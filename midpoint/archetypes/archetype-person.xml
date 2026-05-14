@@ -15,9 +15,10 @@
   Diseno deliberado:
     - El enforcement real (lifecycleState=draft) lo hace el Bloque F del Object Template.
     - Las policy rules aqui agregan TRAZABILIDAD (audit log + extension fields).
-    - Las policy rules se declaran en inducement (patron MP 4.9 correcto para archetypes).
-      Un inducement con solo policyRule y sin target/construction NO induce privilegios.
-      Esto es diferente a "sin inducements" del libro §8.4 que se refiere a NO inducir roles/resources.
+    - Las policy rules van en inducement sin target/construction: no inducen privilegios.
+      Un inducement con solo policyRule NO es "inducir roles" (libro §8.4).
+    - El elemento assignmentRelation va dentro del assignment existente en PROD (id=1).
+      NO se declara como elemento raiz del archetype: no existe en schema ArchetypeType.
 
   F2 - Refactor de Archetypes UPeU 2026-05
   F5 - Policy Rules de trazabilidad UPeU 2026-05-14
@@ -41,27 +42,20 @@
         <conflictResolution>
             <action>recompute</action>
         </conflictResolution>
-        <!-- HIGH-2 fix 2026-05-14: vinculado al UserTemplate-Person-Base real (OID verificado en PROD) -->
         <objectTemplateRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" type="c:ObjectTemplateType"/>
     </archetypePolicy>
 
-    <!-- assignmentRelation: solo UserType puede recibir este archetype -->
-    <assignmentRelation>
-        <holderType>UserType</holderType>
-    </assignmentRelation>
-
     <!-- ============================================================
-         INDUCEMENT con POLICY RULE PR-RECORD-REJECTION
-         Patron MidPoint 4.9: las policy rules se declaran en inducement.
-         Este inducement NO tiene target/construction: no induce privilegios.
-         Solo contiene una policyRule de trazabilidad.
+         INDUCEMENT: POLICY RULE PR-RECORD-REJECTION
+         Evalua los 8 requisitos canonicos UPeU en cada recompute
+         del foco Person con lifecycleState=draft o proposed.
+         Actions: record en audit log + scriptExecution para escribir
+         rejectionReasons + rejectedAt + rejectionSource.
 
-         Evalua PR-02 al PR-08 en cada recompute del foco Person
-         cuando lifecycleState=draft o proposed. Si alguno falla:
-           - Registra en audit log (action: record)
-           - Escribe rejectionReasons + rejectedAt + rejectionSource
+         NO tiene target/construction: no induce privilegios.
+         Esto es diferente a "sin inducements de privilegios" (libro §8.4).
 
-         Requisitos verificados:
+         Requisitos:
            PR-02: personalNumber no vacio
            PR-03: >= 1 identityDocument con primary="true"
            PR-04: DNI valido (8 digitos) si tipo=DNI
@@ -69,14 +63,11 @@
            PR-06: primaryAffiliation en vocabulario canonico
            PR-07: emailAddress termina en @upeu.edu.pe
            PR-08: givenName + familyName presentes
-
-         PR-01 (archetype Person asignado) no se verifica aqui porque
-         si esta rule se ejecuta, el archetype ya esta asignado.
          ============================================================ -->
     <inducement>
         <policyRule>
             <name>PR-RECORD-REJECTION</name>
-            <documentation>Evalua requisitos canonicos UPeU (PR-02 al PR-08) en cada recompute de Person en estado draft/proposed. Escribe rejectionReasons + rejectedAt si hay fallos. Complementa el Bloque F del Object Template (enforcement real). Spec §4.3 Pilar 4 - Import estricto.</documentation>
+            <documentation>Evalua requisitos canonicos UPeU (PR-02 al PR-08) en cada recompute de Person en draft/proposed. Escribe rejectionReasons + rejectedAt si hay fallos. Complementa el Bloque F del Object Template (enforcement real). Spec §4.3 Pilar 4 - Import estricto.</documentation>
             <policyConstraints>
                 <objectState>
                     <name>perfil-en-draft-o-proposed</name>
@@ -201,16 +192,14 @@ if (reasons) {
 
     def userOid = user.oid
     def userType = com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class
-
     def delta = prismContext.deltaFactory().object().createEmptyModifyDelta(userType, userOid)
 
-    def rejReasonsQName = new javax.xml.namespace.QName(SCIBACK_NS, 'rejectionReasons')
-    def rejAtQName      = new javax.xml.namespace.QName(SCIBACK_NS, 'rejectedAt')
-    def rejSrcQName     = new javax.xml.namespace.QName(SCIBACK_NS, 'rejectionSource')
-
-    def rejReasonsPath = com.evolveum.midpoint.prism.path.ItemPath.create('extension', rejReasonsQName)
-    def rejAtPath      = com.evolveum.midpoint.prism.path.ItemPath.create('extension', rejAtQName)
-    def rejSrcPath     = com.evolveum.midpoint.prism.path.ItemPath.create('extension', rejSrcQName)
+    def rejReasonsPath = com.evolveum.midpoint.prism.path.ItemPath.create(
+        'extension', new javax.xml.namespace.QName(SCIBACK_NS, 'rejectionReasons'))
+    def rejAtPath = com.evolveum.midpoint.prism.path.ItemPath.create(
+        'extension', new javax.xml.namespace.QName(SCIBACK_NS, 'rejectedAt'))
+    def rejSrcPath = com.evolveum.midpoint.prism.path.ItemPath.create(
+        'extension', new javax.xml.namespace.QName(SCIBACK_NS, 'rejectionSource'))
 
     delta.addModificationReplaceProperty(rejReasonsPath, reasons.toArray(new String[0]))
     delta.addModificationReplaceProperty(rejAtPath, now)
@@ -226,9 +215,12 @@ if (reasons) {
         log.info('PR-RECORD-REJECTION [{}]: perfil ahora completo -- limpiando campos de rechazo previos', user.name)
         def userType = com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class
         def delta = prismContext.deltaFactory().object().createEmptyModifyDelta(userType, user.oid)
-        delta.addModificationReplaceProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', rejReasonsQName))
-        delta.addModificationReplaceProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', new javax.xml.namespace.QName(SCIBACK_NS, 'rejectedAt')))
-        delta.addModificationReplaceProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', new javax.xml.namespace.QName(SCIBACK_NS, 'rejectionSource')))
+        delta.addModificationReplaceProperty(com.evolveum.midpoint.prism.path.ItemPath.create(
+            'extension', rejReasonsQName))
+        delta.addModificationReplaceProperty(com.evolveum.midpoint.prism.path.ItemPath.create(
+            'extension', new javax.xml.namespace.QName(SCIBACK_NS, 'rejectedAt')))
+        delta.addModificationReplaceProperty(com.evolveum.midpoint.prism.path.ItemPath.create(
+            'extension', new javax.xml.namespace.QName(SCIBACK_NS, 'rejectionSource')))
         midpoint.applyDelta(delta)
     } else {
         log.debug('PR-RECORD-REJECTION [{}]: perfil completo -- sin razones de rechazo', user.name)
@@ -245,10 +237,10 @@ if (reasons) {
     </inducement>
 
     <!-- ============================================================
-         INDUCEMENT con POLICY RULE PR-AUDIT-ACTIVE-GATE
+         INDUCEMENT: POLICY RULE PR-AUDIT-ACTIVE-GATE
          Registra en audit log la transicion hacia lifecycleState=active.
          El gate real es el Bloque F del Object Template.
-         Este inducement NO induce privilegios (sin target/construction).
+         NO tiene target/construction: no induce privilegios.
          ============================================================ -->
     <inducement>
         <policyRule>
