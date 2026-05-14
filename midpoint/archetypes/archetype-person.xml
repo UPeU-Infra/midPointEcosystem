@@ -3,16 +3,31 @@
   Archetype: Person (structural)
   OID: 00000000-0000-0000-0000-000000000702 (built-in Evolveum, PATCH over existing)
 
-  Spec canónica: §3.1 Pilar 1 — Persona única, §4.2 Archetype único Person
-  Regla: un único archetype structural por UserType. Sin inducements (libro §8.4).
-  Regla: NO codifica afiliación. Afiliaciones = R-Affiliation-* roles (spec §3.2).
+  Spec canónica: §3.1 Pilar 1 - Persona unica, §4.2 Archetype unico Person
+  Regla: un unico archetype structural por UserType. Sin inducements (libro §8.4).
+  Regla: NO codifica afiliacion. Afiliaciones = R-Affiliation-* roles (spec §3.2).
 
-  F2 — Refactor de Archetypes UPeU 2026-05
+  Policy Rules (F5 - 2026-05-14):
+    PR-AUDIT-ACTIVE-GATE : registra en audit log la transicion a active
+    PR-RECORD-REJECTION  : en cada recompute evalua los 8 requisitos canonicos y escribe
+                           rejectionReasons + rejectedAt en extension/sciback: si hay fallos
+
+  Diseno deliberado:
+    - El enforcement real (lifecycleState=draft) lo hace el Bloque F del Object Template.
+    - Las policy rules aqui agregan TRAZABILIDAD (audit log + extension fields).
+    - NO usar enforcement en policy rules: evitar doble enforcement que complique debugging.
+    - scriptExecution con object/focus es el patron correcto para archetypes en MP 4.9.
+
+  F2 - Refactor de Archetypes UPeU 2026-05
+  F5 - Policy Rules de trazabilidad UPeU 2026-05-14
 -->
 <archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+           xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+           xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+           xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
            oid="00000000-0000-0000-0000-000000000702">
     <name>Person</name>
-    <description>Toda persona física vinculada a UPeU. Único archetype structural permitido para UserType. Las afiliaciones (student/faculty/staff/alum/affiliate) se expresan como R-Affiliation-* roles, NO como archetypes distintos. Spec §3.1 + §4.2.</description>
+    <description>Toda persona fisica vinculada a UPeU. Unico archetype structural permitido para UserType. Las afiliaciones (student/faculty/staff/alum/affiliate) se expresan como R-Affiliation-* roles, NO como archetypes distintos. Spec §3.1 + §4.2. Policy rules de trazabilidad F5 implementadas.</description>
     <archetypePolicy>
         <display>
             <label>Persona UPeU</label>
@@ -27,6 +42,234 @@
         </conflictResolution>
         <!-- HIGH-2 fix 2026-05-14: vinculado al UserTemplate-Person-Base real (OID verificado en PROD) -->
         <objectTemplateRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" type="c:ObjectTemplateType"/>
+
+        <!-- ============================================================
+             POLICY RULE PR-RECORD-REJECTION
+             Evalua los 8 requisitos canonicos UPeU en cada recompute
+             del foco Person con lifecycleState=draft o proposed.
+             Si alguno falla:
+               - Registra en audit log (action: record)
+               - Escribe rejectionReasons + rejectedAt + rejectionSource
+
+             Requisitos verificados:
+               PR-02: personalNumber no vacio
+               PR-03: >= 1 identityDocument con primary="true"
+               PR-04: DNI valido (8 digitos) si tipo=DNI
+               PR-05: >= 1 rol R-Affiliation-* asignado
+               PR-06: primaryAffiliation en vocabulario canonico
+               PR-07: emailAddress termina en @upeu.edu.pe
+               PR-08: givenName + familyName presentes
+
+             PR-01 (archetype Person asignado) no se verifica aqui porque
+             si esta rule se ejecuta, el archetype ya esta asignado.
+
+             MidPoint 4.9: scriptExecution en archetypePolicy/policyRule
+             usa <object><focus/> para referenciar el objeto evaluado.
+             El script recibe el objeto via variable 'input'.
+             ============================================================ -->
+        <policyRule>
+            <name>PR-RECORD-REJECTION</name>
+            <documentation>Evalua requisitos canonicos UPeU (PR-02 al PR-08) en cada recompute de Person en estado draft/proposed. Escribe rejectionReasons + rejectedAt si hay fallos. Complementa el Bloque F del Object Template (enforcement real). Spec §4.3 Pilar 4 - Import estricto.</documentation>
+            <policyConstraints>
+                <objectState>
+                    <name>perfil-en-draft-o-proposed</name>
+                    <filter>
+                        <q:or>
+                            <q:equal>
+                                <q:path>lifecycleState</q:path>
+                                <q:value>draft</q:value>
+                            </q:equal>
+                            <q:equal>
+                                <q:path>lifecycleState</q:path>
+                                <q:value>proposed</q:value>
+                            </q:equal>
+                        </q:or>
+                    </filter>
+                </objectState>
+            </policyConstraints>
+            <policyActions>
+                <record/>
+                <scriptExecution>
+                    <object>
+                        <focus/>
+                    </object>
+                    <executeScript>
+                        <s:pipeline>
+                            <s:execute>
+                                <s:script>
+                                    <code><![CDATA[
+import java.time.Instant
+
+def SCIBACK_NS = 'urn:sciback:midpoint:person'
+def AFFIL_OIDS = [
+    '79ad22c7-b828-4b8c-a562-2ee01b214d7f',
+    '94a03f65-e866-4d49-a996-26c4dc227413',
+    '0da0b3b8-a93b-4765-ad71-30c535ff7512',
+    '7d4e89fb-163c-478c-a224-4e4be733bc1b',
+    '485dc678-94a5-4d20-9463-71568c625a33',
+    '31f25974-62c9-404a-a038-b17a08059fe5'
+] as Set
+
+def VALID_AFFILIATIONS = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUMNI','AFFILIATE-CU'] as Set
+
+def user = input
+def reasons = []
+
+// PR-02: personalNumber no vacio
+def pn = user.personalNumber?.orig
+if (!pn || pn.trim() == '') {
+    reasons << 'PR-02: personalNumber ausente o vacio'
+}
+
+// PR-03: >= 1 identityDocument con primary="true"
+def hasPrimary = false
+def primaryDocNumber = null
+def primaryDocType = null
+try {
+    def containers = user.extension?.findContainers(
+        new javax.xml.namespace.QName(SCIBACK_NS, 'identityDocuments')
+    )
+    if (containers) {
+        containers.each { c ->
+            def primVal = c?.findProperty(new javax.xml.namespace.QName(SCIBACK_NS, 'primary'))?.realValue
+            if ('true' == primVal?.toString()) {
+                hasPrimary = true
+                primaryDocNumber = c?.findProperty(new javax.xml.namespace.QName(SCIBACK_NS, 'number'))?.realValue?.toString()
+                primaryDocType   = c?.findProperty(new javax.xml.namespace.QName(SCIBACK_NS, 'type'))?.realValue?.toString()
+            }
+        }
+    }
+} catch (Exception e) {
+    log.warn('PR-RECORD-REJECTION: error leyendo identityDocuments en {}: {}', user.name, e.message)
+}
+if (!hasPrimary) {
+    reasons << 'PR-03: sin documento de identidad primario (primary=true)'
+}
+
+// PR-04: DNI valido (8 digitos numericos) -- aplica si tipo=DNI o tipo ausente
+if (hasPrimary && primaryDocNumber != null) {
+    def docType = primaryDocType?.toUpperCase() ?: 'DNI'
+    if (docType == 'DNI' || docType == '') {
+        if (!(primaryDocNumber ==~ /^\d{8}$/)) {
+            reasons << "PR-04: numero DNI invalido '${primaryDocNumber}' (debe ser 8 digitos numericos)"
+        }
+    }
+}
+
+// PR-05: >= 1 rol R-Affiliation-* asignado
+def hasAffil = user.assignment?.any { a ->
+    a.targetRef?.oid in AFFIL_OIDS
+}
+if (!hasAffil) {
+    reasons << 'PR-05: sin rol de afiliacion R-Affiliation-* asignado'
+}
+
+// PR-06: primaryAffiliation en vocabulario canonico
+def primAffil = user.extension?.findProperty(
+    new javax.xml.namespace.QName(SCIBACK_NS, 'primaryAffiliation')
+)?.realValue?.toString()
+if (!primAffil || !(primAffil.toUpperCase() in VALID_AFFILIATIONS)) {
+    reasons << "PR-06: primaryAffiliation invalido o ausente ('${primAffil}'). Validos: ${VALID_AFFILIATIONS.sort().join('|')}"
+}
+
+// PR-07: emailAddress institucional (@upeu.edu.pe)
+def email = user.emailAddress?.orig
+if (!email || !email.endsWith('@upeu.edu.pe')) {
+    reasons << "PR-07: emailAddress institucional ausente o invalido ('${email}')"
+}
+
+// PR-08a: givenName
+if (!user.givenName?.orig || user.givenName.orig.trim() == '') {
+    reasons << 'PR-08a: givenName ausente o vacio'
+}
+// PR-08b: familyName
+if (!user.familyName?.orig || user.familyName.orig.trim() == '') {
+    reasons << 'PR-08b: familyName ausente o vacio'
+}
+
+// Escribir resultados en extension si hay razones de rechazo
+if (reasons) {
+    def now = Instant.now().toString()
+    log.info('PR-RECORD-REJECTION [{}]: {} fallos: {}', user.name, reasons.size(), reasons.join(' | '))
+
+    // Construir delta para actualizar los campos de governance en extension
+    // Usar midpoint.applyDelta para escribir directamente sin ciclo de recompute
+    def userOid = user.oid
+    def userType = com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class
+
+    def delta = prismContext.deltaFactory().object().createEmptyModifyDelta(userType, userOid)
+
+    def rejReasonsQName = new javax.xml.namespace.QName(SCIBACK_NS, 'rejectionReasons')
+    def rejAtQName      = new javax.xml.namespace.QName(SCIBACK_NS, 'rejectedAt')
+    def rejSrcQName     = new javax.xml.namespace.QName(SCIBACK_NS, 'rejectionSource')
+
+    // Obtener definiciones del schema para construir los ItemDeltas correctamente
+    def extDef = prismContext.getSchemaRegistry().findObjectDefinitionByCompileTimeClass(userType)
+        .findContainerDefinition(com.evolveum.midpoint.prism.path.ItemPath.create('extension'))
+
+    def rejReasonsPath = com.evolveum.midpoint.prism.path.ItemPath.create('extension', rejReasonsQName)
+    def rejAtPath      = com.evolveum.midpoint.prism.path.ItemPath.create('extension', rejAtQName)
+    def rejSrcPath     = com.evolveum.midpoint.prism.path.ItemPath.create('extension', rejSrcQName)
+
+    delta.addModificationReplaceProperty(rejReasonsPath, reasons.toArray(new String[0]))
+    delta.addModificationReplaceProperty(rejAtPath, now)
+    delta.addModificationReplaceProperty(rejSrcPath, 'PR-RECORD-REJECTION@archetype-person')
+
+    midpoint.applyDelta(delta)
+} else {
+    // Perfil completo: limpiar campos de rechazo si existian de una iteracion anterior
+    def userOid = user.oid
+    def rejReasonsQName = new javax.xml.namespace.QName(SCIBACK_NS, 'rejectionReasons')
+    def rejAtQName      = new javax.xml.namespace.QName(SCIBACK_NS, 'rejectedAt')
+    def rejSrcQName     = new javax.xml.namespace.QName(SCIBACK_NS, 'rejectionSource')
+
+    def hasOldReasons = user.extension?.findProperty(rejReasonsQName)?.realValue != null
+
+    if (hasOldReasons) {
+        log.info('PR-RECORD-REJECTION [{}]: perfil ahora completo -- limpiando campos de rechazo previos', user.name)
+        def userType = com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class
+        def delta = prismContext.deltaFactory().object().createEmptyModifyDelta(userType, userOid)
+        delta.addModificationReplaceProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', rejReasonsQName))
+        delta.addModificationReplaceProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', rejAtQName))
+        delta.addModificationReplaceProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', rejSrcQName))
+        midpoint.applyDelta(delta)
+    } else {
+        log.debug('PR-RECORD-REJECTION [{}]: perfil completo -- sin razones de rechazo', user.name)
+    }
+}
+                                    ]]></code>
+                                </s:script>
+                            </s:execute>
+                        </s:pipeline>
+                    </executeScript>
+                </scriptExecution>
+            </policyActions>
+        </policyRule>
+
+        <!-- ============================================================
+             POLICY RULE PR-AUDIT-ACTIVE-GATE
+             Se dispara cuando un usuario con archetype Person transita
+             hacia lifecycleState=active. Registra en audit log
+             confirmando la transicion (el gate real es el Bloque F
+             del Object Template - no se duplica enforcement aqui).
+
+             Constraint: <transition> + stateAfter=active
+             Action: solo record (solo trazabilidad).
+             ============================================================ -->
+        <policyRule>
+            <name>PR-AUDIT-ACTIVE-GATE</name>
+            <documentation>Registra en audit log la transicion hacia active de cualquier Person. Informativo: confirma que el Bloque F del Object Template permitio la transicion. No duplica enforcement.</documentation>
+            <policyConstraints>
+                <transition>
+                    <stateAfter>active</stateAfter>
+                    <directOwner>true</directOwner>
+                </transition>
+            </policyConstraints>
+            <policyActions>
+                <record/>
+            </policyActions>
+        </policyRule>
+
     </archetypePolicy>
     <!-- assignmentRelation: solo UserType puede recibir este archetype -->
     <assignmentRelation>
