@@ -1,0 +1,898 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Schema Extension UPeU — UserType Person v3.1
+    =============================================
+    Namespace  : urn:upeu:midpoint:person
+    Versión    : 3.1
+    Fecha      : 2026-05-14
+    Autor      : midpoint-expert (SciBack) bajo dirección de Alberto Sánchez (DTI UPeU)
+    Estándares : eduPerson 202208, SCHAC 1.6.0, SCIM 2.0 (RFC 7643), ISO/IEC 24760-1,
+                 ISO 5218, ISO 3166-1 alpha-3, Ley 29733 PE, Ley Migración PE
+    Proyecto   : IGA Canónico UPeU — Spec §4.1
+
+    REGLAS DE DISEÑO:
+    - Solo atributos que NO están en el core UserType de MidPoint.
+    - Campos core excluidos: name, fullName, givenName, familyName, emailAddress,
+      personalNumber, organization, organizationalUnit, costCenter, preferredLanguage,
+      locale, timezone, activation, credentials, additionalName.
+    - Todos los tipos xs:date (no xs:dateTime salvo donde se necesite timestamp).
+    - Datos sensibles según Ley 29733 §2.5 marcados con comentario [SENSIBLE].
+    - Atributos derivados/computados por Object Template marcados con comentario [COMPUTADO].
+
+    MIGRACIÓN DESDE v3.0:
+    Atributos v3.0 deprecados (presentes para compatibilidad, serán eliminados en v4.0):
+      - taxId          → reemplazado por identityDocuments[] con type=DNI/CE/etc.
+      - secondaryMail  → renombrado a personalEmail
+      - phoneNumberAlt → renombrado a phoneNumber
+      - personalWeb    → eliminado (no tiene equivalente canónico; uso marginal)
+      - province       → reemplazado por ubigeo (código INEI 6 dígitos)
+      - country        → reemplazado por nationality
+      - streetAddress  → se mantiene con mismo nombre (OK)
+      - hireDate       → se mantiene con mismo nombre (OK)
+      - terminationDate → se mantiene con mismo nombre (OK)
+      - primaryAffiliationCode → renombrado a primaryAffiliation (computado)
+      - primaryAffiliationName → eliminado (derivado de primaryAffiliation)
+      - languageSkills → eliminado (no está en spec v3.1; usar preferredLanguage core)
+      - campus         → renombrado a homeCampus
+      - employeeType   → se mantiene (mismo nombre, ahora multivalor)
+      - studentCycle   → se mantiene (mismo nombre, int multivalor)
+      - academicProgram → se mantiene
+      - academicProgramCode → se mantiene
+      - alumniStatus   → eliminado (se modela via R-Affiliation-Alum assignment)
+      - studyModality  → se mantiene
+      - faculty        → eliminado (se modela via parentOrgRef al org Faculty)
+      - orcid          → se mantiene
+      - institutionalIdCard → renombrado a institutionalCode
+      - universityIdCard    → redundante con institutionalCode; eliminado
+      - externalSystemId    → se mantiene
+-->
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:tns="urn:upeu:midpoint:person"
+    targetNamespace="urn:upeu:midpoint:person"
+    elementFormDefault="qualified">
+
+    <!-- ================================================================
+         COMPLEX TYPE: IdentityDocumentType
+         Representa un documento de identidad individual.
+         Spec §4.1.2. Multivalor: identityDocuments[] en UserExtensionType.
+         Alineado: SCHAC schacPersonalUniqueID, Ley Migración PE, DL 1350.
+         ================================================================ -->
+    <xs:complexType name="IdentityDocumentType">
+        <xs:annotation>
+            <xs:appinfo>
+                <a:displayName>Documento de identidad</a:displayName>
+                <a:help>Documento oficial de identificación de la persona. Mínimo 1 requerido; exactamente 1 con primary=true.</a:help>
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:sequence>
+
+            <!-- Tipo de documento -->
+            <xs:element name="type" type="xs:string" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Tipo de documento</a:displayName>
+                        <a:help>Vocabulario: DNI | CE | PASSPORT | PTP | CPP | CSR | ITIN. Ver Ley Migración PE (DL 1350) y Ley 26497 RENIEC.</a:help>
+                        <a:displayOrder>10</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Número de documento [SENSIBLE Ley 29733] -->
+            <xs:element name="number" type="xs:string" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Número de documento</a:displayName>
+                        <a:help>Número del documento. Regex por tipo: DNI=8 dígitos, CE/PTP/CPP/CSR=9 dígitos, PASSPORT=6-12 alfanumerico. Dato PII sensible (Ley 29733 §2.5).</a:help>
+                        <a:displayOrder>20</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- País emisor del documento -->
+            <xs:element name="countryOfIssue" type="xs:string" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>País emisor</a:displayName>
+                        <a:help>Código ISO 3166-1 alpha-3. Ej: PER, VEN, BRA, COL. Obligatorio para distinguir documentos de múltiples países.</a:help>
+                        <a:displayOrder>30</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Documento primario — exactamente 1 debe ser true -->
+            <xs:element name="primary" type="xs:boolean" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Documento principal</a:displayName>
+                        <a:help>true = este documento se exporta como schacPersonalUniqueID en SAML/LDAP. Exactamente 1 documento por persona debe tener primary=true.</a:help>
+                        <a:displayOrder>40</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Fecha de emisión -->
+            <xs:element name="issuedAt" type="xs:date" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Fecha de emisión</a:displayName>
+                        <a:help>Fecha en que se emitió el documento (YYYY-MM-DD).</a:help>
+                        <a:displayOrder>50</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Fecha de vencimiento -->
+            <xs:element name="expiresAt" type="xs:date" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Fecha de vencimiento</a:displayName>
+                        <a:help>Fecha de expiración del documento (YYYY-MM-DD). Obligatorio para CE, PASSPORT, PTP, CPP. Trigger para alertas de renovación.</a:help>
+                        <a:displayOrder>60</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Entidad verificadora -->
+            <xs:element name="verifiedBy" type="xs:string" minOccurs="1" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Verificado por</a:displayName>
+                        <a:help>Vocabulario: RENIEC | MIGRACIONES | INSTITUTIONAL | SELF-DECLARED. Define el IAL del atributo (NIST SP 800-63A).</a:help>
+                        <a:displayOrder>70</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Fecha de verificación -->
+            <xs:element name="verifiedAt" type="xs:date" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Fecha de verificación</a:displayName>
+                        <a:help>Fecha en que se verificó el documento con la entidad emisora (YYYY-MM-DD).</a:help>
+                        <a:displayOrder>80</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- ================================================================
+         EXTENSION PRINCIPAL: UserExtensionType
+         Extiende c:UserType. Solo campos que NO están en core MidPoint.
+         Spec §4.1.1 a §4.1.10.
+         ================================================================ -->
+    <xs:complexType name="UserExtensionType">
+        <xs:annotation>
+            <xs:appinfo>
+                <a:extension ref="c:UserType"/>
+                <a:displayName>Datos de persona UPeU</a:displayName>
+                <a:help>Extensión canónica del UserType para personas vinculadas a UPeU. Schema v3.1. Alineado a eduPerson 202208, SCHAC 1.6.0, SCIM 2.0, ISO 24760, Ley 29733.</a:help>
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:sequence>
+
+            <!-- ============================================================
+                 SECCIÓN 1 — IDENTIFICADORES
+                 Spec §4.1.1
+                 ============================================================ -->
+
+            <!-- Documentos de identidad tipados — multivalor -->
+            <xs:element name="identityDocuments" type="tns:IdentityDocumentType"
+                        minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Documentos de identidad</a:displayName>
+                        <a:help>Lista de documentos de identidad oficiales. Mínimo 1 requerido para que el perfil pase de draft a active. Exactamente 1 con primary=true. Mapeo: documento primario → SCHAC schacPersonalUniqueID (URN: urn:schac:personalUniqueID:pe:{type}:{countryOfIssue}:{number}).</a:help>
+                        <a:displayOrder>100</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Código institucional — alias semántico de name/personalNumber -->
+            <xs:element name="institutionalCode" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Código institucional</a:displayName>
+                        <a:help>Alias semántico del código UPeU (= name = personalNumber). Sirve para visualización en UI y compatibilidad SCIM. [UPeU-LOCAL §4.1.1.b]</a:help>
+                        <a:indexed>true</a:indexed>
+                        <a:displayOrder>110</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- ID LAMB persona — base de eduPersonUniqueId -->
+            <xs:element name="lambIdPersona" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>ID LAMB (ID_PERSONA)</a:displayName>
+                        <a:help>Identificador inmutable de persona en Oracle LAMB (MOISES.ID_PERSONA). Inmutable de por vida. Base para eduPersonUniqueId: {lambIdPersona}@upeu.edu.pe. NO reasignable. Spec §4.1.5.a.</a:help>
+                        <a:indexed>true</a:indexed>
+                        <a:displayOrder>120</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- ID en sistema externo — correlación con sistemas no-LAMB -->
+            <xs:element name="externalSystemId" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>ID sistema externo</a:displayName>
+                        <a:help>Identificador en sistemas externos no-LAMB (Koha, AD, etc.) para correlación durante migración. Temporal; se elimina cuando el sistema es gestionado por MidPoint.</a:help>
+                        <a:indexed>true</a:indexed>
+                        <a:displayOrder>130</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- ============================================================
+                 SECCIÓN 2 — DATOS DEMOGRÁFICOS
+                 Spec §4.1.3
+                 ============================================================ -->
+
+            <!-- Fecha de nacimiento -->
+            <xs:element name="birthDate" type="xs:date"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Fecha de nacimiento</a:displayName>
+                        <a:help>Fecha de nacimiento (YYYY-MM-DD). Origen: Oracle LAMB FEC_NACIMIENTO. Mapeo SAML: SCHAC schacDateOfBirth (formato YYYYMMDD). Dato PII.</a:help>
+                        <a:displayOrder>200</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Género — ISO 5218 -->
+            <xs:element name="gender" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Género</a:displayName>
+                        <a:help>Código ISO 5218: 0=No conocido, 1=Masculino, 2=Femenino, 9=No aplicable. Origen: Oracle LAMB ID_SEXO (M→1, F→2). NO usar M/F directamente.</a:help>
+                        <a:displayOrder>210</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Nacionalidad — ISO 3166-1 alpha-3 -->
+            <xs:element name="nationality" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Nacionalidad</a:displayName>
+                        <a:help>Código ISO 3166-1 alpha-3 del país de ciudadanía. Ej: PER, VEN, COL. Origen: Oracle LAMB ID_TIPOPAIS. Mapeo SAML: SCHAC schacCountryOfCitizenship.</a:help>
+                        <a:displayOrder>220</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Nombre preferido / nickname -->
+            <xs:element name="preferredName" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Nombre preferido</a:displayName>
+                        <a:help>Nombre por el que la persona prefiere ser llamada (apodo, nombre corto). Self-service. Mapeo SAML: eduPerson eduPersonNickname.</a:help>
+                        <a:displayOrder>230</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Pronombres preferidos — multivalor -->
+            <xs:element name="displayPronouns" type="xs:string"
+                        minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Pronombres preferidos</a:displayName>
+                        <a:help>Pronombres que la persona solicita que se usen. Ej: él/él, ella/ella, elle/elle. Self-service. Mapeo: eduPerson eduPersonDisplayPronouns.</a:help>
+                        <a:displayOrder>240</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Discapacidad — boolean -->
+            <xs:element name="disability" type="xs:boolean"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Persona con discapacidad</a:displayName>
+                        <a:help>true si la persona tiene certificado de discapacidad vigente (CONADIS). Dato sensible Ley 29733 §2.5. Solo sistemas internos. Origen: LAMB o self-service con respaldo documental.</a:help>
+                        <a:displayOrder>250</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Estado civil -->
+            <xs:element name="maritalStatus" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Estado civil</a:displayName>
+                        <a:help>Estado civil. Origen: Oracle LAMB ESTADO_CIVIL. [UPeU-LOCAL] No tiene equivalente en estándar educacional. Vocabulario: SOLTERO|CASADO|DIVORCIADO|VIUDO|CONVIVIENTE.</a:help>
+                        <a:displayOrder>260</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Religión — DATO SENSIBLE Ley 29733 §2.5 -->
+            <xs:element name="religion" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Religión</a:displayName>
+                        <a:help>[SENSIBLE Ley 29733 §2.5 — requiere consentimiento explícito] UPeU es institución confesional adventista. Dato usado para planificación de sábados, becas y eventos religiosos. NO exportar a SAML salvo sistemas internos UPeU autorizados. Origen: LAMB RELIGION. [UPeU-LOCAL §4.1.3.a]</a:help>
+                        <a:displayOrder>270</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- ============================================================
+                 SECCIÓN 3 — CONTACTO
+                 Spec §4.1.4. emailAddress y phoneNumber CORE no se duplican.
+                 ============================================================ -->
+
+            <!-- Correo personal — multivalor -->
+            <xs:element name="personalEmail" type="xs:string"
+                        minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Correo personal</a:displayName>
+                        <a:help>Correo electrónico personal (Gmail, Outlook, etc.). Origen: LAMB CORREO o self-service. NO se usa para login. Se preserva para comunicaciones de emergencia y recuperación. Mapeo SCIM: emails[type=home]. Renombrado desde secondaryMail (v3.0).</a:help>
+                        <a:displayOrder>300</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Teléfono — multivalor -->
+            <xs:element name="phoneNumber" type="xs:string"
+                        minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Teléfono</a:displayName>
+                        <a:help>Número de teléfono (celular preferido). Origen: Oracle LAMB CELULAR. Formato: +51XXXXXXXXX (E.164). Mapeo LDAP: mobile. Mapeo SCIM: phoneNumbers[type=mobile]. Renombrado desde phoneNumberAlt (v3.0).</a:help>
+                        <a:displayOrder>310</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Dirección domiciliaria -->
+            <xs:element name="streetAddress" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Dirección</a:displayName>
+                        <a:help>Dirección domiciliaria. Origen: Oracle LAMB DIRECCION. Mapeo LDAP: street. Mapeo SCIM: addresses[type=home].streetAddress.</a:help>
+                        <a:displayOrder>320</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Ubigeo INEI — código geográfico peruano -->
+            <xs:element name="ubigeo" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Ubigeo</a:displayName>
+                        <a:help>Código de ubicación geográfica INEI de 6 dígitos (departamento-provincia-distrito). Ej: 150101 (Lima-Lima-Lima). Origen: Oracle LAMB ID_UBIGEO. [UPeU-LOCAL]</a:help>
+                        <a:displayOrder>330</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- ============================================================
+                 SECCIÓN 4 — AFILIACIÓN (COMPUTADOS por Object Template)
+                 Spec §4.1.5. NO son inputs. Solo salida del template.
+                 ============================================================ -->
+
+            <!-- Afiliaciones activas — multivalor [COMPUTADO] -->
+            <xs:element name="affiliations" type="xs:string"
+                        minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Afiliaciones</a:displayName>
+                        <a:help>[COMPUTADO por Object Template] Unión de valores eduPersonAffiliation emitidos por roles R-Affiliation-* activos. Vocabulario eduPerson 202208: faculty|student|staff|employee|member|affiliate|alum|library-walk-in. NO modificar manualmente.</a:help>
+                        <a:displayOrder>400</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Afiliación primaria — single [COMPUTADO] -->
+            <xs:element name="primaryAffiliation" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Afiliación principal</a:displayName>
+                        <a:help>[COMPUTADO por Object Template] Derivado por prelación: staff > faculty > student > alum > affiliate > library-walk-in. Mapeo SAML: eduPerson eduPersonPrimaryAffiliation. [UPeU-LOCAL §3.2.c: staff > faculty]. Renombrado desde primaryAffiliationCode (v3.0).</a:help>
+                        <a:indexed>true</a:indexed>
+                        <a:displayOrder>410</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Afiliaciones con scope — multivalor [COMPUTADO] -->
+            <xs:element name="scopedAffiliations" type="xs:string"
+                        minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Afiliaciones con ámbito</a:displayName>
+                        <a:help>[COMPUTADO por Object Template] {affiliation}@upeu.edu.pe para cada affiliation activa. Ej: student@upeu.edu.pe. Mapeo SAML: eduPerson eduPersonScopedAffiliation.</a:help>
+                        <a:displayOrder>420</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Derechos/entitlements — multivalor [COMPUTADO] -->
+            <xs:element name="entitlements" type="xs:string"
+                        minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Derechos (entitlements)</a:displayName>
+                        <a:help>[COMPUTADO por Object Template] URNs de derechos derivados de roles activos. Ej: urn:upeu.edu.pe:entitlement:library:databases. Mapeo SAML: eduPerson eduPersonEntitlement. R&amp;S REFEDS.</a:help>
+                        <a:displayOrder>430</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- ePPN — eduPersonPrincipalName [COMPUTADO] -->
+            <xs:element name="eppn" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>ePPN (eduPersonPrincipalName)</a:displayName>
+                        <a:help>[COMPUTADO por Object Template] {name}@upeu.edu.pe. Usado como identificador en federación SAML. Mapeo SAML: eduPerson eduPersonPrincipalName. [AVISO: no debe reutilizarse si el name cambia; para identificador permanente usar eduPersonUniqueId].</a:help>
+                        <a:displayOrder>440</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- eduPersonUniqueId — ID permanente en federación [COMPUTADO] -->
+            <xs:element name="eduPersonUniqueId" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>eduPersonUniqueId</a:displayName>
+                        <a:help>[COMPUTADO por Object Template] {lambIdPersona}@upeu.edu.pe. Omnidireccional y nunca reasignable (eduPerson 202208 §3). Base: MOISES.ID_PERSONA de Oracle LAMB. [UPeU-LOCAL §4.1.5.a]</a:help>
+                        <a:indexed>true</a:indexed>
+                        <a:displayOrder>450</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- schacHomeOrganization — constante [COMPUTADO] -->
+            <xs:element name="schacHomeOrganization" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Organización (schacHomeOrganization)</a:displayName>
+                        <a:help>[COMPUTADO por Object Template] Constante: upeu.edu.pe. Mapeo SAML: SCHAC schacHomeOrganization. Requerido en bundle REFEDS R&amp;S.</a:help>
+                        <a:displayOrder>460</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- schacExpiryDate — fecha expiración para SPs externos -->
+            <xs:element name="schacExpiryDate" type="xs:date"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Fecha de expiración (SCHAC)</a:displayName>
+                        <a:help>Fecha hasta la cual la cuenta es válida. Mismo valor que activation/validTo. Mapeo SAML: SCHAC schacExpiryDate. Exportable a SPs externos para control de acceso temporal.</a:help>
+                        <a:displayOrder>470</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- ============================================================
+                 SECCIÓN 5 — ACADÉMICO (subset student)
+                 Spec §4.1.6
+                 ============================================================ -->
+
+            <!-- Programa académico — multivalor -->
+            <xs:element name="academicProgram" type="xs:string"
+                        minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Programa académico</a:displayName>
+                        <a:help>Nombre de la Escuela Profesional o programa de posgrado. Origen: Oracle LAMB NOMBRE_ESCUELA. Multivalor para dobles titulaciones. [UPeU-LOCAL]</a:help>
+                        <a:displayOrder>500</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Código de programa académico — multivalor, indexado -->
+            <xs:element name="academicProgramCode" type="xs:string"
+                        minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Código de programa académico</a:displayName>
+                        <a:help>Código del programa académico (ID_PROGRAMA_ESTUDIO de Oracle LAMB). Usado para assignmentTargetSearch a org EP. Multivalor. [UPeU-LOCAL]</a:help>
+                        <a:indexed>true</a:indexed>
+                        <a:displayOrder>510</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Nivel de estudios -->
+            <xs:element name="studyLevel" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Nivel de estudios</a:displayName>
+                        <a:help>Vocabulario: pregrado|posgrado|doctorado|tecnico|preuniversitario|extension. Derivado desde LAMB. Mapeo SCHAC: schacPersonalPosition (URI). [UPeU-LOCAL]</a:help>
+                        <a:displayOrder>520</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Modalidad de estudio — multivalor -->
+            <xs:element name="studyModality" type="xs:string"
+                        minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Modalidad de estudio</a:displayName>
+                        <a:help>Vocabulario: presencial|semipresencial|distancia. Origen: derivado desde LAMB. Multivalor (estudiante puede tener cursos en ambas modalidades). [UPeU-LOCAL]</a:help>
+                        <a:displayOrder>530</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Ciclo académico — int multivalor -->
+            <xs:element name="studentCycle" type="xs:int"
+                        minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Ciclo académico</a:displayName>
+                        <a:help>Ciclo(s) en que el estudiante está matriculado. Origen: Oracle LAMB CICLO. Int multivalor (estudiante puede cursar materias de múltiples ciclos). [UPeU-LOCAL]</a:help>
+                        <a:displayOrder>540</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Período de admisión -->
+            <xs:element name="admissionPeriod" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Período de admisión</a:displayName>
+                        <a:help>Semestre en que el estudiante ingresó por primera vez. Valor del primer ID_SEMESTRE matriculado en LAMB. Inmutable una vez establecido. [UPeU-LOCAL]</a:help>
+                        <a:displayOrder>550</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- ============================================================
+                 SECCIÓN 6 — LABORAL (subset faculty/staff)
+                 Spec §4.1.7
+                 ============================================================ -->
+
+            <!-- Categoría ocupacional -->
+            <xs:element name="employeeCategory" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Categoría ocupacional</a:displayName>
+                        <a:help>Código de categoría ocupacional de Oracle LAMB (ID_CATEGORIAOCUPACIONAL). Mapeo a ENOC.CAT_DOCENTE para categorías docentes. Mapeo SCHAC: schacPersonalPosition. Origen: ELISEO.VW_APS_EMPLEADO.</a:help>
+                        <a:displayOrder>600</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Tipo de empleo — multivalor -->
+            <xs:element name="employeeType" type="xs:string"
+                        minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Tipo de empleo</a:displayName>
+                        <a:help>Vocabulario: TC (Tiempo Completo)|TP (Tiempo Parcial)|COND (Contratado Docente)|INVESTIGADOR. Origen: derivado de ENOC.CAT_DOCENTE.NOMBRE buscando tokens. Multivalor para combinaciones. [UPeU-LOCAL]</a:help>
+                        <a:displayOrder>610</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Fecha de ingreso -->
+            <xs:element name="hireDate" type="xs:date"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Fecha de ingreso</a:displayName>
+                        <a:help>Fecha de inicio del contrato laboral (YYYY-MM-DD). Origen: Oracle LAMB FEC_INICIO (ELISEO.VW_APS_EMPLEADO). Trigger Joiner policy. Usado en activation/validFrom.</a:help>
+                        <a:displayOrder>620</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Fecha de término -->
+            <xs:element name="terminationDate" type="xs:date"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Fecha de término</a:displayName>
+                        <a:help>Fecha de fin del contrato laboral (YYYY-MM-DD). Origen: Oracle LAMB FEC_TERMINO (ELISEO.VW_APS_EMPLEADO). Trigger Leaver policy → lifecycleState suspended. Usado en activation/validTo. ISO 24760 lifecycle trigger.</a:help>
+                        <a:displayOrder>630</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Tipo de contrato -->
+            <xs:element name="contractType" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Tipo de contrato</a:displayName>
+                        <a:help>Tipo de contrato laboral. Origen: Oracle LAMB ID_TIPOCONTRATO. [UPeU-LOCAL]</a:help>
+                        <a:displayOrder>640</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Departamento/unidad — ID numérico LAMB -->
+            <xs:element name="depto" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Departamento (ID LAMB)</a:displayName>
+                        <a:help>Código numérico de departamento/área de Oracle LAMB (ID_DEPTO). Usado para assignmentTargetSearch al org departamento. Lookup: ELISEO.VW_REP_DEPTOS. Mapeo SCIM: department. Mapeo LDAP: departmentNumber. [UPeU-LOCAL]</a:help>
+                        <a:indexed>true</a:indexed>
+                        <a:displayOrder>650</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- ============================================================
+                 SECCIÓN 7 — INVESTIGACIÓN (subset researcher)
+                 Spec §4.1.8
+                 ============================================================ -->
+
+            <!-- ORCID iD -->
+            <xs:element name="orcid" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>ORCID iD</a:displayName>
+                        <a:help>ORCID del investigador en formato URI: https://orcid.org/XXXX-XXXX-XXXX-XXXX. Self-service / CONCYTEC API. Obligatorio para investigadores RENACYT. Mapeo SAML: eduPerson eduPersonOrcid.</a:help>
+                        <a:indexed>true</a:indexed>
+                        <a:displayOrder>700</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- ID CONCYTEC/RENACYT -->
+            <xs:element name="concytecId" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>ID CONCYTEC/RENACYT</a:displayName>
+                        <a:help>Código de investigador en el Registro Nacional de Investigadores RENACYT (CONCYTEC). Origen: CONCYTEC API o declaración institucional. [UPeU-LOCAL]</a:help>
+                        <a:indexed>true</a:indexed>
+                        <a:displayOrder>710</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Categoría RENACYT -->
+            <xs:element name="researcherCategory" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Categoría investigador</a:displayName>
+                        <a:help>Categoría RENACYT: III (Reconocido)|II (Distinguido)|I (Consagrado). Origen: CONCYTEC. Determina acceso a fondos de investigación y repositorios premium. [UPeU-LOCAL]</a:help>
+                        <a:displayOrder>720</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- ============================================================
+                 SECCIÓN 8 — ORGANIZACIÓN / CAMPUS
+                 Spec §4.1.9
+                 ============================================================ -->
+
+            <!-- Campus sede -->
+            <xs:element name="homeCampus" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Campus sede</a:displayName>
+                        <a:help>Campus principal de la persona. Vocabulario: LIMA|JULIACA|TARAPOTO. Derivado del parentOrgRef al campus o del semestre activo (LAMB). [UPeU-LOCAL §4.1.9]. Renombrado desde campus (v3.0).</a:help>
+                        <a:displayOrder>800</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- ============================================================
+                 SECCIÓN 9 — GOVERNANCE / DRAFT METADATA
+                 Campos para gestión del workflow de reconciliación.
+                 Spec §8 (workflow de reconciliación de perfiles incompletos).
+                 ============================================================ -->
+
+            <!-- Razones de rechazo — multivalor -->
+            <xs:element name="rejectionReasons" type="xs:string"
+                        minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Razones de rechazo</a:displayName>
+                        <a:help>Listado de razones por las que el perfil no pasó de draft a active. Formato: {atributo}:{motivo}. Ej: identityDocuments:MISSING. Se limpia cuando el perfil pasa a active. Spec §8 workflow reconciliación.</a:help>
+                        <a:displayOrder>900</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Timestamp de rechazo -->
+            <xs:element name="rejectedAt" type="xs:dateTime"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Fecha/hora de rechazo</a:displayName>
+                        <a:help>Timestamp de la última evaluación de rechazo del perfil draft. xs:dateTime por necesidad de precisión en audit log (Ley 29733 ARCO).</a:help>
+                        <a:displayOrder>910</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Fuente del rechazo -->
+            <xs:element name="rejectionSource" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Fuente del rechazo</a:displayName>
+                        <a:help>Sistema o proceso que generó el rechazo. Ej: ORACLE-LAMB-ESTUDIANTES|ORACLE-LAMB-TRABAJADORES|MANUAL. Trazabilidad IIA.</a:help>
+                        <a:displayOrder>920</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Fuente esperada para corrección -->
+            <xs:element name="expectedSourceForFix" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Fuente esperada para corrección</a:displayName>
+                        <a:help>Sistema IIA donde se debe corregir el dato faltante/inválido. Facilita el workflow de resolución de perfiles draft. Ej: ORACLE-LAMB|RENIEC|MIGRACIONES|SELF-SERVICE.</a:help>
+                        <a:displayOrder>930</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Timestamp última revisión -->
+            <xs:element name="lastReviewedAt" type="xs:dateTime"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Fecha/hora última revisión</a:displayName>
+                        <a:help>Timestamp de la última revisión manual del perfil por el equipo DTI Governance. Trazabilidad ISO 27001 A.5.16.</a:help>
+                        <a:displayOrder>940</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- Notas del revisor -->
+            <xs:element name="reviewerNotes" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>Notas del revisor</a:displayName>
+                        <a:help>Notas de texto libre del revisor DTI sobre el estado del perfil. Solo visible para administradores. Borrar al activar el perfil.</a:help>
+                        <a:displayOrder>950</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- ============================================================
+                 SECCIÓN 10 — ATRIBUTOS DEPRECADOS (v3.0 → v3.1)
+                 Mantener para compatibilidad durante migración.
+                 Serán eliminados en v4.0 una vez limpiados todos los XMLs.
+                 ============================================================ -->
+
+            <!-- taxId — DEPRECADO v3.1: usar identityDocuments[type=DNI|CE|...] -->
+            <xs:element name="taxId" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>[DEPRECADO] DNI/CE (taxId)</a:displayName>
+                        <a:help>DEPRECADO en v3.1. Usar identityDocuments[] con el type correspondiente (DNI, CE, PASSPORT...). Este campo se eliminará en v4.0. Mapeo previo: SCHAC schacPersonalUniqueID.</a:help>
+                        <a:deprecated>true</a:deprecated>
+                        <a:displayOrder>9900</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- secondaryMail — DEPRECADO v3.1: usar personalEmail -->
+            <xs:element name="secondaryMail" type="xs:string"
+                        minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>[DEPRECADO] Correo secundario</a:displayName>
+                        <a:help>DEPRECADO en v3.1. Renombrado a personalEmail. Se eliminará en v4.0.</a:help>
+                        <a:deprecated>true</a:deprecated>
+                        <a:displayOrder>9910</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- phoneNumberAlt — DEPRECADO v3.1: usar phoneNumber -->
+            <xs:element name="phoneNumberAlt" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>[DEPRECADO] Teléfono alternativo</a:displayName>
+                        <a:help>DEPRECADO en v3.1. Renombrado a phoneNumber (multivalor). Se eliminará en v4.0.</a:help>
+                        <a:deprecated>true</a:deprecated>
+                        <a:displayOrder>9920</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- primaryAffiliationCode — DEPRECADO v3.1: usar primaryAffiliation -->
+            <xs:element name="primaryAffiliationCode" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>[DEPRECADO] Código afiliación principal</a:displayName>
+                        <a:help>DEPRECADO en v3.1. Renombrado a primaryAffiliation. Se eliminará en v4.0.</a:help>
+                        <a:deprecated>true</a:deprecated>
+                        <a:displayOrder>9930</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- campus — DEPRECADO v3.1: usar homeCampus -->
+            <xs:element name="campus" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>[DEPRECADO] Campus</a:displayName>
+                        <a:help>DEPRECADO en v3.1. Renombrado a homeCampus. Se eliminará en v4.0.</a:help>
+                        <a:deprecated>true</a:deprecated>
+                        <a:displayOrder>9940</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- institutionalIdCard — DEPRECADO v3.1: usar institutionalCode -->
+            <xs:element name="institutionalIdCard" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>[DEPRECADO] Carnet institucional</a:displayName>
+                        <a:help>DEPRECADO en v3.1. Renombrado a institutionalCode. Se eliminará en v4.0.</a:help>
+                        <a:deprecated>true</a:deprecated>
+                        <a:displayOrder>9950</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- universityIdCard — DEPRECADO v3.1: redundante, eliminado -->
+            <xs:element name="universityIdCard" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>[DEPRECADO] Carnet universitario</a:displayName>
+                        <a:help>DEPRECADO en v3.1. Redundante con institutionalCode. Se eliminará en v4.0.</a:help>
+                        <a:deprecated>true</a:deprecated>
+                        <a:displayOrder>9960</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+            <!-- primaryAffiliationName — DEPRECADO v3.1: derivado de primaryAffiliation -->
+            <xs:element name="primaryAffiliationName" type="xs:string"
+                        minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:appinfo>
+                        <a:displayName>[DEPRECADO] Nombre afiliación principal</a:displayName>
+                        <a:help>DEPRECADO en v3.1. Eliminado (derivado de primaryAffiliation). Se eliminará en v4.0.</a:help>
+                        <a:deprecated>true</a:deprecated>
+                        <a:displayOrder>9970</a:displayOrder>
+                    </xs:appinfo>
+                </xs:annotation>
+            </xs:element>
+
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>
