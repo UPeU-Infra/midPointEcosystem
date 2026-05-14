@@ -44,98 +44,69 @@
             <cfg:allNative>false</cfg:allNative>
             <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
             <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
-            <cfg:searchScript>
+            <cfg:searchScript><![CDATA[
 import groovy.sql.Sql
 def sql = new Sql(connection)
 def result = []
-
-// Egresados: dedup por CODIGO con MAX para resolver filas duplicadas.
-// La vista VW_PERSONA_EGRESADO puede tener múltiples filas por egresado
-// si cursó más de un programa. Se toma la primera con MAX aggr.
-def baseQuery = '''
-SELECT * FROM (
-  SELECT
-    e.CODIGO,
-    MAX(e.NOMBRE)        AS NOMBRE,
-    MAX(e.PATERNO)       AS PATERNO,
-    MAX(e.MATERNO)       AS MATERNO,
-    MAX(e.CORREO_UPEU)   AS CORREO_UPEU,
-    MAX(e.CELULAR)       AS CELULAR,
-    MAX(e.NUM_DOCUMENTO) AS NUM_DOCUMENTO,
-    MAX(e.FEC_NACIMIENTO) AS FEC_NACIMIENTO
-  FROM DAVID.VW_PERSONA_EGRESADO e
-  GROUP BY e.CODIGO
-)
-'''
-
+def baseQuery = '''SELECT * FROM (
+  SELECT e.CODIGO,
+    MAX(e.NOMBRE) AS NOMBRE, MAX(e.PATERNO) AS PATERNO, MAX(e.MATERNO) AS MATERNO,
+    MAX(e.CORREO_UPEU) AS CORREO_UPEU, MAX(e.CELULAR) AS CELULAR,
+    MAX(e.NUM_DOCUMENTO) AS NUM_DOCUMENTO, MAX(e.FEC_NACIMIENTO) AS FEC_NACIMIENTO
+  FROM DAVID.VW_PERSONA_EGRESADO e GROUP BY e.CODIGO
+)'''
 def whereClause = ''
 def params = []
-
 if (query != null) {
-    if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp;
-        (query.left == '__NAME__' || query.left == '__UID__')) {
+    if (query.operation == 'EQUALS' && !query.not && (query.left == '__NAME__' || query.left == '__UID__')) {
         whereClause = ' WHERE CODIGO = ?'
-        params &lt;&lt; (query.right as String)
+        params << (query.right as String)
     } else {
-        throw new UnsupportedOperationException(
-            'Egresados-v3 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query)
+        throw new UnsupportedOperationException('Egresados-v3 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query)
     }
 }
-
 def finalQuery = "SELECT * FROM (${baseQuery.trim()})${whereClause}".toString()
 sql.eachRow(finalQuery, params) { row ->
-    result &lt;&lt; [
-        '__UID__'       : row.CODIGO as String,
-        '__NAME__'      : row.CODIGO as String,
-        'CODIGO'        : row.CODIGO as String,
-        'NOMBRE'        : row.NOMBRE as String,
-        'PATERNO'       : row.PATERNO as String,
-        'MATERNO'       : row.MATERNO as String,
-        'CORREO_UPEU'   : row.CORREO_UPEU as String,
-        'CELULAR'       : row.CELULAR as String,
-        'NUM_DOCUMENTO' : row.NUM_DOCUMENTO as String,
-        'FEC_NACIMIENTO': row.FEC_NACIMIENTO?.toString()
+    result << [
+        '__UID__': row.CODIGO as String, '__NAME__': row.CODIGO as String,
+        'CODIGO': row.CODIGO as String, 'NOMBRE': row.NOMBRE as String,
+        'PATERNO': row.PATERNO as String, 'MATERNO': row.MATERNO as String,
+        'CORREO_UPEU': row.CORREO_UPEU as String, 'CELULAR': row.CELULAR as String,
+        'NUM_DOCUMENTO': row.NUM_DOCUMENTO as String, 'FEC_NACIMIENTO': row.FEC_NACIMIENTO?.toString()
     ]
 }
 return result
-</cfg:searchScript>
-            <cfg:syncScript>
+]]></cfg:searchScript>
+            <cfg:syncScript><![CDATA[
 return null
-</cfg:syncScript>
-            <cfg:schemaScript>
+]]></cfg:syncScript>
+            <cfg:schemaScript><![CDATA[
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder
 import org.identityconnectors.framework.common.objects.ObjectClass
 import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder
-
 def ro = { String attrName, boolean required ->
     def aib = new AttributeInfoBuilder(attrName, String.class)
-    aib.setRequired(required)
-    aib.setCreateable(false)
-    aib.setUpdateable(false)
-    aib.setReadable(true)
+    aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true)
     aib.build()
 }
-
 def ocib = new ObjectClassInfoBuilder()
 ocib.setType(ObjectClass.ACCOUNT_NAME)
-
-ocib.addAttributeInfo(ro("CODIGO",         true))
-ocib.addAttributeInfo(ro("NOMBRE",         true))
-ocib.addAttributeInfo(ro("PATERNO",        false))
-ocib.addAttributeInfo(ro("MATERNO",        false))
-ocib.addAttributeInfo(ro("CORREO_UPEU",    false))
-ocib.addAttributeInfo(ro("CELULAR",        false))
-ocib.addAttributeInfo(ro("NUM_DOCUMENTO",  false))
+ocib.addAttributeInfo(ro("CODIGO", true))
+ocib.addAttributeInfo(ro("NOMBRE", true))
+ocib.addAttributeInfo(ro("PATERNO", false))
+ocib.addAttributeInfo(ro("MATERNO", false))
+ocib.addAttributeInfo(ro("CORREO_UPEU", false))
+ocib.addAttributeInfo(ro("CELULAR", false))
+ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false))
 ocib.addAttributeInfo(ro("FEC_NACIMIENTO", false))
-
 builder.defineObjectClass(ocib.build())
-</cfg:schemaScript>
-            <cfg:testScript>
+]]></cfg:schemaScript>
+            <cfg:testScript><![CDATA[
 import groovy.sql.Sql
 def sql = new Sql(connection)
 sql.firstRow("SELECT 1 AS OK FROM DUAL")
 return "OK"
-</cfg:testScript>
+]]></cfg:testScript>
         </icfc:configurationProperties>
     </connectorConfiguration>
 
