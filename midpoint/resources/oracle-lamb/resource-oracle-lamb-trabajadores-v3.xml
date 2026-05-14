@@ -4,11 +4,9 @@
   OID:      6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21
   Fuente:   ELISEO.VW_APS_EMPLEADO + JOIN ENOC.CAT_DOCENTE
   Schema:   urn:sciback:midpoint:person (sb:) + urn:upeu:midpoint:local (upeu:)
-  Correlación: NUM_DOCUMENTO → extension/sb:identityDocuments[primary=true]/number
-               (correlator declarativo por atributo simple en personalNumber como fallback)
+  ConnectorConfig: preservada del v2 (scripts probados y funcionales)
+  SchemaHandling: actualizado a namespaces canónicos
   lifecycleState: active
-  Política nombres: AS-IS (ALL CAPS, formato RENIEC/DNI)
-  NOTA: NO crear/actualizar/borrar en Oracle. Solo lectura.
 -->
 <resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
           xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
@@ -18,118 +16,95 @@
           oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21">
 
     <name>Oracle LAMB Trabajadores v2</name>
-    <description>Inbound ScriptedSQL desde ELISEO.VW_APS_EMPLEADO + JOIN ENOC.CAT_DOCENTE. Dedup por COD_APS + discriminador faculty/staff resueltos en query. Mappings migrados a schema canónico sciback:person v1.0 + upeu:local v1.0. Fase 5a-v3.</description>
+    <description>Inbound ScriptedSQL desde ELISEO.VW_APS_EMPLEADO + JOIN ENOC.CAT_DOCENTE. SchemaHandling migrado a schema canónico sb: + upeu:. Fase 5a-v3.</description>
     <lifecycleState>active</lifecycleState>
 
     <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="ConnectorType"/>
 
     <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
-        <icfc:resultsHandlerConfiguration>
-            <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
-            <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
-            <icfc:filteredResultsHandlerInValidationMode>true</icfc:filteredResultsHandlerInValidationMode>
-            <icfc:enableAttributesToGetSearchResultsHandler>false</icfc:enableAttributesToGetSearchResultsHandler>
-        </icfc:resultsHandlerConfiguration>
-        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">
-            <cfg:host>192.168.13.9</cfg:host>
-            <cfg:port>1521</cfg:port>
-            <cfg:user>JUANSANCHEZ</cfg:user>
-            <cfg:password><t:clearValue>jU4n54NC3Z180923</t:clearValue></cfg:password>
-            <cfg:database>UPEU</cfg:database>
-            <cfg:jdbcDriver>oracle.jdbc.OracleDriver</cfg:jdbcDriver>
-            <cfg:jdbcUrlTemplate>jdbc:oracle:thin:@%h:%p/%d</cfg:jdbcUrlTemplate>
-            <cfg:rethrowAllSQLExceptions>true</cfg:rethrowAllSQLExceptions>
-            <cfg:nativeTimestamps>true</cfg:nativeTimestamps>
-            <cfg:allNative>false</cfg:allNative>
-            <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
-            <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
-            <cfg:searchScript><![CDATA[
-import groovy.sql.Sql
-def sql = new Sql(connection)
-def result = []
-def baseQuery = '''SELECT * FROM (
-  SELECT * FROM (
-    SELECT
-      e.COD_APS, e.NOMBRE, e.PATERNO, e.MATERNO, e.NUM_DOCUMENTO,
-      e.FEC_INICIO, e.FEC_TERMINO, e.ESTADO, e.ID_CATEGORIAOCUPACIONAL,
-      CASE WHEN cd.ID_DOCENTE IS NOT NULL
-           THEN 'archetype-user-employee-faculty'
-           ELSE 'archetype-user-employee-staff'
-      END AS UPEU_ARCHETYPE_NAME,
-      ROW_NUMBER() OVER (
-        PARTITION BY e.COD_APS
-        ORDER BY CASE e.ID_TIPODOCUMENTO
-          WHEN 1 THEN 1 WHEN 4 THEN 2 WHEN 7 THEN 3 WHEN 22 THEN 4
-          WHEN 24 THEN 5 WHEN 31 THEN 6 WHEN 23 THEN 7 WHEN 9 THEN 8
-          WHEN 6 THEN 9 WHEN 0 THEN 10 WHEN 97 THEN 11 WHEN 98 THEN 12
-          WHEN 99 THEN 13 ELSE 14 END ASC,
-        e.FEC_INICIO DESC NULLS LAST
-      ) AS RN
-    FROM ELISEO.VW_APS_EMPLEADO e
-    LEFT JOIN ENOC.CAT_DOCENTE cd ON cd.ID_PERSONA = e.ID_PERSONA AND cd.ID_ESTADO_DOCENTE = '02'
-    WHERE e.ESTADO = 'A' AND e.COD_APS IS NOT NULL
-      AND TRIM(e.COD_APS) IS NOT NULL AND NOT REGEXP_LIKE(TRIM(e.COD_APS), '^0+$')
-  ) WHERE RN = 1
-)'''
-def whereClause = ''
-def params = []
-if (query != null) {
-    if (query.operation == 'EQUALS' && !query.not && (query.left == '__NAME__' || query.left == '__UID__')) {
-        whereClause = ' WHERE COD_APS = ?'
-        params << (query.right as String)
-    } else {
-        throw new UnsupportedOperationException('Trabajadores-v3 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query)
+            <icfc:resultsHandlerConfiguration>
+                <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
+                <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
+                <icfc:filteredResultsHandlerInValidationMode>true</icfc:filteredResultsHandlerInValidationMode>
+                <icfc:enableAttributesToGetSearchResultsHandler>false</icfc:enableAttributesToGetSearchResultsHandler>
+            </icfc:resultsHandlerConfiguration>
+            <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">
+                <cfg:host>192.168.13.9</cfg:host>
+                <cfg:port>1521</cfg:port>
+                <cfg:user>JUANSANCHEZ</cfg:user>
+                <cfg:password>
+                    <t:encryptedData>
+                        <t:encryptionMethod>
+                            <t:algorithm>http://www.w3.org/2001/04/xmlenc#aes256-cbc</t:algorithm>
+                        </t:encryptionMethod>
+                        <t:keyInfo>
+                            <t:keyName>nkZ4VieDLlRmwD8hdryrmjz8IxQ=</t:keyName>
+                        </t:keyInfo>
+                        <t:cipherData>
+                            <t:cipherValue>5PiBLf405M3U4ulm9p6WfqMMVVwtOcVl5PuL6/CqPRMTmbA5Aoa/axj4ks8onfI2</t:cipherValue>
+                        </t:cipherData>
+                    </t:encryptedData>
+                </cfg:password>
+                <cfg:database>UPEU</cfg:database>
+                <cfg:jdbcDriver>oracle.jdbc.OracleDriver</cfg:jdbcDriver>
+                <cfg:jdbcUrlTemplate>jdbc:oracle:thin:@%h:%p/%d</cfg:jdbcUrlTemplate>
+                <cfg:rethrowAllSQLExceptions>true</cfg:rethrowAllSQLExceptions>
+                <cfg:nativeTimestamps>true</cfg:nativeTimestamps>
+                <cfg:allNative>false</cfg:allNative>
+                <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
+                <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
+                <cfg:searchScript>
+    import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT * FROM ( SELECT * FROM ( SELECT e.COD_APS, e.NOMBRE, e.PATERNO, e.MATERNO, e.NUM_DOCUMENTO, e.FEC_INICIO, e.FEC_TERMINO, e.ESTADO, e.ID_CATEGORIAOCUPACIONAL, CASE WHEN cd.ID_DOCENTE IS NOT NULL THEN 'archetype-user-employee-faculty' ELSE 'archetype-user-employee-staff' END AS UPEU_ARCHETYPE_NAME, ROW_NUMBER() OVER (PARTITION BY e.COD_APS ORDER BY CASE e.ID_TIPODOCUMENTO WHEN 1 THEN 1 WHEN 4 THEN 2 WHEN 7 THEN 3 WHEN 22 THEN 4 WHEN 24 THEN 5 WHEN 31 THEN 6 WHEN 23 THEN 7 WHEN 9 THEN 8 WHEN 6 THEN 9 WHEN 0 THEN 10 WHEN 97 THEN 11 WHEN 98 THEN 12 WHEN 99 THEN 13 ELSE 14 END ASC, e.FEC_INICIO DESC NULLS LAST) AS RN FROM ELISEO.VW_APS_EMPLEADO e LEFT JOIN ENOC.CAT_DOCENTE cd ON cd.ID_PERSONA = e.ID_PERSONA AND cd.ID_ESTADO_DOCENTE = '02' WHERE e.ESTADO = 'A' AND e.COD_APS IS NOT NULL AND TRIM(e.COD_APS) IS NOT NULL AND NOT REGEXP_LIKE(TRIM(e.COD_APS), '^0+$') ) WHERE RN = 1 ) WHERE ROWNUM = 1'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE COD_APS = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Trabajadores-v2 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { row -&gt; result &lt;&lt; ['__UID__': row.COD_APS as String, '__NAME__': row.COD_APS as String, 'COD_APS': row.COD_APS as String, 'NOMBRE': row.NOMBRE as String, 'PATERNO': row.PATERNO as String, 'MATERNO': row.MATERNO as String, 'NUM_DOCUMENTO': row.NUM_DOCUMENTO as String, 'FEC_INICIO': row.FEC_INICIO?.toString(), 'FEC_TERMINO': row.FEC_TERMINO?.toString(), 'ESTADO': row.ESTADO as String, 'ID_CATEGORIAOCUPACIONAL': row.ID_CATEGORIAOCUPACIONAL?.toString(), 'UPEU_ARCHETYPE_NAME': row.UPEU_ARCHETYPE_NAME as String] }; return result
+    </cfg:searchScript>
+                <cfg:syncScript>
+    // Placeholder: piloto no usa liveSync; reconciliation cubre el caso.
+    return null
+    </cfg:syncScript>
+                <cfg:schemaScript>
+    import org.identityconnectors.framework.common.objects.AttributeInfoBuilder
+    import org.identityconnectors.framework.common.objects.ObjectClass
+    import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder
+    
+    // Convención del connector Tirasa commons-scripted (AbstractScriptedConnector#schema):
+    //  - El binding `builder` es un org.identityconnectors.framework.common.objects.SchemaBuilder.
+    //  - El script DEBE MUTAR `builder` (builder.defineObjectClass(...)); el valor de
+    //    retorno se ignora. Tras el script, el connector hace builder.build().
+    //  - ConnId añade automáticamente __NAME__ (required). __UID__ es implícito.
+    // Atributos read-only (resource inbound-only; create/update/delete deshabilitados).
+    
+    def ro = { String attrName, boolean required -&gt;
+        def aib = new AttributeInfoBuilder(attrName, String.class)
+        aib.setRequired(required)
+        aib.setCreateable(false)
+        aib.setUpdateable(false)
+        aib.setReadable(true)
+        aib.build()
     }
-}
-def finalQuery = "SELECT * FROM (${baseQuery.trim()})${whereClause}".toString()
-sql.eachRow(finalQuery, params) { row ->
-    result << [
-        '__UID__': row.COD_APS as String, '__NAME__': row.COD_APS as String,
-        'COD_APS': row.COD_APS as String, 'NOMBRE': row.NOMBRE as String,
-        'PATERNO': row.PATERNO as String, 'MATERNO': row.MATERNO as String,
-        'NUM_DOCUMENTO': row.NUM_DOCUMENTO as String,
-        'FEC_INICIO': row.FEC_INICIO?.toString(), 'FEC_TERMINO': row.FEC_TERMINO?.toString(),
-        'ESTADO': row.ESTADO as String,
-        'ID_CATEGORIAOCUPACIONAL': row.ID_CATEGORIAOCUPACIONAL?.toString(),
-        'UPEU_ARCHETYPE_NAME': row.UPEU_ARCHETYPE_NAME as String
-    ]
-}
-return result
-]]></cfg:searchScript>
-            <cfg:syncScript><![CDATA[
-return null
-]]></cfg:syncScript>
-            <cfg:schemaScript><![CDATA[
-import org.identityconnectors.framework.common.objects.AttributeInfoBuilder
-import org.identityconnectors.framework.common.objects.ObjectClass
-import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder
-def ro = { String attrName, boolean required ->
-    def aib = new AttributeInfoBuilder(attrName, String.class)
-    aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true)
-    aib.build()
-}
-def ocib = new ObjectClassInfoBuilder()
-ocib.setType(ObjectClass.ACCOUNT_NAME)
-ocib.addAttributeInfo(ro("COD_APS", true))
-ocib.addAttributeInfo(ro("NOMBRE", true))
-ocib.addAttributeInfo(ro("PATERNO", true))
-ocib.addAttributeInfo(ro("MATERNO", false))
-ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false))
-ocib.addAttributeInfo(ro("FEC_INICIO", false))
-ocib.addAttributeInfo(ro("FEC_TERMINO", false))
-ocib.addAttributeInfo(ro("ESTADO", true))
-ocib.addAttributeInfo(ro("ID_CATEGORIAOCUPACIONAL", false))
-ocib.addAttributeInfo(ro("UPEU_ARCHETYPE_NAME", true))
-builder.defineObjectClass(ocib.build())
-]]></cfg:schemaScript>
-            <cfg:testScript><![CDATA[
-import groovy.sql.Sql
-def sql = new Sql(connection)
-sql.firstRow("SELECT 1 AS OK FROM DUAL")
-return "OK"
-]]></cfg:testScript>
-        </icfc:configurationProperties>
-    </connectorConfiguration>
+    
+    def ocib = new ObjectClassInfoBuilder()
+    ocib.setType(ObjectClass.ACCOUNT_NAME)
+    
+    ocib.addAttributeInfo(ro("COD_APS", true))                  // = __UID__/__NAME__ (también atributo regular)
+    ocib.addAttributeInfo(ro("NOMBRE", true))
+    ocib.addAttributeInfo(ro("PATERNO", true))
+    ocib.addAttributeInfo(ro("MATERNO", false))
+    ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false))
+    ocib.addAttributeInfo(ro("FEC_INICIO", false))
+    ocib.addAttributeInfo(ro("FEC_TERMINO", false))
+    ocib.addAttributeInfo(ro("ESTADO", true))                   // filtro WHERE e.ESTADO='A' garantiza valor
+    ocib.addAttributeInfo(ro("ID_CATEGORIAOCUPACIONAL", false))
+    ocib.addAttributeInfo(ro("UPEU_ARCHETYPE_NAME", true))      // CASE WHEN garantiza valor
+    
+    builder.defineObjectClass(ocib.build())
+    </cfg:schemaScript>
+                <cfg:testScript>
+    import groovy.sql.Sql
+    def sql = new Sql(connection)
+    sql.firstRow("SELECT 1 AS OK FROM DUAL")
+    return "OK"
+    </cfg:testScript>
+            </icfc:configurationProperties>
+        </connectorConfiguration>
 
     <schemaHandling>
         <objectType>
@@ -142,43 +117,49 @@ return "OK"
             </delineation>
             <focus>
                 <type>UserType</type>
-                <!-- Sin archetypeRef aquí: el archetype se asigna dinámicamente
-                     vía inbound UPEU_ARCHETYPE_NAME → assignmentTargetSearch.
-                     Esto permite mapear faculty vs staff desde el mismo resource. -->
             </focus>
-
-            <!-- ──────────────────────────────────────────────
-                 IDENTIFICADORES
-            ────────────────────────────────────────────── -->
             <attribute>
                 <ref>ri:COD_APS</ref>
-                <!-- COD_APS = identificador inmutable del empleado en LAMB.
-                     Mapea a name (username técnico) y a personalNumber (correlación HR). -->
                 <inbound>
                     <name>cod-aps-to-name</name>
                     <strength>strong</strength>
-                    <target>
-                        <path>name</path>
-                    </target>
+                    <target><path>name</path></target>
                 </inbound>
                 <inbound>
                     <name>cod-aps-to-personalNumber</name>
                     <strength>strong</strength>
-                    <target>
-                        <path>personalNumber</path>
-                    </target>
+                    <target><path>personalNumber</path></target>
                 </inbound>
             </attribute>
-
+            <attribute>
+                <ref>ri:NOMBRE</ref>
+                <inbound>
+                    <name>nombre-to-givenName</name>
+                    <strength>strong</strength>
+                    <target><path>givenName</path></target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:PATERNO</ref>
+                <inbound>
+                    <name>paterno-materno-to-familyName</name>
+                    <strength>strong</strength>
+                    <source><path>$shadow/attributes/ri:PATERNO</path></source>
+                    <source><path>$shadow/attributes/ri:MATERNO</path></source>
+                    <expression>
+                        <script>
+                            <code>
+                                def p = (PATERNO ?: '').toString().trim()
+                                def m = (MATERNO ?: '').toString().trim()
+                                (p + (m ? ' ' + m : '')).trim() ?: null
+                            </code>
+                        </script>
+                    </expression>
+                    <target><path>familyName</path></target>
+                </inbound>
+            </attribute>
             <attribute>
                 <ref>ri:NUM_DOCUMENTO</ref>
-                <!-- Correlador: NUM_DOCUMENTO (DNI) contra extension/sb:taxId (campo URN plano
-                     indexado en el schema sb: canónico). Approach:
-                       1. El inbound construye el URN SCHAC y lo guarda en sb:taxId.
-                       2. El <correlator/> declara que este atributo se usa para correlación.
-                     sb:taxId está marcado deprecated en schema pero sigue activo e indexado
-                     — es el campo correcto para correlación simple hasta que se implemente
-                     correlación por sub-campo de container (IdentityDocumentType). -->
                 <correlator/>
                 <inbound>
                     <name>dni-to-taxId-urn</name>
@@ -186,8 +167,8 @@ return "OK"
                     <expression>
                         <script>
                             <code>
-def d = (input ?: '').toString().trim()
-d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null
+                                def d = (input ?: '').toString().trim()
+                                d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null
                             </code>
                         </script>
                     </expression>
@@ -200,52 +181,6 @@ d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null
                     </evaluationPhases>
                 </inbound>
             </attribute>
-
-            <!-- ──────────────────────────────────────────────
-                 NOMBRE
-            ────────────────────────────────────────────── -->
-            <attribute>
-                <ref>ri:NOMBRE</ref>
-                <!-- Nombres propios. AS-IS: ALL CAPS (formato RENIEC/DNI). No aplicar INITCAP. -->
-                <inbound>
-                    <name>nombre-to-givenName</name>
-                    <strength>strong</strength>
-                    <target>
-                        <path>givenName</path>
-                    </target>
-                </inbound>
-            </attribute>
-
-            <attribute>
-                <ref>ri:PATERNO</ref>
-                <!-- familyName = PATERNO + ' ' + MATERNO (ambos fuentes; script combina). -->
-                <inbound>
-                    <name>paterno-materno-to-familyName</name>
-                    <strength>strong</strength>
-                    <source>
-                        <path>$shadow/attributes/ri:PATERNO</path>
-                    </source>
-                    <source>
-                        <path>$shadow/attributes/ri:MATERNO</path>
-                    </source>
-                    <expression>
-                        <script>
-                            <code>
-def p = (PATERNO ?: '').toString().trim()
-def m = (MATERNO ?: '').toString().trim()
-(p + (m ? ' ' + m : '')).trim() ?: null
-                            </code>
-                        </script>
-                    </expression>
-                    <target>
-                        <path>familyName</path>
-                    </target>
-                </inbound>
-            </attribute>
-
-            <!-- ──────────────────────────────────────────────
-                 DATOS LABORALES (schema sb: canónico)
-            ────────────────────────────────────────────── -->
             <attribute>
                 <ref>ri:FEC_INICIO</ref>
                 <inbound>
@@ -254,9 +189,9 @@ def m = (MATERNO ?: '').toString().trim()
                     <expression>
                         <script>
                             <code>
-if (input == null) return null
-def s = input.toString()
-s.length() >= 10 ? s.substring(0, 10) : null
+                                if (input == null) return null
+                                def s = input.toString()
+                                s.length() >= 10 ? s.substring(0, 10) : null
                             </code>
                         </script>
                     </expression>
@@ -265,7 +200,6 @@ s.length() >= 10 ? s.substring(0, 10) : null
                     </target>
                 </inbound>
             </attribute>
-
             <attribute>
                 <ref>ri:FEC_TERMINO</ref>
                 <inbound>
@@ -274,9 +208,9 @@ s.length() >= 10 ? s.substring(0, 10) : null
                     <expression>
                         <script>
                             <code>
-if (input == null) return null
-def s = input.toString()
-s.length() >= 10 ? s.substring(0, 10) : null
+                                if (input == null) return null
+                                def s = input.toString()
+                                s.length() >= 10 ? s.substring(0, 10) : null
                             </code>
                         </script>
                     </expression>
@@ -285,11 +219,8 @@ s.length() >= 10 ? s.substring(0, 10) : null
                     </target>
                 </inbound>
             </attribute>
-
             <attribute>
                 <ref>ri:ID_CATEGORIAOCUPACIONAL</ref>
-                <!-- employeeCategory: código de categoría ocupacional LAMB tal cual (AS-IS).
-                     No se transforma aquí; la capa de roles/BR lo consume para PBAC. -->
                 <inbound>
                     <name>categoria-to-employeeCategory</name>
                     <strength>strong</strength>
@@ -298,11 +229,8 @@ s.length() >= 10 ? s.substring(0, 10) : null
                     </target>
                 </inbound>
             </attribute>
-
             <attribute>
                 <ref>ri:ESTADO</ref>
-                <!-- Activación: ESTADO='A' → enabled; cualquier otro valor → disabled.
-                     IIA para estado de cuenta: Oracle LAMB (no AD, no Keycloak). -->
                 <inbound>
                     <name>estado-to-administrativeStatus</name>
                     <strength>strong</strength>
@@ -311,37 +239,9 @@ s.length() >= 10 ? s.substring(0, 10) : null
                             <code>(input == 'A') ? 'enabled' : 'disabled'</code>
                         </script>
                     </expression>
-                    <target>
-                        <path>activation/administrativeStatus</path>
-                    </target>
+                    <target><path>activation/administrativeStatus</path></target>
                 </inbound>
             </attribute>
-
-            <!-- ──────────────────────────────────────────────
-                 IDENTIFICADORES LAMB (schema upeu:local)
-            ────────────────────────────────────────────── -->
-            <!-- lambIdPersona no está disponible en VW_APS_EMPLEADO directamente;
-                 se omite aquí. Si se agrega a la query en el futuro, descomentar. -->
-            <!--
-            <attribute>
-                <ref>ri:ID_PERSONA</ref>
-                <inbound>
-                    <name>id-persona-to-lambIdPersona</name>
-                    <strength>strong</strength>
-                    <target>
-                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambIdPersona</path>
-                    </target>
-                </inbound>
-            </attribute>
-            -->
-
-            <!-- ──────────────────────────────────────────────
-                 ARCHETYPE DINÁMICO
-                 UPEU_ARCHETYPE_NAME viene del CASE WHEN de la query:
-                   'archetype-user-employee-faculty' o 'archetype-user-employee-staff'
-                 Se asigna como assignment vía assignmentTargetSearch para que
-                 MidPoint active el archetype correcto al crear el focus.
-            ────────────────────────────────────────────── -->
             <attribute>
                 <ref>ri:UPEU_ARCHETYPE_NAME</ref>
                 <inbound>
@@ -353,77 +253,40 @@ s.length() >= 10 ? s.substring(0, 10) : null
                             <filter>
                                 <q:equal>
                                     <q:path>name</q:path>
-                                    <expression>
-                                        <path>$input</path>
-                                    </expression>
+                                    <expression><path>$input</path></expression>
                                 </q:equal>
                             </filter>
                         </assignmentTargetSearch>
                     </expression>
-                    <target>
-                        <path>assignment</path>
-                    </target>
+                    <target><path>assignment</path></target>
                 </inbound>
             </attribute>
-
-            <!-- ──────────────────────────────────────────────
-                 CORRELACIÓN
-                 Correlador por NUM_DOCUMENTO (DNI).
-                 El inbound dni-to-identityDocument-primary ya declara
-                 evaluationPhases/beforeCorrelation para que el valor esté
-                 disponible. El <correlator/> en el atributo activa la
-                 correlación automática por ese atributo.
-                 Fallback: si no hay DNI, queda unmatched → addFocus.
-            ────────────────────────────────────────────── -->
-
-            <!-- ──────────────────────────────────────────────
-                 SYNCHRONIZATION REACTIONS
-            ────────────────────────────────────────────── -->
             <synchronization>
                 <reaction>
                     <situation>linked</situation>
-                    <actions>
-                        <synchronize/>
-                    </actions>
+                    <actions><synchronize/></actions>
                 </reaction>
                 <reaction>
                     <situation>unlinked</situation>
-                    <actions>
-                        <link/>
-                    </actions>
+                    <actions><link/></actions>
                 </reaction>
                 <reaction>
                     <situation>unmatched</situation>
-                    <actions>
-                        <addFocus/>
-                    </actions>
+                    <actions><addFocus/></actions>
                 </reaction>
                 <reaction>
-                    <!-- deleted = el shadow desapareció de Oracle (empleado inactivado).
-                         inactivateFocus cambia administrativeStatus a disabled;
-                         NO se elimina el user (retención ISO 24760 / JML Leaver). -->
                     <situation>deleted</situation>
-                    <actions>
-                        <inactivateFocus/>
-                    </actions>
+                    <actions><inactivateFocus/></actions>
                 </reaction>
             </synchronization>
-
         </objectType>
     </schemaHandling>
 
     <capabilities>
         <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
-            <!-- Oracle LAMB: solo lectura. Ninguna operación de escritura permitida. -->
-            <cap:create>
-                <cap:enabled>false</cap:enabled>
-            </cap:create>
-            <cap:update>
-                <cap:enabled>false</cap:enabled>
-            </cap:update>
-            <cap:delete>
-                <cap:enabled>false</cap:enabled>
-            </cap:delete>
+            <cap:create><cap:enabled>false</cap:enabled></cap:create>
+            <cap:update><cap:enabled>false</cap:enabled></cap:update>
+            <cap:delete><cap:enabled>false</cap:enabled></cap:delete>
         </configured>
     </capabilities>
 
