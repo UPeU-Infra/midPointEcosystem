@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Resource: Oracle LAMB Egresados v3
+  OID:      6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23
+  Fuente:   DAVID.VW_PERSONA_EGRESADO (dedup por CODIGO con MAX aggr)
+  Schema:   urn:sciback:midpoint:person (sb:) + urn:upeu:midpoint:local (upeu:)
+  Correlación: NUM_DOCUMENTO → identityDocuments[primary=true] (beforeCorrelation)
+               por-atributo con <correlator/> en NUM_DOCUMENTO
+  Archetype: archetype-user-alum (OID a confirmar; buscar por nombre si cambia)
+  lifecycleState: active
+  Política nombres: AS-IS (ALL CAPS, formato RENIEC/DNI)
+  NOTA: NO crear/actualizar/borrar en Oracle. Solo lectura.
+-->
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+          xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+          xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+          oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23">
+
+    <name>Oracle LAMB Egresados v2</name>
+    <description>Inbound ScriptedSQL desde DAVID.VW_PERSONA_EGRESADO con dedup por CODIGO. Mappings migrados a schema canónico sciback:person v1.0. Fase 5a-v3.</description>
+    <lifecycleState>active</lifecycleState>
+
+    <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="ConnectorType"/>
+
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:resultsHandlerConfiguration>
+            <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
+            <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
+            <icfc:filteredResultsHandlerInValidationMode>true</icfc:filteredResultsHandlerInValidationMode>
+            <icfc:enableAttributesToGetSearchResultsHandler>false</icfc:enableAttributesToGetSearchResultsHandler>
+        </icfc:resultsHandlerConfiguration>
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">
+            <cfg:host>192.168.13.9</cfg:host>
+            <cfg:port>1521</cfg:port>
+            <cfg:user>JUANSANCHEZ</cfg:user>
+            <cfg:password><t:clearValue>jU4n54NC3Z180923</t:clearValue></cfg:password>
+            <cfg:database>UPEU</cfg:database>
+            <cfg:jdbcDriver>oracle.jdbc.OracleDriver</cfg:jdbcDriver>
+            <cfg:jdbcUrlTemplate>jdbc:oracle:thin:@%h:%p/%d</cfg:jdbcUrlTemplate>
+            <cfg:rethrowAllSQLExceptions>true</cfg:rethrowAllSQLExceptions>
+            <cfg:nativeTimestamps>true</cfg:nativeTimestamps>
+            <cfg:allNative>false</cfg:allNative>
+            <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
+            <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
+            <cfg:searchScript>
+import groovy.sql.Sql
+def sql = new Sql(connection)
+def result = []
+
+// Egresados: dedup por CODIGO con MAX para resolver filas duplicadas.
+// La vista VW_PERSONA_EGRESADO puede tener múltiples filas por egresado
+// si cursó más de un programa. Se toma la primera con MAX aggr.
+def baseQuery = '''
+SELECT * FROM (
+  SELECT
+    e.CODIGO,
+    MAX(e.NOMBRE)        AS NOMBRE,
+    MAX(e.PATERNO)       AS PATERNO,
+    MAX(e.MATERNO)       AS MATERNO,
+    MAX(e.CORREO_UPEU)   AS CORREO_UPEU,
+    MAX(e.CELULAR)       AS CELULAR,
+    MAX(e.NUM_DOCUMENTO) AS NUM_DOCUMENTO,
+    MAX(e.FEC_NACIMIENTO) AS FEC_NACIMIENTO
+  FROM DAVID.VW_PERSONA_EGRESADO e
+  GROUP BY e.CODIGO
+)
+'''
+
+def whereClause = ''
+def params = []
+
+if (query != null) {
+    if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp;
+        (query.left == '__NAME__' || query.left == '__UID__')) {
+        whereClause = ' WHERE CODIGO = ?'
+        params &lt;&lt; (query.right as String)
+    } else {
+        throw new UnsupportedOperationException(
+            'Egresados-v3 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query)
+    }
+}
+
+def finalQuery = "SELECT * FROM (${baseQuery.trim()})${whereClause}".toString()
+sql.eachRow(finalQuery, params) { row ->
+    result &lt;&lt; [
+        '__UID__'       : row.CODIGO as String,
+        '__NAME__'      : row.CODIGO as String,
+        'CODIGO'        : row.CODIGO as String,
+        'NOMBRE'        : row.NOMBRE as String,
+        'PATERNO'       : row.PATERNO as String,
+        'MATERNO'       : row.MATERNO as String,
+        'CORREO_UPEU'   : row.CORREO_UPEU as String,
+        'CELULAR'       : row.CELULAR as String,
+        'NUM_DOCUMENTO' : row.NUM_DOCUMENTO as String,
+        'FEC_NACIMIENTO': row.FEC_NACIMIENTO?.toString()
+    ]
+}
+return result
+</cfg:searchScript>
+            <cfg:syncScript>
+return null
+</cfg:syncScript>
+            <cfg:schemaScript>
+import org.identityconnectors.framework.common.objects.AttributeInfoBuilder
+import org.identityconnectors.framework.common.objects.ObjectClass
+import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder
+
+def ro = { String attrName, boolean required ->
+    def aib = new AttributeInfoBuilder(attrName, String.class)
+    aib.setRequired(required)
+    aib.setCreateable(false)
+    aib.setUpdateable(false)
+    aib.setReadable(true)
+    aib.build()
+}
+
+def ocib = new ObjectClassInfoBuilder()
+ocib.setType(ObjectClass.ACCOUNT_NAME)
+
+ocib.addAttributeInfo(ro("CODIGO",         true))
+ocib.addAttributeInfo(ro("NOMBRE",         true))
+ocib.addAttributeInfo(ro("PATERNO",        false))
+ocib.addAttributeInfo(ro("MATERNO",        false))
+ocib.addAttributeInfo(ro("CORREO_UPEU",    false))
+ocib.addAttributeInfo(ro("CELULAR",        false))
+ocib.addAttributeInfo(ro("NUM_DOCUMENTO",  false))
+ocib.addAttributeInfo(ro("FEC_NACIMIENTO", false))
+
+builder.defineObjectClass(ocib.build())
+</cfg:schemaScript>
+            <cfg:testScript>
+import groovy.sql.Sql
+def sql = new Sql(connection)
+sql.firstRow("SELECT 1 AS OK FROM DUAL")
+return "OK"
+</cfg:testScript>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+
+    <schemaHandling>
+        <objectType>
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>Egresado UPeU (LAMB SIS v3)</displayName>
+            <default>true</default>
+            <delineation>
+                <objectClass>ri:AccountObjectClass</objectClass>
+            </delineation>
+            <focus>
+                <type>UserType</type>
+                <!-- archetype-user-alumni OID: 87552943-9600-493b-88ca-74b7d3ba93e4 (REGISTRY.md) -->
+                <archetypeRef oid="87552943-9600-493b-88ca-74b7d3ba93e4" relation="org:default" type="ArchetypeType"/>
+            </focus>
+
+            <!-- ──────────────────────────────────────────────
+                 IDENTIFICADORES
+            ────────────────────────────────────────────── -->
+            <attribute>
+                <ref>ri:CODIGO</ref>
+                <inbound>
+                    <name>codigo-to-name</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>name</path>
+                    </target>
+                </inbound>
+                <inbound>
+                    <name>codigo-to-personalNumber</name>
+                    <strength>weak</strength>
+                    <!-- weak: si el egresado también es alumno activo o trabajador,
+                         el otro resource con mayor prioridad domina. -->
+                    <target>
+                        <path>personalNumber</path>
+                    </target>
+                </inbound>
+                <inbound>
+                    <name>codigo-to-institutionalCode</name>
+                    <strength>weak</strength>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:institutionalCode</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:NUM_DOCUMENTO</ref>
+                <!-- Correlador por DNI como URN SCHAC plano → extension/sb:taxId (indexado).
+                     taxId marcado deprecated en schema pero funcional e indexado.
+                     El correlador implícito <correlator/> compara el valor del shadow
+                     contra sb:taxId del focus para encontrar match. -->
+                <correlator/>
+                <inbound>
+                    <name>dni-to-taxId-urn</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+def d = (input ?: '').toString().trim()
+d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</path>
+                    </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
+                </inbound>
+            </attribute>
+
+            <!-- ──────────────────────────────────────────────
+                 NOMBRE
+            ────────────────────────────────────────────── -->
+            <attribute>
+                <ref>ri:NOMBRE</ref>
+                <inbound>
+                    <name>nombre-to-givenName</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>givenName</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:PATERNO</ref>
+                <inbound>
+                    <name>paterno-materno-to-familyName</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$shadow/attributes/ri:PATERNO</path>
+                    </source>
+                    <source>
+                        <path>$shadow/attributes/ri:MATERNO</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+def p = (PATERNO ?: '').toString().trim()
+def m = (MATERNO ?: '').toString().trim()
+(p + (m ? ' ' + m : '')).trim() ?: null
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>familyName</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <!-- ──────────────────────────────────────────────
+                 CONTACTO
+            ────────────────────────────────────────────── -->
+            <attribute>
+                <ref>ri:CORREO_UPEU</ref>
+                <inbound>
+                    <name>correo-upeu-to-emailAddress</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>(input ?: '').toString().trim().toLowerCase() ?: null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>emailAddress</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:CELULAR</ref>
+                <inbound>
+                    <name>celular-to-telephoneNumber</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>telephoneNumber</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <!-- ──────────────────────────────────────────────
+                 DEMOGRÁFICOS
+            ────────────────────────────────────────────── -->
+            <attribute>
+                <ref>ri:FEC_NACIMIENTO</ref>
+                <inbound>
+                    <name>fec-nacimiento-to-birthDate</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+if (input == null) return null
+def s = input.toString()
+s.length() >= 10 ? s.substring(0, 10) : null
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:birthDate</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <!-- ──────────────────────────────────────────────
+                 CORRELACIÓN
+                 Declarada implícitamente via <correlator/> en ri:NUM_DOCUMENTO.
+                 MidPoint compara el valor del shadow contra extension/sb:taxId
+                 (campo indexado en el focus).
+                 La expresión del inbound produce la URN SCHAC con beforeCorrelation.
+            ────────────────────────────────────────────── -->
+
+            <!-- ──────────────────────────────────────────────
+                 SYNCHRONIZATION REACTIONS
+            ────────────────────────────────────────────── -->
+            <synchronization>
+                <reaction>
+                    <situation>linked</situation>
+                    <actions>
+                        <synchronize/>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <situation>unlinked</situation>
+                    <actions>
+                        <link/>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <situation>unmatched</situation>
+                    <actions>
+                        <addFocus/>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <!-- deleted = egresado salió de la vista. Se inactiva (no elimina). -->
+                    <situation>deleted</situation>
+                    <actions>
+                        <inactivateFocus/>
+                    </actions>
+                </reaction>
+            </synchronization>
+
+        </objectType>
+    </schemaHandling>
+
+    <capabilities>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:create>
+                <cap:enabled>false</cap:enabled>
+            </cap:create>
+            <cap:update>
+                <cap:enabled>false</cap:enabled>
+            </cap:update>
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
+        </configured>
+    </capabilities>
+
+    <projection>
+        <assignmentPolicyEnforcement>relative</assignmentPolicyEnforcement>
+    </projection>
+
+</resource>
