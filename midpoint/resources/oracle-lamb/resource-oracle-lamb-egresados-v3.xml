@@ -1,104 +1,301 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
-  Resource: Oracle LAMB Egresados v3
-  OID:      6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23
-  Fuente:   DAVID.VW_PERSONA_EGRESADO (dedup por CODIGO con MAX aggr)
-  Schema:   urn:sciback:midpoint:person (sb:)
-  ConnectorConfig: preservada del v2 (scripts probados y funcionales)
-  SchemaHandling: actualizado a namespaces canónicos
-  lifecycleState: active
--->
-<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
-          xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
-          xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
-          xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
-          xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
-          oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23">
-
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23" version="85">
+    <_metadata id="797">
+        <storage>
+            <modifyTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-05-14T12:57:31.595Z</modifyTimestamp>
+            <modifierRef>
+                <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+            </modifierRef>
+            <modifyChannel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</modifyChannel>
+        </storage>
+        <process/>
+    </_metadata>
     <name>Oracle LAMB Egresados v2</name>
-    <description>Inbound ScriptedSQL desde DAVID.VW_PERSONA_EGRESADO con dedup por CODIGO. SchemaHandling migrado a schema canónico sb:. Fase 5a-v3.</description>
+    <description>Inbound ScriptedSQL desde DAVID.VW_PERSONA_EGRESADO con dedup por CODIGO. Piloto Fase 5a-v2.</description>
     <lifecycleState>active</lifecycleState>
-
-    <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="ConnectorType"/>
-
+    <operationExecution id="794">
+        <recordType>simple</recordType>
+        <timestamp>2026-05-14T12:32:20.983Z</timestamp>
+        <operation>
+            <objectDelta>
+                <t:changeType>add</t:changeType>
+                <t:objectType>c:ResourceType</t:objectType>
+            </objectDelta>
+            <executionResult>
+                <operation>com.evolveum.midpoint.model.impl.lens.ChangeExecutor.executeDelta</operation>
+                <status>success</status>
+                <importance>normal</importance>
+                <token>1000000000001837649</token>
+            </executionResult>
+            <objectName>Oracle LAMB Egresados v2</objectName>
+        </operation>
+        <status>success</status>
+        <initiatorRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="c:UserType"/>
+        <channel>http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</channel>
+    </operationExecution>
+    <operationExecution id="798">
+        <recordType>simple</recordType>
+        <timestamp>2026-05-14T12:33:20.726Z</timestamp>
+        <operation>
+            <objectDelta>
+                <t:changeType>modify</t:changeType>
+                <t:objectType>c:ResourceType</t:objectType>
+            </objectDelta>
+            <executionResult>
+                <operation>com.evolveum.midpoint.model.impl.lens.ChangeExecutor.executeDelta</operation>
+                <status>success</status>
+                <importance>normal</importance>
+                <token>1000000000001837806</token>
+            </executionResult>
+            <objectName>Oracle LAMB Egresados v2</objectName>
+        </operation>
+        <status>success</status>
+        <initiatorRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="c:UserType"/>
+        <channel>http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</channel>
+    </operationExecution>
+    <operationExecution id="799">
+        <recordType>simple</recordType>
+        <timestamp>2026-05-14T12:57:31.695Z</timestamp>
+        <operation>
+            <objectDelta>
+                <t:changeType>modify</t:changeType>
+                <t:objectType>c:ResourceType</t:objectType>
+            </objectDelta>
+            <executionResult>
+                <operation>com.evolveum.midpoint.model.impl.lens.ChangeExecutor.executeDelta</operation>
+                <status>success</status>
+                <importance>normal</importance>
+                <token>1000000000001839007</token>
+            </executionResult>
+            <objectName>Oracle LAMB Egresados v2</objectName>
+        </operation>
+        <status>success</status>
+        <initiatorRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="c:UserType"/>
+        <channel>http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</channel>
+    </operationExecution>
+    <iteration>0</iteration>
+    <iterationToken/>
+    <operationalState>
+        <lastAvailabilityStatus>up</lastAvailabilityStatus>
+        <message>Status set to UP because resource schema was successfully fetched</message>
+        <timestamp>2026-05-14T12:32:36.859Z</timestamp>
+        <nodeId>DefaultNode</nodeId>
+    </operationalState>
+    <operationalStateHistory id="796">
+        <lastAvailabilityStatus>up</lastAvailabilityStatus>
+        <message>Status set to UP because resource schema was successfully fetched</message>
+        <timestamp>2026-05-14T12:32:36.859Z</timestamp>
+        <nodeId>DefaultNode</nodeId>
+    </operationalStateHistory>
+    <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
-            <icfc:resultsHandlerConfiguration>
-                <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
-                <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
-                <icfc:filteredResultsHandlerInValidationMode>true</icfc:filteredResultsHandlerInValidationMode>
-                <icfc:enableAttributesToGetSearchResultsHandler>false</icfc:enableAttributesToGetSearchResultsHandler>
-            </icfc:resultsHandlerConfiguration>
-            <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">
-                <cfg:host>192.168.13.9</cfg:host>
-                <cfg:port>1521</cfg:port>
-                <cfg:user>JUANSANCHEZ</cfg:user>
-                <cfg:password>
-                    <t:encryptedData>
-                        <t:encryptionMethod>
-                            <t:algorithm>http://www.w3.org/2001/04/xmlenc#aes256-cbc</t:algorithm>
-                        </t:encryptionMethod>
-                        <t:keyInfo>
-                            <t:keyName>nkZ4VieDLlRmwD8hdryrmjz8IxQ=</t:keyName>
-                        </t:keyInfo>
-                        <t:cipherData>
-                            <t:cipherValue>cbS0z8iJBH65IpXN1rHu7W+A4kDoVjubqe3LR3iXW/GlGCOKqSJT4lDv6GSwUeQl</t:cipherValue>
-                        </t:cipherData>
-                    </t:encryptedData>
-                </cfg:password>
-                <cfg:database>UPEU</cfg:database>
-                <cfg:jdbcDriver>oracle.jdbc.OracleDriver</cfg:jdbcDriver>
-                <cfg:jdbcUrlTemplate>jdbc:oracle:thin:@%h:%p/%d</cfg:jdbcUrlTemplate>
-                <cfg:rethrowAllSQLExceptions>true</cfg:rethrowAllSQLExceptions>
-                <cfg:nativeTimestamps>true</cfg:nativeTimestamps>
-                <cfg:allNative>false</cfg:allNative>
-                <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
-                <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
-                <cfg:searchScript>
-    import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT * FROM ( SELECT e.CODIGO, MAX(e.NOMBRE) AS NOMBRE, MAX(e.PATERNO) AS PATERNO, MAX(e.MATERNO) AS MATERNO, MAX(e.CORREO_UPEU) AS CORREO_UPEU, MAX(e.CELULAR) AS CELULAR, MAX(e.NUM_DOCUMENTO) AS NUM_DOCUMENTO, MAX(e.FEC_NACIMIENTO) AS FEC_NACIMIENTO FROM DAVID.VW_PERSONA_EGRESADO e GROUP BY e.CODIGO )'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE CODIGO = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Egresados-v2 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { row -&gt; result &lt;&lt; ['__UID__': row.CODIGO as String, '__NAME__': row.CODIGO as String, 'CODIGO': row.CODIGO as String, 'NOMBRE': row.NOMBRE as String, 'PATERNO': row.PATERNO as String, 'MATERNO': row.MATERNO as String, 'CORREO_UPEU': row.CORREO_UPEU as String, 'CELULAR': row.CELULAR as String, 'NUM_DOCUMENTO': row.NUM_DOCUMENTO as String, 'FEC_NACIMIENTO': row.FEC_NACIMIENTO?.toString()] }; return result
-    </cfg:searchScript>
-                <cfg:syncScript>
-    return null
-    </cfg:syncScript>
-                <cfg:schemaScript>
-    import org.identityconnectors.framework.common.objects.AttributeInfoBuilder
-    import org.identityconnectors.framework.common.objects.ObjectClass
-    import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder
-    
-    // Convención Tirasa ScriptedSQL 2.2.10: el binding `builder` es un SchemaBuilder.
-    // El script DEBE mutar builder.defineObjectClass(...); el retorno se ignora.
-    
-    def ro = { String attrName, boolean required -&gt;
-        def aib = new AttributeInfoBuilder(attrName, String.class)
-        aib.setRequired(required)
-        aib.setCreateable(false)
-        aib.setUpdateable(false)
-        aib.setReadable(true)
-        aib.build()
-    }
-    
-    def ocib = new ObjectClassInfoBuilder()
-    ocib.setType(ObjectClass.ACCOUNT_NAME)
-    
-    ocib.addAttributeInfo(ro("CODIGO",        true))   // = __UID__/__NAME__
-    ocib.addAttributeInfo(ro("NOMBRE",        true))
-    ocib.addAttributeInfo(ro("PATERNO",       false))
-    ocib.addAttributeInfo(ro("MATERNO",       false))
-    ocib.addAttributeInfo(ro("CORREO_UPEU",   false))
-    ocib.addAttributeInfo(ro("CELULAR",       false))
-    ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false))
-    ocib.addAttributeInfo(ro("FEC_NACIMIENTO",false))
-    
-    builder.defineObjectClass(ocib.build())
-    </cfg:schemaScript>
-                <cfg:testScript>
-    import groovy.sql.Sql
-    def sql = new Sql(connection)
-    sql.firstRow("SELECT 1 AS OK FROM DUAL")
-    return "OK"
-    </cfg:testScript>
-            </icfc:configurationProperties>
-        </connectorConfiguration>
+        <icfc:resultsHandlerConfiguration>
+            <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
+            <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
+            <icfc:filteredResultsHandlerInValidationMode>true</icfc:filteredResultsHandlerInValidationMode>
+            <icfc:enableAttributesToGetSearchResultsHandler>false</icfc:enableAttributesToGetSearchResultsHandler>
+        </icfc:resultsHandlerConfiguration>
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">
+            <cfg:host>192.168.13.9</cfg:host>
+            <cfg:port>1521</cfg:port>
+            <cfg:user>JUANSANCHEZ</cfg:user>
+            <cfg:password>
+                <t:encryptedData>
+                    <t:encryptionMethod>
+                        <t:algorithm>http://www.w3.org/2001/04/xmlenc#aes256-cbc</t:algorithm>
+                    </t:encryptionMethod>
+                    <t:keyInfo>
+                        <t:keyName>nkZ4VieDLlRmwD8hdryrmjz8IxQ=</t:keyName>
+                    </t:keyInfo>
+                    <t:cipherData>
+                        <t:cipherValue>cbS0z8iJBH65IpXN1rHu7W+A4kDoVjubqe3LR3iXW/GlGCOKqSJT4lDv6GSwUeQl</t:cipherValue>
+                    </t:cipherData>
+                </t:encryptedData>
+            </cfg:password>
+            <cfg:database>UPEU</cfg:database>
+            <cfg:jdbcDriver>oracle.jdbc.OracleDriver</cfg:jdbcDriver>
+            <cfg:jdbcUrlTemplate>jdbc:oracle:thin:@%h:%p/%d</cfg:jdbcUrlTemplate>
+            <cfg:rethrowAllSQLExceptions>true</cfg:rethrowAllSQLExceptions>
+            <cfg:nativeTimestamps>true</cfg:nativeTimestamps>
+            <cfg:allNative>false</cfg:allNative>
+            <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
+            <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
+            <cfg:searchScript>
+import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT * FROM ( SELECT e.CODIGO, MAX(e.NOMBRE) AS NOMBRE, MAX(e.PATERNO) AS PATERNO, MAX(e.MATERNO) AS MATERNO, MAX(e.CORREO_UPEU) AS CORREO_UPEU, MAX(e.CELULAR) AS CELULAR, MAX(e.NUM_DOCUMENTO) AS NUM_DOCUMENTO, MAX(e.FEC_NACIMIENTO) AS FEC_NACIMIENTO FROM DAVID.VW_PERSONA_EGRESADO e GROUP BY e.CODIGO )'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE CODIGO = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Egresados-v2 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { row -&gt; result &lt;&lt; ['__UID__': row.CODIGO as String, '__NAME__': row.CODIGO as String, 'CODIGO': row.CODIGO as String, 'NOMBRE': row.NOMBRE as String, 'PATERNO': row.PATERNO as String, 'MATERNO': row.MATERNO as String, 'CORREO_UPEU': row.CORREO_UPEU as String, 'CELULAR': row.CELULAR as String, 'NUM_DOCUMENTO': row.NUM_DOCUMENTO as String, 'FEC_NACIMIENTO': row.FEC_NACIMIENTO?.toString()] }; return result
+</cfg:searchScript>
+            <cfg:syncScript>
+return null
+</cfg:syncScript>
+            <cfg:schemaScript>
+import org.identityconnectors.framework.common.objects.AttributeInfoBuilder
+import org.identityconnectors.framework.common.objects.ObjectClass
+import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder
 
+// Convención Tirasa ScriptedSQL 2.2.10: el binding `builder` es un SchemaBuilder.
+// El script DEBE mutar builder.defineObjectClass(...); el retorno se ignora.
+
+def ro = { String attrName, boolean required -&gt;
+    def aib = new AttributeInfoBuilder(attrName, String.class)
+    aib.setRequired(required)
+    aib.setCreateable(false)
+    aib.setUpdateable(false)
+    aib.setReadable(true)
+    aib.build()
+}
+
+def ocib = new ObjectClassInfoBuilder()
+ocib.setType(ObjectClass.ACCOUNT_NAME)
+
+ocib.addAttributeInfo(ro("CODIGO",        true))   // = __UID__/__NAME__
+ocib.addAttributeInfo(ro("NOMBRE",        true))
+ocib.addAttributeInfo(ro("PATERNO",       false))
+ocib.addAttributeInfo(ro("MATERNO",       false))
+ocib.addAttributeInfo(ro("CORREO_UPEU",   false))
+ocib.addAttributeInfo(ro("CELULAR",       false))
+ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false))
+ocib.addAttributeInfo(ro("FEC_NACIMIENTO",false))
+
+builder.defineObjectClass(ocib.build())
+</cfg:schemaScript>
+            <cfg:testScript>
+import groovy.sql.Sql
+def sql = new Sql(connection)
+sql.firstRow("SELECT 1 AS OK FROM DUAL")
+return "OK"
+</cfg:testScript>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+    <schema>
+        <cachingMetadata>
+            <retrievalTimestamp>2026-05-14T12:32:36.859Z</retrievalTimestamp>
+            <serialNumber>f506b52afeac04bd-64f8d600e6d4e072</serialNumber>
+        </cachingMetadata>
+        <definition>
+            <xsd:schema xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:ra="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:tns="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+                <xsd:import namespace="http://prism.evolveum.com/xml/ns/public/annotation-3"/>
+                <xsd:import namespace="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"/>
+                <xsd:import namespace="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3"/>
+                <xsd:complexType name="AccountObjectClass">
+                    <xsd:annotation>
+                        <xsd:appinfo>
+                            <a:container>true</a:container>
+                            <ra:resourceObject>true</ra:resourceObject>
+                            <ra:nativeObjectClass>__ACCOUNT__</ra:nativeObjectClass>
+                            <ra:default>true</ra:default>
+                            <ra:auxiliary>false</ra:auxiliary>
+                            <ra:embedded>false</ra:embedded>
+                            <ra:namingAttribute>icfs:name</ra:namingAttribute>
+                            <ra:displayNameAttribute>icfs:name</ra:displayNameAttribute>
+                            <ra:identifier>icfs:uid</ra:identifier>
+                            <ra:secondaryIdentifier>icfs:name</ra:secondaryIdentifier>
+                        </xsd:appinfo>
+                    </xsd:annotation>
+                    <xsd:sequence>
+                        <xsd:element minOccurs="0" name="NUM_DOCUMENTO" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>120</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:frameworkAttributeName>NUM_DOCUMENTO</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="CODIGO" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>130</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:frameworkAttributeName>CODIGO</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="CORREO_UPEU" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>140</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:frameworkAttributeName>CORREO_UPEU</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="CELULAR" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>150</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:frameworkAttributeName>CELULAR</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="MATERNO" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>160</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:frameworkAttributeName>MATERNO</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="FEC_NACIMIENTO" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>170</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:frameworkAttributeName>FEC_NACIMIENTO</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element ref="icfs:name">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayName>ConnId Name</a:displayName>
+                                    <a:displayOrder>110</a:displayOrder>
+                                    <ra:frameworkAttributeName>__NAME__</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="PATERNO" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>180</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:frameworkAttributeName>PATERNO</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="NOMBRE" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>190</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:frameworkAttributeName>NOMBRE</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" ref="icfs:uid">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayName>ConnId UID</a:displayName>
+                                    <a:displayOrder>100</a:displayOrder>
+                                    <a:access>read</a:access>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:schema>
+        </definition>
+    </schema>
     <schemaHandling>
         <objectType>
             <kind>account</kind>
@@ -242,17 +439,43 @@
             </synchronization>
         </objectType>
     </schemaHandling>
-
     <capabilities>
+        <cachingMetadata>
+            <retrievalTimestamp>2026-05-14T12:32:36.852Z</retrievalTimestamp>
+            <serialNumber>8ab36266719af872-c86bb9e39dde8f1d</serialNumber>
+        </cachingMetadata>
+        <native xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:schema/>
+            <cap:liveSync/>
+            <cap:create/>
+            <cap:read>
+                <cap:returnDefaultAttributesOption>false</cap:returnDefaultAttributesOption>
+            </cap:read>
+            <cap:update>
+                <cap:delta>true</cap:delta>
+                <cap:addRemoveAttributeValues>true</cap:addRemoveAttributeValues>
+            </cap:update>
+            <cap:delete/>
+            <cap:testConnection/>
+            <cap:script>
+                <cap:host id="795">
+                    <cap:type>connector</cap:type>
+                </cap:host>
+            </cap:script>
+        </native>
         <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
-            <cap:create><cap:enabled>false</cap:enabled></cap:create>
-            <cap:update><cap:enabled>false</cap:enabled></cap:update>
-            <cap:delete><cap:enabled>false</cap:enabled></cap:delete>
+            <cap:create>
+                <cap:enabled>false</cap:enabled>
+            </cap:create>
+            <cap:update>
+                <cap:enabled>false</cap:enabled>
+            </cap:update>
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
         </configured>
     </capabilities>
-
     <projection>
         <assignmentPolicyEnforcement>relative</assignmentPolicyEnforcement>
     </projection>
-
 </resource>
