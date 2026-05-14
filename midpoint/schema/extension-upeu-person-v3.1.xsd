@@ -10,6 +10,17 @@
                  ISO 5218, ISO 3166-1 alpha-3, Ley 29733 PE, Ley Migración PE
     Proyecto   : IGA Canónico UPeU — Spec §4.1
 
+    NOTA DE DESPLIEGUE (2026-05-14):
+    Este archivo XSD es el diseño canónico de referencia.
+    El despliegue REAL en producción es via SchemaType object en DB:
+      OID: b7d55017-599f-4f2f-9493-9f64bba62c5b
+      Archivo objeto: schema-object-upeu-person-v3.1.xml
+
+    DIFERENCIA ENTRE XSD-REFERENCIA Y SCHEMATYPE-PROD:
+    - IdentityDocumentType usa <a:container/> en la versión prod (requerido para PrismContainer)
+    - Todos los tipos xsd:date, xsd:boolean, xsd:int son xsd:string en prod (limitación SchemaType DB)
+    - Este XSD conserva los tipos semánticos correctos como documentación de intención de diseño
+
     REGLAS DE DISEÑO:
     - Solo atributos que NO están en el core UserType de MidPoint.
     - Campos core excluidos: name, fullName, givenName, familyName, emailAddress,

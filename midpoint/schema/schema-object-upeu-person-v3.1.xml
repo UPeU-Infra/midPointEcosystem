@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+        oid="b7d55017-599f-4f2f-9493-9f64bba62c5b">
+    <name>Schema canónico UPeU — Person v3.1</name>
+    <description>Schema de extensión canónico para UserType UPeU. Namespace: urn:upeu:midpoint:person. Versión 3.1. Alineado: eduPerson 202208, SCHAC 1.6.0, SCIM 2.0, ISO 24760, Ley 29733. Todos los tipos xsd:string para compatibilidad con SchemaType DB. identityDocuments[] como PrismContainer (a:container).</description>
+    <lifecycleState>active</lifecycleState>
+    <definition>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3"
+            xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+            xmlns:tns="urn:upeu:midpoint:person"
+            targetNamespace="urn:upeu:midpoint:person"
+            elementFormDefault="qualified">
+
+            <xsd:import namespace="http://prism.evolveum.com/xml/ns/public/annotation-3"/>
+            <xsd:import namespace="http://midpoint.evolveum.com/xml/ns/public/common/common-3"/>
+
+            <!-- IdentityDocumentType — PrismContainer. Todos los campos xsd:string. -->
+            <xsd:complexType name="IdentityDocumentType">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <a:container/>
+                        <a:displayName>Documento de identidad</a:displayName>
+                        <a:help>Documento oficial de identificación. Exactamente 1 con primary=true.</a:help>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="type" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Tipo de documento</a:displayName><a:help>DNI|CE|PASSPORT|PTP|CPP|CSR|ITIN</a:help><a:displayOrder>10</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="number" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Número de documento</a:displayName><a:displayOrder>20</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="countryOfIssue" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>País emisor</a:displayName><a:help>ISO 3166-1 alpha-3</a:help><a:displayOrder>30</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="primary" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Documento principal</a:displayName><a:help>true|false</a:help><a:displayOrder>40</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="issuedAt" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de emisión</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>50</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="expiresAt" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de vencimiento</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>60</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="verifiedBy" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Verificado por</a:displayName><a:help>RENIEC|MIGRACIONES|INSTITUTIONAL|SELF-DECLARED</a:help><a:displayOrder>70</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="verifiedAt" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de verificación</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>80</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <!-- UserExtensionType — todos los tipos xsd:string -->
+            <xsd:complexType name="UserExtensionType">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                        <a:displayName>Datos de persona UPeU</a:displayName>
+                        <a:help>Extensión canónica v3.1. eduPerson 202208 + SCHAC 1.6.0 + SCIM 2.0 + ISO 24760 + Ley 29733.</a:help>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+
+                    <!-- S1 — IDENTIFICADORES -->
+                    <xsd:element name="identityDocuments" type="tns:IdentityDocumentType" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Documentos de identidad</a:displayName><a:displayOrder>100</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="institutionalCode" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código institucional</a:displayName><a:indexed>true</a:indexed><a:displayOrder>110</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="lambIdPersona" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>ID LAMB (ID_PERSONA)</a:displayName><a:indexed>true</a:indexed><a:displayOrder>120</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="externalSystemId" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>ID sistema externo</a:displayName><a:indexed>true</a:indexed><a:displayOrder>130</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S2 — DEMOGRÁFICOS -->
+                    <xsd:element name="birthDate" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de nacimiento</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>200</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="gender" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Género</a:displayName><a:help>ISO 5218: 0|1|2|9</a:help><a:displayOrder>210</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="nationality" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Nacionalidad</a:displayName><a:help>ISO 3166-1 alpha-3</a:help><a:displayOrder>220</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="preferredName" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Nombre preferido</a:displayName><a:displayOrder>230</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="displayPronouns" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Pronombres preferidos</a:displayName><a:displayOrder>240</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="disability" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Persona con discapacidad</a:displayName><a:help>true|false</a:help><a:displayOrder>250</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="maritalStatus" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Estado civil</a:displayName><a:displayOrder>260</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="religion" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Religión</a:displayName><a:displayOrder>270</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S3 — CONTACTO -->
+                    <xsd:element name="personalEmail" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Correo personal</a:displayName><a:displayOrder>300</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="phoneNumber" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Teléfono</a:displayName><a:displayOrder>310</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="streetAddress" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Dirección</a:displayName><a:displayOrder>320</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="ubigeo" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Ubigeo</a:displayName><a:displayOrder>330</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S4 — AFILIACIÓN (COMPUTADOS) -->
+                    <xsd:element name="affiliations" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Afiliaciones</a:displayName><a:displayOrder>400</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="primaryAffiliation" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Afiliación principal</a:displayName><a:indexed>true</a:indexed><a:displayOrder>410</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="scopedAffiliations" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Afiliaciones con ámbito</a:displayName><a:displayOrder>420</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="entitlements" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Derechos (entitlements)</a:displayName><a:displayOrder>430</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="eppn" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>ePPN (eduPersonPrincipalName)</a:displayName><a:displayOrder>440</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="eduPersonUniqueId" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>eduPersonUniqueId</a:displayName><a:indexed>true</a:indexed><a:displayOrder>450</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="schacHomeOrganization" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Organización (schacHomeOrganization)</a:displayName><a:displayOrder>460</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="schacExpiryDate" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de expiración (SCHAC)</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>470</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S5 — ACADÉMICO -->
+                    <xsd:element name="academicProgram" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Programa académico</a:displayName><a:displayOrder>500</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="academicProgramCode" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código de programa académico</a:displayName><a:indexed>true</a:indexed><a:displayOrder>510</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="studyLevel" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Nivel de estudios</a:displayName><a:displayOrder>520</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="studyModality" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Modalidad de estudio</a:displayName><a:displayOrder>530</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="studentCycle" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Ciclo académico</a:displayName><a:displayOrder>540</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="admissionPeriod" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Período de admisión</a:displayName><a:displayOrder>550</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S6 — LABORAL -->
+                    <xsd:element name="employeeCategory" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Categoría ocupacional</a:displayName><a:displayOrder>600</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="employeeType" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Tipo de empleo</a:displayName><a:displayOrder>610</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="hireDate" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de ingreso</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>620</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="terminationDate" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de término</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>630</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="contractType" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Tipo de contrato</a:displayName><a:displayOrder>640</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="depto" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Departamento (ID LAMB)</a:displayName><a:indexed>true</a:indexed><a:displayOrder>650</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S7 — INVESTIGACIÓN -->
+                    <xsd:element name="orcid" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>ORCID iD</a:displayName><a:indexed>true</a:indexed><a:displayOrder>700</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="concytecId" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>ID CONCYTEC/RENACYT</a:displayName><a:indexed>true</a:indexed><a:displayOrder>710</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="researcherCategory" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Categoría investigador</a:displayName><a:displayOrder>720</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S8 — ORGANIZACIÓN / CAMPUS -->
+                    <xsd:element name="homeCampus" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Campus sede</a:displayName><a:displayOrder>800</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S9 — GOVERNANCE / DRAFT METADATA -->
+                    <xsd:element name="rejectionReasons" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Razones de rechazo</a:displayName><a:displayOrder>900</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="rejectedAt" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha/hora de rechazo</a:displayName><a:help>ISO 8601 datetime</a:help><a:displayOrder>910</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="rejectionSource" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fuente del rechazo</a:displayName><a:displayOrder>920</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="expectedSourceForFix" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fuente esperada para corrección</a:displayName><a:displayOrder>930</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="lastReviewedAt" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha/hora última revisión</a:displayName><a:help>ISO 8601 datetime</a:help><a:displayOrder>940</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="reviewerNotes" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Notas del revisor</a:displayName><a:displayOrder>950</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S10 — DEPRECADOS (compatibilidad v3.0) -->
+                    <xsd:element name="taxId" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] DNI/CE (taxId)</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9900</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="secondaryMail" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] Correo secundario</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9910</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="phoneNumberAlt" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] Teléfono alternativo</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9920</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="primaryAffiliationCode" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] Código afiliación principal</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9930</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="campus" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] Campus</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9940</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="institutionalIdCard" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] Carnet institucional</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9950</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="universityIdCard" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] Carnet universitario</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9960</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="primaryAffiliationName" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] Nombre afiliación principal</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9970</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                </xsd:sequence>
+            </xsd:complexType>
+
+        </xsd:schema>
+    </definition>
+</schema>
