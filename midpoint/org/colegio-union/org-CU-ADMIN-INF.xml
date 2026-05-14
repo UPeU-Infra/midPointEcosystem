@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CU-ADMIN-INF — Infraestructura y Servicios Generales -->
+<!-- archetype: archetype-org-department (73795c10) -->
+<!-- parent: CU-ADMIN (19b8fc3b) -->
+<!-- OID: 264d5668-bb4b-44c1-b185-999eb7c40a1f -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="264d5668-bb4b-44c1-b185-999eb7c40a1f">
+    <name>CU-ADMIN-INF</name>
+    <displayName>Infraestructura y Servicios Generales</displayName>
+    <identifier>cu-admin-inf</identifier>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="73795c10-2417-4323-b6fa-b88449a8bba4" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <assignment>
+        <targetRef oid="19b8fc3b-d07f-4c17-8c65-8e536c7a11ac" relation="org:default" type="c:OrgType"/>
+    </assignment>
+</org>

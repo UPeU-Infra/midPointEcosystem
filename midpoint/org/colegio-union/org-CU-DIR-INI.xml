@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CU-DIR-INI — Subdirección Nivel Inicial -->
+<!-- archetype: archetype-org-academic-unit (04c304d1) -->
+<!-- parent: CU-DIR (00000000-0000-0000-0000-240999814505) -->
+<!-- OID: 654e31df-4020-4b41-90a8-ff8cc27a9838 -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="654e31df-4020-4b41-90a8-ff8cc27a9838">
+    <name>CU-DIR-INI</name>
+    <displayName>Subdirección Nivel Inicial</displayName>
+    <identifier>cu-subdir-ini</identifier>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <assignment>
+        <targetRef oid="00000000-0000-0000-0000-240999814505" relation="org:default" type="c:OrgType"/>
+    </assignment>
+</org>

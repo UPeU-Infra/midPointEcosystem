@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CU-DIR — Dirección General de Colegio Unión -->
+<!-- archetype: archetype-org-governance (20ee260b) -->
+<!-- parent: COLEGIO-UNION (a4971f45) -->
+<!-- OID: 00000000-0000-0000-0000-240999814505 -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="00000000-0000-0000-0000-240999814505">
+    <name>CU-DIR</name>
+    <displayName>Dirección General</displayName>
+    <identifier>cu-dir-01</identifier>
+    <locality>Lima</locality>
+    <lifecycleState>active</lifecycleState>
+    <assignment id="22">
+        <targetRef oid="20ee260b-8591-4a5b-8b93-f1607eb501a7" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <assignment id="30">
+        <targetRef oid="a4971f45-6317-473d-b89a-93aae41c8c3a" relation="org:default" type="c:OrgType"/>
+    </assignment>
+</org>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CU-EST-INI — Estudiantes Nivel Inicial -->
+<!-- archetype: archetype-org-academic-unit (04c304d1) -->
+<!-- parent: CU-ESTUDIANTES (ac0e12ad) -->
+<!-- OID: df4c4243-c2c9-4d8e-8607-16c7da156de9 -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="df4c4243-c2c9-4d8e-8607-16c7da156de9">
+    <name>CU-EST-INI</name>
+    <displayName>Estudiantes Nivel Inicial</displayName>
+    <identifier>cu-est-ini</identifier>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <assignment>
+        <targetRef oid="ac0e12ad-12dc-4ca8-90a1-57d66924a4a4" relation="org:default" type="c:OrgType"/>
+    </assignment>
+</org>

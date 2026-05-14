@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CU-PSIC — Departamento de Psicología -->
+<!-- archetype: archetype-org-academic-unit (04c304d1) -->
+<!-- parent: CU-APOYO-PED (f61c3515) -->
+<!-- OID: 257d762e-1629-4066-b0f6-da45ef69ba7e -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="257d762e-1629-4066-b0f6-da45ef69ba7e">
+    <name>CU-PSIC</name>
+    <displayName>Departamento de Psicología</displayName>
+    <identifier>cu-psic</identifier>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <assignment>
+        <targetRef oid="f61c3515-2492-4e76-95eb-4c40f4ad2711" relation="org:default" type="c:OrgType"/>
+    </assignment>
+</org>

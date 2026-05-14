@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CU-DIR-SEC — Subdirección Nivel Secundaria -->
+<!-- archetype: archetype-org-academic-unit (04c304d1) -->
+<!-- parent: CU-DIR (00000000-0000-0000-0000-240999814505) -->
+<!-- OID: d41f704f-6b18-43a1-9b0c-d4ba7d86a7f5 -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="d41f704f-6b18-43a1-9b0c-d4ba7d86a7f5">
+    <name>CU-DIR-SEC</name>
+    <displayName>Subdirección Nivel Secundaria</displayName>
+    <identifier>cu-subdir-sec</identifier>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <assignment>
+        <targetRef oid="00000000-0000-0000-0000-240999814505" relation="org:default" type="c:OrgType"/>
+    </assignment>
+</org>

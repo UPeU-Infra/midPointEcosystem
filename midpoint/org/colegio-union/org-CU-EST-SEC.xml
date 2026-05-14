@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CU-EST-SEC — Estudiantes Nivel Secundaria -->
+<!-- archetype: archetype-org-academic-unit (04c304d1) -->
+<!-- parent: CU-ESTUDIANTES (ac0e12ad) -->
+<!-- OID: a887a59d-0ed2-47a4-add5-58f8557da5b3 -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="a887a59d-0ed2-47a4-add5-58f8557da5b3">
+    <name>CU-EST-SEC</name>
+    <displayName>Estudiantes Nivel Secundaria</displayName>
+    <identifier>cu-est-sec</identifier>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <assignment>
+        <targetRef oid="ac0e12ad-12dc-4ca8-90a1-57d66924a4a4" relation="org:default" type="c:OrgType"/>
+    </assignment>
+</org>

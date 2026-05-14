@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Colegio Unión — Institución raíz (partner institution de UPeU) -->
+<!-- archetype: archetype-org-institution (455d90ab) -->
+<!-- OID: a4971f45-6317-473d-b89a-93aae41c8c3a -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="a4971f45-6317-473d-b89a-93aae41c8c3a">
+    <name>COLEGIO-UNION</name>
+    <displayName>Colegio Unión</displayName>
+    <identifier>colegiounion.edu.pe</identifier>
+    <lifecycleState>active</lifecycleState>
+    <!-- Nota: este objeto preexistía en PROD. Incluido solo como referencia canónica. -->
+</org>

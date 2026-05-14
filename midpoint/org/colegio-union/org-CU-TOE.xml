@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CU-TOE — Tutoría y Orientación Educativa -->
+<!-- archetype: archetype-org-academic-unit (04c304d1) -->
+<!-- parent: CU-APOYO-PED (f61c3515) -->
+<!-- OID: 734bc4fa-fa4d-41c9-b4e0-44cee6c0d90b -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="734bc4fa-fa4d-41c9-b4e0-44cee6c0d90b">
+    <name>CU-TOE</name>
+    <displayName>Tutoría y Orientación Educativa</displayName>
+    <identifier>cu-toe</identifier>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <assignment>
+        <targetRef oid="f61c3515-2492-4e76-95eb-4c40f4ad2711" relation="org:default" type="c:OrgType"/>
+    </assignment>
+</org>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CU-EST-PRIM — Estudiantes Nivel Primaria -->
+<!-- archetype: archetype-org-academic-unit (04c304d1) -->
+<!-- parent: CU-ESTUDIANTES (ac0e12ad) -->
+<!-- OID: 4e6dad7a-6059-49ba-b0f0-b26380dd4a74 -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="4e6dad7a-6059-49ba-b0f0-b26380dd4a74">
+    <name>CU-EST-PRIM</name>
+    <displayName>Estudiantes Nivel Primaria</displayName>
+    <identifier>cu-est-prim</identifier>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <assignment>
+        <targetRef oid="ac0e12ad-12dc-4ca8-90a1-57d66924a4a4" relation="org:default" type="c:OrgType"/>
+    </assignment>
+</org>

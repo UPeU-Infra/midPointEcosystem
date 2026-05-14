@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CU-ESTUDIANTES — Estudiantes Colegio Unión (rama activa Fase 5) -->
+<!-- archetype: archetype-org-academic-unit (04c304d1) -->
+<!-- parent: COLEGIO-UNION (a4971f45) -->
+<!-- OID: ac0e12ad-12dc-4ca8-90a1-57d66924a4a4 -->
+<!-- NOTA: Esta es la rama activa en la primera etapa. Los alumnos de CU que
+     usan servicios UPeU (Instituto de Idiomas, Conservatorio, Koha, etc.)
+     se organizan bajo esta rama por nivel educativo. -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="ac0e12ad-12dc-4ca8-90a1-57d66924a4a4">
+    <name>CU-ESTUDIANTES</name>
+    <displayName>Estudiantes Colegio Unión</displayName>
+    <identifier>cu-estudiantes</identifier>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <assignment>
+        <targetRef oid="a4971f45-6317-473d-b89a-93aae41c8c3a" relation="org:default" type="c:OrgType"/>
+    </assignment>
+</org>

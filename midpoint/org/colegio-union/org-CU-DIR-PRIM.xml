@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CU-DIR-PRIM — Subdirección Nivel Primaria -->
+<!-- archetype: archetype-org-academic-unit (04c304d1) -->
+<!-- parent: CU-DIR (00000000-0000-0000-0000-240999814505) -->
+<!-- OID: 607b9b0e-cdd7-4eb2-888f-f9bbc7309102 -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="607b9b0e-cdd7-4eb2-888f-f9bbc7309102">
+    <name>CU-DIR-PRIM</name>
+    <displayName>Subdirección Nivel Primaria</displayName>
+    <identifier>cu-subdir-prim</identifier>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <assignment>
+        <targetRef oid="00000000-0000-0000-0000-240999814505" relation="org:default" type="c:OrgType"/>
+    </assignment>
+</org>

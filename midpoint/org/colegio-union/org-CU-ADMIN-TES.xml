@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CU-ADMIN-TES — Tesorería y Contabilidad -->
+<!-- archetype: archetype-org-department (73795c10) -->
+<!-- parent: CU-ADMIN (19b8fc3b) -->
+<!-- OID: 671650a6-5692-4d79-9efb-1078421bd465 -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="671650a6-5692-4d79-9efb-1078421bd465">
+    <name>CU-ADMIN-TES</name>
+    <displayName>Tesorería y Contabilidad</displayName>
+    <identifier>cu-admin-tes</identifier>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="73795c10-2417-4323-b6fa-b88449a8bba4" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <assignment>
+        <targetRef oid="19b8fc3b-d07f-4c17-8c65-8e536c7a11ac" relation="org:default" type="c:OrgType"/>
+    </assignment>
+</org>
