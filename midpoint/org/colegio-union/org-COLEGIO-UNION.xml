@@ -13,6 +13,6 @@
     <identifier>colegiounion.edu.pe</identifier>
     <lifecycleState>active</lifecycleState>
     <assignment>
-        <archetypeRef oid="79bd8a9e-cf52-4c3a-a860-8e4c7f4f1a2d" type="c:ArchetypeType"/>
+        <archetypeRef oid="79bd8a9e-78f0-430f-8133-e8f3be6859c1" type="c:ArchetypeType"/>
     </assignment>
 </org>
