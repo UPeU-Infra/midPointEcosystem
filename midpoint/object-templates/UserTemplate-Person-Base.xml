@@ -439,19 +439,16 @@
             <source>
                 <path>lifecycleState</path>
             </source>
-            <source>
-                <path>extension/sciback:rejectionReasons</path>
-            </source>
             <expression>
                 <script>
                     <code>
+                        // Siempre actualizar timestamp cuando el foco esta en draft/proposed.
+                        // No depender de rejectionReasons como source (multivalor causa ejecuciones multiples).
+                        // El valor de rejectionReasons se evalua en el bloque G-rejection-reasons-evaluator.
                         import java.time.Instant
                         def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''
                         if (ls != 'draft' &amp;&amp; ls != 'proposed') return null
-                        // Solo actualizar timestamp si hay razones de rechazo
-                        def hasReasons = rejectionReasons != null &amp;&amp; !basic.stringify(rejectionReasons).isEmpty()
-                        if (hasReasons) return Instant.now().toString()
-                        return null
+                        return Instant.now().toString()
                     </code>
                 </script>
             </expression>
@@ -474,17 +471,12 @@
             <source>
                 <path>lifecycleState</path>
             </source>
-            <source>
-                <path>extension/sciback:rejectionReasons</path>
-            </source>
             <expression>
                 <script>
                     <code>
                         def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''
                         if (ls != 'draft' &amp;&amp; ls != 'proposed') return null
-                        def hasReasons = rejectionReasons != null &amp;&amp; !basic.stringify(rejectionReasons).isEmpty()
-                        if (hasReasons) return 'BloqueG@UserTemplate-Person-Base'
-                        return null
+                        return 'BloqueG@UserTemplate-Person-Base'
                     </code>
                 </script>
             </expression>
