@@ -7,7 +7,7 @@
   <org oid="8dc19d75-44a5-4a5a-95d0-37f008d3c3d8">
     <name>DIR-CRAI-JULIACA</name>
     <displayName>Dirección del CRAI</displayName>
-    <identifier>dir.crai.juliaca</identifier>
+    <identifier>CRAI-JULIACA</identifier>
     <assignment>
       <!-- Archetype: academic-unit -->
       <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" type="ArchetypeType"/>
@@ -22,7 +22,7 @@
   <org oid="e4fc894c-dd5a-421c-819f-58cf3676f3b9">
     <name>DIR-CRAI-TARAPOTO</name>
     <displayName>Dirección del CRAI</displayName>
-    <identifier>dir.crai.tarapoto</identifier>
+    <identifier>CRAI-TARAPOTO</identifier>
     <assignment>
       <!-- Archetype: academic-unit -->
       <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" type="ArchetypeType"/>

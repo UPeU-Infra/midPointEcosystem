@@ -5,7 +5,7 @@
      oid="ec37f248-9276-4886-86ff-c84fb0754ab8">
   <name>OU-CAMPUS-LIMA</name>
   <displayName>Campus Lima</displayName>
-  <identifier>ou.campus.lima</identifier>
+  <identifier>SEDE-LIMA</identifier>
   <assignment>
     <!-- Archetype: campus -->
     <targetRef oid="a0c2e4e3-911c-4146-9447-f91a1416feff" type="ArchetypeType"/>

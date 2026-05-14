@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- F3-Ronda1: Unidades de Campus Lima — reparentadas desde DIR-GENERAL-CAMPUS-LIMA a OU-CAMPUS-LIMA -->
+<!-- F3-Ronda2: identifiers canónicos en facultades + unidades clave; eliminado DIR-INSTITUTO-SUPERIOR (duplicado) -->
 <!-- Archetypes: academic-unit=04c304d1, department=73795c10, faculty=87f84549 -->
 <objects xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
          xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3">
@@ -9,7 +10,7 @@
   <org oid="8a818f68-a6ed-44f6-8d61-018ba9a12951">
     <name>CENTRO-IDIOMAS-LIMA</name>
     <displayName>Centro de Idiomas</displayName>
-    <identifier>centro.idiomas.lima</identifier>
+    <identifier>ENGLISH-LIMA</identifier>
     <assignment>
       <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" type="ArchetypeType"/>
     </assignment>
@@ -33,7 +34,7 @@
   <org oid="5814ef75-41d8-49ae-885e-12044cbf4ec8">
     <name>COORD-CEPRE-LIMA</name>
     <displayName>Coordinación CEPRE</displayName>
-    <identifier>coord.cepre.lima</identifier>
+    <identifier>CEPRE-LIMA</identifier>
     <assignment>
       <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" type="ArchetypeType"/>
     </assignment>
@@ -45,7 +46,7 @@
   <org oid="00000000-0000-0000-0000-248019316830">
     <name>DIR-CRAI-LIMA</name>
     <displayName>Dirección del CRAI</displayName>
-    <identifier>dir.crai.lima</identifier>
+    <identifier>CRAI-LIMA</identifier>
     <assignment>
       <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" type="ArchetypeType"/>
     </assignment>
@@ -54,22 +55,11 @@
     </assignment>
   </org>
 
+  <!-- DIR-INST-SUP-LIMA: único nodo de Instituto Superior (DIR-INSTITUTO-SUPERIOR eliminado en R2-A como duplicado) -->
   <org oid="bd564abd-1cc9-4583-9368-c34c48a6cd29">
     <name>DIR-INST-SUP-LIMA</name>
     <displayName>Dirección de Instituto Superior</displayName>
     <identifier>dir.inst.superior.lima</identifier>
-    <assignment>
-      <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" type="ArchetypeType"/>
-    </assignment>
-    <assignment>
-      <targetRef oid="ec37f248-9276-4886-86ff-c84fb0754ab8" type="OrgType" relation="org:default"/>
-    </assignment>
-  </org>
-
-  <org oid="00000000-0000-0000-0000-621222052687">
-    <name>DIR-INSTITUTO-SUPERIOR</name>
-    <displayName>Dirección de Instituto Superior</displayName>
-    <!-- Sin identifier registrado -->
     <assignment>
       <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" type="ArchetypeType"/>
     </assignment>
@@ -95,7 +85,7 @@
   <org oid="9f30eb08-5ee7-46d3-bda0-f0cc62204d87">
     <name>COORDINACION-TI-LIMA</name>
     <displayName>Coordinación Tecnologías de Información - Lima</displayName>
-    <identifier>cti.lima</identifier>
+    <identifier>DTI</identifier>
     <assignment>
       <targetRef oid="73795c10-2417-4323-b6fa-b88449a8bba4" type="ArchetypeType"/>
     </assignment>
@@ -128,11 +118,13 @@
     </assignment>
   </org>
 
-  <!-- Facultades con archetype faculty (87f84549) — reparentadas desde FACULTADES -->
+  <!-- Facultades Lima — archetype faculty (87f84549) — hijos directos de OU-CAMPUS-LIMA -->
+  <!-- Identifiers = siglas oficiales UPeU asignados en F3-Ronda2 -->
 
   <org oid="141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9">
     <name>FACULTAD-EDUCACION</name>
     <displayName>Facultad de Ciencias Humanas y Educación</displayName>
+    <identifier>FE</identifier>
     <assignment>
       <targetRef oid="87f84549-d101-4ae4-8036-42fb6abdfeec" type="ArchetypeType"/>
     </assignment>
@@ -144,6 +136,7 @@
   <org oid="23e944c6-57ca-4ca8-bdcb-3bac5b31a1cd">
     <name>FACULTAD-TEOLOGIA</name>
     <displayName>Facultad de Teología</displayName>
+    <identifier>FT</identifier>
     <assignment>
       <targetRef oid="87f84549-d101-4ae4-8036-42fb6abdfeec" type="ArchetypeType"/>
     </assignment>
@@ -155,6 +148,7 @@
   <org oid="2899369e-b405-431a-9489-186bdbcdc5ce">
     <name>FACULTAD-EMPRESARIALES</name>
     <displayName>Facultad de Ciencias Empresariales</displayName>
+    <identifier>FCCA</identifier>
     <assignment>
       <targetRef oid="87f84549-d101-4ae4-8036-42fb6abdfeec" type="ArchetypeType"/>
     </assignment>
@@ -166,6 +160,7 @@
   <org oid="86968a5a-7d41-4eb3-a545-244df5b700c1">
     <name>FACULTAD-INGENIERIA</name>
     <displayName>Facultad de Ingeniería y Arquitectura</displayName>
+    <identifier>FIA</identifier>
     <assignment>
       <targetRef oid="87f84549-d101-4ae4-8036-42fb6abdfeec" type="ArchetypeType"/>
     </assignment>
@@ -177,6 +172,7 @@
   <org oid="a72bbde6-c689-4ef0-81d5-f293e78c26fe">
     <name>FACULTAD-SALUD</name>
     <displayName>Facultad de Ciencias de la Salud</displayName>
+    <identifier>FCS</identifier>
     <assignment>
       <targetRef oid="87f84549-d101-4ae4-8036-42fb6abdfeec" type="ArchetypeType"/>
     </assignment>
