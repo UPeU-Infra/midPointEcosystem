@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- F3-Ronda3: Unidades de Gobierno y Administración UPeU Lima
+     Identifiers asignados desde ELISEO.ORG_AREA (fuente: Oracle LAMB, entidad 7124)
+     Formato identifier:
+       area.<ID_AREA>       => equivalente directo en ELISEO.ORG_AREA
+       admin.<slug>         => unidad sin equivalente directo en LAMB (código descriptivo estable)
+       gov.upeu             => nodo grouper de gobierno institucional
+-->
+<objects xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+         xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3">
+
+  <!-- === NODO GOBIERNO INSTITUCIONAL === -->
+
+  <org oid="e9dce150-b649-4646-b4ab-c0ce2a3c7330">
+    <name>GOBIERNO-UNIVERSITARIO</name>
+    <displayName>Gobierno Universitario</displayName>
+    <identifier>gov.upeu</identifier>
+  </org>
+
+  <!-- Archetype governance: 12 nodos -->
+
+  <org oid="466091e8-5b17-41b8-ba34-7cadcb334955">
+    <name>ASAMBLEA-UNIVERSITARIA</name>
+    <displayName>Asamblea Universitaria</displayName>
+    <identifier>area.1</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=1, NOMBRE="Asamblea Universitaría" -->
+  </org>
+
+  <org oid="18c30d7b-1e6b-42d8-8fbf-f549c06f13b3">
+    <name>CONSEJO-UNIVERSITARIO</name>
+    <displayName>Consejo Universitario</displayName>
+    <identifier>area.2</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=2, NOMBRE="Consejo Universitario" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-481102126730">
+    <name>RECTORADO</name>
+    <displayName>Rectorado</displayName>
+    <identifier>area.3</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=3, NOMBRE="Rectorado" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-019204771296">
+    <name>VICERRECTORADO-ACADEMICO</name>
+    <displayName>Vicerrectorado Académico</displayName>
+    <identifier>area.5</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=5, NOMBRE="Vicerrectorado Académico" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-352736936167">
+    <name>VICERRECTORADO-BIENESTAR-UNIVERSITARIO</name>
+    <displayName>Vicerrectorado de Bienestar Universitario</displayName>
+    <identifier>area.4</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=4, NOMBRE="Vicerrectorado de Bienestar Universitario" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-518851964441">
+    <name>VICERRECTORADO-ADMINISTRATIVO</name>
+    <displayName>Vicerrectorado Administrativo</displayName>
+    <identifier>area.6</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=6, NOMBRE="Vicerrectorado Administrativo" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-432679972824">
+    <name>SECRETARIA-GENERAL</name>
+    <displayName>Secretaria General</displayName>
+    <identifier>area.23</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=23, NOMBRE="Secretaría General" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-883493804258">
+    <name>DIR-PLANIFICACION-CALIDAD</name>
+    <displayName>Dirección de Planificación y Gestión de la Calidad</displayName>
+    <identifier>area.24</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=24, NOMBRE="Dirección de Planíficación y Gestión de la Calidad" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-213951167960">
+    <name>ASESORIA-LEGAL</name>
+    <displayName>Asesoria Legal</displayName>
+    <identifier>area.65</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=65, NOMBRE="Asesoría Legal" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-586283794176">
+    <name>AUDITORIA-INTERNA</name>
+    <displayName>Auditoria Interna</displayName>
+    <identifier>area.66</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=66, NOMBRE="Auditoría Interna" -->
+  </org>
+
+  <org oid="9acd4220-f878-466a-a0e3-0016961276d7">
+    <name>DEFENSORIA-UNIVERSITARIA</name>
+    <displayName>Defensoría Universitaria</displayName>
+    <identifier>admin.defensoria</identifier>
+    <!-- Sin equivalente directo en LAMB ORG_AREA -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-967409357659">
+    <name>DIR-COOPERACION-Y-PROYECTOS</name>
+    <displayName>Dirección de Cooperación y Proyectos</displayName>
+    <identifier>area.59</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=59, NOMBRE="Oficina de Cooperación y Relaciones Naciónales e Internacionales" -->
+  </org>
+
+  <!-- === UNIDADES DEL VICERRECTORADO ACADÉMICO === -->
+
+  <org oid="00000000-0000-0000-0000-205881674697">
+    <name>DIR-INVESTIGACION-E-INNOVACION</name>
+    <displayName>Dirección de Investigación e Innovación</displayName>
+    <identifier>area.69</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=69, NOMBRE="Dirección General de Investigación" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-652979689802">
+    <name>SUBDIR-INVESTIGACION</name>
+    <displayName>Sub Dirección de Investigación e Innovación</displayName>
+    <identifier>admin.subdir-investigacion</identifier>
+    <!-- Sub-área de DGI, sin equivalente directo en LAMB -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-088080320020">
+    <name>DIR-ASUNTOS-ACADEMICOS</name>
+    <displayName>Dirección de Asuntos Académicos</displayName>
+    <identifier>area.70</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=70, NOMBRE="Dirección Académico-Universitario" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-676362476702">
+    <name>GABINETE-PEDAGOGICO</name>
+    <displayName>Gabinete Pedagógico</displayName>
+    <identifier>area.126</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=126, NOMBRE="Gabinete pedagogico" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-713164433062">
+    <name>TUTORIA-UNIVERSITARIA</name>
+    <displayName>Tutoría Universitaria</displayName>
+    <identifier>area.127</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=127, NOMBRE="Tutoría Universitaría" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-957416380258">
+    <name>SEGUIMIENTO-EGRESADOS</name>
+    <displayName>Seguimiento a Egresados</displayName>
+    <identifier>area.128</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=128, NOMBRE="Seguimiento de Egresado" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-539768224466">
+    <name>GESTION-CURRICULAR</name>
+    <displayName>Gestión Curricular</displayName>
+    <identifier>area.130</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=130, NOMBRE="Gestión curricular" -->
+  </org>
+
+  <org oid="f614c3dc-0b19-46fd-a9b3-f60584711435">
+    <name>COORDINACION-ACADEMICA</name>
+    <displayName>Coordinación Académica</displayName>
+    <identifier>admin.coord-academica</identifier>
+    <!-- Agrupador académico, sin equivalente directo en LAMB -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-299309089935">
+    <name>DIR-EDUCACION-DISTANCIA</name>
+    <displayName>Dirección de Educación a Distancia</displayName>
+    <identifier>area.68</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=68, NOMBRE="Dirección de UPeU Virtual" -->
+  </org>
+
+  <org oid="8896f223-7aea-47e5-9975-f0e9af674f38">
+    <name>COORDINACION-APRENDIZAJE-DIGITAL</name>
+    <displayName>Coordinación de Aprendizaje Digital</displayName>
+    <identifier>admin.coord-aprendizaje-digital</identifier>
+    <!-- Sub-área de Dir. Ed. Distancia, sin equivalente directo en LAMB -->
+  </org>
+
+  <org oid="b3c13d9f-226c-46c6-8719-e5bbddae4803">
+    <name>COORDINACION-EDUCACION-CONTINUA</name>
+    <displayName>Coordinación de Educación Continua</displayName>
+    <identifier>admin.coord-educ-continua</identifier>
+    <!-- Sub-área de Dir. Ed. Distancia, sin equivalente directo en LAMB -->
+  </org>
+
+  <!-- === UNIDADES DEL VICERRECTORADO DE BIENESTAR UNIVERSITARIO === -->
+
+  <org oid="00000000-0000-0000-0000-354350420278">
+    <name>DIRECCION-BIENESTAR-UNIVERSITARIO</name>
+    <displayName>Dirección de Bienestar Universitario</displayName>
+    <identifier>admin.dir-bienestar</identifier>
+    <!-- Unidad operativa bajo VBU, sin equivalente directo en LAMB -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-122943786083">
+    <name>DIR-UNIV-SALUDABLE</name>
+    <displayName>Dirección de Universidad Saludable</displayName>
+    <identifier>area.19</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=19, NOMBRE="Dirección de Universidad Saludable" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-816194535119">
+    <name>DIR-IDEC</name>
+    <displayName>IDEC</displayName>
+    <identifier>area.20</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=20, NOMBRE="IDEC" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-476628641037">
+    <name>DIR-MISION</name>
+    <displayName>Dirección de Misión</displayName>
+    <identifier>area.21</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=21, NOMBRE="Iglesia Universitaría" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-694528181932">
+    <name>COORD-MISION</name>
+    <displayName>Coordinación de Misión</displayName>
+    <identifier>admin.coord-mision</identifier>
+    <!-- Sub-área de misión, sin equivalente directo en LAMB -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-232117223399">
+    <name>COORD-RESIDENCIAS</name>
+    <displayName>Coordinación de Resid. Universitarias</displayName>
+    <identifier>admin.coord-residencias</identifier>
+    <!-- Agrupador residencias, sin equivalente directo en LAMB -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-290507037253">
+    <name>ASISTENCIA-SOCIAL</name>
+    <displayName>Asistencia Social</displayName>
+    <identifier>admin.asistencia-social</identifier>
+    <!-- Servicio social, sin equivalente directo en LAMB nivel 1 -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-190233503077">
+    <name>DIR-PRODAC</name>
+    <displayName>PRODAC</displayName>
+    <identifier>admin.prodac</identifier>
+    <!-- Programa académico especial, sin equivalente directo en LAMB -->
+  </org>
+
+  <!-- === UNIDADES DEL VICERRECTORADO ADMINISTRATIVO === -->
+
+  <org oid="00000000-0000-0000-0000-293614965563">
+    <name>DIR-TALENTO-HUMANO</name>
+    <displayName>Dirección del Talento Humano</displayName>
+    <identifier>area.14</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=14, COD=GTH, NOMBRE="Dirección del Talento Humano" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-729518957077">
+    <name>DIR-FINANCIERA</name>
+    <displayName>Dirección Financiera</displayName>
+    <identifier>area.13</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=13, NOMBRE="Dirección Financiero Contable" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-760515897070">
+    <name>TESORERIA-GENERAL</name>
+    <displayName>Tesorería General</displayName>
+    <identifier>area.47</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=47, NOMBRE="Tesorería General" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-656134027033">
+    <name>CONTABILIDAD-GENERAL</name>
+    <displayName>Contabilidad General</displayName>
+    <identifier>area.48</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=48, NOMBRE="Dirección Contable" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-254038977947">
+    <name>FINANZAS-ALUMNOS</name>
+    <displayName>Finanzas Alumnos</displayName>
+    <identifier>area.49</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=49, NOMBRE="Caja Central" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-446330271479">
+    <name>DIR-OPERACIONES-CAMPUS</name>
+    <displayName>Dirección de Operaciones Campus</displayName>
+    <identifier>area.16</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=16, NOMBRE="Dirección de Servicios Generales" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-347803680759">
+    <name>SERVICIOS-GENERALES</name>
+    <displayName>Servicios Generales</displayName>
+    <identifier>admin.servicios-generales</identifier>
+    <!-- Sub-área operacional de DIR-OPERACIONES-CAMPUS, sin equivalente directo en LAMB -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-403620538486">
+    <name>LOGISTICA-ACTIVOS</name>
+    <displayName>Logística y Activos</displayName>
+    <identifier>area.15</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=15, NOMBRE="Dirección de Activos y Adquisiciones" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-586421525057">
+    <name>DIR-INFRAESTRUCTURA</name>
+    <displayName>Dirección de Infraestructura</displayName>
+    <identifier>area.17</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=17, NOMBRE="Dirección de Infraestructura" -->
+  </org>
+
+  <org oid="3e428535-a6da-4bdc-9cc4-38361e23fe89">
+    <name>DESARROLLO-PROYECTOS</name>
+    <displayName>Desarrollo de Proyectos</displayName>
+    <identifier>admin.dev-proyectos</identifier>
+    <!-- Sub-área de infraestructura/proyectos, sin equivalente directo en LAMB -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-953119566392">
+    <name>DTI</name>
+    <displayName>Dirección de Tecnologías de Información</displayName>
+    <identifier>area.18</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=18, NOMBRE="Dirección de Tecnologías de Información" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-483795966730">
+    <name>DESARROLLO-PROYECTOS-TI</name>
+    <displayName>Desarrollo de Proyecto TI</displayName>
+    <identifier>admin.dev-ti</identifier>
+    <!-- Sub-área DTI, sin equivalente directo en LAMB -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-662044381701">
+    <name>ANALITICA-AVANZADA</name>
+    <displayName>Analítica Avanzada</displayName>
+    <identifier>admin.analitica</identifier>
+    <!-- Sub-área DTI nueva, sin equivalente directo en LAMB -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-179084668256">
+    <name>SEGURIDAD-INFORMACION</name>
+    <displayName>Seguridad de la Información</displayName>
+    <identifier>admin.seg-info</identifier>
+    <!-- Sub-área DTI seguridad, sin equivalente directo en LAMB -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-072625086587">
+    <name>DIR-IMAGEN-INSTITUCIONAL-RRPP</name>
+    <displayName>Dirección de Imagen Institucional y Relaciones Públicas</displayName>
+    <identifier>area.58</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=58, NOMBRE="Coordinación de Comunicaciones Campus" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-911329900505">
+    <name>DIR-MARKETING-COMUNICACIONES</name>
+    <displayName>Dirección de Marketing y Comunicaciones</displayName>
+    <identifier>area.67</identifier>
+    <!-- LAMB: ELISEO.ORG_AREA ID_AREA=67, NOMBRE="Coordinación Comercial Campus" -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-524700978709">
+    <name>DIR-COMERCIAL</name>
+    <displayName>Dirección Comercial</displayName>
+    <identifier>admin.dir-comercial</identifier>
+    <!-- Área comercial administrativa, sin equivalente directo en LAMB -->
+  </org>
+
+  <org oid="00000000-0000-0000-0000-773572722576">
+    <name>DIR-FONDO-EDITORIAL</name>
+    <displayName>Dirección de Fondo Editorial</displayName>
+    <identifier>admin.fondo-editorial</identifier>
+    <!-- Área editorial, sin equivalente directo en LAMB a este nivel -->
+  </org>
+
+</objects>
