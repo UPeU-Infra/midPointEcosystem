@@ -525,48 +525,46 @@
         </source>
         <expression>
             <script>
-                <code>
-                    import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+                <code><![CDATA[
+import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
 
-                    // Condición 1: tiene documento de identidad primario
-                    def hasPrimaryDoc = false
-                    def docs = focus?.extension?.findProperty(
-                        new javax.xml.namespace.QName('urn:sciback:midpoint:person','identityDocuments')
-                    )
-                    // Verificar si hay al menos un contenedor identityDocuments con primary="true"
-                    if (focus?.extension != null) {
-                        def idDocsContainers = focus.extension.findContainers(
-                            new javax.xml.namespace.QName('urn:sciback:midpoint:person','identityDocuments')
-                        )
-                        if (idDocsContainers != null) {
-                            hasPrimaryDoc = idDocsContainers.any { container ->
-                                def primaryProp = container?.findProperty(
-                                    new javax.xml.namespace.QName('urn:sciback:midpoint:person','primary')
-                                )
-                                primaryProp != null &amp;&amp; 'true' == basic.stringify(primaryProp.realValue)
-                            }
-                        }
-                    }
+// Condicion 1: tiene documento de identidad primario
+// identityDocuments = PrismContainerValue o List<PrismContainerValue> inyectado por source
+def hasPrimaryDoc = false
+try {
+    def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(
+        new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'primary')
+    )
+    def docs = identityDocuments
+    if (docs != null) {
+        def docList = (docs instanceof List) ? docs : [docs]
+        hasPrimaryDoc = docList.any { doc ->
+            def primProp = doc?.findProperty(primPath)
+            primProp != null && 'true' == primProp?.realValue?.toString()
+        }
+    }
+} catch (Exception e) {
+    log.warn('Bloque F: error leyendo identityDocuments en {}: {}', focus?.name, e.message)
+}
 
-                    // Condición 2: tiene afiliación primaria válida
-                    def validAffiliations = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUMNI','AFFILIATE-CU']
-                    def hasAffiliation = primaryAffiliation != null &amp;&amp;
-                        validAffiliations.contains(basic.stringify(primaryAffiliation).trim().toUpperCase())
+// Condicion 2: tiene afiliacion primaria valida
+def validAffiliations = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUMNI','AFFILIATE-CU']
+def hasAffiliation = primaryAffiliation != null &&
+    validAffiliations.contains(basic.stringify(primaryAffiliation).trim().toUpperCase())
 
-                    // Gate: solo active si cumple ambas condiciones
-                    if (hasPrimaryDoc &amp;&amp; hasAffiliation) {
-                        return 'active'
-                    } else {
-                        // Loguear razón para diagnóstico
-                        if (!hasPrimaryDoc) {
-                            log.info("UPeU lifecycle gate: {} sin documento primario → draft", focus?.name)
-                        }
-                        if (!hasAffiliation) {
-                            log.info("UPeU lifecycle gate: {} sin afiliación válida → draft", focus?.name)
-                        }
-                        return 'draft'
-                    }
-                </code>
+// Gate: solo active si cumple ambas condiciones
+if (hasPrimaryDoc && hasAffiliation) {
+    return 'active'
+} else {
+    if (!hasPrimaryDoc) {
+        log.info('Bloque F lifecycle gate: {} sin documento primario -> draft', focus?.name)
+    }
+    if (!hasAffiliation) {
+        log.info('Bloque F lifecycle gate: {} sin afiliacion valida -> draft', focus?.name)
+    }
+    return 'draft'
+}
+                ]]></code>
             </script>
         </expression>
         <target>
