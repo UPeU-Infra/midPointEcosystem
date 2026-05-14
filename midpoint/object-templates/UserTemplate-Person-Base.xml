@@ -286,6 +286,220 @@
          ============================================================ -->
 
     <!-- ============================================================
+         BLOQUE G — REJECTION REASONS (trazabilidad de perfiles incompletos)
+         Evalua los 8 requisitos canonicos UPeU en cada recompute del foco
+         cuando lifecycleState=draft. Escribe en extension/sciback:
+           - rejectionReasons (multivalor): lista de motivos de rechazo
+           - rejectedAt (string): ISO 8601 timestamp del ultimo rechazo
+           - rejectionSource (string): identificador de este bloque
+
+         Si el perfil esta completo, limpia los campos (replace con null).
+         strength: strong — se evalua en cada recompute.
+
+         Requisitos evaluados (complementa el Bloque F):
+           PR-02: personalNumber no vacio
+           PR-03: >= 1 identityDocument con primary="true"
+           PR-04: DNI valido (8 digitos) si tipo=DNI
+           PR-05: >= 1 rol R-Affiliation-* asignado
+           PR-06: primaryAffiliation en vocabulario canonico
+           PR-07: emailAddress termina en @upeu.edu.pe
+           PR-08: givenName + familyName presentes
+
+         Nota: PR-01 (archetype Person) no se verifica — si este
+         template se ejecuta, el archetype ya esta asignado.
+         ============================================================ -->
+    <item>
+        <ref>extension/sciback:rejectionReasons</ref>
+        <mapping>
+            <name>G-rejection-reasons-evaluator</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>lifecycleState</path>
+            </source>
+            <source>
+                <path>personalNumber</path>
+            </source>
+            <source>
+                <path>givenName</path>
+            </source>
+            <source>
+                <path>familyName</path>
+            </source>
+            <source>
+                <path>emailAddress</path>
+            </source>
+            <source>
+                <path>extension/sciback:primaryAffiliation</path>
+            </source>
+            <source>
+                <path>extension/sciback:identityDocuments</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+                        // Bloque G: solo actua cuando el foco esta en draft/proposed
+                        def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''
+                        if (ls != 'draft' &amp;&amp; ls != 'proposed') return null
+
+                        def SCIBACK_NS = 'urn:sciback:midpoint:person'
+                        def AFFIL_OIDS = [
+                            '79ad22c7-b828-4b8c-a562-2ee01b214d7f',
+                            '94a03f65-e866-4d49-a996-26c4dc227413',
+                            '0da0b3b8-a93b-4765-ad71-30c535ff7512',
+                            '7d4e89fb-163c-478c-a224-4e4be733bc1b',
+                            '485dc678-94a5-4d20-9463-71568c625a33',
+                            '31f25974-62c9-404a-a038-b17a08059fe5'
+                        ] as Set
+                        def VALID_AFFILIATIONS = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUMNI','AFFILIATE-CU'] as Set
+
+                        def reasons = []
+
+                        // PR-02: personalNumber
+                        def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''
+                        if (pn == '') reasons &lt;&lt; 'PR-02: personalNumber ausente o vacio'
+
+                        // PR-03 + PR-04: identityDocument primario y DNI valido
+                        def hasPrimary = false
+                        def primaryDocNumber = null
+                        def primaryDocType = null
+                        try {
+                            def containers = focus?.extension?.findContainers(
+                                new javax.xml.namespace.QName(SCIBACK_NS, 'identityDocuments')
+                            )
+                            if (containers) {
+                                containers.each { c ->
+                                    def primVal = c?.findProperty(new javax.xml.namespace.QName(SCIBACK_NS, 'primary'))?.realValue
+                                    if ('true' == primVal?.toString()) {
+                                        hasPrimary = true
+                                        primaryDocNumber = c?.findProperty(new javax.xml.namespace.QName(SCIBACK_NS, 'number'))?.realValue?.toString()
+                                        primaryDocType   = c?.findProperty(new javax.xml.namespace.QName(SCIBACK_NS, 'type'))?.realValue?.toString()
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            log.warn('Bloque G: error leyendo identityDocuments en {}: {}', focus?.name, e.message)
+                        }
+                        if (!hasPrimary) {
+                            reasons &lt;&lt; 'PR-03: sin documento de identidad primario (primary=true)'
+                        } else if (primaryDocNumber != null) {
+                            def docType = primaryDocType?.toUpperCase() ?: 'DNI'
+                            if (docType == 'DNI' || docType == '') {
+                                if (!(primaryDocNumber ==~ /^\d{8}$/))
+                                    reasons &lt;&lt; "PR-04: DNI invalido '${primaryDocNumber}' (debe ser 8 digitos)"
+                            }
+                        }
+
+                        // PR-05: rol de afiliacion
+                        def hasAffil = focus?.assignment?.any { a -> a.targetRef?.oid in AFFIL_OIDS }
+                        if (!hasAffil) reasons &lt;&lt; 'PR-05: sin rol R-Affiliation-* asignado'
+
+                        // PR-06: primaryAffiliation
+                        def primAffil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
+                        if (!primAffil || !(primAffil in VALID_AFFILIATIONS))
+                            reasons &lt;&lt; "PR-06: primaryAffiliation invalido ('${primAffil}'). Validos: ${VALID_AFFILIATIONS.sort().join('|')}"
+
+                        // PR-07: emailAddress
+                        def email = emailAddress != null ? basic.stringify(emailAddress) : ''
+                        if (!email.endsWith('@upeu.edu.pe'))
+                            reasons &lt;&lt; "PR-07: emailAddress institucional invalido ('${email}')"
+
+                        // PR-08a: givenName
+                        def gn = givenName != null ? basic.stringify(givenName).trim() : ''
+                        if (gn == '') reasons &lt;&lt; 'PR-08a: givenName ausente o vacio'
+
+                        // PR-08b: familyName
+                        def fn = familyName != null ? basic.stringify(familyName).trim() : ''
+                        if (fn == '') reasons &lt;&lt; 'PR-08b: familyName ausente o vacio'
+
+                        if (reasons) {
+                            log.info('Bloque G [{}]: {} fallos: {}', focus?.name, reasons.size(), reasons.join(' | '))
+                            return reasons
+                        }
+                        return null
+                    </code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>
+                        def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''
+                        ls == 'draft' || ls == 'proposed'
+                    </code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+    <item>
+        <ref>extension/sciback:rejectedAt</ref>
+        <mapping>
+            <name>G-rejected-at-timestamp</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>lifecycleState</path>
+            </source>
+            <source>
+                <path>extension/sciback:rejectionReasons</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+                        import java.time.Instant
+                        def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''
+                        if (ls != 'draft' &amp;&amp; ls != 'proposed') return null
+                        // Solo actualizar timestamp si hay razones de rechazo
+                        def hasReasons = rejectionReasons != null &amp;&amp; !basic.stringify(rejectionReasons).isEmpty()
+                        if (hasReasons) return Instant.now().toString()
+                        return null
+                    </code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>
+                        def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''
+                        ls == 'draft' || ls == 'proposed'
+                    </code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+    <item>
+        <ref>extension/sciback:rejectionSource</ref>
+        <mapping>
+            <name>G-rejection-source</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>lifecycleState</path>
+            </source>
+            <source>
+                <path>extension/sciback:rejectionReasons</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+                        def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''
+                        if (ls != 'draft' &amp;&amp; ls != 'proposed') return null
+                        def hasReasons = rejectionReasons != null &amp;&amp; !basic.stringify(rejectionReasons).isEmpty()
+                        if (hasReasons) return 'BloqueG@UserTemplate-Person-Base'
+                        return null
+                    </code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>
+                        def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''
+                        ls == 'draft' || ls == 'proposed'
+                    </code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
          BLOQUE F — LIFECYCLE GATE: draft → active
          Política estricta UPeU (Pilar 4 — Import estricto):
          Solo pasa a 'active' si cumple AMBAS condiciones:

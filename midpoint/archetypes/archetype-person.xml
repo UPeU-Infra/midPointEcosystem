@@ -8,17 +8,17 @@
   Regla: NO codifica afiliacion. Afiliaciones = R-Affiliation-* roles (spec §3.2).
 
   Policy Rules (F5 - 2026-05-14):
-    PR-RECORD-REJECTION  : evalua PR-02 al PR-08 en cada recompute de Person en draft/proposed.
-                           Escribe rejectionReasons + rejectedAt + rejectionSource en extension/sciback:
-    PR-AUDIT-ACTIVE-GATE : registra en audit log la transicion hacia lifecycleState=active.
+    PR-RECORD-REJECTION  : audit log cuando el foco esta en draft (trazabilidad).
+                           El script de rejectionReasons va en Bloque G del Object Template.
+    PR-AUDIT-ACTIVE-GATE : audit log cuando el foco transita a active (trazabilidad).
 
   Diseno deliberado:
     - El enforcement real (lifecycleState=draft) lo hace el Bloque F del Object Template.
-    - Las policy rules aqui agregan TRAZABILIDAD (audit log + extension fields).
-    - Las policy rules van en inducement sin target/construction: no inducen privilegios.
-      Un inducement con solo policyRule NO es "inducir roles" (libro §8.4).
-    - El elemento assignmentRelation va dentro del assignment existente en PROD (id=1).
-      NO se declara como elemento raiz del archetype: no existe en schema ArchetypeType.
+    - El script de rejectionReasons lo ejecuta el Bloque G del Object Template (mapping script).
+      Razon: objectState en inducement evalua el estado del rol/archetype, no el foco.
+      El template tiene acceso directo al foco y puede escribir en extension fields.
+    - Las policy rules en inducement agregan TRAZABILIDAD en audit log (action: record).
+    - Un inducement con solo policyRule/record NO induce privilegios (libro §8.4 compatible).
 
   F2 - Refactor de Archetypes UPeU 2026-05
   F5 - Policy Rules de trazabilidad UPeU 2026-05-14
@@ -26,10 +26,9 @@
 <archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
            xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
            xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
-           xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
            oid="00000000-0000-0000-0000-000000000702">
     <name>Person</name>
-    <description>Toda persona fisica vinculada a UPeU. Unico archetype structural permitido para UserType. Las afiliaciones (student/faculty/staff/alum/affiliate) se expresan como R-Affiliation-* roles, NO como archetypes distintos. Spec §3.1 + §4.2. Policy rules de trazabilidad F5 en inducement.</description>
+    <description>Toda persona fisica vinculada a UPeU. Unico archetype structural permitido para UserType. Las afiliaciones (student/faculty/staff/alum/affiliate) se expresan como R-Affiliation-* roles, NO como archetypes distintos. Spec §3.1 + §4.2. Policy rules de trazabilidad F5 en inducement (audit log). Script rejectionReasons en Bloque G del Object Template.</description>
     <archetypePolicy>
         <display>
             <label>Persona UPeU</label>
@@ -47,27 +46,21 @@
 
     <!-- ============================================================
          INDUCEMENT: POLICY RULE PR-RECORD-REJECTION
-         Evalua los 8 requisitos canonicos UPeU en cada recompute
-         del foco Person con lifecycleState=draft o proposed.
-         Actions: record en audit log + scriptExecution para escribir
-         rejectionReasons + rejectedAt + rejectionSource.
+         Registra en audit log cuando un Person esta en estado draft/proposed.
+         Action: solo record (trazabilidad en audit log MidPoint).
 
-         NO tiene target/construction: no induce privilegios.
-         Esto es diferente a "sin inducements de privilegios" (libro §8.4).
+         El script que escribe rejectionReasons + rejectedAt en extension/sciback:
+         esta en el Bloque G del Object Template (855caaca-68c4-4f7f-8ff8-b4e35dd7d390).
+         Razon tecnica: objectState en inducement evalua el estado del archetype,
+         no el foco. El mapping script en el template tiene acceso directo al foco
+         y puede setear extension fields. MidPoint 4.9 verified.
 
-         Requisitos:
-           PR-02: personalNumber no vacio
-           PR-03: >= 1 identityDocument con primary="true"
-           PR-04: DNI valido (8 digitos) si tipo=DNI
-           PR-05: >= 1 rol R-Affiliation-* asignado
-           PR-06: primaryAffiliation en vocabulario canonico
-           PR-07: emailAddress termina en @upeu.edu.pe
-           PR-08: givenName + familyName presentes
+         NO tiene target/construction: no induce privilegios (libro §8.4 compatible).
          ============================================================ -->
     <inducement>
         <policyRule>
             <name>PR-RECORD-REJECTION</name>
-            <documentation>Evalua requisitos canonicos UPeU (PR-02 al PR-08) en cada recompute de Person en draft/proposed. Escribe rejectionReasons + rejectedAt si hay fallos. Complementa el Bloque F del Object Template (enforcement real). Spec §4.3 Pilar 4 - Import estricto.</documentation>
+            <documentation>Registra en audit log cuando un Person esta en draft/proposed. El script de rejectionReasons va en Bloque G del Object Template. Spec §4.3 Pilar 4 - Import estricto.</documentation>
             <policyConstraints>
                 <objectState>
                     <name>perfil-en-draft-o-proposed</name>
@@ -87,152 +80,6 @@
             </policyConstraints>
             <policyActions>
                 <record/>
-                <scriptExecution>
-                    <object>
-                        <currentObject/>
-                    </object>
-                    <executeScript>
-                        <s:pipeline>
-                            <s:execute>
-                                <s:script>
-                                    <!-- input = currentObject (el UserType evaluado) -->
-                                    <code><![CDATA[
-import java.time.Instant
-
-def SCIBACK_NS = 'urn:sciback:midpoint:person'
-def AFFIL_OIDS = [
-    '79ad22c7-b828-4b8c-a562-2ee01b214d7f',
-    '94a03f65-e866-4d49-a996-26c4dc227413',
-    '0da0b3b8-a93b-4765-ad71-30c535ff7512',
-    '7d4e89fb-163c-478c-a224-4e4be733bc1b',
-    '485dc678-94a5-4d20-9463-71568c625a33',
-    '31f25974-62c9-404a-a038-b17a08059fe5'
-] as Set
-
-def VALID_AFFILIATIONS = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUMNI','AFFILIATE-CU'] as Set
-
-def user = input
-def reasons = []
-
-// PR-02: personalNumber no vacio
-def pn = user.personalNumber?.orig
-if (!pn || pn.trim() == '') {
-    reasons << 'PR-02: personalNumber ausente o vacio'
-}
-
-// PR-03: >= 1 identityDocument con primary="true"
-def hasPrimary = false
-def primaryDocNumber = null
-def primaryDocType = null
-try {
-    def containers = user.extension?.findContainers(
-        new javax.xml.namespace.QName(SCIBACK_NS, 'identityDocuments')
-    )
-    if (containers) {
-        containers.each { c ->
-            def primVal = c?.findProperty(new javax.xml.namespace.QName(SCIBACK_NS, 'primary'))?.realValue
-            if ('true' == primVal?.toString()) {
-                hasPrimary = true
-                primaryDocNumber = c?.findProperty(new javax.xml.namespace.QName(SCIBACK_NS, 'number'))?.realValue?.toString()
-                primaryDocType   = c?.findProperty(new javax.xml.namespace.QName(SCIBACK_NS, 'type'))?.realValue?.toString()
-            }
-        }
-    }
-} catch (Exception e) {
-    log.warn('PR-RECORD-REJECTION: error leyendo identityDocuments en {}: {}', user.name, e.message)
-}
-if (!hasPrimary) {
-    reasons << 'PR-03: sin documento de identidad primario (primary=true)'
-}
-
-// PR-04: DNI valido (8 digitos numericos) -- aplica si tipo=DNI o tipo ausente
-if (hasPrimary && primaryDocNumber != null) {
-    def docType = primaryDocType?.toUpperCase() ?: 'DNI'
-    if (docType == 'DNI' || docType == '') {
-        if (!(primaryDocNumber ==~ /^\d{8}$/)) {
-            reasons << "PR-04: numero DNI invalido '${primaryDocNumber}' (debe ser 8 digitos numericos)"
-        }
-    }
-}
-
-// PR-05: >= 1 rol R-Affiliation-* asignado
-def hasAffil = user.assignment?.any { a ->
-    a.targetRef?.oid in AFFIL_OIDS
-}
-if (!hasAffil) {
-    reasons << 'PR-05: sin rol de afiliacion R-Affiliation-* asignado'
-}
-
-// PR-06: primaryAffiliation en vocabulario canonico
-def primAffil = user.extension?.findProperty(
-    new javax.xml.namespace.QName(SCIBACK_NS, 'primaryAffiliation')
-)?.realValue?.toString()
-if (!primAffil || !(primAffil.toUpperCase() in VALID_AFFILIATIONS)) {
-    reasons << "PR-06: primaryAffiliation invalido o ausente ('${primAffil}'). Validos: ${VALID_AFFILIATIONS.sort().join('|')}"
-}
-
-// PR-07: emailAddress institucional (@upeu.edu.pe)
-def email = user.emailAddress?.orig
-if (!email || !email.endsWith('@upeu.edu.pe')) {
-    reasons << "PR-07: emailAddress institucional ausente o invalido ('${email}')"
-}
-
-// PR-08a: givenName
-if (!user.givenName?.orig || user.givenName.orig.trim() == '') {
-    reasons << 'PR-08a: givenName ausente o vacio'
-}
-// PR-08b: familyName
-if (!user.familyName?.orig || user.familyName.orig.trim() == '') {
-    reasons << 'PR-08b: familyName ausente o vacio'
-}
-
-// Escribir resultados en extension
-if (reasons) {
-    def now = Instant.now().toString()
-    log.info('PR-RECORD-REJECTION [{}]: {} fallos: {}', user.name, reasons.size(), reasons.join(' | '))
-
-    def userOid = user.oid
-    def userType = com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class
-    def delta = prismContext.deltaFactory().object().createEmptyModifyDelta(userType, userOid)
-
-    def rejReasonsPath = com.evolveum.midpoint.prism.path.ItemPath.create(
-        'extension', new javax.xml.namespace.QName(SCIBACK_NS, 'rejectionReasons'))
-    def rejAtPath = com.evolveum.midpoint.prism.path.ItemPath.create(
-        'extension', new javax.xml.namespace.QName(SCIBACK_NS, 'rejectedAt'))
-    def rejSrcPath = com.evolveum.midpoint.prism.path.ItemPath.create(
-        'extension', new javax.xml.namespace.QName(SCIBACK_NS, 'rejectionSource'))
-
-    delta.addModificationReplaceProperty(rejReasonsPath, reasons.toArray(new String[0]))
-    delta.addModificationReplaceProperty(rejAtPath, now)
-    delta.addModificationReplaceProperty(rejSrcPath, 'PR-RECORD-REJECTION@archetype-person')
-
-    midpoint.applyDelta(delta)
-} else {
-    // Perfil completo: limpiar campos de rechazo si existian de iteracion anterior
-    def rejReasonsQName = new javax.xml.namespace.QName(SCIBACK_NS, 'rejectionReasons')
-    def hasOldReasons = user.extension?.findProperty(rejReasonsQName)?.realValue != null
-
-    if (hasOldReasons) {
-        log.info('PR-RECORD-REJECTION [{}]: perfil ahora completo -- limpiando campos de rechazo previos', user.name)
-        def userType = com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class
-        def delta = prismContext.deltaFactory().object().createEmptyModifyDelta(userType, user.oid)
-        delta.addModificationReplaceProperty(com.evolveum.midpoint.prism.path.ItemPath.create(
-            'extension', rejReasonsQName))
-        delta.addModificationReplaceProperty(com.evolveum.midpoint.prism.path.ItemPath.create(
-            'extension', new javax.xml.namespace.QName(SCIBACK_NS, 'rejectedAt')))
-        delta.addModificationReplaceProperty(com.evolveum.midpoint.prism.path.ItemPath.create(
-            'extension', new javax.xml.namespace.QName(SCIBACK_NS, 'rejectionSource')))
-        midpoint.applyDelta(delta)
-    } else {
-        log.debug('PR-RECORD-REJECTION [{}]: perfil completo -- sin razones de rechazo', user.name)
-    }
-}
-                                    ]]></code>
-                                </s:script>
-                            </s:execute>
-                        </s:pipeline>
-                    </executeScript>
-                </scriptExecution>
             </policyActions>
         </policyRule>
     </inducement>
