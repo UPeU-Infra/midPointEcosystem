@@ -250,7 +250,6 @@ if (reasons) {
             <policyConstraints>
                 <transition>
                     <stateAfter>active</stateAfter>
-                    <directOwner>true</directOwner>
                 </transition>
             </policyConstraints>
             <policyActions>
