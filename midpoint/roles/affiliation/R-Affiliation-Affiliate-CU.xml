@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3">
+    <name>R-Affiliation-Affiliate-CU</name>
+    <description>Afiliacion birthright — estudiante o personal del Colegio Union que usa servicios UPeU</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="a1c40fd6-24e0-4bb0-b809-080edff6f9b0" type="ArchetypeType" relation="org:default"/>
+    </assignment>
+    <!-- Sin inducements todavia — se cablearán en Fase 5 cuando AR-* tengan constructions -->
+</role>
