@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- F3-Ronda1: Campus Juliaca — archetype campus, hijos reparentados desde DIR-GENERAL-CAMPUS-JULIACA -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="0262b695-3b27-4011-b70f-97629d7688e9">
+  <name>OU-CAMPUS-JULIACA</name>
+  <displayName>Campus Juliaca</displayName>
+  <identifier>ou.campus.juliaca</identifier>
+  <assignment>
+    <!-- Archetype: campus -->
+    <targetRef oid="a0c2e4e3-911c-4146-9447-f91a1416feff" type="ArchetypeType"/>
+  </assignment>
+  <assignment>
+    <!-- Parent: UPeU (root) -->
+    <targetRef oid="00000000-0000-0000-0000-497211782216" type="OrgType" relation="org:default"/>
+  </assignment>
+</org>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- F3-Ronda1: Campus Tarapoto — archetype campus, hijos reparentados desde DIR-GENERAL-CAMPUS-TARAPOTO -->
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+     xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+     oid="5e7bb68a-b6ae-477e-be70-809a37fc2711">
+  <name>OU-CAMPUS-TARAPOTO</name>
+  <displayName>Campus Tarapoto</displayName>
+  <identifier>ou.campus.tarapoto</identifier>
+  <assignment>
+    <!-- Archetype: campus -->
+    <targetRef oid="a0c2e4e3-911c-4146-9447-f91a1416feff" type="ArchetypeType"/>
+  </assignment>
+  <assignment>
+    <!-- Parent: UPeU (root) -->
+    <targetRef oid="00000000-0000-0000-0000-497211782216" type="OrgType" relation="org:default"/>
+  </assignment>
+</org>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- F3-Ronda1: Unidades de Campus Juliaca y Tarapoto — reparentadas a OU-CAMPUS-* -->
+<objects xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+         xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3">
+
+  <!-- Campus Juliaca -->
+  <org oid="8dc19d75-44a5-4a5a-95d0-37f008d3c3d8">
+    <name>DIR-CRAI-JULIACA</name>
+    <displayName>Dirección del CRAI</displayName>
+    <identifier>dir.crai.juliaca</identifier>
+    <assignment>
+      <!-- Archetype: academic-unit -->
+      <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <!-- Parent: OU-CAMPUS-JULIACA (antes DIR-GENERAL-CAMPUS-JULIACA) -->
+      <targetRef oid="0262b695-3b27-4011-b70f-97629d7688e9" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- Campus Tarapoto -->
+  <org oid="e4fc894c-dd5a-421c-819f-58cf3676f3b9">
+    <name>DIR-CRAI-TARAPOTO</name>
+    <displayName>Dirección del CRAI</displayName>
+    <identifier>dir.crai.tarapoto</identifier>
+    <assignment>
+      <!-- Archetype: academic-unit -->
+      <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <!-- Parent: OU-CAMPUS-TARAPOTO (antes DIR-GENERAL-CAMPUS-TARAPOTO) -->
+      <targetRef oid="5e7bb68a-b6ae-477e-be70-809a37fc2711" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+</objects>
