@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DEPRECADO — F2 Refactor de Archetypes UPeU 2026-05
+  Anti-pattern spec §10.1: mezclar Persona con Afiliación en archetypes.
+  Reemplazado por: archetype Person (structural) + R-Affiliation-Contractor (role birthright).
+  Nota spec §3.2.b: Contractor emite eduPersonAffiliation=affiliate (NO employee).
+  NO borrar hasta F9 purga de usuarios legacy. 0 usuarios activos al momento de deprecación.
+-->
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+           oid="18337126-27ad-421b-8860-59403c36f1b8">
+    <name>archetype-user-contractor</name>
+    <lifecycleState>deprecated</lifecycleState>
+</archetype>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Archetype: Position
+  OID: b51e4e39-fc48-42ef-9916-3b7ad6647b9b (nuevo, fijo)
+
+  Spec canónica: §3.3 Pilar 3 — Position-Based Access Control
+  Las Positions son objetos ServiceType catalogados. Cada Position induce
+  el paquete completo de Business Roles + Application Roles + parentOrgRef.
+
+  Estructura de Position (spec §3.3):
+    ServiceType + archetype Position
+    ├── identifier: código catalogado (POS-DECANO-FIA, POS-DOCENTE-TC-EP-SIS, ...)
+    ├── inducements → Business Roles + Application Roles + parentOrgRef
+    └── assignment: holderType=ServiceType (porta el archetype) + holderType=UserType (recibe assignments)
+
+  Estructura: assignment > assignmentRelation > holderType (forma MidPoint 4.9)
+  Dos assignments: uno para ServiceType, otro para UserType.
+
+  F2 — Refactor de Archetypes UPeU 2026-05
+-->
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+           oid="b51e4e39-fc48-42ef-9916-3b7ad6647b9b">
+    <name>Position</name>
+    <description>Puesto catalogado UPeU (ServiceType). Cada Position induce Business Roles + Application Roles + parentOrgRef al User asignado. Catálogo organizado en árbol Position-Catalog paralelo al árbol funcional. Spec Pilar 3 + INCITS 359-2012 job function.</description>
+    <archetypePolicy>
+        <display>
+            <label>Posicion</label>
+            <pluralLabel>Posiciones</pluralLabel>
+            <icon>
+                <cssClass>fa fa-briefcase</cssClass>
+                <color>#fd7e14</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+    <!-- holderType ServiceType: el archetype se asigna a objetos ServiceType -->
+    <assignment>
+        <identifier>holderTypeService</identifier>
+        <assignmentRelation>
+            <holderType>ServiceType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <!-- holderType UserType: los users pueden recibir assignments a Positions -->
+    <assignment>
+        <identifier>holderTypeUser</identifier>
+        <assignmentRelation>
+            <holderType>UserType</holderType>
+        </assignmentRelation>
+    </assignment>
+</archetype>

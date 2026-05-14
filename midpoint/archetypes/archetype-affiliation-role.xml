@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Archetype: Affiliation-Role
+  OID: a1c40fd6-24e0-4bb0-b809-080edff6f9b0 (nuevo, fijo)
+
+  Spec canónica: §3.2 Pilar 2 — Afiliaciones como roles birthright multivalor
+  Este es el meta-archetype que se aplica a RoleType (no a UserType directamente).
+  Los roles R-Affiliation-Student, R-Affiliation-Faculty, etc. llevan este archetype.
+
+  Regla: los roles Affiliation-Role se auto-asignan vía assignmentTargetSearch en
+  el Object Template Person. NO se asignan manualmente.
+
+  Estructura: assignment > assignmentRelation > holderType (forma MidPoint 4.9)
+
+  F2 — Refactor de Archetypes UPeU 2026-05
+-->
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+           oid="a1c40fd6-24e0-4bb0-b809-080edff6f9b0">
+    <name>Affiliation-Role</name>
+    <description>Meta-archetype para roles de afiliacion birthright (R-Affiliation-Student, R-Affiliation-Faculty, R-Affiliation-Staff, R-Affiliation-Alum, R-Affiliation-Affiliate, R-Affiliation-Contractor, R-Affiliation-Library-Walk-In). Se aplica a RoleType. Spec Pilar 2.</description>
+    <archetypePolicy>
+        <display>
+            <label>Rol de Afiliacion</label>
+            <pluralLabel>Roles de Afiliacion</pluralLabel>
+            <icon>
+                <cssClass>fa fa-id-badge</cssClass>
+                <color>#28a745</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+    <!-- assignment > assignmentRelation es la forma canónica en MidPoint 4.9 -->
+    <assignment>
+        <identifier>holderType</identifier>
+        <assignmentRelation>
+            <holderType>RoleType</holderType>
+        </assignmentRelation>
+    </assignment>
+</archetype>

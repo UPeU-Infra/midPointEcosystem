@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DEPRECADO — F2 Refactor de Archetypes UPeU 2026-05
+  Anti-pattern spec §10.1: mezclar Persona con Afiliación en archetypes.
+  Reemplazado por: archetype Person (structural) + R-Affiliation-Alum (role birthright).
+  NO borrar hasta F9 purga de usuarios legacy. 0 usuarios activos al momento de deprecación.
+-->
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+           oid="87552943-9600-493b-88ca-74b7d3ba93e4">
+    <name>archetype-user-alumni</name>
+    <lifecycleState>deprecated</lifecycleState>
+</archetype>

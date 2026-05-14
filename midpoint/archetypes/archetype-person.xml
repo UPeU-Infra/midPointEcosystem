@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Archetype: Person (structural)
+  OID: 00000000-0000-0000-0000-000000000702 (built-in Evolveum, PATCH over existing)
+
+  Spec canónica: §3.1 Pilar 1 — Persona única, §4.2 Archetype único Person
+  Regla: un único archetype structural por UserType. Sin inducements (libro §8.4).
+  Regla: NO codifica afiliación. Afiliaciones = R-Affiliation-* roles (spec §3.2).
+
+  F2 — Refactor de Archetypes UPeU 2026-05
+-->
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+           oid="00000000-0000-0000-0000-000000000702">
+    <name>Person</name>
+    <description>Toda persona física vinculada a UPeU. Único archetype structural permitido para UserType. Las afiliaciones (student/faculty/staff/alum/affiliate) se expresan como R-Affiliation-* roles, NO como archetypes distintos. Spec §3.1 + §4.2.</description>
+    <archetypePolicy>
+        <display>
+            <label>Persona UPeU</label>
+            <pluralLabel>Personas UPeU</pluralLabel>
+            <icon>
+                <cssClass>fa fa-user</cssClass>
+                <color>#0072b5</color>
+            </icon>
+        </display>
+        <conflictResolution>
+            <action>recompute</action>
+        </conflictResolution>
+        <!-- objectTemplateRef: se vincilará en F5 cuando el Object Template Person esté desplegado -->
+    </archetypePolicy>
+    <!-- assignmentRelation: solo UserType puede recibir este archetype -->
+    <assignmentRelation>
+        <holderType>UserType</holderType>
+    </assignmentRelation>
+    <!-- SIN inducements: archetypes structural no inducen privilegios (libro §8.4) -->
+</archetype>
