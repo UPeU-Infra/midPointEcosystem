@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+        oid="64ed4155-147f-4081-89db-8d7e451d9c00">
+    <name>UPeU — Schema local extensiones LAMB v1.0</name>
+    <description>Schema de extensión específico UPeU. Namespace: urn:upeu:midpoint:local. Atributos del ERP LAMB (Oracle) y particularidades institucionales UPeU que no aplican a otras universidades SciBack IGA.</description>
+    <lifecycleState>active</lifecycleState>
+    <definition>
+        <xsd:schema
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3"
+            xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+            xmlns:tns="urn:upeu:midpoint:local"
+            targetNamespace="urn:upeu:midpoint:local"
+            elementFormDefault="qualified">
+
+            <xsd:import namespace="http://prism.evolveum.com/xml/ns/public/annotation-3"/>
+            <xsd:import namespace="http://midpoint.evolveum.com/xml/ns/public/common/common-3"/>
+
+            <!-- UserExtensionType — extensiones locales UPeU. Todos xsd:string. -->
+            <xsd:complexType name="UserExtensionType">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                        <a:displayName>Datos locales UPeU (LAMB)</a:displayName>
+                        <a:help>Extensión local v1.0. Campos del ERP Oracle LAMB específicos de UPeU. No reutilizable entre universidades SciBack IGA.</a:help>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+
+                    <!-- L1 — IDENTIFICADORES LAMB -->
+                    <xsd:element name="lambIdPersona" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>ID LAMB (ID_PERSONA)</a:displayName><a:indexed>true</a:indexed><a:displayOrder>10</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- L2 — ORGANIZACIÓN LAMB -->
+                    <xsd:element name="depto" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Departamento (ID LAMB)</a:displayName><a:indexed>true</a:indexed><a:displayOrder>20</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- L3 — PREVISIÓN SOCIAL (LAMB / RRHH) -->
+                    <xsd:element name="lambSNP" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Régimen pensiones (ONP/AFP)</a:displayName><a:help>ONP|AFP</a:help><a:displayOrder>30</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="lambCUSSP" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código seguro social (CUSSP)</a:displayName><a:displayOrder>40</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- L4 — PARTICULARIDADES INSTITUCIONALES UPeU ADVENTISTA -->
+                    <xsd:element name="lambFecMisionero" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de ordenación/misión</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>50</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                </xsd:sequence>
+            </xsd:complexType>
+
+        </xsd:schema>
+    </definition>
+</schema>

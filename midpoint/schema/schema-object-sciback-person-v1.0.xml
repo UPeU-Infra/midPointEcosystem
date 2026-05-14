@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
-        oid="b7d55017-599f-4f2f-9493-9f64bba62c5b">
-    <name>Schema canónico UPeU — Person v3.1</name>
-    <description>Schema de extensión canónico para UserType UPeU. Namespace: urn:upeu:midpoint:person. Versión 3.1. Alineado: eduPerson 202208, SCHAC 1.6.0, SCIM 2.0, ISO 24760, Ley 29733. Todos los tipos xsd:string para compatibilidad con SchemaType DB. identityDocuments[] como PrismContainer (a:container).</description>
-    <lifecycleState>deprecated</lifecycleState>
+        oid="e800335c-9ca1-4a2d-b4ca-e06f6db42693">
+    <name>SciBack IGA — Schema canónico universitario Perú v1.0</name>
+    <description>Schema de extensión canónico para universidades peruanas. Namespace: urn:sciback:midpoint:person. Alineado: eduPerson 202208, SCHAC 1.6.0, SCIM 2.0, ISO 24760, Ley 29733, Ley 30220, SUNEDU CBC. Reutilizable por cualquier universidad licenciada SUNEDU en plataforma SciBack IGA.</description>
+    <lifecycleState>active</lifecycleState>
     <definition>
         <xsd:schema
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3"
             xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
-            xmlns:tns="urn:upeu:midpoint:person"
-            targetNamespace="urn:upeu:midpoint:person"
+            xmlns:tns="urn:sciback:midpoint:person"
+            targetNamespace="urn:sciback:midpoint:person"
             elementFormDefault="qualified">
 
             <xsd:import namespace="http://prism.evolveum.com/xml/ns/public/annotation-3"/>
@@ -58,8 +58,8 @@
                 <xsd:annotation>
                     <xsd:appinfo>
                         <a:extension ref="c:UserType"/>
-                        <a:displayName>Datos de persona UPeU</a:displayName>
-                        <a:help>Extensión canónica v3.1. eduPerson 202208 + SCHAC 1.6.0 + SCIM 2.0 + ISO 24760 + Ley 29733.</a:help>
+                        <a:displayName>Datos de persona SciBack IGA</a:displayName>
+                        <a:help>Extensión canónica v1.0. eduPerson 202208 + SCHAC 1.6.0 + SCIM 2.0 + ISO 24760 + Ley 29733 + Ley 30220 + SUNEDU CBC.</a:help>
                     </xsd:appinfo>
                 </xsd:annotation>
                 <xsd:sequence>
@@ -70,9 +70,6 @@
                     </xsd:element>
                     <xsd:element name="institutionalCode" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>Código institucional</a:displayName><a:indexed>true</a:indexed><a:displayOrder>110</a:displayOrder></xsd:appinfo></xsd:annotation>
-                    </xsd:element>
-                    <xsd:element name="lambIdPersona" type="xsd:string" minOccurs="0" maxOccurs="1">
-                        <xsd:annotation><xsd:appinfo><a:displayName>ID LAMB (ID_PERSONA)</a:displayName><a:indexed>true</a:indexed><a:displayOrder>120</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
                     <xsd:element name="externalSystemId" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>ID sistema externo</a:displayName><a:indexed>true</a:indexed><a:displayOrder>130</a:displayOrder></xsd:appinfo></xsd:annotation>
@@ -180,9 +177,6 @@
                     <xsd:element name="contractType" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>Tipo de contrato</a:displayName><a:displayOrder>640</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="depto" type="xsd:string" minOccurs="0" maxOccurs="1">
-                        <xsd:annotation><xsd:appinfo><a:displayName>Departamento (ID LAMB)</a:displayName><a:indexed>true</a:indexed><a:displayOrder>650</a:displayOrder></xsd:appinfo></xsd:annotation>
-                    </xsd:element>
 
                     <!-- S7 — INVESTIGACIÓN -->
                     <xsd:element name="orcid" type="xsd:string" minOccurs="0" maxOccurs="1">
@@ -220,7 +214,7 @@
                         <xsd:annotation><xsd:appinfo><a:displayName>Notas del revisor</a:displayName><a:displayOrder>950</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
 
-                    <!-- S10 — DEPRECADOS (compatibilidad v3.0) -->
+                    <!-- S10 — DEPRECADOS (compatibilidad v3.0 / urn:upeu:midpoint:person) -->
                     <xsd:element name="taxId" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] DNI/CE (taxId)</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9900</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
