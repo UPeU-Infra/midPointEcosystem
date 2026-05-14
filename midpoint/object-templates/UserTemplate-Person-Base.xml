@@ -1,0 +1,527 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  UserTemplate-Person-Base — Template canónico base UPeU
+  OID: 855caaca-68c4-4f7f-8ff8-b4e35dd7d390
+  Versión: 2.0 (2026-05-14)
+  Schema: urn:sciback:midpoint:person (canónico) + urn:upeu:midpoint:local (LAMB)
+  Aplica a: todos los UserType via archetypePolicy en Archetype-Person-Built-in
+  Libro Cap.9: template se activa en cada create/modify/recompute del focus object.
+
+  Bloques implementados:
+    A — Identifier inmutable: name ← personalNumber (strong)
+    B — Datos derivados: fullName, emailAddress institucional (weak)
+    C — eppn (eduPersonPrincipalName): strong, identificador federado
+    D — Auto-asignación R-Affiliation-* via assignmentTargetSearch
+    E — Asignación a Org (TODO: espera LAMB inbound depto→OU)
+    F — Lifecycle gate draft→active (política estricta UPeU: doc primario + afiliación)
+
+  Validaciones de formato (weak/log-warn):
+    birthDate (YYYY-MM-DD), gender (ISO 5218), nationality (ISO 3166 alpha-3),
+    hireDate (YYYY-MM-DD), terminationDate (YYYY-MM-DD)
+
+  Leaver policy:
+    activation/administrativeStatus ← terminationDate <= today → DISABLED (strong)
+-->
+<objectTemplate
+    xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:sciback="urn:sciback:midpoint:person"
+    xmlns:upeu="urn:upeu:midpoint:local"
+    xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390">
+
+    <name>UserTemplate-Person-Base</name>
+    <description>Template canónico base UPeU v2.0. Bloques A-F implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant.</description>
+    <lifecycleState>active</lifecycleState>
+
+    <!-- ============================================================
+         BLOQUE A — IDENTIFIER INMUTABLE
+         name ← personalNumber (strong)
+         Libro Cap.9: "best choice is something already unique, immutable
+         and reasonably short". personalNumber es el campo exacto para esto.
+         strong = fuerza valor incluso sobre overrides manuales.
+         Fallback a derivado inicial+apellido solo si personalNumber ausente.
+         ============================================================ -->
+    <item>
+        <ref>name</ref>
+        <mapping>
+            <name>A-name-from-personalNumber</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>personalNumber</path>
+            </source>
+            <source>
+                <path>givenName</path>
+            </source>
+            <source>
+                <path>familyName</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+                        // Preferencia 1: personalNumber — identificador institucional inmutable
+                        if (personalNumber != null &amp;&amp; basic.stringify(personalNumber).trim() != '') {
+                            return basic.stringify(personalNumber).trim()
+                        }
+                        // Preferencia 2: inicial + apellido normalizado (sin tildes, lowercase)
+                        // Solo como fallback temporal hasta que LAMB inbound asigne personalNumber
+                        def gn = givenName != null ? basic.norm(basic.stringify(givenName)) : ''
+                        def fn = familyName != null ? basic.norm(basic.stringify(familyName)) : ''
+                        if (gn == '' &amp;&amp; fn == '') return null
+                        def initial = gn.take(1)
+                        def lastname = fn.replaceAll(' ', '')
+                        return (initial + lastname).take(8) + iterationToken
+                    </code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
+         BLOQUE B — DATOS DERIVADOS BÁSICOS
+         fullName ← givenName + familyName (strong)
+         emailAddress ← personalNumber + "@upeu.edu.pe" (weak)
+         weak en emailAddress = no sobrescribe si LAMB inbound ya puso valor.
+         ============================================================ -->
+    <item>
+        <ref>fullName</ref>
+        <mapping>
+            <name>B-fullname-from-given-family</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>givenName</path>
+            </source>
+            <source>
+                <path>familyName</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+                        if (givenName == null &amp;&amp; familyName == null) return null
+                        def gn = givenName != null ? basic.stringify(givenName).trim() : ''
+                        def fn = familyName != null ? basic.stringify(familyName).trim() : ''
+                        return (gn + ' ' + fn).trim()
+                    </code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+    <item>
+        <ref>emailAddress</ref>
+        <mapping>
+            <name>B-email-institutional-from-personalNumber</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <source>
+                <path>personalNumber</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+                        // weak: no sobrescribe si LAMB inbound ya proporcionó email real
+                        if (personalNumber == null) return null
+                        def pn = basic.stringify(personalNumber).trim()
+                        if (pn == '') return null
+                        return pn + '@upeu.edu.pe'
+                    </code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>personalNumber != null &amp;&amp; basic.stringify(personalNumber).trim() != ''</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
+         BLOQUE C — eppn (eduPersonPrincipalName)
+         eppn = personalNumber@upeu.edu.pe (strong)
+         REFEDS R&S: eppn es el identificador federado primario de la persona.
+         strong = inmutable una vez asignado. NUNCA cambiar con rename de user.
+         Namespace: urn:sciback:midpoint:person
+         ============================================================ -->
+    <item>
+        <ref>extension/sciback:eppn</ref>
+        <mapping>
+            <name>C-eppn-from-personalNumber</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>personalNumber</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+                        // eppn = eduPersonPrincipalName (REFEDS R&amp;S)
+                        // Formato: localPart@scope (scope = dominio institucional)
+                        if (personalNumber == null) return null
+                        def pn = basic.stringify(personalNumber).trim()
+                        if (pn == '') return null
+                        return pn + '@upeu.edu.pe'
+                    </code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>personalNumber != null &amp;&amp; basic.stringify(personalNumber).trim() != ''</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
+         BLOQUE D — AUTO-ASIGNACIÓN R-Affiliation-* via assignmentTargetSearch
+         Libro Cap.9: assignmentTargetSearch busca target por filtro dinámico
+         y construye el assignment completo. Patrón birthright roles.
+
+         Fuente: extension/sciback:primaryAffiliation
+         Valores esperados desde LAMB inbound:
+           STUDENT     → R-Affiliation-Student  (79ad22c7-...)
+           FACULTY     → R-Affiliation-Faculty  (94a03f65-...)
+           STAFF       → R-Affiliation-Staff    (0da0b3b8-...)
+           EMPLOYEE    → R-Affiliation-Employee (7d4e89fb-...)
+           ALUMNI      → R-Affiliation-Alumni   (485dc678-...)
+           AFFILIATE-CU → R-Affiliation-Affiliate-CU (31f25974-...)
+
+         Lógica: busca rol por name = "R-Affiliation-" + capitalize(primaryAffiliation)
+         AFFILIATE-CU requiere manejo especial (guion en el valor).
+
+         strong: fuerza asignación en cada recompute.
+         Condición: solo cuando primaryAffiliation tiene valor no vacío.
+         ============================================================ -->
+    <mapping>
+        <name>D-assign-affiliation-role-from-primaryAffiliation</name>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>RoleType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <expression>
+                            <script>
+                                <code>
+                                    // Construir nombre de rol canónico desde primaryAffiliation
+                                    // Valores LAMB → nombres de rol:
+                                    //   STUDENT      → R-Affiliation-Student
+                                    //   FACULTY      → R-Affiliation-Faculty
+                                    //   STAFF        → R-Affiliation-Staff
+                                    //   EMPLOYEE     → R-Affiliation-Employee
+                                    //   ALUMNI       → R-Affiliation-Alumni
+                                    //   AFFILIATE-CU → R-Affiliation-Affiliate-CU
+                                    if (primaryAffiliation == null) return null
+                                    def val = basic.stringify(primaryAffiliation).trim().toUpperCase()
+                                    // Mapeo explícito para garantizar nombres exactos de roles
+                                    def roleMap = [
+                                        'STUDENT':      'R-Affiliation-Student',
+                                        'FACULTY':      'R-Affiliation-Faculty',
+                                        'STAFF':        'R-Affiliation-Staff',
+                                        'EMPLOYEE':     'R-Affiliation-Employee',
+                                        'ALUMNI':       'R-Affiliation-Alumni',
+                                        'AFFILIATE-CU': 'R-Affiliation-Affiliate-CU'
+                                    ]
+                                    return roleMap[val]
+                                </code>
+                            </script>
+                        </expression>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>
+                    primaryAffiliation != null &amp;&amp;
+                    basic.stringify(primaryAffiliation).trim() != '' &amp;&amp;
+                    ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUMNI','AFFILIATE-CU'].contains(
+                        basic.stringify(primaryAffiliation).trim().toUpperCase()
+                    )
+                </code>
+            </script>
+        </condition>
+    </mapping>
+
+    <!-- ============================================================
+         BLOQUE E — ASIGNACIÓN A ORG VIA assignmentTargetSearch
+         TODO: Activar cuando LAMB inbound tenga mapeado upeu:depto → identifier de OU.
+         El campo upeu:depto contiene el ID del departamento en LAMB.
+         Buscar OrgType por identifier = depto para crear el assignment al OU.
+
+         <mapping>
+           <name>E-assign-org-from-depto</name>
+           <lifecycleState>DISABLED-pending-lamb-inbound</lifecycleState>
+           <strength>strong</strength>
+           <source><path>extension/upeu:depto</path></source>
+           <expression>
+             <assignmentTargetSearch>
+               <targetType>OrgType</targetType>
+               <filter>
+                 <q:equal>
+                   <q:path>identifier</q:path>
+                   <expression><script><code>basic.stringify(depto)</code></script></expression>
+                 </q:equal>
+               </filter>
+               <createOnDemand>false</createOnDemand>
+             </assignmentTargetSearch>
+           </expression>
+           <target><path>assignment</path></target>
+           <condition>
+             <script><code>depto != null &amp;&amp; basic.stringify(depto).trim() != ''</code></script>
+           </condition>
+         </mapping>
+
+         Pendiente: Fase 5 LAMB inbound debe mapear DEPTO/ORG_AREA → upeu:depto.
+         Cuando upeu:depto esté disponible, cambiar lifecycleState a active.
+         ============================================================ -->
+
+    <!-- ============================================================
+         BLOQUE F — LIFECYCLE GATE: draft → active
+         Política estricta UPeU (Pilar 4 — Import estricto):
+         Solo pasa a 'active' si cumple AMBAS condiciones:
+           1. Tiene >= 1 identityDocument con primary = "true"
+           2. Tiene >= 1 assignment a un rol R-Affiliation-*
+
+         Si no cumple → permanece en 'draft' (cuentas incompletas
+         van a cola de reconciliación, no se propagan a OpenLDAP/Keycloak).
+
+         strong: revalúa en cada recompute. Si se pierde la afiliación
+         (leaver), vuelve a draft automáticamente.
+         ============================================================ -->
+    <mapping>
+        <name>F-lifecycle-gate-draft-to-active</name>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <source>
+            <path>extension/sciback:identityDocuments</path>
+        </source>
+        <expression>
+            <script>
+                <code>
+                    import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+
+                    // Condición 1: tiene documento de identidad primario
+                    def hasPrimaryDoc = false
+                    def docs = focus?.extension?.findProperty(
+                        new javax.xml.namespace.QName('urn:sciback:midpoint:person','identityDocuments')
+                    )
+                    // Verificar si hay al menos un contenedor identityDocuments con primary="true"
+                    if (focus?.extension != null) {
+                        def idDocsContainers = focus.extension.findContainers(
+                            new javax.xml.namespace.QName('urn:sciback:midpoint:person','identityDocuments')
+                        )
+                        if (idDocsContainers != null) {
+                            hasPrimaryDoc = idDocsContainers.any { container ->
+                                def primaryProp = container?.findProperty(
+                                    new javax.xml.namespace.QName('urn:sciback:midpoint:person','primary')
+                                )
+                                primaryProp != null &amp;&amp; 'true' == basic.stringify(primaryProp.realValue)
+                            }
+                        }
+                    }
+
+                    // Condición 2: tiene afiliación primaria válida
+                    def validAffiliations = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUMNI','AFFILIATE-CU']
+                    def hasAffiliation = primaryAffiliation != null &amp;&amp;
+                        validAffiliations.contains(basic.stringify(primaryAffiliation).trim().toUpperCase())
+
+                    // Gate: solo active si cumple ambas condiciones
+                    if (hasPrimaryDoc &amp;&amp; hasAffiliation) {
+                        return 'active'
+                    } else {
+                        // Loguear razón para diagnóstico
+                        if (!hasPrimaryDoc) {
+                            log.info("UPeU lifecycle gate: {} sin documento primario → draft", focus?.name)
+                        }
+                        if (!hasAffiliation) {
+                            log.info("UPeU lifecycle gate: {} sin afiliación válida → draft", focus?.name)
+                        }
+                        return 'draft'
+                    }
+                </code>
+            </script>
+        </expression>
+        <target>
+            <path>lifecycleState</path>
+        </target>
+    </mapping>
+
+    <!-- ============================================================
+         LEAVER POLICY — DISABLE EN TERMINATIONDATE
+         activation/administrativeStatus ← terminationDate <= today → DISABLED
+         ISO 24760: active → suspended en fecha de cese.
+         strong: se aplica en cada recompute si terminationDate está presente.
+         Namespace: urn:sciback:midpoint:person
+         ============================================================ -->
+    <item>
+        <ref>activation/administrativeStatus</ref>
+        <mapping>
+            <name>leaver-disable-on-terminationdate</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>extension/sciback:terminationDate</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+                        import java.time.LocalDate
+                        import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+                        if (terminationDate == null) return null
+                        def v = basic.stringify(terminationDate)
+                        if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) return null
+                        try {
+                            def td = LocalDate.parse(v)
+                            if (!td.isAfter(LocalDate.now())) {
+                                return ActivationStatusType.DISABLED
+                            }
+                        } catch (Exception e) {
+                            log.warn("UPeU template leaver: terminationDate no parseable '{}' en {}: {}", v, focus?.name, e.message)
+                        }
+                        return null
+                    </code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>terminationDate != null</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
+         VALIDACIONES DE FORMATO (strength: weak / log-warn)
+         No bloquean — solo registran warning en audit log si el valor
+         no cumple el formato canónico esperado. Namespace: sciback:
+         ============================================================ -->
+    <item>
+        <ref>extension/sciback:birthDate</ref>
+        <mapping>
+            <name>validate-birthdate-format</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <source>
+                <path>extension/sciback:birthDate</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+                        if (birthDate == null) return null
+                        def v = basic.stringify(birthDate)
+                        if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) {
+                            log.warn("UPeU template: birthDate inválido '{}' en {} (esperado YYYY-MM-DD)", v, focus?.name)
+                        }
+                        return v
+                    </code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+    <item>
+        <ref>extension/sciback:gender</ref>
+        <mapping>
+            <name>validate-gender-iso5218</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <source>
+                <path>extension/sciback:gender</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+                        if (gender == null) return null
+                        def v = basic.stringify(gender)
+                        if (!(v ==~ /^[0129]$/)) {
+                            log.warn("UPeU template: gender inválido '{}' en {} (esperado 0|1|2|9 ISO 5218)", v, focus?.name)
+                        }
+                        return v
+                    </code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+    <item>
+        <ref>extension/sciback:nationality</ref>
+        <mapping>
+            <name>validate-nationality-iso3166-alpha3</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <source>
+                <path>extension/sciback:nationality</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+                        if (nationality == null) return null
+                        def v = basic.stringify(nationality)
+                        if (!(v ==~ /^[A-Z]{3}$/)) {
+                            log.warn("UPeU template: nationality no-canónico '{}' en {} (esperado ISO 3166-1 alpha-3)", v, focus?.name)
+                        }
+                        return v
+                    </code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+    <item>
+        <ref>extension/sciback:hireDate</ref>
+        <mapping>
+            <name>validate-hiredate-format</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <source>
+                <path>extension/sciback:hireDate</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+                        if (hireDate == null) return null
+                        def v = basic.stringify(hireDate)
+                        if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) {
+                            log.warn("UPeU template: hireDate inválido '{}' en {} (esperado YYYY-MM-DD)", v, focus?.name)
+                        }
+                        return v
+                    </code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+    <item>
+        <ref>extension/sciback:terminationDate</ref>
+        <mapping>
+            <name>validate-terminationdate-format</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <source>
+                <path>extension/sciback:terminationDate</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+                        if (terminationDate == null) return null
+                        def v = basic.stringify(terminationDate)
+                        if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) {
+                            log.warn("UPeU template: terminationDate inválido '{}' en {} (esperado YYYY-MM-DD)", v, focus?.name)
+                        }
+                        return v
+                    </code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+
+</objectTemplate>
