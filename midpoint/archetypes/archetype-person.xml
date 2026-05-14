@@ -25,7 +25,8 @@
         <conflictResolution>
             <action>recompute</action>
         </conflictResolution>
-        <!-- objectTemplateRef: se vincilará en F5 cuando el Object Template Person esté desplegado -->
+        <!-- HIGH-2 fix 2026-05-14: vinculado al UserTemplate-Person-Base real (OID verificado en PROD) -->
+        <objectTemplateRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" type="c:ObjectTemplateType"/>
     </archetypePolicy>
     <!-- assignmentRelation: solo UserType puede recibir este archetype -->
     <assignmentRelation>
