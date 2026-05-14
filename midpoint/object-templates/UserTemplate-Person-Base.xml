@@ -360,20 +360,29 @@
                         if (pn == '') reasons &lt;&lt; 'PR-02: personalNumber ausente o vacio'
 
                         // PR-03 + PR-04: identityDocument primario y DNI valido
+                        // identityDocuments es una variable de tipo PrismContainerValue (o coleccion)
+                        // inyectada por MidPoint desde el source extension/sciback:identityDocuments.
+                        // Iterar con PrismContainerValue.findProperty(ItemPath) para leer sub-campos.
                         def hasPrimary = false
                         def primaryDocNumber = null
                         def primaryDocType = null
                         try {
-                            def containers = focus?.extension?.findContainers(
-                                new javax.xml.namespace.QName(SCIBACK_NS, 'identityDocuments')
-                            )
-                            if (containers) {
-                                containers.each { c ->
-                                    def primVal = c?.findProperty(new javax.xml.namespace.QName(SCIBACK_NS, 'primary'))?.realValue
-                                    if ('true' == primVal?.toString()) {
+                            def primQN   = new javax.xml.namespace.QName(SCIBACK_NS, 'primary')
+                            def numQN    = new javax.xml.namespace.QName(SCIBACK_NS, 'number')
+                            def typeQN   = new javax.xml.namespace.QName(SCIBACK_NS, 'type')
+                            def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(primQN)
+                            def numPath  = com.evolveum.midpoint.prism.path.ItemPath.create(numQN)
+                            def typePath = com.evolveum.midpoint.prism.path.ItemPath.create(typeQN)
+                            // identityDocuments puede ser una sola PrismContainerValue o una List segun MP version
+                            def docs = identityDocuments
+                            if (docs != null) {
+                                def docList = (docs instanceof List) ? docs : [docs]
+                                docList.each { doc ->
+                                    def primProp = doc?.findProperty(primPath)
+                                    if ('true' == primProp?.realValue?.toString()) {
                                         hasPrimary = true
-                                        primaryDocNumber = c?.findProperty(new javax.xml.namespace.QName(SCIBACK_NS, 'number'))?.realValue?.toString()
-                                        primaryDocType   = c?.findProperty(new javax.xml.namespace.QName(SCIBACK_NS, 'type'))?.realValue?.toString()
+                                        primaryDocNumber = doc?.findProperty(numPath)?.realValue?.toString()
+                                        primaryDocType   = doc?.findProperty(typePath)?.realValue?.toString()
                                     }
                                 }
                             }
