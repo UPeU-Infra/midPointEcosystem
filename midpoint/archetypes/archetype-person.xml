@@ -89,12 +89,13 @@
                 <record/>
                 <scriptExecution>
                     <object>
-                        <focus/>
+                        <currentObject/>
                     </object>
                     <executeScript>
                         <s:pipeline>
                             <s:execute>
                                 <s:script>
+                                    <!-- input = currentObject (el UserType evaluado) -->
                                     <code><![CDATA[
 import java.time.Instant
 
