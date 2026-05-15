@@ -55,9 +55,11 @@ def cleanText = text.replaceFirst(/(?i)^EP\s+/, '').trim()
 def tableOid = 'd9b1e0c2-e036-4c6a-9753-c732a83bbf0a'
 
 try {
-    def LookupTableType = com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType
-    def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(com.evolveum.midpoint.schema.constants.SchemaConstants.RETRIEVE_LOOKUP_TABLE_ALL)
-    def tableObj = midpoint.getObject(LookupTableType, tableOid, options)
+    def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(
+        com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.F_ROW,
+        com.evolveum.midpoint.schema.GetOperationOptions.createRetrieve()
+    )
+    def tableObj = midpoint.getObject(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.class, tableOid, options)
     if (tableObj == null) {
         log.warn('sb-program-resolver: LookupTable {} not found', tableOid)
         return null
@@ -118,9 +120,11 @@ def cleanText = text.replaceFirst(/(?i)^EP\s+/, '').trim()
 def tableOid = 'd9b1e0c2-e036-4c6a-9753-c732a83bbf0a'
 
 try {
-    def LookupTableType = com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType
-    def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(com.evolveum.midpoint.schema.constants.SchemaConstants.RETRIEVE_LOOKUP_TABLE_ALL)
-    def tableObj = midpoint.getObject(LookupTableType, tableOid, options)
+    def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(
+        com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.F_ROW,
+        com.evolveum.midpoint.schema.GetOperationOptions.createRetrieve()
+    )
+    def tableObj = midpoint.getObject(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.class, tableOid, options)
     if (tableObj == null) return null
     def rows = tableObj.getRow()
     if (rows == null) return null
