@@ -188,6 +188,30 @@
                     </expression>
                     <target><path>assignment</path></target>
                 </inbound>
+                <inbound>
+                    <name>archetype-to-primaryAffiliation</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>input == 'archetype-user-employee-faculty' ? 'faculty' : 'staff'</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:primaryAffiliation</path>
+                    </target>
+                </inbound>
+                <inbound>
+                    <name>archetype-to-affiliations</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>input == 'archetype-user-employee-faculty' ? 'faculty' : 'staff'</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:affiliations</path>
+                    </target>
+                </inbound>
             </attribute>
             <synchronization>
                 <reaction>

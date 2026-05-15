@@ -169,6 +169,18 @@
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:primaryAffiliation</path>
                     </target>
                 </inbound>
+                <inbound>
+                    <name>afiliacion-to-affiliations</name>
+                    <strength>weak</strength>
+                    <expression>
+                        <script>
+                            <code>def map = ['ALUMNI':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff','EMPLOYEE':'employee']; def v = input?.toString()?.trim()?.toUpperCase(); v ? (map[v] ?: input.toString().trim().toLowerCase()) : null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:affiliations</path>
+                    </target>
+                </inbound>
             </attribute>
             <synchronization>
                 <reaction>
