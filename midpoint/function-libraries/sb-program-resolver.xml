@@ -46,17 +46,19 @@
         <script>
             <code>
 import com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType
-import com.evolveum.midpoint.schema.GetOperationOptions
-import com.evolveum.midpoint.schema.SelectorOptions
+import com.evolveum.midpoint.schema.constants.SchemaConstants
 
 if (programText == null) return null
 def text = programText.toString().trim()
 if (text.isEmpty()) return null
 
+// Quitar prefijo "EP " que usa Oracle LAMB en ESCUELA_PROFESIONAL y NOMBRE_ESCUELA
+def cleanText = text.replaceFirst(/(?i)^EP\s+/, '').trim()
+
 def tableOid = 'd9b1e0c2-e036-4c6a-9753-c732a83bbf0a'
 
 try {
-    def options = SelectorOptions.createCollection(GetOperationOptions.createRetrieve())
+    def options = SelectorOptions.createCollection(SchemaConstants.RETRIEVE_LOOKUP_TABLE_ALL)
     def tableObj = midpoint.getObject(LookupTableType.class, tableOid, options)
     if (tableObj == null) {
         log.warn('sb-program-resolver: LookupTable {} not found', tableOid)
@@ -68,9 +70,9 @@ try {
         return null
     }
 
-    // Pass 1: exact case-insensitive match
+    // Pass 1: exact case-insensitive match (texto limpio)
     for (def row : rows) {
-        if (row.getKey() != null &amp;&amp; row.getKey().equalsIgnoreCase(text)) {
+        if (row.getKey() != null &amp;&amp; row.getKey().equalsIgnoreCase(cleanText)) {
             return row.getValue()
         }
     }
@@ -83,14 +85,14 @@ try {
         n = n.replaceAll('\\s+', ' ')
         return n
     }
-    def normText = normalize(text)
+    def normText = normalize(cleanText)
     for (def row : rows) {
         if (normalize(row.getKey()) == normText) {
             return row.getValue()
         }
     }
 
-    log.debug('sb-program-resolver: no match for "{}"', text)
+    log.debug('sb-program-resolver: no match for "{}" (cleaned: "{}")', text, cleanText)
     return null
 } catch (Exception e) {
     log.warn('sb-program-resolver: error resolving "{}": {}', text, e.getMessage())
@@ -110,17 +112,19 @@ try {
         <script>
             <code>
 import com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType
-import com.evolveum.midpoint.schema.GetOperationOptions
 import com.evolveum.midpoint.schema.SelectorOptions
+import com.evolveum.midpoint.schema.constants.SchemaConstants
 
 if (programText == null) return null
 def text = programText.toString().trim()
 if (text.isEmpty()) return null
 
+def cleanText = text.replaceFirst(/(?i)^EP\s+/, '').trim()
+
 def tableOid = 'd9b1e0c2-e036-4c6a-9753-c732a83bbf0a'
 
 try {
-    def options = SelectorOptions.createCollection(GetOperationOptions.createRetrieve())
+    def options = SelectorOptions.createCollection(SchemaConstants.RETRIEVE_LOOKUP_TABLE_ALL)
     def tableObj = midpoint.getObject(LookupTableType.class, tableOid, options)
     if (tableObj == null) return null
     def rows = tableObj.getRow()
@@ -128,7 +132,7 @@ try {
 
     // Pass 1: exact case-insensitive
     for (def row : rows) {
-        if (row.getKey() != null &amp;&amp; row.getKey().equalsIgnoreCase(text)) {
+        if (row.getKey() != null &amp;&amp; row.getKey().equalsIgnoreCase(cleanText)) {
             def lab = row.getLabel()
             if (lab != null) return lab.getOrig()
             return null
@@ -143,7 +147,7 @@ try {
         n = n.replaceAll('\\s+', ' ')
         return n
     }
-    def normText = normalize(text)
+    def normText = normalize(cleanText)
     for (def row : rows) {
         if (normalize(row.getKey()) == normText) {
             def lab = row.getLabel()
