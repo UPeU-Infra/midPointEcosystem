@@ -91,11 +91,7 @@
                     <source><path>$shadow/attributes/ri:MATERNO</path></source>
                     <expression>
                         <script>
-                            <code>
-                                def p = (PATERNO ?: '').toString().trim()
-                                def m = (MATERNO ?: '').toString().trim()
-                                (p + (m ? ' ' + m : '')).trim() ?: null
-                            </code>
+                            <code>def p = (PATERNO ?: '').toString().trim(); def m = (MATERNO ?: '').toString().trim(); (p + (m ? ' ' + m : '')).trim() ?: null</code>
                         </script>
                     </expression>
                     <target><path>familyName</path></target>
@@ -109,10 +105,7 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>
-                                def d = (input ?: '').toString().trim()
-                                d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null
-                            </code>
+                            <code>def d = (input ?: '').toString().trim(); d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null</code>
                         </script>
                     </expression>
                     <target>
@@ -131,11 +124,7 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>
-                                if (input == null) return null
-                                def s = input.toString()
-                                s.length() >= 10 ? s.substring(0, 10) : null
-                            </code>
+                            <code>if (input == null) return null; def s = input.toString(); s.length() >= 10 ? s.substring(0, 10) : null</code>
                         </script>
                     </expression>
                     <target>
@@ -150,11 +139,7 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>
-                                if (input == null) return null
-                                def s = input.toString()
-                                s.length() >= 10 ? s.substring(0, 10) : null
-                            </code>
+                            <code>if (input == null) return null; def s = input.toString(); s.length() >= 10 ? s.substring(0, 10) : null</code>
                         </script>
                     </expression>
                     <target>
