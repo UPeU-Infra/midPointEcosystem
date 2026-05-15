@@ -45,10 +45,6 @@
         <returnType>xsd:string</returnType>
         <script>
             <code>
-import com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType
-import com.evolveum.midpoint.schema.SelectorOptions
-import com.evolveum.midpoint.schema.constants.SchemaConstants
-
 if (programText == null) return null
 def text = programText.toString().trim()
 if (text.isEmpty()) return null
@@ -59,8 +55,9 @@ def cleanText = text.replaceFirst(/(?i)^EP\s+/, '').trim()
 def tableOid = 'd9b1e0c2-e036-4c6a-9753-c732a83bbf0a'
 
 try {
-    def options = SelectorOptions.createCollection(SchemaConstants.RETRIEVE_LOOKUP_TABLE_ALL)
-    def tableObj = midpoint.getObject(LookupTableType.class, tableOid, options)
+    def LookupTableType = com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType
+    def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(com.evolveum.midpoint.schema.constants.SchemaConstants.RETRIEVE_LOOKUP_TABLE_ALL)
+    def tableObj = midpoint.getObject(LookupTableType, tableOid, options)
     if (tableObj == null) {
         log.warn('sb-program-resolver: LookupTable {} not found', tableOid)
         return null
@@ -112,10 +109,6 @@ try {
         <returnType>xsd:string</returnType>
         <script>
             <code>
-import com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType
-import com.evolveum.midpoint.schema.SelectorOptions
-import com.evolveum.midpoint.schema.constants.SchemaConstants
-
 if (programText == null) return null
 def text = programText.toString().trim()
 if (text.isEmpty()) return null
@@ -125,8 +118,9 @@ def cleanText = text.replaceFirst(/(?i)^EP\s+/, '').trim()
 def tableOid = 'd9b1e0c2-e036-4c6a-9753-c732a83bbf0a'
 
 try {
-    def options = SelectorOptions.createCollection(SchemaConstants.RETRIEVE_LOOKUP_TABLE_ALL)
-    def tableObj = midpoint.getObject(LookupTableType.class, tableOid, options)
+    def LookupTableType = com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType
+    def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(com.evolveum.midpoint.schema.constants.SchemaConstants.RETRIEVE_LOOKUP_TABLE_ALL)
+    def tableObj = midpoint.getObject(LookupTableType, tableOid, options)
     if (tableObj == null) return null
     def rows = tableObj.getRow()
     if (rows == null) return null
