@@ -171,7 +171,7 @@
                 </inbound>
                 <inbound>
                     <name>afiliacion-to-affiliations</name>
-                    <strength>weak</strength>
+                    <strength>normal</strength>
                     <expression>
                         <script>
                             <code>def map = ['ALUMNI':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff','EMPLOYEE':'employee']; def v = input?.toString()?.trim()?.toUpperCase(); v ? (map[v] ?: input.toString().trim().toLowerCase()) : null</code>

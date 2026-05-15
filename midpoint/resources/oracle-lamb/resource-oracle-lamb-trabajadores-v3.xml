@@ -202,7 +202,7 @@
                 </inbound>
                 <inbound>
                     <name>archetype-to-affiliations</name>
-                    <strength>strong</strength>
+                    <strength>normal</strength>
                     <expression>
                         <script>
                             <code>input == 'archetype-user-employee-faculty' ? 'faculty' : 'staff'</code>
