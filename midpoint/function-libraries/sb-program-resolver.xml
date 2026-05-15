@@ -46,6 +46,7 @@
         <script>
             <code>
 import com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType
+import com.evolveum.midpoint.schema.SelectorOptions
 import com.evolveum.midpoint.schema.constants.SchemaConstants
 
 if (programText == null) return null
