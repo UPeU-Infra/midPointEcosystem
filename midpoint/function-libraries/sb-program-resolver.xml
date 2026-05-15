@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FunctionLibrary: sb-program-resolver
+  OID: 6a99f9de-5db6-43d5-9b20-0cfd2b79ecf9
+
+  Funciones:
+    - resolveProgramUri(programText): String?
+        Recibe un texto crudo proveniente de Oracle LAMB
+        (ESCUELA_PROFESIONAL, NOMBRE_CERTIFICADO, NOMBRE_ESCUELA, etc.)
+        y devuelve la URI canonica del programa en VocBench
+        (Tesauro_Institucional_UPeU).
+        Estrategia de matching:
+          1. Lookup exacto, case-insensitive, en LookupTable program-resolver-lamb
+             (OID d9b1e0c2-e036-4c6a-9753-c732a83bbf0a).
+          2. Si no hay match, normaliza el texto (minuscula, sin tildes, trim
+             y reduccion de espacios) y reintenta contra todas las keys
+             normalizadas igual.
+          3. Devuelve null si no hay match (politica strict import: el
+             caller debe escalarlo a rejectionReasons).
+
+    - resolveProgramCode(programText): String?
+        Variante que devuelve el notation EP-XXX (label de la row) en lugar
+        de la URI completa. Util para mappings que poblen extension/sb:academicProgramCode.
+
+  Variables disponibles en contexto Groovy de MidPoint:
+    - midpoint        (MidpointFunctions, para acceder al repo)
+    - log             (Logger)
+
+  Spec SciBack F3 / Paso-3 IGA.
+-->
+<functionLibrary xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                 xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                 xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 oid="6a99f9de-5db6-43d5-9b20-0cfd2b79ecf9">
+    <name>sb-program-resolver</name>
+    <description>Resuelve texto crudo de Oracle LAMB a URI canonica VocBench usando LookupTable program-resolver-lamb. Devuelve null si no hay match (strict import).</description>
+
+    <function>
+        <name>resolveProgramUri</name>
+        <parameter>
+            <name>programText</name>
+            <type>xsd:string</type>
+        </parameter>
+        <returnType>xsd:string</returnType>
+        <script>
+            <code>
+import com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType
+import com.evolveum.midpoint.schema.GetOperationOptions
+import com.evolveum.midpoint.schema.SelectorOptions
+
+if (programText == null) return null
+def text = programText.toString().trim()
+if (text.isEmpty()) return null
+
+def tableOid = 'd9b1e0c2-e036-4c6a-9753-c732a83bbf0a'
+
+try {
+    def options = SelectorOptions.createCollection(GetOperationOptions.createRetrieve())
+    def tableObj = midpoint.getObject(LookupTableType.class, tableOid, options)
+    if (tableObj == null) {
+        log.warn('sb-program-resolver: LookupTable {} not found', tableOid)
+        return null
+    }
+    def rows = tableObj.getRow()
+    if (rows == null || rows.isEmpty()) {
+        log.warn('sb-program-resolver: LookupTable {} has no rows', tableOid)
+        return null
+    }
+
+    // Pass 1: exact case-insensitive match
+    for (def row : rows) {
+        if (row.getKey() != null &amp;&amp; row.getKey().equalsIgnoreCase(text)) {
+            return row.getValue()
+        }
+    }
+
+    // Pass 2: normalized match (lowercase, no accents, single spaces)
+    def normalize = { String s -&gt;
+        if (s == null) return ''
+        def n = java.text.Normalizer.normalize(s.toLowerCase().trim(), java.text.Normalizer.Form.NFD)
+        n = n.replaceAll('\\p{InCombiningDiacriticalMarks}+', '')
+        n = n.replaceAll('\\s+', ' ')
+        return n
+    }
+    def normText = normalize(text)
+    for (def row : rows) {
+        if (normalize(row.getKey()) == normText) {
+            return row.getValue()
+        }
+    }
+
+    log.debug('sb-program-resolver: no match for "{}"', text)
+    return null
+} catch (Exception e) {
+    log.warn('sb-program-resolver: error resolving "{}": {}', text, e.getMessage())
+    return null
+}
+            </code>
+        </script>
+    </function>
+
+    <function>
+        <name>resolveProgramCode</name>
+        <parameter>
+            <name>programText</name>
+            <type>xsd:string</type>
+        </parameter>
+        <returnType>xsd:string</returnType>
+        <script>
+            <code>
+import com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType
+import com.evolveum.midpoint.schema.GetOperationOptions
+import com.evolveum.midpoint.schema.SelectorOptions
+
+if (programText == null) return null
+def text = programText.toString().trim()
+if (text.isEmpty()) return null
+
+def tableOid = 'd9b1e0c2-e036-4c6a-9753-c732a83bbf0a'
+
+try {
+    def options = SelectorOptions.createCollection(GetOperationOptions.createRetrieve())
+    def tableObj = midpoint.getObject(LookupTableType.class, tableOid, options)
+    if (tableObj == null) return null
+    def rows = tableObj.getRow()
+    if (rows == null) return null
+
+    // Pass 1: exact case-insensitive
+    for (def row : rows) {
+        if (row.getKey() != null &amp;&amp; row.getKey().equalsIgnoreCase(text)) {
+            def lab = row.getLabel()
+            if (lab != null) return lab.getOrig()
+            return null
+        }
+    }
+
+    // Pass 2: normalized
+    def normalize = { String s -&gt;
+        if (s == null) return ''
+        def n = java.text.Normalizer.normalize(s.toLowerCase().trim(), java.text.Normalizer.Form.NFD)
+        n = n.replaceAll('\\p{InCombiningDiacriticalMarks}+', '')
+        n = n.replaceAll('\\s+', ' ')
+        return n
+    }
+    def normText = normalize(text)
+    for (def row : rows) {
+        if (normalize(row.getKey()) == normText) {
+            def lab = row.getLabel()
+            if (lab != null) return lab.getOrig()
+            return null
+        }
+    }
+    return null
+} catch (Exception e) {
+    log.warn('sb-program-resolver.resolveProgramCode: error "{}" -&gt; {}', text, e.getMessage())
+    return null
+}
+            </code>
+        </script>
+    </function>
+</functionLibrary>

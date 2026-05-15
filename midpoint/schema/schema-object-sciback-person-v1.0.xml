@@ -249,6 +249,31 @@
                 </xsd:sequence>
             </xsd:complexType>
 
+            <!-- OrgExtensionType — extension de OrgType para programas academicos -->
+            <xsd:complexType name="OrgExtensionType">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:OrgType"/>
+                        <a:displayName>Datos academicos de OrgType SciBack IGA</a:displayName>
+                        <a:help>Extension del OrgType. Usada por archetype-org-academic-program para vincular un Org a su concepto SKOS canonico en VocBench.</a:help>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="academicProgramUri" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>URI canonica del programa academico (VocBench SKOS)</a:displayName><a:help>Identificador persistente del concepto SKOS en el Tesauro Institucional. Ej.: http://upeu.edu.pe/sys/programas/c_bbf436cf. Coincide con el valor que se mapea hacia extension/sciback:academicProgramUri en el User.</a:help><a:indexed>true</a:indexed><a:displayOrder>100</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="academicProgramCode" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Codigo corto del programa</a:displayName><a:help>Notation SKOS del programa (p. ej. EP-SIS, EP-ENF). Mismo valor que el atributo "identifier" del Org pero indexado para busquedas.</a:help><a:indexed>true</a:indexed><a:displayOrder>110</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="studyLevel" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Nivel del programa</a:displayName><a:help>pregrado | maestria | doctorado | especializacion | segunda-especialidad</a:help><a:displayOrder>120</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="iscedFCode" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>ISCED-F (campo de educacion)</a:displayName><a:help>ISCED-F 2013 (UNESCO). Ej.: 0613, 0221.</a:help><a:displayOrder>130</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+
         </xsd:schema>
     </definition>
 </schema>

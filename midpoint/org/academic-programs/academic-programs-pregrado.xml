@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  F3 - Programas Academicos (Escuelas Profesionales) UPeU
+  23 OrgType con archetype Academic-Program (9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73).
+  Cada Org enlaza al concepto SKOS canonico del Tesauro Institucional VocBench via
+  extension/sb:academicProgramUri (schema sciback v1.0 - OrgExtensionType).
+
+  Fuente autoritativa de URI/prefLabel/notation:
+    VocBench / Tesauro_Institucional_UPeU
+    Scheme: http://upeu.edu.pe/sys/programas/scheme/programas-academicos
+
+  Relacion con jerarquia organizacional:
+    Cada EP -> Facultad correspondiente via assignment con relation org:default.
+
+  Reglas (skill midpoint-best-practices Sec.5.2):
+    - name   = identificador tecnico unico (EP-XXX)
+    - identifier = mismo valor que name, indexado para busquedas separadas
+    - displayName = legible
+    - assignment ArchetypeType (Academic-Program) - direct, no inducement
+    - assignment OrgType (Facultad padre) - construye org tree
+    - extension/sb:academicProgramUri - URI canonica VocBench (indexed)
+-->
+<objects xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+         xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+         xmlns:sb="urn:sciback:midpoint:person">
+
+  <!-- FIA: Arquitectura y Urbanismo -->
+  <org oid="4358f580-c30e-4a35-95d1-5424a96ded3c">
+    <name>EP-ARQ</name>
+    <displayName>Arquitectura y Urbanismo</displayName>
+    <identifier>EP-ARQ</identifier>
+    <description>Escuela Profesional de Arquitectura y Urbanismo - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/c_e399e0aa</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/c_e399e0aa</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-ARQ</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0731</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="86968a5a-7d41-4eb3-a545-244df5b700c1" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FIA: Ingeniería Ambiental -->
+  <org oid="faab1be3-3b5a-4d56-9ee0-97e8c45d2322">
+    <name>EP-IAMB</name>
+    <displayName>Ingeniería Ambiental</displayName>
+    <identifier>EP-IAMB</identifier>
+    <description>Escuela Profesional de Ingeniería Ambiental - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/ingenieria-ambiental</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/ingenieria-ambiental</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-IAMB</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0712</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="86968a5a-7d41-4eb3-a545-244df5b700c1" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FIA: Ingeniería Civil -->
+  <org oid="435d2edb-ee6a-46c2-ad59-f994aadf8c90">
+    <name>EP-ICIV</name>
+    <displayName>Ingeniería Civil</displayName>
+    <identifier>EP-ICIV</identifier>
+    <description>Escuela Profesional de Ingeniería Civil - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/c_be8b346d</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/c_be8b346d</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-ICIV</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0732</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="86968a5a-7d41-4eb3-a545-244df5b700c1" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FIA: Ingeniería de Industrias Alimentarias -->
+  <org oid="c4f355bb-903a-4aff-9871-6a302492a69b">
+    <name>EP-IIA</name>
+    <displayName>Ingeniería de Industrias Alimentarias</displayName>
+    <identifier>EP-IIA</identifier>
+    <description>Escuela Profesional de Ingeniería de Industrias Alimentarias - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/ingenieria-de-industrias-alimentarias</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/ingenieria-de-industrias-alimentarias</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-IIA</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0721</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="86968a5a-7d41-4eb3-a545-244df5b700c1" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FIA: Ingeniería Informática y Estadística -->
+  <org oid="e636ed6f-b354-4756-ac3d-eed440ac7975">
+    <name>EP-IIE</name>
+    <displayName>Ingeniería Informática y Estadística</displayName>
+    <identifier>EP-IIE</identifier>
+    <description>Escuela Profesional de Ingeniería Informática y Estadística - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/ingenieria-informatica-y-estadistica</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/ingenieria-informatica-y-estadistica</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-IIE</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0613</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="86968a5a-7d41-4eb3-a545-244df5b700c1" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FIA: Ingeniería de Sistemas -->
+  <org oid="9d7a2343-f02e-431c-8525-912644d78bbb">
+    <name>EP-SIS</name>
+    <displayName>Ingeniería de Sistemas</displayName>
+    <identifier>EP-SIS</identifier>
+    <description>Escuela Profesional de Ingeniería de Sistemas - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/c_bbf436cf</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/c_bbf436cf</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-SIS</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0613</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="86968a5a-7d41-4eb3-a545-244df5b700c1" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCE: Administración -->
+  <org oid="76b32416-a5ba-4c03-b01e-4d8dbc8ad197">
+    <name>EP-ADM</name>
+    <displayName>Administración</displayName>
+    <identifier>EP-ADM</identifier>
+    <description>Escuela Profesional de Administración - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/administracion</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/administracion</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-ADM</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0413</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="2899369e-b405-431a-9489-186bdbcdc5ce" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCE: Contabilidad, Gestión Tributaria y Aduanera -->
+  <org oid="5c0e4c13-66e3-46fd-bc49-ff5a2361e178">
+    <name>EP-CON</name>
+    <displayName>Contabilidad, Gestión Tributaria y Aduanera</displayName>
+    <identifier>EP-CON</identifier>
+    <description>Escuela Profesional de Contabilidad - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-CON</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0411</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="2899369e-b405-431a-9489-186bdbcdc5ce" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCE: Marketing y Negocios Internacionales -->
+  <org oid="b46a185a-be0f-45da-a6b3-1399247146c9">
+    <name>EP-MKT</name>
+    <displayName>Marketing y Negocios Internacionales</displayName>
+    <identifier>EP-MKT</identifier>
+    <description>Escuela Profesional de Marketing y Negocios Internacionales - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/marketing-y-negocios-internacionales</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/marketing-y-negocios-internacionales</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-MKT</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0414</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="2899369e-b405-431a-9489-186bdbcdc5ce" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCHE: Ciencias de la Comunicación -->
+  <org oid="367c55b3-ba94-4220-8d24-8ee442eb1ed2">
+    <name>EP-COM</name>
+    <displayName>Ciencias de la Comunicación</displayName>
+    <identifier>EP-COM</identifier>
+    <description>Escuela Profesional de Ciencias de la Comunicación - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/ciencias-de-la-comunicacion</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/ciencias-de-la-comunicacion</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-COM</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0321</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCHE: Educación: Ciencias Naturales y Tecnología -->
+  <org oid="d8ee148a-a573-4f15-9171-604c4339f57c">
+    <name>EP-EDU-CIN</name>
+    <displayName>Educación: Ciencias Naturales y Tecnología</displayName>
+    <identifier>EP-EDU-CIN</identifier>
+    <description>Escuela Profesional de Educación, Especialidad Ciencias Naturales - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/educacion-ciencias-naturales</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-ciencias-naturales</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-EDU-CIN</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0114</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCHE: Educación: Educación Física -->
+  <org oid="25484bfe-ce95-42a9-8112-96bdb66338dd">
+    <name>EP-EDU-EFI</name>
+    <displayName>Educación: Educación Física</displayName>
+    <identifier>EP-EDU-EFI</identifier>
+    <description>Escuela Profesional de Educación, Especialidad Educación Física, Recreación y Deportes - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/educacion-educacion-fisica</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-educacion-fisica</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-EDU-EFI</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0114</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCHE: Educación: Inglés y Español -->
+  <org oid="332fe477-32e5-4683-a6ca-bf6e9c9e4b78">
+    <name>EP-EDU-IES</name>
+    <displayName>Educación: Inglés y Español</displayName>
+    <identifier>EP-EDU-IES</identifier>
+    <description>Escuela Profesional de Educación, Especialidad Inglés y Español - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/educacion-ingles-espanol</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-ingles-espanol</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-EDU-IES</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0114</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCHE: Educación Inicial y Puericultura -->
+  <org oid="7ae7cc60-b14b-43c6-b384-ab00b713ea43">
+    <name>EP-EDU-INI</name>
+    <displayName>Educación Inicial y Puericultura</displayName>
+    <identifier>EP-EDU-INI</identifier>
+    <description>Escuela Profesional de Educación Inicial - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/educacion-inicial</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-inicial</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-EDU-INI</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0112</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCHE: Educación: Matemática y Computación -->
+  <org oid="a83ed1eb-5fea-40fc-9526-ca5a8e684a77">
+    <name>EP-EDU-MAT</name>
+    <displayName>Educación: Matemática y Computación</displayName>
+    <identifier>EP-EDU-MAT</identifier>
+    <description>Escuela Profesional de Educación, Especialidad Matemática - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/educacion-matematica</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-matematica</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-EDU-MAT</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0114</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCHE: Educación: Música y Artes Visuales -->
+  <org oid="82793d2b-29d0-48a4-b885-edcc1f87accb">
+    <name>EP-EDU-MUA</name>
+    <displayName>Educación: Música y Artes Visuales</displayName>
+    <identifier>EP-EDU-MUA</identifier>
+    <description>Escuela Profesional de Educación, Especialidad Música y Artes Visuales - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/educacion-musica-artes</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-musica-artes</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-EDU-MUA</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0114</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCHE: Educación Primaria -->
+  <org oid="7b1031d3-cafc-4ef7-887e-1e8fa15fae1d">
+    <name>EP-EDU-PRI</name>
+    <displayName>Educación Primaria</displayName>
+    <identifier>EP-EDU-PRI</identifier>
+    <description>Escuela Profesional de Educación Primaria y Pedagogía Terapéutica - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/educacion-primaria</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-primaria</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-EDU-PRI</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0113</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCHE: Psicología (FCHE) -->
+  <org oid="e05981c5-a1d6-4a50-ae06-b6627b577d43">
+    <name>EP-PSI-FCHE</name>
+    <displayName>Psicología (FCHE)</displayName>
+    <identifier>EP-PSI-FCHE</identifier>
+    <description>Escuela Profesional de Psicología — Facultad de Ciencias Humanas y Educación - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/psicologia-fche</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/psicologia-fche</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-PSI-FCHE</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0313</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCS: Enfermería -->
+  <org oid="97d548fc-e99b-4025-b489-50b7593ff475">
+    <name>EP-ENF</name>
+    <displayName>Enfermería</displayName>
+    <identifier>EP-ENF</identifier>
+    <description>Escuela Profesional de Enfermería - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/c_c5f87ee9</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/c_c5f87ee9</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-ENF</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0913</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="a72bbde6-c689-4ef0-81d5-f293e78c26fe" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCS: Medicina Humana -->
+  <org oid="52c0c516-eaae-4f80-a206-3bbe48c16906">
+    <name>EP-MED</name>
+    <displayName>Medicina Humana</displayName>
+    <identifier>EP-MED</identifier>
+    <description>Escuela Profesional de Medicina Humana - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/c_353ae8f7</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/c_353ae8f7</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-MED</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0912</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="a72bbde6-c689-4ef0-81d5-f293e78c26fe" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCS: Nutrición Humana -->
+  <org oid="1472f480-cc3a-4345-bf89-93172d36e663">
+    <name>EP-NUT</name>
+    <displayName>Nutrición Humana</displayName>
+    <identifier>EP-NUT</identifier>
+    <description>Escuela Profesional de Nutrición Humana - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/nutricion-humana</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/nutricion-humana</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-NUT</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0915</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="a72bbde6-c689-4ef0-81d5-f293e78c26fe" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FCS: Psicología (FCS) -->
+  <org oid="202f54f0-cefe-45e3-9e1a-e151b5619e7f">
+    <name>EP-PSI-FCS</name>
+    <displayName>Psicología (FCS)</displayName>
+    <identifier>EP-PSI-FCS</identifier>
+    <description>Escuela Profesional de Psicología — Facultad de Ciencias de la Salud - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/c_b48bff58</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/c_b48bff58</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-PSI-FCS</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0313</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="a72bbde6-c689-4ef0-81d5-f293e78c26fe" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FT: Teología -->
+  <org oid="0cda5d94-3c2d-4fc6-a53d-00abb0e6dc67">
+    <name>EP-TEO</name>
+    <displayName>Teología</displayName>
+    <identifier>EP-TEO</identifier>
+    <description>Escuela Profesional de Teología - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/teologia</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/teologia</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-TEO</sb:academicProgramCode>
+      <sb:studyLevel>pregrado</sb:studyLevel>
+      <sb:iscedFCode>0221</sb:iscedFCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="23e944c6-57ca-4ca8-bdcb-3bac5b31a1cd" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+</objects>

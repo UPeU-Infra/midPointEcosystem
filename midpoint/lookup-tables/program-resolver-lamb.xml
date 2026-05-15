@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  LookupTable: program-resolver-lamb
+  OID: d9b1e0c2-e036-4c6a-9753-c732a83bbf0a
+
+  Mapa de variantes textuales encontradas en Oracle LAMB (campos
+  ESCUELA_PROFESIONAL, NOMBRE_CERTIFICADO, NOMBRE_ESCUELA, etc.) hacia la
+  URI canonica del programa en VocBench / Tesauro Institucional UPeU.
+
+  Generado desde el dump RDF del Tesauro (Tesauro_Institucional_UPeU,
+  scheme http://upeu.edu.pe/sys/programas/scheme/programas-academicos):
+    - skos:prefLabel + skos:altLabel
+    - skosxl:prefLabel + skosxl:altLabel
+  Filtros: solo programas con notation que empieza por "EP-" (pregrado).
+
+  Usado por: FunctionLibrary "sb-program-resolver" (funcion resolveProgramUri).
+  El label de cada row guarda el notation EP-XXX para inspeccion visual.
+
+  Total: 70 rows | 23 programas distintos.
+  Generado: 2026-05-15 desde VocBench Tesauro_Institucional_UPeU.
+-->
+<lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+             oid="d9b1e0c2-e036-4c6a-9753-c732a83bbf0a">
+  <name>program-resolver-lamb</name>
+  <description>Mapa variantes textuales Oracle LAMB hacia URI canonica VocBench (SKOS).</description>
+  <row>
+    <key>Administración</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/administracion</value>
+    <label>EP-ADM</label>
+  </row>
+  <row>
+    <key>Administración y Negocios Internacionales</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/administracion</value>
+    <label>EP-ADM</label>
+  </row>
+  <row>
+    <key>ARQUITECTURA Y URBANISMO</key>
+    <value>http://upeu.edu.pe/sys/programas/c_e399e0aa</value>
+    <label>EP-ARQ</label>
+  </row>
+  <row>
+    <key>Arq.</key>
+    <value>http://upeu.edu.pe/sys/programas/c_e399e0aa</value>
+    <label>EP-ARQ</label>
+  </row>
+  <row>
+    <key>Arquitectura</key>
+    <value>http://upeu.edu.pe/sys/programas/c_e399e0aa</value>
+    <label>EP-ARQ</label>
+  </row>
+  <row>
+    <key>Arquitectura y Urbanismo</key>
+    <value>http://upeu.edu.pe/sys/programas/c_e399e0aa</value>
+    <label>EP-ARQ</label>
+  </row>
+  <row>
+    <key>arquitectura-y-urbanismo</key>
+    <value>http://upeu.edu.pe/sys/programas/c_e399e0aa</value>
+    <label>EP-ARQ</label>
+  </row>
+  <row>
+    <key>Ciencias de la Comunicación</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/ciencias-de-la-comunicacion</value>
+    <label>EP-COM</label>
+  </row>
+  <row>
+    <key>Contabilidad</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria</value>
+    <label>EP-CON</label>
+  </row>
+  <row>
+    <key>Contabilidad y Finanzas</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria</value>
+    <label>EP-CON</label>
+  </row>
+  <row>
+    <key>Contabilidad y Gestión Tributaria</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria</value>
+    <label>EP-CON</label>
+  </row>
+  <row>
+    <key>Contabilidad, Gestión Tributaria y Aduanera</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria</value>
+    <label>EP-CON</label>
+  </row>
+  <row>
+    <key>Educación, Especialidad Ciencias Naturales y Tecnología</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-ciencias-naturales</value>
+    <label>EP-EDU-CIN</label>
+  </row>
+  <row>
+    <key>Educación: Especialidad Biología y Química</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-ciencias-naturales</value>
+    <label>EP-EDU-CIN</label>
+  </row>
+  <row>
+    <key>Educación: Especialidad Ciencias Histórico Sociales</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-ciencias-naturales</value>
+    <label>EP-EDU-CIN</label>
+  </row>
+  <row>
+    <key>Educación Física</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-educacion-fisica</value>
+    <label>EP-EDU-EFI</label>
+  </row>
+  <row>
+    <key>Educación, Especialidad Educación Física, Recreación y Deportes</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-educacion-fisica</value>
+    <label>EP-EDU-EFI</label>
+  </row>
+  <row>
+    <key>Educación, Especialidad Inglés y Español</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-ingles-espanol</value>
+    <label>EP-EDU-IES</label>
+  </row>
+  <row>
+    <key>Educación: Especialidad Inglés</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-ingles-espanol</value>
+    <label>EP-EDU-IES</label>
+  </row>
+  <row>
+    <key>Educación: Especialidad Lingüística e Inglés</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-ingles-espanol</value>
+    <label>EP-EDU-IES</label>
+  </row>
+  <row>
+    <key>Educación</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-inicial</value>
+    <label>EP-EDU-INI</label>
+  </row>
+  <row>
+    <key>Educación Inicial y Puericultura</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-inicial</value>
+    <label>EP-EDU-INI</label>
+  </row>
+  <row>
+    <key>Educación: Especialidad Inicial</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-inicial</value>
+    <label>EP-EDU-INI</label>
+  </row>
+  <row>
+    <key>Educación, Especialidad Matemática, Análisis de Datos y Computación</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-matematica</value>
+    <label>EP-EDU-MAT</label>
+  </row>
+  <row>
+    <key>Educación: Especialidad Matemática y Física</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-matematica</value>
+    <label>EP-EDU-MAT</label>
+  </row>
+  <row>
+    <key>Educación, Especialidad Música y Artes Visuales</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-musica-artes</value>
+    <label>EP-EDU-MUA</label>
+  </row>
+  <row>
+    <key>Educación: Especialidad Artes Plásticas</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-musica-artes</value>
+    <label>EP-EDU-MUA</label>
+  </row>
+  <row>
+    <key>Educación: Especialidad Música y Artes</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-musica-artes</value>
+    <label>EP-EDU-MUA</label>
+  </row>
+  <row>
+    <key>Educación Primaria y Pedagogía Terapéutica</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-primaria</value>
+    <label>EP-EDU-PRI</label>
+  </row>
+  <row>
+    <key>Educación: Especialidad Primaria</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-primaria</value>
+    <label>EP-EDU-PRI</label>
+  </row>
+  <row>
+    <key>ENFERMERÍA</key>
+    <value>http://upeu.edu.pe/sys/programas/c_c5f87ee9</value>
+    <label>EP-ENF</label>
+  </row>
+  <row>
+    <key>Enf.</key>
+    <value>http://upeu.edu.pe/sys/programas/c_c5f87ee9</value>
+    <label>EP-ENF</label>
+  </row>
+  <row>
+    <key>Enfermería</key>
+    <value>http://upeu.edu.pe/sys/programas/c_c5f87ee9</value>
+    <label>EP-ENF</label>
+  </row>
+  <row>
+    <key>enfermeria</key>
+    <value>http://upeu.edu.pe/sys/programas/c_c5f87ee9</value>
+    <label>EP-ENF</label>
+  </row>
+  <row>
+    <key>Ingeniería Ambiental</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-ambiental</value>
+    <label>EP-IAMB</label>
+  </row>
+  <row>
+    <key>INGENIERÍA CIVIL</key>
+    <value>http://upeu.edu.pe/sys/programas/c_be8b346d</value>
+    <label>EP-ICIV</label>
+  </row>
+  <row>
+    <key>Ing.Civ.</key>
+    <value>http://upeu.edu.pe/sys/programas/c_be8b346d</value>
+    <label>EP-ICIV</label>
+  </row>
+  <row>
+    <key>Ingeniería Civil</key>
+    <value>http://upeu.edu.pe/sys/programas/c_be8b346d</value>
+    <label>EP-ICIV</label>
+  </row>
+  <row>
+    <key>ingenieria-civil</key>
+    <value>http://upeu.edu.pe/sys/programas/c_be8b346d</value>
+    <label>EP-ICIV</label>
+  </row>
+  <row>
+    <key>Ingeniería de Alimentos</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-de-industrias-alimentarias</value>
+    <label>EP-IIA</label>
+  </row>
+  <row>
+    <key>Ingeniería de Industrias Alimentarias</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-de-industrias-alimentarias</value>
+    <label>EP-IIA</label>
+  </row>
+  <row>
+    <key>Ingeniería de Industrias Alimentarías</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-de-industrias-alimentarias</value>
+    <label>EP-IIA</label>
+  </row>
+  <row>
+    <key>Ingeniería en Industrias Alimentarias</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-de-industrias-alimentarias</value>
+    <label>EP-IIA</label>
+  </row>
+  <row>
+    <key>Ingeniería Informática y Estadística</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-informatica-y-estadistica</value>
+    <label>EP-IIE</label>
+  </row>
+  <row>
+    <key>MEDICINA HUMANA</key>
+    <value>http://upeu.edu.pe/sys/programas/c_353ae8f7</value>
+    <label>EP-MED</label>
+  </row>
+  <row>
+    <key>Med.Hum.</key>
+    <value>http://upeu.edu.pe/sys/programas/c_353ae8f7</value>
+    <label>EP-MED</label>
+  </row>
+  <row>
+    <key>Medicina</key>
+    <value>http://upeu.edu.pe/sys/programas/c_353ae8f7</value>
+    <label>EP-MED</label>
+  </row>
+  <row>
+    <key>Medicina Humana</key>
+    <value>http://upeu.edu.pe/sys/programas/c_353ae8f7</value>
+    <label>EP-MED</label>
+  </row>
+  <row>
+    <key>medicina-humana</key>
+    <value>http://upeu.edu.pe/sys/programas/c_353ae8f7</value>
+    <label>EP-MED</label>
+  </row>
+  <row>
+    <key>Marketing y Negocios Internacionales</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/marketing-y-negocios-internacionales</value>
+    <label>EP-MKT</label>
+  </row>
+  <row>
+    <key>Nutrición</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/nutricion-humana</value>
+    <label>EP-NUT</label>
+  </row>
+  <row>
+    <key>Nutrición Humana</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/nutricion-humana</value>
+    <label>EP-NUT</label>
+  </row>
+  <row>
+    <key>Nutrición Vegetariana</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/nutricion-humana</value>
+    <label>EP-NUT</label>
+  </row>
+  <row>
+    <key>Psicología</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/psicologia-fche</value>
+    <label>EP-PSI-FCHE</label>
+  </row>
+  <row>
+    <key>Psicología (FCHE)</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/psicologia-fche</value>
+    <label>EP-PSI-FCHE</label>
+  </row>
+  <row>
+    <key>PSICOLOGÍA</key>
+    <value>http://upeu.edu.pe/sys/programas/c_b48bff58</value>
+    <label>EP-PSI-FCS</label>
+  </row>
+  <row>
+    <key>Psic.</key>
+    <value>http://upeu.edu.pe/sys/programas/c_b48bff58</value>
+    <label>EP-PSI-FCS</label>
+  </row>
+  <row>
+    <key>Psicología</key>
+    <value>http://upeu.edu.pe/sys/programas/c_b48bff58</value>
+    <label>EP-PSI-FCS</label>
+  </row>
+  <row>
+    <key>psicologia</key>
+    <value>http://upeu.edu.pe/sys/programas/c_b48bff58</value>
+    <label>EP-PSI-FCS</label>
+  </row>
+  <row>
+    <key>INGENIERÍA DE SISTEMAS</key>
+    <value>http://upeu.edu.pe/sys/programas/c_bbf436cf</value>
+    <label>EP-SIS</label>
+  </row>
+  <row>
+    <key>Ing.Sist.</key>
+    <value>http://upeu.edu.pe/sys/programas/c_bbf436cf</value>
+    <label>EP-SIS</label>
+  </row>
+  <row>
+    <key>Ingeniería de Sistemas</key>
+    <value>http://upeu.edu.pe/sys/programas/c_bbf436cf</value>
+    <label>EP-SIS</label>
+  </row>
+  <row>
+    <key>ingenieria-de-sistemas</key>
+    <value>http://upeu.edu.pe/sys/programas/c_bbf436cf</value>
+    <label>EP-SIS</label>
+  </row>
+  <row>
+    <key>Convenio - Teología</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/teologia</value>
+    <label>EP-TEO</label>
+  </row>
+  <row>
+    <key>Teología</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/teologia</value>
+    <label>EP-TEO</label>
+  </row>
+  <row>
+    <key>Teología-Mención: Liderazgo Eclesiástico</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/teologia</value>
+    <label>EP-TEO</label>
+  </row>
+  <row>
+    <key>Teología-Mención: Música</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/teologia</value>
+    <label>EP-TEO</label>
+  </row>
+  <row>
+    <key>Teología-Mención: Psicología Pastoral</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/teologia</value>
+    <label>EP-TEO</label>
+  </row>
+  <row>
+    <key>Teología-Mención: Sagrada Escritura</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/teologia</value>
+    <label>EP-TEO</label>
+  </row>
+  <row>
+    <key>Teología-Mención: Salud Pública</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/teologia</value>
+    <label>EP-TEO</label>
+  </row>
+</lookupTable>
