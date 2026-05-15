@@ -43,9 +43,9 @@
             <cfg:allNative>false</cfg:allNative>
             <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
             <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
-            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT a.CODIGO, a.NOMBRE, a.PATERNO, a.MATERNO, a.CORREO_UPEU, a.CELULAR, a.FEC_NACIMIENTO, a.CODIGO_SEXO, a.NUM_DOCUMENTO, f.STUDENT_CYCLE, f.PROGRAM_CODES FROM DAVID.VW_PERSONA_ALUMNO a INNER JOIN ( SELECT DISTINCT ID_ALUMNO FROM DAVID.VW_FICHA_MATRICULA WHERE ID_SEMESTRE = 279 ) sem ON sem.ID_ALUMNO = a.ID_PERSONA LEFT JOIN ( SELECT ID_ALUMNO, MAX(CICLO) AS STUDENT_CYCLE, LISTAGG(TO_CHAR(ID_PROGRAMA_ESTUDIO), \',\') WITHIN GROUP (ORDER BY ID_PROGRAMA_ESTUDIO) AS PROGRAM_CODES FROM DAVID.VW_FICHA_MATRICULA WHERE ID_SEMESTRE = 279 GROUP BY ID_ALUMNO ) f ON f.ID_ALUMNO = a.ID_PERSONA WHERE a.CORREO_UPEU IS NOT NULL AND ROWNUM &lt;= 1'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE CODIGO = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Estudiantes-v2 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { row -&gt; def map = [:]; map['__UID__'] = row.CODIGO as String; map['__NAME__'] = row.CODIGO as String; map['CODIGO'] = row.CODIGO as String; map['NOMBRE'] = row.NOMBRE as String; map['PATERNO'] = row.PATERNO as String; map['MATERNO'] = row.MATERNO as String; map['CORREO_UPEU'] = row.CORREO_UPEU as String; map['CELULAR'] = row.CELULAR as String; map['FEC_NACIMIENTO'] = row.FEC_NACIMIENTO?.toString(); map['CODIGO_SEXO'] = row.CODIGO_SEXO as String; map['NUM_DOCUMENTO'] = row.NUM_DOCUMENTO as String; map['STUDENT_CYCLE'] = row.STUDENT_CYCLE?.toString(); if (row.PROGRAM_CODES != null) { def codes = (row.PROGRAM_CODES as String).split(',').collect { it.trim() }.findAll { it }.unique(); if (codes) map['PROGRAM_CODES'] = codes; }; result &lt;&lt; map }; return result</cfg:searchScript>
+            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT a.CODIGO, a.NOMBRE, a.PATERNO, a.MATERNO, a.CORREO_UPEU, a.CELULAR, a.FEC_NACIMIENTO, a.CODIGO_SEXO, a.NUM_DOCUMENTO, f.STUDENT_CYCLE, f.PROGRAM_CODES, f.SCHOOL_NAME FROM DAVID.VW_PERSONA_ALUMNO a INNER JOIN ( SELECT DISTINCT ID_ALUMNO FROM DAVID.VW_FICHA_MATRICULA WHERE ID_SEMESTRE = 279 ) sem ON sem.ID_ALUMNO = a.ID_PERSONA LEFT JOIN ( SELECT ID_ALUMNO, MAX(CICLO) AS STUDENT_CYCLE, LISTAGG(TO_CHAR(ID_PROGRAMA_ESTUDIO), \',\') WITHIN GROUP (ORDER BY ID_PROGRAMA_ESTUDIO) AS PROGRAM_CODES, MAX(NOMBRE_ESCUELA) AS SCHOOL_NAME FROM DAVID.VW_FICHA_MATRICULA WHERE ID_SEMESTRE = 279 GROUP BY ID_ALUMNO ) f ON f.ID_ALUMNO = a.ID_PERSONA WHERE a.CORREO_UPEU IS NOT NULL AND ROWNUM &lt;= 1'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE CODIGO = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Estudiantes-v2 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { row -&gt; def map = [:]; map['__UID__'] = row.CODIGO as String; map['__NAME__'] = row.CODIGO as String; map['CODIGO'] = row.CODIGO as String; map['NOMBRE'] = row.NOMBRE as String; map['PATERNO'] = row.PATERNO as String; map['MATERNO'] = row.MATERNO as String; map['CORREO_UPEU'] = row.CORREO_UPEU as String; map['CELULAR'] = row.CELULAR as String; map['FEC_NACIMIENTO'] = row.FEC_NACIMIENTO?.toString(); map['CODIGO_SEXO'] = row.CODIGO_SEXO as String; map['NUM_DOCUMENTO'] = row.NUM_DOCUMENTO as String; map['STUDENT_CYCLE'] = row.STUDENT_CYCLE?.toString(); if (row.PROGRAM_CODES != null) { def codes = (row.PROGRAM_CODES as String).split(',').collect { it.trim() }.findAll { it }.unique(); if (codes) map['PROGRAM_CODES'] = codes; }; map['SCHOOL_NAME'] = row.SCHOOL_NAME as String; result &lt;&lt; map }; return result</cfg:searchScript>
             <cfg:syncScript>return null</cfg:syncScript>
-            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required, boolean multiValued = false -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.setMultiValued(multiValued); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("CODIGO", true)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("PATERNO", false)); ocib.addAttributeInfo(ro("MATERNO", false)); ocib.addAttributeInfo(ro("CORREO_UPEU", false)); ocib.addAttributeInfo(ro("CELULAR", false)); ocib.addAttributeInfo(ro("FEC_NACIMIENTO", false)); ocib.addAttributeInfo(ro("CODIGO_SEXO", false)); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false)); ocib.addAttributeInfo(ro("STUDENT_CYCLE", false)); ocib.addAttributeInfo(ro("PROGRAM_CODES", false, true)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
+            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required, boolean multiValued = false -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.setMultiValued(multiValued); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("CODIGO", true)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("PATERNO", false)); ocib.addAttributeInfo(ro("MATERNO", false)); ocib.addAttributeInfo(ro("CORREO_UPEU", false)); ocib.addAttributeInfo(ro("CELULAR", false)); ocib.addAttributeInfo(ro("FEC_NACIMIENTO", false)); ocib.addAttributeInfo(ro("CODIGO_SEXO", false)); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false)); ocib.addAttributeInfo(ro("STUDENT_CYCLE", false)); ocib.addAttributeInfo(ro("PROGRAM_CODES", false, true)); ocib.addAttributeInfo(ro("SCHOOL_NAME", false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
             <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); sql.firstRow("SELECT 1 AS OK FROM DUAL"); return "OK"</cfg:testScript>
         </icfc:configurationProperties>
     </connectorConfiguration>
@@ -210,6 +210,36 @@
                     <strength>strong</strength>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramCode</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:SCHOOL_NAME</ref>
+                <inbound>
+                    <name>school-name-to-academicProgramUri</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <functionCall>
+                            <libraryRef oid="6a99f9de-5db6-43d5-9b20-0cfd2b79ecf9" type="FunctionLibraryType"/>
+                            <function>resolveProgramUri</function>
+                            <parameter>
+                                <name>programText</name>
+                                <expression><path>$input</path></expression>
+                            </parameter>
+                        </functionCall>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramUri</path>
+                    </target>
+                </inbound>
+                <inbound>
+                    <name>school-name-to-academicProgramRole</name>
+                    <strength>weak</strength>
+                    <expression>
+                        <value>student</value>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramRole</path>
                     </target>
                 </inbound>
             </attribute>
