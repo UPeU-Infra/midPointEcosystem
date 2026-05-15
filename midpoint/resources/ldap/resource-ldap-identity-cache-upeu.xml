@@ -14070,7 +14070,7 @@
                     </source>
                     <expression>
                         <script>
-                            <code>def map = ['ALUMNI':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff','EMPLOYEE':'employee','MEMBER':'member','AFFILIATE':'affiliate']; def v = affiliations?.toString()?.trim()?.toUpperCase(); v ? (map[v] ?: affiliations.toString().trim().toLowerCase()) : null</code>
+                            <code>def vocabMap = ['ALUMNI':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff','EMPLOYEE':'employee','MEMBER':'member','AFFILIATE':'affiliate']; if (affiliations == null) return null; def items = affiliations instanceof Collection ? affiliations.toList() : [affiliations]; items.collect { v -> def k = v?.toString()?.trim()?.toUpperCase(); k ? (vocabMap[k] ?: v.toString().trim().toLowerCase()) : null }.findAll { it != null } ?: null</code>
                         </script>
                     </expression>
                 </outbound>
