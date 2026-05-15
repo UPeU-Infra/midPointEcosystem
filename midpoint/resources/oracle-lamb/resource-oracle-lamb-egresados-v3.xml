@@ -166,14 +166,14 @@
                     <name>escuela-to-academicProgramUri</name>
                     <strength>strong</strength>
                     <expression>
-                        <functionCall>
+                        <function>
                             <libraryRef oid="6a99f9de-5db6-43d5-9b20-0cfd2b79ecf9" type="FunctionLibraryType"/>
-                            <function>resolveProgramUri</function>
+                            <name>resolveProgramUri</name>
                             <parameter>
                                 <name>programText</name>
                                 <expression><path>$input</path></expression>
                             </parameter>
-                        </functionCall>
+                        </function>
                     </expression>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramUri</path>
