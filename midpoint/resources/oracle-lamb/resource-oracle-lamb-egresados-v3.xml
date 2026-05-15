@@ -98,11 +98,7 @@
                     <source><path>$shadow/attributes/ri:MATERNO</path></source>
                     <expression>
                         <script>
-                            <code>
-                                def p = (PATERNO ?: '').toString().trim()
-                                def m = (MATERNO ?: '').toString().trim()
-                                (p + (m ? ' ' + m : '')).trim() ?: null
-                            </code>
+                            <code>def p = (PATERNO ?: '').toString().trim(); def m = (MATERNO ?: '').toString().trim(); (p + (m ? ' ' + m : '')).trim() ?: null</code>
                         </script>
                     </expression>
                     <target><path>familyName</path></target>
@@ -137,40 +133,11 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>
-                                def d = (input ?: '').toString().trim()
-                                d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null
-                            </code>
+                            <code>def d = (input ?: '').toString().trim(); d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null</code>
                         </script>
                     </expression>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</path>
-                    </target>
-                    <evaluationPhases>
-                        <include>beforeCorrelation</include>
-                        <include>clockwork</include>
-                    </evaluationPhases>
-                </inbound>
-                <inbound>
-                    <name>dni-to-identityDocuments</name>
-                    <strength>weak</strength>
-                    <expression>
-                        <script>
-                            <code>
-                                def d = (input ?: '').toString().trim()
-                                if (!d) return null
-                                def doc = midpoint.createContainerValue(new javax.xml.namespace.QName('http://midpoint.evolveum.com/xml/ns/public/common/common-3', 'IdentityDocumentType'))
-                                doc.findOrCreateProperty(new javax.xml.namespace.QName('type')).setRealValue('DNI')
-                                doc.findOrCreateProperty(new javax.xml.namespace.QName('number')).setRealValue(d)
-                                doc.findOrCreateProperty(new javax.xml.namespace.QName('primary')).setRealValue(true)
-                                doc.findOrCreateProperty(new javax.xml.namespace.QName('countryOfIssue')).setRealValue('PE')
-                                doc.findOrCreateProperty(new javax.xml.namespace.QName('verifiedBy')).setRealValue('LAMB')
-                                return doc
-                            </code>
-                        </script>
-                    </expression>
-                    <target>
-                        <path>identityDocuments</path>
                     </target>
                     <evaluationPhases>
                         <include>beforeCorrelation</include>
@@ -185,11 +152,7 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>
-                                if (input == null) return null
-                                def s = input.toString()
-                                s.length() >= 10 ? s.substring(0, 10) : null
-                            </code>
+                            <code>if (input == null) return null; def s = input.toString(); s.length() >= 10 ? s.substring(0, 10) : null</code>
                         </script>
                     </expression>
                     <target>
