@@ -56,7 +56,7 @@ def tableOid = 'd9b1e0c2-e036-4c6a-9753-c732a83bbf0a'
 
 try {
     def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(
-        com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.F_ROW,
+        com.evolveum.midpoint.prism.path.ItemPath.create(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.F_ROW),
         com.evolveum.midpoint.schema.GetOperationOptions.createRetrieve()
     )
     def tableObj = midpoint.getObject(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.class, tableOid, options)
@@ -121,7 +121,7 @@ def tableOid = 'd9b1e0c2-e036-4c6a-9753-c732a83bbf0a'
 
 try {
     def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(
-        com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.F_ROW,
+        com.evolveum.midpoint.prism.path.ItemPath.create(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.F_ROW),
         com.evolveum.midpoint.schema.GetOperationOptions.createRetrieve()
     )
     def tableObj = midpoint.getObject(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.class, tableOid, options)
