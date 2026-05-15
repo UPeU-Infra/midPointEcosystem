@@ -14053,6 +14053,11 @@
                     <source>
                         <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:primaryAffiliation</path>
                     </source>
+                    <expression>
+                        <script>
+                            <code>def map = ['ALUMNI':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff','EMPLOYEE':'employee','MEMBER':'member','AFFILIATE':'affiliate']; def v = primaryAffiliation?.toString()?.trim()?.toUpperCase(); v ? (map[v] ?: primaryAffiliation.toString().trim().toLowerCase()) : null</code>
+                        </script>
+                    </expression>
                 </outbound>
             </attribute>
             <attribute id="70">
@@ -14116,15 +14121,6 @@
             <cap:pagedSearch/>
             <cap:auxiliaryObjectClasses/>
         </native>
-        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
-            <cap:activation>
-                <cap:status>
-                    <cap:attribute>ri:midPointAccountStatus</cap:attribute>
-                    <cap:enableValue>enabled</cap:enableValue>
-                    <cap:disableValue>disabled</cap:disableValue>
-                </cap:status>
-            </cap:activation>
-        </configured>
     </capabilities>
     <synchronization>
         <objectSynchronization id="75">

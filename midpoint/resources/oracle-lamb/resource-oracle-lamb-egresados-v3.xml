@@ -152,6 +152,32 @@
                         <include>clockwork</include>
                     </evaluationPhases>
                 </inbound>
+                <inbound>
+                    <name>dni-to-identityDocuments</name>
+                    <strength>weak</strength>
+                    <expression>
+                        <script>
+                            <code>
+                                def d = (input ?: '').toString().trim()
+                                if (!d) return null
+                                def doc = midpoint.createContainerValue(new javax.xml.namespace.QName('http://midpoint.evolveum.com/xml/ns/public/common/common-3', 'IdentityDocumentType'))
+                                doc.findOrCreateProperty(new javax.xml.namespace.QName('type')).setRealValue('DNI')
+                                doc.findOrCreateProperty(new javax.xml.namespace.QName('number')).setRealValue(d)
+                                doc.findOrCreateProperty(new javax.xml.namespace.QName('primary')).setRealValue(true)
+                                doc.findOrCreateProperty(new javax.xml.namespace.QName('countryOfIssue')).setRealValue('PE')
+                                doc.findOrCreateProperty(new javax.xml.namespace.QName('verifiedBy')).setRealValue('LAMB')
+                                return doc
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>identityDocuments</path>
+                    </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
+                </inbound>
             </attribute>
             <attribute>
                 <ref>ri:FEC_NACIMIENTO</ref>

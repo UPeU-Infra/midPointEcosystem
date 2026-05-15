@@ -1,0 +1,22 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="26ea3930-c588-414b-82a3-120ae8b1ec22">
+    <name>BR-Egresado</name>
+    <description>Egresado / alumni. Acceso limitado a vendors académicos. Email-Alumni pendiente.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <!-- R-Affiliation-Alumni -->
+    <inducement>
+        <targetRef oid="9cc94538-d576-4735-a16c-e70562cd98b9" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- R-Affiliation-Member -->
+    <inducement>
+        <targetRef oid="c0448fb9-db51-4109-8949-9321e1c6d9e5" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-LDAP-Person — provisión en OpenLDAP Identity Cache -->
+    <inducement>
+        <targetRef oid="7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d" relation="org:default" type="RoleType"/>
+    </inducement>
+</role>
