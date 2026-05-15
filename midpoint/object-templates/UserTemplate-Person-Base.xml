@@ -137,12 +137,24 @@
     </item>
 
     <!-- ============================================================
-         BLOQUE C — eppn (eduPersonPrincipalName)
+         BLOQUE C — eppn (eduPersonPrincipalName) + schacHomeOrganization
          eppn = personalNumber@upeu.edu.pe (strong)
          REFEDS R&S: eppn es el identificador federado primario de la persona.
          strong = inmutable una vez asignado. NUNCA cambiar con rename de user.
+         schacHomeOrganization = "upeu.edu.pe" (strong, valor fijo institucional)
          Namespace: urn:sciback:midpoint:person
          ============================================================ -->
+    <item>
+        <ref>extension/sciback:schacHomeOrganization</ref>
+        <mapping>
+            <name>C-schacHomeOrganization-literal</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <expression>
+                <value>upeu.edu.pe</value>
+            </expression>
+        </mapping>
+    </item>
     <item>
         <ref>extension/sciback:eppn</ref>
         <mapping>
@@ -172,6 +184,22 @@
         </mapping>
     </item>
 
+    <!-- ============================================================
+         BLOQUE D — AUTO-ASIGNACIÓN R-Affiliation-* + Business Roles por afiliación
+         via assignmentTargetSearch
+
+         D.1 — R-Affiliation-* desde primaryAffiliation (birthright)
+         D.2 — BR-Estudiante-Pregrado/Posgrado/Doctorado desde studentCycle
+               (condición: primaryAffiliation == 'STUDENT')
+         D.3 — BR-Docente-TC para docentes activos
+               (condición: primaryAffiliation == 'FACULTY')
+         D.4 — BR-Admin-Area para personal administrativo
+               (condición: primaryAffiliation == 'STAFF')
+
+         Principio: "MidPoint suma, nunca resta" — strong en todos.
+         Opción A canónica: un solo template base cubre toda la lógica
+         de derivación para TODOS los archetypes (Person structural).
+         ============================================================ -->
     <!-- ============================================================
          BLOQUE D — AUTO-ASIGNACIÓN R-Affiliation-* via assignmentTargetSearch
          Libro Cap.9: assignmentTargetSearch busca target por filtro dinámico
@@ -247,6 +275,181 @@
                     ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUMNI','AFFILIATE-CU'].contains(
                         basic.stringify(primaryAffiliation).trim().toUpperCase()
                     )
+                </code>
+            </script>
+        </condition>
+    </mapping>
+
+    <!-- D.1b — Validación: log warning si studentCycle presente sin academicProgramCode
+         Solo evalúa cuando primaryAffiliation == STUDENT. weak: no bloquea.
+         Migrado desde UserTemplate-Student (upeu3: → sciback:). -->
+    <item>
+        <ref>extension/sciback:studentCycle</ref>
+        <mapping>
+            <name>D-student-warn-missing-program</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <source>
+                <path>extension/sciback:primaryAffiliation</path>
+            </source>
+            <source>
+                <path>extension/sciback:studentCycle</path>
+            </source>
+            <source>
+                <path>extension/sciback:academicProgramCode</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+                        def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
+                        if (affil != 'STUDENT') return studentCycle
+                        if (studentCycle != null &amp;&amp; (academicProgramCode == null || (academicProgramCode instanceof java.util.Collection ? academicProgramCode.isEmpty() : academicProgramCode.toString().isEmpty()))) {
+                            log.warn("UPeU Student: cycle={} sin academicProgramCode en user {}", studentCycle, focus?.name)
+                        }
+                        return studentCycle
+                    </code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>
+                        def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
+                        affil == 'STUDENT' &amp;&amp; studentCycle != null
+                    </code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!-- D.2 — Auto-asignación BR-Estudiante-Pregrado/Posgrado/Doctorado según studentCycle
+         Solo actúa cuando primaryAffiliation == STUDENT.
+         Lógica: cycle >= 9 → Doctorado; 7-8 → Posgrado; resto → Pregrado.
+         Migrado desde UserTemplate-Student (upeu3: → sciback:). -->
+    <mapping>
+        <name>D-autoassign-br-estudiante-by-cycle</name>
+        <description>Auto-asigna BR-Estudiante-Pregrado/Posgrado/Doctorado según studentCycle. Opción A: lógica en base template.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <source>
+            <path>extension/sciback:studentCycle</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>RoleType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <expression>
+                            <script>
+                                <code>
+                                    // studentCycle es xsd:string (puede venir como "5" desde LAMB)
+                                    // Convertir a Integer para comparación numérica
+                                    def raw = studentCycle
+                                    def n = null
+                                    try {
+                                        def s = (raw instanceof java.util.Collection) ?
+                                            (raw.isEmpty() ? null : raw.max { it.toString() as Integer }) :
+                                            raw?.toString()
+                                        if (s != null) n = Integer.parseInt(s.trim())
+                                    } catch (Exception e) {
+                                        log.warn("D.2: studentCycle no parseable '{}' en {}", raw, focus?.name)
+                                    }
+                                    if (n == null) return 'BR-Estudiante-Pregrado'
+                                    if (n >= 9) return 'BR-Estudiante-Doctorado'
+                                    if (n >= 7) return 'BR-Estudiante-Posgrado'
+                                    return 'BR-Estudiante-Pregrado'
+                                </code>
+                            </script>
+                        </expression>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>
+                    def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
+                    affil == 'STUDENT' &amp;&amp; studentCycle != null
+                </code>
+            </script>
+        </condition>
+    </mapping>
+
+    <!-- D.3 — Auto-asignación BR-Docente-TC para docentes activos
+         Solo actúa cuando primaryAffiliation == FACULTY.
+         Nota: diferenciación TC/TP pendiente de datos LAMB (employeeCategory).
+         Migrado desde UserTemplate-Employee-Faculty (upeu3: → sciback:). -->
+    <mapping>
+        <name>D-autoassign-br-docente-tc</name>
+        <description>Auto-asigna BR-Docente-TC a usuarios con primaryAffiliation=FACULTY. Diferenciación TC/TP pendiente de Fase 5 LAMB inbound. Opción A: lógica en base template.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>RoleType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <q:value>BR-Docente-TC</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>
+                    def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
+                    affil == 'FACULTY'
+                </code>
+            </script>
+        </condition>
+    </mapping>
+
+    <!-- D.4 — Auto-asignación BR-Admin-Area para personal administrativo
+         Solo actúa cuando primaryAffiliation == STAFF.
+         Migrado desde UserTemplate-Employee-Staff (upeu3: → sciback:). -->
+    <mapping>
+        <name>D-autoassign-br-admin-area</name>
+        <description>Auto-asigna BR-Admin-Area a usuarios con primaryAffiliation=STAFF. Opción A: lógica en base template.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>RoleType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <q:value>BR-Admin-Area</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>
+                    def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
+                    affil == 'STAFF'
                 </code>
             </script>
         </condition>
@@ -503,9 +706,10 @@
     <!-- ============================================================
          BLOQUE F — LIFECYCLE GATE: draft → active
          Política estricta UPeU (Pilar 4 — Import estricto):
-         Solo pasa a 'active' si cumple AMBAS condiciones:
-           1. Tiene >= 1 identityDocument con primary = "true"
-           2. Tiene >= 1 assignment a un rol R-Affiliation-*
+         Solo pasa a 'active' si cumple LAS TRES condiciones:
+           1. personalNumber no nulo ni vacío (identificador inmutable institucional)
+           2. Tiene >= 1 identityDocument con primary = "true"
+           3. Tiene afiliación primaria válida en vocabulario canónico
 
          Si no cumple → permanece en 'draft' (cuentas incompletas
          van a cola de reconciliación, no se propagan a OpenLDAP/Keycloak).
@@ -518,6 +722,9 @@
         <lifecycleState>active</lifecycleState>
         <strength>strong</strength>
         <source>
+            <path>personalNumber</path>
+        </source>
+        <source>
             <path>extension/sciback:primaryAffiliation</path>
         </source>
         <source>
@@ -527,6 +734,10 @@
             <script>
                 <code><![CDATA[
 import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+
+// Condicion 0: personalNumber presente (identificador inmutable requerido)
+def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''
+def hasPersonalNumber = (pn != '')
 
 // Condicion 1: tiene documento de identidad primario
 // identityDocuments = PrismContainerValue o List<PrismContainerValue> inyectado por source
@@ -552,10 +763,13 @@ def validAffiliations = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUMNI','AFFILI
 def hasAffiliation = primaryAffiliation != null &&
     validAffiliations.contains(basic.stringify(primaryAffiliation).trim().toUpperCase())
 
-// Gate: solo active si cumple ambas condiciones
-if (hasPrimaryDoc && hasAffiliation) {
+// Gate: solo active si cumple las tres condiciones
+if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
     return 'active'
 } else {
+    if (!hasPersonalNumber) {
+        log.info('Bloque F lifecycle gate: {} sin personalNumber -> draft', focus?.name)
+    }
     if (!hasPrimaryDoc) {
         log.info('Bloque F lifecycle gate: {} sin documento primario -> draft', focus?.name)
     }
