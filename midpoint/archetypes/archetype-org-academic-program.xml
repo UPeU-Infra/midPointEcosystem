@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Archetype: Academic-Program (OrgType)
+  OID: 9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73 (nuevo, fijo)
+
+  Tipifica los OrgType que representan programas académicos (Escuelas Profesionales,
+  programas de posgrado, especializaciones). Coherente con el patrón seguido por
+  los OrgType faculty / department: el archetype solo tipifica; NO induce roles.
+
+  Los inducements de afiliación (R-Affiliation-Student / R-Affiliation-Faculty)
+  vienen luego desde el Object Template de User vía assignmentTargetSearch sobre
+  los campos extension/sciback:academicProgramUri + academicProgramRole.
+
+  Identificación canónica:
+    - identifier (Org): código corto del programa (p.ej. EP-SIS, EP-ENF, MAEDU)
+    - URI canónica: urn:sciback:program:{institutionId}:{programCode}
+      (se materializa en extension/sciback:academicProgramUri en el User)
+
+  Relación con la jerarquía organizacional:
+    - parentOrgRef → OrgType faculty (o department / campus en posgrado)
+    - Soporta multi-pertenencia (un programa puede ser interfacultativo via
+      múltiples relations en assignments).
+
+  Spec canónica SciBack §4 — modelo de orgs.
+  F2 — Archetypes UPeU 2026-05
+-->
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+           oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73">
+    <name>Academic-Program</name>
+    <description>Programa academico (Escuela Profesional, Maestria, Doctorado, Especializacion). OrgType. El archetype solo tipifica el Org; los inducements de afiliacion (R-Affiliation-Student/Faculty) se asignan desde el Object Template de User via assignmentTargetSearch sobre extension/sciback:academicProgramUri + academicProgramRole. Spec SciBack §4.</description>
+    <archetypePolicy>
+        <display>
+            <label>Programa Academico</label>
+            <pluralLabel>Programas Academicos</pluralLabel>
+            <icon>
+                <cssClass>fa fa-graduation-cap</cssClass>
+                <color>#52c41a</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+    <!-- holderType OrgType: el archetype se asigna a objetos OrgType (programas academicos) -->
+    <assignment>
+        <identifier>holderTypeOrg</identifier>
+        <assignmentRelation>
+            <holderType>OrgType</holderType>
+        </assignmentRelation>
+    </assignment>
+</archetype>

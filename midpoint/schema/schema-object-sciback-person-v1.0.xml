@@ -160,6 +160,12 @@
                     <xsd:element name="admissionPeriod" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>Período de admisión</a:displayName><a:displayOrder>550</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
+                    <xsd:element name="academicProgramUri" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>URI canónica del programa académico</a:displayName><a:help>Identificador persistente del programa (urn:sciback:program:{institutionId}:{programCode}). Vinculado al OrgType academic-program. Para uso en eduPersonOrgUnitDN y SCHAC.</a:help><a:indexed>true</a:indexed><a:displayOrder>560</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="academicProgramRole" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Rol del usuario en el programa</a:displayName><a:help>Vocabulario controlado: student|faculty|coordinator|director|alum. Multivalor: una persona puede ser docente de un programa y coordinador de otro.</a:help><a:displayOrder>570</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
 
                     <!-- S6 — LABORAL -->
                     <xsd:element name="employeeCategory" type="xsd:string" minOccurs="0" maxOccurs="1">
