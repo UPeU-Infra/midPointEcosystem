@@ -6,7 +6,7 @@
   Propósito: verificar pipeline completo inbound → correlación → archetype → mappings
   Estado: runnable (ejecutar una sola vez, luego suspender)
 -->
-<task oid="f1a00001-0000-0000-0000-pilot0000001"
+<task oid="d4158235-d629-4a4f-981f-b4da97f55128"
       xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
       xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
