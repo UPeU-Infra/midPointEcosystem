@@ -60,7 +60,7 @@
             </delineation>
             <focus>
                 <type>UserType</type>
-                <archetypeRef oid="3037fbd2-db02-4ffd-8b1a-83fab5e686aa" relation="org:default" type="ArchetypeType"/>
+                <archetypeRef oid="00000000-0000-0000-0000-000000000702" relation="org:default" type="ArchetypeType"/>
             </focus>
             <attribute>
                 <ref>ri:CODIGO</ref>
