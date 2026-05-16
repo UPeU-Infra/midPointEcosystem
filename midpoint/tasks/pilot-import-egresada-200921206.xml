@@ -10,9 +10,9 @@
     - DNI 43919791 no coincide con ningún usuario existente
     - Escuela: EP Psicología | Facultad: Ciencias de la Salud | Nivel: Pregrado | Período: 2015-2
   Estado: runnable (ejecutar UNA VEZ, verificar resultado)
-  Nota v2: filtro usa URI inline para evitar bug de serialización namespace icfs: en PostgreSQL.
-           {http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3}name
-           es equivalente a icfs:name pero sobrevive round-trip DB serialization.
+  Nota v3: filtro usa q:text (Axiom query language) para evitar problema de serialización
+           de namespace icfs: en filtros almacenados en PostgreSQL. Axiom usa nombre local
+           del atributo sin prefijo de namespace.
 -->
 <task oid="e2000001-0000-0000-0000-000000000001"
       xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
@@ -32,10 +32,7 @@
                     <objectclass>ri:AccountObjectClass</objectclass>
                     <query>
                         <q:filter>
-                            <q:equal>
-                                <q:path>attributes/{http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3}name</q:path>
-                                <q:value>200921206</q:value>
-                            </q:equal>
+                            <q:text>attributes/name = "200921206"</q:text>
                         </q:filter>
                     </query>
                 </resourceObjects>
