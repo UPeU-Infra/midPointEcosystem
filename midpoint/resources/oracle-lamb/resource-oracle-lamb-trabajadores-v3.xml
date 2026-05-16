@@ -60,7 +60,6 @@
             </delineation>
             <focus>
                 <type>UserType</type>
-                <archetypeRef oid="00000000-0000-0000-0000-000000000702" relation="org:default" type="ArchetypeType"/>
             </focus>
             <attribute>
                 <ref>ri:COD_APS</ref>
