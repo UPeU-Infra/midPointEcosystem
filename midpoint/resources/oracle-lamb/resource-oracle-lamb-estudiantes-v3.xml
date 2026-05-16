@@ -242,6 +242,16 @@
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramRole</path>
                     </target>
                 </inbound>
+                <inbound>
+                    <name>school-name-to-primaryAffiliation</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>STUDENT</value>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:primaryAffiliation</path>
+                    </target>
+                </inbound>
             </attribute>
             <synchronization>
                 <reaction>

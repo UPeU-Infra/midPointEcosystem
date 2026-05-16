@@ -547,6 +547,10 @@
             <source>
                 <path>extension/sciback:identityDocuments</path>
             </source>
+            <source>
+                <name>taxId</name>
+                <path>extension/sciback:taxId</path>
+            </source>
             <expression>
                 <script>
                     <code>
@@ -600,6 +604,16 @@
                             }
                         } catch (Exception e) {
                             log.warn('Bloque G: error leyendo identityDocuments en {}: {}', focus?.name, e.message)
+                        }
+                        // PR-03 fallback: si no hay identityDocuments, acepta taxId (campo legacy) como puente
+                        if (!hasPrimary &amp;&amp; taxId != null) {
+                            def txStr = basic.stringify(taxId)?.trim()
+                            if (txStr?.startsWith('urn:schac:personalUniqueID:')) {
+                                hasPrimary = true
+                                def parts = txStr.split(':')
+                                primaryDocNumber = parts.length > 0 ? parts[parts.length - 1] : null
+                                primaryDocType = 'DNI'
+                            }
                         }
                         if (!hasPrimary) {
                             reasons &lt;&lt; 'PR-03: sin documento de identidad primario (primary=true)'
