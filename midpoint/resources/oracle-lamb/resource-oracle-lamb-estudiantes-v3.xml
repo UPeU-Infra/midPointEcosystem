@@ -116,7 +116,7 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>(CORREO_UPEU ?: '').toString().trim().toLowerCase() ?: null</code>
+                            <code>(input ?: '').toString().trim().toLowerCase() ?: null</code>
                         </script>
                     </expression>
                     <target><path>emailAddress</path></target>
@@ -139,7 +139,7 @@
                     <expression>
                         <script>
                             <code>
-                                def d = (NUM_DOCUMENTO ?: '').toString().trim()
+                                def d = (input ?: '').toString().trim()
                                 d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null
                             </code>
                         </script>
@@ -161,8 +161,8 @@
                     <expression>
                         <script>
                             <code>
-                                if (FEC_NACIMIENTO == null) return null
-                                def s = FEC_NACIMIENTO.toString()
+                                if (input == null) return null
+                                def s = input.toString()
                                 s.length() >= 10 ? s.substring(0, 10) : null
                             </code>
                         </script>
@@ -180,7 +180,7 @@
                     <expression>
                         <script>
                             <code>
-                                switch ((CODIGO_SEXO ?: '').toString().toUpperCase()) {
+                                switch ((input ?: '').toString().toUpperCase()) {
                                     case 'M': return '1'
                                     case 'F': return '2'
                                     default:  return '0'
