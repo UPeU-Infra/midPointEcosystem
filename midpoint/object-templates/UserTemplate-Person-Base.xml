@@ -457,36 +457,45 @@
 
     <!-- ============================================================
          BLOQUE E — ASIGNACIÓN A ORG VIA assignmentTargetSearch
-         TODO: Activar cuando LAMB inbound tenga mapeado upeu:depto → identifier de OU.
-         El campo upeu:depto contiene el ID del departamento en LAMB.
-         Buscar OrgType por identifier = depto para crear el assignment al OU.
-
-         <mapping>
-           <name>E-assign-org-from-depto</name>
-           <lifecycleState>DISABLED-pending-lamb-inbound</lifecycleState>
-           <strength>strong</strength>
-           <source><path>extension/upeu:depto</path></source>
-           <expression>
-             <assignmentTargetSearch>
-               <targetType>OrgType</targetType>
-               <filter>
-                 <q:equal>
-                   <q:path>identifier</q:path>
-                   <expression><script><code>basic.stringify(depto)</code></script></expression>
-                 </q:equal>
-               </filter>
-               <createOnDemand>false</createOnDemand>
-             </assignmentTargetSearch>
-           </expression>
-           <target><path>assignment</path></target>
-           <condition>
-             <script><code>depto != null &amp;&amp; basic.stringify(depto).trim() != ''</code></script>
-           </condition>
-         </mapping>
-
-         Pendiente: Fase 5 LAMB inbound debe mapear DEPTO/ORG_AREA → upeu:depto.
-         Cuando upeu:depto esté disponible, cambiar lifecycleState a active.
+         Activado Fase 5b (2026-05-15):
+         costCenter ← ID_SEDEAREA mapeado en resource-oracle-lamb-trabajadores
+         Formato: "area.{ID_AREA}" (ej: "area.6" → VICERRECTORADO-ADMINISTRATIVO)
+         Busca OrgType por identifier = costCenter.
+         IIA: ENOC.VW_TRABAJADOR.ID_SEDEAREA (via ELISEO.VW_APS_EMPLEADO JOIN)
          ============================================================ -->
+    <mapping>
+        <name>E-assign-org-from-costCenter</name>
+        <description>Auto-asigna membership a OrgType (area.*) desde costCenter. costCenter = 'area.{ID_SEDEAREA}' inbound desde LAMB Trabajadores. OrgTypes preexistentes en 050-GobiernoAdmin.xml.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>costCenter</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>OrgType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>identifier</q:path>
+                        <expression>
+                            <script>
+                                <code>costCenter != null ? basic.stringify(costCenter).trim() : null</code>
+                            </script>
+                        </expression>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>costCenter != null &amp;&amp; basic.stringify(costCenter).trim().startsWith('area.')</code>
+            </script>
+        </condition>
+    </mapping>
 
     <!-- ============================================================
          BLOQUE G — REJECTION REASONS (trazabilidad de perfiles incompletos)
