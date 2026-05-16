@@ -264,7 +264,7 @@
                 <ref>ri:AFILIACION</ref>
                 <inbound>
                     <name>afiliacion-to-primaryAffiliation</name>
-                    <strength>weak</strength>
+                    <strength>strong</strength>
                     <expression>
                         <script>
                             <code>def map = ['ALUMNI':'alum','ALUM':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff','EMPLOYEE':'employee']; def v = input?.toString()?.trim()?.toUpperCase(); v ? (map[v] ?: input.toString().trim().toLowerCase()) : null</code>
