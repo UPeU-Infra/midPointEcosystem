@@ -179,6 +179,23 @@
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramUri</path>
                     </target>
                 </inbound>
+                <inbound>
+                    <name>escuela-to-academicProgramCode</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <function>
+                            <libraryRef oid="6a99f9de-5db6-43d5-9b20-0cfd2b79ecf9" type="FunctionLibraryType"/>
+                            <name>resolveProgramCode</name>
+                            <parameter>
+                                <name>programText</name>
+                                <expression><path>$input</path></expression>
+                            </parameter>
+                        </function>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramCode</path>
+                    </target>
+                </inbound>
             </attribute>
             <attribute>
                 <ref>ri:NOM_FACULTAD</ref>

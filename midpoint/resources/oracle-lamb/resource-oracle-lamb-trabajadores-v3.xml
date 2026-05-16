@@ -8,7 +8,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21">
     <name>Oracle LAMB Trabajadores v2</name>
-    <description>Inbound ScriptedSQL desde ELISEO.VW_APS_EMPLEADO + JOIN ENOC.CAT_DOCENTE. SchemaHandling migrado a schema canónico sb:. Fase 5a-v3.</description>
+    <description>Inbound ScriptedSQL desde ELISEO.VW_APS_EMPLEADO + JOIN ENOC.CAT_DOCENTE + JOIN ENOC.VW_TRABAJADOR + JOIN ENOC.PLLA_PUESTO. Agrega telephoneNumber, emailAddress, title, gender, birthDate, externalSystemId, maritalStatus. Fase 5a-v4.</description>
     <lifecycleState>active</lifecycleState>
     <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
@@ -43,9 +43,9 @@
             <cfg:allNative>false</cfg:allNative>
             <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
             <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
-            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT * FROM ( SELECT * FROM ( SELECT e.COD_APS, e.NOMBRE, e.PATERNO, e.MATERNO, e.NUM_DOCUMENTO, e.FEC_INICIO, e.FEC_TERMINO, e.ESTADO, e.ID_CATEGORIAOCUPACIONAL, CASE WHEN cd.ID_DOCENTE IS NOT NULL THEN 'archetype-user-employee-faculty' ELSE 'archetype-user-employee-staff' END AS UPEU_ARCHETYPE_NAME, ROW_NUMBER() OVER (PARTITION BY e.COD_APS ORDER BY CASE e.ID_TIPODOCUMENTO WHEN 1 THEN 1 WHEN 4 THEN 2 WHEN 7 THEN 3 WHEN 22 THEN 4 WHEN 24 THEN 5 WHEN 31 THEN 6 WHEN 23 THEN 7 WHEN 9 THEN 8 WHEN 6 THEN 9 WHEN 0 THEN 10 WHEN 97 THEN 11 WHEN 98 THEN 12 WHEN 99 THEN 13 ELSE 14 END ASC, e.FEC_INICIO DESC NULLS LAST) AS RN FROM ELISEO.VW_APS_EMPLEADO e LEFT JOIN ENOC.CAT_DOCENTE cd ON cd.ID_PERSONA = e.ID_PERSONA AND cd.ID_ESTADO_DOCENTE = '02' WHERE e.ESTADO = 'A' AND e.COD_APS IS NOT NULL AND TRIM(e.COD_APS) IS NOT NULL AND NOT REGEXP_LIKE(TRIM(e.COD_APS), '^0+$') ) WHERE RN = 1 )'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE COD_APS = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Trabajadores-v2 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { row -&gt; result &lt;&lt; ['__UID__': row.COD_APS as String, '__NAME__': row.COD_APS as String, 'COD_APS': row.COD_APS as String, 'NOMBRE': row.NOMBRE as String, 'PATERNO': row.PATERNO as String, 'MATERNO': row.MATERNO as String, 'NUM_DOCUMENTO': row.NUM_DOCUMENTO as String, 'FEC_INICIO': row.FEC_INICIO?.toString(), 'FEC_TERMINO': row.FEC_TERMINO?.toString(), 'ESTADO': row.ESTADO as String, 'ID_CATEGORIAOCUPACIONAL': row.ID_CATEGORIAOCUPACIONAL?.toString(), 'UPEU_ARCHETYPE_NAME': row.UPEU_ARCHETYPE_NAME as String] }; return result</cfg:searchScript>
+            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT * FROM ( SELECT * FROM ( SELECT e.COD_APS, e.ID_PERSONA, e.NOMBRE, e.PATERNO, e.MATERNO, e.NUM_DOCUMENTO, e.SEXO, e.FEC_NACIMIENTO, e.FEC_INICIO, e.FEC_TERMINO, e.ESTADO, e.ID_CATEGORIAOCUPACIONAL, t.CELULAR, t.CORREO_INST, t.ID_TIPOESTADOCIVIL, p.NOMBRE AS NOMBRE_PUESTO, CASE WHEN cd.ID_DOCENTE IS NOT NULL THEN 'archetype-user-employee-faculty' ELSE 'archetype-user-employee-staff' END AS UPEU_ARCHETYPE_NAME, ROW_NUMBER() OVER (PARTITION BY e.COD_APS ORDER BY CASE e.ID_TIPODOCUMENTO WHEN 1 THEN 1 WHEN 4 THEN 2 WHEN 7 THEN 3 WHEN 22 THEN 4 WHEN 24 THEN 5 WHEN 31 THEN 6 WHEN 23 THEN 7 WHEN 9 THEN 8 WHEN 6 THEN 9 WHEN 0 THEN 10 WHEN 97 THEN 11 WHEN 98 THEN 12 WHEN 99 THEN 13 ELSE 14 END ASC, e.FEC_INICIO DESC NULLS LAST) AS RN FROM ELISEO.VW_APS_EMPLEADO e LEFT JOIN ENOC.CAT_DOCENTE cd ON cd.ID_PERSONA = e.ID_PERSONA AND cd.ID_ESTADO_DOCENTE = '02' LEFT JOIN ENOC.VW_TRABAJADOR t ON t.ID_PERSONA = e.ID_PERSONA LEFT JOIN ENOC.PLLA_PUESTO p ON p.ID_PUESTO = t.ID_PUESTO WHERE e.ESTADO = 'A' AND e.COD_APS IS NOT NULL AND TRIM(e.COD_APS) IS NOT NULL AND NOT REGEXP_LIKE(TRIM(e.COD_APS), '^0+$') ) WHERE RN = 1 )'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE COD_APS = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Trabajadores-v2 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { row -&gt; result &lt;&lt; ['__UID__': row.COD_APS as String, '__NAME__': row.COD_APS as String, 'COD_APS': row.COD_APS as String, 'ID_PERSONA': row.ID_PERSONA?.toString(), 'NOMBRE': row.NOMBRE as String, 'PATERNO': row.PATERNO as String, 'MATERNO': row.MATERNO as String, 'NUM_DOCUMENTO': row.NUM_DOCUMENTO as String, 'SEXO': row.SEXO as String, 'FEC_NACIMIENTO': row.FEC_NACIMIENTO?.toString(), 'FEC_INICIO': row.FEC_INICIO?.toString(), 'FEC_TERMINO': row.FEC_TERMINO?.toString(), 'ESTADO': row.ESTADO as String, 'ID_CATEGORIAOCUPACIONAL': row.ID_CATEGORIAOCUPACIONAL?.toString(), 'CELULAR': row.CELULAR as String, 'CORREO_INST': row.CORREO_INST as String, 'ID_TIPOESTADOCIVIL': row.ID_TIPOESTADOCIVIL?.toString(), 'NOMBRE_PUESTO': row.NOMBRE_PUESTO as String, 'UPEU_ARCHETYPE_NAME': row.UPEU_ARCHETYPE_NAME as String] }; return result</cfg:searchScript>
             <cfg:syncScript>return null</cfg:syncScript>
-            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("COD_APS", true)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("PATERNO", true)); ocib.addAttributeInfo(ro("MATERNO", false)); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false)); ocib.addAttributeInfo(ro("FEC_INICIO", false)); ocib.addAttributeInfo(ro("FEC_TERMINO", false)); ocib.addAttributeInfo(ro("ESTADO", true)); ocib.addAttributeInfo(ro("ID_CATEGORIAOCUPACIONAL", false)); ocib.addAttributeInfo(ro("UPEU_ARCHETYPE_NAME", true)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
+            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("COD_APS", true)); ocib.addAttributeInfo(ro("ID_PERSONA", false)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("PATERNO", true)); ocib.addAttributeInfo(ro("MATERNO", false)); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false)); ocib.addAttributeInfo(ro("SEXO", false)); ocib.addAttributeInfo(ro("FEC_NACIMIENTO", false)); ocib.addAttributeInfo(ro("FEC_INICIO", false)); ocib.addAttributeInfo(ro("FEC_TERMINO", false)); ocib.addAttributeInfo(ro("ESTADO", true)); ocib.addAttributeInfo(ro("ID_CATEGORIAOCUPACIONAL", false)); ocib.addAttributeInfo(ro("CELULAR", false)); ocib.addAttributeInfo(ro("CORREO_INST", false)); ocib.addAttributeInfo(ro("ID_TIPOESTADOCIVIL", false)); ocib.addAttributeInfo(ro("NOMBRE_PUESTO", false)); ocib.addAttributeInfo(ro("UPEU_ARCHETYPE_NAME", true)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
             <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); sql.firstRow("SELECT 1 AS OK FROM DUAL"); return "OK"</cfg:testScript>
         </icfc:configurationProperties>
     </connectorConfiguration>
@@ -168,6 +168,90 @@
                         </script>
                     </expression>
                     <target><path>activation/administrativeStatus</path></target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:ID_PERSONA</ref>
+                <inbound>
+                    <name>id-persona-to-externalSystemId</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:externalSystemId</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:SEXO</ref>
+                <inbound>
+                    <name>sexo-to-gender</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim().toUpperCase(); v == 'M' ? '1' : v == 'F' ? '2' : '0'</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:gender</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:FEC_NACIMIENTO</ref>
+                <inbound>
+                    <name>fec-nacimiento-to-birthDate</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>if (input == null) return null; def s = input.toString(); s.length() >= 10 ? s.substring(0, 10) : null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:birthDate</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:CELULAR</ref>
+                <inbound>
+                    <name>celular-to-telephoneNumber</name>
+                    <strength>strong</strength>
+                    <target><path>telephoneNumber</path></target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:CORREO_INST</ref>
+                <inbound>
+                    <name>correo-inst-to-emailAddress</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim().toLowerCase(); v ?: null</code>
+                        </script>
+                    </expression>
+                    <target><path>emailAddress</path></target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:ID_TIPOESTADOCIVIL</ref>
+                <inbound>
+                    <name>estado-civil-to-maritalStatus</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:maritalStatus</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:NOMBRE_PUESTO</ref>
+                <inbound>
+                    <name>nombre-puesto-to-title</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim(); v ?: null</code>
+                        </script>
+                    </expression>
+                    <target><path>title</path></target>
                 </inbound>
             </attribute>
             <attribute>
