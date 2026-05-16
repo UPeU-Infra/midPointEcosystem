@@ -43,9 +43,9 @@
             <cfg:allNative>false</cfg:allNative>
             <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
             <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
-            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT * FROM ( SELECT e.CODIGO, MAX(e.NOMBRE) AS NOMBRE, MAX(e.PATERNO) AS PATERNO, MAX(e.MATERNO) AS MATERNO, MAX(e.CORREO_UPEU) AS CORREO_UPEU, MAX(e.CELULAR) AS CELULAR, MAX(e.NUM_DOCUMENTO) AS NUM_DOCUMENTO, MAX(e.FEC_NACIMIENTO) AS FEC_NACIMIENTO, MAX(e.ESCUELA_PROFESIONAL) AS ESCUELA_PROFESIONAL, 'ALUMNI' AS AFILIACION FROM DAVID.VW_PERSONA_EGRESADO e GROUP BY e.CODIGO )'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE CODIGO = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Egresados-v2 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { row -&gt; result &lt;&lt; ['__UID__': row.CODIGO as String, '__NAME__': row.CODIGO as String, 'CODIGO': row.CODIGO as String, 'NOMBRE': row.NOMBRE as String, 'PATERNO': row.PATERNO as String, 'MATERNO': row.MATERNO as String, 'CORREO_UPEU': row.CORREO_UPEU as String, 'CELULAR': row.CELULAR as String, 'NUM_DOCUMENTO': row.NUM_DOCUMENTO as String, 'FEC_NACIMIENTO': row.FEC_NACIMIENTO?.toString(), 'ESCUELA_PROFESIONAL': row.ESCUELA_PROFESIONAL as String, 'AFILIACION': row.AFILIACION as String] }; return result</cfg:searchScript>
+            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT * FROM ( SELECT e.CODIGO, MAX(e.NOMBRE) AS NOMBRE, MAX(e.PATERNO) AS PATERNO, MAX(e.MATERNO) AS MATERNO, MAX(e.CORREO_UPEU) AS CORREO_UPEU, MAX(e.CELULAR) AS CELULAR, MAX(e.NUM_DOCUMENTO) AS NUM_DOCUMENTO, MAX(e.FEC_NACIMIENTO) AS FEC_NACIMIENTO, MAX(e.ESCUELA_PROFESIONAL) AS ESCUELA_PROFESIONAL, MAX(e.NOM_FACULTAD) AS NOM_FACULTAD, MAX(e.NIVEL_ENSENANZA) AS NIVEL_ENSENANZA, MAX(e.MODALIDAD_ESTUDIO) AS MODALIDAD_ESTUDIO, MAX(e.ANIO) AS ANIO, MAX(e.SEMESTRE) AS SEMESTRE, 'ALUMNI' AS AFILIACION FROM DAVID.VW_PERSONA_EGRESADO e GROUP BY e.CODIGO )'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE CODIGO = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Egresados-v2 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { row -&gt; result &lt;&lt; ['__UID__': row.CODIGO as String, '__NAME__': row.CODIGO as String, 'CODIGO': row.CODIGO as String, 'NOMBRE': row.NOMBRE as String, 'PATERNO': row.PATERNO as String, 'MATERNO': row.MATERNO as String, 'CORREO_UPEU': row.CORREO_UPEU as String, 'CELULAR': row.CELULAR as String, 'NUM_DOCUMENTO': row.NUM_DOCUMENTO as String, 'FEC_NACIMIENTO': row.FEC_NACIMIENTO?.toString(), 'ESCUELA_PROFESIONAL': row.ESCUELA_PROFESIONAL as String, 'NOM_FACULTAD': row.NOM_FACULTAD as String, 'NIVEL_ENSENANZA': row.NIVEL_ENSENANZA as String, 'MODALIDAD_ESTUDIO': row.MODALIDAD_ESTUDIO as String, 'ANIO': row.ANIO?.toString(), 'SEMESTRE': row.SEMESTRE?.toString(), 'AFILIACION': row.AFILIACION as String] }; return result</cfg:searchScript>
             <cfg:syncScript>return null</cfg:syncScript>
-            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("CODIGO", true)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("PATERNO", false)); ocib.addAttributeInfo(ro("MATERNO", false)); ocib.addAttributeInfo(ro("CORREO_UPEU", false)); ocib.addAttributeInfo(ro("CELULAR", false)); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false)); ocib.addAttributeInfo(ro("FEC_NACIMIENTO", false)); ocib.addAttributeInfo(ro("ESCUELA_PROFESIONAL", false)); ocib.addAttributeInfo(ro("AFILIACION", false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
+            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("CODIGO", true)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("PATERNO", false)); ocib.addAttributeInfo(ro("MATERNO", false)); ocib.addAttributeInfo(ro("CORREO_UPEU", false)); ocib.addAttributeInfo(ro("CELULAR", false)); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false)); ocib.addAttributeInfo(ro("FEC_NACIMIENTO", false)); ocib.addAttributeInfo(ro("ESCUELA_PROFESIONAL", false)); ocib.addAttributeInfo(ro("NOM_FACULTAD", false)); ocib.addAttributeInfo(ro("NIVEL_ENSENANZA", false)); ocib.addAttributeInfo(ro("MODALIDAD_ESTUDIO", false)); ocib.addAttributeInfo(ro("ANIO", false)); ocib.addAttributeInfo(ro("SEMESTRE", false)); ocib.addAttributeInfo(ro("AFILIACION", false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
             <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); sql.firstRow("SELECT 1 AS OK FROM DUAL"); return "OK"</cfg:testScript>
         </icfc:configurationProperties>
     </connectorConfiguration>
@@ -179,6 +179,70 @@
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramUri</path>
                     </target>
                 </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:NOM_FACULTAD</ref>
+                <inbound>
+                    <name>nom-facultad-to-organizationalUnit</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>(input ?: '').toString().trim() ?: null</code>
+                        </script>
+                    </expression>
+                    <target><path>organizationalUnit</path></target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:NIVEL_ENSENANZA</ref>
+                <inbound>
+                    <name>nivel-ensenanza-to-studyLevel</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>(input ?: '').toString().trim() ?: null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:studyLevel</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:MODALIDAD_ESTUDIO</ref>
+                <inbound>
+                    <name>modalidad-to-studyModality</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>(input ?: '').toString().trim() ?: null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:studyModality</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:ANIO</ref>
+                <inbound>
+                    <name>anio-semestre-to-admissionPeriod</name>
+                    <strength>strong</strength>
+                    <source><path>$shadow/attributes/ri:ANIO</path></source>
+                    <source><path>$shadow/attributes/ri:SEMESTRE</path></source>
+                    <expression>
+                        <script>
+                            <code>def a = ANIO?.toString()?.trim(); def s = SEMESTRE?.toString()?.trim(); (a &amp;&amp; s) ? "${a}-${s}" : (a ?: null)</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:admissionPeriod</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:SEMESTRE</ref>
+                <!-- sin inbound propio: consumido por anio-semestre-to-admissionPeriod en ri:ANIO -->
             </attribute>
             <attribute>
                 <ref>ri:AFILIACION</ref>
