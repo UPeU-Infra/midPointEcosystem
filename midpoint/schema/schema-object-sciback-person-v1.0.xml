@@ -135,7 +135,7 @@
                         <xsd:annotation><xsd:appinfo><a:displayName>eduPersonUniqueId</a:displayName><a:indexed>true</a:indexed><a:displayOrder>450</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
                     <xsd:element name="schacHomeOrganization" type="xsd:string" minOccurs="0" maxOccurs="1">
-                        <xsd:annotation><xsd:appinfo><a:displayName>Organización (schacHomeOrganization)</a:displayName><a:displayOrder>460</a:displayOrder></xsd:appinfo></xsd:annotation>
+                        <xsd:annotation><xsd:appinfo><a:displayName>Organización (schacHomeOrganization)</a:displayName><a:displayOrder>460</a:displayOrder><a:indexed>true</a:indexed></xsd:appinfo></xsd:annotation>
                     </xsd:element>
                     <xsd:element name="schacExpiryDate" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>Fecha de expiración (SCHAC)</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>470</a:displayOrder></xsd:appinfo></xsd:annotation>
