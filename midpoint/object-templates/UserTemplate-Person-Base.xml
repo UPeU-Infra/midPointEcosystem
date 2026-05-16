@@ -753,6 +753,10 @@
         <source>
             <path>extension/sciback:identityDocuments</path>
         </source>
+        <source>
+            <name>taxId</name>
+            <path>extension/sciback:taxId</path>
+        </source>
         <expression>
             <script>
                 <code><![CDATA[
@@ -779,6 +783,11 @@ try {
     }
 } catch (Exception e) {
     log.warn('Bloque F: error leyendo identityDocuments en {}: {}', focus?.name, e.message)
+}
+// Fallback: aceptar taxId (campo legacy urn:schac:personalUniqueID:*) como documento primario
+if (!hasPrimaryDoc && taxId != null) {
+    def txStr = basic.stringify(taxId)?.trim()
+    if (txStr?.startsWith('urn:schac:personalUniqueID:')) hasPrimaryDoc = true
 }
 
 // Condicion 2: tiene afiliacion primaria valida
