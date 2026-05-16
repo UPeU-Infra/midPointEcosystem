@@ -211,7 +211,7 @@
            FACULTY     → R-Affiliation-Faculty  (94a03f65-...)
            STAFF       → R-Affiliation-Staff    (0da0b3b8-...)
            EMPLOYEE    → R-Affiliation-Employee (7d4e89fb-...)
-           ALUMNI      → R-Affiliation-Alumni   (485dc678-...)
+           ALUM        → R-Affiliation-Alumni   (485dc678-...)
            AFFILIATE-CU → R-Affiliation-Affiliate-CU (31f25974-...)
 
          Lógica: busca rol por name = "R-Affiliation-" + capitalize(primaryAffiliation)
@@ -242,7 +242,7 @@
                                     //   FACULTY      → R-Affiliation-Faculty
                                     //   STAFF        → R-Affiliation-Staff
                                     //   EMPLOYEE     → R-Affiliation-Employee
-                                    //   ALUMNI       → R-Affiliation-Alumni
+                                    //   ALUM         → R-Affiliation-Alumni
                                     //   AFFILIATE-CU → R-Affiliation-Affiliate-CU
                                     if (primaryAffiliation == null) return null
                                     def val = basic.stringify(primaryAffiliation).trim().toUpperCase()
@@ -252,7 +252,7 @@
                                         'FACULTY':      'R-Affiliation-Faculty',
                                         'STAFF':        'R-Affiliation-Staff',
                                         'EMPLOYEE':     'R-Affiliation-Employee',
-                                        'ALUMNI':       'R-Affiliation-Alumni',
+                                        'ALUM':         'R-Affiliation-Alumni',
                                         'AFFILIATE-CU': 'R-Affiliation-Affiliate-CU'
                                     ]
                                     return roleMap[val]
@@ -272,7 +272,7 @@
                 <code>
                     primaryAffiliation != null &amp;&amp;
                     basic.stringify(primaryAffiliation).trim() != '' &amp;&amp;
-                    ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUMNI','AFFILIATE-CU'].contains(
+                    ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUM','AFFILIATE-CU'].contains(
                         basic.stringify(primaryAffiliation).trim().toUpperCase()
                     )
                 </code>
@@ -710,7 +710,7 @@
                             '485dc678-94a5-4d20-9463-71568c625a33',
                             '31f25974-62c9-404a-a038-b17a08059fe5'
                         ] as Set
-                        def VALID_AFFILIATIONS = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUMNI','AFFILIATE-CU'] as Set
+                        def VALID_AFFILIATIONS = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUM','AFFILIATE-CU'] as Set
 
                         def reasons = []
 
@@ -934,7 +934,7 @@ if (!hasPrimaryDoc && taxId != null) {
 }
 
 // Condicion 2: tiene afiliacion primaria valida
-def validAffiliations = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUMNI','AFFILIATE-CU']
+def validAffiliations = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUM','AFFILIATE-CU']
 def hasAffiliation = primaryAffiliation != null &&
     validAffiliations.contains(basic.stringify(primaryAffiliation).trim().toUpperCase())
 

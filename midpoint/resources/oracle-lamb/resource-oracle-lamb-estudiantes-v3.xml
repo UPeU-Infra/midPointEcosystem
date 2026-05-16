@@ -205,13 +205,8 @@
             </attribute>
             <attribute>
                 <ref>ri:PROGRAM_CODES</ref>
-                <inbound>
-                    <name>program-codes-to-extension</name>
-                    <strength>strong</strength>
-                    <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramCode</path>
-                    </target>
-                </inbound>
+                <!-- PROGRAM_CODES contiene IDs numéricos Oracle (ej: "327") — no usar como academicProgramCode canónico.
+                     academicProgramCode canónico EP-XXX se resuelve desde SCHOOL_NAME via resolveProgramCode. -->
             </attribute>
             <attribute>
                 <ref>ri:SCHOOL_NAME</ref>
@@ -246,10 +241,27 @@
                     <name>school-name-to-primaryAffiliation</name>
                     <strength>strong</strength>
                     <expression>
-                        <value>STUDENT</value>
+                        <value>student</value>
                     </expression>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:primaryAffiliation</path>
+                    </target>
+                </inbound>
+                <inbound>
+                    <name>school-name-to-academicProgramCode</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <function>
+                            <libraryRef oid="6a99f9de-5db6-43d5-9b20-0cfd2b79ecf9" type="FunctionLibraryType"/>
+                            <name>resolveProgramCode</name>
+                            <parameter>
+                                <name>programText</name>
+                                <expression><path>$input</path></expression>
+                            </parameter>
+                        </function>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramCode</path>
                     </target>
                 </inbound>
             </attribute>
