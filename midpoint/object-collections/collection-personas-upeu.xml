@@ -16,14 +16,6 @@
                   xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
                   xmlns:sb="urn:sciback:midpoint:person">
     <name>personas-upeu</name>
-    <display>
-        <label>Personas UPeU</label>
-        <pluralLabel>Personas UPeU</pluralLabel>
-        <icon>
-            <cssClass>fa fa-users</cssClass>
-            <color>#1565C0</color>
-        </icon>
-    </display>
     <type>UserType</type>
     <filter>
         <q:equal>
