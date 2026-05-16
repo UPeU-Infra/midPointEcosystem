@@ -1,27 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Archetype: Person (structural)
+  Archetype: Person (built-in Evolveum)
   OID: 00000000-0000-0000-0000-000000000702 (built-in Evolveum, PATCH over existing)
 
-  Spec canonica: §3.1 Pilar 1 - Persona unica, §4.2 Archetype unico Person
-  Regla: un unico archetype structural por UserType.
-  Regla: NO codifica afiliacion. Afiliaciones = R-Affiliation-* roles (spec §3.2).
+  DECISION 2026-05-16: Person NO se usa como archetype structural para usuarios
+  operacionales UPeU. Cada tipo de usuario tiene su propio archetype structural:
+    - archetype-user-student     (3037fbd2-db02-4ffd-8b1a-83fab5e686aa)
+    - archetype-user-alumni      (87552943-9600-493b-88ca-74b7d3ba93e4)
+    - archetype-user-employee-staff   (6460facf-3abf-4851-966e-0c95aa1a6c46)
+    - archetype-user-employee-faculty (c93083ca-f4c5-4704-acf4-d53b97c9556e)
+    - etc.
 
-  Policy Rules (F5 - 2026-05-14):
-    PR-RECORD-REJECTION  : audit log cuando el foco esta en draft (trazabilidad).
-                           El script de rejectionReasons va en Bloque G del Object Template.
-    PR-AUDIT-ACTIVE-GATE : audit log cuando el foco transita a active (trazabilidad).
+  Cada archetype especifico tiene su propio ObjectTemplate (UserTemplate-<Tipo>)
+  que hace includeRef al UserTemplate-Person-Base (855caaca-...).
+  Por eso el objectTemplateRef en este archetype Person queda INACTIVO
+  (los usuarios no reciben Person como archetype structural).
 
-  Diseno deliberado:
-    - El enforcement real (lifecycleState=draft) lo hace el Bloque F del Object Template.
-    - El script de rejectionReasons lo ejecuta el Bloque G del Object Template (mapping script).
-      Razon: objectState en inducement evalua el estado del rol/archetype, no el foco.
-      El template tiene acceso directo al foco y puede escribir en extension fields.
-    - Las policy rules en inducement agregan TRAZABILIDAD en audit log (action: record).
-    - Un inducement con solo policyRule/record NO induce privilegios (libro §8.4 compatible).
+  Person se mantiene en DB porque es un built-in de MidPoint 4.9 — no se puede
+  eliminar. Sus policy rules de trazabilidad se mantienen para documentacion
+  historica pero NO se evaluan en usuarios operacionales (ninguno tiene Person
+  como archetype desde 2026-05-16).
 
-  F2 - Refactor de Archetypes UPeU 2026-05
+  Raiz del problema que motivo este cambio:
+    Cuando un usuario aparecia en multiples resources (ej. trabajador que tambien
+    es egresado), cada resource intentaba forzar un archetype structural distinto
+    (Person vs archetype-user-employee-staff) → PolicyViolationException.
+    La solucion es que cada resource asigne el archetype especifico de su tipo.
+
+  F2 - Refactor inicial de Archetypes UPeU 2026-05
   F5 - Policy Rules de trazabilidad UPeU 2026-05-14
+  F6 - Migracion a archetypes especificos por tipo 2026-05-16 (esta decision)
 -->
 <archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
            xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
@@ -41,7 +49,13 @@
         <conflictResolution>
             <action>recompute</action>
         </conflictResolution>
-        <objectTemplateRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" type="c:ObjectTemplateType"/>
+        <!-- objectTemplateRef DESACTIVADO 2026-05-16:
+             Person ya no se asigna como archetype structural a usuarios operacionales.
+             Cada archetype especifico (archetype-user-student, -alumni, -employee-staff, etc.)
+             tiene su propio template que hace includeRef al UserTemplate-Person-Base.
+             Mantener este objectTemplateRef activo causaria que si algun usuario tuviera
+             Person como archetype, recibiria el template base sin las extensiones especificas.
+        <objectTemplateRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" type="c:ObjectTemplateType"/> -->
     </archetypePolicy>
 
     <!-- ============================================================
