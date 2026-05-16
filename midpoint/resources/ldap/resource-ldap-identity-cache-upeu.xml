@@ -14102,6 +14102,125 @@
                     </expression>
                 </outbound>
             </attribute>
+            <!-- ── NUEVOS ATRIBUTOS: inetOrgPerson ─────────────────────── -->
+            <attribute id="83">
+                <ref>ri:mobile</ref>
+                <displayName>Mobile (celular)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/telephoneNumber</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="84">
+                <ref>ri:ou</ref>
+                <displayName>Organizational Unit (facultad/escuela)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/organizationalUnit</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="85">
+                <ref>ri:title</ref>
+                <displayName>Title (cargo)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/title</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="86">
+                <ref>ri:departmentNumber</ref>
+                <displayName>Department Number (costCenter area.N)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/costCenter</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="87">
+                <ref>ri:displayName</ref>
+                <displayName>Display Name</displayName>
+                <outbound>
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/fullName</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <!-- ── NUEVOS ATRIBUTOS: eduPerson ────────────────────────── -->
+            <attribute id="88">
+                <ref>ri:eduPersonEntitlement</ref>
+                <displayName>eduPersonEntitlement (programa académico URI)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:academicProgramUri</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <!-- ── NUEVOS ATRIBUTOS: SCHAC schacPersonalCharacteristics ── -->
+            <attribute id="89">
+                <ref>ri:schacGender</ref>
+                <displayName>SCHAC Gender (ISO 5218, integer)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:gender</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>gender != null ? Integer.parseInt(gender.toString().trim()) : null</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="90">
+                <ref>ri:schacDateOfBirth</ref>
+                <displayName>SCHAC Date of Birth (YYYYMMDD string)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:birthDate</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>birthDate != null ? birthDate.toString().replaceAll('-','') : null</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="91">
+                <ref>ri:schacCountryOfCitizenship</ref>
+                <displayName>SCHAC Country of Citizenship (ISO 3166-1 alpha-3)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:nationality</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <!-- ── NUEVOS ATRIBUTOS: SCHAC schacEntryMetadata ────────── -->
+            <attribute id="92">
+                <ref>ri:schacExpiryDate</ref>
+                <displayName>SCHAC Expiry Date (terminationDate → dateTime)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:terminationDate</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>if (terminationDate == null) return null; def s = terminationDate.toString().trim(); def parts = s.split('-'); if (parts.length != 3) return null; javax.xml.datatype.DatatypeFactory.newInstance().newXMLGregorianCalendar(parts[0].toInteger(), parts[1].toInteger(), parts[2].toInteger(), 0, 0, 0, 0, 0)</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
         </objectType>
     </schemaHandling>
     <capabilities>
