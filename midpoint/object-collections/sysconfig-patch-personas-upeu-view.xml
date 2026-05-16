@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Fragment: objectCollectionView para personas-upeu
+    Contexto: Bloque a agregar dentro de adminGuiConfiguration/objectCollectionViews
+              en la SystemConfiguration (OID 00000000-0000-0000-0000-000000000001).
+
+    NOTA: Este archivo es documentación del fragmento XML, NO se importa directamente.
+    La SystemConfiguration completa se importa como sysconfig-updated.xml (generado
+    desde REST export + edición manual).
+
+    Propósito: Vista "Personas UPeU" en el menú lateral de MidPoint.
+               Muestra todos los usuarios importados desde Oracle LAMB
+               (filtrado por schacHomeOrganization = "upeu.edu.pe").
+               displayOrder=10 para que aparezca primero en la sección Users.
+
+    Referencia: ObjectCollection OID 00000000-0000-0000-0002-000000000100
+    Creado: 2026-05-15
+-->
+<objectCollectionView>
+    <identifier>personas-upeu-view</identifier>
+    <display>
+        <label>Personas UPeU</label>
+        <pluralLabel>Personas UPeU</pluralLabel>
+        <icon>
+            <cssClass>fa fa-users</cssClass>
+            <color>#1565C0</color>
+        </icon>
+    </display>
+    <displayOrder>10</displayOrder>
+    <type>UserType</type>
+    <collection>
+        <collectionRef oid="00000000-0000-0000-0002-000000000100" type="ObjectCollectionType"/>
+    </collection>
+</objectCollectionView>
