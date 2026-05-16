@@ -10,11 +10,13 @@
     - DNI 43919791 no coincide con ningún usuario existente
     - Escuela: EP Psicología | Facultad: Ciencias de la Salud | Nivel: Pregrado | Período: 2015-2
   Estado: runnable (ejecutar UNA VEZ, verificar resultado)
+  Nota v2: filtro usa URI inline para evitar bug de serialización namespace icfs: en PostgreSQL.
+           {http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3}name
+           es equivalente a icfs:name pero sobrevive round-trip DB serialization.
 -->
 <task oid="e2000001-0000-0000-0000-000000000001"
       xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
-      xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
     <name>pilot-import-egresada-200921206</name>
     <description>Import piloto de UNA egresada (Edith Melba Choque, CODIGO 200921206, EP Psicología, Facultad Ciencias de la Salud, Pregrado 2015-2). Candidata pura: solo egresada, no trabajadora ni estudiante activa. Solo para verificación de pipeline inbound Egresados. Ejecutar UNA VEZ.</description>
@@ -31,7 +33,7 @@
                     <query>
                         <q:filter>
                             <q:equal>
-                                <q:path>attributes/icfs:name</q:path>
+                                <q:path>attributes/{http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3}name</q:path>
                                 <q:value>200921206</q:value>
                             </q:equal>
                         </q:filter>
