@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: Pilot import — estudiante 202212349 (Elias Fernandez Llanos)
+  OID: tarea única para import piloto de UN estudiante por CODIGO
+  Resource: Oracle LAMB Estudiantes v3 (6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22)
+  Propósito: verificar pipeline completo inbound → correlación → archetype → mappings
+  Estado: runnable (ejecutar una sola vez, luego suspender)
+-->
+<task oid="f1a00001-0000-0000-0000-pilot0000001"
+      xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+    <name>pilot-import-estudiante-202212349</name>
+    <description>Import piloto de UN estudiante (Elias Fernandez Llanos, CODIGO 202212349, EP Ingeniería de Sistemas, ciclo 8). Solo para verificación de pipeline inbound. Ejecutar UNA VEZ.</description>
+    <executionState>runnable</executionState>
+    <activity>
+        <work>
+            <import>
+                <resourceObjects>
+                    <resourceRef oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22" type="ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
+                    <objectclass>ri:AccountObjectClass</objectclass>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>attributes/icfs:name</q:path>
+                                <q:value>202212349</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </resourceObjects>
+            </import>
+        </work>
+        <controlFlow>
+            <errorHandling>
+                <entry>
+                    <situation>
+                        <errorCategory>generic</errorCategory>
+                    </situation>
+                    <reaction>
+                        <stopOnError>true</stopOnError>
+                    </reaction>
+                </entry>
+            </errorHandling>
+        </controlFlow>
+    </activity>
+</task>
