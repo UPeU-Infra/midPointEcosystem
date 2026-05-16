@@ -13,6 +13,7 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
     <name>pilot-import-estudiante-202212349</name>
     <description>Import piloto de UN estudiante (Elias Fernandez Llanos, CODIGO 202212349, EP Ingeniería de Sistemas, ciclo 8). Solo para verificación de pipeline inbound. Ejecutar UNA VEZ.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
     <executionState>runnable</executionState>
     <activity>
         <work>
