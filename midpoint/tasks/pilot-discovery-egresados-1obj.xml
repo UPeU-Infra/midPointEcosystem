@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: Pilot discovery — egresados (1 objeto para encontrar CODIGO candidato)
+  OID: e1000001-0000-0000-0000-000000000001
+  Resource: Oracle LAMB Egresados v2 (6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23)
+  Propósito: descubrir 1 CODIGO de egresado válido para el import piloto.
+             Sin filtro → trae el primer objeto. Suspender después de 1 objeto.
+  Estado: runnable (ejecutar UNA VEZ, suspender manualmente)
+  Nota: NO es el import piloto real. Solo para obtener el CODIGO candidato.
+-->
+<task oid="e1000001-0000-0000-0000-000000000001"
+      xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+    <name>pilot-discovery-egresados-1obj</name>
+    <description>Discovery task: importa 1 objeto del resource Egresados para obtener CODIGO candidato. Suspender después de 1 objeto procesado. NO es el import piloto definitivo.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>runnable</executionState>
+    <activity>
+        <work>
+            <import>
+                <resourceObjects>
+                    <resourceRef oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23" type="ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
+                    <objectclass>ri:AccountObjectClass</objectclass>
+                </resourceObjects>
+            </import>
+        </work>
+        <distribution>
+            <buckets>
+                <explicitSegmentation>
+                    <segment>
+                        <from>1</from>
+                        <to>2</to>
+                    </segment>
+                </explicitSegmentation>
+            </buckets>
+        </distribution>
+    </activity>
+</task>

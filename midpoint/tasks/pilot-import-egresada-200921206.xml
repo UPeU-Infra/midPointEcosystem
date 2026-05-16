@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: Pilot import — egresada 200921206 (Edith Melba Choque)
+  OID: e2000001-0000-0000-0000-000000000001
+  Resource: Oracle LAMB Egresados v2 (6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23)
+  Propósito: verificar pipeline completo inbound para Egresados → correlación → archetype → mappings
+  Candidata verificada:
+    - NO es trabajadora activa (CHECK_TRAB=0 en ELISEO.VW_APS_EMPLEADO con FEC_TERMINO IS NULL)
+    - NO es estudiante activa (CHECK_EST=0 en DAVID.VW_FICHA_MATRICULA con ID_SEMESTRE=279)
+    - DNI 43919791 no coincide con ningún usuario existente
+    - Escuela: EP Psicología | Facultad: Ciencias de la Salud | Nivel: Pregrado | Período: 2015-2
+  Estado: runnable (ejecutar UNA VEZ, verificar resultado)
+-->
+<task oid="e2000001-0000-0000-0000-000000000001"
+      xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+    <name>pilot-import-egresada-200921206</name>
+    <description>Import piloto de UNA egresada (Edith Melba Choque, CODIGO 200921206, EP Psicología, Facultad Ciencias de la Salud, Pregrado 2015-2). Candidata pura: solo egresada, no trabajadora ni estudiante activa. Solo para verificación de pipeline inbound Egresados. Ejecutar UNA VEZ.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>runnable</executionState>
+    <activity>
+        <work>
+            <import>
+                <resourceObjects>
+                    <resourceRef oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23" type="ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
+                    <objectclass>ri:AccountObjectClass</objectclass>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>attributes/icfs:name</q:path>
+                                <q:value>200921206</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </resourceObjects>
+            </import>
+        </work>
+    </activity>
+</task>
