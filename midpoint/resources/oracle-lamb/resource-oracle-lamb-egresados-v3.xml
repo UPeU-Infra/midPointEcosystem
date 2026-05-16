@@ -225,24 +225,22 @@
             </attribute>
             <attribute>
                 <ref>ri:ANIO</ref>
+                <!-- sin inbound propio: SEMESTRE ya contiene el período completo "ANIO-N" -->
+            </attribute>
+            <attribute>
+                <ref>ri:SEMESTRE</ref>
                 <inbound>
-                    <name>anio-semestre-to-admissionPeriod</name>
+                    <name>semestre-to-admissionPeriod</name>
                     <strength>strong</strength>
-                    <source><path>$shadow/attributes/ri:ANIO</path></source>
-                    <source><path>$shadow/attributes/ri:SEMESTRE</path></source>
                     <expression>
                         <script>
-                            <code>def a = ANIO?.toString()?.trim(); def s = SEMESTRE?.toString()?.trim(); (a &amp;&amp; s) ? "${a}-${s}" : (a ?: null)</code>
+                            <code>(input ?: '').toString().trim() ?: null</code>
                         </script>
                     </expression>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:admissionPeriod</path>
                     </target>
                 </inbound>
-            </attribute>
-            <attribute>
-                <ref>ri:SEMESTRE</ref>
-                <!-- sin inbound propio: consumido por anio-semestre-to-admissionPeriod en ri:ANIO -->
             </attribute>
             <attribute>
                 <ref>ri:AFILIACION</ref>
