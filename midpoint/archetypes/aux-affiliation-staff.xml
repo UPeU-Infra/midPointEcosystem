@@ -11,6 +11,7 @@
            xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
     <name>AuxAff-Staff</name>
     <description>Archetype auxiliar de afiliación: Personal Administrativo UPeU. Asignado automáticamente cuando primaryAffiliation='staff'. Complementa el archetype estructural Person. eduPerson: staff.</description>
+    <archetypeType>auxiliary</archetypeType>
     <archetypePolicy>
         <display>
             <label>Personal Administrativo</label>
@@ -21,9 +22,4 @@
             </icon>
         </display>
     </archetypePolicy>
-    <assignment>
-        <assignmentRelation>
-            <holderType>UserType</holderType>
-        </assignmentRelation>
-    </assignment>
 </archetype>
