@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AuxAff-Alum — Archetype auxiliar de afiliación: Egresado
+  OID: 23fb4fdf-fff9-49c7-8fa0-379c4e77ff86
+  Tipo: auxiliary (asignado automáticamente desde ObjectTemplate-Person-Base)
+  Condición: extension/sciback:primaryAffiliation = 'alum'
+  Estándar: eduPersonPrimaryAffiliation = 'alum' (eduPerson 202208)
+  SciBack: bloque canónico — no hardcodear lógica de afiliación aquí
+-->
+<archetype oid="23fb4fdf-fff9-49c7-8fa0-379c4e77ff86"
+           xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
+    <name>AuxAff-Alum</name>
+    <description>Archetype auxiliar de afiliación: Egresado UPeU. Asignado automáticamente cuando primaryAffiliation='alum'. Complementa el archetype estructural Person. eduPerson: alum.</description>
+    <archetypePolicy>
+        <display>
+            <label>Egresado</label>
+            <pluralLabel>Egresados</pluralLabel>
+            <icon>
+                <cssClass>fa fa-user-graduate</cssClass>
+                <color>#546E7A</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+    <assignment>
+        <assignmentRelation>
+            <holderType>UserType</holderType>
+        </assignmentRelation>
+    </assignment>
+</archetype>

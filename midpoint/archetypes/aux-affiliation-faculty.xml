@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AuxAff-Faculty — Archetype auxiliar de afiliación: Docente
+  OID: c42e740c-77aa-4823-9127-6def8970ffa3
+  Tipo: auxiliary (asignado automáticamente desde ObjectTemplate-Person-Base)
+  Condición: extension/sciback:primaryAffiliation = 'faculty'
+  Estándar: eduPersonPrimaryAffiliation = 'faculty' (eduPerson 202208)
+  SciBack: bloque canónico — no hardcodear lógica de afiliación aquí
+-->
+<archetype oid="c42e740c-77aa-4823-9127-6def8970ffa3"
+           xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
+    <name>AuxAff-Faculty</name>
+    <description>Archetype auxiliar de afiliación: Docente UPeU. Asignado automáticamente cuando primaryAffiliation='faculty'. Complementa el archetype estructural Person. eduPerson: faculty.</description>
+    <archetypePolicy>
+        <display>
+            <label>Docente</label>
+            <pluralLabel>Docentes</pluralLabel>
+            <icon>
+                <cssClass>fa fa-chalkboard-teacher</cssClass>
+                <color>#2E7D32</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+    <assignment>
+        <assignmentRelation>
+            <holderType>UserType</holderType>
+        </assignmentRelation>
+    </assignment>
+</archetype>

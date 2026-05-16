@@ -456,6 +456,149 @@
     </mapping>
 
     <!-- ============================================================
+         BLOQUE D.5 — AUTO-ASIGNACIÓN AUXILIARY ARCHETYPES DE AFILIACIÓN
+         Asigna el archetype auxiliar correspondiente según primaryAffiliation.
+         Valores esperados (lowercase, vienen de LAMB inbound resources):
+           student  → AuxAff-Student  (598d6845-6160-499d-a13a-8e1439be3680)
+           staff    → AuxAff-Staff    (43529dfa-e8ce-4d5d-9ff1-94a2c9833590)
+           faculty  → AuxAff-Faculty  (c42e740c-77aa-4823-9127-6def8970ffa3)
+           alum     → AuxAff-Alum     (23fb4fdf-fff9-49c7-8fa0-379c4e77ff86)
+
+         Principio: archetypes auxiliares son ADITIVOS (un usuario puede tener
+         staff + alum simultáneamente). strong = se evalúa en cada recompute.
+         Patrón: target OID directo en assignmentTargetSearch (más eficiente
+         que filtro por name). Libro Cap.7 + eduPerson 202208 §2.2.
+         ============================================================ -->
+    <mapping>
+        <name>D5-aux-archetype-student</name>
+        <description>Auto-asigna archetype auxiliar AuxAff-Student cuando primaryAffiliation='student'.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>ArchetypeType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <q:value>AuxAff-Student</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>
+                    primaryAffiliation != null &amp;&amp;
+                    basic.stringify(primaryAffiliation).trim().toLowerCase() == 'student'
+                </code>
+            </script>
+        </condition>
+    </mapping>
+    <mapping>
+        <name>D5-aux-archetype-staff</name>
+        <description>Auto-asigna archetype auxiliar AuxAff-Staff cuando primaryAffiliation='staff'.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>ArchetypeType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <q:value>AuxAff-Staff</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>
+                    primaryAffiliation != null &amp;&amp;
+                    basic.stringify(primaryAffiliation).trim().toLowerCase() == 'staff'
+                </code>
+            </script>
+        </condition>
+    </mapping>
+    <mapping>
+        <name>D5-aux-archetype-faculty</name>
+        <description>Auto-asigna archetype auxiliar AuxAff-Faculty cuando primaryAffiliation='faculty'.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>ArchetypeType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <q:value>AuxAff-Faculty</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>
+                    primaryAffiliation != null &amp;&amp;
+                    basic.stringify(primaryAffiliation).trim().toLowerCase() == 'faculty'
+                </code>
+            </script>
+        </condition>
+    </mapping>
+    <mapping>
+        <name>D5-aux-archetype-alum</name>
+        <description>Auto-asigna archetype auxiliar AuxAff-Alum cuando primaryAffiliation='alum'.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>ArchetypeType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <q:value>AuxAff-Alum</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>
+                    primaryAffiliation != null &amp;&amp;
+                    basic.stringify(primaryAffiliation).trim().toLowerCase() == 'alum'
+                </code>
+            </script>
+        </condition>
+    </mapping>
+
+    <!-- ============================================================
          BLOQUE E — ASIGNACIÓN A ORG VIA assignmentTargetSearch
          Activado Fase 5b (2026-05-15):
          costCenter ← ID_SEDEAREA mapeado en resource-oracle-lamb-trabajadores
