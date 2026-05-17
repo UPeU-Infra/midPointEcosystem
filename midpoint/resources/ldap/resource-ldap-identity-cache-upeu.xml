@@ -14240,7 +14240,6 @@
                     <cap:attribute>ri:midPointAccountStatus</cap:attribute>
                     <cap:enableValue>enabled</cap:enableValue>
                     <cap:disableValue>disabled</cap:disableValue>
-                    <cap:noneValue>disabled</cap:noneValue>
                 </cap:status>
             </cap:activation>
             <!-- TLS pendiente — futura integración con EJBCA PKI UPeU -->
