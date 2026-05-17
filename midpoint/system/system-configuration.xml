@@ -191,11 +191,17 @@
     </roleManagement>
     <cleanupPolicy>
         <auditRecords>
-            <maxAge>P3M</maxAge>
+            <maxAge>P90D</maxAge>
         </auditRecords>
         <closedTasks>
-            <maxAge>P1M</maxAge>
+            <maxAge>P30D</maxAge>
         </closedTasks>
+        <operationExecutionRecords>
+            <maxAge>P7D</maxAge>
+        </operationExecutionRecords>
+        <reportData>
+            <maxAge>P7D</maxAge>
+        </reportData>
     </cleanupPolicy>
     <internals>
         <shadowCaching>
