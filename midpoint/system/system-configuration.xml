@@ -196,12 +196,12 @@
         <closedTasks>
             <maxAge>P30D</maxAge>
         </closedTasks>
-        <operationExecutionRecords>
+        <outputReports>
             <maxAge>P7D</maxAge>
-        </operationExecutionRecords>
-        <reportData>
+        </outputReports>
+        <objectResults>
             <maxAge>P7D</maxAge>
-        </reportData>
+        </objectResults>
     </cleanupPolicy>
     <internals>
         <shadowCaching>
