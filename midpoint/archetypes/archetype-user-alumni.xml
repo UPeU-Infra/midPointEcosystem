@@ -1,0 +1,27 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    oid="87552943-9600-493b-88ca-74b7d3ba93e4">
+    <name>archetype-user-alumni</name>
+    <description>Persona que culminó estudios formales en UPeU. eduPersonAffiliation: alum + member. Acceso reducido (email alumni, OPAC externo, bases bibliográficas limitadas).</description>
+    <lifecycleState>deprecated</lifecycleState>
+    <assignment>
+        <activation>
+            <effectiveStatus>enabled</effectiveStatus>
+        </activation>
+        <assignmentRelation>
+            <holderType>UserType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Egresado</label>
+            <pluralLabel>Egresados</pluralLabel>
+            <icon>
+                <cssClass>fa fa-graduation-cap</cssClass>
+                <color>#7f8c8d</color>
+            </icon>
+        </display>
+        <objectTemplateRef oid="c02c1e5d-914f-478e-98dd-59917c9172a6" relation="org:default" type="ObjectTemplateType"/>
+    </archetypePolicy>
+</archetype>

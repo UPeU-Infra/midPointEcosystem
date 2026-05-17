@@ -1,0 +1,27 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    oid="6460facf-3abf-4851-966e-0c95aa1a6c46">
+    <name>archetype-user-employee-staff</name>
+    <description>Personal no docente con relación contractual. eduPersonAffiliation: staff + employee + member.</description>
+    <lifecycleState>deprecated</lifecycleState>
+    <assignment>
+        <activation>
+            <effectiveStatus>enabled</effectiveStatus>
+        </activation>
+        <assignmentRelation>
+            <holderType>UserType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Personal Administrativo</label>
+            <pluralLabel>Personal Administrativo</pluralLabel>
+            <icon>
+                <cssClass>fa fa-user-tie</cssClass>
+                <color>#e67e22</color>
+            </icon>
+        </display>
+        <objectTemplateRef oid="e5d34f0b-ef62-4c04-9243-5be808c2b4c6" relation="org:default" type="ObjectTemplateType"/>
+    </archetypePolicy>
+</archetype>

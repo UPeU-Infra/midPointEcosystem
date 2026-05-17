@@ -3,5 +3,7 @@
     <displayName>Personal Administrativo</displayName>
     <description>Arquetipo para personal administrativo. <!-- TODO: ajustar atributos adicionales --></description>
     <archetypeType>user</archetypeType>
-    <applicableTemplateRef oid="{{OID_USER_TEMPLATE}}" type="ObjectTemplateType"/>
+    <archetypePolicy>
+        <objectTemplateRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" type="ObjectTemplateType"/>
+    </archetypePolicy>
 </archetype>

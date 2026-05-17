@@ -1,0 +1,27 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    oid="c93083ca-f4c5-4704-acf4-d53b97c9556e">
+    <name>archetype-user-employee-faculty</name>
+    <description>Personal académico con relación contractual para enseñanza/investigación. eduPersonAffiliation: faculty + employee + member. Subcategorías por ENOC.CAT_DOCENTE (ordinario/auxiliar/asociado/principal/contratado).</description>
+    <lifecycleState>deprecated</lifecycleState>
+    <assignment>
+        <activation>
+            <effectiveStatus>enabled</effectiveStatus>
+        </activation>
+        <assignmentRelation>
+            <holderType>UserType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Docente</label>
+            <pluralLabel>Docentes</pluralLabel>
+            <icon>
+                <cssClass>fa fa-chalkboard-teacher</cssClass>
+                <color>#27ae60</color>
+            </icon>
+        </display>
+        <objectTemplateRef oid="c8dc97b5-2dc6-4765-a3b3-0b071cbee3a5" relation="org:default" type="ObjectTemplateType"/>
+    </archetypePolicy>
+</archetype>

@@ -1,0 +1,27 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    oid="3037fbd2-db02-4ffd-8b1a-83fab5e686aa">
+    <name>archetype-user-student</name>
+    <description>Persona matriculada en estudios formales (pregrado/posgrado/doctorado). eduPersonAffiliation: student + member.</description>
+    <lifecycleState>deprecated</lifecycleState>
+    <assignment>
+        <activation>
+            <effectiveStatus>enabled</effectiveStatus>
+        </activation>
+        <assignmentRelation>
+            <holderType>UserType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Estudiante</label>
+            <pluralLabel>Estudiantes</pluralLabel>
+            <icon>
+                <cssClass>fa fa-user-graduate</cssClass>
+                <color>#3498db</color>
+            </icon>
+        </display>
+        <objectTemplateRef oid="b6e5b9a8-8ea9-439e-bf18-6a661e198c68" relation="org:default" type="ObjectTemplateType"/>
+    </archetypePolicy>
+</archetype>
