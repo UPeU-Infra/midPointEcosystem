@@ -3,13 +3,16 @@
       xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
       oid="2881200b-bb9f-415f-b422-dbbcbdea7caf">
     <name>AR-EntraID-User</name>
-    <description>Application Role: cuenta de usuario en Microsoft Entra ID / Microsoft 365 (tenant upeu.edu.pe). Construction UPEU-EntraID-Graph en Fase 5.</description>
+    <description>Application Role: cuenta de usuario en Microsoft Entra ID / Microsoft 365 (tenant upeu.edu.pe). Fase 5: construction activa — outbound bloqueado en resource hasta que David Urquizo conceda User.ReadWrite.All.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
         <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
     </assignment>
-    <!-- TODO Fase 5: agregar construction resourceRef UPEU-EntraID-Graph (2f11c057-7b15-4641-a0eb-00c98a6fa4cb)
+    <!-- Construction: provisiona cuenta en UPEU-EntraID-Graph (OID 2f11c057-7b15-4641-a0eb-00c98a6fa4cb).
+         El resource tiene capabilities create/update deshabilitadas mientras se espera
+         User.ReadWrite.All. Una vez concedido: habilitar en resource → recompute usuarios.
+         Ver instrucciones completas en UPEU-EntraID-Graph.xml § CAPABILITIES. -->
     <inducement>
         <construction>
             <resourceRef oid="2f11c057-7b15-4641-a0eb-00c98a6fa4cb" type="ResourceType"/>
@@ -17,5 +20,4 @@
             <intent>default</intent>
         </construction>
     </inducement>
-    -->
 </role>

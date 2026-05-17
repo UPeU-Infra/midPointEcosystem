@@ -12,7 +12,10 @@
     <!-- R-Affiliation-Staff y R-Affiliation-Employee eliminados (I2 2026-05-17):
          UserTemplate-Person-Base los auto-asigna via assignmentTargetSearch desde primaryAffiliation.
          Duplicarlos en BRs viola "no duplicar politica" (Semancik cap. 9). -->
-    <!-- AR-EntraID-User: cuenta en Entra ID / M365 -->
+    <!-- AR-EntraID-User: cuenta en Entra ID / M365.
+         Fase 5: inducement activo; write efectivo cuando David Urquizo conceda
+         User.ReadWrite.All en App 94dd7b5b (Azure Portal → Graph API → admin consent).
+         Capabilities create/update deshabilitadas en UPEU-EntraID-Graph hasta entonces. -->
     <inducement>
         <targetRef oid="2881200b-bb9f-415f-b422-dbbcbdea7caf" relation="org:default" type="RoleType"/>
     </inducement>

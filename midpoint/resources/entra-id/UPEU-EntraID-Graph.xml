@@ -1,20 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    UPEU-EntraID-Graph — Resource Microsoft Graph API (tenant upeu.edu.pe)
+    OID PROD:       2f11c057-7b15-4641-a0eb-00c98a6fa4cb
+    Conector:       com.evolveum.polygon.connector.msgraphapi.MSGraphConnector
+                    OID PROD: 01a9df66-90e9-4fd6-b296-bbe28f2b6b0b
+    Tenant:         cfbd88b4-94bc-4fba-98bd-64d0726394a3
+    App clientId:   94dd7b5b-eae6-45bc-a60a-d28781ecefbd
+
+    CREDENCIALES: clientSecret gestionado en keystore cifrado de MidPoint (AES-256-CBC).
+    NO reproducir en texto plano. Gestionar via UI Admin o ninja.
+
+    Estado Fase 5:  OUTBOUND PREPARADO — bloqueante:
+                    David Urquizo debe conceder User.ReadWrite.All en Azure Portal:
+                    App registration 94dd7b5b → Graph API → Application permissions
+                    → User.ReadWrite.All → Grant admin consent
+
+    Activación outbound: descomentar <configured> capabilities + aplicar este XML
+    en PROD via REST PUT cuando el permiso esté concedido.
+    NO aplicar hasta tener confirmación de David Urquizo.
+
+    Historial:
+    - Fase 1 (2026-04-16): resource creado, solo inbound (readonly Entra ID → MidPoint)
+    - Fase 5 (2026-05-17): outbound mappings agregados (UPN, givenName, surname,
+                            displayName, accountEnabled). Capabilities write deshabilitadas
+                            hasta que User.ReadWrite.All sea concedido.
+-->
 <resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
           xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3"
-          oid="6c1e920c-da75-4800-90c1-ab22be5c8cdc">
+          xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+          xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+          xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+          xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+          xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+          xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3"
+          oid="2f11c057-7b15-4641-a0eb-00c98a6fa4cb">
+
     <name>UPEU-EntraID-Graph</name>
-    <displayName>Microsoft Entra ID (Graph API)</displayName>
-    <description>Esqueleto de recurso para Entra ID usando Graph API. <!-- TODO: registrar aplicación y permisos -->
-    </description>
-    <connectorRef oid="{{OID_ENTRA_CONNECTOR}}" type="ConnectorType"/>
+    <description>Microsoft Graph API · tenant upeu.edu.pe · Fase 5: outbound preparado (bloqueante: User.ReadWrite.All pendiente David Urquizo)</description>
+
+    <!-- connectorRef OID real en PROD: 01a9df66-90e9-4fd6-b296-bbe28f2b6b0b -->
+    <connectorRef oid="01a9df66-90e9-4fd6-b296-bbe28f2b6b0b" type="ConnectorType"/>
+
     <connectorConfiguration>
-        <!-- TODO: completar clientId, tenantId y secrets -->
-        <icfc:configurationProperties>
-            <clientId>{{ENTRA_CLIENT_ID}}</clientId>
-            <tenantId>{{ENTRA_TENANT_ID}}</tenantId>
-            <clientSecret>{{SECRET}}</clientSecret>
-            <authority>{{ENTRA_AUTHORITY}}</authority>
-            <scope>{{ENTRA_SCOPE}}</scope>
+        <icfc:resultsHandlerConfiguration>
+            <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
+            <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
+            <icfc:enableAttributesToGetSearchResultsHandler>false</icfc:enableAttributesToGetSearchResultsHandler>
+        </icfc:resultsHandlerConfiguration>
+        <icfc:configurationProperties
+            xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.evolveum.polygon.connector-msgraph/com.evolveum.polygon.connector.msgraphapi.MSGraphConnector">
+            <cfg:clientId>94dd7b5b-eae6-45bc-a60a-d28781ecefbd</cfg:clientId>
+            <!--
+                clientSecret: gestionado en keystore MidPoint (t:encryptedData AES-256-CBC).
+                En PROD el valor cifrado se conserva; NO reproducir aquí.
+                Para renovar: UI → Resources → UPEU-EntraID-Graph → Edit → clientSecret.
+            -->
+            <cfg:tenantId>cfbd88b4-94bc-4fba-98bd-64d0726394a3</cfg:tenantId>
         </icfc:configurationProperties>
     </connectorConfiguration>
-    <!-- TODO: definir schemaHandling para cuentas y grupos una vez que se habiliten permisos -->
+
+    <schemaHandling>
+        <objectType>
+            <kind>account</kind>
+            <intent>default</intent>
+            <default>true</default>
+            <delineation>
+                <objectClass>ri:AccountObjectClass</objectClass>
+            </delineation>
+            <focus>
+                <type>c:UserType</type>
+            </focus>
+
+            <!-- ================================================================
+                 INBOUND — lectura Entra ID → MidPoint (Fase 1, preservado)
+                 Strength weak: MidPoint no sobrescribe si Oracle LAMB ya proveyó.
+                 ================================================================ -->
+            <attribute>
+                <ref>icfs:name</ref>
+                <!-- UPN como fuente de username (split en @) -->
+                <inbound>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>input ? input.toString().split("@")[0] : null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>$user/name</path>
+                    </target>
+                </inbound>
+                <!-- UPN completo como emailAddress institucional -->
+                <inbound>
+                    <strength>weak</strength>
+                    <target>
+                        <path>$user/emailAddress</path>
+                    </target>
+                </inbound>
+                <!-- OUTBOUND: UPN generado desde name del user (personalNumber@upeu.edu.pe)
+                     El template UserTemplate-Person-Base genera name = personalNumber.
+                     Entra ID UPN = name + "@upeu.edu.pe".
+                     strength normal: no sobrescribir cambios manuales en Entra ID. -->
+                <outbound>
+                    <strength>normal</strength>
+                    <expression>
+                        <script>
+                            <code>
+                                def uname = basic.getPropertyValue(focus, 'name')
+                                uname ? uname + '@upeu.edu.pe' : null
+                            </code>
+                        </script>
+                    </expression>
+                    <source>
+                        <path>$user/name</path>
+                    </source>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:givenName</ref>
+                <inbound>
+                    <strength>weak</strength>
+                    <target>
+                        <path>$user/givenName</path>
+                    </target>
+                </inbound>
+                <outbound>
+                    <strength>normal</strength>
+                    <source>
+                        <path>$user/givenName</path>
+                    </source>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:surname</ref>
+                <inbound>
+                    <strength>weak</strength>
+                    <target>
+                        <path>$user/familyName</path>
+                    </target>
+                </inbound>
+                <outbound>
+                    <strength>normal</strength>
+                    <source>
+                        <path>$user/familyName</path>
+                    </source>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:displayName</ref>
+                <inbound>
+                    <strength>weak</strength>
+                    <target>
+                        <path>$user/fullName</path>
+                    </target>
+                </inbound>
+                <outbound>
+                    <strength>normal</strength>
+                    <source>
+                        <path>$user/fullName</path>
+                    </source>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:mail</ref>
+                <inbound>
+                    <strength>weak</strength>
+                    <target>
+                        <path>$user/emailAddress</path>
+                    </target>
+                </inbound>
+                <!-- mail no se escribe outbound: lo gestiona Entra ID vía UPN automáticamente -->
+            </attribute>
+
+            <attribute>
+                <ref>ri:employeeId</ref>
+                <inbound>
+                    <strength>weak</strength>
+                    <target>
+                        <!-- Nota: employeeNumber está deprecated en modelo UPeU canónico;
+                             IIA real es Oracle LAMB → personalNumber.
+                             Se preserva este inbound para correlación legacy. -->
+                        <path>$user/employeeNumber</path>
+                    </target>
+                </inbound>
+                <!-- No outbound: personalNumber lo gestiona el template desde LAMB -->
+            </attribute>
+
+            <attribute>
+                <ref>ri:jobTitle</ref>
+                <inbound>
+                    <strength>weak</strength>
+                    <target>
+                        <path>$user/title</path>
+                    </target>
+                </inbound>
+                <!-- No outbound: title lo gestiona el template desde LAMB -->
+            </attribute>
+
+            <!-- ================================================================
+                 ACTIVATION — outbound: accountEnabled desde effectiveStatus MidPoint
+                 Groovy: ENABLED → true; DISABLED/ARCHIVED/SUSPENDED → false.
+                 ================================================================ -->
+            <activation>
+                <administrativeStatus>
+                    <inbound>
+                        <strength>weak</strength>
+                    </inbound>
+                </administrativeStatus>
+                <!-- accountEnabled outbound calculado desde effectiveStatus -->
+                <existence>
+                    <outbound>
+                        <expression>
+                            <value>true</value>
+                        </expression>
+                    </outbound>
+                </existence>
+            </activation>
+
+            <!-- ================================================================
+                 CORRELATION — por emailAddress (Fase 1, preservado)
+                 ================================================================ -->
+            <correlation>
+                <correlators>
+                    <items>
+                        <name>correlate-by-email</name>
+                        <enabled>true</enabled>
+                        <item>
+                            <ref>emailAddress</ref>
+                        </item>
+                    </items>
+                </correlators>
+            </correlation>
+
+            <!-- ================================================================
+                 SYNCHRONIZATION — reacciones inbound (Fase 1, preservado)
+                 ================================================================ -->
+            <synchronization>
+                <reaction>
+                    <situation>linked</situation>
+                    <actions>
+                        <synchronize>
+                            <synchronize>true</synchronize>
+                        </synchronize>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <situation>unlinked</situation>
+                    <actions>
+                        <link>
+                            <synchronize>true</synchronize>
+                        </link>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <situation>unmatched</situation>
+                    <!-- sin acción: no crear usuarios desde Entra ID; Oracle LAMB es IIA -->
+                </reaction>
+                <reaction>
+                    <situation>deleted</situation>
+                    <actions>
+                        <inactivateResourceObject/>
+                    </actions>
+                </reaction>
+            </synchronization>
+
+        </objectType>
+    </schemaHandling>
+
+    <!-- ================================================================
+         CAPABILITIES CONFIGURADAS
+         create y update deshabilitados hasta que User.ReadWrite.All
+         sea concedido por David Urquizo en Azure Portal.
+
+         Para activar outbound en PROD:
+         1. David concede User.ReadWrite.All + admin consent
+         2. Descomentar el bloque <configured> abajo
+         3. Aplicar este XML via REST PUT en PROD
+         4. Descomentar construction en AR-EntraID-User.xml
+         5. Recompute usuarios con BR que incluyen AR-EntraID-User
+
+         NOTA: el bloque <native> es generado por MidPoint al hacer
+         Test Connection — no se incluye aquí para evitar conflictos
+         con el schema cacheado en PROD.
+         ================================================================ -->
+    <capabilities>
+        <configured>
+            <cap:create>
+                <cap:enabled>false</cap:enabled>
+            </cap:create>
+            <cap:update>
+                <cap:enabled>false</cap:enabled>
+            </cap:update>
+            <!-- read y liveSync permanecen habilitados (Fase 1 operativa) -->
+            <cap:read>
+                <cap:enabled>true</cap:enabled>
+            </cap:read>
+            <cap:liveSync>
+                <cap:enabled>true</cap:enabled>
+            </cap:liveSync>
+        </configured>
+    </capabilities>
+
 </resource>
