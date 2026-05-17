@@ -23,7 +23,7 @@
         <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.evolveum.polygon.connector-ldap/com.evolveum.polygon.connector.ldap.LdapConnector">
             <cfg:host>192.168.15.168</cfg:host>
             <cfg:port>389</cfg:port>
-            <cfg:connectionSecurity>none</cfg:connectionSecurity>
+            <cfg:connectionSecurity>starttls</cfg:connectionSecurity>
             <cfg:bindDn>cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe</cfg:bindDn>
             <cfg:bindPassword>
                 <t:encryptedData>
