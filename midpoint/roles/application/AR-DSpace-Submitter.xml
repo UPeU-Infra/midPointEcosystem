@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="d9d31837-6125-4846-8bb0-62674a40749d">
+    <name>AR-DSpace-Submitter</name>
+    <description>Application Role: submitter en DSpace 7.6.6 (repositorio institucional ALICIA/RENATI). Puede depositar tesis, articulos, documentos. Construction LDAP (grupo dspace-submitters en OpenLDAP) en Fase 5.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application role (OID canónico PROD) -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <!-- TODO Fase 5: construcción vía OpenLDAP (LDAP-IdentityCache-UPeU) con memberOf grupo dspace-submitters
+    <inducement>
+        <construction>
+            <resourceRef oid="7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f" type="ResourceType"/>
+            <kind>entitlement</kind>
+            <intent>group-dspace-submitters</intent>
+        </construction>
+    </inducement>
+    -->
+</role>

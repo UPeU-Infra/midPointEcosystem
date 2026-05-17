@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="c0448fb9-db51-4109-8949-9321e1c6d9e5">
+    <name>AR-Keycloak-RealmAccess-UPeU</name>
+    <description>Application Role: acceso al realm 'upeu' en Keycloak 26.6.1 via User Federation OpenLDAP (arquitectura MidPoint->OpenLDAP<-Keycloak, sin conector directo MidPoint->Keycloak). El acceso efectivo lo otorga AR-LDAP-Person al crear la cuenta en OpenLDAP Identity Cache. Fase 6.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application role (OID canónico PROD) -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <!-- Sin construction directa: Keycloak usa User Federation -> OpenLDAP.
+         El acceso se materializa automáticamente cuando AR-LDAP-Person crea la cuenta LDAP.
+         No hay resource MidPoint->Keycloak (decisión doctrinal activa). -->
+</role>

@@ -8,14 +8,9 @@
         <!-- Archetype: Business Role -->
         <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="ArchetypeType"/>
     </assignment>
-    <!-- R-Affiliation: faculty (eduPersonPrimaryAffiliation=faculty) -->
-    <inducement>
-        <targetRef oid="94a03f65-e866-4d49-a996-26c4dc227413" relation="org:default" type="RoleType"/>
-    </inducement>
-    <!-- R-Affiliation: employee (también es empleado de planta) -->
-    <inducement>
-        <targetRef oid="7d4e89fb-163c-478c-a224-4e4be733bc1b" relation="org:default" type="RoleType"/>
-    </inducement>
+    <!-- R-Affiliation-Faculty y R-Affiliation-Employee eliminados (I2 2026-05-17):
+         UserTemplate-Person-Base los auto-asigna via assignmentTargetSearch desde primaryAffiliation.
+         Duplicarlos en BRs viola "no duplicar politica" (Semancik cap. 9). -->
     <!-- AR-EntraID-User: cuenta en Entra ID / M365 -->
     <inducement>
         <targetRef oid="2881200b-bb9f-415f-b422-dbbcbdea7caf" relation="org:default" type="RoleType"/>

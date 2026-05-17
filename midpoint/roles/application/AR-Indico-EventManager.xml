@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="da821757-90f5-470c-a311-cc20d0e14e65">
+    <name>AR-Indico-EventManager</name>
+    <description>Application Role: gestor de eventos en Indico — puede crear y administrar eventos de su facultad. Acceso via JIT-login SSO Keycloak (decision doctrinal: sin conector push). Sin construction directa. Fase 5.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application role (OID canónico PROD) -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <!-- Decision doctrinal activa 2026-04-22: Indico NO recibe push provisioning.
+         JIT-login + synced_fields via Keycloak SSO. Sin construction. -->
+</role>

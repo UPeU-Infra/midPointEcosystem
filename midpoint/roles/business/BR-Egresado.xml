@@ -8,10 +8,9 @@
         <!-- Archetype: Business Role -->
         <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="ArchetypeType"/>
     </assignment>
-    <!-- R-Affiliation: alum (eduPersonPrimaryAffiliation=alum) -->
-    <inducement>
-        <targetRef oid="485dc678-94a5-4d20-9463-71568c625a33" relation="org:default" type="RoleType"/>
-    </inducement>
+    <!-- R-Affiliation-Alumni eliminado (I2 2026-05-17):
+         UserTemplate-Person-Base lo auto-asigna via assignmentTargetSearch desde primaryAffiliation.
+         Duplicarlo en BRs viola "no duplicar politica" (Semancik cap. 9). -->
     <!-- AR-LDAP-Person: cuenta en OpenLDAP Identity Cache -->
     <inducement>
         <targetRef oid="7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d" relation="org:default" type="RoleType"/>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="2881200b-bb9f-415f-b422-dbbcbdea7caf">
+    <name>AR-EntraID-User</name>
+    <description>Application Role: cuenta de usuario en Microsoft Entra ID / Microsoft 365 (tenant upeu.edu.pe). Construction UPEU-EntraID-Graph en Fase 5.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application role (OID canónico PROD) -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <!-- TODO Fase 5: agregar construction resourceRef UPEU-EntraID-Graph (2f11c057-7b15-4641-a0eb-00c98a6fa4cb)
+    <inducement>
+        <construction>
+            <resourceRef oid="2f11c057-7b15-4641-a0eb-00c98a6fa4cb" type="ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+        </construction>
+    </inducement>
+    -->
+</role>

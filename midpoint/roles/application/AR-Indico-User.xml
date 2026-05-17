@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="3e979bbf-2f54-48e8-a304-9104f5e92ad3">
+    <name>AR-Indico-User</name>
+    <description>Application Role: usuario estandar Indico (v3.3.12, 192.168.12.165). Acceso via JIT-login SSO Keycloak (decision doctrinal: sin conector push). Sin construction directa. Fase 5.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application role (OID canónico PROD) -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <!-- Decision doctrinal activa 2026-04-22: Indico NO recibe push provisioning.
+         JIT-login + synced_fields via Keycloak SSO. Sin construction. -->
+</role>

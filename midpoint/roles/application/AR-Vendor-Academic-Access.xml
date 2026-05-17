@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="9cc94538-d576-4735-a16c-e70562cd98b9">
+    <name>AR-Vendor-Academic-Access</name>
+    <description>Application Role: acceso a vendors academicos federados (Scopus, WoS, EBSCO, ScienceDirect, Springer) via Keycloak Client Scope 'academic-databases-eduperson' + eduPersonScopedAffiliation. Sin construction directa (federacion SAML pasiva — no hay resource por vendor).</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application role (OID canónico PROD) -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <!-- Sin construction directa: acceso via eduPersonScopedAffiliation en SAML assertion.
+         Keycloak client scope 'academic-databases-eduperson' mapea el atributo al SP.
+         Fase F13: harvest SUSHI metrics (COUNTER). No requiere resource dedicado. -->
+</role>

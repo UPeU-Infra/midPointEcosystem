@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="91b2cbcd-3db9-4e90-b72e-b874b3c48fa6">
+    <name>AR-Koha-Librarian</name>
+    <description>Application Role: rol bibliotecario interno Koha CRAI — circulación, catalogación, administración ILS. Categoría patron Librarian. ConnId Java conector custom UPeU. Construction en Fase 5.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application role (OID canónico PROD) -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <!-- TODO Fase 5: agregar construction resourceRef Koha ILS (9b5a7c81-47aa-42ac-9a08-4de8b64935af)
+    <inducement>
+        <construction>
+            <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
+            <kind>account</kind>
+            <intent>librarian</intent>
+        </construction>
+    </inducement>
+    -->
+</role>
