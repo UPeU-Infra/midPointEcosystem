@@ -182,7 +182,7 @@
         <rootLoggerAppender>MIDPOINT_LOG</rootLoggerAppender>
         <rootLoggerLevel>INFO</rootLoggerLevel>
         <auditing>
-            <enabled>false</enabled>
+            <enabled>true</enabled>
             <details>false</details>
         </auditing>
     </logging>
