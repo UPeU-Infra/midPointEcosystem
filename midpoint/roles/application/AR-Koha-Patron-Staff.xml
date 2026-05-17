@@ -20,7 +20,7 @@
                 <ref>ri:category_id</ref>
                 <outbound>
                     <strength>strong</strength>
-                    <expression><value>PLACEHOLDER_STAFF</value></expression>
+                    <expression><value>STAFF</value></expression>
                 </outbound>
             </attribute>
         </construction>

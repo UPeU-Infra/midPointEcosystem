@@ -20,7 +20,7 @@
                 <ref>ri:category_id</ref>
                 <outbound>
                     <strength>strong</strength>
-                    <expression><value>PLACEHOLDER_FACULTY</value></expression>
+                    <expression><value>DOCEN</value></expression>
                 </outbound>
             </attribute>
         </construction>
