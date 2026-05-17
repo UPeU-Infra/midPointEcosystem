@@ -6,8 +6,10 @@
   Activar manualmente desde la UI cuando el piloto de import esté aprobado.
   Horario configurado: 02:00 UTC nightly (cronLikePattern) — inactivo mientras suspended.
   Fase: I6 — IGA UPeU canónico 2026-05-17
+  Sintaxis: activity-based reconciliation MidPoint 4.9.5 (resourceObjects wrapper requerido)
 -->
 <task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       oid="f1a00002-lamb-rec0-0000-000000000002">
     <name>Reconcile Oracle LAMB Egresados</name>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
@@ -19,7 +21,11 @@
     <activity>
         <work>
             <reconciliation>
-                <resourceRef oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23" type="ResourceType"/>
+                <resourceObjects>
+                    <resourceRef oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23" type="c:ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
+                </resourceObjects>
             </reconciliation>
         </work>
     </activity>
