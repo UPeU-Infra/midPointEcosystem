@@ -10,7 +10,7 @@
 -->
 <task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
-      oid="f1a00003-lamb-rec0-0000-000000000003">
+      oid="23b9fde4-6a5f-4c84-9370-0971fb27be73">
     <name>Reconcile Oracle LAMB Trabajadores</name>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
     <executionStatus>suspended</executionStatus>
