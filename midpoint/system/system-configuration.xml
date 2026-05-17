@@ -2362,5 +2362,26 @@
             <decision>deny</decision>
         </bulkActionsProfile>
     </expressions>
+    <globalPolicyRule>
+        <name>global-require-owner-business-roles</name>
+        <description>Aplica minAssignees owner=1 a todos los RoleType. Alimenta el Compliance Dashboard (ISO27001/A.5.1,A.5.2,A.5.9,A.5.36).</description>
+        <policyConstraints>
+            <minAssignees>
+                <name>constraint-require-owner</name>
+                <multiplicity>1</multiplicity>
+                <relation>org:owner</relation>
+            </minAssignees>
+        </policyConstraints>
+        <markRef oid="5508aca4-2aef-47a6-ad50-892389823c91" relation="org:default" type="c:MarkType"/>
+        <policyActions>
+            <record>
+                <description>Registrar mark Unowned en roles sin owner. Modo record (gradual enforcement per Evolveum best practices).</description>
+            </record>
+        </policyActions>
+        <evaluationTarget>object</evaluationTarget>
+        <focusSelector>
+            <type>RoleType</type>
+        </focusSelector>
+    </globalPolicyRule>
 </systemConfiguration>
 </c:objects>
