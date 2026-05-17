@@ -1,9 +1,0 @@
-<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="069a118b-9317-4ca2-a4e0-7be90b1d11f8">
-    <name>StudentType</name>
-    <displayName>Estudiante</displayName>
-    <description>Arquetipo base para estudiantes de la UPeU. <!-- TODO: ajustar atributos adicionales --></description>
-    <archetypeType>user</archetypeType>
-    <archetypePolicy>
-        <objectTemplateRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" type="ObjectTemplateType"/>
-    </archetypePolicy>
-</archetype>

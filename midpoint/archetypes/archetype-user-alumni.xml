@@ -4,7 +4,6 @@
     oid="87552943-9600-493b-88ca-74b7d3ba93e4">
     <name>archetype-user-alumni</name>
     <description>Persona que culminó estudios formales en UPeU. eduPersonAffiliation: alum + member. Acceso reducido (email alumni, OPAC externo, bases bibliográficas limitadas).</description>
-    <lifecycleState>deprecated</lifecycleState>
     <assignment>
         <activation>
             <effectiveStatus>enabled</effectiveStatus>

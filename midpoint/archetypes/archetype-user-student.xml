@@ -4,7 +4,6 @@
     oid="3037fbd2-db02-4ffd-8b1a-83fab5e686aa">
     <name>archetype-user-student</name>
     <description>Persona matriculada en estudios formales (pregrado/posgrado/doctorado). eduPersonAffiliation: student + member.</description>
-    <lifecycleState>deprecated</lifecycleState>
     <assignment>
         <activation>
             <effectiveStatus>enabled</effectiveStatus>

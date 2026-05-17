@@ -4,7 +4,6 @@
     oid="6460facf-3abf-4851-966e-0c95aa1a6c46">
     <name>archetype-user-employee-staff</name>
     <description>Personal no docente con relación contractual. eduPersonAffiliation: staff + employee + member.</description>
-    <lifecycleState>deprecated</lifecycleState>
     <assignment>
         <activation>
             <effectiveStatus>enabled</effectiveStatus>
