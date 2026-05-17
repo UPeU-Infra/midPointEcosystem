@@ -26,7 +26,17 @@
             <cfg:connectionSecurity>none</cfg:connectionSecurity>
             <cfg:bindDn>cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe</cfg:bindDn>
             <cfg:bindPassword>
-                <t:clearValue>MidPt@Ldap2026!</t:clearValue>
+                <t:encryptedData>
+                    <t:encryptionMethod>
+                        <t:algorithm>http://www.w3.org/2001/04/xmlenc#aes256-cbc</t:algorithm>
+                    </t:encryptionMethod>
+                    <t:keyInfo>
+                        <t:keyName>nkZ4VieDLlRmwD8hdryrmjz8IxQ=</t:keyName>
+                    </t:keyInfo>
+                    <t:cipherData>
+                        <t:cipherValue>O+gDVmU83LhMLrZPBUCKiPJqqkhqqAGbFG7B2EqxXes=</t:cipherValue>
+                    </t:cipherData>
+                </t:encryptedData>
             </cfg:bindPassword>
             <cfg:baseContext>ou=people,dc=upeu,dc=edu,dc=pe</cfg:baseContext>
             <cfg:passwordHashAlgorithm>SSHA</cfg:passwordHashAlgorithm>
@@ -14224,6 +14234,16 @@
         </objectType>
     </schemaHandling>
     <capabilities>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:activation>
+                <cap:status>
+                    <cap:attribute>ri:midPointAccountStatus</cap:attribute>
+                    <cap:enableValue>enabled</cap:enableValue>
+                    <cap:disableValue>disabled</cap:disableValue>
+                </cap:status>
+            </cap:activation>
+            <!-- TLS pendiente — futura integración con EJBCA PKI UPeU -->
+        </configured>
         <cachingMetadata>
             <retrievalTimestamp>2026-05-15T12:10:14.876Z</retrievalTimestamp>
             <serialNumber>a86a6ecef82bd365-c244fe765e81baa5</serialNumber>
