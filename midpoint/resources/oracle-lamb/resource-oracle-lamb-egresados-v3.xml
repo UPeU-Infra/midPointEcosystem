@@ -7,7 +7,7 @@
     xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23">
-    <name>Oracle LAMB Egresados v2</name>
+    <name>Oracle LAMB Egresados v3</name>
     <description>Inbound ScriptedSQL desde DAVID.VW_PERSONA_EGRESADO con dedup por CODIGO. Fase 5a-v3 schema sb:.</description>
     <lifecycleState>active</lifecycleState>
     <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="c:ConnectorType"/>

@@ -7,7 +7,7 @@
     xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21">
-    <name>Oracle LAMB Trabajadores v2</name>
+    <name>Oracle LAMB Trabajadores v3</name>
     <description>Inbound ScriptedSQL desde ELISEO.VW_APS_EMPLEADO + JOIN ENOC.CAT_DOCENTE + JOIN ENOC.VW_TRABAJADOR + JOIN ENOC.PLLA_PUESTO. Agrega telephoneNumber, emailAddress, title, gender, birthDate, externalSystemId, maritalStatus, ID_SEDEAREA→costCenter. Fase 5b.</description>
     <lifecycleState>active</lifecycleState>
     <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="c:ConnectorType"/>
@@ -187,7 +187,7 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>def v = (input ?: '').toString().trim().toUpperCase(); v == 'M' ? '1' : v == 'F' ? '2' : '0'</code>
+                            <code>def v = (input ?: '').toString().trim(); v == '1' || v.equalsIgnoreCase('M') ? '1' : v == '2' || v.equalsIgnoreCase('F') ? '2' : '9'</code>
                         </script>
                     </expression>
                     <target>
