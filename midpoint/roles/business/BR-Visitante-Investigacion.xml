@@ -1,0 +1,35 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="3399a9da-256b-4e82-b6bb-ffb0e1c042c1">
+    <name>BR-Visitante-Investigacion</name>
+    <description>Investigador visitante / afiliado temporal. Acceso mínimo: LDAP + WiFi Docentes + Keycloak + Vendor Academic Access. Sin M365 ni Zoom (cuenta temporal, licencias bajo demanda). iga-canonical-standards §6.4.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Business Role -->
+        <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <!-- R-Affiliation: affiliate (eduPersonPrimaryAffiliation=affiliate) — visitante externo -->
+    <inducement>
+        <targetRef oid="31f25974-62c9-404a-a038-b17a08059fe5" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-LDAP-Person: cuenta en OpenLDAP Identity Cache -->
+    <inducement>
+        <targetRef oid="7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-WiFi-Docentes: acceso red WiFi para investigación en campus -->
+    <inducement>
+        <targetRef oid="28e11679-a107-4c6c-b9d4-3ad616599f9b" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Keycloak-RealmAccess-UPeU: acceso SSO para recursos académicos -->
+    <inducement>
+        <targetRef oid="c0448fb9-db51-4109-8949-9321e1c6d9e5" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Vendor-Academic-Access: acceso a bases de datos académicas -->
+    <inducement>
+        <targetRef oid="9cc94538-d576-4735-a16c-e70562cd98b9" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Koha-Patron-Faculty: acceso biblioteca como visitante investigador -->
+    <inducement>
+        <targetRef oid="3294189e-958f-447d-a07b-83f986a7a1c7" relation="org:default" type="RoleType"/>
+    </inducement>
+</role>

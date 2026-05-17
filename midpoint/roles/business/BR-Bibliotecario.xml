@@ -1,0 +1,55 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="310ca80c-aff3-4a3b-8794-634b45762e3b">
+    <name>BR-Bibliotecario</name>
+    <description>Bibliotecario / personal CRAI. Acceso staff a M365 + Zoom Pro (reuniones con usuarios) + Koha Librarian (perfil gestor). iga-canonical-standards §6.4.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Business Role -->
+        <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <!-- R-Affiliation: staff (eduPersonPrimaryAffiliation=staff) -->
+    <inducement>
+        <targetRef oid="0da0b3b8-a93b-4765-ad71-30c535ff7512" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- R-Affiliation: employee -->
+    <inducement>
+        <targetRef oid="7d4e89fb-163c-478c-a224-4e4be733bc1b" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-EntraID-User: cuenta en Entra ID / M365 -->
+    <inducement>
+        <targetRef oid="2881200b-bb9f-415f-b422-dbbcbdea7caf" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-M365-Staff-A3: licencia M365 A3 for Staff -->
+    <inducement>
+        <targetRef oid="26618c24-eef8-4d28-830f-e0830b7d50e4" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Zoom-Pro: licencia Zoom Pro (atención usuarios, capacitaciones) -->
+    <inducement>
+        <targetRef oid="a1b2c3d4-e5f6-7890-abcd-ef1234567890" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-LDAP-Person: cuenta en OpenLDAP Identity Cache -->
+    <inducement>
+        <targetRef oid="7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Koha-Librarian: perfil gestor en Koha ILS (circulación, catalogación) -->
+    <inducement>
+        <targetRef oid="91b2cbcd-3db9-4e90-b72e-b874b3c48fa6" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-WiFi-Staff: acceso red WiFi corporativa staff -->
+    <inducement>
+        <targetRef oid="723fe852-1169-4d31-b765-5f5b799e4996" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Keycloak-RealmAccess-UPeU: acceso SSO Keycloak realm upeu -->
+    <inducement>
+        <targetRef oid="c0448fb9-db51-4109-8949-9321e1c6d9e5" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-DSpace-Submitter: puede depositar en repositorio (tesis, documentos) -->
+    <inducement>
+        <targetRef oid="d9d31837-6125-4846-8bb0-62674a40749d" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Indico-User: acceso Indico eventos -->
+    <inducement>
+        <targetRef oid="3e979bbf-2f54-48e8-a304-9104f5e92ad3" relation="org:default" type="RoleType"/>
+    </inducement>
+</role>

@@ -1,0 +1,18 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="d54aed62-9ab9-4cd2-b495-d04ae7727f19">
+    <name>AR-M365-Student-A1</name>
+    <description>Licencia Microsoft 365 A1 for Students. Provisionada via membresía en grupo Entra ID lic-m365-a1-students (group-based licensing). Destinatarios: estudiantes pregrado, posgrado. Resource EntraID en Fase outbound activará el outbound hacia memberOfGroup. IIA: UPEU-EntraID-Graph (kind=account intent=default).</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application Role (OID canónico Evolveum) -->
+        <targetRef oid="00000000-0000-0000-0000-000000000328" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <inducement>
+        <construction>
+            <resourceRef oid="2f11c057-7b15-4641-a0eb-00c98a6fa4cb" type="ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+        </construction>
+    </inducement>
+</role>

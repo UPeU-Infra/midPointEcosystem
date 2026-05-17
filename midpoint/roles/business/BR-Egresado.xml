@@ -2,21 +2,33 @@
       xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
       oid="26ea3930-c588-414b-82a3-120ae8b1ec22">
     <name>BR-Egresado</name>
-    <description>Egresado / alumni. Acceso limitado a vendors académicos. Email-Alumni pendiente.</description>
+    <description>Egresado / alumni. Acceso limitado: LDAP + vendors académicos + email alumni (M365 A1 Alumni pendiente activación grupo Entra ID). iga-canonical-standards §6.4.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
+        <!-- Archetype: Business Role -->
         <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="ArchetypeType"/>
     </assignment>
-    <!-- R-Affiliation-Alumni -->
+    <!-- R-Affiliation: alum (eduPersonPrimaryAffiliation=alum) -->
     <inducement>
-        <targetRef oid="9cc94538-d576-4735-a16c-e70562cd98b9" relation="org:default" type="RoleType"/>
+        <targetRef oid="485dc678-94a5-4d20-9463-71568c625a33" relation="org:default" type="RoleType"/>
     </inducement>
-    <!-- R-Affiliation-Member -->
-    <inducement>
-        <targetRef oid="c0448fb9-db51-4109-8949-9321e1c6d9e5" relation="org:default" type="RoleType"/>
-    </inducement>
-    <!-- AR-LDAP-Person — provisión en OpenLDAP Identity Cache -->
+    <!-- AR-LDAP-Person: cuenta en OpenLDAP Identity Cache -->
     <inducement>
         <targetRef oid="7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d" relation="org:default" type="RoleType"/>
     </inducement>
+    <!-- AR-Vendor-Academic-Access: acceso limitado a bases de datos académicas -->
+    <inducement>
+        <targetRef oid="9cc94538-d576-4735-a16c-e70562cd98b9" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Keycloak-RealmAccess-UPeU: acceso SSO para portales alumni -->
+    <inducement>
+        <targetRef oid="c0448fb9-db51-4109-8949-9321e1c6d9e5" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-M365-Alumni-A1: email alumni @alumni.upeu.edu.pe — pendiente activación grupo Entra ID lic-m365-a1-alumni -->
+    <!-- DESCOMENTADO cuando se confirme el grupo en Entra ID con David Urquizo -->
+    <!--
+    <inducement>
+        <targetRef oid="dd0ea6b7-816f-4bff-b654-67f8650480a8" relation="org:default" type="RoleType"/>
+    </inducement>
+    -->
 </role>

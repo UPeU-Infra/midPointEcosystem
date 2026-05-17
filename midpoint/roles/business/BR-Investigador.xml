@@ -1,0 +1,55 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="70c1606c-9d56-42ce-989f-a025c98f9c0b">
+    <name>BR-Investigador</name>
+    <description>Investigador activo (puede ser docente-investigador o investigador de planta). Tier máximo de herramientas: M365 A3 + Zoom Pro + DSpace Submitter + Vendor Academic Access. iga-canonical-standards §6.4.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Business Role -->
+        <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <!-- R-Affiliation: faculty (los investigadores tienen afiliación faculty en EDUCAUSE) -->
+    <inducement>
+        <targetRef oid="94a03f65-e866-4d49-a996-26c4dc227413" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-EntraID-User: cuenta en Entra ID / M365 -->
+    <inducement>
+        <targetRef oid="2881200b-bb9f-415f-b422-dbbcbdea7caf" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-M365-Faculty-A3: licencia M365 A3 for Faculty -->
+    <inducement>
+        <targetRef oid="31a1e321-ed05-4f62-938f-48548ff60b0a" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Zoom-Pro: licencia Zoom Pro -->
+    <inducement>
+        <targetRef oid="a1b2c3d4-e5f6-7890-abcd-ef1234567890" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-LDAP-Person: cuenta en OpenLDAP Identity Cache -->
+    <inducement>
+        <targetRef oid="7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Koha-Patron-Faculty: cuenta Koha ILS perfil Faculty -->
+    <inducement>
+        <targetRef oid="3294189e-958f-447d-a07b-83f986a7a1c7" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-WiFi-Docentes: acceso red WiFi corporativa docentes/investigadores -->
+    <inducement>
+        <targetRef oid="28e11679-a107-4c6c-b9d4-3ad616599f9b" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Keycloak-RealmAccess-UPeU: acceso SSO Keycloak realm upeu -->
+    <inducement>
+        <targetRef oid="c0448fb9-db51-4109-8949-9321e1c6d9e5" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-DSpace-Submitter: puede depositar en repositorio institucional -->
+    <inducement>
+        <targetRef oid="d9d31837-6125-4846-8bb0-62674a40749d" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Vendor-Academic-Access: acceso a bases de datos académicas -->
+    <inducement>
+        <targetRef oid="9cc94538-d576-4735-a16c-e70562cd98b9" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Indico-User: acceso Indico eventos -->
+    <inducement>
+        <targetRef oid="3e979bbf-2f54-48e8-a304-9104f5e92ad3" relation="org:default" type="RoleType"/>
+    </inducement>
+</role>

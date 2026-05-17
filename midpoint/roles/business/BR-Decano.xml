@@ -1,0 +1,51 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="dc4ff793-39e4-481d-8292-95a1282046ec">
+    <name>BR-Decano</name>
+    <description>Decano de facultad. Autoridad académica máxima a nivel de facultad. Tier faculty: M365 A3 + Zoom Pro. Roles de cargo específicos (MOF-DECANO) asignados separadamente via PBAC. iga-canonical-standards §6.4.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Business Role -->
+        <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <!-- R-Affiliation: faculty (decanos son docentes con cargo) -->
+    <inducement>
+        <targetRef oid="94a03f65-e866-4d49-a996-26c4dc227413" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- R-Affiliation: employee -->
+    <inducement>
+        <targetRef oid="7d4e89fb-163c-478c-a224-4e4be733bc1b" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-EntraID-User: cuenta en Entra ID / M365 -->
+    <inducement>
+        <targetRef oid="2881200b-bb9f-415f-b422-dbbcbdea7caf" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-M365-Faculty-A3: licencia M365 A3 for Faculty -->
+    <inducement>
+        <targetRef oid="31a1e321-ed05-4f62-938f-48548ff60b0a" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Zoom-Pro: licencia Zoom Pro -->
+    <inducement>
+        <targetRef oid="a1b2c3d4-e5f6-7890-abcd-ef1234567890" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-LDAP-Person: cuenta en OpenLDAP Identity Cache -->
+    <inducement>
+        <targetRef oid="7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Koha-Patron-Faculty: cuenta Koha ILS perfil Faculty -->
+    <inducement>
+        <targetRef oid="3294189e-958f-447d-a07b-83f986a7a1c7" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-WiFi-Docentes: acceso red WiFi corporativa -->
+    <inducement>
+        <targetRef oid="28e11679-a107-4c6c-b9d4-3ad616599f9b" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Keycloak-RealmAccess-UPeU: acceso SSO Keycloak realm upeu -->
+    <inducement>
+        <targetRef oid="c0448fb9-db51-4109-8949-9321e1c6d9e5" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Indico-EventManager: los decanos gestionan eventos de su facultad -->
+    <inducement>
+        <targetRef oid="da821757-90f5-470c-a311-cc20d0e14e65" relation="org:default" type="RoleType"/>
+    </inducement>
+</role>

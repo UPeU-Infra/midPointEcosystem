@@ -1,0 +1,18 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="b2c3d4e5-f6a7-8901-bcde-f12345678901">
+    <name>AR-Zoom-Basic</name>
+    <description>Licencia Zoom Basic (gratuita, 40 min por reunión). Provisionada via membresía en grupo Entra ID lic-zoom-basic (group-based via Entra ID + SAML SSO). Destinatarios: estudiantes pregrado, posgrado. IIA: UPEU-EntraID-Graph (kind=account intent=default). Nota: Zoom USA federated login via Entra ID SAML — la membresía en el grupo activa el plan basic en el tenant Zoom UPeU.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application Role (OID canónico Evolveum) -->
+        <targetRef oid="00000000-0000-0000-0000-000000000328" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <inducement>
+        <construction>
+            <resourceRef oid="2f11c057-7b15-4641-a0eb-00c98a6fa4cb" type="ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+        </construction>
+    </inducement>
+</role>

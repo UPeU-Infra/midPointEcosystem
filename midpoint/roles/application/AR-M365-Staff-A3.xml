@@ -1,0 +1,18 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="26618c24-eef8-4d28-830f-e0830b7d50e4">
+    <name>AR-M365-Staff-A3</name>
+    <description>Licencia Microsoft 365 A3 for Staff. Provisionada via membresía en grupo Entra ID lic-m365-a3-staff (group-based licensing). Destinatarios: personal administrativo, bibliotecarios. Resource EntraID en Fase outbound activará el outbound hacia memberOfGroup. IIA: UPEU-EntraID-Graph (kind=account intent=default).</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application Role (OID canónico Evolveum) -->
+        <targetRef oid="00000000-0000-0000-0000-000000000328" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <inducement>
+        <construction>
+            <resourceRef oid="2f11c057-7b15-4641-a0eb-00c98a6fa4cb" type="ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+        </construction>
+    </inducement>
+</role>

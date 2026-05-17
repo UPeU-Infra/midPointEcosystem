@@ -1,0 +1,43 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="111e2e54-b484-4c18-bd1b-01131107eb11">
+    <name>BR-Estudiante-Posgrado</name>
+    <description>Estudiante de posgrado activo (maestría). Afiliación: student. M365 A1 + Zoom Basic + LDAP + Koha + WiFi. iga-canonical-standards §6.4.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Business Role -->
+        <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <!-- R-Affiliation: student (eduPersonPrimaryAffiliation=student) -->
+    <inducement>
+        <targetRef oid="79ad22c7-b828-4b8c-a562-2ee01b214d7f" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-EntraID-User: cuenta en Entra ID / M365 -->
+    <inducement>
+        <targetRef oid="2881200b-bb9f-415f-b422-dbbcbdea7caf" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-M365-Student-A1: licencia M365 A1 for Students -->
+    <inducement>
+        <targetRef oid="d54aed62-9ab9-4cd2-b495-d04ae7727f19" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Zoom-Basic: licencia Zoom Basic -->
+    <inducement>
+        <targetRef oid="b2c3d4e5-f6a7-8901-bcde-f12345678901" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-LDAP-Person: cuenta en OpenLDAP Identity Cache -->
+    <inducement>
+        <targetRef oid="7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Koha-Patron-Student: cuenta Koha ILS perfil Student -->
+    <inducement>
+        <targetRef oid="e7447183-cba1-441d-b57f-d3b69cd56662" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-WiFi-Estudiantes: acceso red WiFi estudiantes -->
+    <inducement>
+        <targetRef oid="295dbd7c-6c67-480f-9d27-59aa04c1d193" relation="org:default" type="RoleType"/>
+    </inducement>
+    <!-- AR-Keycloak-RealmAccess-UPeU: acceso SSO Keycloak realm upeu -->
+    <inducement>
+        <targetRef oid="c0448fb9-db51-4109-8949-9321e1c6d9e5" relation="org:default" type="RoleType"/>
+    </inducement>
+</role>
