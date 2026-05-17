@@ -1060,11 +1060,7 @@
             <attribute id="26">
                 <ref>ri:category_id</ref>
                 <displayName>Categoría Patrón Koha</displayName>
-                <outbound>
-                    <name>category-id-outbound</name>
-                    <strength>weak</strength>
-                    <!-- category_id es controlado por AR-Koha-Patron-*/construction con strength=strong -->
-                </outbound>
+                <!-- outbound eliminado: category_id es controlado exclusivamente por AR-Koha-Patron-*/construction con strength=strong -->
             </attribute>
             <attribute id="27">
                 <ref>ri:library_id</ref>
