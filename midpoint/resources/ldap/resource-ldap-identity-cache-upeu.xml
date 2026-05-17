@@ -14023,6 +14023,25 @@
                     <source>
                         <path>$focus/familyName</path>
                     </source>
+                    <source>
+                        <name>fullName</name>
+                        <path>$focus/fullName</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+                                // sn es requerido en inetOrgPerson. Usar familyName si existe,
+                                // fallback a fullName completo (casos donde LAMB no tiene PATERNO/MATERNO).
+                                if (familyName != null &amp;&amp; familyName.toString().trim() != '') {
+                                    return familyName.toString().trim()
+                                }
+                                if (fullName != null &amp;&amp; fullName.toString().trim() != '') {
+                                    return fullName.toString().trim()
+                                }
+                                return null
+                            </code>
+                        </script>
+                    </expression>
                 </outbound>
             </attribute>
             <attribute id="66">
