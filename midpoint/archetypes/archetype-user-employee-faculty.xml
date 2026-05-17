@@ -22,6 +22,6 @@
                 <color>#27ae60</color>
             </icon>
         </display>
-        <objectTemplateRef oid="c8dc97b5-2dc6-4765-a3b3-0b071cbee3a5" relation="org:default" type="ObjectTemplateType"/>
+        <objectTemplateRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" type="ObjectTemplateType"/>
     </archetypePolicy>
 </archetype>
