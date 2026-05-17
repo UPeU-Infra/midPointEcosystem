@@ -2,7 +2,7 @@
 <!--
   UserTemplate-Person-Base — Template canónico base UPeU
   OID: 855caaca-68c4-4f7f-8ff8-b4e35dd7d390
-  Versión: 2.1 (2026-05-17)
+  Versión: 2.2 (2026-05-17)
   Schema: urn:sciback:midpoint:person (canónico) + urn:upeu:midpoint:local (LAMB)
   Aplica a: todos los UserType via archetypePolicy en Archetype-Person-Built-in
   Libro Cap.9: template se activa en cada create/modify/recompute del focus object.
@@ -12,6 +12,7 @@
     B — Datos derivados: fullName, emailAddress institucional (weak)
     C — eppn (eduPersonPrincipalName): strong, identificador federado
     D — Auto-asignación R-Affiliation-* via assignmentTargetSearch
+    D6 — OrgType EP desde academicProgramCode
     E — Asignación a Org (TODO: espera LAMB inbound depto→OU)
     F — Lifecycle gate draft→active (política estricta UPeU: doc primario + afiliación)
     G — Rejection reasons: trazabilidad de perfiles incompletos en draft
@@ -34,7 +35,7 @@
     oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390">
 
     <name>UserTemplate-Person-Base</name>
-    <description>Template canónico base UPeU v2.1. Bloques A-H implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque H: ciclo ISO 24760 §6.3 active→archived.</description>
+    <description>Template canónico base UPeU v2.2. Bloques A-H + D6 implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque H: ciclo ISO 24760 §6.3 active→archived. D6: OrgType EP desde academicProgramCode.</description>
     <lifecycleState>active</lifecycleState>
 
     <!-- ============================================================
@@ -596,6 +597,74 @@
                 <code>
                     primaryAffiliation != null &amp;&amp;
                     basic.stringify(primaryAffiliation).trim().toLowerCase() == 'alum'
+                </code>
+            </script>
+        </condition>
+    </mapping>
+
+    <!-- ============================================================
+         BLOQUE D.6 — AUTO-ASIGNACIÓN OrgType Escuela Profesional (EP)
+         Asigna el OrgType de la EP canónica desde sb:academicProgramCode.
+         Código EP (ej: EP-ARQ, EP-ING-SIS) ← sb-program-resolver (inbound LAMB).
+         OrgTypes EP: name = identifier = código EP (ej: "EP-ARQ").
+         Archetype: Academic-Program (9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73).
+
+         Solo actúa cuando:
+           1. sb:academicProgramCode tiene valor que empieza con "EP-"
+           2. sb:primaryAffiliation es student o alum
+
+         Libro Cap.10: Org hierarchy via assignments. Patrón assignmentTargetSearch.
+         createOnDemand=false: si el EP no existe en MidPoint → no error, solo skip.
+         ============================================================ -->
+    <mapping>
+        <name>D6-assign-org-ep-from-academicProgramCode</name>
+        <description>Auto-asigna OrgType Escuela Profesional (EP) desde sb:academicProgramCode. Busca OrgType.name = código EP (ej: EP-ARQ). Solo afiliaciones student/alum. Libro Cap.10 + iga-canonical-standards Pilar 3.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:academicProgramCode</path>
+        </source>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>OrgType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <expression>
+                            <script>
+                                <code>
+                                    // academicProgramCode = "EP-ARQ", "EP-ING-SIS", etc.
+                                    // Coincide directamente con OrgType.name en academic-programs-pregrado.xml
+                                    if (academicProgramCode == null) return null
+                                    def code = (academicProgramCode instanceof java.util.Collection) ?
+                                        (academicProgramCode.isEmpty() ? null : academicProgramCode.first()?.toString()?.trim()) :
+                                        basic.stringify(academicProgramCode).trim()
+                                    code?.startsWith('EP-') ? code : null
+                                </code>
+                            </script>
+                        </expression>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>
+                    // Solo actúa para afiliaciones académicas (student o alum)
+                    // y cuando hay código EP válido
+                    def code = (academicProgramCode instanceof java.util.Collection) ?
+                        (academicProgramCode.isEmpty() ? null : academicProgramCode.first()?.toString()?.trim()) :
+                        (academicProgramCode != null ? basic.stringify(academicProgramCode).trim() : null)
+                    if (code == null || !code.startsWith('EP-')) return false
+                    def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''
+                    return affil == 'student' || affil == 'alum'
                 </code>
             </script>
         </condition>

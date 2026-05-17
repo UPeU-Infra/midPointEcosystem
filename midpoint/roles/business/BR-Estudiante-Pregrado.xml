@@ -4,6 +4,7 @@
     <name>BR-Estudiante-Pregrado</name>
     <description>Estudiante de pregrado activo. Afiliación: student. M365 A1 + Zoom Basic + LDAP + Koha + WiFi. iga-canonical-standards §6.4.</description>
     <lifecycleState>active</lifecycleState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
     <assignment>
         <!-- Archetype: Business Role -->
         <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="ArchetypeType"/>
