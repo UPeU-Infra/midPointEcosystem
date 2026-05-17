@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: Reconcile Oracle LAMB Estudiantes
+  Resource: Oracle LAMB Estudiantes v2 (OID 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22)
+  Estado: SUSPENDED — NO ejecutar automáticamente.
+  Activar manualmente desde la UI cuando el piloto de import esté aprobado.
+  Horario configurado: 02:00 UTC nightly (cronLikePattern) — inactivo mientras SUSPENDED.
+  Fase: I6 — IGA UPeU canónico 2026-05-17
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      oid="f1a00001-lamb-rec0-0000-000000000001">
+    <name>Reconcile Oracle LAMB Estudiantes</name>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>SUSPENDED</executionState>
+    <schedule>
+        <recurrence>RECURRING</recurrence>
+        <cronLikePattern>0 0 2 * * ?</cronLikePattern>
+    </schedule>
+    <activity>
+        <work>
+            <reconciliation>
+                <resourceRef oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22" type="ResourceType"/>
+            </reconciliation>
+        </work>
+    </activity>
+</task>

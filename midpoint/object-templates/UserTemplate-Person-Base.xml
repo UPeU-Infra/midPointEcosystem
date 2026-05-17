@@ -2,7 +2,7 @@
 <!--
   UserTemplate-Person-Base — Template canónico base UPeU
   OID: 855caaca-68c4-4f7f-8ff8-b4e35dd7d390
-  Versión: 2.0 (2026-05-14)
+  Versión: 2.1 (2026-05-17)
   Schema: urn:sciback:midpoint:person (canónico) + urn:upeu:midpoint:local (LAMB)
   Aplica a: todos los UserType via archetypePolicy en Archetype-Person-Built-in
   Libro Cap.9: template se activa en cada create/modify/recompute del focus object.
@@ -14,13 +14,16 @@
     D — Auto-asignación R-Affiliation-* via assignmentTargetSearch
     E — Asignación a Org (TODO: espera LAMB inbound depto→OU)
     F — Lifecycle gate draft→active (política estricta UPeU: doc primario + afiliación)
+    G — Rejection reasons: trazabilidad de perfiles incompletos en draft
+    H — Baja definitiva: active→archived para staff/faculty 180d post-terminationDate (ISO 24760 §6.3)
 
   Validaciones de formato (weak/log-warn):
     birthDate (YYYY-MM-DD), gender (ISO 5218), nationality (ISO 3166 alpha-3),
     hireDate (YYYY-MM-DD), terminationDate (YYYY-MM-DD)
 
-  Leaver policy:
-    activation/administrativeStatus ← terminationDate <= today → DISABLED (strong)
+  Leaver policy (ciclo ISO 24760 completo):
+    activation/administrativeStatus ← terminationDate <= today → DISABLED (strong) [Bloque leaver]
+    lifecycleState ← 180d post-terminationDate + staff/faculty → archived (strong) [Bloque H]
 -->
 <objectTemplate
     xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
@@ -31,7 +34,7 @@
     oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390">
 
     <name>UserTemplate-Person-Base</name>
-    <description>Template canónico base UPeU v2.0. Bloques A-F implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant.</description>
+    <description>Template canónico base UPeU v2.1. Bloques A-H implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque H: ciclo ISO 24760 §6.3 active→archived.</description>
     <lifecycleState>active</lifecycleState>
 
     <!-- ============================================================
@@ -1002,6 +1005,59 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
                     <code>terminationDate != null</code>
                 </script>
             </condition>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
+         BLOQUE H — BAJA DEFINITIVA: active → archived (ISO 24760 §6.3)
+         Archiva identidades de staff/faculty 180 días post-terminación.
+         Implementa el ciclo completo ISO 24760: draft→active→suspended→archived.
+         Cuando lifecycleState=archived: todos los inducements se desactivan
+         y las cuentas downstream se eliminan en el siguiente recompute.
+         Semančík cap.14: archived = baja definitiva, datos retenidos para auditoría.
+         IIA del terminationDate: ELISEO.VW_APS_EMPLEADO (inbound LAMB Trabajadores).
+         primaryAffiliation evaluado: staff | faculty (minúsculas, como viene de LAMB).
+         ============================================================ -->
+    <item>
+        <ref>lifecycleState</ref>
+        <mapping>
+            <name>auto-archive-after-termination-grace-period</name>
+            <description>Transición active→archived para staff/faculty 180 días después de terminationDate. Implementa el ciclo completo ISO 24760 §6.3.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>extension/sciback:primaryAffiliation</path>
+            </source>
+            <source>
+                <path>extension/sciback:terminationDate</path>
+            </source>
+            <source>
+                <path>lifecycleState</path>
+            </source>
+            <condition>
+                <script>
+                    <code>
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''
+def termStr = terminationDate != null ? basic.stringify(terminationDate).trim() : ''
+def curState = lifecycleState != null ? basic.stringify(lifecycleState).trim() : ''
+if (!['staff', 'faculty'].contains(aff)) return false
+if (termStr == null || termStr == '') return false
+if (curState == 'archived') return false
+try {
+    def td = LocalDate.parse(termStr.substring(0, 10))
+    return ChronoUnit.DAYS.between(td, LocalDate.now()) > 180
+} catch (Exception e) {
+    log.warn('BloqueH: terminationDate no parseable {} en {}: {}', termStr, focus?.name, e.message)
+    return false
+}
+                    </code>
+                </script>
+            </condition>
+            <expression>
+                <value>archived</value>
+            </expression>
         </mapping>
     </item>
 
