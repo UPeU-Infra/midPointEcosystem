@@ -152,13 +152,32 @@
             </attribute>
 
             <!-- name → ServiceType.name = 'POS-{ID_PUESTO}'
-                 Convenio: prefijo POS- para namespace claro en UI y filtros. -->
+                 Convenio: prefijo POS- para namespace claro en UI y filtros.
+                 También asigna el archetype Position (assignmentTargetSearch)
+                 desde el mismo atributo — un solo bloque <attribute> para icfs:name. -->
             <attribute>
                 <ref>icfs:name</ref>
                 <inbound>
                     <name>name-to-name</name>
                     <strength>strong</strength>
                     <target><path>name</path></target>
+                </inbound>
+                <inbound>
+                    <name>assign-position-archetype</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <assignmentTargetSearch>
+                            <targetType>ArchetypeType</targetType>
+                            <filter>
+                                <q:equal>
+                                    <q:path>name</q:path>
+                                    <q:value>Position</q:value>
+                                </q:equal>
+                            </filter>
+                            <createOnDemand>false</createOnDemand>
+                        </assignmentTargetSearch>
+                    </expression>
+                    <target><path>assignment</path></target>
                 </inbound>
             </attribute>
 
@@ -199,9 +218,8 @@
                 </inbound>
             </attribute>
 
-            <!-- CODIGO_APS → ServiceType.identifier en formato APS (campo auxiliar) -->
-            <!-- Nota: identifier ya tiene ID_PUESTO. El CODIGO_APS va a subtype
-                 como metadato adicional (código alfanumérico RRHH). -->
+            <!-- CODIGO_APS → subtype (código alfanumérico RRHH, metadato adicional)
+                 identifier ya tiene ID_PUESTO (inmutable). CODIGO_APS va a subtype. -->
             <attribute>
                 <ref>ri:CODIGO_APS</ref>
                 <inbound>
@@ -213,28 +231,6 @@
                         </script>
                     </expression>
                     <target><path>subtype</path></target>
-                </inbound>
-            </attribute>
-
-            <!-- Archetype Position → assignment (auto-asignar archetype al crear) -->
-            <attribute>
-                <ref>icfs:name</ref>
-                <inbound>
-                    <name>assign-position-archetype</name>
-                    <strength>strong</strength>
-                    <expression>
-                        <assignmentTargetSearch>
-                            <targetType>ArchetypeType</targetType>
-                            <filter>
-                                <q:equal>
-                                    <q:path>name</q:path>
-                                    <q:value>Position</q:value>
-                                </q:equal>
-                            </filter>
-                            <createOnDemand>false</createOnDemand>
-                        </assignmentTargetSearch>
-                    </expression>
-                    <target><path>assignment</path></target>
                 </inbound>
             </attribute>
 
