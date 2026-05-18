@@ -417,9 +417,12 @@
         <condition>
             <script>
                 <code>
-                    /* input = valor de extension/sciback:primaryAffiliation (single-source mapping) */
-                    def affil = input != null ? basic.stringify(input).trim().toUpperCase() : ''
-                    affil == 'FACULTY'
+                    /* primaryAffiliation es la variable del source en este mapping.
+                       Proteger contra null con try/catch para evitar GroovyCastException. */
+                    try {
+                        if (primaryAffiliation == null) return false
+                        return basic.stringify(primaryAffiliation).trim().toUpperCase() == 'FACULTY'
+                    } catch (e) { return false }
                 </code>
             </script>
         </condition>
@@ -454,9 +457,12 @@
         <condition>
             <script>
                 <code>
-                    /* input = valor de extension/sciback:primaryAffiliation (single-source mapping) */
-                    def affil = input != null ? basic.stringify(input).trim().toUpperCase() : ''
-                    affil == 'STAFF'
+                    /* primaryAffiliation es la variable del source en este mapping.
+                       Proteger contra null con try/catch para evitar GroovyCastException. */
+                    try {
+                        if (primaryAffiliation == null) return false
+                        return basic.stringify(primaryAffiliation).trim().toUpperCase() == 'STAFF'
+                    } catch (e) { return false }
                 </code>
             </script>
         </condition>
