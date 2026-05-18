@@ -1312,30 +1312,19 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
                         <expression>
                             <script>
                                 <code>
-                                    // affiliations es multivalor: contiene TODAS las afiliaciones del usuario
-                                    // acumuladas desde todos los resources LAMB (trabajadores, estudiantes, egresados).
-                                    // Prioridad: faculty(1) > staff(2) > student(3) > alum(4)
                                     def afils = []
                                     if (affiliations != null) {
                                         if (affiliations instanceof java.util.Collection) {
                                             afils = affiliations.collect { it?.toString()?.trim()?.toLowerCase() }.findAll { it }
                                         } else {
                                             def v = affiliations.toString().trim().toLowerCase()
-                                            if (v) afils = [v]
+                                            if (v) { afils = [v] }
                                         }
                                     }
                                     def prio = ['faculty': 1, 'staff': 2, 'student': 3, 'alum': 4]
                                     def sorted = afils.findAll { prio.containsKey(it) }.sort { prio[it] }
-                                    if (sorted.isEmpty()) return null
-                                    def nameMap = [
-                                        'faculty': 'archetype-user-employee-faculty',
-                                        'staff':   'archetype-user-employee-staff',
-                                        'student': 'archetype-user-student',
-                                        'alum':    'archetype-user-alumni'
-                                    ]
-                                    def winner = sorted.first()
-                                    log.debug('D7 archetype winner={} from affiliations={} for user {}', winner, afils, focus?.name)
-                                    return nameMap[winner]
+                                    def nameMap = ['faculty': 'archetype-user-employee-faculty', 'staff': 'archetype-user-employee-staff', 'student': 'archetype-user-student', 'alum': 'archetype-user-alumni']
+                                    sorted.isEmpty() ? null : nameMap[sorted.first()]
                                 </code>
                             </script>
                         </expression>
