@@ -1285,14 +1285,14 @@ try {
             </expression>
             <condition>
                 <script>
-                    <code>
+                    <code><![CDATA[
 def rawTaxId = taxId != null ? basic.stringify(taxId).trim() : ''
-def hasNumber = rawTaxId != '' &amp;&amp; rawTaxId != 'urn:schac:personalUniqueID:pe:DNI:PE:'
+def hasNumber = rawTaxId != '' && rawTaxId != 'urn:schac:personalUniqueID:pe:DNI:PE:'
 def rawType = lambDocType != null ? basic.stringify(lambDocType).trim() : ''
 def INVALID = ['0', '97', '98', '99'] as Set
 def typeOk = rawType == '' || !INVALID.contains(rawType)
-hasNumber &amp;&amp; typeOk
-                    </code>
+hasNumber && typeOk
+                    ]]></code>
                 </script>
             </condition>
         </mapping>
