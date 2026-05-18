@@ -235,21 +235,20 @@
             </attribute>
 
             <!--
-              Synchronization reactions para ServiceType/generic/position
-              linked → synchronize (actualiza atributos si cambió en LAMB)
-              unlinked → link (reconcilia huérfanos)
-              unmatched → addFocus (crea nuevo ServiceType Position)
-              deleted → inactivateFocus (puesto dado de baja en LAMB → lifecycleState=archived)
+              Correlación: identifier del ServiceType MidPoint = ID_PUESTO de LAMB
+              El inbound mapping uid-to-identifier ya copia ID_PUESTO → ServiceType.identifier
+              El correlador busca el ServiceType por identifier = ID_PUESTO del shadow.
+              Patrón MidPoint 4.9: <correlation> a nivel de objectType con filter sobre
+              el campo focus (identifier) y fuente desde los atributos del shadow.
             -->
-            <synchronization>
+            <correlation>
                 <correlators>
                     <items>
                         <name>correlate-by-identifier</name>
                         <item>
-                            <name>identifier</name>
+                            <name>identifier-match</name>
                             <search>
                                 <path>identifier</path>
-                                <indexOnly>true</indexOnly>
                             </search>
                             <source>
                                 <path>$shadow/attributes/ri:ID_PUESTO</path>
@@ -257,6 +256,16 @@
                         </item>
                     </items>
                 </correlators>
+            </correlation>
+
+            <!--
+              Synchronization reactions para ServiceType/generic/position
+              linked → synchronize (actualiza atributos si cambió en LAMB)
+              unlinked → link (reconcilia huérfanos)
+              unmatched → addFocus (crea nuevo ServiceType Position)
+              deleted → inactivateFocus (puesto dado de baja en LAMB → lifecycleState=archived)
+            -->
+            <synchronization>
                 <reaction>
                     <situation>linked</situation>
                     <actions><synchronize/></actions>
