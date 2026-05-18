@@ -2,7 +2,7 @@
 <!--
   UserTemplate-Person-Base — Template canónico base UPeU
   OID: 855caaca-68c4-4f7f-8ff8-b4e35dd7d390
-  Versión: 2.4 (2026-05-18)
+  Versión: 2.5 (2026-05-18)
   Schema: urn:sciback:midpoint:person (canónico) + urn:upeu:midpoint:local (LAMB)
   Aplica a: todos los UserType via archetypePolicy en Archetype-Person-Built-in
   Libro Cap.9: template se activa en cada create/modify/recompute del focus object.
@@ -18,6 +18,7 @@
     G — Rejection reasons: trazabilidad de perfiles incompletos en draft
     H — Baja definitiva: active→archived para staff/faculty 180d post-terminationDate (ISO 24760 §6.3)
     I — jpegPhoto fetch desde LAMB MinIO (upeu:photoUrl → jpegPhoto, normal, try/catch)
+    J — Migración taxId → identityDocuments: construye contenedor canónico + limpia taxId
     P — Position assignment (PBAC Pilar 3): ServiceType Position desde upeu:lambPositionId
 
   Validaciones de formato (weak/log-warn):
@@ -37,7 +38,7 @@
     oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390">
 
     <name>UserTemplate-Person-Base</name>
-    <description>Template canónico base UPeU v2.4. Bloques A-H + D6 + I + P implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque H: ciclo ISO 24760 §6.3 active→archived. D6: OrgType EP desde academicProgramCode. Bloque I: jpegPhoto fetch desde LAMB MinIO (photoUrl→jpegPhoto, normal). Bloque P: PBAC Position desde lambPositionId.</description>
+    <description>Template canónico base UPeU v2.5. Bloques A-H + D6 + I + J + P implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque H: ciclo ISO 24760 §6.3 active→archived. D6: OrgType EP desde academicProgramCode. Bloque I: jpegPhoto fetch desde LAMB MinIO (photoUrl→jpegPhoto, normal). Bloque J: migración taxId→identityDocuments (contenedor canónico). Bloque P: PBAC Position desde lambPositionId.</description>
     <lifecycleState>active</lifecycleState>
 
     <!-- ============================================================
@@ -1131,5 +1132,215 @@ try {
             </script>
         </condition>
     </mapping>
+
+
+    <!-- ============================================================
+         BLOQUE J — MIGRACIÓN taxId → identityDocuments (contenedor canónico)
+         Construye el contenedor sciback:identityDocuments a partir de:
+           - upeu:lambDocType: código de tipo LAMB (ej: "1", "4", "7")
+           - sciback:taxId: número de documento raw (inbound desde LAMB Trabajadores)
+             o el URN SCHAC heredado (urn:schac:personalUniqueID:pe:DNI:PE:{num})
+
+         Mapeo de tipos LAMB → canónico:
+           1  → DNI  (RENIEC,     PER)
+           24 → DNI  (RENIEC,     PER) — DNI menores/CDI
+           4  → CE   (MIGRACIONES, PER)
+           6  → CE   (MIGRACIONES, PER) — variante
+           31 → CE   (MIGRACIONES, PER) — visa especial
+           7  → PASSPORT (MIGRACIONES, "")  — dejar countryOfIssue vacío
+           9  → PASSPORT (MIGRACIONES, "")  — variante
+           22 → PTP  (MIGRACIONES, PER)
+           23 → CPP  (MIGRACIONES, PER)
+           0, 97, 98, 99 → ignorar (sin documento válido → retorna null)
+
+         Si lambDocType es null/vacío y taxId tiene el URN heredado
+         (urn:schac:personalUniqueID:pe:DNI:PE:*) → asumir DNI como fallback
+         para compatibilidad con usuarios creados antes de la migración.
+
+         target: sciback:identityDocuments (PrismContainer, multivalor)
+         El contenedor se construye via prismContext API (ItemFactory).
+         strength: strong — se re-evalúa en cada recompute.
+
+         POST-CONSTRUCCIÓN: limpia sciback:taxId → null.
+         El Bloque F sigue aceptando identityDocuments como evidencia de
+         documento primario (lógica actual en Bloque F ya lo hace).
+
+         IIA: ELISEO.VW_APS_EMPLEADO (via Oracle LAMB Trabajadores v3 inbound).
+         SciBack blueprint: patrón reutilizable para otros ERP con campo tipo doc.
+         ============================================================ -->
+    <item>
+        <ref>extension/sciback:identityDocuments</ref>
+        <mapping>
+            <name>J-build-identityDocuments-from-lambDocType-taxId</name>
+            <description>Construye el contenedor canónico sciback:identityDocuments desde upeu:lambDocType (tipo LAMB) + sciback:taxId (número doc raw o URN heredado). Limpia sciback:taxId al finalizar. Fallback: URN heredado → DNI. strong: revalúa en cada recompute. MidPoint Book Cap.9 + eduPerson 202208 schacPersonalUniqueID.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>lambDocType</name>
+                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocType</path>
+            </source>
+            <source>
+                <name>taxId</name>
+                <path>extension/sciback:taxId</path>
+            </source>
+            <expression>
+                <script>
+                    <code><![CDATA[
+import javax.xml.namespace.QName
+import com.evolveum.midpoint.prism.path.ItemPath
+
+// --- 1. Extraer número de documento ---
+def rawTaxId = taxId != null ? basic.stringify(taxId).trim() : ''
+def docNumber = null
+if (rawTaxId.startsWith('urn:schac:personalUniqueID:')) {
+    // Formato heredado: extraer el último segmento
+    def parts = rawTaxId.split(':')
+    docNumber = parts.length > 0 ? parts[parts.length - 1].trim() : null
+} else if (rawTaxId != '') {
+    // Número raw (nuevo flujo desde inbound num-documento-raw-to-taxId-transport)
+    docNumber = rawTaxId
+}
+if (!docNumber) return null
+
+// --- 2. Determinar tipo canónico desde lambDocType ---
+def rawType = lambDocType != null ? basic.stringify(lambDocType).trim() : ''
+def typeId = rawType != '' ? rawType : null
+
+// Tabla de conversión ID_TIPODOCUMENTO → canónico
+def INVALID_TYPES = ['0', '97', '98', '99'] as Set
+if (typeId != null && INVALID_TYPES.contains(typeId)) {
+    // Sin documento válido — no crear contenedor
+    log.debug('Bloque J: tipo LAMB {} inválido para {} — skip identityDocuments', typeId, focus?.name)
+    return null
+}
+
+def docType      = 'DNI'    // default
+def verifiedBy   = 'RENIEC' // default
+def countryIssue = 'PER'    // default
+
+if (typeId == null && rawTaxId.startsWith('urn:schac:personalUniqueID:pe:DNI:PE:')) {
+    // Fallback heredado: URN SCHAC con DNI explícito
+    docType = 'DNI'; verifiedBy = 'RENIEC'; countryIssue = 'PER'
+} else {
+    switch (typeId) {
+        case '1':  docType = 'DNI';      verifiedBy = 'RENIEC';      countryIssue = 'PER'; break
+        case '24': docType = 'DNI';      verifiedBy = 'RENIEC';      countryIssue = 'PER'; break  // DNI menores/CDI
+        case '4':  docType = 'CE';       verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break
+        case '6':  docType = 'CE';       verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break  // CE variante
+        case '31': docType = 'CE';       verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break  // visa especial
+        case '7':  docType = 'PASSPORT'; verifiedBy = 'MIGRACIONES'; countryIssue = '';    break
+        case '9':  docType = 'PASSPORT'; verifiedBy = 'MIGRACIONES'; countryIssue = '';    break  // PASSPORT variante
+        case '22': docType = 'PTP';      verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break
+        case '23': docType = 'CPP';      verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break
+        default:
+            // Tipo desconocido: asumir DNI + log warning para triage
+            log.warn('Bloque J: ID_TIPODOCUMENTO desconocido "{}" para {} — asumiendo DNI', typeId, focus?.name)
+            docType = 'DNI'; verifiedBy = 'RENIEC'; countryIssue = 'PER'
+    }
+}
+
+// --- 3. Construir PrismContainerValue via prismContext ---
+def NS = 'urn:sciback:midpoint:person'
+try {
+    def factory = midpoint.prismContext.itemFactory()
+    def containerDef = midpoint.prismContext.schemaRegistry
+        .findComplexTypeDefinitionByType(new QName(NS, 'IdentityDocumentType'))
+
+    if (containerDef == null) {
+        log.error('Bloque J: IdentityDocumentType no encontrado en registry — verifique schema sciback. user={}', focus?.name)
+        return null
+    }
+
+    def cv = factory.createContainerValue()
+
+    def setStr = { String localName, String value ->
+        if (value == null || value == '') return
+        def qn = new QName(NS, localName)
+        def propDef = containerDef.findPropertyDefinition(ItemPath.create(qn))
+        if (propDef == null) {
+            log.warn('Bloque J: propiedad {} no encontrada en IdentityDocumentType', localName)
+            return
+        }
+        def prop = factory.createProperty(qn, propDef)
+        prop.setRealValue(value)
+        cv.add(prop)
+    }
+
+    setStr('type',           docType)
+    setStr('number',         docNumber)
+    setStr('primary',        'true')
+    setStr('verifiedBy',     verifiedBy)
+    if (countryIssue) setStr('countryOfIssue', countryIssue)
+
+    log.debug('Bloque J: identityDocuments construido type={} number={} verifiedBy={} para {}',
+              docType, docNumber, verifiedBy, focus?.name)
+    return cv
+
+} catch (Exception e) {
+    log.error('Bloque J: error construyendo identityDocuments para {}: {}', focus?.name, e.message)
+    return null
+}
+                    ]]></code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>
+def rawTaxId = taxId != null ? basic.stringify(taxId).trim() : ''
+def hasNumber = rawTaxId != '' &amp;&amp; rawTaxId != 'urn:schac:personalUniqueID:pe:DNI:PE:'
+def rawType = lambDocType != null ? basic.stringify(lambDocType).trim() : ''
+def INVALID = ['0', '97', '98', '99'] as Set
+def typeOk = rawType == '' || !INVALID.contains(rawType)
+hasNumber &amp;&amp; typeOk
+                    </code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
+         BLOQUE J.2 — LIMPIAR taxId DESPUÉS DE MIGRAR A identityDocuments
+         Una vez que identityDocuments tiene valor, taxId debe quedar null.
+         Rompe el ciclo: taxId ya no es el campo de transporte una vez migrado.
+         strength: strong — se evalúa después del Bloque J.1 en cada recompute.
+         Condición: solo si identityDocuments ya tiene al menos 1 entrada.
+         El campo taxId permanece en el schema (deprecated) para compatibilidad.
+         ============================================================ -->
+    <item>
+        <ref>extension/sciback:taxId</ref>
+        <mapping>
+            <name>J2-clear-taxId-after-identityDocuments-migration</name>
+            <description>Limpia sciback:taxId (deprecated) una vez que sciback:identityDocuments tiene valor. Finaliza la migración del campo legacy. strong: se evalúa en cada recompute. El campo taxId permanece en el schema para retrocompatibilidad pero debe quedar vacío.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>extension/sciback:identityDocuments</path>
+            </source>
+            <expression>
+                <value/>
+            </expression>
+            <condition>
+                <script>
+                    <code><![CDATA[
+import com.evolveum.midpoint.prism.path.ItemPath
+import javax.xml.namespace.QName
+def docs = identityDocuments
+if (docs == null) return false
+try {
+    def docList = (docs instanceof java.util.Collection) ? docs : [docs]
+    def primPath = ItemPath.create(new QName('urn:sciback:midpoint:person', 'primary'))
+    return docList.any { doc ->
+        def primProp = doc?.findProperty(primPath)
+        primProp != null && 'true' == primProp?.realValue?.toString()
+    }
+} catch (Exception e) {
+    log.warn('Bloque J2: error verificando identityDocuments en {}: {}', focus?.name, e.message)
+    return false
+}
+                    ]]></code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
 
 </objectTemplate>
