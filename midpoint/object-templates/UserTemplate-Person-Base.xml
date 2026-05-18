@@ -2,7 +2,7 @@
 <!--
   UserTemplate-Person-Base — Template canónico base UPeU
   OID: 855caaca-68c4-4f7f-8ff8-b4e35dd7d390
-  Versión: 2.3 (2026-05-18)
+  Versión: 2.4 (2026-05-18)
   Schema: urn:sciback:midpoint:person (canónico) + urn:upeu:midpoint:local (LAMB)
   Aplica a: todos los UserType via archetypePolicy en Archetype-Person-Built-in
   Libro Cap.9: template se activa en cada create/modify/recompute del focus object.
@@ -17,6 +17,7 @@
     F — Lifecycle gate draft→active (política estricta UPeU: doc primario + afiliación)
     G — Rejection reasons: trazabilidad de perfiles incompletos en draft
     H — Baja definitiva: active→archived para staff/faculty 180d post-terminationDate (ISO 24760 §6.3)
+    I — jpegPhoto fetch desde LAMB MinIO (upeu:photoUrl → jpegPhoto, normal, try/catch)
     P — Position assignment (PBAC Pilar 3): ServiceType Position desde upeu:lambPositionId
 
   Validaciones de formato (weak/log-warn):
@@ -36,7 +37,7 @@
     oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390">
 
     <name>UserTemplate-Person-Base</name>
-    <description>Template canónico base UPeU v2.3. Bloques A-H + D6 + P implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque H: ciclo ISO 24760 §6.3 active→archived. D6: OrgType EP desde academicProgramCode. Bloque P: PBAC Position desde lambPositionId.</description>
+    <description>Template canónico base UPeU v2.4. Bloques A-H + D6 + I + P implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque H: ciclo ISO 24760 §6.3 active→archived. D6: OrgType EP desde academicProgramCode. Bloque I: jpegPhoto fetch desde LAMB MinIO (photoUrl→jpegPhoto, normal). Bloque P: PBAC Position desde lambPositionId.</description>
     <lifecycleState>active</lifecycleState>
 
     <!-- ============================================================
@@ -995,6 +996,78 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
             </script>
         </condition>
     </mapping>
+
+    <!-- ============================================================
+         BLOQUE I — FETCH JPEG DESDE LAMB MINIO (photoUrl → jpegPhoto)
+         Source: extension/upeu:photoUrl (inbound desde Oracle LAMB Trabajadores)
+         Target: jpegPhoto (core UserType, xsd:base64Binary)
+         Strength: normal — no sobreescribe si jpegPhoto ya tiene valor más reciente
+           (Entra ID inbound es strong; este es normal → Entra ID gana si existe)
+         Condición: solo si photoUrl no es null y no está vacío.
+           Estudiantes/egresados no tienen photoUrl → este mapping no actúa para ellos.
+         Timeout: connect 5s, read 10s (MinIO interno UPeU, red LAN 192.168.x)
+         Error handling: try/catch → retorna null (no lanza excepción al template)
+         IIA: ENOC.VW_TRABAJADOR.FOTO → LAMB MinIO → photoUrl
+         Nota: si Entra ID inbound (ri:photo → jpegPhoto, strength=strong) ya tiene
+           valor, este mapping de strength=normal no lo sobreescribe. El binding
+           Entra ID foto es la imagen elegida por el usuario → tiene prioridad.
+         SciBack blueprint: patrón reusable para fetch foto desde URL externa.
+         ============================================================ -->
+    <item>
+        <ref>jpegPhoto</ref>
+        <mapping>
+            <name>I-jpegPhoto-fetch-from-photoUrl</name>
+            <description>Fetcha foto JPEG desde URL MinIO LAMB (upeu:photoUrl) y la escribe en jpegPhoto. strength=normal: no sobreescribe si Entra ID (strong) ya puso una foto. Solo actúa si photoUrl tiene valor. Timeout connect 5s / read 10s. try/catch retorna null en error.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>normal</strength>
+            <source>
+                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:photoUrl</path>
+            </source>
+            <expression>
+                <script>
+                    <code><![CDATA[
+if (photoUrl == null) return null
+def urlStr = basic.stringify(photoUrl)?.trim()
+if (!urlStr) return null
+try {
+    def url = new java.net.URL(urlStr)
+    def conn = (java.net.HttpURLConnection) url.openConnection()
+    conn.setConnectTimeout(5000)
+    conn.setReadTimeout(10000)
+    conn.setRequestMethod('GET')
+    conn.setRequestProperty('User-Agent', 'MidPoint-UPeU-IGA/1.0')
+    def status = conn.getResponseCode()
+    if (status != 200) {
+        log.warn('Bloque I jpegPhoto: HTTP {} al fetchear {} para {}', status, urlStr, focus?.name)
+        return null
+    }
+    def is = conn.getInputStream()
+    def baos = new java.io.ByteArrayOutputStream()
+    def buf = new byte[8192]
+    int n
+    while ((n = is.read(buf)) != -1) { baos.write(buf, 0, n) }
+    is.close()
+    def bytes = baos.toByteArray()
+    if (bytes.length == 0) {
+        log.warn('Bloque I jpegPhoto: respuesta vacía desde {} para {}', urlStr, focus?.name)
+        return null
+    }
+    log.debug('Bloque I jpegPhoto: {} bytes leídos desde {} para {}', bytes.length, urlStr, focus?.name)
+    return bytes
+} catch (Exception e) {
+    log.warn('Bloque I jpegPhoto: error fetcheando {} para {}: {}', urlStr, focus?.name, e.message)
+    return null
+}
+                    ]]></code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>photoUrl != null &amp;&amp; basic.stringify(photoUrl)?.trim() != ''</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
 
     <item>
         <ref>extension/sciback:terminationDate</ref>
