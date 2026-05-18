@@ -1311,21 +1311,7 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
                         <q:path>name</q:path>
                         <expression>
                             <script>
-                                <code>
-                                    def afils = []
-                                    if (affiliations != null) {
-                                        if (affiliations instanceof java.util.Collection) {
-                                            afils = affiliations.collect { it?.toString()?.trim()?.toLowerCase() }.findAll { it }
-                                        } else {
-                                            def v = affiliations.toString().trim().toLowerCase()
-                                            if (v) { afils = [v] }
-                                        }
-                                    }
-                                    def prio = ['faculty': 1, 'staff': 2, 'student': 3, 'alum': 4]
-                                    def sorted = afils.findAll { prio.containsKey(it) }.sort { prio[it] }
-                                    def nameMap = ['faculty': 'archetype-user-employee-faculty', 'staff': 'archetype-user-employee-staff', 'student': 'archetype-user-student', 'alum': 'archetype-user-alumni']
-                                    sorted.isEmpty() ? null : nameMap[sorted.first()]
-                                </code>
+                                <code>def afils = (affiliations instanceof java.util.Collection) ? affiliations.collect { it?.toString()?.trim()?.toLowerCase() }.findAll { it } : (affiliations != null ? [affiliations.toString().trim().toLowerCase()].findAll { it } : []); def prio = ['faculty': 1, 'staff': 2, 'student': 3, 'alum': 4]; def sorted = afils.findAll { prio.containsKey(it) }.sort { prio[it] }; def nameMap = ['faculty': 'archetype-user-employee-faculty', 'staff': 'archetype-user-employee-staff', 'student': 'archetype-user-student', 'alum': 'archetype-user-alumni']; sorted.isEmpty() ? null : nameMap[sorted.first()]</code>
                             </script>
                         </expression>
                     </q:equal>
@@ -1344,19 +1330,7 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
         </target>
         <condition>
             <script>
-                <code>
-                    def afils = []
-                    if (affiliations != null) {
-                        if (affiliations instanceof java.util.Collection) {
-                            afils = affiliations.collect { it?.toString()?.trim()?.toLowerCase() }.findAll { it }
-                        } else {
-                            def v = affiliations.toString().trim().toLowerCase()
-                            if (v) afils = [v]
-                        }
-                    }
-                    def prio = ['faculty': 1, 'staff': 2, 'student': 3, 'alum': 4]
-                    return afils.any { prio.containsKey(it) }
-                </code>
+                <code>def afils = (affiliations instanceof java.util.Collection) ? affiliations.collect { it?.toString()?.trim()?.toLowerCase() }.findAll { it } : (affiliations != null ? [affiliations.toString().trim().toLowerCase()].findAll { it } : []); afils.any { it in ['faculty','staff','student','alum'] }</code>
             </script>
         </condition>
     </mapping>
