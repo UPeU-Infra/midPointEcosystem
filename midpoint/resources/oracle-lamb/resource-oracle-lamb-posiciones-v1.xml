@@ -204,11 +204,7 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>
-                                def grupo = (input ?: '').toString().trim()
-                                def totalPerfiles = (TOTAL_PERFILES ?: '0').toString().trim()
-                                grupo ? "Categoría: ${grupo} | Perfiles Lima: ${totalPerfiles}" : null
-                            </code>
+                            <code>def grupo = (input ?: '').toString().trim(); def totalPerfiles = (TOTAL_PERFILES ?: '0').toString().trim(); grupo ? 'Categoria: ' + grupo + ' | Perfiles Lima: ' + totalPerfiles : null</code>
                         </script>
                     </expression>
                     <source>
