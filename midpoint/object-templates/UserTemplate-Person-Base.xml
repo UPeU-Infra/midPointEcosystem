@@ -1344,4 +1344,93 @@ try {
         </mapping>
     </item>
 
+    <!-- ================================================================
+         BLOQUE D.7 — ARCHETYPE ESTRUCTURAL POR PRIORIDAD DE AFILIACIONES
+         Corre en el Object Template (DESPUÉS de todos los inbounds) por lo
+         que ve sb:affiliations consolidado de TODOS los resources LAMB.
+         Prioridad: faculty(1) > staff(2) > student(3) > alum(4).
+         Resuelve el dual-archetype de egresados-que-son-trabajadores:
+         los resources egresados/estudiantes ya no asignan archetypeRef
+         estático en <focus> — la asignación la centraliza este bloque.
+         MidPoint Book Cap. 8-9: archetype assignment centralizado en template.
+         Si trabajadores también produce el mismo archetype (faculty/staff) via
+         assignmentTargetSearch propio, MidPoint lo mergea — es idempotente.
+         ================================================================ -->
+    <mapping>
+        <name>D7-structural-archetype-priority</name>
+        <description>Archetype estructural único según prioridad de afiliaciones. faculty > staff > student > alum. Reemplaza la asignación estática archetypeRef en focus de los resources egresados y estudiantes. Resuelve dual-archetype para egresados-convertidos-en-trabajadores. MidPoint Book Cap. 8-9.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:affiliations</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>ArchetypeType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <expression>
+                            <script>
+                                <code>
+                                    // affiliations es multivalor: contiene TODAS las afiliaciones del usuario
+                                    // acumuladas desde todos los resources LAMB (trabajadores, estudiantes, egresados).
+                                    // Prioridad: faculty(1) > staff(2) > student(3) > alum(4)
+                                    def afils = []
+                                    if (affiliations != null) {
+                                        if (affiliations instanceof java.util.Collection) {
+                                            afils = affiliations.collect { it?.toString()?.trim()?.toLowerCase() }.findAll { it }
+                                        } else {
+                                            def v = affiliations.toString().trim().toLowerCase()
+                                            if (v) afils = [v]
+                                        }
+                                    }
+                                    def prio = ['faculty': 1, 'staff': 2, 'student': 3, 'alum': 4]
+                                    def sorted = afils.findAll { prio.containsKey(it) }.sort { prio[it] }
+                                    if (sorted.isEmpty()) return null
+                                    def nameMap = [
+                                        'faculty': 'archetype-user-employee-faculty',
+                                        'staff':   'archetype-user-employee-staff',
+                                        'student': 'archetype-user-student',
+                                        'alum':    'archetype-user-alumni'
+                                    ]
+                                    def winner = sorted.first()
+                                    log.debug('D7 archetype winner={} from affiliations={} for user {}', winner, afils, focus?.name)
+                                    return nameMap[winner]
+                                </code>
+                            </script>
+                        </expression>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+                <populate>
+                    <populateItem>
+                        <expression><value>org:default</value></expression>
+                        <target><path>relation</path></target>
+                    </populateItem>
+                </populate>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>
+                    def afils = []
+                    if (affiliations != null) {
+                        if (affiliations instanceof java.util.Collection) {
+                            afils = affiliations.collect { it?.toString()?.trim()?.toLowerCase() }.findAll { it }
+                        } else {
+                            def v = affiliations.toString().trim().toLowerCase()
+                            if (v) afils = [v]
+                        }
+                    }
+                    def prio = ['faculty': 1, 'staff': 2, 'student': 3, 'alum': 4]
+                    return afils.any { prio.containsKey(it) }
+                </code>
+            </script>
+        </condition>
+    </mapping>
+
 </objectTemplate>

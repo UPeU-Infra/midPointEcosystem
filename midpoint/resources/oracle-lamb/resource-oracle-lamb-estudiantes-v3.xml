@@ -60,7 +60,9 @@
             </delineation>
             <focus>
                 <type>UserType</type>
-                <archetypeRef oid="3037fbd2-db02-4ffd-8b1a-83fab5e686aa" relation="org:default" type="ArchetypeType"/>
+                <!-- archetypeRef removido — Bloque D.7 del Object Template asigna el archetype
+                     estructural correcto según prioridad de sb:affiliations (faculty > staff > student > alum).
+                     MidPoint Book Cap. 8-9: template decide, resources solo proveen datos. -->
             </focus>
             <attribute>
                 <ref>ri:CODIGO</ref>
@@ -239,7 +241,9 @@
                 </inbound>
                 <inbound>
                     <name>school-name-to-primaryAffiliation</name>
-                    <strength>strong</strength>
+                    <!-- weak: cede ante primaryAffiliation que pongan trabajadores (strength=normal).
+                         Para pure students sin empleo, weak es suficiente. -->
+                    <strength>weak</strength>
                     <expression>
                         <value>student</value>
                     </expression>
