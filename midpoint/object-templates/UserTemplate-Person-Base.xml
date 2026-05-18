@@ -630,15 +630,7 @@
                         <q:path>name</q:path>
                         <expression>
                             <script>
-                                <code>
-                                    // academicProgramCode = "EP-ARQ", "EP-ING-SIS", etc.
-                                    // Coincide directamente con OrgType.name en academic-programs-pregrado.xml
-                                    if (academicProgramCode == null) return null
-                                    def code = (academicProgramCode instanceof java.util.Collection) ?
-                                        (academicProgramCode.isEmpty() ? null : academicProgramCode.first()?.toString()?.trim()) :
-                                        basic.stringify(academicProgramCode).trim()
-                                    code?.startsWith('EP-') ? code : null
-                                </code>
+                                <code>academicProgramCode == null ? null : ((academicProgramCode instanceof java.util.Collection) ? (academicProgramCode.isEmpty() ? null : (academicProgramCode.first()?.toString()?.trim()?.startsWith('EP-') ? academicProgramCode.first().toString().trim() : null)) : (basic.stringify(academicProgramCode).trim()?.startsWith('EP-') ? basic.stringify(academicProgramCode).trim() : null))</code>
                             </script>
                         </expression>
                     </q:equal>
@@ -651,11 +643,7 @@
         </target>
         <condition>
             <script>
-                <code>
-def code = (academicProgramCode instanceof java.util.Collection) ? (academicProgramCode.isEmpty() ? null : academicProgramCode.first()?.toString()?.trim()) : (academicProgramCode != null ? basic.stringify(academicProgramCode).trim() : null)
-def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''
-code != null &amp;&amp; code.startsWith('EP-') &amp;&amp; (affil == 'student' || affil == 'alum')
-                </code>
+                <code>def code = (academicProgramCode instanceof java.util.Collection) ? (academicProgramCode.isEmpty() ? null : academicProgramCode.first()?.toString()?.trim()) : (academicProgramCode != null ? basic.stringify(academicProgramCode).trim() : null); def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; code != null &amp;&amp; code.startsWith('EP-') &amp;&amp; (affil == 'student' || affil == 'alum')</code>
             </script>
         </condition>
     </mapping>
@@ -1095,16 +1083,7 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
             </source>
             <condition>
                 <script>
-                    <code>
-import java.time.LocalDate; import java.time.temporal.ChronoUnit
-def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''
-def termStr = terminationDate != null ? basic.stringify(terminationDate).trim() : ''
-def curState = lifecycleState != null ? basic.stringify(lifecycleState).trim() : ''
-def eligible = ['staff', 'faculty'].contains(aff) &amp;&amp; termStr != '' &amp;&amp; curState != 'archived'
-def result = false
-if (eligible) { try { result = ChronoUnit.DAYS.between(LocalDate.parse(termStr.substring(0, 10)), LocalDate.now()) > 180 } catch (Exception e) { log.warn('BloqueH: terminationDate no parseable {} en {}: {}', termStr, focus?.name, e.message) } }
-result
-                    </code>
+                    <code>import java.time.LocalDate; import java.time.temporal.ChronoUnit; def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; def termStr = terminationDate != null ? basic.stringify(terminationDate).trim() : ''; def curState = lifecycleState != null ? basic.stringify(lifecycleState).trim() : ''; def eligible = ['staff', 'faculty'].contains(aff) &amp;&amp; termStr != '' &amp;&amp; curState != 'archived'; def result = false; if (eligible) { try { result = ChronoUnit.DAYS.between(LocalDate.parse(termStr.substring(0, 10)), LocalDate.now()) > 180 } catch (Exception e) { log.warn('BloqueH: terminationDate no parseable {} en {}: {}', termStr, focus?.name, e.message) } }; result</code>
                 </script>
             </condition>
             <expression>
@@ -1275,11 +1254,7 @@ result
         </target>
         <condition>
             <script>
-                <code>
-def v = lambPositionId != null ? basic.stringify(lambPositionId).trim() : ''
-def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
-v != '' &amp;&amp; (affil == 'FACULTY' || affil == 'STAFF')
-                </code>
+                <code>def v = lambPositionId != null ? basic.stringify(lambPositionId).trim() : ''; def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''; v != '' &amp;&amp; (affil == 'FACULTY' || affil == 'STAFF')</code>
             </script>
         </condition>
     </mapping>
