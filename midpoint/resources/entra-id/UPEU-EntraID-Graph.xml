@@ -275,6 +275,15 @@
     </schemaHandling>
 
     <!-- ================================================================
+         CONSISTENCY — errores de Entra ID no son fatales mientras
+         User.ReadWrite.All esté pendiente (B3 David Urquizo).
+         Cuando B3 se resuelva: eliminar este bloque.
+         ================================================================ -->
+    <consistency>
+        <errorCriticality>nonFatal</errorCriticality>
+    </consistency>
+
+    <!-- ================================================================
          CAPABILITIES CONFIGURADAS
          create y update deshabilitados hasta que User.ReadWrite.All
          sea concedido por David Urquizo en Azure Portal.
