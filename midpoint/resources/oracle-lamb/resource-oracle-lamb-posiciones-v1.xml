@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Resource: LAMB-Oracle-Posiciones v1.0
+  OID: f2422f42-90da-4ca4-a4db-78fe25a63245
+
+  Pilar 3 — Position-Based Access Control (PBAC)
+  Fuente: ENOC.PLLA_PUESTO JOIN ENOC.PLLA_PERFIL_PUESTO (ID_ENTIDAD=7124, UPeU Lima)
+  Identidad autoritativa de puestos institucionales (IIA: LAMB RRHH).
+
+  Arquitectura:
+    kind=generic, intent=position → sincroniza como ServiceType con archetype Position
+    Identifier (UID): ID_PUESTO (inmutable, numérico, permanente en LAMB)
+    NAME: POS-{ID_PUESTO} (formato controlado, legible, único)
+    Cada registro LAMB = 1 ServiceType Position en MidPoint
+
+  Filtro IIA:
+    VIGENCIA=1 en PLLA_PUESTO (activos)
+    EXISTS en PLLA_PERFIL_PUESTO con ID_ENTIDAD=7124 (UPeU Lima)
+    → excluye puestos de otras sedes y puestos eliminados
+
+  Solo inbound. LAMB es solo-lectura (JAMÁS INSERT/UPDATE/DELETE).
+  Capabilities: create=false, update=false, delete=false.
+
+  Libro Cap.9 (Semančík): generic synchronization para objetos que no son
+  accounts — el serviceType con kind=generic es el patrón correcto para
+  catálogos de puestos, aplicaciones, grupos organizacionales.
+
+  Correlación:
+    Correlation: identifier del ServiceType MidPoint = ID_PUESTO de LAMB
+    Si coincide → linked+synchronize; si no → crear ServiceType nuevo
+
+  Relacionado con:
+    - archetype-position.xml (OID: b51e4e39-fc48-42ef-9916-3b7ad6647b9b)
+    - resource-oracle-lamb-trabajadores-v3.xml (comparte connector + DB)
+    - UserTemplate-Person-Base.xml Bloque G — assignmentTargetSearch Position
+    - schema-object-upeu-local-v1.0.xml (upeu:lambPositionId en UserType)
+
+  Fase 5c — PBAC (2026-05)
+-->
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+    xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+    xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    oid="f2422f42-90da-4ca4-a4db-78fe25a63245">
+
+    <name>LAMB-Oracle-Posiciones</name>
+    <description>Inbound ScriptedSQL desde ENOC.PLLA_PUESTO filtrado por presencia en PLLA_PERFIL_PUESTO con ID_ENTIDAD=7124 (UPeU Lima). Sincroniza como ServiceType con archetype Position. IIA de puestos institucionales UPeU. Fase 5c PBAC.</description>
+    <lifecycleState>active</lifecycleState>
+
+    <!-- Mismo connector ScriptedSQL Tirasa que los otros 3 LAMB resources -->
+    <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="c:ConnectorType"/>
+
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:resultsHandlerConfiguration>
+            <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
+            <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
+            <icfc:filteredResultsHandlerInValidationMode>true</icfc:filteredResultsHandlerInValidationMode>
+            <icfc:enableAttributesToGetSearchResultsHandler>false</icfc:enableAttributesToGetSearchResultsHandler>
+        </icfc:resultsHandlerConfiguration>
+
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">
+            <cfg:host>192.168.13.9</cfg:host>
+            <cfg:port>1521</cfg:port>
+            <cfg:user>JUANSANCHEZ</cfg:user>
+            <!-- Password cifrado igual que en LAMB-Trabajadores (misma instancia Oracle) -->
+            <cfg:password>
+                <t:encryptedData>
+                    <t:encryptionMethod>
+                        <t:algorithm>http://www.w3.org/2001/04/xmlenc#aes256-cbc</t:algorithm>
+                    </t:encryptionMethod>
+                    <t:keyInfo>
+                        <t:keyName>nkZ4VieDLlRmwD8hdryrmjz8IxQ=</t:keyName>
+                    </t:keyInfo>
+                    <t:cipherData>
+                        <t:cipherValue>5PiBLf405M3U4ulm9p6WfqMMVVwtOcVl5PuL6/CqPRMTmbA5Aoa/axj4ks8onfI2</t:cipherValue>
+                    </t:cipherData>
+                </t:encryptedData>
+            </cfg:password>
+            <cfg:database>UPEU</cfg:database>
+            <cfg:jdbcDriver>oracle.jdbc.OracleDriver</cfg:jdbcDriver>
+            <cfg:jdbcUrlTemplate>jdbc:oracle:thin:@%h:%p/%d</cfg:jdbcUrlTemplate>
+            <cfg:rethrowAllSQLExceptions>true</cfg:rethrowAllSQLExceptions>
+            <cfg:nativeTimestamps>true</cfg:nativeTimestamps>
+            <cfg:allNative>false</cfg:allNative>
+            <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
+            <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
+
+            <!--
+              searchScript — Catálogo de puestos UPeU Lima
+              Fuente: ENOC.PLLA_PUESTO JOIN ENOC.PLLA_PERFIL_PUESTO
+              Filtro:
+                - p.VIGENCIA = 1 (puesto activo en catálogo)
+                - EXISTS perfil activo para UPeU Lima (ID_ENTIDAD=7124, pp.VIGENCIA=1)
+              JOIN ENOC.PLLA_GRUPO_ESCALA para nombre de categoría (displayName enriquecido)
+              UID = ID_PUESTO (string, inmutable)
+              NAME = 'POS-' || TO_CHAR(ID_PUESTO) (convenio de naming legible)
+
+              NOTA: scripts ScriptedSQL deben ser una sola línea (sin saltos reales).
+              Los ; separan sentencias; usar \ para continuación lógica en Groovy.
+            -->
+            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = 'SELECT p.ID_PUESTO, p.NOMBRE AS NOMBRE_PUESTO, p.CODIGO_APS, p.DOCENTE_AUTORIDAD, g.NOMBRE AS NOMBRE_GRUPO, COUNT(pp.ID_PERFIL_PUESTO) AS TOTAL_PERFILES FROM ENOC.PLLA_PUESTO p INNER JOIN ENOC.PLLA_PERFIL_PUESTO pp ON pp.ID_PUESTO = p.ID_PUESTO AND pp.ID_ENTIDAD = 7124 AND pp.VIGENCIA = 1 LEFT JOIN ENOC.PLLA_GRUPO_ESCALA g ON g.ID_GRUPO_ESCALA = p.ID_GRUPO_ESCALA WHERE p.VIGENCIA = 1 GROUP BY p.ID_PUESTO, p.NOMBRE, p.CODIGO_APS, p.DOCENTE_AUTORIDAD, g.NOMBRE'; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { def val = (query.right as String); if (val.startsWith('POS-')) { val = val.substring(4) }; whereClause = ' HAVING p.ID_PUESTO = ?'; params &lt;&lt; Long.parseLong(val); } else { throw new UnsupportedOperationException('Posiciones searchScript solo soporta EqualsFilter en __NAME__/__UID__; recibido: ' + query); } }; def finalQuery = 'SELECT * FROM (' + baseQuery + ') ' + (whereClause ?: ''); sql.eachRow(finalQuery, params) { row -&gt; def idPuesto = row.ID_PUESTO?.toString(); result &lt;&lt; ['__UID__': idPuesto, '__NAME__': 'POS-' + idPuesto, 'ID_PUESTO': idPuesto, 'NOMBRE_PUESTO': row.NOMBRE_PUESTO as String, 'CODIGO_APS': row.CODIGO_APS as String, 'DOCENTE_AUTORIDAD': row.DOCENTE_AUTORIDAD?.toString(), 'NOMBRE_GRUPO': row.NOMBRE_GRUPO as String, 'TOTAL_PERFILES': row.TOTAL_PERFILES?.toString()] }; return result</cfg:searchScript>
+
+            <cfg:syncScript>return null</cfg:syncScript>
+
+            <!--
+              schemaScript — define los atributos del objeto Position
+              ObjectClass: __ACCOUNT__ (convención ScriptedSQL, aunque es generic en MidPoint)
+              Todos read-only (createable=false, updateable=false).
+            -->
+            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro('ID_PUESTO', true)); ocib.addAttributeInfo(ro('NOMBRE_PUESTO', true)); ocib.addAttributeInfo(ro('CODIGO_APS', false)); ocib.addAttributeInfo(ro('DOCENTE_AUTORIDAD', false)); ocib.addAttributeInfo(ro('NOMBRE_GRUPO', false)); ocib.addAttributeInfo(ro('TOTAL_PERFILES', false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
+
+            <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); def row = sql.firstRow('SELECT COUNT(*) AS TOTAL FROM ENOC.PLLA_PUESTO WHERE VIGENCIA = 1'); return 'OK - Puestos activos: ' + row.TOTAL</cfg:testScript>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+
+    <schemaHandling>
+        <objectType>
+            <!--
+              kind=generic + intent=position → ServiceType
+              Libro Cap.9: kind=generic para objetos que no son accounts ni entitlements.
+              El focus type=ServiceType + archetype Position = patrón catalog object.
+            -->
+            <kind>generic</kind>
+            <intent>position</intent>
+            <displayName>Puesto institucional UPeU (LAMB RRHH)</displayName>
+            <default>true</default>
+            <delineation>
+                <objectClass>ri:AccountObjectClass</objectClass>
+            </delineation>
+            <focus>
+                <type>ServiceType</type>
+                <archetypeRef oid="b51e4e39-fc48-42ef-9916-3b7ad6647b9b" relation="org:default" type="ArchetypeType"/>
+            </focus>
+
+            <!-- identifier → ServiceType.identifier (campo indexado, inmutable)
+                 IIA: ID_PUESTO de ENOC.PLLA_PUESTO. Nunca cambia. -->
+            <attribute>
+                <ref>icfs:uid</ref>
+                <inbound>
+                    <name>uid-to-identifier</name>
+                    <strength>strong</strength>
+                    <target><path>identifier</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- name → ServiceType.name = 'POS-{ID_PUESTO}'
+                 Convenio: prefijo POS- para namespace claro en UI y filtros. -->
+            <attribute>
+                <ref>icfs:name</ref>
+                <inbound>
+                    <name>name-to-name</name>
+                    <strength>strong</strength>
+                    <target><path>name</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- NOMBRE_PUESTO → displayName (nombre legible del puesto) -->
+            <attribute>
+                <ref>ri:NOMBRE_PUESTO</ref>
+                <inbound>
+                    <name>nombre-puesto-to-displayName</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim(); v ?: null</code>
+                        </script>
+                    </expression>
+                    <target><path>displayName</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- NOMBRE_GRUPO → description (categoría del puesto: Rector, Decano, etc.) -->
+            <attribute>
+                <ref>ri:NOMBRE_GRUPO</ref>
+                <inbound>
+                    <name>nombre-grupo-to-description</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+                                def grupo = (input ?: '').toString().trim()
+                                def totalPerfiles = (TOTAL_PERFILES ?: '0').toString().trim()
+                                grupo ? "Categoría: ${grupo} | Perfiles Lima: ${totalPerfiles}" : null
+                            </code>
+                        </script>
+                    </expression>
+                    <source>
+                        <path>$shadow/attributes/ri:TOTAL_PERFILES</path>
+                    </source>
+                    <target><path>description</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- CODIGO_APS → ServiceType.identifier en formato APS (campo auxiliar) -->
+            <!-- Nota: identifier ya tiene ID_PUESTO. El CODIGO_APS va a subtype
+                 como metadato adicional (código alfanumérico RRHH). -->
+            <attribute>
+                <ref>ri:CODIGO_APS</ref>
+                <inbound>
+                    <name>codigo-aps-to-subtype</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim(); v ? 'aps.' + v : null</code>
+                        </script>
+                    </expression>
+                    <target><path>subtype</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- Archetype Position → assignment (auto-asignar archetype al crear) -->
+            <attribute>
+                <ref>icfs:name</ref>
+                <inbound>
+                    <name>assign-position-archetype</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <assignmentTargetSearch>
+                            <targetType>ArchetypeType</targetType>
+                            <filter>
+                                <q:equal>
+                                    <q:path>name</q:path>
+                                    <q:value>Position</q:value>
+                                </q:equal>
+                            </filter>
+                            <createOnDemand>false</createOnDemand>
+                        </assignmentTargetSearch>
+                    </expression>
+                    <target><path>assignment</path></target>
+                </inbound>
+            </attribute>
+
+            <!--
+              Synchronization reactions para ServiceType/generic/position
+              linked → synchronize (actualiza atributos si cambió en LAMB)
+              unlinked → link (reconcilia huérfanos)
+              unmatched → addFocus (crea nuevo ServiceType Position)
+              deleted → inactivateFocus (puesto dado de baja en LAMB → lifecycleState=archived)
+            -->
+            <synchronization>
+                <correlators>
+                    <items>
+                        <name>correlate-by-identifier</name>
+                        <item>
+                            <name>identifier</name>
+                            <search>
+                                <path>identifier</path>
+                                <indexOnly>true</indexOnly>
+                            </search>
+                            <source>
+                                <path>$shadow/attributes/ri:ID_PUESTO</path>
+                            </source>
+                        </item>
+                    </items>
+                </correlators>
+                <reaction>
+                    <situation>linked</situation>
+                    <actions><synchronize/></actions>
+                </reaction>
+                <reaction>
+                    <situation>unlinked</situation>
+                    <actions><link/></actions>
+                </reaction>
+                <reaction>
+                    <situation>unmatched</situation>
+                    <actions><addFocus/></actions>
+                </reaction>
+                <reaction>
+                    <!-- Puesto VIGENCIA=0 o sin perfiles Lima → inactivar ServiceType -->
+                    <situation>deleted</situation>
+                    <actions><inactivateFocus/></actions>
+                </reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>
+
+    <!-- Solo inbound. LAMB Oracle es solo-lectura absoluta. -->
+    <capabilities>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:create>
+                <cap:enabled>false</cap:enabled>
+            </cap:create>
+            <cap:update>
+                <cap:enabled>false</cap:enabled>
+            </cap:update>
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
+        </configured>
+    </capabilities>
+
+    <projection>
+        <assignmentPolicyEnforcement>relative</assignmentPolicyEnforcement>
+    </projection>
+</resource>

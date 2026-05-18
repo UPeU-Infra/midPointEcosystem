@@ -32,6 +32,11 @@
                         <xsd:annotation><xsd:appinfo><a:displayName>ID LAMB (ID_PERSONA)</a:displayName><a:indexed>true</a:indexed><a:displayOrder>10</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
 
+                    <!-- L1b — PUESTO LAMB (PBAC Pilar 3) -->
+                    <xsd:element name="lambPositionId" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>ID Puesto LAMB (ID_PUESTO)</a:displayName><a:help>ID numérico del puesto activo en ENOC.PLLA_PUESTO. IIA: MOISES.TRABAJADOR_PUESTO (HASTA IS NULL). Usado por Bloque G del UserTemplate para assignmentTargetSearch al ServiceType Position. Indexed para correlación eficiente.</a:help><a:indexed>true</a:indexed><a:displayOrder>15</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
                     <!-- L2 — ORGANIZACIÓN LAMB -->
                     <xsd:element name="depto" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>Departamento (ID LAMB)</a:displayName><a:indexed>true</a:indexed><a:displayOrder>20</a:displayOrder></xsd:appinfo></xsd:annotation>

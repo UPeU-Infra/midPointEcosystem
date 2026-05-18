@@ -2,7 +2,7 @@
 <!--
   UserTemplate-Person-Base — Template canónico base UPeU
   OID: 855caaca-68c4-4f7f-8ff8-b4e35dd7d390
-  Versión: 2.2 (2026-05-17)
+  Versión: 2.3 (2026-05-18)
   Schema: urn:sciback:midpoint:person (canónico) + urn:upeu:midpoint:local (LAMB)
   Aplica a: todos los UserType via archetypePolicy en Archetype-Person-Built-in
   Libro Cap.9: template se activa en cada create/modify/recompute del focus object.
@@ -17,6 +17,7 @@
     F — Lifecycle gate draft→active (política estricta UPeU: doc primario + afiliación)
     G — Rejection reasons: trazabilidad de perfiles incompletos en draft
     H — Baja definitiva: active→archived para staff/faculty 180d post-terminationDate (ISO 24760 §6.3)
+    P — Position assignment (PBAC Pilar 3): ServiceType Position desde upeu:lambPositionId
 
   Validaciones de formato (weak/log-warn):
     birthDate (YYYY-MM-DD), gender (ISO 5218), nationality (ISO 3166 alpha-3),
@@ -35,7 +36,7 @@
     oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390">
 
     <name>UserTemplate-Person-Base</name>
-    <description>Template canónico base UPeU v2.2. Bloques A-H + D6 implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque H: ciclo ISO 24760 §6.3 active→archived. D6: OrgType EP desde academicProgramCode.</description>
+    <description>Template canónico base UPeU v2.3. Bloques A-H + D6 + P implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque H: ciclo ISO 24760 §6.3 active→archived. D6: OrgType EP desde academicProgramCode. Bloque P: PBAC Position desde lambPositionId.</description>
     <lifecycleState>active</lifecycleState>
 
     <!-- ============================================================
@@ -1227,6 +1228,90 @@ try {
             </expression>
         </mapping>
     </item>
+    <!-- ============================================================
+         BLOQUE P — POSITION ASSIGNMENT (PBAC Pilar 3)
+         Auto-asigna el ServiceType Position canónico desde upeu:lambPositionId.
+
+         Flujo:
+           1. LAMB Trabajadores inbound: ri:ID_PUESTO → upeu:lambPositionId (string)
+           2. Este bloque: busca ServiceType donde identifier = lambPositionId
+           3. Si existe → crea assignment User→Position (con relation=default)
+           4. Position induce sus BR + AR vía inducements (PBAC completo)
+
+         Identidad autoritativa (IIA): MOISES.TRABAJADOR_PUESTO (HASTA IS NULL)
+         → el puesto activo del trabajador sincronizado desde LAMB.
+
+         ServiceType Position.identifier = ID_PUESTO de ENOC.PLLA_PUESTO (string)
+         Correlación por identifier (campo indexado): búsqueda O(log n).
+
+         Solo actúa cuando:
+           - lambPositionId no es nulo ni vacío
+           - primaryAffiliation es FACULTY o STAFF (trabajadores)
+         Los estudiantes no tienen posición institucional.
+
+         strong: se re-evalúa en cada recompute. Si el puesto cambia en LAMB
+         (nuevo sync → nuevo lambPositionId) → MidPoint elimina el assignment
+         anterior y crea el nuevo (política de assignment relative enforcement).
+
+         Libro Cap.9: assignmentTargetSearch para auto-asignación de targets
+         no predeterminados. createOnDemand=false: si el ServiceType Position
+         no existe en MidPoint (sync del resource posiciones no ejecutado aún)
+         el mapping no falla, simplemente no agrega el assignment.
+
+         SciBack blueprint: patrón PBAC reusable. El identifier del ServiceType
+         debe ser el ID_PUESTO de la IIA de cada universidad (LAMB en UPeU).
+         ============================================================ -->
+    <mapping>
+        <name>P-assign-position-from-lambPositionId</name>
+        <description>Auto-asigna ServiceType Position desde upeu:lambPositionId. Busca ServiceType.identifier = lambPositionId. Solo para FACULTY y STAFF activos. Libro Cap.9 PBAC.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambPositionId</path>
+        </source>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>ServiceType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>identifier</q:path>
+                        <expression>
+                            <script>
+                                <code>
+                                    // lambPositionId = ID_PUESTO de LAMB (string numérico)
+                                    // ServiceType Position.identifier = mismo valor
+                                    if (lambPositionId == null) return null
+                                    def v = basic.stringify(lambPositionId).trim()
+                                    v ?: null
+                                </code>
+                            </script>
+                        </expression>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>
+                    // Solo trabajadores activos (FACULTY o STAFF)
+                    // Los estudiantes no tienen puesto institucional en LAMB
+                    if (lambPositionId == null) return false
+                    def v = basic.stringify(lambPositionId).trim()
+                    if (v == '') return false
+                    def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
+                    return affil == 'FACULTY' || affil == 'STAFF'
+                </code>
+            </script>
+        </condition>
+    </mapping>
+
     <item>
         <ref>extension/sciback:terminationDate</ref>
         <mapping>
