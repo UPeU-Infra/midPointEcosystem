@@ -212,6 +212,7 @@
                         </script>
                     </expression>
                     <source>
+                        <name>TOTAL_PERFILES</name>
                         <path>$shadow/attributes/ri:TOTAL_PERFILES</path>
                     </source>
                     <target><path>description</path></target>
