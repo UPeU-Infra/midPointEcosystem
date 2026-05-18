@@ -417,7 +417,8 @@
         <condition>
             <script>
                 <code>
-                    def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
+                    /* input = valor de extension/sciback:primaryAffiliation (single-source mapping) */
+                    def affil = input != null ? basic.stringify(input).trim().toUpperCase() : ''
                     affil == 'FACULTY'
                 </code>
             </script>
@@ -453,7 +454,8 @@
         <condition>
             <script>
                 <code>
-                    def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
+                    /* input = valor de extension/sciback:primaryAffiliation (single-source mapping) */
+                    def affil = input != null ? basic.stringify(input).trim().toUpperCase() : ''
                     affil == 'STAFF'
                 </code>
             </script>
