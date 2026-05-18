@@ -202,6 +202,29 @@
             </attribute>
 
             <!-- ================================================================
+                 FOTO — ri:photo inbound → jpegPhoto
+                 fetchStrategy=explicit: photo tiene returnedByDefault=false en el
+                 conector MSGraph. Sin esta directiva, Graph API no incluye el campo
+                 en las respuestas de listado/sync — solo en fetch individual.
+                 Permiso requerido: User.Read.All (ya concedido, Fase 1 operativa).
+                 Strength normal: Entra ID es IIA para jpegPhoto cuando el usuario
+                 actualiza su foto en M365. Oracle LAMB cubre photoUrl (campo separado).
+                 Downstream: si jpegPhoto existe → usar esa foto (más reciente, elegida
+                 por el usuario). Si no → fetchear desde extension/upeu:photoUrl (MinIO).
+                 ================================================================ -->
+            <attribute>
+                <ref>ri:photo</ref>
+                <fetchStrategy>explicit</fetchStrategy>
+                <inbound>
+                    <name>photo-to-jpegPhoto</name>
+                    <strength>normal</strength>
+                    <target>
+                        <path>jpegPhoto</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <!-- ================================================================
                  ACTIVATION — outbound: accountEnabled desde effectiveStatus MidPoint
                  Groovy: ENABLED → true; DISABLED/ARCHIVED/SUSPENDED → false.
                  ================================================================ -->

@@ -55,6 +55,11 @@
                         <xsd:annotation><xsd:appinfo><a:displayName>Fecha de ordenación/misión</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>50</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
 
+                    <!-- L5 — FOTO INSTITUCIONAL (LAMB MinIO) -->
+                    <xsd:element name="photoUrl" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>URL foto institucional (LAMB)</a:displayName><a:help>URL completo de la foto en MinIO institucional. Formato: https://lamb-files.upeu.edu.pe/lamb-academic/{ruta-relativa}. IIA: columna FOTO de ENOC.VW_TRABAJADOR (Oracle LAMB). Solo disponible para trabajadores.</a:help><a:displayOrder>60</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
                 </xsd:sequence>
             </xsd:complexType>
 
