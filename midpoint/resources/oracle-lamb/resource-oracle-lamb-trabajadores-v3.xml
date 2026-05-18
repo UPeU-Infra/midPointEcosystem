@@ -123,12 +123,12 @@
                     </evaluationPhases>
                 </inbound>
                 <inbound>
-                    <!-- Transporta el número de documento raw a sciback:taxId como campo de transporte.
-                         SOLO el número (sin prefijo URN). El Bloque J del UserTemplate lo combina
-                         con upeu:lambDocType para construir el contenedor sciback:identityDocuments.
-                         strength strong: se sobrescribe en cada sync desde LAMB (IIA: ELISEO.VW_APS_EMPLEADO).
-                         evaluationPhases: incluye beforeCorrelation para que el correlador funcione. -->
+                    <!-- DEPRECADO: transportaba el número raw a sciback:taxId (campo de transporte legacy).
+                         Reemplazado por num-documento-to-lambDocNum que usa upeu:lambDocNum.
+                         Se mantiene archived para trazabilidad.
+                         El Bloque J2 del UserTemplate limpia taxId en cada recompute. -->
                     <name>num-documento-raw-to-taxId-transport</name>
+                    <lifecycleState>archived</lifecycleState>
                     <strength>strong</strength>
                     <expression>
                         <script>
@@ -137,6 +137,26 @@
                     </expression>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</path>
+                    </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
+                </inbound>
+                <inbound>
+                    <!-- Transporta el número de documento raw a upeu:lambDocNum (campo de transporte canónico).
+                         El Bloque J del UserTemplate-Person-Base lo combina con upeu:lambDocType
+                         para construir el contenedor sciback:identityDocuments.
+                         strength strong: se sobrescribe en cada sync desde LAMB. -->
+                    <name>num-documento-to-lambDocNum</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def d = (input ?: '').toString().trim(); d ?: null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</path>
                     </target>
                     <evaluationPhases>
                         <include>beforeCorrelation</include>

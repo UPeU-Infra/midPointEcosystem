@@ -2,7 +2,7 @@
 <!--
   UserTemplate-Person-Base — Template canónico base UPeU
   OID: 855caaca-68c4-4f7f-8ff8-b4e35dd7d390
-  Versión: 2.5 (2026-05-18)
+  Versión: 2.6 (2026-05-18)
   Schema: urn:sciback:midpoint:person (canónico) + urn:upeu:midpoint:local (LAMB)
   Aplica a: todos los UserType via archetypePolicy en Archetype-Person-Built-in
   Libro Cap.9: template se activa en cada create/modify/recompute del focus object.
@@ -18,7 +18,7 @@
     G — Rejection reasons: trazabilidad de perfiles incompletos en draft
     H — Baja definitiva: active→archived para staff/faculty 180d post-terminationDate (ISO 24760 §6.3)
     I — jpegPhoto fetch desde LAMB MinIO (upeu:photoUrl → jpegPhoto, normal, try/catch)
-    J — Migración taxId → identityDocuments: construye contenedor canónico + limpia taxId
+    J — Migración lambDocNum → identityDocuments: construye contenedor canónico + limpia taxId
     P — Position assignment (PBAC Pilar 3): ServiceType Position desde upeu:lambPositionId
 
   Validaciones de formato (weak/log-warn):
@@ -38,7 +38,7 @@
     oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390">
 
     <name>UserTemplate-Person-Base</name>
-    <description>Template canónico base UPeU v2.5. Bloques A-H + D6 + I + J + P implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque H: ciclo ISO 24760 §6.3 active→archived. D6: OrgType EP desde academicProgramCode. Bloque I: jpegPhoto fetch desde LAMB MinIO (photoUrl→jpegPhoto, normal). Bloque J: migración taxId→identityDocuments (contenedor canónico). Bloque P: PBAC Position desde lambPositionId.</description>
+    <description>Template canónico base UPeU v2.6. Bloques A-H + D6 + I + J + P implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque H: ciclo ISO 24760 §6.3 active→archived. D6: OrgType EP desde academicProgramCode. Bloque I: jpegPhoto fetch desde LAMB MinIO (photoUrl→jpegPhoto, normal). Bloque J: lambDocNum→identityDocuments (upeu:lambDocNum = transport canónico, reemplaza taxId como campo de transporte). J2: limpia taxId. Bloque P: PBAC Position desde lambPositionId.</description>
     <lifecycleState>active</lifecycleState>
 
     <!-- ============================================================
@@ -1135,11 +1135,13 @@ try {
 
 
     <!-- ============================================================
-         BLOQUE J — MIGRACIÓN taxId → identityDocuments (contenedor canónico)
+         BLOQUE J — MIGRACIÓN lambDocNum → identityDocuments (contenedor canónico)
          Construye el contenedor sciback:identityDocuments a partir de:
            - upeu:lambDocType: código de tipo LAMB (ej: "1", "4", "7")
-           - sciback:taxId: número de documento raw (inbound desde LAMB Trabajadores)
-             o el URN SCHAC heredado (urn:schac:personalUniqueID:pe:DNI:PE:{num})
+           - upeu:lambDocNum: número de documento raw (inbound desde LAMB Trabajadores,
+             campo de transporte canónico — reemplaza el uso legacy de sciback:taxId)
+           Fallback retrocompatibilidad: si lambDocNum es null y sciback:taxId contiene
+             un URN SCHAC heredado (urn:schac:personalUniqueID:pe:DNI:PE:{num}) → usa ese.
 
          Mapeo de tipos LAMB → canónico:
            1  → DNI  (RENIEC,     PER)
@@ -1171,13 +1173,17 @@ try {
     <item>
         <ref>extension/sciback:identityDocuments</ref>
         <mapping>
-            <name>J-build-identityDocuments-from-lambDocType-taxId</name>
-            <description>Construye el contenedor canónico sciback:identityDocuments desde upeu:lambDocType (tipo LAMB) + sciback:taxId (número doc raw o URN heredado). Limpia sciback:taxId al finalizar. Fallback: URN heredado → DNI. strong: revalúa en cada recompute. MidPoint Book Cap.9 + eduPerson 202208 schacPersonalUniqueID.</description>
+            <name>J-build-identityDocuments-from-lambDocType-lambDocNum</name>
+            <description>Construye el contenedor canónico sciback:identityDocuments desde upeu:lambDocType (tipo LAMB) + upeu:lambDocNum (número doc raw). Fallback: si lambDocNum es null, intenta sciback:taxId como URN heredado (urn:schac:personalUniqueID:pe:DNI:PE:*) para retrocompatibilidad. El Bloque J2 limpia taxId post-migración. strong: revalúa en cada recompute. MidPoint Book Cap.9 + eduPerson 202208 schacPersonalUniqueID.</description>
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
             <source>
                 <name>lambDocType</name>
                 <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocType</path>
+            </source>
+            <source>
+                <name>lambDocNum</name>
+                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</path>
             </source>
             <source>
                 <name>taxId</name>
@@ -1190,15 +1196,20 @@ import javax.xml.namespace.QName
 import com.evolveum.midpoint.prism.path.ItemPath
 
 // --- 1. Extraer número de documento ---
-def rawTaxId = taxId != null ? basic.stringify(taxId).trim() : ''
+// Fuente primaria: upeu:lambDocNum (campo de transporte canónico desde inbound LAMB)
+// Fallback: sciback:taxId si contiene URN heredado (urn:schac:personalUniqueID:pe:DNI:PE:*)
+//   para retrocompatibilidad con usuarios creados antes de la migración.
+def rawDocNum = lambDocNum != null ? basic.stringify(lambDocNum).trim() : ''
 def docNumber = null
-if (rawTaxId.startsWith('urn:schac:personalUniqueID:')) {
-    // Formato heredado: extraer el último segmento
-    def parts = rawTaxId.split(':')
-    docNumber = parts.length > 0 ? parts[parts.length - 1].trim() : null
-} else if (rawTaxId != '') {
-    // Número raw (nuevo flujo desde inbound num-documento-raw-to-taxId-transport)
-    docNumber = rawTaxId
+if (rawDocNum != '') {
+    docNumber = rawDocNum
+} else {
+    // Fallback heredado: taxId con URN SCHAC
+    def rawTaxId = taxId != null ? basic.stringify(taxId).trim() : ''
+    if (rawTaxId.startsWith('urn:schac:personalUniqueID:')) {
+        def parts = rawTaxId.split(':')
+        docNumber = parts.length > 0 ? parts[parts.length - 1].trim() : null
+    }
 }
 if (!docNumber) return null
 
@@ -1286,8 +1297,16 @@ try {
             <condition>
                 <script>
                     <code><![CDATA[
-def rawTaxId = taxId != null ? basic.stringify(taxId).trim() : ''
-def hasNumber = rawTaxId != '' && rawTaxId != 'urn:schac:personalUniqueID:pe:DNI:PE:'
+// Condición: hay número de documento (desde lambDocNum o fallback taxId URN) Y tipo válido
+def rawDocNum = lambDocNum != null ? basic.stringify(lambDocNum).trim() : ''
+def hasNumber = false
+if (rawDocNum != '') {
+    hasNumber = true
+} else {
+    def rawTaxId = taxId != null ? basic.stringify(taxId).trim() : ''
+    hasNumber = rawTaxId.startsWith('urn:schac:personalUniqueID:pe:DNI:PE:') &&
+                rawTaxId != 'urn:schac:personalUniqueID:pe:DNI:PE:'
+}
 def rawType = lambDocType != null ? basic.stringify(lambDocType).trim() : ''
 def INVALID = ['0', '97', '98', '99'] as Set
 def typeOk = rawType == '' || !INVALID.contains(rawType)

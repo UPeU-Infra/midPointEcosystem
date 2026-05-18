@@ -62,7 +62,18 @@
 
                     <!-- L6 — TIPO DE DOCUMENTO LAMB (campo de transporte) -->
                     <xsd:element name="lambDocType" type="xsd:string" minOccurs="0" maxOccurs="1">
-                        <xsd:annotation><xsd:appinfo><a:displayName>Tipo de documento LAMB (ID_TIPODOCUMENTO)</a:displayName><a:help>Código numérico de tipo de documento en ELISEO.VW_APS_EMPLEADO.ID_TIPODOCUMENTO. Campo de transporte: el Bloque J del UserTemplate lo convierte junto con sciback:taxId (número raw) al contenedor canónico sciback:identityDocuments. Valores: 1=DNI, 4=CE, 7=PASSPORT, 22=PTP, 23=CPP, 24=DNI-menor, 31=CE-visa, 9=PASSPORT-2, 6=CE-2. 0/97/98/99=sin documento válido.</a:help><a:indexed>true</a:indexed><a:displayOrder>70</a:displayOrder></xsd:appinfo></xsd:annotation>
+                        <xsd:annotation><xsd:appinfo><a:displayName>Tipo de documento LAMB (ID_TIPODOCUMENTO)</a:displayName><a:help>Código numérico de tipo de documento en ELISEO.VW_APS_EMPLEADO.ID_TIPODOCUMENTO. Campo de transporte: el Bloque J del UserTemplate lo convierte junto con upeu:lambDocNum (número raw) al contenedor canónico sciback:identityDocuments. Valores: 1=DNI, 4=CE, 7=PASSPORT, 22=PTP, 23=CPP, 24=DNI-menor, 31=CE-visa, 9=PASSPORT-2, 6=CE-2. 0/97/98/99=sin documento válido.</a:help><a:indexed>true</a:indexed><a:displayOrder>70</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- L7 — NÚMERO DE DOCUMENTO LAMB (campo de transporte canónico) -->
+                    <xsd:element name="lambDocNum" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Número documento LAMB (transporte)</a:displayName>
+                                <a:displayOrder>75</a:displayOrder>
+                                <a:help>Número de documento raw desde Oracle LAMB (campo de transporte para Bloque J del object template). IIA: ELISEO.VW_APS_EMPLEADO.NUM_DOCUMENTO. El Bloque J lo combina con upeu:lambDocType para construir sciback:identityDocuments. No usar directamente en UI.</a:help>
+                            </xsd:appinfo>
+                        </xsd:annotation>
                     </xsd:element>
 
                 </xsd:sequence>
