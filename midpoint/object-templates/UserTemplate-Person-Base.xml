@@ -1317,12 +1317,6 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
                     </q:equal>
                 </filter>
                 <createOnDemand>false</createOnDemand>
-                <populate>
-                    <populateItem>
-                        <expression><value>org:default</value></expression>
-                        <target><path>relation</path></target>
-                    </populateItem>
-                </populate>
             </assignmentTargetSearch>
         </expression>
         <target>
