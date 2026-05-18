@@ -14250,6 +14250,25 @@
                     </expression>
                 </outbound>
             </attribute>
+
+            <!-- jpegPhoto: fetch desde upeu:photoUrl (LAMB MinIO) en outbound.
+                 MidPoint descarga el binario en memoria — no se almacena en MidPoint DB.
+                 Solo se escribe en LDAP para que Keycloak, Koha y otros lo lean. -->
+            <attribute>
+                <ref>ri:jpegPhoto</ref>
+                <outbound>
+                    <name>photoUrl-to-jpegPhoto-ldap</name>
+                    <strength>normal</strength>
+                    <source>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:photoUrl</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>if (!photoUrl) return null; try { def conn = new URL(photoUrl).openConnection(); conn.connectTimeout = 5000; conn.readTimeout = 10000; return conn.inputStream.bytes } catch (Exception e) { log.warn('jpegPhoto fetch failed: ' + photoUrl + ' — ' + e.message); return null }</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
         </objectType>
     </schemaHandling>
     <capabilities>
