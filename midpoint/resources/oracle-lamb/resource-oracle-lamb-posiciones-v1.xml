@@ -137,9 +137,13 @@
             </focus>
 
             <!-- identifier → ServiceType.identifier (campo indexado, inmutable)
-                 IIA: ID_PUESTO de ENOC.PLLA_PUESTO. Nunca cambia. -->
+                 IIA: ID_PUESTO de ENOC.PLLA_PUESTO. Nunca cambia.
+                 <correlator/> activa correlación en base a este atributo: MidPoint
+                 busca ServiceType donde identifier = ID_PUESTO del shadow.
+                 Patrón consistente con LAMB-Trabajadores (NUM_DOCUMENTO correlator). -->
             <attribute>
                 <ref>icfs:uid</ref>
+                <correlator/>
                 <inbound>
                     <name>uid-to-identifier</name>
                     <strength>strong</strength>
@@ -233,30 +237,6 @@
                     <target><path>assignment</path></target>
                 </inbound>
             </attribute>
-
-            <!--
-              Correlación: identifier del ServiceType MidPoint = ID_PUESTO de LAMB
-              El inbound mapping uid-to-identifier ya copia ID_PUESTO → ServiceType.identifier
-              El correlador busca el ServiceType por identifier = ID_PUESTO del shadow.
-              Patrón MidPoint 4.9: <correlation> a nivel de objectType con filter sobre
-              el campo focus (identifier) y fuente desde los atributos del shadow.
-            -->
-            <correlation>
-                <correlators>
-                    <items>
-                        <name>correlate-by-identifier</name>
-                        <item>
-                            <name>identifier-match</name>
-                            <search>
-                                <path>identifier</path>
-                            </search>
-                            <source>
-                                <path>$shadow/attributes/ri:ID_PUESTO</path>
-                            </source>
-                        </item>
-                    </items>
-                </correlators>
-            </correlation>
 
             <!--
               Synchronization reactions para ServiceType/generic/position
