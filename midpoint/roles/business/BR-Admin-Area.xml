@@ -39,10 +39,6 @@
     <inducement>
         <targetRef oid="723fe852-1169-4d31-b765-5f5b799e4996" relation="org:default" type="RoleType"/>
     </inducement>
-    <!-- AR-Keycloak-RealmAccess-UPeU: acceso SSO Keycloak realm upeu -->
-    <inducement>
-        <targetRef oid="c0448fb9-db51-4109-8949-9321e1c6d9e5" relation="org:default" type="RoleType"/>
-    </inducement>
     <!-- AR-Indico-User: acceso Indico eventos -->
     <inducement>
         <targetRef oid="3e979bbf-2f54-48e8-a304-9104f5e92ad3" relation="org:default" type="RoleType"/>

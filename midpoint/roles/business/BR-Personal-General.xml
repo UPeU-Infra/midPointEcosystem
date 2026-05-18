@@ -2,9 +2,10 @@
 <!--
   BR-Personal-General — Business Role base universal UPeU
   OID: b0000001-0000-0000-0000-000000000001
-  Propósito: Induce AR-LDAP-Person + AR-Keycloak-RealmAccess-UPeU.
+  Propósito: Induce AR-LDAP-Person (Identity Cache OpenLDAP).
+  Keycloak accede via User Federation -> OpenLDAP (sin conector directo MidPoint->Keycloak).
   Incluir vía inducement en todo BR operacional nuevo (BR-13 en adelante).
-  Los 11 BRs existentes ya tienen estos ARs como inducements directos;
+  Los 11 BRs existentes ya tienen AR-LDAP-Person como inducement directo;
   la migración a BR-Personal-General como fuente única es Fase posterior.
   IIA: MidPoint (governance object, no viene de LAMB).
   Archetype: archetype-role-business (af29bb55-f7c2-449a-ab67-ae3c819ebf5b)
@@ -13,7 +14,7 @@
       xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
       oid="b0000001-0000-0000-0000-000000000001">
     <name>BR-Personal-General</name>
-    <description>Base universal para toda persona activa UPeU. Induce AR-LDAP-Person (cuenta en OpenLDAP Identity Cache) y AR-Keycloak-RealmAccess-UPeU (acceso SSO realm upeu). Incluir vía inducement en todos los BRs operacionales nuevos (BR-13+). No asignar directamente a usuarios.</description>
+    <description>Base universal para toda persona activa UPeU. Induce AR-LDAP-Person (cuenta en OpenLDAP Identity Cache). El acceso a Keycloak se materializa via User Federation desde OpenLDAP (arquitectura MidPoint-OpenLDAP-Keycloak, sin conector directo). Incluir vía inducement en todos los BRs operacionales nuevos (BR-13+). No asignar directamente a usuarios.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Business Role -->
@@ -22,9 +23,5 @@
     <!-- AR-LDAP-Person: cuenta en OpenLDAP Identity Cache (fuente para Keycloak User Federation) -->
     <inducement>
         <targetRef oid="7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d" relation="org:default" type="RoleType"/>
-    </inducement>
-    <!-- AR-Keycloak-RealmAccess-UPeU: acceso SSO realm upeu -->
-    <inducement>
-        <targetRef oid="c0448fb9-db51-4109-8949-9321e1c6d9e5" relation="org:default" type="RoleType"/>
     </inducement>
 </role>

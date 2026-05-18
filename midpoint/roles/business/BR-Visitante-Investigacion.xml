@@ -20,10 +20,6 @@
     <inducement>
         <targetRef oid="28e11679-a107-4c6c-b9d4-3ad616599f9b" relation="org:default" type="RoleType"/>
     </inducement>
-    <!-- AR-Keycloak-RealmAccess-UPeU: acceso SSO para recursos académicos -->
-    <inducement>
-        <targetRef oid="c0448fb9-db51-4109-8949-9321e1c6d9e5" relation="org:default" type="RoleType"/>
-    </inducement>
     <!-- AR-Vendor-Academic-Access: acceso a bases de datos académicas -->
     <inducement>
         <targetRef oid="9cc94538-d576-4735-a16c-e70562cd98b9" relation="org:default" type="RoleType"/>

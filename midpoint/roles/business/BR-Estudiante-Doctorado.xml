@@ -39,10 +39,6 @@
     <inducement>
         <targetRef oid="28e11679-a107-4c6c-b9d4-3ad616599f9b" relation="org:default" type="RoleType"/>
     </inducement>
-    <!-- AR-Keycloak-RealmAccess-UPeU: acceso SSO Keycloak realm upeu -->
-    <inducement>
-        <targetRef oid="c0448fb9-db51-4109-8949-9321e1c6d9e5" relation="org:default" type="RoleType"/>
-    </inducement>
     <!-- AR-DSpace-Submitter: puede depositar en repositorio (tesis/artículos) -->
     <inducement>
         <targetRef oid="d9d31837-6125-4846-8bb0-62674a40749d" relation="org:default" type="RoleType"/>
