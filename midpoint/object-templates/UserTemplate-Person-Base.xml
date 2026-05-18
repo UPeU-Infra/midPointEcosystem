@@ -64,20 +64,7 @@
             </source>
             <expression>
                 <script>
-                    <code>
-                        // Preferencia 1: personalNumber — identificador institucional inmutable
-                        if (personalNumber != null &amp;&amp; basic.stringify(personalNumber).trim() != '') {
-                            return basic.stringify(personalNumber).trim()
-                        }
-                        // Preferencia 2: inicial + apellido normalizado (sin tildes, lowercase)
-                        // Solo como fallback temporal hasta que LAMB inbound asigne personalNumber
-                        def gn = givenName != null ? basic.norm(basic.stringify(givenName)) : ''
-                        def fn = familyName != null ? basic.norm(basic.stringify(familyName)) : ''
-                        if (gn == '' &amp;&amp; fn == '') return null
-                        def initial = gn.take(1)
-                        def lastname = fn.replaceAll(' ', '')
-                        return (initial + lastname).take(8) + iterationToken
-                    </code>
+                    <code>if (personalNumber != null &amp;&amp; basic.stringify(personalNumber).trim() != '') { return basic.stringify(personalNumber).trim() }; def gn = givenName != null ? basic.norm(basic.stringify(givenName)) : ''; def fn = familyName != null ? basic.norm(basic.stringify(familyName)) : ''; if (gn == '' &amp;&amp; fn == '') return null; def initial = gn.take(1); def lastname = fn.replaceAll(' ', ''); return (initial + lastname).take(8) + iterationToken</code>
                 </script>
             </expression>
         </mapping>
@@ -103,12 +90,7 @@
             </source>
             <expression>
                 <script>
-                    <code>
-                        if (givenName == null &amp;&amp; familyName == null) return null
-                        def gn = givenName != null ? basic.stringify(givenName).trim() : ''
-                        def fn = familyName != null ? basic.stringify(familyName).trim() : ''
-                        return (gn + ' ' + fn).trim()
-                    </code>
+                    <code>if (givenName == null &amp;&amp; familyName == null) return null; def gn = givenName != null ? basic.stringify(givenName).trim() : ''; def fn = familyName != null ? basic.stringify(familyName).trim() : ''; return (gn + ' ' + fn).trim()</code>
                 </script>
             </expression>
         </mapping>
@@ -124,13 +106,7 @@
             </source>
             <expression>
                 <script>
-                    <code>
-                        // weak: no sobrescribe si LAMB inbound ya proporcionó email real
-                        if (personalNumber == null) return null
-                        def pn = basic.stringify(personalNumber).trim()
-                        if (pn == '') return null
-                        return pn + '@upeu.edu.pe'
-                    </code>
+                    <code>if (personalNumber == null) return null; def pn = basic.stringify(personalNumber).trim(); if (pn == '') return null; return pn + '@upeu.edu.pe'</code>
                 </script>
             </expression>
             <condition>
@@ -171,14 +147,7 @@
             </source>
             <expression>
                 <script>
-                    <code>
-                        // eppn = eduPersonPrincipalName (REFEDS R&amp;S)
-                        // Formato: localPart@scope (scope = dominio institucional)
-                        if (personalNumber == null) return null
-                        def pn = basic.stringify(personalNumber).trim()
-                        if (pn == '') return null
-                        return pn + '@upeu.edu.pe'
-                    </code>
+                    <code>if (personalNumber == null) return null; def pn = basic.stringify(personalNumber).trim(); if (pn == '') return null; return pn + '@upeu.edu.pe'</code>
                 </script>
             </expression>
             <condition>
@@ -240,28 +209,7 @@
                         <q:path>name</q:path>
                         <expression>
                             <script>
-                                <code>
-                                    // Construir nombre de rol canónico desde primaryAffiliation
-                                    // Valores LAMB → nombres de rol:
-                                    //   STUDENT      → R-Affiliation-Student
-                                    //   FACULTY      → R-Affiliation-Faculty
-                                    //   STAFF        → R-Affiliation-Staff
-                                    //   EMPLOYEE     → R-Affiliation-Employee
-                                    //   ALUM         → R-Affiliation-Alumni
-                                    //   AFFILIATE-CU → R-Affiliation-Affiliate-CU
-                                    if (primaryAffiliation == null) return null
-                                    def val = basic.stringify(primaryAffiliation).trim().toUpperCase()
-                                    // Mapeo explícito para garantizar nombres exactos de roles
-                                    def roleMap = [
-                                        'STUDENT':      'R-Affiliation-Student',
-                                        'FACULTY':      'R-Affiliation-Faculty',
-                                        'STAFF':        'R-Affiliation-Staff',
-                                        'EMPLOYEE':     'R-Affiliation-Employee',
-                                        'ALUM':         'R-Affiliation-Alumni',
-                                        'AFFILIATE-CU': 'R-Affiliation-Affiliate-CU'
-                                    ]
-                                    return roleMap[val]
-                                </code>
+                                <code>if (primaryAffiliation == null) return null; def val = basic.stringify(primaryAffiliation).trim().toUpperCase(); def roleMap = ['STUDENT': 'R-Affiliation-Student', 'FACULTY': 'R-Affiliation-Faculty', 'STAFF': 'R-Affiliation-Staff', 'EMPLOYEE': 'R-Affiliation-Employee', 'ALUM': 'R-Affiliation-Alumni', 'AFFILIATE-CU': 'R-Affiliation-Affiliate-CU']; return roleMap[val]</code>
                             </script>
                         </expression>
                     </q:equal>
@@ -274,13 +222,7 @@
         </target>
         <condition>
             <script>
-                <code>
-                    primaryAffiliation != null &amp;&amp;
-                    basic.stringify(primaryAffiliation).trim() != '' &amp;&amp;
-                    ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUM','AFFILIATE-CU'].contains(
-                        basic.stringify(primaryAffiliation).trim().toUpperCase()
-                    )
-                </code>
+                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim() != '' &amp;&amp; ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUM','AFFILIATE-CU'].contains(basic.stringify(primaryAffiliation).trim().toUpperCase())</code>
             </script>
         </condition>
     </mapping>
@@ -305,22 +247,12 @@
             </source>
             <expression>
                 <script>
-                    <code>
-                        def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
-                        if (affil != 'STUDENT') return studentCycle
-                        if (studentCycle != null &amp;&amp; (academicProgramCode == null || (academicProgramCode instanceof java.util.Collection ? academicProgramCode.isEmpty() : academicProgramCode.toString().isEmpty()))) {
-                            log.warn("UPeU Student: cycle={} sin academicProgramCode en user {}", studentCycle, focus?.name)
-                        }
-                        return studentCycle
-                    </code>
+                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''; if (affil != 'STUDENT') return studentCycle; if (studentCycle != null &amp;&amp; (academicProgramCode == null || (academicProgramCode instanceof java.util.Collection ? academicProgramCode.isEmpty() : academicProgramCode.toString().isEmpty()))) { log.warn("UPeU Student: cycle={} sin academicProgramCode en user {}", studentCycle, focus?.name) }; return studentCycle</code>
                 </script>
             </expression>
             <condition>
                 <script>
-                    <code>
-                        def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
-                        affil == 'STUDENT' &amp;&amp; studentCycle != null
-                    </code>
+                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''; affil == 'STUDENT' &amp;&amp; studentCycle != null</code>
                 </script>
             </condition>
         </mapping>
@@ -349,24 +281,7 @@
                         <q:path>name</q:path>
                         <expression>
                             <script>
-                                <code>
-                                    // studentCycle es xsd:string (puede venir como "5" desde LAMB)
-                                    // Convertir a Integer para comparación numérica
-                                    def raw = studentCycle
-                                    def n = null
-                                    try {
-                                        def s = (raw instanceof java.util.Collection) ?
-                                            (raw.isEmpty() ? null : raw.max { it.toString() as Integer }) :
-                                            raw?.toString()
-                                        if (s != null) n = Integer.parseInt(s.trim())
-                                    } catch (Exception e) {
-                                        log.warn("D.2: studentCycle no parseable '{}' en {}", raw, focus?.name)
-                                    }
-                                    if (n == null) return 'BR-Estudiante-Pregrado'
-                                    if (n >= 9) return 'BR-Estudiante-Doctorado'
-                                    if (n >= 7) return 'BR-Estudiante-Posgrado'
-                                    return 'BR-Estudiante-Pregrado'
-                                </code>
+                                <code>def raw = studentCycle; def n = null; try { def s = (raw instanceof java.util.Collection) ? (raw.isEmpty() ? null : raw.max { it.toString() as Integer }) : raw?.toString(); if (s != null) n = Integer.parseInt(s.trim()) } catch (Exception e) { log.warn("D.2: studentCycle no parseable '{}' en {}", raw, focus?.name) }; if (n == null) return 'BR-Estudiante-Pregrado'; if (n >= 9) return 'BR-Estudiante-Doctorado'; if (n >= 7) return 'BR-Estudiante-Posgrado'; return 'BR-Estudiante-Pregrado'</code>
                             </script>
                         </expression>
                     </q:equal>
@@ -379,10 +294,7 @@
         </target>
         <condition>
             <script>
-                <code>
-                    def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
-                    affil == 'STUDENT' &amp;&amp; studentCycle != null
-                </code>
+                <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''; affil == 'STUDENT' &amp;&amp; studentCycle != null</code>
             </script>
         </condition>
     </mapping>
@@ -493,10 +405,7 @@
         </target>
         <condition>
             <script>
-                <code>
-                    primaryAffiliation != null &amp;&amp;
-                    basic.stringify(primaryAffiliation).trim().toLowerCase() == 'student'
-                </code>
+                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'student'</code>
             </script>
         </condition>
     </mapping>
@@ -525,10 +434,7 @@
         </target>
         <condition>
             <script>
-                <code>
-                    primaryAffiliation != null &amp;&amp;
-                    basic.stringify(primaryAffiliation).trim().toLowerCase() == 'staff'
-                </code>
+                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'staff'</code>
             </script>
         </condition>
     </mapping>
@@ -557,10 +463,7 @@
         </target>
         <condition>
             <script>
-                <code>
-                    primaryAffiliation != null &amp;&amp;
-                    basic.stringify(primaryAffiliation).trim().toLowerCase() == 'faculty'
-                </code>
+                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'faculty'</code>
             </script>
         </condition>
     </mapping>
@@ -589,10 +492,7 @@
         </target>
         <condition>
             <script>
-                <code>
-                    primaryAffiliation != null &amp;&amp;
-                    basic.stringify(primaryAffiliation).trim().toLowerCase() == 'alum'
-                </code>
+                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'alum'</code>
             </script>
         </condition>
     </mapping>
@@ -746,114 +646,12 @@
             </source>
             <expression>
                 <script>
-                    <code>
-                        // Bloque G: solo actua cuando el foco esta en draft/proposed
-                        def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''
-                        if (ls != 'draft' &amp;&amp; ls != 'proposed') return null
-
-                        def SCIBACK_NS = 'urn:sciback:midpoint:person'
-                        def AFFIL_OIDS = [
-                            '79ad22c7-b828-4b8c-a562-2ee01b214d7f',
-                            '94a03f65-e866-4d49-a996-26c4dc227413',
-                            '0da0b3b8-a93b-4765-ad71-30c535ff7512',
-                            '7d4e89fb-163c-478c-a224-4e4be733bc1b',
-                            '485dc678-94a5-4d20-9463-71568c625a33',
-                            '31f25974-62c9-404a-a038-b17a08059fe5'
-                        ] as Set
-                        def VALID_AFFILIATIONS = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUM','AFFILIATE-CU'] as Set
-
-                        def reasons = []
-
-                        // PR-02: personalNumber
-                        def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''
-                        if (pn == '') reasons &lt;&lt; 'PR-02: personalNumber ausente o vacio'
-
-                        // PR-03 + PR-04: identityDocument primario y DNI valido
-                        // identityDocuments es una variable de tipo PrismContainerValue (o coleccion)
-                        // inyectada por MidPoint desde el source extension/sciback:identityDocuments.
-                        // Iterar con PrismContainerValue.findProperty(ItemPath) para leer sub-campos.
-                        def hasPrimary = false
-                        def primaryDocNumber = null
-                        def primaryDocType = null
-                        try {
-                            def primQN   = new javax.xml.namespace.QName(SCIBACK_NS, 'primary')
-                            def numQN    = new javax.xml.namespace.QName(SCIBACK_NS, 'number')
-                            def typeQN   = new javax.xml.namespace.QName(SCIBACK_NS, 'type')
-                            def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(primQN)
-                            def numPath  = com.evolveum.midpoint.prism.path.ItemPath.create(numQN)
-                            def typePath = com.evolveum.midpoint.prism.path.ItemPath.create(typeQN)
-                            // identityDocuments puede ser una sola PrismContainerValue o una List segun MP version
-                            def docs = identityDocuments
-                            if (docs != null) {
-                                def docList = (docs instanceof List) ? docs : [docs]
-                                docList.each { doc ->
-                                    def primProp = doc?.findProperty(primPath)
-                                    if ('true' == primProp?.realValue?.toString()) {
-                                        hasPrimary = true
-                                        primaryDocNumber = doc?.findProperty(numPath)?.realValue?.toString()
-                                        primaryDocType   = doc?.findProperty(typePath)?.realValue?.toString()
-                                    }
-                                }
-                            }
-                        } catch (Exception e) {
-                            log.warn('Bloque G: error leyendo identityDocuments en {}: {}', focus?.name, e.message)
-                        }
-                        // PR-03 fallback: si no hay identityDocuments, acepta taxId (campo legacy) como puente
-                        if (!hasPrimary &amp;&amp; taxId != null) {
-                            def txStr = basic.stringify(taxId)?.trim()
-                            if (txStr?.startsWith('urn:schac:personalUniqueID:')) {
-                                hasPrimary = true
-                                def parts = txStr.split(':')
-                                primaryDocNumber = parts.length > 0 ? parts[parts.length - 1] : null
-                                primaryDocType = 'DNI'
-                            }
-                        }
-                        if (!hasPrimary) {
-                            reasons &lt;&lt; 'PR-03: sin documento de identidad primario (primary=true)'
-                        } else if (primaryDocNumber != null) {
-                            def docType = primaryDocType?.toUpperCase() ?: 'DNI'
-                            if (docType == 'DNI' || docType == '') {
-                                if (!(primaryDocNumber ==~ /^\d{8}$/))
-                                    reasons &lt;&lt; "PR-04: DNI invalido '${primaryDocNumber}' (debe ser 8 digitos)"
-                            }
-                        }
-
-                        // PR-05: rol de afiliacion
-                        def hasAffil = focus?.assignment?.any { a -> a.targetRef?.oid in AFFIL_OIDS }
-                        if (!hasAffil) reasons &lt;&lt; 'PR-05: sin rol R-Affiliation-* asignado'
-
-                        // PR-06: primaryAffiliation
-                        def primAffil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
-                        if (!primAffil || !(primAffil in VALID_AFFILIATIONS))
-                            reasons &lt;&lt; "PR-06: primaryAffiliation invalido ('${primAffil}'). Validos: ${VALID_AFFILIATIONS.sort().join('|')}"
-
-                        // PR-07: emailAddress
-                        def email = emailAddress != null ? basic.stringify(emailAddress) : ''
-                        if (!email.endsWith('@upeu.edu.pe'))
-                            reasons &lt;&lt; "PR-07: emailAddress institucional invalido ('${email}')"
-
-                        // PR-08a: givenName
-                        def gn = givenName != null ? basic.stringify(givenName).trim() : ''
-                        if (gn == '') reasons &lt;&lt; 'PR-08a: givenName ausente o vacio'
-
-                        // PR-08b: familyName
-                        def fn = familyName != null ? basic.stringify(familyName).trim() : ''
-                        if (fn == '') reasons &lt;&lt; 'PR-08b: familyName ausente o vacio'
-
-                        if (reasons) {
-                            log.info('Bloque G [{}]: {} fallos: {}', focus?.name, reasons.size(), reasons.join(' | '))
-                            return reasons
-                        }
-                        return null
-                    </code>
+                    <code><![CDATA[def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''; if (ls != 'draft' && ls != 'proposed') return null; def SCIBACK_NS = 'urn:sciback:midpoint:person'; def AFFIL_OIDS = ['79ad22c7-b828-4b8c-a562-2ee01b214d7f','94a03f65-e866-4d49-a996-26c4dc227413','0da0b3b8-a93b-4765-ad71-30c535ff7512','7d4e89fb-163c-478c-a224-4e4be733bc1b','485dc678-94a5-4d20-9463-71568c625a33','31f25974-62c9-404a-a038-b17a08059fe5'] as Set; def VALID_AFFILIATIONS = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUM','AFFILIATE-CU'] as Set; def reasons = []; def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''; if (pn == '') reasons << 'PR-02: personalNumber ausente o vacio'; def hasPrimary = false; def primaryDocNumber = null; def primaryDocType = null; try { def primQN = new javax.xml.namespace.QName(SCIBACK_NS, 'primary'); def numQN = new javax.xml.namespace.QName(SCIBACK_NS, 'number'); def typeQN = new javax.xml.namespace.QName(SCIBACK_NS, 'type'); def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(primQN); def numPath = com.evolveum.midpoint.prism.path.ItemPath.create(numQN); def typePath = com.evolveum.midpoint.prism.path.ItemPath.create(typeQN); def docs = identityDocuments; if (docs != null) { def docList = (docs instanceof List) ? docs : [docs]; docList.each { doc -> def primProp = doc?.findProperty(primPath); if ('true' == primProp?.realValue?.toString()) { hasPrimary = true; primaryDocNumber = doc?.findProperty(numPath)?.realValue?.toString(); primaryDocType = doc?.findProperty(typePath)?.realValue?.toString() } } } } catch (Exception e) { log.warn('Bloque G: error leyendo identityDocuments en {}: {}', focus?.name, e.message) }; if (!hasPrimary && taxId != null) { def txStr = basic.stringify(taxId)?.trim(); if (txStr?.startsWith('urn:schac:personalUniqueID:')) { hasPrimary = true; def parts = txStr.split(':'); primaryDocNumber = parts.length > 0 ? parts[parts.length - 1] : null; primaryDocType = 'DNI' } }; if (!hasPrimary) { reasons << 'PR-03: sin documento de identidad primario (primary=true)' } else if (primaryDocNumber != null) { def docType = primaryDocType?.toUpperCase() ?: 'DNI'; if (docType == 'DNI' || docType == '') { if (!(primaryDocNumber ==~ /^\d{8}$/)) reasons << "PR-04: DNI invalido '${primaryDocNumber}' (debe ser 8 digitos)" } }; def hasAffil = focus?.assignment?.any { a -> a.targetRef?.oid in AFFIL_OIDS }; if (!hasAffil) reasons << 'PR-05: sin rol R-Affiliation-* asignado'; def primAffil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''; if (!primAffil || !(primAffil in VALID_AFFILIATIONS)) reasons << "PR-06: primaryAffiliation invalido ('${primAffil}'). Validos: ${VALID_AFFILIATIONS.sort().join('|')}"; def email = emailAddress != null ? basic.stringify(emailAddress) : ''; if (!email.endsWith('@upeu.edu.pe')) reasons << "PR-07: emailAddress institucional invalido ('${email}')"; def gn = givenName != null ? basic.stringify(givenName).trim() : ''; if (gn == '') reasons << 'PR-08a: givenName ausente o vacio'; def fn = familyName != null ? basic.stringify(familyName).trim() : ''; if (fn == '') reasons << 'PR-08b: familyName ausente o vacio'; if (reasons) { log.info('Bloque G [{}]: {} fallos: {}', focus?.name, reasons.size(), reasons.join(' | ')); return reasons }; return null]]></code>
                 </script>
             </expression>
             <condition>
                 <script>
-                    <code>
-                        def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''
-                        ls == 'draft' || ls == 'proposed'
-                    </code>
+                    <code>def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''; ls == 'draft' || ls == 'proposed'</code>
                 </script>
             </condition>
         </mapping>
@@ -869,23 +667,12 @@
             </source>
             <expression>
                 <script>
-                    <code>
-                        // Siempre actualizar timestamp cuando el foco esta en draft/proposed.
-                        // No depender de rejectionReasons como source (multivalor causa ejecuciones multiples).
-                        // El valor de rejectionReasons se evalua en el bloque G-rejection-reasons-evaluator.
-                        import java.time.Instant
-                        def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''
-                        if (ls != 'draft' &amp;&amp; ls != 'proposed') return null
-                        return Instant.now().toString()
-                    </code>
+                    <code>import java.time.Instant; def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''; if (ls != 'draft' &amp;&amp; ls != 'proposed') return null; return Instant.now().toString()</code>
                 </script>
             </expression>
             <condition>
                 <script>
-                    <code>
-                        def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''
-                        ls == 'draft' || ls == 'proposed'
-                    </code>
+                    <code>def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''; ls == 'draft' || ls == 'proposed'</code>
                 </script>
             </condition>
         </mapping>
@@ -901,19 +688,12 @@
             </source>
             <expression>
                 <script>
-                    <code>
-                        def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''
-                        if (ls != 'draft' &amp;&amp; ls != 'proposed') return null
-                        return 'BloqueG@UserTemplate-Person-Base'
-                    </code>
+                    <code>def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''; if (ls != 'draft' &amp;&amp; ls != 'proposed') return null; return 'BloqueG@UserTemplate-Person-Base'</code>
                 </script>
             </expression>
             <condition>
                 <script>
-                    <code>
-                        def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''
-                        ls == 'draft' || ls == 'proposed'
-                    </code>
+                    <code>def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''; ls == 'draft' || ls == 'proposed'</code>
                 </script>
             </condition>
         </mapping>
@@ -1029,22 +809,7 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
             </source>
             <expression>
                 <script>
-                    <code>
-                        import java.time.LocalDate
-                        import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
-                        if (terminationDate == null) return null
-                        def v = basic.stringify(terminationDate)
-                        if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) return null
-                        try {
-                            def td = LocalDate.parse(v)
-                            if (!td.isAfter(LocalDate.now())) {
-                                return ActivationStatusType.DISABLED
-                            }
-                        } catch (Exception e) {
-                            log.warn("UPeU template leaver: terminationDate no parseable '{}' en {}: {}", v, focus?.name, e.message)
-                        }
-                        return null
-                    </code>
+                    <code>import java.time.LocalDate; import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType; if (terminationDate == null) return null; def v = basic.stringify(terminationDate); if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) return null; try { def td = LocalDate.parse(v); if (!td.isAfter(LocalDate.now())) { return ActivationStatusType.DISABLED } } catch (Exception e) { log.warn("UPeU template leaver: terminationDate no parseable '{}' en {}: {}", v, focus?.name, e.message) }; return null</code>
                 </script>
             </expression>
             <condition>
@@ -1108,14 +873,7 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
             </source>
             <expression>
                 <script>
-                    <code>
-                        if (birthDate == null) return null
-                        def v = basic.stringify(birthDate)
-                        if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) {
-                            log.warn("UPeU template: birthDate inválido '{}' en {} (esperado YYYY-MM-DD)", v, focus?.name)
-                        }
-                        return v
-                    </code>
+                    <code>if (birthDate == null) return null; def v = basic.stringify(birthDate); if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) { log.warn("UPeU template: birthDate invalido '{}' en {} (esperado YYYY-MM-DD)", v, focus?.name) }; return v</code>
                 </script>
             </expression>
         </mapping>
@@ -1131,14 +889,7 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
             </source>
             <expression>
                 <script>
-                    <code>
-                        if (gender == null) return null
-                        def v = basic.stringify(gender)
-                        if (!(v ==~ /^[0129]$/)) {
-                            log.warn("UPeU template: gender inválido '{}' en {} (esperado 0|1|2|9 ISO 5218)", v, focus?.name)
-                        }
-                        return v
-                    </code>
+                    <code>if (gender == null) return null; def v = basic.stringify(gender); if (!(v ==~ /^[0129]$/)) { log.warn("UPeU template: gender invalido '{}' en {} (esperado 0|1|2|9 ISO 5218)", v, focus?.name) }; return v</code>
                 </script>
             </expression>
         </mapping>
@@ -1154,14 +905,7 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
             </source>
             <expression>
                 <script>
-                    <code>
-                        if (nationality == null) return null
-                        def v = basic.stringify(nationality)
-                        if (!(v ==~ /^[A-Z]{3}$/)) {
-                            log.warn("UPeU template: nationality no-canónico '{}' en {} (esperado ISO 3166-1 alpha-3)", v, focus?.name)
-                        }
-                        return v
-                    </code>
+                    <code>if (nationality == null) return null; def v = basic.stringify(nationality); if (!(v ==~ /^[A-Z]{3}$/)) { log.warn("UPeU template: nationality no-canonico '{}' en {} (esperado ISO 3166-1 alpha-3)", v, focus?.name) }; return v</code>
                 </script>
             </expression>
         </mapping>
@@ -1177,14 +921,7 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
             </source>
             <expression>
                 <script>
-                    <code>
-                        if (hireDate == null) return null
-                        def v = basic.stringify(hireDate)
-                        if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) {
-                            log.warn("UPeU template: hireDate inválido '{}' en {} (esperado YYYY-MM-DD)", v, focus?.name)
-                        }
-                        return v
-                    </code>
+                    <code>if (hireDate == null) return null; def v = basic.stringify(hireDate); if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) { log.warn("UPeU template: hireDate invalido '{}' en {} (esperado YYYY-MM-DD)", v, focus?.name) }; return v</code>
                 </script>
             </expression>
         </mapping>
@@ -1270,14 +1007,7 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
             </source>
             <expression>
                 <script>
-                    <code>
-                        if (terminationDate == null) return null
-                        def v = basic.stringify(terminationDate)
-                        if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) {
-                            log.warn("UPeU template: terminationDate inválido '{}' en {} (esperado YYYY-MM-DD)", v, focus?.name)
-                        }
-                        return v
-                    </code>
+                    <code>if (terminationDate == null) return null; def v = basic.stringify(terminationDate); if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) { log.warn("UPeU template: terminationDate invalido '{}' en {} (esperado YYYY-MM-DD)", v, focus?.name) }; return v</code>
                 </script>
             </expression>
         </mapping>
