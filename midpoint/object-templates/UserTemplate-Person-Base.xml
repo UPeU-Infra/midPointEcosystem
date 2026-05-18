@@ -416,14 +416,7 @@
         </target>
         <condition>
             <script>
-                <code>
-                    /* primaryAffiliation es la variable del source en este mapping.
-                       Proteger contra null con try/catch para evitar GroovyCastException. */
-                    try {
-                        if (primaryAffiliation == null) return false
-                        return basic.stringify(primaryAffiliation).trim().toUpperCase() == 'FACULTY'
-                    } catch (e) { return false }
-                </code>
+                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toUpperCase() == 'FACULTY'</code>
             </script>
         </condition>
     </mapping>
@@ -456,14 +449,7 @@
         </target>
         <condition>
             <script>
-                <code>
-                    /* primaryAffiliation es la variable del source en este mapping.
-                       Proteger contra null con try/catch para evitar GroovyCastException. */
-                    try {
-                        if (primaryAffiliation == null) return false
-                        return basic.stringify(primaryAffiliation).trim().toUpperCase() == 'STAFF'
-                    } catch (e) { return false }
-                </code>
+                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toUpperCase() == 'STAFF'</code>
             </script>
         </condition>
     </mapping>
@@ -666,14 +652,9 @@
         <condition>
             <script>
                 <code>
-                    // Solo actúa para afiliaciones académicas (student o alum)
-                    // y cuando hay código EP válido
-                    def code = (academicProgramCode instanceof java.util.Collection) ?
-                        (academicProgramCode.isEmpty() ? null : academicProgramCode.first()?.toString()?.trim()) :
-                        (academicProgramCode != null ? basic.stringify(academicProgramCode).trim() : null)
-                    if (code == null || !code.startsWith('EP-')) return false
-                    def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''
-                    return affil == 'student' || affil == 'alum'
+def code = (academicProgramCode instanceof java.util.Collection) ? (academicProgramCode.isEmpty() ? null : academicProgramCode.first()?.toString()?.trim()) : (academicProgramCode != null ? basic.stringify(academicProgramCode).trim() : null)
+def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''
+code != null &amp;&amp; code.startsWith('EP-') &amp;&amp; (affil == 'student' || affil == 'alum')
                 </code>
             </script>
         </condition>
@@ -1115,21 +1096,14 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
             <condition>
                 <script>
                     <code>
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
+import java.time.LocalDate; import java.time.temporal.ChronoUnit
 def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''
 def termStr = terminationDate != null ? basic.stringify(terminationDate).trim() : ''
 def curState = lifecycleState != null ? basic.stringify(lifecycleState).trim() : ''
-if (!['staff', 'faculty'].contains(aff)) return false
-if (termStr == null || termStr == '') return false
-if (curState == 'archived') return false
-try {
-    def td = LocalDate.parse(termStr.substring(0, 10))
-    return ChronoUnit.DAYS.between(td, LocalDate.now()) > 180
-} catch (Exception e) {
-    log.warn('BloqueH: terminationDate no parseable {} en {}: {}', termStr, focus?.name, e.message)
-    return false
-}
+def eligible = ['staff', 'faculty'].contains(aff) &amp;&amp; termStr != '' &amp;&amp; curState != 'archived'
+def result = false
+if (eligible) { try { result = ChronoUnit.DAYS.between(LocalDate.parse(termStr.substring(0, 10)), LocalDate.now()) > 180 } catch (Exception e) { log.warn('BloqueH: terminationDate no parseable {} en {}: {}', termStr, focus?.name, e.message) } }
+result
                     </code>
                 </script>
             </condition>
@@ -1288,13 +1262,7 @@ try {
                         <q:path>identifier</q:path>
                         <expression>
                             <script>
-                                <code>
-                                    // lambPositionId = ID_PUESTO de LAMB (string numérico)
-                                    // ServiceType Position.identifier = mismo valor
-                                    if (lambPositionId == null) return null
-                                    def v = basic.stringify(lambPositionId).trim()
-                                    v ?: null
-                                </code>
+                                <code>lambPositionId != null ? basic.stringify(lambPositionId).trim() ?: null : null</code>
                             </script>
                         </expression>
                     </q:equal>
@@ -1308,13 +1276,9 @@ try {
         <condition>
             <script>
                 <code>
-                    // Solo trabajadores activos (FACULTY o STAFF)
-                    // Los estudiantes no tienen puesto institucional en LAMB
-                    if (lambPositionId == null) return false
-                    def v = basic.stringify(lambPositionId).trim()
-                    if (v == '') return false
-                    def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
-                    return affil == 'FACULTY' || affil == 'STAFF'
+def v = lambPositionId != null ? basic.stringify(lambPositionId).trim() : ''
+def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''
+v != '' &amp;&amp; (affil == 'FACULTY' || affil == 'STAFF')
                 </code>
             </script>
         </condition>
