@@ -1094,12 +1094,7 @@
                     </source>
                     <expression>
                         <script>
-                            <code>
-if (input == null) return null
-input instanceof javax.xml.datatype.XMLGregorianCalendar ?
-    input.toGregorianCalendar().toZonedDateTime().toLocalDate().toString() :
-    input.toString().take(10)
-                                </code>
+                            <code>if (validTo == null) return null; validTo instanceof javax.xml.datatype.XMLGregorianCalendar ? validTo.toGregorianCalendar().toZonedDateTime().toLocalDate().toString() : validTo.toString().take(10)</code>
                         </script>
                     </expression>
                 </outbound>
