@@ -1335,7 +1335,9 @@ hasNumber && typeOk
                 <path>extension/sciback:identityDocuments</path>
             </source>
             <expression>
-                <value/>
+                <script>
+                    <code>null</code>
+                </script>
             </expression>
             <condition>
                 <script>
