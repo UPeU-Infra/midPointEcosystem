@@ -211,7 +211,9 @@
     <div class="alert-icon">🚨</div>
     <div>
       <strong>Problema crítico: Licencias nunca se revocan</strong>
-      <p>El equipo de mesa de ayuda asigna licencias M365 manualmente. Al no existir proceso de baja, las licencias permanecen activas aunque el usuario ya no sea estudiante, docente ni trabajador activo. Esto genera costo innecesario y riesgo de seguridad.</p>
+      <p>El sistema de admisiones crea cuentas M365 automáticamente al admitir postulantes. La mesa de ayuda también asigna licencias de forma directa en Entra ID.
+      En ninguno de los dos flujos existe un proceso de baja: las licencias permanecen activas aunque el usuario no se haya matriculado, haya egresado o ya no sea trabajador activo.
+      Audit 2026-05-19: <strong>28,608 cuentas (81.5%)</strong> en Entra ID no tienen correspondencia en LAMB. Esto genera costo innecesario y riesgo de seguridad.</p>
     </div>
   </div>
 
@@ -219,13 +221,14 @@
     <div class="card red">
       <div class="card-header">
         <div class="card-icon" style="background:var(--red-lt);">📋</div>
-        <div><div class="card-title">Registro manual de emails</div><div class="card-sub">Mesa de ayuda</div></div>
+        <div><div class="card-title">Cuentas sin ciclo de vida completo</div><div class="card-sub">Sistema de admisiones</div></div>
       </div>
       <ul class="list cross">
-        <li>La mesa de ayuda crea/modifica cuentas directamente en Entra ID</li>
-        <li>No hay correlación automática con los datos de LAMB (Oracle)</li>
+        <li>El sistema de admisiones crea cuentas M365 automáticamente al admitir postulantes</li>
+        <li>Si el admitido no se matricula, la cuenta <strong>no se elimina ni desactiva</strong></li>
+        <li>28,608 cuentas en Entra ID sin correspondencia en LAMB (no son empleados ni alumnos activos)</li>
         <li>73K cuentas con atributos vacíos (givenName, surname, dept...)</li>
-        <li>Sin estándar de UPN — casos inconsistentes</li>
+        <li>Sin estándar de UPN — múltiples formatos coexistentes</li>
       </ul>
     </div>
     <div class="card red">
@@ -269,6 +272,62 @@
       <tr><td>Asignación automática de licencias via grupos</td><td><span class="badge badge-orange">⏳ Diseñado</span></td><td>B3 + Group.ReadWrite.All</td></tr>
     </tbody>
   </table>
+
+  <div class="sep"></div>
+
+  <h3>Audit técnico — Entra ID vs LAMB (2026-05-19)</h3>
+  <p style="color:var(--muted);font-size:.9em;margin-bottom:16px;">
+    Análisis realizado sobre la base de datos de MidPoint (PostgreSQL). Los 35,106 shadows de Entra ID fueron reconciliados en mayo 2026.
+  </p>
+
+  <div class="cards cards-3" style="margin-bottom:24px;">
+    <div class="card" style="border-color:var(--green);">
+      <div class="card-header">
+        <div class="card-icon" style="background:#e8f5e9;">🔗</div>
+        <div><div class="card-title" style="color:var(--green);">6,450 cuentas LINKED</div><div class="card-sub">17% del total Entra ID</div></div>
+      </div>
+      <ul class="list check">
+        <li>6,419 usuarios <code>active</code> en LAMB</li>
+        <li>27 en estado <code>draft</code></li>
+        <li>4 en estado <code>archived</code></li>
+        <li>Correlación funciona correctamente por <code>emailAddress</code></li>
+      </ul>
+    </div>
+    <div class="card red">
+      <div class="card-header">
+        <div class="card-icon" style="background:var(--red-lt);">🚨</div>
+        <div><div class="card-title">28,608 cuentas UNMATCHED</div><div class="card-sub">81.5% sin usuario en LAMB</div></div>
+      </div>
+      <ul class="list cross">
+        <li><strong>12,958</strong> formato <code>nombre.apellido@upeu.edu.pe</code> → admisiones</li>
+        <li><strong>9,720</strong> formato legacy (sin separador, guion bajo, etc.)</li>
+        <li><strong>5,930</strong> formato numérico histórico</li>
+        <li>Ninguna de estas cuentas tiene gestión activa en MidPoint</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color:var(--orange);">
+      <div class="card-header">
+        <div class="card-icon" style="background:#fff3e0;">⚠️</div>
+        <div><div class="card-title">394 DISPUTED</div><div class="card-sub">Múltiples candidatos de correlación</div></div>
+      </div>
+      <ul class="list">
+        <li>Un UPN coincide con más de un usuario en LAMB</li>
+        <li>Requiere revisión manual caso a caso</li>
+        <li>Posibles duplicados en Oracle LAMB</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="alert" style="background:#fff8e1;border-color:#f59e0b;margin-bottom:8px;">
+    <div class="alert-icon">🔍</div>
+    <div>
+      <strong>Hallazgo clave — Flujo de admisiones sin cierre de ciclo de vida</strong>
+      <p>El sistema de admisiones crea cuentas M365 con el formato <code>nombre.apellido@upeu.edu.pe</code> automáticamente al admitir postulantes.
+      Si el postulante <strong>no se matricula</strong>, LAMB no genera registro de alumno activo, pero la cuenta M365 y su licencia asociada
+      <strong>permanecen activas indefinidamente</strong>. Esto explica los 12,958 UNMATCHED con formato de admisiones.
+      Una vez que MidPoint tenga <code>User.ReadWrite.All</code> (B3), podrá desactivar estas cuentas automáticamente.</p>
+    </div>
+  </div>
 </section>
 
 <!-- ============================================================ -->
