@@ -368,6 +368,41 @@
         </condition>
     </mapping>
 
+    <!-- D.5-base — Auto-asignación BR-Personal-General (piso mínimo para todo trabajador)
+         Actúa cuando primaryAffiliation == STAFF o FACULTY.
+         MidPoint suma, nunca resta: los trabajadores que ya tienen BR-Admin-Area
+         o BR-Docente-TC también reciben este BR — AR-LDAP-Person se deduplica.
+         Garantiza acceso LDAP/Keycloak a trabajadores sin posición tipificada. -->
+    <mapping>
+        <name>D-autoassign-br-personal-general</name>
+        <description>Auto-asigna BR-Personal-General (piso mínimo) a todo usuario con primaryAffiliation=STAFF o FACULTY. Resuelve los 29.730 trabajadores activos sin BR que no llegan a LDAP/Keycloak. AR-LDAP-Person ya inducido en otros BRs — MidPoint lo deduplica. Opción A: lógica en base template.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>RoleType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <q:value>BR-Personal-General</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''; aff == 'STAFF' || aff == 'FACULTY'</code>
+            </script>
+        </condition>
+    </mapping>
+
     <!-- ============================================================
          BLOQUE D.5 — AUTO-ASIGNACIÓN AUXILIARY ARCHETYPES DE AFILIACIÓN
          Asigna el archetype auxiliar correspondiente según primaryAffiliation.
