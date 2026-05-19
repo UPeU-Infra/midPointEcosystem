@@ -1057,12 +1057,7 @@
                     </source>
                     <expression>
                         <script>
-                            <code>
-// academicProgram es multivalor; Koha acepta un solo valor en statistics_2
-// Tomamos el primer elemento si existe
-if (input == null) return null
-input instanceof java.util.Collection ? (input.isEmpty() ? null : input.iterator().next()?.toString()) : input.toString()
-                            </code>
+                            <code>academicProgram instanceof Collection ? academicProgram?.find()?.toString() : academicProgram?.toString()</code>
                         </script>
                     </expression>
                 </outbound>
