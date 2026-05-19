@@ -1,0 +1,99 @@
+<objectTemplate xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="11a9fc09-9b4b-4fe3-9ff5-8c9b5a4d440f" version="2">
+    <name>UserTemplate-UPEU</name>
+    <description>Plantilla base UPeU/SciBack: genera email, nickName, asigna archetype desde employeeType.</description>
+    <lifecycleState>archived</lifecycleState>
+    <item id="55">
+        <ref>c:emailAddress</ref>
+        <mapping id="56">
+            <name>generate-email</name>
+            <strength>strong</strength>
+            <source>
+                <path>emailAddress</path>
+            </source>
+            <source>
+                <path>name</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+if (user == null) return null
+def existing = emailAddress
+def emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
+if (existing != null &amp;&amp; existing ==~ emailRegex) { return existing }
+return user.name + '@sciback.com'
+                </code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+    <item id="57">
+        <ref>c:nickName</ref>
+        <mapping id="58">
+            <name>generate-nickname</name>
+            <strength>strong</strength>
+            <source>
+                <path>emailAddress</path>
+            </source>
+            <source>
+                <path>name</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+if (user == null) return null
+def email = user.emailAddress
+if (email != null &amp;&amp; email.contains('@')) { return email.split('@')[0] }
+return user.name
+                </code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+    <item id="59">
+        <ref>activation/administrativeStatus</ref>
+        <mapping id="60">
+            <name>default-activation</name>
+            <strength>weak</strength>
+            <expression>
+                <value>enabled</value>
+            </expression>
+        </mapping>
+    </item>
+    <item id="61">
+        <ref>c:assignment</ref>
+        <mapping id="62">
+            <name>archetype-from-employeeType</name>
+            <strength>strong</strength>
+            <source>
+                <path>extension/employeeType</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+import com.evolveum.midpoint.xml.ns._public.common.common_3.AssignmentType
+import com.evolveum.midpoint.xml.ns._public.common.common_3.ObjectReferenceType
+import javax.xml.namespace.QName
+
+def typeMap = [
+    'ESTUDI': 'a9e58152-7726-4da0-b380-c332709e51c4',
+    'DOCEN':  '56acb464-7cfd-41a9-a9f2-6c51f38cbc7c',
+    'ADMIN':  '21fca3ad-9263-4343-ae78-1dd7b05eb90a',
+    'EGRES':  '6a74ca47-dad4-4199-8558-244f2c264c10',
+]
+if (user == null) return null
+def empType = employeeType?.toString()?.trim()
+def archOid = typeMap[empType]
+if (!archOid) return null
+def ref = new ObjectReferenceType()
+ref.setOid(archOid)
+ref.setType(new QName('http://midpoint.evolveum.com/xml/ns/public/common/common-3', 'ArchetypeType'))
+ref.setRelation(new QName('http://midpoint.evolveum.com/xml/ns/public/common/org-3', 'default'))
+def a = new AssignmentType()
+a.setTargetRef(ref)
+return a
+                </code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+</objectTemplate>

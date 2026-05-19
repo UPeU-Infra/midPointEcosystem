@@ -1,0 +1,426 @@
+425 /tmp/schema-current.xml
+<schema xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="b7d55017-599f-4f2f-9493-9f64bba62c5b" version="104">
+    <_metadata id="32">
+        <storage>
+            <modifyTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-02-09T21:17:16.332Z</modifyTimestamp>
+            <modifierRef>
+                <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+            </modifierRef>
+            <modifyChannel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#user</modifyChannel>
+        </storage>
+        <process/>
+    </_metadata>
+    <name>Esquema de Extensión para Personas UPeU v2.2</name>
+    <description>Extensión minimalista para información demográfica, contacto adicional,
+      fechas laborales, afiliación, estatus académico, identidad federada
+      e identificadores complementarios.
+
+      • Las relaciones organizativas (Campus/Facultad/Escuela/Área) se manejan con Org.
+      • Los campos nativos (emailAddress, employeeNumber, title, employeeType, locality, activation)
+        se usan sin duplicación.
+      • Compatible con sincronización desde sistemas externos (ERP/RRHH).
+  </description>
+    <lifecycleState>active</lifecycleState>
+    <operationExecution id="34">
+        <recordType>simple</recordType>
+        <timestamp>2026-02-05T23:01:55.548Z</timestamp>
+        <operation>
+            <objectDelta>
+                <t:changeType>modify</t:changeType>
+                <t:objectType>c:SchemaType</t:objectType>
+            </objectDelta>
+            <executionResult>
+                <operation>com.evolveum.midpoint.model.impl.lens.ChangeExecutor.executeDelta</operation>
+                <status>success</status>
+                <importance>normal</importance>
+                <token>1000000000000905959</token>
+            </executionResult>
+            <objectName>Esquema de Extensión para Personas UPeU v2.2</objectName>
+        </operation>
+        <status>success</status>
+        <initiatorRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="c:UserType"/>
+        <channel>http://midpoint.evolveum.com/xml/ns/public/common/channels-3#user</channel>
+    </operationExecution>
+    <operationExecution id="35">
+        <recordType>simple</recordType>
+        <timestamp>2026-02-05T23:01:59.902Z</timestamp>
+        <operation>
+            <objectDelta>
+                <t:changeType>modify</t:changeType>
+                <t:objectType>c:SchemaType</t:objectType>
+            </objectDelta>
+            <executionResult>
+                <operation>com.evolveum.midpoint.model.impl.lens.ChangeExecutor.executeDelta</operation>
+                <status>success</status>
+                <importance>normal</importance>
+                <token>1000000000000905989</token>
+            </executionResult>
+            <objectName>Esquema de Extensión para Personas UPeU v2.2</objectName>
+        </operation>
+        <status>success</status>
+        <initiatorRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="c:UserType"/>
+        <channel>http://midpoint.evolveum.com/xml/ns/public/common/channels-3#user</channel>
+    </operationExecution>
+    <operationExecution id="36">
+        <recordType>simple</recordType>
+        <timestamp>2026-02-06T14:22:43.310Z</timestamp>
+        <operation>
+            <objectDelta>
+                <t:changeType>modify</t:changeType>
+                <t:objectType>c:SchemaType</t:objectType>
+            </objectDelta>
+            <executionResult>
+                <operation>com.evolveum.midpoint.model.impl.lens.ChangeExecutor.executeDelta</operation>
+                <status>success</status>
+                <importance>normal</importance>
+                <token>1000000000000940541</token>
+            </executionResult>
+            <objectName>Esquema de Extensión para Personas UPeU v2.2</objectName>
+        </operation>
+        <status>success</status>
+        <initiatorRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="c:UserType"/>
+        <channel>http://midpoint.evolveum.com/xml/ns/public/common/channels-3#user</channel>
+    </operationExecution>
+    <operationExecution id="37">
+        <recordType>simple</recordType>
+        <timestamp>2026-02-06T14:40:33.118Z</timestamp>
+        <operation>
+            <objectDelta>
+                <t:changeType>modify</t:changeType>
+                <t:objectType>c:SchemaType</t:objectType>
+            </objectDelta>
+            <executionResult>
+                <operation>com.evolveum.midpoint.model.impl.lens.ChangeExecutor.executeDelta</operation>
+                <status>success</status>
+                <importance>normal</importance>
+                <token>1000000000000949846</token>
+            </executionResult>
+            <objectName>Esquema de Extensión para Personas UPeU v2.2</objectName>
+        </operation>
+        <status>success</status>
+        <initiatorRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="c:UserType"/>
+        <channel>http://midpoint.evolveum.com/xml/ns/public/common/channels-3#user</channel>
+    </operationExecution>
+    <operationExecution id="38">
+        <recordType>simple</recordType>
+        <timestamp>2026-02-09T21:17:18.257Z</timestamp>
+        <operation>
+            <objectDelta>
+                <t:changeType>modify</t:changeType>
+                <t:objectType>c:SchemaType</t:objectType>
+            </objectDelta>
+            <executionResult>
+                <operation>com.evolveum.midpoint.model.impl.lens.ChangeExecutor.executeDelta</operation>
+                <status>success</status>
+                <importance>normal</importance>
+                <token>1000000000001046232</token>
+            </executionResult>
+            <objectName>Esquema de Extensión para Personas UPeU v2.2</objectName>
+        </operation>
+        <status>success</status>
+        <initiatorRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="c:UserType"/>
+        <channel>http://midpoint.evolveum.com/xml/ns/public/common/channels-3#user</channel>
+    </operationExecution>
+    <iteration>0</iteration>
+    <iterationToken/>
+    <definition>
+        <xsd:schema xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:tns="urn:upeu:midpoint:person" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="urn:upeu:midpoint:person">
+            <xsd:import namespace="http://prism.evolveum.com/xml/ns/public/annotation-3"/>
+            <xsd:complexType name="DemographicsType">
+                <xsd:annotation>
+                    <xsd:documentation>Datos demográficos (no nativos): fecha de nacimiento, género ISO5218, país ISO3166-1.</xsd:documentation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element minOccurs="0" name="birthDate" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Fecha de Nacimiento</a:displayName>
+                                <a:displayOrder>110</a:displayOrder>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="gender" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:documentation>ISO/IEC 5218: 1=Masculino, 2=Femenino, 9=No aplica</xsd:documentation>
+                            <xsd:appinfo>
+                                <a:displayName>Género</a:displayName>
+                                <a:displayOrder>120</a:displayOrder>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="country" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:documentation>País de residencia (ISO 3166-1 alpha-3)</xsd:documentation>
+                            <xsd:appinfo>
+                                <a:displayName>País de Residencia</a:displayName>
+                                <a:displayOrder>130</a:displayOrder>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="province" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Provincia de Residencia</a:displayName>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="streetAddress" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Dirección</a:displayName>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="ContactInfoType">
+                <xsd:annotation>
+                    <xsd:documentation>Solo contacto adicional (email institucional es c:emailAddress).</xsd:documentation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="secondaryMail" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Correo Secundario</a:displayName>
+                                <a:displayOrder>210</a:displayOrder>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="phoneNumberAlt" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Teléfono Alternativo</a:displayName>
+                                <a:displayOrder>220</a:displayOrder>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="personalWeb" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Página Personal</a:displayName>
+                                <a:displayOrder>230</a:displayOrder>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="AffiliationDataType">
+                <xsd:annotation>
+                    <xsd:documentation>Afiliación institucional primaria y habilidades.</xsd:documentation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element minOccurs="0" name="primaryAffiliationCode" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Siglas Afiliación Primaria</a:displayName>
+                                <a:displayOrder>410</a:displayOrder>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="primaryAffiliationName" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Nombre Afiliación Primaria</a:displayName>
+                                <a:displayOrder>411</a:displayOrder>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="languageSkills" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Idiomas Dominados</a:displayName>
+                                <a:displayOrder>420</a:displayOrder>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="campus" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Sede / Campus</a:displayName>
+                                <a:displayOrder>405</a:displayOrder>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="employeeType" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Rol Institucional</a:displayName>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="AcademicStatusType">
+                <xsd:annotation>
+                    <xsd:documentation>Estado académico y detalles del programa de estudio.</xsd:documentation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="studentCycle" type="xsd:int">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Ciclo Académico</a:displayName>
+                                <a:displayOrder>510</a:displayOrder>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="academicProgram" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Nombre del Programa Académico</a:displayName>
+                                <a:displayOrder>515</a:displayOrder>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="academicProgramCode" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Código Programa (Siglas)</a:displayName>
+                                <a:displayOrder>516</a:displayOrder>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="alumniStatus" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Estado de Egreso</a:displayName>
+                                <a:displayOrder>520</a:displayOrder>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="studyModality" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Modalidad Estudio</a:displayName>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="FederatedIdentityType">
+                <xsd:annotation>
+                    <xsd:documentation>Identidad federada complementaria.</xsd:documentation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element minOccurs="0" name="orcid" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>ORCID</a:displayName>
+                                <a:displayOrder>610</a:displayOrder>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="EmploymentDataType">
+                <xsd:annotation>
+                    <xsd:documentation>Fechas laborales (c:employeeType y c:title son nativos; estructura por Org).</xsd:documentation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element minOccurs="0" name="hireDate" type="xsd:date">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Fecha de Ingreso</a:displayName>
+                                <a:displayOrder>310</a:displayOrder>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="terminationDate" type="xsd:date">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Fecha de Cese</a:displayName>
+                                <a:displayOrder>320</a:displayOrder>
+                                <a:indexed>false</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="UniqueIdentifiersType">
+                <xsd:annotation>
+                    <xsd:documentation>Identificadores complementarios (employeeNumber es nativo).</xsd:documentation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element minOccurs="0" name="taxId" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>DNI/CE</a:displayName>
+                                <a:displayOrder>710</a:displayOrder>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="institutionalIdCard" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>ID Institucional</a:displayName>
+                                <a:displayOrder>720</a:displayOrder>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="universityIdCard" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Carnet Universitario</a:displayName>
+                                <a:displayOrder>730</a:displayOrder>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="externalSystemId" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>ID Sistema Externo</a:displayName>
+                                <a:displayOrder>740</a:displayOrder>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:schema>
+    </definition>
+</schema>

@@ -1,34 +1,65 @@
-# midPointEcosystem
+# midPointEcosystem — Fuente única de verdad IGA UPeU
 
-Repositorio reestructurado para gestionar la configuración de midPoint 4.9.x de la UPeU mediante MidPoint Studio y prácticas GitOps.
+Repositorio canónico de la configuración MidPoint 4.10.x de la Universidad Peruana Unión (UPeU). Operado por GitOps; clonado en PROD en `/home/juansanchez/midPointEcosystem/` (`192.168.15.166`).
 
-## Componentes Clave
+## Estructura (post-consolidación 2026-05-19)
 
-- **midPoint** (`/midpoint`): objetos listos para importar (arquetipos, organizaciones, recursos, roles, tareas, autenticación, etc.).
-- **datasets** (`/datasets/csv`): archivos CSV de ejemplo para laboratorios (SIS, RRHH, CRM).
-- **docs** (`/docs`): lineamientos de arquitectura, convenciones, reglas de mapeo, correlación, ciclo de vida y guía de ejecución.
-- **archive** (`/archive/previous`): artefactos heredados preservados para referencia histórica.
+```
+midPointEcosystem/
+├── canonical/                  # CAPA 1: agnóstica (eduPerson / SCHAC / RBAC / SCIM / ISO 24760)
+│   ├── schemas/                # sciback-person-v1.0.xml (urn:sciback:midpoint:person)
+│   ├── archetypes/{user,org}/
+│   ├── object-templates/       # UserTemplate-Person-Base
+│   ├── policies/               # owners-required, sod-basic
+│   ├── function-libraries/
+│   └── roles/                  # (futuro) roles canónicos
+│
+├── upeu/                       # CAPA 2: overlay tenant UPeU
+│   ├── schemas/                # upeu-local-v1.0.xml (urn:upeu:midpoint:local)
+│   ├── archetypes/{auxiliary,custom}/
+│   ├── orgs/                   # Jerarquía UPeU (root, facultades, campus, colegio-union, partners)
+│   ├── resources/              # oracle-lamb/, ldap-identity-cache, entra-id-graph, koha-ils, ad-upeu
+│   ├── roles/                  # affiliation/, application/, business/, governance/, mof/, system/
+│   ├── services/positions/     # Catálogo Positions Ley 30220 / Resol. 0001-2026
+│   ├── lookup-tables/
+│   ├── object-collections/
+│   ├── dashboards/
+│   ├── auth/
+│   ├── object-templates/       # (futuro) overrides per-archetype UPeU
+│   ├── tasks/{simulations,pilots}/
+│   └── system/
+│
+├── docs/                       # Documentación viva (ROADMAP, ARCHITECTURE, profiles, eduperson, runbooks, specs)
+│   ├── canonical/              # Referencia eduPerson + SSO vendors
+│   ├── runbooks/               # upgrade-midpoint-docker, tickets-david, tickets-rudy, onboarding-sso
+│   ├── specs/                  # ClaudeFlow specs históricas (iga-canonical-model, multi-profile, …)
+│   └── catalogo-positions-upeu/
+│
+├── datasets/                   # CSV/PostgreSQL demo (testing)
+├── archive/                    # Material histórico (NO importar a PROD)
+│   ├── previous/               # Schemas/resources legacy
+│   ├── backups-2026-05/        # Snapshots forensic críticos
+│   ├── specs/                  # Specs superseded
+│   └── connector-keycloak-http/ # Conector custom archivado (decisión 2026-05-11)
+│
+└── midpoint-project.yaml       # Descriptor ninja/Studio
+```
 
-## Uso Rápido
+## Quick-start
 
-1. Abra el repositorio en MidPoint Studio; el descriptor está en `/midpoint/midpoint-project.yaml`.
-2. Revise y actualice los valores `{{VARIABLE}}` antes de importar (hostnames, rutas CSV, secretos, OIDs reales, etc.).
-3. Importe los objetos desde MidPoint Studio o via REST siguiendo `docs/execution-guide.md`.
-4. Ejecute las tareas de simulación para validar el impacto antes de pasar a ejecución real.
-5. Consulte la documentación en `/docs` para conocer nomenclaturas, correlaciones y flujos propuestos.
+1. **Leer** `docs/ARCHITECTURE.md` y `docs/ROADMAP.md` para el modelo IGA canónico actual.
+2. **Acceso PROD:** `sshpass -p "$MIDPOINT_PROD_PASS" ssh midpoint-prod` (alias en `~/.ssh/config`, secreto en `~/.secrets/midpoint-upeu.env`).
+3. **GitOps:** editar local → commit → push → en PROD `cd /home/juansanchez/midPointEcosystem && git pull` → reaplicar selectivo vía REST API.
+4. **NUNCA** `scp`. **NUNCA** `git push --force` a `main`.
 
-## Contenido Legacy
+## Principios
 
-Los archivos originales se movieron a `/archive/previous` para mantener el historial sin afectar la nueva estructura GitOps.
+1. **Canónico primero.** El modelo se diseña contra estándares (eduPerson 202208, SCHAC, NIST RBAC, ISO 24760). Los datos UPeU se mapean al modelo canónico, no al revés.
+2. **Schema is the law.** Antes de extender, buscar en core MidPoint.
+3. **OIDs estables.** Filename puede cambiar; OID nunca.
+4. **Reality vs Policy.** Assignments = policy. Shadows/links = reality.
+5. **Oracle LAMB solo lectura.** Política absoluta.
 
-## TODOs Parametrizables
+## Histórico
 
-- `{{OID_USER_TEMPLATE}}`: actualizar con el OID real del Object Template en producción.
-- `{{OID_ROLE_STUDENT}}`, `{{OID_ROLE_PROFESSOR}}`, `{{OID_ROLE_STAFF}}`: reemplazar por los OID definitivos de roles en el entorno objetivo.
-- `{{AD_HOSTNAME}}`, `{{AD_PORT}}`, `{{AD_BASE_DN}}`, `{{AD_BIND_DN}}`, `{{SECRET}}`: completar datos de conexión al Active Directory.
-- `{{CSV_SIS_PATH}}`, `{{CSV_RRHH_PATH}}`, `{{CSV_CRM_PATH}}`: definir rutas absolutas a los archivos CSV montados en el contenedor.
-- `{{OID_ENTRA_CONNECTOR}}`, `{{ENTRA_CLIENT_ID}}`, `{{ENTRA_TENANT_ID}}`, `{{ENTRA_AUTHORITY}}`, `{{ENTRA_SCOPE}}`, `{{ENTRA_ISSUER_URI}}`, `{{ENTRA_AUTHORIZATION_ENDPOINT}}`, `{{ENTRA_TOKEN_ENDPOINT}}`, `{{ENTRA_USERINFO_ENDPOINT}}`, `{{ENTRA_END_SESSION_ENDPOINT}}`: configurar integración con Microsoft Entra ID.
-- `{{MIDPOINT_OIDC_REDIRECT_URI}}`: establecer la URL de retorno para la autenticación OIDC de la GUI.
-- `{{SECRET}}` (repetido): reemplazar en todos los recursos y políticas por mecanismos seguros (vault, variables de entorno).
-
-Revise también los comentarios `<!-- TODO: ... -->` dentro de los archivos para completar pendientes específicos.
+Esta consolidación (2026-05-19) fusionó el material del repo paralelo `SciBack/midpoint` en una única estructura `canonical/ + upeu/`. Ver `docs/AUDIT-CONSOLIDATION-2026-05-19.md` (auditoría) y `docs/MIGRATION-EXECUTED-2026-05-19.md` (ejecución). Decisiones pendientes en `docs/MIGRATION-DECISIONS-PENDING.md`.

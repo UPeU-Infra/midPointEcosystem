@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 960 680" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#555"/>
+    </marker>
+    <style>
+      text { font-family: Inter, system-ui, sans-serif; }
+      .node-label { font-size: 10px; fill: #fff; font-weight: 600; text-anchor: middle; dominant-baseline: middle; }
+      .node-sub { font-size: 8px; fill: rgba(255,255,255,0.85); text-anchor: middle; dominant-baseline: middle; }
+      .legend-text { font-size: 11px; fill: #333; dominant-baseline: middle; }
+      .line { stroke: #888; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+      .line-thin { stroke: #bbb; stroke-width: 1; fill: none; }
+    </style>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#00000033"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="960" height="680" fill="#f8f9fa" rx="8"/>
+  <text x="480" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#003366">Organigrama Institucional — Universidad Peruana Unión (Res. 0001-2026/UPeU-AU)</text>
+
+  <!-- ===== NIVEL 0: AU ===== -->
+  <rect x="390" y="38" width="180" height="38" rx="6" fill="#1a1a2e" filter="url(#shadow)"/>
+  <text x="480" y="53" class="node-label">Asamblea Universitaria</text>
+  <text x="480" y="66" class="node-sub">Órgano máximo</text>
+
+  <!-- ===== NIVEL 1: CU ===== -->
+  <rect x="390" y="100" width="180" height="38" rx="6" fill="#003366" filter="url(#shadow)"/>
+  <text x="480" y="115" class="node-label">Consejo Universitario</text>
+  <text x="480" y="128" class="node-sub">Órgano de gobierno</text>
+
+  <!-- AU → CU -->
+  <line x1="480" y1="76" x2="480" y2="100" class="line"/>
+
+  <!-- ===== NIVEL 2: RECTOR ===== -->
+  <rect x="375" y="162" width="210" height="40" rx="6" fill="#003366" filter="url(#shadow)"/>
+  <text x="480" y="177" class="node-label">Rector</text>
+  <text x="480" y="190" class="node-sub">POS-RECTOR · Murillo Antón, W.S.</text>
+
+  <!-- CU → Rector -->
+  <line x1="480" y1="138" x2="480" y2="162" class="line"/>
+
+  <!-- ===== NIVEL 3: VR + SecGen ===== -->
+  <!-- VR Académico -->
+  <rect x="50" y="238" width="185" height="42" rx="6" fill="#1565C0" filter="url(#shadow)"/>
+  <text x="143" y="254" class="node-label">VR Académico</text>
+  <text x="143" y="268" class="node-sub">POS-VICE-RECTOR-ACAD</text>
+
+  <!-- VR Administrativo -->
+  <rect x="255" y="238" width="185" height="42" rx="6" fill="#2E7D32" filter="url(#shadow)"/>
+  <text x="348" y="254" class="node-label">VR Administrativo</text>
+  <text x="348" y="268" class="node-sub">POS-VICE-RECTOR-ADM</text>
+
+  <!-- SecGen -->
+  <rect x="455" y="238" width="165" height="42" rx="6" fill="#6A1E55" filter="url(#shadow)"/>
+  <text x="538" y="254" class="node-label">Secretario General</text>
+  <text x="538" y="268" class="node-sub">POS-SECRETARIO-GENERAL</text>
+
+  <!-- VR Bienestar -->
+  <rect x="635" y="238" width="185" height="42" rx="6" fill="#E65100" filter="url(#shadow)"/>
+  <text x="728" y="254" class="node-label">VR Bienestar Univ.</text>
+  <text x="728" y="268" class="node-sub">POS-VICE-RECTOR-BIENESTAR</text>
+
+  <!-- Rector → branches -->
+  <line x1="480" y1="202" x2="480" y2="220" class="line-thin"/>
+  <line x1="143" y1="220" x2="728" y2="220" stroke="#888" stroke-width="1.5" fill="none"/>
+  <line x1="143" y1="220" x2="143" y2="238" class="line"/>
+  <line x1="348" y1="220" x2="348" y2="238" class="line"/>
+  <line x1="538" y1="220" x2="538" y2="238" class="line"/>
+  <line x1="728" y1="220" x2="728" y2="238" class="line"/>
+
+  <!-- ===== NIVEL 4A: Dependientes VR Académico ===== -->
+  <rect x="10" y="316" width="140" height="34" rx="5" fill="#1976D2"/>
+  <text x="80" y="329" class="node-label" style="font-size:9px">Dir. Asuntos Acad.</text>
+  <text x="80" y="342" class="node-sub" style="font-size:8px">POS-DIR-ASUNTOS-ACAD</text>
+
+  <rect x="158" y="316" width="132" height="34" rx="5" fill="#1976D2"/>
+  <text x="224" y="329" class="node-label" style="font-size:9px">Dir. Escuela Posgrado</text>
+  <text x="224" y="342" class="node-sub" style="font-size:8px">POS-DIR-ESCUELA-POSGRADO</text>
+
+  <!-- VR Acad → branches -->
+  <line x1="143" y1="280" x2="143" y2="298" class="line-thin"/>
+  <line x1="80" y1="298" x2="224" y2="298" stroke="#888" stroke-width="1.2" fill="none"/>
+  <line x1="80" y1="298" x2="80" y2="316" class="line"/>
+  <line x1="224" y1="298" x2="224" y2="316" class="line"/>
+
+  <!-- Facultades -->
+  <text x="80" y="372" text-anchor="middle" font-size="9" fill="#1565C0" font-weight="600">5 Facultades (Decanos)</text>
+  <rect x="10" y="378" width="250" height="28" rx="4" fill="#BBDEFB"/>
+  <text x="135" y="394" text-anchor="middle" font-size="8" fill="#0D47A1">FIA · FACTEO · FACISAL · FACIHED · FCE</text>
+  <text x="135" y="394" dy="0" text-anchor="middle" font-size="8" fill="#0D47A1"/>
+  <line x1="80" y1="350" x2="80" y2="378" class="line"/>
+  <line x1="80" y1="360" x2="135" y2="378" stroke="#1976D2" stroke-width="1" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- ===== NIVEL 4B: Dependientes VR Administrativo ===== -->
+  <rect x="255" y="316" width="112" height="30" rx="5" fill="#388E3C"/>
+  <text x="311" y="328" class="node-label" style="font-size:9px">Dir. DTI</text>
+  <text x="311" y="340" class="node-sub" style="font-size:8px">POS-DIR-DTI</text>
+
+  <rect x="373" y="316" width="112" height="30" rx="5" fill="#388E3C"/>
+  <text x="429" y="328" class="node-label" style="font-size:9px">Dir. Talento Humano</text>
+  <text x="429" y="340" class="node-sub" style="font-size:8px">POS-DIR-TALENTO-HUMANO</text>
+
+  <!-- VR Adm → branches -->
+  <line x1="348" y1="280" x2="348" y2="298" class="line-thin"/>
+  <line x1="311" y1="298" x2="429" y2="298" stroke="#888" stroke-width="1.2" fill="none"/>
+  <line x1="311" y1="298" x2="311" y2="316" class="line"/>
+  <line x1="429" y1="298" x2="429" y2="316" class="line"/>
+
+  <!-- DTI sub -->
+  <rect x="255" y="360" width="230" height="28" rx="4" fill="#C8E6C9"/>
+  <text x="370" y="376" text-anchor="middle" font-size="8" fill="#1B5E20">Jefe Infra TI · Jefe Desa. SI · Jefe Soporte</text>
+  <line x1="311" y1="346" x2="370" y2="360" stroke="#388E3C" stroke-width="1" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- ===== NIVEL 4C: VR Bienestar ===== -->
+  <rect x="635" y="316" width="185" height="30" rx="5" fill="#EF6C00"/>
+  <text x="728" y="328" class="node-label" style="font-size:9px">Dir. Universidad Saludable</text>
+  <text x="728" y="342" class="node-sub" style="font-size:8px">POS-DIR-UNIV-SALUDABLE</text>
+  <line x1="728" y1="280" x2="728" y2="316" class="line"/>
+
+  <!-- ===== ASESORÍA Rectorado ===== -->
+  <text x="835" y="172" text-anchor="middle" font-size="9" fill="#555" font-weight="600">Asesoría / Control</text>
+  <rect x="840" y="178" width="110" height="22" rx="4" fill="#78909C"/>
+  <text x="895" y="191" text-anchor="middle" font-size="8" fill="#fff">Defensor Universitario</text>
+  <rect x="840" y="206" width="110" height="22" rx="4" fill="#78909C"/>
+  <text x="895" y="219" text-anchor="middle" font-size="8" fill="#fff">Tribunal de Honor</text>
+  <rect x="840" y="234" width="110" height="22" rx="4" fill="#78909C"/>
+  <text x="895" y="247" text-anchor="middle" font-size="8" fill="#fff">Asesor Legal</text>
+  <rect x="840" y="262" width="110" height="22" rx="4" fill="#78909C"/>
+  <text x="895" y="275" text-anchor="middle" font-size="8" fill="#fff">Auditor Interno</text>
+  <line x1="585" y1="182" x2="840" y2="191" stroke="#78909C" stroke-width="1" stroke-dasharray="4,3" fill="none"/>
+
+  <!-- ===== CAMPUS ===== -->
+  <text x="480" y="460" text-anchor="middle" font-size="10" fill="#555" font-weight="700">Direcciones Generales de Campus</text>
+  <rect x="200" y="470" width="165" height="32" rx="5" fill="#5C6BC0"/>
+  <text x="283" y="482" class="node-label">Campus Lima</text>
+  <text x="283" y="494" class="node-sub">POS-DIR-GENERAL-CAMPUS-LM</text>
+
+  <rect x="390" y="470" width="165" height="32" rx="5" fill="#5C6BC0"/>
+  <text x="473" y="482" class="node-label">Campus Juliaca</text>
+  <text x="473" y="494" class="node-sub">POS-DIR-GENERAL-CAMPUS-JU</text>
+
+  <rect x="580" y="470" width="165" height="32" rx="5" fill="#5C6BC0"/>
+  <text x="663" y="482" class="node-label">Campus Tarapoto</text>
+  <text x="663" y="494" class="node-sub">POS-DIR-GENERAL-CAMPUS-TA</text>
+
+  <!-- ===== BIBLIOTECA / CRAI ===== -->
+  <rect x="200" y="526" width="545" height="30" rx="5" fill="#00796B"/>
+  <text x="473" y="537" class="node-label">Biblioteca / CRAI — Lima · Juliaca · Tarapoto</text>
+  <text x="473" y="550" class="node-sub">POS-JEFE-BIBLIOTECA-LM/JU/TA · POS-BIBLIOTECARIO-LM/JU/TA</text>
+
+  <!-- Conector Rector → Campus -->
+  <line x1="480" y1="440" x2="480" y2="462" class="line-thin"/>
+  <line x1="480" y1="202" x2="480" y2="440" stroke="#ccc" stroke-width="1" stroke-dasharray="4,2" fill="none"/>
+
+  <!-- ===== LEYENDA ===== -->
+  <rect x="10" y="618" width="940" height="52" rx="6" fill="#fff" stroke="#ddd" stroke-width="1"/>
+  <text x="20" y="634" font-size="10" fill="#555" font-weight="700">Leyenda:</text>
+  <rect x="75" y="624" width="14" height="14" rx="3" fill="#003366"/>
+  <text x="93" y="634" class="legend-text">Gobierno central</text>
+  <rect x="195" y="624" width="14" height="14" rx="3" fill="#1565C0"/>
+  <text x="213" y="634" class="legend-text">VR Académico</text>
+  <rect x="310" y="624" width="14" height="14" rx="3" fill="#2E7D32"/>
+  <text x="328" y="634" class="legend-text">VR Administrativo</text>
+  <rect x="445" y="624" width="14" height="14" rx="3" fill="#E65100"/>
+  <text x="463" y="634" class="legend-text">VR Bienestar</text>
+  <rect x="545" y="624" width="14" height="14" rx="3" fill="#5C6BC0"/>
+  <text x="563" y="634" class="legend-text">Campus</text>
+  <rect x="615" y="624" width="14" height="14" rx="3" fill="#00796B"/>
+  <text x="633" y="634" class="legend-text">Biblioteca/CRAI</text>
+  <rect x="715" y="624" width="14" height="14" rx="3" fill="#78909C"/>
+  <text x="733" y="634" class="legend-text">Asesoría/Control</text>
+
+  <text x="480" y="660" text-anchor="middle" font-size="9" fill="#888">Fuente: Resolución 0001-2026/UPeU-AU — Organigrama Institucional UPeU. Elaborado para Proyecto IGA 2026.</text>
+</svg>

@@ -1,0 +1,413 @@
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21" version="59">
+    <name>Oracle LAMB Trabajadores v2</name>
+    <description>Inbound ScriptedSQL desde ELISEO.VW_APS_EMPLEADO + JOIN ENOC.CAT_DOCENTE. Dedup por COD_APS + discriminador faculty/staff resueltos en query. Piloto Fase 5a-v2.</description>
+    <lifecycleState>active</lifecycleState>
+    <operationExecution id="464">
+        <recordType>simple</recordType>
+        <timestamp>2026-05-12T22:25:32.756Z</timestamp>
+        <operation>
+            <objectDelta>
+                <t:changeType>add</t:changeType>
+                <t:objectType>c:ResourceType</t:objectType>
+            </objectDelta>
+            <executionResult>
+                <operation>com.evolveum.midpoint.model.impl.lens.ChangeExecutor.executeDelta</operation>
+                <status>success</status>
+                <importance>normal</importance>
+                <token>1000000000000002864</token>
+            </executionResult>
+            <objectName>Oracle LAMB Trabajadores v2</objectName>
+        </operation>
+        <status>success</status>
+        <initiatorRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="c:UserType"/>
+        <channel>http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</channel>
+    </operationExecution>
+    <iteration>0</iteration>
+    <iterationToken/>
+    <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="c:ConnectorType"/>
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:resultsHandlerConfiguration>
+            <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
+            <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
+            <icfc:filteredResultsHandlerInValidationMode>true</icfc:filteredResultsHandlerInValidationMode>
+            <icfc:enableAttributesToGetSearchResultsHandler>false</icfc:enableAttributesToGetSearchResultsHandler>
+        </icfc:resultsHandlerConfiguration>
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">
+            <cfg:host>192.168.13.9</cfg:host>
+            <cfg:port>1521</cfg:port>
+            <cfg:user>JUANSANCHEZ</cfg:user>
+            <cfg:password>
+                <t:encryptedData>
+                    <t:encryptionMethod>
+                        <t:algorithm>http://www.w3.org/2001/04/xmlenc#aes256-cbc</t:algorithm>
+                    </t:encryptionMethod>
+                    <t:keyInfo>
+                        <t:keyName>nkZ4VieDLlRmwD8hdryrmjz8IxQ=</t:keyName>
+                    </t:keyInfo>
+                    <t:cipherData>
+                        <t:cipherValue>4o+ONHvMKN09A2ZZyQmzn3pYIdN8IKEKvGnOROozcERSHAIjrBR/N1uRQugh6Il5</t:cipherValue>
+                    </t:cipherData>
+                </t:encryptedData>
+            </cfg:password>
+            <cfg:database>UPEU</cfg:database>
+            <cfg:jdbcDriver>oracle.jdbc.OracleDriver</cfg:jdbcDriver>
+            <cfg:jdbcUrlTemplate>jdbc:oracle:thin:@%h:%p/%d</cfg:jdbcUrlTemplate>
+            <cfg:rethrowAllSQLExceptions>true</cfg:rethrowAllSQLExceptions>
+            <cfg:nativeTimestamps>true</cfg:nativeTimestamps>
+            <cfg:allNative>false</cfg:allNative>
+            <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
+            <cfg:reloadScriptOnExecution>true</cfg:reloadScriptOnExecution>
+            <cfg:searchScript>
+import groovy.sql.Sql
+import org.identityconnectors.framework.common.objects.*
+
+def sql = new Sql(connection)
+def result = []
+def query = """
+SELECT * FROM (
+  SELECT
+    e.COD_APS,
+    e.NOMBRE,
+    e.PATERNO,
+    e.MATERNO,
+    e.NUM_DOCUMENTO,
+    e.FEC_INICIO,
+    e.FEC_TERMINO,
+    e.ESTADO,
+    e.ID_CATEGORIAOCUPACIONAL,
+    CASE WHEN cd.ID_DOCENTE IS NOT NULL
+         THEN 'archetype-user-employee-faculty'
+         ELSE 'archetype-user-employee-staff' END AS UPEU_ARCHETYPE_NAME,
+    ROW_NUMBER() OVER (PARTITION BY e.COD_APS ORDER BY e.FEC_INICIO DESC NULLS LAST) AS RN
+  FROM ELISEO.VW_APS_EMPLEADO e
+  LEFT JOIN ENOC.CAT_DOCENTE cd
+    ON cd.ID_PERSONA = e.ID_PERSONA AND cd.ID_ESTADO_DOCENTE = '02'
+  WHERE e.ESTADO = 'A'
+) WHERE RN = 1
+"""
+sql.eachRow(query) { row -&gt;
+    def cob = new ConnectorObjectBuilder()
+    cob.setObjectClass(ObjectClass.ACCOUNT)
+    cob.setUid(row.COD_APS as String)
+    cob.setName(row.COD_APS as String)
+    cob.addAttribute("NOMBRE", row.NOMBRE as String)
+    cob.addAttribute("PATERNO", row.PATERNO as String)
+    cob.addAttribute("MATERNO", row.MATERNO as String)
+    cob.addAttribute("NUM_DOCUMENTO", row.NUM_DOCUMENTO as String)
+    cob.addAttribute("FEC_INICIO", row.FEC_INICIO?.toString())
+    cob.addAttribute("FEC_TERMINO", row.FEC_TERMINO?.toString())
+    cob.addAttribute("ESTADO", row.ESTADO as String)
+    cob.addAttribute("UPEU_ARCHETYPE_NAME", row.UPEU_ARCHETYPE_NAME as String)
+    handler.handle(cob.build())
+}
+return new SearchResult()
+</cfg:searchScript>
+            <cfg:syncScript>
+// Placeholder: piloto no usa liveSync; reconciliation cubre el caso.
+return null
+</cfg:syncScript>
+            <cfg:testScript>
+import groovy.sql.Sql
+def sql = new Sql(connection)
+sql.firstRow("SELECT 1 AS OK FROM DUAL")
+return "OK"
+</cfg:testScript>
+            <cfg:schemaScript><![CDATA[
+import org.identityconnectors.framework.common.objects.*
+
+// Convención Tirasa ScriptedSQL: el Groovy recibe la variable `builder`
+// (SchemaBuilder). Devolver lista de ObjectClassInfo o construir directamente
+// vía builder.defineObjectClass(...). Retornar la lista es el patrón documentado.
+def ocib = new ObjectClassInfoBuilder()
+ocib.setType(ObjectClass.ACCOUNT_NAME)
+
+// __UID__ = COD_APS (read-only)
+def uidAib = new AttributeInfoBuilder(Uid.NAME, String.class)
+uidAib.setRequired(true)
+uidAib.setCreateable(false)
+uidAib.setUpdateable(false)
+uidAib.setReadable(true)
+uidAib.setNativeName("COD_APS")
+ocib.addAttributeInfo(uidAib.build())
+
+// __NAME__ = COD_APS
+def nameAib = new AttributeInfoBuilder(Name.NAME, String.class)
+nameAib.setRequired(true)
+nameAib.setCreateable(false)
+nameAib.setUpdateable(false)
+nameAib.setReadable(true)
+nameAib.setNativeName("COD_APS")
+ocib.addAttributeInfo(nameAib.build())
+
+["NOMBRE", "PATERNO"].each { n ->
+    def aib = new AttributeInfoBuilder(n, String.class)
+    aib.setRequired(true)
+    aib.setCreateable(false)
+    aib.setUpdateable(false)
+    aib.setReadable(true)
+    ocib.addAttributeInfo(aib.build())
+}
+
+["MATERNO", "NUM_DOCUMENTO", "FEC_INICIO", "FEC_TERMINO", "ID_CATEGORIAOCUPACIONAL"].each { n ->
+    def aib = new AttributeInfoBuilder(n, String.class)
+    aib.setRequired(false)
+    aib.setCreateable(false)
+    aib.setUpdateable(false)
+    aib.setReadable(true)
+    ocib.addAttributeInfo(aib.build())
+}
+
+def estadoAib = new AttributeInfoBuilder("ESTADO", String.class)
+estadoAib.setRequired(true)
+estadoAib.setCreateable(false)
+estadoAib.setUpdateable(false)
+estadoAib.setReadable(true)
+ocib.addAttributeInfo(estadoAib.build())
+
+def archAib = new AttributeInfoBuilder("UPEU_ARCHETYPE_NAME", String.class)
+archAib.setRequired(true)
+archAib.setCreateable(false)
+archAib.setUpdateable(false)
+archAib.setReadable(true)
+ocib.addAttributeInfo(archAib.build())
+
+return [ocib.build()]
+]]></cfg:schemaScript>
+
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+    <schemaHandling>
+        <objectType id="436">
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>Empleado UPeU (Lamb RR.HH. v2)</displayName>
+            <default>true</default>
+            <delineation>
+                <objectClass>ri:AccountObjectClass</objectClass>
+            </delineation>
+            <focus>
+                <type>UserType</type>
+                <archetypeRef oid="6460facf-3abf-4851-966e-0c95aa1a6c46" relation="org:default" type="c:ArchetypeType"/>
+            </focus>
+            <attribute id="437">
+                <ref>ri:COD_APS</ref>
+                <inbound id="438">
+                    <name>cod-aps-to-name</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>name</path>
+                    </target>
+                </inbound>
+                <inbound id="439">
+                    <name>cod-aps-to-employee-number</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>employeeNumber</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="440">
+                <ref>ri:NOMBRE</ref>
+                <inbound id="441">
+                    <name>nombre-to-givenName</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path>givenName</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="442">
+                <ref>ri:PATERNO</ref>
+                <inbound id="443">
+                    <name>paterno-materno-to-familyName</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$shadow/attributes/ri:PATERNO</path>
+                    </source>
+                    <source>
+                        <path>$shadow/attributes/ri:MATERNO</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+                                def p = (paterno ?: '').toString().trim()
+                                def m = (MATERNO ?: '').toString().trim()
+                                (p + (m ? ' ' + m : '')).trim() ?: null
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>familyName</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="444">
+                <ref>ri:NUM_DOCUMENTO</ref>
+                <inbound id="445">
+                    <name>dni-to-taxId-urn</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+                                def d = (num_documento ?: '').toString().trim()
+                                d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu3="urn:upeu:midpoint:person:v3">extension/upeu3:taxId</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="446">
+                <ref>ri:FEC_INICIO</ref>
+                <inbound id="447">
+                    <name>fec-inicio-to-hireDate</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+                                if (fec_inicio == null) return null
+                                def s = fec_inicio.toString()
+                                // Aceptar "yyyy-MM-dd ..." o ISO; quedarnos con los 10 primeros
+                                s.length() &gt;= 10 ? s.substring(0,10) : null
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu3="urn:upeu:midpoint:person:v3">extension/upeu3:hireDate</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="448">
+                <ref>ri:FEC_TERMINO</ref>
+                <inbound id="449">
+                    <name>fec-termino-to-terminationDate</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+                                if (fec_termino == null) return null
+                                def s = fec_termino.toString()
+                                s.length() &gt;= 10 ? s.substring(0,10) : null
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu3="urn:upeu:midpoint:person:v3">extension/upeu3:terminationDate</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="450">
+                <ref>ri:ESTADO</ref>
+                <inbound id="451">
+                    <name>estado-to-administrativeStatus</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>(estado == 'A') ? 'enabled' : 'disabled'</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>activation/administrativeStatus</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="452">
+                <ref>ri:UPEU_ARCHETYPE_NAME</ref>
+                <inbound id="453">
+                    <name>upeu-archetype-assign</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <assignmentTargetSearch>
+                            <targetType>ArchetypeType</targetType>
+                            <filter>
+                                <q:equal>
+                                    <q:path>name</q:path>
+                                    <expression>
+                                        <path>$input</path>
+                                    </expression>
+                                </q:equal>
+                            </filter>
+                        </assignmentTargetSearch>
+                    </expression>
+                    <target>
+                        <path>assignment</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <correlation>
+                <correlators>
+                    <items id="454">
+                        <item id="455">
+                            <ref>name</ref>
+                        </item>
+                    </items>
+                </correlators>
+            </correlation>
+            <synchronization>
+                <reaction id="456">
+                    <situation>linked</situation>
+                    <actions>
+                        <synchronize id="457"/>
+                    </actions>
+                </reaction>
+                <reaction id="458">
+                    <situation>deleted</situation>
+                    <actions>
+                        <inactivateFocus id="459"/>
+                    </actions>
+                </reaction>
+                <reaction id="460">
+                    <situation>unlinked</situation>
+                    <actions>
+                        <link id="461"/>
+                    </actions>
+                </reaction>
+                <reaction id="462">
+                    <situation>unmatched</situation>
+                    <actions>
+                        <addFocus id="463"/>
+                    </actions>
+                </reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>
+    <capabilities>
+        <cachingMetadata>
+            <retrievalTimestamp>2026-05-12T22:28:15.618Z</retrievalTimestamp>
+            <serialNumber>5376b95b1fef1a63-b89d0002a7e9f580</serialNumber>
+        </cachingMetadata>
+        <native xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:schema/>
+            <cap:liveSync/>
+            <cap:create/>
+            <cap:read/>
+            <cap:update>
+                <cap:delta>true</cap:delta>
+                <cap:addRemoveAttributeValues>true</cap:addRemoveAttributeValues>
+            </cap:update>
+            <cap:delete/>
+            <cap:testConnection/>
+            <cap:script>
+                <cap:host id="465">
+                    <cap:type>connector</cap:type>
+                </cap:host>
+            </cap:script>
+        </native>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:create>
+                <cap:enabled>false</cap:enabled>
+            </cap:create>
+            <cap:update>
+                <cap:enabled>false</cap:enabled>
+            </cap:update>
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
+        </configured>
+    </capabilities>
+    <projection>
+        <assignmentPolicyEnforcement>relative</assignmentPolicyEnforcement>
+    </projection>
+</resource>

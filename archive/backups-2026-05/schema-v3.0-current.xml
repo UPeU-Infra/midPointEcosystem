@@ -1,0 +1,165 @@
+<schema xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="b7d55017-599f-4f2f-9493-9f64bba62c5b" version="6">
+    <name>Esquema canónico UPeU v3.0 — extensiones IGA</name>
+    <description>Schema canónico UPeU alineado a eduPerson 202208, SCHAC 1.6.0, SCIM 2.0 core y best practices Evolveum. Solo contiene atributos UPeU-specific NO presentes en estándares ni en MidPoint core. Atributos canónicos derivados (ePPN, ePSA, eduPersonAffiliation, schac*) viven en object templates. Reemplaza v2.x. Namespace: urn:upeu:midpoint:person:v3</description>
+    <lifecycleState>active</lifecycleState>
+    <definition>
+        <xsd:schema xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:tns="urn:upeu:midpoint:person:v3" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="urn:upeu:midpoint:person:v3" xml:space="preserve">
+
+            <xsd:import namespace="http://prism.evolveum.com/xml/ns/public/annotation-3"/>
+
+            <xsd:complexType name="DemographicsType">
+                <xsd:annotation>
+                    <xsd:documentation>Datos demográficos extra UPeU. No incluye nombres, dirección ni email (esos viven en core).</xsd:documentation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element minOccurs="0" name="birthDate" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Fecha de nacimiento</a:displayName>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="gender" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Género (ISO 5218: 0=unknown 1=male 2=female 9=N/A)</a:displayName>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="country" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>País (ISO 3166-1 alpha-3, ej. PER)</a:displayName>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="province" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Provincia / UBIGEO</a:displayName>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="EmploymentDataType">
+                <xsd:annotation>
+                    <xsd:documentation>Fechas laborales para Joiner/Leaver triggers.</xsd:documentation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element minOccurs="0" name="hireDate" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Fecha de ingreso (Joiner trigger)</a:displayName>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="terminationDate" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Fecha de baja (Leaver trigger → schacExpiryDate)</a:displayName>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="AcademicStatusType">
+                <xsd:annotation>
+                    <xsd:documentation>Status académico UPeU. faculty/campus/academicProgram son OrgType refs por assignment, no atributos. academicPhase se deriva en object template desde studentCycle.</xsd:documentation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element minOccurs="0" name="studentCycle" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Ciclo académico (1-10)</a:displayName>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="academicProgramCode" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Código(s) de programa académico</a:displayName>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="studyModality" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Modalidad (presencial | virtual | semipresencial)</a:displayName>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="ContactExtType">
+                <xsd:annotation>
+                    <xsd:documentation>Contacto extra no presente en core (emails/teléfonos van en core, multi).</xsd:documentation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element minOccurs="0" name="personalWeb" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Sitio web personal</a:displayName>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="languageSkills" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Idiomas (ISO 639-1, ej. es en qu)</a:displayName>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="PeruvianIdentifiersType">
+                <xsd:annotation>
+                    <xsd:documentation>Identificadores peruanos en formato URN canónico SCHAC (publicables en SAML).</xsd:documentation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element minOccurs="0" name="taxId" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>DNI URN SCHAC (urn:schac:personalUniqueID:pe:DNI:PE:...)</a:displayName>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="institutionalIdCard" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Carnet UPeU URN SCHAC (urn:schac:personalUniqueCode:pe:...)</a:displayName>
+                                <a:indexed>true</a:indexed>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+
+        </xsd:schema>
+    </definition>
+</schema>

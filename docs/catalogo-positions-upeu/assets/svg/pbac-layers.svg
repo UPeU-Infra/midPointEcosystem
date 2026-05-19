@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 700 400" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <rect width="700" height="400" fill="#F8F9FA" rx="10"/>
+  <text x="350" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#003366">Modelo PBAC — Capas de Acceso UPeU</text>
+
+  <!-- Capa 3 (exterior): Birthright Role -->
+  <ellipse cx="280" cy="210" rx="240" ry="165" fill="#E3F2FD" stroke="#1565C0" stroke-width="2.5"/>
+  <text x="84" y="130" font-size="11" font-weight="700" fill="#1565C0">Capa 1</text>
+  <text x="84" y="144" font-size="10" fill="#1565C0">Birthright Role</text>
+  <text x="84" y="158" font-size="9" fill="#1565C0">(por afiliación)</text>
+
+  <!-- Capa 2: Position Role -->
+  <ellipse cx="280" cy="210" rx="160" ry="110" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2.5"/>
+  <text x="145" y="140" font-size="11" font-weight="700" fill="#2E7D32">Capa 2</text>
+  <text x="145" y="154" font-size="10" fill="#2E7D32">Position Role</text>
+  <text x="145" y="168" font-size="9" fill="#2E7D32">(por cargo)</text>
+
+  <!-- Capa 1 (centro): Privilege -->
+  <ellipse cx="280" cy="210" rx="80" ry="55" fill="#FFF3E0" stroke="#FFB900" stroke-width="3"/>
+  <text x="280" y="203" text-anchor="middle" font-size="11" font-weight="700" fill="#E65100">Capa 3</text>
+  <text x="280" y="218" text-anchor="middle" font-size="10" fill="#E65100">Privilege</text>
+  <text x="280" y="231" text-anchor="middle" font-size="9" fill="#E65100">(acceso final)</text>
+
+  <!-- ===== EJEMPLOS CONCRETOS ===== -->
+  <!-- Ejemplo Birthright -->
+  <rect x="430" y="55" width="250" height="70" rx="7" fill="#BBDEFB" stroke="#1565C0" stroke-width="1.5"/>
+  <text x="555" y="74" text-anchor="middle" font-size="10" font-weight="700" fill="#0D47A1">Ejemplo — Birthright Role</text>
+  <text x="555" y="89" text-anchor="middle" font-size="9" fill="#1565C0">primaryAffiliation = "faculty"</text>
+  <text x="555" y="103" text-anchor="middle" font-size="9" fill="#1565C0">→ BR-Docente → acceso base</text>
+  <text x="555" y="117" text-anchor="middle" font-size="9" fill="#1565C0">correo @upeu.edu.pe · Canvas LMS</text>
+  <line x1="432" y1="90" x2="390" y2="175" stroke="#1565C0" stroke-width="1.5" stroke-dasharray="5,3" fill="none"/>
+
+  <!-- Ejemplo Position Role -->
+  <rect x="430" y="150" width="250" height="70" rx="7" fill="#C8E6C9" stroke="#2E7D32" stroke-width="1.5"/>
+  <text x="555" y="169" text-anchor="middle" font-size="10" font-weight="700" fill="#1B5E20">Ejemplo — Position Role</text>
+  <text x="555" y="184" text-anchor="middle" font-size="9" fill="#2E7D32">POS-DECANO-FIA asignado</text>
+  <text x="555" y="198" text-anchor="middle" font-size="9" fill="#2E7D32">→ AR-Decanato → acceso</text>
+  <text x="555" y="212" text-anchor="middle" font-size="9" fill="#2E7D32">reportes, SIGA Admin, SICO</text>
+  <line x1="432" y1="190" x2="395" y2="210" stroke="#2E7D32" stroke-width="1.5" stroke-dasharray="5,3" fill="none"/>
+
+  <!-- Ejemplo Privilege -->
+  <rect x="430" y="245" width="250" height="80" rx="7" fill="#FFE0B2" stroke="#FFB900" stroke-width="2"/>
+  <text x="555" y="264" text-anchor="middle" font-size="10" font-weight="700" fill="#E65100">Ejemplo — Privilege (combinado)</text>
+  <text x="555" y="279" text-anchor="middle" font-size="9" fill="#E65100">Docente Ordinario TC (POS-DOCENTE-</text>
+  <text x="555" y="292" text-anchor="middle" font-size="9" fill="#E65100">PRINCIPAL-TC) + RENACYT-I</text>
+  <text x="555" y="305" text-anchor="middle" font-size="9" fill="#BF360C">→ módulos investigación avanzada</text>
+  <text x="555" y="318" text-anchor="middle" font-size="9" fill="#BF360C">SICI, Portal investigadores UPeU</text>
+  <line x1="432" y1="270" x2="340" y2="240" stroke="#FFB900" stroke-width="2" stroke-dasharray="5,3" fill="none"/>
+
+  <!-- ===== LEYENDA ROLES ===== -->
+  <rect x="20" y="350" width="660" height="38" rx="6" fill="#fff" stroke="#ddd" stroke-width="1"/>
+  <text x="30" y="366" font-size="9" fill="#555" font-weight="700">Siglas:</text>
+  <text x="72" y="366" font-size="9" fill="#555">BR = Business Role (Birthright)</text>
+  <text x="262" y="366" font-size="9" fill="#555">AR = Application Role</text>
+  <text x="382" y="366" font-size="9" fill="#555">POS = Position ServiceType</text>
+  <text x="540" y="366" font-size="9" fill="#555">PBAC = Position-Based Access Control</text>
+  <text x="350" y="381" text-anchor="middle" font-size="8" fill="#888">Pilar 3 — Modelo IGA Canónico UPeU 2026 · MidPoint 4.10.2</text>
+</svg>

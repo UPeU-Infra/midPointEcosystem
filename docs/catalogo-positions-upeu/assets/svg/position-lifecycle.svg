@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 820 320" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#555"/>
+    </marker>
+    <marker id="arr-green" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2E7D32"/>
+    </marker>
+    <marker id="arr-red" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#C62828"/>
+    </marker>
+    <marker id="arr-blue" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1565C0"/>
+    </marker>
+  </defs>
+
+  <rect width="820" height="320" fill="#F8F9FA" rx="10"/>
+  <text x="410" y="26" text-anchor="middle" font-size="14" font-weight="700" fill="#003366">Ciclo de Vida de una Position — MidPoint UPeU</text>
+
+  <!-- ESTADO: DRAFT -->
+  <rect x="30" y="80" width="130" height="70" rx="8" fill="#ECEFF1" stroke="#90A4AE" stroke-width="2"/>
+  <text x="95" y="108" text-anchor="middle" font-size="12" font-weight="700" fill="#546E7A">DRAFT</text>
+  <text x="95" y="125" text-anchor="middle" font-size="9" fill="#607D8B">ServiceType creado</text>
+  <text x="95" y="138" text-anchor="middle" font-size="9" fill="#607D8B">OID asignado</text>
+
+  <!-- ESTADO: PROPUESTO -->
+  <rect x="225" y="80" width="140" height="70" rx="8" fill="#FFF9C4" stroke="#F9A825" stroke-width="2"/>
+  <text x="295" y="108" text-anchor="middle" font-size="12" font-weight="700" fill="#F57F17">PROPUESTO</text>
+  <text x="295" y="125" text-anchor="middle" font-size="9" fill="#F57F17">Revisión DTI/RRHH</text>
+  <text x="295" y="138" text-anchor="middle" font-size="9" fill="#F57F17">Pending approval</text>
+
+  <!-- ESTADO: ACTIVO -->
+  <rect x="430" y="80" width="140" height="70" rx="8" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2.5"/>
+  <text x="500" y="108" text-anchor="middle" font-size="12" font-weight="700" fill="#1B5E20">ACTIVO</text>
+  <text x="500" y="125" text-anchor="middle" font-size="9" fill="#2E7D32">Position operativa</text>
+  <text x="500" y="138" text-anchor="middle" font-size="9" fill="#2E7D32">Induce privilegios</text>
+
+  <!-- ESTADO: ARCHIVADO -->
+  <rect x="635" y="80" width="140" height="70" rx="8" fill="#FFEBEE" stroke="#C62828" stroke-width="2"/>
+  <text x="705" y="108" text-anchor="middle" font-size="12" font-weight="700" fill="#B71C1C">ARCHIVADO</text>
+  <text x="705" y="125" text-anchor="middle" font-size="9" fill="#C62828">Position inactiva</text>
+  <text x="705" y="138" text-anchor="middle" font-size="9" fill="#C62828">Sin inducements</text>
+
+  <!-- Flechas de estado -->
+  <line x1="160" y1="115" x2="225" y2="115" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="192" y="108" text-anchor="middle" font-size="8" fill="#555">proponer</text>
+
+  <line x1="365" y1="115" x2="430" y2="115" stroke="#2E7D32" stroke-width="2" marker-end="url(#arr-green)"/>
+  <text x="397" y="108" text-anchor="middle" font-size="8" fill="#2E7D32">aprobar</text>
+
+  <line x1="570" y1="115" x2="635" y2="115" stroke="#C62828" stroke-width="2" marker-end="url(#arr-red)"/>
+  <text x="602" y="108" text-anchor="middle" font-size="8" fill="#C62828">archivar</text>
+
+  <!-- Rechazo: Propuesto → Draft -->
+  <path d="M295,80 C295,55 95,55 95,80" stroke="#F57F17" stroke-width="1.5" fill="none" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+  <text x="195" y="48" text-anchor="middle" font-size="8" fill="#F57F17">rechazar → vuelve a Draft</text>
+
+  <!-- ===== EVENTOS JML ===== -->
+  <text x="410" y="185" text-anchor="middle" font-size="12" font-weight="700" fill="#003366">Eventos JML sobre Usuarios (Assignment)</text>
+
+  <!-- JOINER -->
+  <rect x="30" y="205" width="220" height="90" rx="7" fill="#E3F2FD" stroke="#1565C0" stroke-width="2"/>
+  <text x="140" y="225" text-anchor="middle" font-size="11" font-weight="700" fill="#0D47A1">JOINER — Designación</text>
+  <text x="140" y="241" text-anchor="middle" font-size="9" fill="#1565C0">Evento: LAMB reporta nuevo cargo</text>
+  <text x="140" y="255" text-anchor="middle" font-size="9" fill="#1565C0">MidPoint: createAssignment(position)</text>
+  <text x="140" y="269" text-anchor="middle" font-size="9" fill="#1565C0">→ induce AR + accounts provisioned</text>
+  <text x="140" y="283" text-anchor="middle" font-size="9" fill="#1565C0">Trigger: reconciliation / webhook</text>
+
+  <!-- MOVER -->
+  <rect x="300" y="205" width="220" height="90" rx="7" fill="#FFF9C4" stroke="#F9A825" stroke-width="2"/>
+  <text x="410" y="225" text-anchor="middle" font-size="11" font-weight="700" fill="#F57F17">MOVER — Cambio cargo</text>
+  <text x="410" y="241" text-anchor="middle" font-size="9" fill="#F57F17">Evento: LAMB actualiza puesto</text>
+  <text x="410" y="255" text-anchor="middle" font-size="9" fill="#F57F17">MidPoint: recompute assignments</text>
+  <text x="410" y="269" text-anchor="middle" font-size="9" fill="#F57F17">→ remove old AR + assign new AR</text>
+  <text x="410" y="283" text-anchor="middle" font-size="9" fill="#F57F17">→ actualiza cuentas en destino</text>
+
+  <!-- LEAVER -->
+  <rect x="570" y="205" width="220" height="90" rx="7" fill="#FFEBEE" stroke="#C62828" stroke-width="2"/>
+  <text x="680" y="225" text-anchor="middle" font-size="11" font-weight="700" fill="#B71C1C">LEAVER — Fin de cargo</text>
+  <text x="680" y="241" text-anchor="middle" font-size="9" fill="#C62828">Evento: LAMB baja del puesto</text>
+  <text x="680" y="255" text-anchor="middle" font-size="9" fill="#C62828">MidPoint: removeAssignment</text>
+  <text x="680" y="269" text-anchor="middle" font-size="9" fill="#C62828">→ revoke AR + disable accounts</text>
+  <text x="680" y="283" text-anchor="middle" font-size="9" fill="#C62828">→ retiene Birthright Role base</text>
+
+  <!-- Conector estado ACTIVO → JML -->
+  <line x1="500" y1="150" x2="500" y2="195" stroke="#2E7D32" stroke-width="1.5" stroke-dasharray="4,3" fill="none" marker-end="url(#arr-green)"/>
+  <text x="508" y="175" font-size="8" fill="#2E7D32">activa</text>
+
+  <text x="410" y="310" text-anchor="middle" font-size="8" fill="#888">Modelo JML sobre PBAC · MidPoint 4.10.2 · UPeU IGA 2026</text>
+</svg>

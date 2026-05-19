@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 860 300" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#003366"/>
+    </marker>
+    <marker id="arr-gold" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#FFB900"/>
+    </marker>
+    <marker id="arr-green" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2E7D32"/>
+    </marker>
+  </defs>
+
+  <rect width="860" height="300" fill="#F8F9FA" rx="10"/>
+  <text x="430" y="24" text-anchor="middle" font-size="14" font-weight="700" fill="#003366">Flujo de Asignación Automática — Position en MidPoint</text>
+
+  <!-- ===== BLOQUE 1: LAMB HR Trigger ===== -->
+  <rect x="20" y="60" width="130" height="110" rx="8" fill="#FFF3E0" stroke="#FF9800" stroke-width="2"/>
+  <text x="85" y="82" text-anchor="middle" font-size="10" font-weight="700" fill="#E65100">Oracle LAMB</text>
+  <text x="85" y="97" text-anchor="middle" font-size="9" fill="#BF360C">HR Trigger</text>
+  <line x1="25" y1="108" x2="145" y2="108" stroke="#FF9800" stroke-width="0.5"/>
+  <text x="85" y="122" text-anchor="middle" font-size="8" fill="#E65100">PLLA_PUESTO</text>
+  <text x="85" y="135" text-anchor="middle" font-size="8" fill="#E65100">ID_PUESTO → cargo</text>
+  <text x="85" y="148" text-anchor="middle" font-size="8" fill="#E65100">ID_EMP → persona</text>
+  <text x="85" y="161" text-anchor="middle" font-size="8" fill="#888">Polling cron / recon</text>
+
+  <!-- Flecha 1 -->
+  <line x1="150" y1="115" x2="195" y2="115" stroke="#003366" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="172" y="108" text-anchor="middle" font-size="8" fill="#003366">ScriptedSQL</text>
+
+  <!-- ===== BLOQUE 2: MidPoint Reconciliation ===== -->
+  <rect x="195" y="60" width="140" height="110" rx="8" fill="#E3F2FD" stroke="#1565C0" stroke-width="2"/>
+  <text x="265" y="82" text-anchor="middle" font-size="10" font-weight="700" fill="#003366">MidPoint</text>
+  <text x="265" y="96" text-anchor="middle" font-size="9" fill="#1565C0">Reconciliation Task</text>
+  <line x1="200" y1="107" x2="330" y2="107" stroke="#1565C0" stroke-width="0.5"/>
+  <text x="265" y="121" text-anchor="middle" font-size="8" fill="#1565C0">importShadow()</text>
+  <text x="265" y="134" text-anchor="middle" font-size="8" fill="#1565C0">correlate user</text>
+  <text x="265" y="147" text-anchor="middle" font-size="8" fill="#1565C0">detect delta</text>
+  <text x="265" y="160" text-anchor="middle" font-size="8" fill="#888">Scheduler: cada 15 min</text>
+
+  <!-- Flecha 2 -->
+  <line x1="335" y1="115" x2="380" y2="115" stroke="#003366" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="357" y="108" text-anchor="middle" font-size="8" fill="#003366">trigger</text>
+
+  <!-- ===== BLOQUE 3: Object Template ===== -->
+  <rect x="380" y="60" width="145" height="110" rx="8" fill="#E8EAF6" stroke="#3F51B5" stroke-width="2"/>
+  <text x="453" y="82" text-anchor="middle" font-size="10" font-weight="700" fill="#1A237E">Object Template</text>
+  <text x="453" y="96" text-anchor="middle" font-size="9" fill="#3F51B5">Person-Base eval</text>
+  <line x1="385" y1="107" x2="520" y2="107" stroke="#3F51B5" stroke-width="0.5"/>
+  <text x="453" y="121" text-anchor="middle" font-size="8" fill="#3F51B5">map ID_PUESTO →</text>
+  <text x="453" y="134" text-anchor="middle" font-size="8" fill="#3F51B5">POS-code</text>
+  <text x="453" y="147" text-anchor="middle" font-size="8" fill="#3F51B5">condition: active?</text>
+  <text x="453" y="160" text-anchor="middle" font-size="8" fill="#888">Groovy / Jython</text>
+
+  <!-- Flecha 3 -->
+  <line x1="525" y1="115" x2="570" y2="115" stroke="#FFB900" stroke-width="2.5" marker-end="url(#arr-gold)"/>
+  <text x="547" y="108" text-anchor="middle" font-size="8" fill="#E65100" font-weight="600">assign</text>
+
+  <!-- ===== BLOQUE 4: Position Assigned ===== -->
+  <rect x="570" y="50" width="130" height="130" rx="8" fill="#003366" stroke="#FFB900" stroke-width="2.5"/>
+  <text x="635" y="74" text-anchor="middle" font-size="10" font-weight="700" fill="#FFB900">Position</text>
+  <text x="635" y="88" text-anchor="middle" font-size="9" fill="#fff">ASSIGNED</text>
+  <line x1="575" y1="99" x2="695" y2="99" stroke="#FFB900" stroke-width="0.5"/>
+  <text x="635" y="113" text-anchor="middle" font-size="8" fill="#93C5FD">e.g. POS-DECANO-FIA</text>
+  <text x="635" y="126" text-anchor="middle" font-size="8" fill="#93C5FD">ServiceType + Archetype</text>
+  <text x="635" y="139" text-anchor="middle" font-size="8" fill="#FFB900">→ inducements fire</text>
+  <text x="635" y="152" text-anchor="middle" font-size="8" fill="#93C5FD">AR-Decanato assigned</text>
+  <text x="635" y="165" text-anchor="middle" font-size="8" fill="#888">via inducement chain</text>
+
+  <!-- Flecha 4 -->
+  <line x1="700" y1="115" x2="740" y2="115" stroke="#2E7D32" stroke-width="2" marker-end="url(#arr-green)"/>
+  <text x="720" y="108" text-anchor="middle" font-size="8" fill="#2E7D32">provision</text>
+
+  <!-- ===== BLOQUE 5: Accounts Provisioned ===== -->
+  <rect x="740" y="55" width="105" height="120" rx="8" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+  <text x="793" y="76" text-anchor="middle" font-size="10" font-weight="700" fill="#1B5E20">Cuentas</text>
+  <text x="793" y="90" text-anchor="middle" font-size="9" fill="#2E7D32">Provisioned</text>
+  <line x1="745" y1="101" x2="840" y2="101" stroke="#2E7D32" stroke-width="0.5"/>
+  <text x="793" y="115" text-anchor="middle" font-size="8" fill="#2E7D32">OpenLDAP</text>
+  <text x="793" y="128" text-anchor="middle" font-size="8" fill="#2E7D32">M365 / Entra ID</text>
+  <text x="793" y="141" text-anchor="middle" font-size="8" fill="#2E7D32">Koha (grupos)</text>
+  <text x="793" y="154" text-anchor="middle" font-size="8" fill="#388E3C">permisos aplicados</text>
+  <text x="793" y="167" text-anchor="middle" font-size="8" fill="#888">connectors</text>
+
+  <!-- ===== LEYENDA FLUJO ===== -->
+  <rect x="20" y="200" width="820" height="80" rx="7" fill="#fff" stroke="#ddd" stroke-width="1"/>
+  <text x="430" y="220" text-anchor="middle" font-size="11" font-weight="700" fill="#003366">Detalle del flujo de datos</text>
+
+  <!-- paso 1 -->
+  <circle cx="35" cy="240" r="10" fill="#FF9800"/>
+  <text x="35" y="244" text-anchor="middle" font-size="9" fill="#fff" font-weight="700">1</text>
+  <text x="52" y="244" font-size="9" fill="#555">LAMB detecta cambio de puesto (ID_PUESTO nuevo)</text>
+
+  <!-- paso 2 -->
+  <circle cx="35" cy="262" r="10" fill="#1565C0"/>
+  <text x="35" y="266" text-anchor="middle" font-size="9" fill="#fff" font-weight="700">2</text>
+  <text x="52" y="266" font-size="9" fill="#555">MidPoint ScriptedSQL importa shadow → correlaciona usuario → detecta delta</text>
+
+  <!-- paso 3 -->
+  <circle cx="420" cy="240" r="10" fill="#3F51B5"/>
+  <text x="420" y="244" text-anchor="middle" font-size="9" fill="#fff" font-weight="700">3</text>
+  <text x="438" y="244" font-size="9" fill="#555">Object Template mapea ID_PUESTO → POS-code → createAssignment</text>
+
+  <!-- paso 4+5 -->
+  <circle cx="420" cy="262" r="10" fill="#FFB900"/>
+  <text x="420" y="266" text-anchor="middle" font-size="9" fill="#003366" font-weight="700">4</text>
+  <text x="438" y="266" font-size="9" fill="#555">Position inducements → AR-roles → connectors provisioning en destinos</text>
+
+  <text x="430" y="275" text-anchor="middle" font-size="8" fill="#888">Flujo PBAC Pilar 3 · Proyecto IGA UPeU 2026</text>
+</svg>

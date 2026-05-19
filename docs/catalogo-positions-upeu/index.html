@@ -1,0 +1,2097 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo de Positions Institucionales — UPeU IGA</title>
+  <meta name="description" content="Catálogo oficial de Positions del modelo IGA UPeU — Pilar 3 PBAC — MidPoint 4.10.2">
+  <meta name="author" content="Ing. Juan Alberto Sánchez / DTI UPeU">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<header id="site-header">
+  <div class="header-brand">
+    <span class="escudo">🏛️</span>
+    <div class="brand-text">
+      <strong>Universidad Peruana Unión</strong>
+      <small>Catálogo de Positions — IGA · MidPoint 4.10.2</small>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button id="btn-print">🖨 Imprimir</button>
+    <button id="hamburger" aria-label="Menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- BREADCRUMB -->
+<div id="breadcrumb">
+  <span>UPeU IGA</span><span class="current">Portada</span>
+</div>
+
+<!-- ============================================================
+     LAYOUT
+     ============================================================ -->
+<div id="layout">
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar" aria-label="Tabla de contenidos">
+    <div id="sidebar-inner">
+      <div class="toc-header">Contenidos</div>
+      <ul id="toc-list">
+        <li><a href="#portada">Portada</a></li>
+        <li><a href="#sec-intro">1. Introducción</a></li>
+        <li class="toc-sub"><a href="#s1-1">1.1 Propósito</a></li>
+        <li class="toc-sub"><a href="#s1-2">1.2 Alcance</a></li>
+        <li class="toc-sub"><a href="#s1-3">1.3 Relación con IGA</a></li>
+        <li class="toc-sub"><a href="#s1-4">1.4 Glosario</a></li>
+        <li><a href="#sec-marco">2. Marco normativo</a></li>
+        <li class="toc-sub"><a href="#s2-1">2.1 Ley 30220</a></li>
+        <li class="toc-sub"><a href="#s2-2">2.2 Estatuto UPeU</a></li>
+        <li class="toc-sub"><a href="#s2-3">2.3 Res. 0001-2026</a></li>
+        <li class="toc-sub"><a href="#s2-4">2.4 Estándares IGA</a></li>
+        <li><a href="#sec-pbac">3. Arquitectura PBAC</a></li>
+        <li class="toc-sub"><a href="#s3-1">3.1 Modelo conceptual</a></li>
+        <li class="toc-sub"><a href="#s3-2">3.2 ServiceType en MidPoint</a></li>
+        <li class="toc-sub"><a href="#s3-3">3.3 Flujo LAMB→Position</a></li>
+        <li class="toc-sub"><a href="#s3-4">3.4 Position vs Rol Afiliación</a></li>
+        <li class="toc-sub"><a href="#s3-5">3.5 Ciclo de vida</a></li>
+        <li><a href="#sec-organigrama">4. Organigrama</a></li>
+        <li><a href="#sec-catalogo">5. Catálogo de Positions</a></li>
+        <li class="toc-sub"><a href="#s5-1">5.1 Gobierno</a></li>
+        <li class="toc-sub"><a href="#s5-2">5.2 Asesoría y Control</a></li>
+        <li class="toc-sub"><a href="#s5-3">5.3 VR Académico</a></li>
+        <li class="toc-sub"><a href="#s5-4">5.4 VR Administrativo</a></li>
+        <li class="toc-sub"><a href="#s5-5">5.5 VR Bienestar</a></li>
+        <li class="toc-sub"><a href="#s5-6">5.6 Dirección Campus</a></li>
+        <li class="toc-sub"><a href="#s5-7">5.7 Biblioteca / CRAI</a></li>
+        <li class="toc-sub"><a href="#s5-8">5.8 Estudiantes con cargo</a></li>
+        <li class="toc-sub"><a href="#s5-9">5.9 Pastoral y Misión</a></li>
+        <li class="toc-sub"><a href="#s5-10">5.10 Áreas operativas</a></li>
+        <li><a href="#sec-titulares">6. Titulares actuales</a></li>
+        <li><a href="#sec-pendientes">7. Pendientes y gaps</a></li>
+        <li><a href="#sec-implementacion">8. Guía de implementación</a></li>
+        <li><a href="#sec-referencias">9. Referencias</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main id="content">
+
+    <!-- ============================================================
+         PORTADA
+         ============================================================ -->
+    <section id="portada">
+      <span class="portada-escudo">🏛️</span>
+      <span class="badge-borrador">Borrador · v1.0</span>
+      <h1>Catálogo de Positions Institucionales<br>Universidad Peruana Unión</h1>
+      <p class="subtitle">Gobierno de Identidades (IGA) — Pilar 3: Position-Based Access Control (PBAC)<br>
+        Sistema de Identidades MidPoint 4.10.2</p>
+
+      <table class="meta-table">
+        <tr>
+          <td>Versión</td>
+          <td>1.0 — Borrador</td>
+        </tr>
+        <tr>
+          <td>Fecha</td>
+          <td>2026-05-18</td>
+        </tr>
+        <tr>
+          <td>Elaborado por</td>
+          <td>Ing. David Urquizo · Ing. Rudy Milán Napán</td>
+        </tr>
+        <tr>
+          <td>Coordinado por</td>
+          <td>Ing. Juan Alberto Sánchez — Gestor Proyecto IGA</td>
+        </tr>
+        <tr>
+          <td>Revisado por</td>
+          <td>Ing. David Barrantes Delgado — Director DTI</td>
+        </tr>
+        <tr>
+          <td>Aprobado por</td>
+          <td><em>PENDIENTE — por determinar conforme Ley 30220</em></td>
+        </tr>
+        <tr>
+          <td>Clasificación</td>
+          <td>Documento interno — DTI / UPeU</td>
+        </tr>
+      </table>
+    </section>
+
+    <!-- ============================================================
+         1. INTRODUCCIÓN
+         ============================================================ -->
+    <section id="sec-intro" class="section">
+      <h2 class="section-title">1. Introducción</h2>
+
+      <h3 id="s1-1" class="subsection-title">1.1 Propósito del documento</h3>
+      <p>Este documento establece el <strong>Catálogo oficial de Positions Institucionales</strong> de la Universidad Peruana Unión (UPeU), definidas como objetos de tipo <code>ServiceType</code> con archetype <em>Position</em> en el sistema de Gobierno de Identidades (IGA) MidPoint 4.10.2.</p>
+      <p>Las Positions constituyen el mecanismo central del <strong>Pilar 3 — Position-Based Access Control (PBAC)</strong> del Modelo Canónico IGA UPeU, por el cual cada cargo institucional conlleva privilegios de acceso digital específicos, asignados y revocados automáticamente conforme el sistema LAMB registra cambios en la planta laboral y académica.</p>
+      <div class="infobox gold">
+        <strong>Alcance de versión 1.0:</strong> Este borrador cubre el catálogo inicial derivado del discovery sobre Oracle LAMB, el organigrama institucional (Res. 0001-2026/UPeU-AU) y la Ley 30220. Pendiente aprobación formal y complemento con gaps identificados en la Sección 7.
+      </div>
+
+      <h3 id="s1-2" class="subsection-title">1.2 Alcance</h3>
+      <p>El presente catálogo abarca:</p>
+      <ul>
+        <li>Positions del <strong>campus Lima</strong> como sede principal, con extensiones a Juliaca y Tarapoto donde están confirmadas.</li>
+        <li>Cargos de <strong>gobierno, académicos, administrativos, pastorales, de estudiantes con cargo</strong> y áreas operativas relevantes para el acceso digital.</li>
+        <li>Posiciones plantilla (con sufijo <code>{EP}</code>, <code>{FACU}</code>, etc.) que se instancian por cada unidad académica.</li>
+      </ul>
+      <p>Quedan <strong>fuera del alcance</strong> de este catálogo: los órganos colegiados (Asamblea Universitaria, Consejo Universitario, Consejos de Facultad) cuyos miembros no reciben acceso adicional por membresía, sino por sus cargos individuales ya incluidos.</p>
+
+      <h3 id="s1-3" class="subsection-title">1.3 Relación con el modelo IGA UPeU</h3>
+      <p>El modelo IGA canónico de UPeU se articula en <strong>4 pilares</strong>:</p>
+      <ol>
+        <li><strong>Persona única</strong> — UserType + archetype Person. Identidad consolidada desde LAMB.</li>
+        <li><strong>Afiliaciones multivalor</strong> — Birthright Roles asignados por <code>primaryAffiliation</code> (estudiante, docente, administrativo, egresado).</li>
+        <li><strong>Position-Based Access Control (PBAC)</strong> ← <em>este documento</em> — Roles adicionales derivados del cargo específico.</li>
+        <li><strong>JML orquestado por LAMB</strong> — Eventos Joiner/Mover/Leaver disparan la asignación y revocación automática de Positions.</li>
+      </ol>
+      <div class="infobox green">
+        Las Positions amplían (no reemplazan) los Birthright Roles del Pilar 2. Un Decano tiene su Birthright Role de docente <em>más</em> el Position Role de Decano, cuya asignación le confiere accesos adicionales a sistemas de gestión académica.
+      </div>
+
+      <h3 id="s1-4" class="subsection-title">1.4 Glosario de términos</h3>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Término</th><th>Definición</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>IGA</strong></td><td>Identity Governance and Administration — disciplina y plataforma de gobierno de identidades.</td></tr>
+            <tr><td><strong>PBAC</strong></td><td>Position-Based Access Control — modelo donde los accesos se derivan del cargo institucional.</td></tr>
+            <tr><td><strong>Position</strong></td><td>Objeto <code>ServiceType</code> en MidPoint con archetype <em>Position</em>. Representa un cargo institucional y sus inducements de acceso.</td></tr>
+            <tr><td><strong>POS-code</strong></td><td>Identificador canónico de una Position (e.g., <code>POS-RECTOR</code>). Estable ante cambios de titulares.</td></tr>
+            <tr><td><strong>Birthright Role</strong></td><td>Rol asignado automáticamente por afiliación (e.g., <code>BR-Docente</code>). Capa 1 del modelo.</td></tr>
+            <tr><td><strong>Application Role (AR)</strong></td><td>Rol que mapea a permisos en un sistema específico (e.g., <code>AR-Decanato-Canvas</code>).</td></tr>
+            <tr><td><strong>Inducement</strong></td><td>Relación en MidPoint que hace que un rol asigne automáticamente otro rol o cuenta al usuario.</td></tr>
+            <tr><td><strong>LAMB</strong></td><td>Sistema ERP denominacional de UPeU (Oracle). Fuente de verdad de datos HR y académicos.</td></tr>
+            <tr><td><strong>JML</strong></td><td>Joiner-Mover-Leaver — ciclo de vida laboral. Los eventos JML disparan asignaciones en MidPoint.</td></tr>
+            <tr><td><strong>OID</strong></td><td>Object Identifier — UUID único de un objeto en MidPoint. Estable en el tiempo.</td></tr>
+            <tr><td><strong>ServiceType</strong></td><td>Tipo de objeto MidPoint utilizado para modelar servicios, recursos y positions.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         2. MARCO NORMATIVO
+         ============================================================ -->
+    <section id="sec-marco" class="section">
+      <h2 class="section-title">2. Marco normativo</h2>
+
+      <h3 id="s2-1" class="subsection-title">2.1 Ley 30220 — Ley Universitaria</h3>
+      <p>La <a href="https://www.gob.pe/institucion/congreso-de-la-republica/normas-legales/243402-30220" target="_blank" rel="noopener">Ley N° 30220</a> (promulgada 2014-07-09) es la norma fundamental del sistema universitario peruano. Para efectos de este catálogo, son relevantes:</p>
+      <ul>
+        <li><strong>Art. 63-72:</strong> Régimen del docente universitario — categorías (Principal, Asociado, Auxiliar), dedicaciones (TC, TP), docentes extraordinarios (Honorario, Emérito, Visitante).</li>
+        <li><strong>Art. 55-62:</strong> Gobierno universitario — Rector, Vicerrectores, Decanos, Jefes de Departamento.</li>
+        <li><strong>Art. 73-79:</strong> Carrera del personal no docente.</li>
+        <li><strong>Art. 135-140:</strong> Régimen económico. Condiciona el acceso a sistemas financieros.</li>
+      </ul>
+      <div class="infobox">
+        La nomenclatura de docentes (<code>POS-DOCENTE-PRINCIPAL-TC</code>, etc.) se alinea directamente con las categorías establecidas en el art. 64 de la Ley 30220, garantizando trazabilidad normativa en el modelo IGA.
+      </div>
+
+      <h3 id="s2-2" class="subsection-title">2.2 Estatuto UPeU</h3>
+      <p>El Estatuto de la Universidad Peruana Unión, conforme a la Ley 30220 y el modelo educativo adventista, define la estructura orgánica institucional, los órganos de gobierno y las competencias de cada cargo. Las posiciones de este catálogo son consistentes con el organigrama estatutario vigente.</p>
+
+      <h3 id="s2-3" class="subsection-title">2.3 Resolución N° 0001-2026/UPeU-AU — Organigrama Institucional</h3>
+      <p>La Resolución de Asamblea Universitaria N° 0001-2026/UPeU-AU (enero 2026) aprueba el organigrama institucional vigente. Este documento es la <strong>fuente primaria</strong> para la estructura jerárquica de las Positions, con los siguientes niveles:</p>
+      <ol>
+        <li>Asamblea Universitaria (AU) → Consejo Universitario (CU)</li>
+        <li>Rectorado (Rector + Vicerrectores + Secretario General)</li>
+        <li>Órganos de asesoría y control (Defensor, Tribunal de Honor, Auditor, etc.)</li>
+        <li>Vicerrectorado Académico, Administrativo y de Bienestar Universitario</li>
+        <li>Facultades, Escuelas Profesionales, Departamentos Académicos</li>
+        <li>Direcciones de apoyo y áreas operativas por campus</li>
+      </ol>
+
+      <h3 id="s2-4" class="subsection-title">2.4 Estándares IGA aplicados</h3>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Estándar</th><th>Referencia</th><th>Aplicación en UPeU IGA</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>INCITS 359-2012</strong></td>
+              <td>Role Based Access Control (ANSI/INCITS 359)</td>
+              <td>Base conceptual del modelo RBAC extendido con PBAC. Define Roles, Assignments, Sessions.</td>
+            </tr>
+            <tr>
+              <td><strong>ISO 24760-1:2019</strong></td>
+              <td>IT Security — Identity management framework</td>
+              <td>Marco de gestión de identidades: ciclo de vida, atributos, reclamaciones de identidad.</td>
+            </tr>
+            <tr>
+              <td><strong>SCIM 2.0</strong></td>
+              <td><a href="https://tools.ietf.org/html/rfc7643" target="_blank" rel="noopener">RFC 7643</a> / <a href="https://tools.ietf.org/html/rfc7644" target="_blank" rel="noopener">RFC 7644</a></td>
+              <td>Protocolo de aprovisionamiento de identidades entre MidPoint y aplicaciones de destino.</td>
+            </tr>
+            <tr>
+              <td><strong>eduPerson 2021</strong></td>
+              <td><a href="https://www.internet2.edu/media/medialibrary/2013/09/04/internet2-mace-dir-eduperson-201203.html" target="_blank" rel="noopener">Internet2 / MACE-Dir</a></td>
+              <td>Atributos LDAP para el ámbito universitario. Usado en OpenLDAP identity cache UPeU.</td>
+            </tr>
+            <tr>
+              <td><strong>SCHAC v1.5</strong></td>
+              <td><a href="https://wiki.refeds.org/display/STAN/SCHAC" target="_blank" rel="noopener">REFEDS SCHAC</a></td>
+              <td>Schema para atributos de identidad en instituciones de educación superior. Complementa eduPerson.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         3. ARQUITECTURA PBAC
+         ============================================================ -->
+    <section id="sec-pbac" class="section">
+      <h2 class="section-title">3. Arquitectura PBAC en MidPoint</h2>
+
+      <h3 id="s3-1" class="subsection-title">3.1 Modelo conceptual — qué es una Position en IGA</h3>
+      <p>En el modelo IGA canónico de UPeU, una <strong>Position</strong> es una abstracción que representa un <em>cargo institucional formal</em>, independiente de la persona que lo ocupa en un momento dado. Este enfoque aporta:</p>
+      <ul>
+        <li><strong>Estabilidad:</strong> El POS-code no cambia cuando cambia el titular.</li>
+        <li><strong>Trazabilidad:</strong> Cada acceso digital puede rastrearse hasta la norma que justifica el cargo.</li>
+        <li><strong>Automatización JML:</strong> Cuando LAMB registra que una persona asume o deja un cargo, MidPoint asigna o revoca la Position sin intervención manual.</li>
+        <li><strong>Separación de responsabilidades:</strong> La Position define <em>qué</em> se accede; la política RBAC define <em>cómo</em> se controla.</li>
+      </ul>
+
+      <div class="svg-container">
+        <img src="assets/svg/pbac-layers.svg" alt="Capas del modelo PBAC UPeU" loading="lazy">
+      </div>
+
+      <h3 id="s3-2" class="subsection-title">3.2 Position como ServiceType en MidPoint</h3>
+      <p>En MidPoint 4.10.2, las Positions se implementan como objetos <code>ServiceType</code> con el archetype <strong>Position</strong> (OID: <code>b51e4e39-fc48-42ef-9916-3b7ad6647b9b</code>). El archetype impone:</p>
+      <ul>
+        <li>Validación del atributo <code>identifier</code> con patrón <code>POS-[A-Z0-9-]+</code></li>
+        <li>Restricción de asignación: solo usuarios con <code>primaryAffiliation</code> correspondiente pueden recibir la Position.</li>
+        <li>Template de inducements: cada Position induce los Application Roles que corresponden al cargo.</li>
+      </ul>
+      <pre class="code-block"><span class="xml-comment">&lt;!-- Estructura básica de una Position en MidPoint --&gt;</span>
+<span class="xml-tag">&lt;service</span> <span class="xml-attr">xmlns</span>=<span class="xml-val">"http://midpoint.evolveum.com/xml/ns/public/common/common-3"</span>
+         <span class="xml-attr">oid</span>=<span class="xml-val">"[UUID generado]"</span><span class="xml-tag">&gt;</span>
+  <span class="xml-tag">&lt;name&gt;</span><span class="xml-text">POS-RECTOR</span><span class="xml-tag">&lt;/name&gt;</span>
+  <span class="xml-tag">&lt;description&gt;</span><span class="xml-text">Rector de la Universidad Peruana Unión</span><span class="xml-tag">&lt;/description&gt;</span>
+  <span class="xml-tag">&lt;assignment&gt;</span>
+    <span class="xml-tag">&lt;targetRef</span> <span class="xml-attr">oid</span>=<span class="xml-val">"b51e4e39-fc48-42ef-9916-3b7ad6647b9b"</span>
+               <span class="xml-attr">type</span>=<span class="xml-val">"ArchetypeType"</span><span class="xml-tag">/&gt;</span> <span class="xml-comment">&lt;!-- Archetype Position --&gt;</span>
+  <span class="xml-tag">&lt;/assignment&gt;</span>
+  <span class="xml-tag">&lt;identifier&gt;</span><span class="xml-text">POS-RECTOR</span><span class="xml-tag">&lt;/identifier&gt;</span>
+  <span class="xml-tag">&lt;displayName&gt;</span><span class="xml-text">Rector</span><span class="xml-tag">&lt;/displayName&gt;</span>
+  <span class="xml-comment">&lt;!-- Inducements que otorga esta Position --&gt;</span>
+  <span class="xml-tag">&lt;inducement&gt;</span>
+    <span class="xml-tag">&lt;targetRef</span> <span class="xml-attr">oid</span>=<span class="xml-val">"[OID AR-Rector-Admin]"</span>
+               <span class="xml-attr">type</span>=<span class="xml-val">"RoleType"</span><span class="xml-tag">/&gt;</span>
+  <span class="xml-tag">&lt;/inducement&gt;</span>
+<span class="xml-tag">&lt;/service&gt;</span></pre>
+
+      <h3 id="s3-3" class="subsection-title">3.3 Flujo: LAMB → MidPoint → Position → Privilegios</h3>
+      <div class="svg-container">
+        <img src="assets/svg/iga-architecture.svg" alt="Arquitectura IGA UPeU" loading="lazy">
+      </div>
+      <div class="svg-container">
+        <img src="assets/svg/assignment-flow.svg" alt="Flujo de asignación de Position" loading="lazy">
+      </div>
+
+      <h3 id="s3-4" class="subsection-title">3.4 Diferencia entre Position y Rol de Afiliación (Birthright Role)</h3>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Aspecto</th><th>Birthright Role (Pilar 2)</th><th>Position Role (Pilar 3)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Fuente de asignación</td><td><code>primaryAffiliation</code> (estudiante/docente/admin)</td><td>Cargo en LAMB (<code>ID_PUESTO</code>)</td></tr>
+            <tr><td>Cardinalidad</td><td>Generalmente 1 por persona</td><td>Puede ser múltiple (e.g., Docente + Investigador RENACYT)</td></tr>
+            <tr><td>Duración</td><td>Mientras dure la afiliación activa</td><td>Mientras dure la designación al cargo</td></tr>
+            <tr><td>Accesos que otorga</td><td>Accesos base: correo, LMS, sistemas de consulta</td><td>Accesos adicionales específicos del cargo</td></tr>
+            <tr><td>Ejemplos</td><td><code>BR-Docente</code>, <code>BR-Estudiante</code></td><td><code>POS-DECANO-FIA</code>, <code>POS-DIR-DTI</code></td></tr>
+            <tr><td>Persiste tras fin de cargo</td><td>Sí (mientras afiliación activa)</td><td>No — se revoca con el JML Leaver del cargo</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="s3-5" class="subsection-title">3.5 Ciclo de vida de una Position</h3>
+      <div class="svg-container">
+        <img src="assets/svg/position-lifecycle.svg" alt="Ciclo de vida de una Position" loading="lazy">
+      </div>
+    </section>
+
+    <!-- ============================================================
+         4. ORGANIGRAMA
+         ============================================================ -->
+    <section id="sec-organigrama" class="section">
+      <h2 class="section-title">4. Organigrama Institucional</h2>
+      <p>El siguiente diagrama muestra la estructura jerárquica de UPeU conforme a la Resolución N° 0001-2026/UPeU-AU, con los cargos principales modelados como Positions en el sistema IGA.</p>
+
+      <div class="svg-container">
+        <img src="assets/svg/organigrama.svg" alt="Organigrama institucional UPeU" loading="lazy">
+      </div>
+
+      <h3 class="subsection-title">Órganos de gobierno colegiado (no modelados como Position individual)</h3>
+      <div class="infobox">
+        Los siguientes órganos colegiados <strong>no se modelan como Position</strong> en IGA, ya que sus miembros acceden a los sistemas por sus cargos individuales (Rector, Decano, Docente ordinario). El acceso adicional de sesiones se gestiona mediante atributos temporales.
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Órgano</th><th>Composición</th><th>Acceso IGA</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Asamblea Universitaria (AU)</td><td>Rector, Vicerrectores, Decanos, docentes elegidos, estudiantes</td><td>Por cargos individuales + atributo <code>upeu:member:au</code></td></tr>
+            <tr><td>Consejo Universitario (CU)</td><td>Rector, VR, Decanos, representantes estudiantiles</td><td>Por cargos individuales + atributo <code>upeu:member:cu</code></td></tr>
+            <tr><td>Consejo de Facultad (CF)</td><td>Decano, docentes de la facultad, representante estudiantil</td><td>Por cargos individuales + <code>POS-REP-ESTUDIANTIL-{FACU}</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         5. CATÁLOGO DE POSITIONS
+         ============================================================ -->
+    <section id="sec-catalogo" class="section">
+      <h2 class="section-title">5. Catálogo de Positions</h2>
+
+      <!-- BUSCADOR -->
+      <div class="search-bar">
+        <input type="search" id="pos-search" placeholder="🔍  Buscar por POS-code, nombre, unidad..." autocomplete="off">
+        <span id="search-count" class="search-count"></span>
+      </div>
+
+      <div class="infobox">
+        <strong>Convención de OIDs:</strong> Los OIDs mostrados como <code class="oid-placeholder">⟨pendiente⟩</code> se generarán al importar el objeto en MidPoint PROD. Los OIDs son estables una vez asignados y no cambian con cambios de titular o renombramiento.
+      </div>
+
+      <div class="infobox gold" id="s5-fuente-lamb">
+        <strong>Fuente de datos LAMB:</strong> Los datos de misión, funciones, responsabilidades y competencias que aparecen en los acordeones expandibles provienen del Sistema de Gestión del Talento Humano (GTH) de la plataforma LAMB — schema <code>ENOC</code>, tabla <code>PLLA_PERFIL_PUESTO</code> — consultado el <strong>2026-05-18</strong> en modo solo lectura. El <strong>ID LAMB</strong> corresponde a <code>ENOC.PLLA_PUESTO.ID_PUESTO</code>, que es el identificador canónico del puesto en Oracle. La columna <strong>ID LAMB</strong> con valor <em>–</em> indica que el mapeo aún no ha sido confirmado con GTH.
+      </div>
+
+      <!-- ===== 5.1 GOBIERNO ===== -->
+      <div id="s5-1" class="pos-subsection">
+        <h3 class="subsection-title">5.1 Gobierno (Ley 30220)</h3>
+        <div class="table-wrap">
+          <table class="data-table pos-catalog">
+            <thead>
+              <tr>
+                <th>POS-code</th>
+                <th>ID LAMB</th>
+                <th>Nombre del cargo</th>
+                <th>Unidad</th>
+                <th>OID (MidPoint)</th>
+                <th>Fuente normativa</th>
+                <th>Titular actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pos-code">POS-RECTOR</span></td>
+                <td><code>187</code></td>
+                <td>
+                  Rector
+                  <details>
+                    <summary>Ver misión y funciones</summary>
+                    <div class="lamb-detail">
+                      <p><strong>Misión (LAMB ID_PERFIL=1):</strong> Es el personero y representante legal de la UPeU. Responsable de la dirección, gestión y representación de la Universidad ante toda clase de autoridades y entidades públicas o privadas, nacionales e internacionales.</p>
+                      <p><strong>Responsabilidades principales:</strong></p>
+                      <ul>
+                        <li>Convocar y presidir el Consejo Universitario y la Asamblea Universitaria</li>
+                        <li>Dirigir la actividad académica y la gestión administrativa de la UPeU</li>
+                        <li>Representar a la universidad ante entidades públicas y privadas</li>
+                        <li>Refrendar diplomas y certificados académicos</li>
+                      </ul>
+                      <p><strong>Experiencia requerida:</strong> 12 años mínimo. <strong>Autonomía:</strong> máxima (nivel 3).</p>
+                      <p><strong>Competencias (Grupo Ejecutivo):</strong> Dirección de Personas, Empowerment, Iniciativa, Pensamiento Estratégico, Relaciones Públicas, Toma de Decisiones.</p>
+                    </div>
+                  </details>
+                </td>
+                <td>Rectorado</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 55</span></td>
+                <td>Murillo Antón, Walter Sixto <small style="color:#666;display:block">rectorado@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-VICE-RECTOR-ACAD</span></td>
+                <td><code>218</code></td>
+                <td>
+                  Vicerrector Académico
+                  <details>
+                    <summary>Ver misión y funciones</summary>
+                    <div class="lamb-detail">
+                      <p><strong>Misión (LAMB ID_PERFIL=81):</strong> Planificar, dirigir y supervisar los procesos académicos de la universidad.</p>
+                      <p><strong>Experiencia requerida:</strong> 12–15 años. <strong>Autonomía:</strong> máxima (nivel 3).</p>
+                      <p><strong>Competencias (Grupo Ejecutivo):</strong> Dirección de Personas, Empowerment, Iniciativa, Pensamiento Estratégico, Relaciones Públicas, Toma de Decisiones.</p>
+                    </div>
+                  </details>
+                </td>
+                <td>Vicerrectorado Académico</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 57</span></td>
+                <td>Dávila Villavicencio, Roussel Dulio <small style="color:#666;display:block">vicerrector@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-VICE-RECTOR-ADM</span></td>
+                <td><code>219</code></td>
+                <td>
+                  Vicerrector Administrativo
+                  <details>
+                    <summary>Ver misión y funciones</summary>
+                    <div class="lamb-detail">
+                      <p><strong>Misión (LAMB ID_PERFIL=2):</strong> Planificar, dirigir y supervisar los procesos administrativos y financieros de la universidad.</p>
+                      <p><strong>Experiencia requerida:</strong> 12–15 años. <strong>Autonomía:</strong> máxima (nivel 3).</p>
+                      <p><strong>Profesión requerida:</strong> Contabilidad (CNO 251003) / Economía o Administración (CNO 252001).</p>
+                      <p><strong>Competencias (Grupo Ejecutivo):</strong> Dirección de Personas, Empowerment, Iniciativa, Pensamiento Estratégico, Relaciones Públicas, Toma de Decisiones.</p>
+                    </div>
+                  </details>
+                </td>
+                <td>Vicerrectorado Administrativo</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 57</span></td>
+                <td>Lévano Chambi, Jimmy <small style="color:#666;display:block">gerencia@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-VICE-RECTOR-BIENESTAR</span></td>
+                <td><code>220</code></td>
+                <td>
+                  Vicerrector de Bienestar Universitario
+                  <details>
+                    <summary>Ver misión y funciones</summary>
+                    <div class="lamb-detail">
+                      <p><strong>Misión (LAMB ID_PERFIL=124):</strong> Constatar la ejecución del planeamiento estratégico; realizar visitas periódicas a unidades; coordinar reuniones de gestión.</p>
+                      <p><strong>Experiencia requerida:</strong> 12–15 años. <strong>Autonomía:</strong> máxima (nivel 3).</p>
+                      <p><strong>Competencias (Grupo Ejecutivo):</strong> Dirección de Personas, Empowerment, Iniciativa, Pensamiento Estratégico, Relaciones Públicas, Toma de Decisiones.</p>
+                    </div>
+                  </details>
+                </td>
+                <td>Vicerrectorado de Bienestar</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Estatuto UPeU</span></td>
+                <td>Gómez Nicoll, Raúl Daniel <small style="color:#666;display:block">vicerrector.bu@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-SECRETARIO-GENERAL</span></td>
+                <td><code>205</code></td>
+                <td>
+                  Secretario General
+                  <details>
+                    <summary>Ver misión y funciones</summary>
+                    <div class="lamb-detail">
+                      <p><strong>Misión (LAMB ID_PERFIL=33):</strong> Gestionar la documentación oficial de la universidad; certificar actos administrativos y resoluciones del Rectorado y Consejo Universitario.</p>
+                      <p><strong>Experiencia requerida:</strong> 2 años. <strong>Profesión requerida:</strong> Derecho / Administración.</p>
+                      <p><strong>Competencias (Grupo Directores):</strong> Autocontrol, Capacidad de Planificación y Organización, Comunicación, Dirección de Equipos de Trabajo, Liderazgo.</p>
+                    </div>
+                  </details>
+                </td>
+                <td>Rectorado</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 62</span></td>
+                <td>Gonzales Taco, René Wilberth <small style="color:#666;display:block">secgeneral@upeu.edu.pe</small></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 5.2 ASESORÍA Y CONTROL ===== -->
+      <div id="s5-2" class="pos-subsection">
+        <h3 class="subsection-title">5.2 Asesoría y Control / Rectorado</h3>
+        <div class="table-wrap">
+          <table class="data-table pos-catalog">
+            <thead>
+              <tr>
+                <th>POS-code</th>
+                <th>ID LAMB</th>
+                <th>Nombre del cargo</th>
+                <th>Unidad</th>
+                <th>OID</th>
+                <th>Fuente normativa</th>
+                <th>Titular actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pos-code">POS-DEFENSOR-UNIVERSITARIO</span></td>
+                <td>-</td>
+                <td>Defensor Universitario</td>
+                <td>Rectorado</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 130</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-TRIBUNAL-HONOR</span></td>
+                <td>-</td>
+                <td>Miembro Tribunal de Honor Universitario</td>
+                <td>Rectorado</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Estatuto UPeU</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-COOPERACION-PROYECTOS</span></td>
+                <td>-</td>
+                <td>Director de Cooperación y Proyectos</td>
+                <td>Rectorado</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-PLANIF-CALIDAD</span></td>
+                <td><code>106</code></td>
+                <td>
+                  Director de Planificación y Gestión de la Calidad
+                  <details>
+                    <summary>Ver misión y funciones</summary>
+                    <div class="lamb-detail">
+                      <p><strong>Responsabilidades principales:</strong></p>
+                      <ul>
+                        <li>Difundir modelos y resultados del proceso de acreditación institucional</li>
+                        <li>Planear el Sistema de Evaluación Institucional</li>
+                        <li>Coordinar con áreas académicas y administrativas el cumplimiento de indicadores de calidad</li>
+                      </ul>
+                      <p><strong>Competencias (Grupo Directores):</strong> Autocontrol, Capacidad de Planificación y Organización, Comunicación, Dirección de Equipos de Trabajo, Liderazgo.</p>
+                    </div>
+                  </details>
+                </td>
+                <td>Planificación</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td>Apaza Romero, Godofredo</td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-AUDITOR-INTERNO</span></td>
+                <td>-</td>
+                <td>Auditor Interno</td>
+                <td>Auditoría Interna</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30225</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-IMAGEN-RRPP</span></td>
+                <td>-</td>
+                <td>Director de Imagen Institucional y RRPP</td>
+                <td>Imagen Institucional</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-MISION</span></td>
+                <td>-</td>
+                <td>Director de Misión</td>
+                <td>Misión</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Estatuto UPeU</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-FONDO-EDITORIAL</span></td>
+                <td>-</td>
+                <td>Director de Fondo Editorial</td>
+                <td>Fondo Editorial Unión</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-ASESOR-LEGAL</span></td>
+                <td>-</td>
+                <td>Asesor Legal</td>
+                <td>Asesoría Jurídica</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Estatuto UPeU</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 5.3 VR ACADÉMICO ===== -->
+      <div id="s5-3" class="pos-subsection">
+        <h3 class="subsection-title">5.3 Vicerrectorado Académico</h3>
+        <div class="table-wrap">
+          <table class="data-table pos-catalog">
+            <thead>
+              <tr>
+                <th>POS-code</th>
+                <th>ID LAMB</th>
+                <th>Nombre del cargo</th>
+                <th>Unidad</th>
+                <th>OID</th>
+                <th>Fuente normativa</th>
+                <th>Titular actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pos-code">POS-DIR-ASUNTOS-ACAD</span></td>
+                <td><code>99</code></td>
+                <td>Director Académico Universitario</td>
+                <td>VR Académico</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td>Saavedra Vascónez, Carlos Eduardo</td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-INV-INNOVACION</span></td>
+                <td><code>117</code></td>
+                <td>
+                  Director General de Investigación
+                  <details>
+                    <summary>Ver misión y funciones</summary>
+                    <div class="lamb-detail">
+                      <p><strong>Misión (LAMB ID_PERFIL=64):</strong> Promover convenios interinstitucionales de investigación; evaluar investigación docente anual; gestionar fondos CONCYTEC/RENACYT.</p>
+                      <p><strong>Responsabilidades principales:</strong></p>
+                      <ul>
+                        <li>Promover convenios interinstitucionales de investigación</li>
+                        <li>Evaluar la actividad investigadora docente anualmente</li>
+                        <li>Gestionar registro de investigadores en RENACYT/CONCYTEC</li>
+                      </ul>
+                      <p><strong>Titulares activos:</strong> 2 (Lima). <strong>Competencias (Grupo Directores):</strong> Autocontrol, Capacidad de Planificación y Organización, Comunicación, Dirección de Equipos, Liderazgo.</p>
+                    </div>
+                  </details>
+                </td>
+                <td>Investigación</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 48</span></td>
+                <td>Huancahuire Vega, Salomón / Robles Lirio, Freddy Jesús</td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-EDUC-DISTANCIA</span></td>
+                <td>-</td>
+                <td>Director de Educación Adventista a Distancia</td>
+                <td>VR Académico</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td>Cotacallapa Subia, Luis Eddie <small style="color:#666;display:block">direccion.ead@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DECANO-FIA</span></td>
+                <td><code>97</code></td>
+                <td>
+                  Decano Facultad de Ingeniería y Arquitectura
+                  <details>
+                    <summary>Ver misión y funciones</summary>
+                    <div class="lamb-detail">
+                      <p><strong>Misión (LAMB ID_PERFIL=89/185/231/281/300):</strong> El decano es la máxima autoridad de la facultad, responsable de dirigir la gestión administrativa y académica de su facultad conforme a la Ley 30220 y el Estatuto UPeU.</p>
+                      <p><strong>Responsabilidades principales:</strong></p>
+                      <ul>
+                        <li>Dirigir administrativa y académicamente la Facultad</li>
+                        <li>Representar a la Facultad ante la AU y el CU</li>
+                        <li>Presidir el Consejo de Facultad con Plan Operativo Anual</li>
+                        <li>Promover el perfeccionamiento y actualización docente</li>
+                        <li>Refrendar diplomas y certificados de la Facultad</li>
+                      </ul>
+                      <p><strong>Experiencia requerida:</strong> 10–12 años. <strong>Competencias (Grupo Decanos):</strong> Autocontrol, Capacidad de Planificación, Desarrollo de Relaciones, Dirección de Equipos, Iniciativa.</p>
+                    </div>
+                  </details>
+                </td>
+                <td>FIA</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 60</span></td>
+                <td>Acuña Salinas, Erika Inés <small style="color:#666;display:block">decanatura.fia@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DECANO-FACTEO</span></td>
+                <td><code>97</code></td>
+                <td>Decano Facultad de Ciencias Teológicas</td>
+                <td>FACTEO</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 60</span></td>
+                <td>Rojas Yauri, Benjamín <small style="color:#666;display:block">decano.teologia@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DECANO-FACISAL</span></td>
+                <td><code>97</code></td>
+                <td>Decano Facultad de Ciencias de la Salud</td>
+                <td>FACISAL</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 60</span></td>
+                <td>Fernández Molocho, Lili Albertina <small style="color:#666;display:block">decanatura.fcs@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DECANO-FACIHED</span></td>
+                <td><code>97</code></td>
+                <td>Decano Facultad de Ciencias Humanas y Educación</td>
+                <td>FACIHED</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 60</span></td>
+                <td>Maquera Sosa, Jorge Platón <small style="color:#666;display:block">decanatura.facihed@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DECANO-FCE</span></td>
+                <td><code>97</code></td>
+                <td>Decano Facultad de Ciencias Empresariales</td>
+                <td>FCE</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 60</span></td>
+                <td>De La Cruz Vargas, Alexander David <small style="color:#666;display:block">decanatura.fce@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-EP-{EP}</span></td>
+                <td><code>103</code></td>
+                <td>Director de Escuela Profesional <span class="badge-template">plantilla</span></td>
+                <td>Facultad correspondiente</td>
+                <td><span class="oid-placeholder">⟨pendiente por EP⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 61</span></td>
+                <td><em>Por instancia</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-JEFE-DPTO-ACAD-{DPTO}</span></td>
+                <td>-</td>
+                <td>Jefe de Departamento Académico <span class="badge-template">plantilla</span></td>
+                <td>Facultad correspondiente</td>
+                <td><span class="oid-placeholder">⟨pendiente por Dpto⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 62</span></td>
+                <td><em>Por instancia</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-ESCUELA-POSGRADO</span></td>
+                <td><code>118</code></td>
+                <td>Director de la Escuela de Posgrado</td>
+                <td>Escuela de Posgrado</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 65</span></td>
+                <td>Quinteros Zúñiga, Damaris Susana</td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-UNIDAD-POSGRADO-{EP}</span></td>
+                <td><code>109</code></td>
+                <td>Director de Unidad de Posgrado <span class="badge-template">plantilla</span></td>
+                <td>Escuela de Posgrado</td>
+                <td><span class="oid-placeholder">⟨pendiente por EP⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 65</span></td>
+                <td><em>Por instancia</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DOCENTE-PRINCIPAL-TC</span></td>
+                <td>-</td>
+                <td>Docente Ordinario Principal — Tiempo Completo</td>
+                <td>Departamento Académico</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 64</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DOCENTE-PRINCIPAL-TP</span></td>
+                <td>-</td>
+                <td>Docente Ordinario Principal — Tiempo Parcial</td>
+                <td>Departamento Académico</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 64</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DOCENTE-ASOCIADO-TC</span></td>
+                <td>-</td>
+                <td>Docente Ordinario Asociado — Tiempo Completo</td>
+                <td>Departamento Académico</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 64</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DOCENTE-ASOCIADO-TP</span></td>
+                <td>-</td>
+                <td>Docente Ordinario Asociado — Tiempo Parcial</td>
+                <td>Departamento Académico</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 64</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DOCENTE-AUXILIAR-TC</span></td>
+                <td>-</td>
+                <td>Docente Ordinario Auxiliar — Tiempo Completo</td>
+                <td>Departamento Académico</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 64</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DOCENTE-AUXILIAR-TP</span></td>
+                <td>-</td>
+                <td>Docente Ordinario Auxiliar — Tiempo Parcial</td>
+                <td>Departamento Académico</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 64</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DOCENTE-CONTRATADO</span></td>
+                <td>-</td>
+                <td>Docente Contratado</td>
+                <td>Departamento Académico</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 67</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DOCENTE-HONORARIO</span></td>
+                <td>-</td>
+                <td>Docente Extraordinario Honorario</td>
+                <td>Rectorado</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 68</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DOCENTE-EMERITO</span></td>
+                <td>-</td>
+                <td>Docente Extraordinario Emérito</td>
+                <td>Rectorado</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 68</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DOCENTE-VISITANTE</span></td>
+                <td>-</td>
+                <td>Docente Extraordinario Visitante</td>
+                <td>Rectorado</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 68</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-INVESTIGADOR-RENACYT-III</span></td>
+                <td>-</td>
+                <td>Investigador RENACYT — Categoría III</td>
+                <td>Investigación</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">CONCYTEC Reglamento</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-INVESTIGADOR-RENACYT-II</span></td>
+                <td>-</td>
+                <td>Investigador RENACYT — Categoría II</td>
+                <td>Investigación</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">CONCYTEC Reglamento</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-INVESTIGADOR-RENACYT-I</span></td>
+                <td>-</td>
+                <td>Investigador RENACYT — Categoría I</td>
+                <td>Investigación</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">CONCYTEC Reglamento</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-INVESTIGADOR-CALIFICADO</span></td>
+                <td>-</td>
+                <td>Investigador CONCYTEC Calificado</td>
+                <td>Investigación</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">CONCYTEC Reglamento</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 5.4 VR ADMINISTRATIVO ===== -->
+      <div id="s5-4" class="pos-subsection">
+        <h3 class="subsection-title">5.4 Vicerrectorado Administrativo</h3>
+        <div class="table-wrap">
+          <table class="data-table pos-catalog">
+            <thead>
+              <tr>
+                <th>POS-code</th>
+                <th>ID LAMB</th>
+                <th>Nombre del cargo</th>
+                <th>Unidad</th>
+                <th>OID</th>
+                <th>Fuente normativa</th>
+                <th>Titular actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pos-code">POS-DIR-DTI</span></td>
+                <td><code>108</code></td>
+                <td>
+                  Director de Tecnologías de Información
+                  <details>
+                    <summary>Ver misión y funciones</summary>
+                    <div class="lamb-detail">
+                      <p><strong>Misión:</strong> Planificar, dirigir y supervisar los sistemas de información y tecnología de la universidad.</p>
+                      <p><strong>Profesión requerida:</strong> Ingeniería de Sistemas/Informática (CNO 217007).</p>
+                      <p><strong>Competencias (Grupo Directores):</strong> Autocontrol, Capacidad de Planificación y Organización, Comunicación, Dirección de Equipos de Trabajo, Liderazgo.</p>
+                    </div>
+                  </details>
+                </td>
+                <td>DTI</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td>Barrantes Delgado, David Jefferson <small style="color:#666;display:block">digesi@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-TALENTO-HUMANO</span></td>
+                <td><code>114</code></td>
+                <td>
+                  Director de Gestión del Talento Humano
+                  <details>
+                    <summary>Ver misión y funciones</summary>
+                    <div class="lamb-detail">
+                      <p><strong>Misión (LAMB ID_PERFIL=22):</strong> El Director de Talento Humano lidera y controla la gestión laboral y organizacional de la UPeU, garantizando el cumplimiento de políticas institucionales y normativa laboral vigente.</p>
+                      <p><strong>Responsabilidades principales:</strong></p>
+                      <ul>
+                        <li>Calcular planilla mensual y depósito de CTS</li>
+                        <li>Actualizar Vida Ley y encuestas MINTRA</li>
+                        <li>Gestionar selección, contratación y desarrollo del personal</li>
+                      </ul>
+                      <p><strong>Experiencia requerida:</strong> 3–5 años. <strong>Autonomía:</strong> nivel 1 (máxima en su área).</p>
+                      <p><strong>Profesión requerida:</strong> Contabilidad (CNO 251003) / Psicología-RRHH (CNO 364004).</p>
+                      <p><strong>Competencias (Grupo Directores):</strong> Autocontrol, Capacidad de Planificación y Organización, Comunicación, Dirección de Equipos de Trabajo, Liderazgo.</p>
+                    </div>
+                  </details>
+                </td>
+                <td>GTH</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td>Jaimes Soncco, Inés Elena <small style="color:#666;display:block">director.dth@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-FINANCIERO</span></td>
+                <td><code>116</code></td>
+                <td>
+                  Director General Financiero Contable
+                  <details>
+                    <summary>Ver misión y funciones</summary>
+                    <div class="lamb-detail">
+                      <p><strong>Responsabilidades principales:</strong></p>
+                      <ul>
+                        <li>Proponer apertura y cierre de cuentas bancarias institucionales</li>
+                        <li>Proyectar el flujo de caja mensual y anual</li>
+                        <li>Supervisar la ejecución presupuestal por unidades</li>
+                      </ul>
+                      <p><strong>Profesión requerida:</strong> Contabilidad (CNO 251003).</p>
+                      <p><strong>Competencias (Grupo Directores):</strong> Autocontrol, Capacidad de Planificación y Organización, Comunicación, Dirección de Equipos de Trabajo, Liderazgo.</p>
+                    </div>
+                  </details>
+                </td>
+                <td>Finanzas</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td>Torres Núñez, Mirtha Jeanette <small style="color:#666;display:block">gerencia.financiera@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-MARKETING</span></td>
+                <td>-</td>
+                <td>Director de Marketing</td>
+                <td>Marketing</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-INFRAESTRUCTURA</span></td>
+                <td>-</td>
+                <td>Director de Infraestructura</td>
+                <td>Infraestructura Física</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-OPERACIONES-CAMPUS-LM</span></td>
+                <td>-</td>
+                <td>Director de Operaciones Campus Lima</td>
+                <td>Campus Lima</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-OPERACIONES-CAMPUS-JU</span></td>
+                <td>-</td>
+                <td>Director de Operaciones Campus Juliaca</td>
+                <td>Campus Juliaca</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td>Carranza Quiroz, José Obed <small style="color:#666;display:block">gerenciaj@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-OPERACIONES-CAMPUS-TA</span></td>
+                <td>-</td>
+                <td>Director de Operaciones Campus Tarapoto</td>
+                <td>Campus Tarapoto</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td>Flores Quinteros, Fernando Gerardo <small style="color:#666;display:block">gerencia.tpp@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-PROD-IMPRENTA</span></td>
+                <td>-</td>
+                <td>Director Centro de Producción Imprenta Unión</td>
+                <td>Imprenta Unión</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-PROD-BIENES</span></td>
+                <td>-</td>
+                <td>Director Centro de Producción de Bienes Unión</td>
+                <td>Bienes Unión</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <!-- DTI Sub-cargos -->
+              <tr>
+                <td><span class="pos-code">POS-JEFE-INFRA-TI</span></td>
+                <td>-</td>
+                <td>Jefe de Infraestructura TI</td>
+                <td>DTI</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-JEFE-DESARROLLO-SI</span></td>
+                <td>-</td>
+                <td>Jefe de Desarrollo de Sistemas de Información</td>
+                <td>DTI</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-JEFE-SOPORTE-TI</span></td>
+                <td>-</td>
+                <td>Jefe de Soporte TI / Helpdesk</td>
+                <td>DTI</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-ANALISTA-SI</span></td>
+                <td>-</td>
+                <td>Analista de Sistemas</td>
+                <td>DTI</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-TECNICO-TI</span></td>
+                <td>-</td>
+                <td>Técnico TI</td>
+                <td>DTI</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <!-- GTH Sub-cargos -->
+              <tr>
+                <td><span class="pos-code">POS-COORD-SELECCION</span></td>
+                <td>-</td>
+                <td>Coordinador de Selección y Contratación</td>
+                <td>GTH</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-COORD-CAPACITACION</span></td>
+                <td>-</td>
+                <td>Coordinador de Capacitación y Desarrollo</td>
+                <td>GTH</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-COORD-REMUNERACIONES</span></td>
+                <td>-</td>
+                <td>Coordinador de Remuneraciones y Planillas</td>
+                <td>GTH</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-ASIST-RRHH</span></td>
+                <td>-</td>
+                <td>Asistente de Recursos Humanos</td>
+                <td>GTH</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 5.5 VR BIENESTAR ===== -->
+      <div id="s5-5" class="pos-subsection">
+        <h3 class="subsection-title">5.5 Vicerrectorado de Bienestar Universitario</h3>
+        <div class="table-wrap">
+          <table class="data-table pos-catalog">
+            <thead>
+              <tr>
+                <th>POS-code</th>
+                <th>ID LAMB</th>
+                <th>Nombre del cargo</th>
+                <th>Unidad</th>
+                <th>OID</th>
+                <th>Fuente normativa</th>
+                <th>Titular actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pos-code">POS-DIR-UNIV-SALUDABLE</span></td>
+                <td>-</td>
+                <td>Director de Universidad Saludable</td>
+                <td>Bienestar</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-BIENESTAR-UNIV</span></td>
+                <td>-</td>
+                <td>Director de Bienestar Universitario</td>
+                <td>Bienestar</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 127</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-PROG-DEPORTIVO</span></td>
+                <td>-</td>
+                <td>Director Programa Deportivo de Alta Competencia</td>
+                <td>Bienestar</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-INST-COLPORTOR</span></td>
+                <td>-</td>
+                <td>Director Instituto de Desarrollo del Estudiante Colportor</td>
+                <td>Bienestar</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Estatuto UPeU</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 5.6 CAMPUS ===== -->
+      <div id="s5-6" class="pos-subsection">
+        <h3 class="subsection-title">5.6 Dirección General de Campus</h3>
+        <div class="table-wrap">
+          <table class="data-table pos-catalog">
+            <thead>
+              <tr>
+                <th>POS-code</th>
+                <th>ID LAMB</th>
+                <th>Nombre del cargo</th>
+                <th>Campus</th>
+                <th>OID</th>
+                <th>Fuente normativa</th>
+                <th>Titular actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pos-code">POS-DIR-GENERAL-CAMPUS-LM</span></td>
+                <td><code>104</code></td>
+                <td>Director General de Campus Lima</td>
+                <td>Lima</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em> <small style="color:#666;display:block">DirectorGeneralLima@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-GENERAL-CAMPUS-JU</span></td>
+                <td><code>104</code></td>
+                <td>Director General de Campus Juliaca</td>
+                <td>Juliaca</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td>Coaquira Tuco, Carlos Mediver <small style="color:#666;display:block">dirgeneralj@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-GENERAL-CAMPUS-TA</span></td>
+                <td><code>104</code></td>
+                <td>Director General de Campus Tarapoto</td>
+                <td>Tarapoto</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td>Vallejos Atalaya, María <small style="color:#666;display:block">dg.tpp@upeu.edu.pe</small></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 5.7 BIBLIOTECA / CRAI ===== -->
+      <div id="s5-7" class="pos-subsection">
+        <h3 class="subsection-title">5.7 Biblioteca / CRAI</h3>
+        <div class="table-wrap">
+          <table class="data-table pos-catalog">
+            <thead>
+              <tr>
+                <th>POS-code</th>
+                <th>ID LAMB</th>
+                <th>Nombre del cargo</th>
+                <th>Sede</th>
+                <th>OID</th>
+                <th>Fuente normativa</th>
+                <th>Titular actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pos-code">POS-JEFE-BIBLIOTECA-LM</span></td>
+                <td><code>112</code></td>
+                <td>
+                  Jefe Biblioteca Lima (BUL)
+                  <details>
+                    <summary>Ver misión y funciones</summary>
+                    <div class="lamb-detail">
+                      <p><strong>Misión (LAMB ID_PERFIL=382):</strong> Planificar los servicios bibliotecarios del CRAI; dirigir recursos humanos y procesos; formular programa de desarrollo del Centro de Recursos para el Aprendizaje e Investigación.</p>
+                      <p><strong>Experiencia requerida:</strong> 5 años.</p>
+                      <p><strong>Titulares activos:</strong> 2 (Lima). <strong>Competencias (Grupo Directores):</strong> Autocontrol, Capacidad de Planificación y Organización, Comunicación, Dirección de Equipos de Trabajo, Liderazgo.</p>
+                    </div>
+                  </details>
+                </td>
+                <td>Lima</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td>Orrego Granados, David <small style="color:#666;display:block">director.crai@upeu.edu.pe</small></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-JEFE-BIBLIOTECA-JU</span></td>
+                <td><code>112</code></td>
+                <td>Jefe Biblioteca Juliaca (BUJ)</td>
+                <td>Juliaca</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-JEFE-BIBLIOTECA-TA</span></td>
+                <td><code>112</code></td>
+                <td>Jefe Biblioteca Tarapoto (BUT)</td>
+                <td>Tarapoto</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-BIBLIOTECARIO-LM</span></td>
+                <td>-</td>
+                <td>Bibliotecario Lima</td>
+                <td>Lima</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-BIBLIOTECARIO-JU</span></td>
+                <td>-</td>
+                <td>Bibliotecario Juliaca</td>
+                <td>Juliaca</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-BIBLIOTECARIO-TA</span></td>
+                <td>-</td>
+                <td>Bibliotecario Tarapoto</td>
+                <td>Tarapoto</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 5.8 ESTUDIANTES CON CARGO ===== -->
+      <div id="s5-8" class="pos-subsection">
+        <h3 class="subsection-title">5.8 Estudiantes con cargo</h3>
+        <div class="table-wrap">
+          <table class="data-table pos-catalog">
+            <thead>
+              <tr>
+                <th>POS-code</th>
+                <th>ID LAMB</th>
+                <th>Nombre del cargo</th>
+                <th>Unidad</th>
+                <th>OID</th>
+                <th>Fuente normativa</th>
+                <th>Titular actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pos-code">POS-ASIST-DOCENCIA</span></td>
+                <td>-</td>
+                <td>Asistente de Docencia</td>
+                <td>Departamento Académico</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 72</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-REP-ESTUDIANTIL-CU</span></td>
+                <td>-</td>
+                <td>Representante Estudiantil ante Consejo Universitario</td>
+                <td>Rectorado</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 56</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-REP-ESTUDIANTIL-{FACU}</span></td>
+                <td>-</td>
+                <td>Representante Estudiantil ante Consejo de Facultad <span class="badge-template">plantilla</span></td>
+                <td>Facultad correspondiente</td>
+                <td><span class="oid-placeholder">⟨pendiente por Facultad⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 60</span></td>
+                <td><em>Por instancia</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-PRES-ASOCIACION-ESTUD-{FACU}</span></td>
+                <td>-</td>
+                <td>Presidente Asociación Estudiantil de Facultad <span class="badge-template">plantilla</span></td>
+                <td>Facultad correspondiente</td>
+                <td><span class="oid-placeholder">⟨pendiente por Facultad⟩</span></td>
+                <td><span class="badge-fuente">Estatuto UPeU</span></td>
+                <td><em>Por instancia</em></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 5.9 PASTORAL Y MISIÓN ===== -->
+      <div id="s5-9" class="pos-subsection">
+        <h3 class="subsection-title">5.9 Pastoral y Misión</h3>
+        <div class="table-wrap">
+          <table class="data-table pos-catalog">
+            <thead>
+              <tr>
+                <th>POS-code</th>
+                <th>ID LAMB</th>
+                <th>Nombre del cargo</th>
+                <th>Sede</th>
+                <th>OID</th>
+                <th>Fuente normativa</th>
+                <th>Titular actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="pos-code">POS-CAPELLAN-LM</span></td>
+                <td>-</td>
+                <td>Capellán Universitario Lima</td>
+                <td>Lima</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Estatuto UPeU</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-CAPELLAN-JU</span></td>
+                <td>-</td>
+                <td>Capellán Universitario Juliaca</td>
+                <td>Juliaca</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Estatuto UPeU</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-CAPELLAN-TA</span></td>
+                <td>-</td>
+                <td>Capellán Universitario Tarapoto</td>
+                <td>Tarapoto</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Estatuto UPeU</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-COORD-ORATORIO</span></td>
+                <td>-</td>
+                <td>Coordinador de Oratorio Universitario</td>
+                <td>Misión</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Estatuto UPeU</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-COORD-MISIONES-ESTUD</span></td>
+                <td>-</td>
+                <td>Coordinador de Misiones Estudiantiles</td>
+                <td>Misión</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Estatuto UPeU</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 5.10 ÁREAS OPERATIVAS ===== -->
+      <div id="s5-10" class="pos-subsection">
+        <h3 class="subsection-title">5.10 Áreas operativas adicionales</h3>
+        <div class="table-wrap">
+          <table class="data-table pos-catalog">
+            <thead>
+              <tr>
+                <th>POS-code</th>
+                <th>ID LAMB</th>
+                <th>Nombre del cargo</th>
+                <th>Unidad</th>
+                <th>OID</th>
+                <th>Fuente normativa</th>
+                <th>Titular actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- CEPRE -->
+              <tr>
+                <td><span class="pos-code">POS-DIR-CEPRE-LM</span></td>
+                <td>-</td>
+                <td>Director CEPRE Lima</td>
+                <td>CEPRE Lima</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-CEPRE-JU</span></td>
+                <td>-</td>
+                <td>Director CEPRE Juliaca</td>
+                <td>CEPRE Juliaca</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DIR-CEPRE-TA</span></td>
+                <td>-</td>
+                <td>Director CEPRE Tarapoto</td>
+                <td>CEPRE Tarapoto</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DOCENTE-CEPRE</span></td>
+                <td>-</td>
+                <td>Docente CEPRE</td>
+                <td>CEPRE</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <!-- Idiomas -->
+              <tr>
+                <td><span class="pos-code">POS-DIR-ENGLISH-FOR-YOU</span></td>
+                <td>-</td>
+                <td>Director Centro de Idiomas English for You</td>
+                <td>Centro de Idiomas</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-DOCENTE-IDIOMAS</span></td>
+                <td>-</td>
+                <td>Docente Centro de Idiomas</td>
+                <td>Centro de Idiomas</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <!-- Seguridad -->
+              <tr>
+                <td><span class="pos-code">POS-JEFE-SEGURIDAD-LM</span></td>
+                <td>-</td>
+                <td>Jefe de Seguridad Campus Lima</td>
+                <td>Seguridad Lima</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-JEFE-SEGURIDAD-JU</span></td>
+                <td>-</td>
+                <td>Jefe de Seguridad Campus Juliaca</td>
+                <td>Seguridad Juliaca</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-JEFE-SEGURIDAD-TA</span></td>
+                <td>-</td>
+                <td>Jefe de Seguridad Campus Tarapoto</td>
+                <td>Seguridad Tarapoto</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-AGENTE-SEGURIDAD</span></td>
+                <td>-</td>
+                <td>Agente de Seguridad</td>
+                <td>Seguridad</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <!-- Mantenimiento -->
+              <tr>
+                <td><span class="pos-code">POS-JEFE-MANTENIMIENTO-LM</span></td>
+                <td>-</td>
+                <td>Jefe de Mantenimiento Campus Lima</td>
+                <td>Mantenimiento Lima</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-JEFE-MANTENIMIENTO-JU</span></td>
+                <td>-</td>
+                <td>Jefe de Mantenimiento Campus Juliaca</td>
+                <td>Mantenimiento Juliaca</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-JEFE-MANTENIMIENTO-TA</span></td>
+                <td>-</td>
+                <td>Jefe de Mantenimiento Campus Tarapoto</td>
+                <td>Mantenimiento Tarapoto</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Res. 0001-2026</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <!-- Salud y bienestar operativo -->
+              <tr>
+                <td><span class="pos-code">POS-MEDICO-UNIV</span></td>
+                <td>-</td>
+                <td>Médico Universitario</td>
+                <td>Bienestar</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 127</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-PSICOPEDAGOGO</span></td>
+                <td>-</td>
+                <td>Psicólogo Universitario</td>
+                <td>Bienestar</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 127</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-COORD-BECAS</span></td>
+                <td>-</td>
+                <td>Coordinador de Becas</td>
+                <td>Bienestar</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 96</span></td>
+                <td><em>Por confirmar</em></td>
+              </tr>
+              <tr>
+                <td><span class="pos-code">POS-COORD-TUTORIA</span></td>
+                <td>-</td>
+                <td>Coordinador de Tutoría Académica</td>
+                <td>VR Académico</td>
+                <td><span class="oid-placeholder">⟨pendiente⟩</span></td>
+                <td><span class="badge-fuente">Ley 30220 art. 98</span></td>
+                <td><em>Múltiples titulares</em></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section><!-- /sec-catalogo -->
+
+    <!-- ============================================================
+         6. TITULARES ACTUALES
+         ============================================================ -->
+    <section id="sec-titulares" class="section">
+      <h2 class="section-title">6. Titulares actuales</h2>
+      <div class="infobox warning">
+        <strong>Nota operativa:</strong> Los datos de titulares y correos de cargo fueron enriquecidos con el <strong>Directorio Institucional 2026</strong> (759 personas, 3 campus) el 2026-05-18. Los correos de cargo mostrados son correos institucionales de la posición, no personales. La <strong>fuente de verdad vigente es siempre Oracle LAMB</strong>, consultado en tiempo real por MidPoint. Los correos de cargo se mantienen estables ante cambios de titular.
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>POS-code</th>
+              <th>ID PUESTO LAMB</th>
+              <th>Cargo</th>
+              <th>Titular actual</th>
+              <th>Fuente</th>
+              <th>Consulta</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="pos-code">POS-RECTOR</span></td>
+              <td><code>187</code></td>
+              <td>Rector</td>
+              <td><strong>Murillo Antón, Walter Sixto</strong> <small style="color:#666;display:block">rectorado@upeu.edu.pe</small></td>
+              <td><span class="badge-fuente">Directorio 2026</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+            <tr>
+              <td><span class="pos-code">POS-VICE-RECTOR-ACAD</span></td>
+              <td><code>218</code></td>
+              <td>Vicerrector Académico</td>
+              <td><strong>Dávila Villavicencio, Roussel Dulio</strong> <small style="color:#666;display:block">vicerrector@upeu.edu.pe</small></td>
+              <td><span class="badge-fuente">Directorio 2026</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+            <tr>
+              <td><span class="pos-code">POS-VICE-RECTOR-ADM</span></td>
+              <td><code>219</code></td>
+              <td>Vicerrector Administrativo</td>
+              <td><strong>Lévano Chambi, Jimmy</strong> <small style="color:#666;display:block">gerencia@upeu.edu.pe</small></td>
+              <td><span class="badge-fuente">Directorio 2026</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+            <tr>
+              <td><span class="pos-code">POS-VICE-RECTOR-BIENESTAR</span></td>
+              <td><code>220</code></td>
+              <td>Vicerrector de Bienestar Universitario</td>
+              <td><strong>Gómez Nicoll, Raúl Daniel</strong> <small style="color:#666;display:block">vicerrector.bu@upeu.edu.pe</small></td>
+              <td><span class="badge-fuente">Directorio 2026</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+            <tr>
+              <td><span class="pos-code">POS-SECRETARIO-GENERAL</span></td>
+              <td><code>205</code></td>
+              <td>Secretario General</td>
+              <td><strong>Gonzales Taco, René Wilberth</strong> <small style="color:#666;display:block">secgeneral@upeu.edu.pe</small></td>
+              <td><span class="badge-fuente">Directorio 2026</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+            <tr>
+              <td><span class="pos-code">POS-DIR-ASUNTOS-ACAD</span></td>
+              <td><code>99</code></td>
+              <td>Director Académico Universitario</td>
+              <td><strong>Saavedra Vascónez, Carlos Eduardo</strong></td>
+              <td><span class="badge-fuente">Oracle LAMB</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+            <tr>
+              <td><span class="pos-code">POS-DIR-DTI</span></td>
+              <td><code>108</code></td>
+              <td>Director de Tecnologías de Información</td>
+              <td><strong>Barrantes Delgado, David Jefferson</strong> <small style="color:#666;display:block">digesi@upeu.edu.pe</small></td>
+              <td><span class="badge-fuente">Directorio 2026</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+            <tr>
+              <td><span class="pos-code">POS-DIR-TALENTO-HUMANO</span></td>
+              <td><code>114</code></td>
+              <td>Director de Gestión del Talento Humano</td>
+              <td><strong>Jaimes Soncco, Inés Elena</strong> <small style="color:#666;display:block">director.dth@upeu.edu.pe</small></td>
+              <td><span class="badge-fuente">Directorio 2026</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+            <tr>
+              <td><span class="pos-code">POS-DIR-FINANCIERO</span></td>
+              <td><code>116</code></td>
+              <td>Director General Financiero Contable</td>
+              <td><strong>Torres Núñez, Mirtha Jeanette</strong> <small style="color:#666;display:block">gerencia.financiera@upeu.edu.pe</small></td>
+              <td><span class="badge-fuente">Directorio 2026</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+            <tr>
+              <td><span class="pos-code">POS-DIR-INV-INNOVACION</span></td>
+              <td><code>117</code></td>
+              <td>Director General de Investigación</td>
+              <td><strong>Huancahuire Vega, Salomón</strong> / <strong>Robles Lirio, Freddy Jesús</strong> <small style="color:#666;display:block">director.dgi@upeu.edu.pe</small></td>
+              <td><span class="badge-fuente">Directorio 2026</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+            <tr>
+              <td><span class="pos-code">POS-DIR-ESCUELA-POSGRADO</span></td>
+              <td><code>118</code></td>
+              <td>Director de la Escuela de Posgrado</td>
+              <td><strong>Quinteros Zúñiga, Damaris Susana</strong> <small style="color:#666;display:block">dir.epg@upeu.edu.pe</small></td>
+              <td><span class="badge-fuente">Directorio 2026</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+            <tr>
+              <td><span class="pos-code">POS-DIR-PLANIF-CALIDAD</span></td>
+              <td><code>106</code></td>
+              <td>Director de Planificación y Gestión de la Calidad</td>
+              <td><strong>Apaza Romero, Godofredo</strong> <small style="color:#666;display:block">direccion.planificacion@upeu.edu.pe</small></td>
+              <td><span class="badge-fuente">Directorio 2026</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+            <tr>
+              <td><span class="pos-code">POS-DIR-GENERAL-CAMPUS-JU</span></td>
+              <td><code>104</code></td>
+              <td>Director General Campus Juliaca</td>
+              <td><strong>Coaquira Tuco, Carlos Mediver</strong> <small style="color:#666;display:block">dirgeneralj@upeu.edu.pe</small></td>
+              <td><span class="badge-fuente">Directorio 2026</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+            <tr>
+              <td><span class="pos-code">POS-DIR-GENERAL-CAMPUS-TA</span></td>
+              <td><code>104</code></td>
+              <td>Director General Campus Tarapoto</td>
+              <td><strong>Vallejos Atalaya, María</strong> <small style="color:#666;display:block">dg.tpp@upeu.edu.pe</small></td>
+              <td><span class="badge-fuente">Directorio 2026</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+            <tr>
+              <td><span class="pos-code">POS-JEFE-BIBLIOTECA-LM</span></td>
+              <td><code>112</code></td>
+              <td>Jefe Biblioteca / CRAI Lima</td>
+              <td><strong>Orrego Granados, David</strong> <small style="color:#666;display:block">director.crai@upeu.edu.pe</small></td>
+              <td><span class="badge-fuente">Directorio 2026</span></td>
+              <td><span class="titular-badge">2026-05-18</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         7. PENDIENTES Y GAPS
+         ============================================================ -->
+    <section id="sec-pendientes" class="section">
+      <h2 class="section-title">7. Pendientes y gaps</h2>
+      <p>Los siguientes ítems requieren información adicional antes de que el catálogo pueda considerarse completo para implementación:</p>
+
+      <ul class="gap-list">
+        <li>
+          <span class="gap-id">D-04</span>
+          <div>
+            <strong>Lista completa de Escuelas Profesionales por campus Juliaca y Tarapoto.</strong>
+            Las instancias de <code>POS-DIR-EP-{EP}</code> y <code>POS-DECANO-*</code> para las sedes de Juliaca y Tarapoto están pendientes de mapeo formal a POS-codes. Sin embargo, el Directorio 2026 confirma las siguientes EPs activas:
+            <br><strong>Campus Juliaca (10 EPs confirmadas):</strong>
+            JU EP ARQUITECTURA · JU EP CONTABILIDAD · JU EP ENFERMERÍA · JU EP ING. AMBIENTAL · JU EP ING. DE SISTEMAS · JU EP ING. IND. ALIMENTARIAS · JU EP NUTRICIÓN HUMANA · JU EP PSICOLOGÍA · JUEP ING. CIVIL · UN EAP EDUCACIÓN
+            <br><strong>Campus Tarapoto (4 facultades confirmadas):</strong>
+            FACULTAD DE CIENCIAS DE LA SALUD · FACULTAD DE CIENCIAS EMPRESARIALES · FACULTAD DE CIENCIAS HUMANAS Y EDUCACIÓN · FACULTAD DE INGENIERÍA Y ARQUITECTURA — más ESCUELA DE POSGRADO
+            <br>Pendiente: definir POS-codes canónicos para instancias por sede y coordinar con Vicerrectorado Académico de cada campus.
+          </div>
+        </li>
+        <li>
+          <span class="gap-id">D-05</span>
+          <div>
+            <strong>Mapeo ID_CATEGORIAOCUPACIONAL → POS-code.</strong>
+            Oracle LAMB usa el campo <code>ID_CATEGORIAOCUPACIONAL</code> para clasificar empleados. Se requiere la tabla de mapeo completa de este campo a los POS-codes definidos en este catálogo. Pendiente con Gestión del Talento Humano (GTH).
+          </div>
+        </li>
+        <li>
+          <span class="gap-id">D-06</span>
+          <div>
+            <strong>Nombre canónico de la Dirección de TI.</strong>
+            En LAMB y documentos internos aparece como "DIGESI", "DIGETI" y "DTI". Se requiere definir el nombre canónico oficial en la Resolución 0001-2026/UPeU-AU para usar en el POS-code. El código provisional es <code>POS-DIR-DTI</code>.
+          </div>
+        </li>
+        <li>
+          <span class="gap-id">D-07</span>
+          <div>
+            <strong>Aprobación formal del catálogo conforme Ley 30220.</strong>
+            El campo "Aprobado por" está pendiente. Se requiere identificar el órgano competente (Consejo Universitario o Rectorado) y obtener la resolución de aprobación antes de que los POS-codes sean vinculantes para el sistema IGA.
+          </div>
+        </li>
+        <li>
+          <span class="gap-id">D-08</span>
+          <div>
+            <strong>Titulares de cargos no confirmados.</strong>
+            Varios cargos tienen titular "Por confirmar". Se requiere consulta directa con GTH para completar la información de Oracle LAMB para estos puestos.
+          </div>
+        </li>
+        <li>
+          <span class="gap-id">D-09</span>
+          <div>
+            <strong>Positions plantilla — instancias por EP y Facultad.</strong>
+            Los POS-codes con sufijo <code>{EP}</code> y <code>{FACU}</code> requieren expandirse a instancias concretas (e.g., <code>POS-DIR-EP-INGENIERIA-SISTEMAS</code>). Pendiente lista definitiva de EPs de Lima, Juliaca y Tarapoto.
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ============================================================
+         8. GUÍA DE IMPLEMENTACIÓN
+         ============================================================ -->
+    <section id="sec-implementacion" class="section">
+      <h2 class="section-title">8. Guía de implementación MidPoint</h2>
+
+      <h3 class="subsection-title">8.1 Crear un objeto Position en MidPoint</h3>
+      <p>Las Positions se crean como objetos XML de tipo <code>ServiceType</code> y se importan via REST API o MidPoint Ninja. Cada Position debe:</p>
+      <ol>
+        <li>Tener un OID fijo, generado una sola vez con <code>uuidgen</code> o equivalente.</li>
+        <li>Asignar el archetype Position (OID: <code>b51e4e39-fc48-42ef-9916-3b7ad6647b9b</code>).</li>
+        <li>Declarar sus inducements (Application Roles que otorga).</li>
+        <li>Incluir metadata de auditoría (quién la creó, fecha, fuente normativa).</li>
+      </ol>
+
+      <pre class="code-block"><span class="xml-comment">&lt;!-- Ejemplo completo: POS-DIR-DTI --&gt;</span>
+<span class="xml-tag">&lt;service</span> <span class="xml-attr">xmlns</span>=<span class="xml-val">"http://midpoint.evolveum.com/xml/ns/public/common/common-3"</span>
+         <span class="xml-attr">xmlns:q</span>=<span class="xml-val">"http://prism.evolveum.com/xml/ns/public/query-3"</span>
+         <span class="xml-attr">oid</span>=<span class="xml-val">"[UUID-unico-generado]"</span><span class="xml-tag">&gt;</span>
+  <span class="xml-tag">&lt;name&gt;</span><span class="xml-text">POS-DIR-DTI</span><span class="xml-tag">&lt;/name&gt;</span>
+  <span class="xml-tag">&lt;description&gt;</span><span class="xml-text">Director de Tecnologías de Información — DTI UPeU</span><span class="xml-tag">&lt;/description&gt;</span>
+  <span class="xml-tag">&lt;documentation&gt;</span><span class="xml-text">
+    Fuente normativa: Resolución 0001-2026/UPeU-AU.
+    Titular actual: Barrantes Delgado, David Jefferson.
+    Consulta LAMB: ENOC.PLLA_PUESTO, 2026-05-18.
+  </span><span class="xml-tag">&lt;/documentation&gt;</span>
+
+  <span class="xml-comment">&lt;!-- Archetype Position --&gt;</span>
+  <span class="xml-tag">&lt;assignment&gt;</span>
+    <span class="xml-tag">&lt;targetRef</span> <span class="xml-attr">oid</span>=<span class="xml-val">"b51e4e39-fc48-42ef-9916-3b7ad6647b9b"</span>
+               <span class="xml-attr">type</span>=<span class="xml-val">"ArchetypeType"</span><span class="xml-tag">/&gt;</span>
+  <span class="xml-tag">&lt;/assignment&gt;</span>
+
+  <span class="xml-tag">&lt;identifier&gt;</span><span class="xml-text">POS-DIR-DTI</span><span class="xml-tag">&lt;/identifier&gt;</span>
+  <span class="xml-tag">&lt;displayName&gt;</span><span class="xml-text">Director de Tecnologías de Información</span><span class="xml-tag">&lt;/displayName&gt;</span>
+
+  <span class="xml-comment">&lt;!-- Inducements: Application Roles que otorga esta Position --&gt;</span>
+  <span class="xml-tag">&lt;inducement&gt;</span>
+    <span class="xml-tag">&lt;targetRef</span> <span class="xml-attr">oid</span>=<span class="xml-val">"[OID AR-DTI-Admin]"</span>
+               <span class="xml-attr">type</span>=<span class="xml-val">"RoleType"</span><span class="xml-tag">/&gt;</span>
+  <span class="xml-tag">&lt;/inducement&gt;</span>
+  <span class="xml-tag">&lt;inducement&gt;</span>
+    <span class="xml-tag">&lt;targetRef</span> <span class="xml-attr">oid</span>=<span class="xml-val">"[OID AR-M365-Admin]"</span>
+               <span class="xml-attr">type</span>=<span class="xml-val">"RoleType"</span><span class="xml-tag">/&gt;</span>
+  <span class="xml-tag">&lt;/inducement&gt;</span>
+<span class="xml-tag">&lt;/service&gt;</span></pre>
+
+      <h3 class="subsection-title" id="s8-2-lamb">8.2 Mapeo Oracle LAMB → MidPoint Position</h3>
+      <p>El campo <code>ENOC.PLLA_PUESTO.ID_PUESTO</code> es el identificador canónico de un puesto en Oracle LAMB. La siguiente tabla muestra el mapeo confirmado entre <code>ID_PUESTO</code> y el POS-code del catálogo:</p>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID_PUESTO</th>
+              <th>Nombre en LAMB</th>
+              <th>POS-code IGA</th>
+              <th>Titulares activos (Lima)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>187</code></td><td>Rector</td><td><span class="pos-code">POS-RECTOR</span></td><td>1</td></tr>
+            <tr><td><code>218</code></td><td>Vicerrector Académico</td><td><span class="pos-code">POS-VICE-RECTOR-ACAD</span></td><td>1</td></tr>
+            <tr><td><code>219</code></td><td>Vicerrector Administrativo</td><td><span class="pos-code">POS-VICE-RECTOR-ADM</span></td><td>1</td></tr>
+            <tr><td><code>220</code></td><td>Vicerrector de Bienestar Universitario</td><td><span class="pos-code">POS-VICE-RECTOR-BIENESTAR</span></td><td>1</td></tr>
+            <tr><td><code>205</code></td><td>Secretario General</td><td><span class="pos-code">POS-SECRETARIO-GENERAL</span></td><td>1</td></tr>
+            <tr><td><code>97</code></td><td>Decano de Facultad</td><td><span class="pos-code">POS-DECANO-{FACU}</span></td><td>5</td></tr>
+            <tr><td><code>103</code></td><td>Director de Escuela Profesional</td><td><span class="pos-code">POS-DIR-EP-{EP}</span></td><td>13</td></tr>
+            <tr><td><code>108</code></td><td>Director de Tecnologías de Información</td><td><span class="pos-code">POS-DIR-DTI</span></td><td>1</td></tr>
+            <tr><td><code>114</code></td><td>Director de Gestión del Talento Humano</td><td><span class="pos-code">POS-DIR-TALENTO-HUMANO</span></td><td>1</td></tr>
+            <tr><td><code>116</code></td><td>Director General Financiero Contable</td><td><span class="pos-code">POS-DIR-FINANCIERO</span></td><td>1</td></tr>
+            <tr><td><code>117</code></td><td>Director General de Investigación</td><td><span class="pos-code">POS-DIR-INV-INNOVACION</span></td><td>2</td></tr>
+            <tr><td><code>118</code></td><td>Director de la Escuela de Posgrado</td><td><span class="pos-code">POS-DIR-ESCUELA-POSGRADO</span></td><td>1</td></tr>
+            <tr><td><code>109</code></td><td>Director de Unidad de Posgrado</td><td><span class="pos-code">POS-DIR-UNIDAD-POSGRADO-{EP}</span></td><td>6</td></tr>
+            <tr><td><code>106</code></td><td>Director de Planificación y Gestión de la Calidad</td><td><span class="pos-code">POS-DIR-PLANIF-CALIDAD</span></td><td>1</td></tr>
+            <tr><td><code>112</code></td><td>Director del CRAI</td><td><span class="pos-code">POS-JEFE-BIBLIOTECA-LM</span></td><td>2</td></tr>
+            <tr><td><code>99</code></td><td>Director Académico Universitario</td><td><span class="pos-code">POS-DIR-ASUNTOS-ACAD</span></td><td>1</td></tr>
+            <tr><td><code>104</code></td><td>Director de Filial</td><td><span class="pos-code">POS-DIR-GENERAL-CAMPUS-{SEDE}</span></td><td>2</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>Query SQL de correlación recomendada</strong> — obtiene el puesto activo de cada trabajador en Lima (ID_ENTIDAD = 7124):</p>
+      <pre class="code-block">SELECT t.ID_TRABAJADOR, tp.ID_PUESTO, pst.NOMBRE as PUESTO,
+       g.NOMBRE as CATEGORIA, tp.ID_PERFIL_PUESTO
+FROM MOISES.TRABAJADOR t
+JOIN MOISES.TRABAJADOR_PUESTO tp ON tp.ID_TRABAJADOR = t.ID_TRABAJADOR AND tp.HASTA IS NULL
+JOIN ENOC.PLLA_PUESTO pst ON tp.ID_PUESTO = pst.ID_PUESTO
+JOIN ENOC.PLLA_GRUPO_ESCALA g ON pst.ID_GRUPO_ESCALA = g.ID_GRUPO_ESCALA
+WHERE t.ID_ENTIDAD = 7124 AND t.FECHA_FIN_EFECTIVO IS NULL</pre>
+
+      <div class="infobox">
+        <strong>Nota técnica:</strong> El campo <code>ID_PERFIL_PUESTO</code> es el identificador a nivel de instancia — un mismo puesto puede tener múltiples perfiles por área/dependencia (e.g., Decano de FIA vs Decano de FACISAL son el mismo <code>ID_PUESTO=97</code> pero distintos <code>ID_PERFIL_PUESTO</code>). Para PBAC en MidPoint se usa <code>ID_PUESTO</code> como identificador del objeto Position. El <code>ID_PERFIL_PUESTO</code> se usa para determinar a qué instancia de Position plantilla corresponde el usuario.
+      </div>
+
+      <h3 class="subsection-title">8.3 Asignar una Position a un usuario</h3>
+      <p>Las Positions se asignan automáticamente via Object Template cuando el inbound mapping de LAMB mapea el <code>ID_PUESTO</code> al <code>POS-code</code> correspondiente. También pueden asignarse manualmente vía UI de MidPoint o REST API:</p>
+
+      <pre class="code-block"><span class="xml-comment">&lt;!-- Fragmento: assignment en UserType --&gt;</span>
+<span class="xml-tag">&lt;assignment&gt;</span>
+  <span class="xml-tag">&lt;targetRef</span> <span class="xml-attr">oid</span>=<span class="xml-val">"[OID de POS-DIR-DTI]"</span>
+             <span class="xml-attr">type</span>=<span class="xml-val">"ServiceType"</span><span class="xml-tag">/&gt;</span>
+  <span class="xml-tag">&lt;activation&gt;</span>
+    <span class="xml-tag">&lt;validFrom&gt;</span><span class="xml-text">2026-01-01T00:00:00Z</span><span class="xml-tag">&lt;/validFrom&gt;</span>
+    <span class="xml-comment">&lt;!-- validTo: omitir si no hay fecha de fin conocida --&gt;</span>
+  <span class="xml-tag">&lt;/activation&gt;</span>
+<span class="xml-tag">&lt;/assignment&gt;</span></pre>
+
+      <h3 class="subsection-title">8.4 Convención de OIDs para Positions UPeU</h3>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Tipo de objeto</th><th>Rango OID</th><th>Método de generación</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Positions (ServiceType)</td>
+              <td>UUID v4 aleatorio</td>
+              <td><code>uuidgen</code> en macOS/Linux, o MidPoint autogenera al importar</td>
+            </tr>
+            <tr>
+              <td>Archetypes</td>
+              <td>UUID v4 fijo, definido en XML</td>
+              <td>Definido en el spec canónico UPeU, no cambiar</td>
+            </tr>
+            <tr>
+              <td>Business Roles</td>
+              <td>UUID v4 aleatorio</td>
+              <td>Generado al crear el rol en MidPoint</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="infobox">
+        <strong>Regla de oro:</strong> Una vez asignado un OID a una Position en PROD, <strong>nunca cambiar ese OID</strong>. Si se necesita "renombrar" una Position, cambiar solo el <code>displayName</code> y el <code>description</code>, no el OID ni el <code>name</code> (POS-code).
+      </div>
+
+      <h3 class="subsection-title">8.5 Importar Positions via REST API</h3>
+      <pre class="code-block"><span class="xml-comment"># Importar Position via REST API MidPoint (desde Mac local)</span>
+curl -k -u administrator:SECRET \
+  -H "Content-Type: application/xml" \
+  -X POST \
+  "https://192.168.15.166:8443/midpoint/ws/rest/services" \
+  --data-binary @POS-DIR-DTI.xml</pre>
+
+      <h3 class="subsection-title">8.6 Verificar Position importada</h3>
+      <pre class="code-block"><span class="xml-comment"># Buscar Position por identifier</span>
+curl -k -u administrator:SECRET \
+  "https://192.168.15.166:8443/midpoint/ws/rest/services?q=POS-DIR-DTI"</pre>
+    </section>
+
+    <!-- ============================================================
+         9. REFERENCIAS
+         ============================================================ -->
+    <section id="sec-referencias" class="section">
+      <h2 class="section-title">9. Referencias</h2>
+      <ol class="ref-list">
+        <li>
+          <div>
+            <strong>Ley N° 30220 — Ley Universitaria Peruana (2014).</strong> Congreso de la República del Perú.
+            <br><a href="https://www.gob.pe/institucion/congreso-de-la-republica/normas-legales/243402-30220" target="_blank" rel="noopener">https://www.gob.pe/institucion/congreso-de-la-republica/normas-legales/243402-30220</a>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Resolución N° 0001-2026/UPeU-AU — Organigrama Institucional UPeU.</strong> Asamblea Universitaria UPeU, enero 2026.
+            <br><em>Documento interno UPeU.</em>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Semančík, R. et al. — "Practical Identity Management with MidPoint" v2.3 (2024).</strong> Evolveum.
+            <br><a href="https://evolveum.com/downloads/" target="_blank" rel="noopener">https://evolveum.com/downloads/</a>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>MidPoint 4.10 Documentation.</strong> Evolveum.
+            <br><a href="https://docs.evolveum.com/midpoint/reference/4.10/" target="_blank" rel="noopener">https://docs.evolveum.com/midpoint/reference/4.10/</a>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>INCITS 359-2012 — Role Based Access Control (ANSI).</strong> American National Standards Institute.
+            <br><a href="https://www.incits.org/Standards/Approved-Withdrawn-Standards-by-Designation/359-2012" target="_blank" rel="noopener">https://www.incits.org/Standards/Approved-Withdrawn-Standards-by-Designation/359-2012</a>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>ISO/IEC 24760-1:2019 — IT Security and Privacy — A framework for identity management.</strong> International Organization for Standardization.
+            <br><a href="https://www.iso.org/standard/77582.html" target="_blank" rel="noopener">https://www.iso.org/standard/77582.html</a>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>RFC 7643 — System for Cross-domain Identity Management: Core Schema (SCIM 2.0).</strong> IETF.
+            <br><a href="https://tools.ietf.org/html/rfc7643" target="_blank" rel="noopener">https://tools.ietf.org/html/rfc7643</a>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>RFC 7644 — System for Cross-domain Identity Management: Protocol (SCIM 2.0).</strong> IETF.
+            <br><a href="https://tools.ietf.org/html/rfc7644" target="_blank" rel="noopener">https://tools.ietf.org/html/rfc7644</a>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>eduPerson Object Class Specification (2021).</strong> Internet2 / MACE-Dir.
+            <br><a href="https://www.internet2.edu/media/medialibrary/2013/09/04/internet2-mace-dir-eduperson-201203.html" target="_blank" rel="noopener">https://www.internet2.edu/media/medialibrary/2013/09/04/internet2-mace-dir-eduperson-201203.html</a>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>SCHAC (SCHema for ACademia) v1.5.</strong> REFEDS.
+            <br><a href="https://wiki.refeds.org/display/STAN/SCHAC" target="_blank" rel="noopener">https://wiki.refeds.org/display/STAN/SCHAC</a>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Oracle LAMB (MOISES, ENOC, ELISEO schemas).</strong> Sistema ERP denominacional UPeU. Consulta directa, solo lectura, 2026-05-18. <em>Documento interno.</em>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Spec IGA Canónica UPeU v1.0.</strong> Sánchez, Juan Alberto (2026). <em>Documento interno UPeU.</em>
+            <br>Ruta: <code>doc/specs/iga-canonical-model-upeu/01-spec.md</code>
+          </div>
+        </li>
+      </ol>
+
+      <div style="margin-top: 32px; padding: 16px; background: var(--navy); color: #fff; border-radius: var(--radius); text-align: center;">
+        <p style="margin:0; font-size: 12px; color: rgba(255,255,255,.7);">
+          Catálogo de Positions Institucionales UPeU — v1.0 Borrador · 2026-05-18<br>
+          Elaborado por Ing. David Urquizo &amp; Ing. Rudy Milán Napán · Coordinado por Ing. Juan Alberto Sánchez<br>
+          Revisado por Ing. David Barrantes Delgado (Director DTI) · Universidad Peruana Unión · Proyecto IGA
+        </p>
+      </div>
+    </section>
+
+  </main><!-- /content -->
+</div><!-- /layout -->
+
+<script src="assets/app.js"></script>
+</body>
+</html>

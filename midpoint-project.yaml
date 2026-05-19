@@ -1,0 +1,45 @@
+project:
+  name: UPeU MidPoint Config — Consolidated (canonical + upeu)
+  version: "2.0.0"
+  midpointVersion: "4.10.*"
+  objectsRoot: "."
+  # Estructura post-consolidacion (2026-05-19):
+  #   canonical/ = capa agnostica (eduPerson/SCHAC/RBAC/SCIM/ISO 24760)
+  #   upeu/      = overlay especifico tenant UPeU
+  sources:
+    # Capa canonica (orden importa: schemas -> archetypes -> templates -> policies -> functions)
+    - "./canonical/schemas"
+    - "./canonical/archetypes/user"
+    - "./canonical/archetypes/org"
+    - "./canonical/object-templates"
+    - "./canonical/policies"
+    - "./canonical/function-libraries"
+    - "./canonical/roles"
+    # Capa UPeU (overlay institucional)
+    - "./upeu/schemas"
+    - "./upeu/archetypes/auxiliary"
+    - "./upeu/archetypes/custom"
+    - "./upeu/lookup-tables"
+    - "./upeu/system"
+    - "./upeu/auth"
+    - "./upeu/orgs"
+    - "./upeu/orgs/campus"
+    - "./upeu/orgs/academic-programs"
+    - "./upeu/orgs/colegio-union"
+    - "./upeu/orgs/partners"
+    - "./upeu/resources"
+    - "./upeu/resources/oracle-lamb"
+    - "./upeu/resources/datasets"
+    - "./upeu/services/positions"
+    - "./upeu/roles/affiliation"
+    - "./upeu/roles/application"
+    - "./upeu/roles/business"
+    - "./upeu/roles/governance"
+    - "./upeu/roles/mof"
+    - "./upeu/roles/system"
+    - "./upeu/object-templates"
+    - "./upeu/object-collections"
+    - "./upeu/dashboards"
+    - "./upeu/tasks"
+    - "./upeu/tasks/simulations"
+    - "./upeu/tasks/pilots"

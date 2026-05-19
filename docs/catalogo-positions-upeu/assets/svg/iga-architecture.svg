@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#555"/>
+    </marker>
+    <marker id="arr-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#1565C0"/>
+    </marker>
+    <marker id="arr-gold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#FFB900"/>
+    </marker>
+  </defs>
+
+  <rect width="900" height="480" fill="#F8F9FA" rx="10"/>
+  <text x="450" y="26" text-anchor="middle" font-size="14" font-weight="700" fill="#003366">Arquitectura IGA UPeU — Flujo de Identidades y Accesos</text>
+
+  <!-- ===== CAPA 1: Oracle LAMB ===== -->
+  <rect x="20" y="48" width="155" height="380" rx="8" fill="#FFF3E0" stroke="#FF9800" stroke-width="2"/>
+  <text x="98" y="70" text-anchor="middle" font-size="11" font-weight="700" fill="#E65100">Oracle LAMB</text>
+  <text x="98" y="84" text-anchor="middle" font-size="9" fill="#BF360C">Fuente de verdad HR</text>
+
+  <rect x="32" y="96" width="131" height="28" rx="4" fill="#FFCC80"/>
+  <text x="98" y="108" text-anchor="middle" font-size="9" font-weight="600" fill="#BF360C">MOISES.ENOC</text>
+  <text x="98" y="120" text-anchor="middle" font-size="8" fill="#E65100">Empleados / Posiciones</text>
+
+  <rect x="32" y="132" width="131" height="28" rx="4" fill="#FFCC80"/>
+  <text x="98" y="144" text-anchor="middle" font-size="9" font-weight="600" fill="#BF360C">MOISES.ELISEO</text>
+  <text x="98" y="156" text-anchor="middle" font-size="8" fill="#E65100">Alumnos / Matrículas</text>
+
+  <rect x="32" y="168" width="131" height="28" rx="4" fill="#FFCC80"/>
+  <text x="98" y="180" text-anchor="middle" font-size="9" font-weight="600" fill="#BF360C">PLLA_PUESTO</text>
+  <text x="98" y="192" text-anchor="middle" font-size="8" fill="#E65100">Cargos / Positions</text>
+
+  <text x="98" y="225" text-anchor="middle" font-size="8" fill="#888" font-style="italic">Solo lectura (SELECT)</text>
+  <text x="98" y="238" text-anchor="middle" font-size="8" fill="#888" font-style="italic">ScriptedSQL Connector</text>
+
+  <!-- ===== CAPA 2: MidPoint ===== -->
+  <rect x="200" y="48" width="200" height="380" rx="8" fill="#E3F2FD" stroke="#003366" stroke-width="2.5"/>
+  <text x="300" y="70" text-anchor="middle" font-size="12" font-weight="700" fill="#003366">MidPoint 4.10.2</text>
+  <text x="300" y="84" text-anchor="middle" font-size="9" fill="#1565C0">Motor IGA / PBAC</text>
+
+  <!-- PBAC highlight box -->
+  <rect x="208" y="94" width="184" height="110" rx="6" fill="#003366" stroke="#FFB900" stroke-width="2"/>
+  <text x="300" y="112" text-anchor="middle" font-size="10" font-weight="700" fill="#FFB900">PBAC — Positions</text>
+  <text x="300" y="126" text-anchor="middle" font-size="8" fill="#fff">ServiceType + Archetype</text>
+  <text x="300" y="140" text-anchor="middle" font-size="8" fill="#93C5FD">POS-RECTOR</text>
+  <text x="300" y="153" text-anchor="middle" font-size="8" fill="#93C5FD">POS-DECANO-FIA</text>
+  <text x="300" y="166" text-anchor="middle" font-size="8" fill="#93C5FD">POS-DIR-DTI … (80+ pos.)</text>
+  <text x="300" y="182" text-anchor="middle" font-size="8" fill="#FFB900" font-style="italic">Pilar 3 del modelo canónico</text>
+
+  <rect x="212" y="215" width="176" height="28" rx="4" fill="#BBDEFB"/>
+  <text x="300" y="227" text-anchor="middle" font-size="9" font-weight="600" fill="#0D47A1">Object Templates</text>
+  <text x="300" y="239" text-anchor="middle" font-size="8" fill="#1565C0">Person-Base + affiliations</text>
+
+  <rect x="212" y="250" width="176" height="28" rx="4" fill="#BBDEFB"/>
+  <text x="300" y="262" text-anchor="middle" font-size="9" font-weight="600" fill="#0D47A1">Archetypes</text>
+  <text x="300" y="274" text-anchor="middle" font-size="8" fill="#1565C0">Person · Position · BR · AR</text>
+
+  <rect x="212" y="285" width="176" height="28" rx="4" fill="#BBDEFB"/>
+  <text x="300" y="297" text-anchor="middle" font-size="9" font-weight="600" fill="#0D47A1">Policy / RBAC</text>
+  <text x="300" y="309" text-anchor="middle" font-size="8" fill="#1565C0">Inducements → Roles → Accs.</text>
+
+  <rect x="212" y="320" width="176" height="28" rx="4" fill="#BBDEFB"/>
+  <text x="300" y="332" text-anchor="middle" font-size="9" font-weight="600" fill="#0D47A1">JML Lifecycle</text>
+  <text x="300" y="344" text-anchor="middle" font-size="8" fill="#1565C0">Joiner · Mover · Leaver</text>
+
+  <!-- ===== CAPA 3: OpenLDAP ===== -->
+  <rect x="425" y="48" width="155" height="180" rx="8" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+  <text x="503" y="70" text-anchor="middle" font-size="11" font-weight="700" fill="#1B5E20">OpenLDAP</text>
+  <text x="503" y="84" text-anchor="middle" font-size="9" fill="#2E7D32">Identity Cache</text>
+  <text x="503" y="98" text-anchor="middle" font-size="8" fill="#388E3C">192.168.15.168</text>
+
+  <rect x="436" y="108" width="133" height="28" rx="4" fill="#C8E6C9"/>
+  <text x="503" y="120" text-anchor="middle" font-size="9" font-weight="600" fill="#1B5E20">inetOrgPerson</text>
+  <text x="503" y="132" text-anchor="middle" font-size="8" fill="#2E7D32">+ eduPerson + SCHAC</text>
+
+  <rect x="436" y="143" width="133" height="26" rx="4" fill="#C8E6C9"/>
+  <text x="503" y="155" text-anchor="middle" font-size="8" fill="#1B5E20">dc=lim,dc=upeu,dc=edu,dc=pe</text>
+  <text x="503" y="166" text-anchor="middle" font-size="8" fill="#388E3C">OU: staff · students · services</text>
+
+  <!-- ===== CAPA 4: Keycloak ===== -->
+  <rect x="425" y="248" width="155" height="180" rx="8" fill="#EDE7F6" stroke="#6A1E55" stroke-width="2"/>
+  <text x="503" y="270" text-anchor="middle" font-size="11" font-weight="700" fill="#4A148C">Keycloak 26.6</text>
+  <text x="503" y="284" text-anchor="middle" font-size="9" fill="#6A1E55">Auth Broker / SSO</text>
+  <text x="503" y="298" text-anchor="middle" font-size="8" fill="#7B1FA2">192.168.12.88</text>
+
+  <rect x="436" y="308" width="133" height="26" rx="4" fill="#D1C4E9"/>
+  <text x="503" y="322" text-anchor="middle" font-size="9" font-weight="600" fill="#4A148C">Realm: upeu</text>
+  <text x="503" y="333" text-anchor="middle" font-size="8" fill="#6A1E55">OIDC / SAML 2.0</text>
+
+  <rect x="436" y="340" width="133" height="26" rx="4" fill="#D1C4E9"/>
+  <text x="503" y="355" text-anchor="middle" font-size="8" fill="#4A148C">User federation → LDAP</text>
+  <text x="503" y="366" text-anchor="middle" font-size="8" fill="#6A1E55">JIT login mapeo atributos</text>
+
+  <!-- ===== CAPA 5: Apps ===== -->
+  <rect x="605" y="48" width="280" height="380" rx="8" fill="#FFF8E1" stroke="#F9A825" stroke-width="2"/>
+  <text x="745" y="70" text-anchor="middle" font-size="11" font-weight="700" fill="#E65100">Aplicaciones UPeU</text>
+  <text x="745" y="84" text-anchor="middle" font-size="9" fill="#BF360C">Sistemas de destino (provisioning)</text>
+
+  <rect x="615" y="96" width="120" height="34" rx="5" fill="#FFE082"/>
+  <text x="675" y="111" text-anchor="middle" font-size="10" font-weight="600" fill="#E65100">Koha</text>
+  <text x="675" y="124" text-anchor="middle" font-size="8" fill="#BF360C">4 instancias BUL/BUJ/BUT/CIA</text>
+
+  <rect x="750" y="96" width="120" height="34" rx="5" fill="#FFE082"/>
+  <text x="810" y="111" text-anchor="middle" font-size="10" font-weight="600" fill="#E65100">Microsoft 365</text>
+  <text x="810" y="124" text-anchor="middle" font-size="8" fill="#BF360C">Entra ID (73K cuentas)</text>
+
+  <rect x="615" y="142" width="120" height="34" rx="5" fill="#FFE082"/>
+  <text x="675" y="157" text-anchor="middle" font-size="10" font-weight="600" fill="#E65100">Indico</text>
+  <text x="675" y="170" text-anchor="middle" font-size="8" fill="#BF360C">JIT-login · synced_fields</text>
+
+  <rect x="750" y="142" width="120" height="34" rx="5" fill="#FFE082"/>
+  <text x="810" y="157" text-anchor="middle" font-size="10" font-weight="600" fill="#E65100">Zoom / LMS</text>
+  <text x="810" y="170" text-anchor="middle" font-size="8" fill="#BF360C">Futura integración</text>
+
+  <rect x="615" y="188" width="255" height="28" rx="4" fill="#FFD54F"/>
+  <text x="743" y="200" text-anchor="middle" font-size="9" font-weight="600" fill="#E65100">Active Directory (damasco2)</text>
+  <text x="743" y="210" text-anchor="middle" font-size="8" fill="#BF360C">192.168.13.150 — Win 2012 R2</text>
+
+  <rect x="615" y="225" width="255" height="28" rx="4" fill="#FFD54F"/>
+  <text x="743" y="237" text-anchor="middle" font-size="9" font-weight="600" fill="#E65100">Oracle DB / ERP LAMB</text>
+  <text x="743" y="249" text-anchor="middle" font-size="8" fill="#BF360C">Solo lectura — fuente canónica HR</text>
+
+  <!-- ===== FLECHAS ===== -->
+  <!-- LAMB → MidPoint -->
+  <path d="M175,165 C190,165 195,200 200,200" stroke="#FF9800" stroke-width="2" fill="none" marker-end="url(#arr)"/>
+  <text x="185" y="177" font-size="8" fill="#E65100" font-weight="600">ScriptedSQL</text>
+  <text x="185" y="188" font-size="7" fill="#888">cron / reconc.</text>
+
+  <!-- MidPoint → OpenLDAP -->
+  <path d="M400,148 L425,148" stroke="#1565C0" stroke-width="2" fill="none" marker-end="url(#arr-blue)"/>
+  <text x="400" y="140" font-size="8" fill="#1565C0">LDAP connector</text>
+
+  <!-- MidPoint → Keycloak -->
+  <path d="M400,338 L425,338" stroke="#6A1E55" stroke-width="2" fill="none" marker-end="url(#arr)"/>
+  <text x="400" y="330" font-size="8" fill="#6A1E55">SCIM / REST</text>
+
+  <!-- OpenLDAP → Apps -->
+  <path d="M580,148 L605,180" stroke="#2E7D32" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+  <text x="583" y="160" font-size="7" fill="#2E7D32">LDAP bind</text>
+
+  <!-- Keycloak → Apps -->
+  <path d="M580,338 L605,237" stroke="#6A1E55" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+  <text x="578" y="305" font-size="7" fill="#6A1E55" transform="rotate(-35,578,305)">OIDC/SAML</text>
+
+  <!-- MidPoint → Apps directo -->
+  <path d="M400,300 L605,213" stroke="#003366" stroke-width="1.5" stroke-dasharray="5,3" fill="none" marker-end="url(#arr)"/>
+  <text x="490" y="268" font-size="7" fill="#003366" transform="rotate(-18,490,268)">connectors directos</text>
+
+  <!-- ===== NOTA PBAC ===== -->
+  <rect x="200" y="418" width="200" height="38" rx="5" fill="#FFB900"/>
+  <text x="300" y="432" text-anchor="middle" font-size="9" font-weight="700" fill="#003366">Pilar 3: PBAC activo en MidPoint</text>
+  <text x="300" y="446" text-anchor="middle" font-size="8" fill="#003366">Position assignments → inducements → accs.</text>
+
+  <!-- Pie -->
+  <text x="450" y="472" text-anchor="middle" font-size="8" fill="#888">Arquitectura IGA UPeU · Proyecto 2026 · Elaborado por Ing. Juan Alberto Sánchez</text>
+</svg>
