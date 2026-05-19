@@ -769,58 +769,7 @@
         </source>
         <expression>
             <script>
-                <code><![CDATA[
-import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
-
-// Condicion 0: personalNumber presente (identificador inmutable requerido)
-def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''
-def hasPersonalNumber = (pn != '')
-
-// Condicion 1: tiene documento de identidad primario
-// identityDocuments = PrismContainerValue o List<PrismContainerValue> inyectado por source
-def hasPrimaryDoc = false
-try {
-    def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(
-        new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'primary')
-    )
-    def docs = identityDocuments
-    if (docs != null) {
-        def docList = (docs instanceof List) ? docs : [docs]
-        hasPrimaryDoc = docList.any { doc ->
-            def primProp = doc?.findProperty(primPath)
-            primProp != null && 'true' == primProp?.realValue?.toString()
-        }
-    }
-} catch (Exception e) {
-    log.warn('Bloque F: error leyendo identityDocuments en {}: {}', focus?.name, e.message)
-}
-// Fallback: aceptar taxId (campo legacy urn:schac:personalUniqueID:*) como documento primario
-if (!hasPrimaryDoc && taxId != null) {
-    def txStr = basic.stringify(taxId)?.trim()
-    if (txStr?.startsWith('urn:schac:personalUniqueID:')) hasPrimaryDoc = true
-}
-
-// Condicion 2: tiene afiliacion primaria valida
-def validAffiliations = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUM','AFFILIATE-CU']
-def hasAffiliation = primaryAffiliation != null &&
-    validAffiliations.contains(basic.stringify(primaryAffiliation).trim().toUpperCase())
-
-// Gate: solo active si cumple las tres condiciones
-if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
-    return 'active'
-} else {
-    if (!hasPersonalNumber) {
-        log.info('Bloque F lifecycle gate: {} sin personalNumber -> draft', focus?.name)
-    }
-    if (!hasPrimaryDoc) {
-        log.info('Bloque F lifecycle gate: {} sin documento primario -> draft', focus?.name)
-    }
-    if (!hasAffiliation) {
-        log.info('Bloque F lifecycle gate: {} sin afiliacion valida -> draft', focus?.name)
-    }
-    return 'draft'
-}
-                ]]></code>
+                <code>def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''; def hasPersonalNumber = (pn != ''); def hasPrimaryDoc = false; try { def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'primary')); def docs = identityDocuments; if (docs != null) { def docList = (docs instanceof List) ? docs : [docs]; hasPrimaryDoc = docList.any { doc -> def primProp = doc?.findProperty(primPath); primProp != null &amp;&amp; 'true' == primProp?.realValue?.toString() } } } catch (Exception e) { log.warn('Bloque F: error leyendo identityDocuments en {}: {}', focus?.name, e.message) }; if (!hasPrimaryDoc &amp;&amp; taxId != null) { def txStr = basic.stringify(taxId)?.trim(); if (txStr?.startsWith('urn:schac:personalUniqueID:')) hasPrimaryDoc = true }; def validAffiliations = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUM','AFFILIATE-CU']; def hasAffiliation = primaryAffiliation != null &amp;&amp; validAffiliations.contains(basic.stringify(primaryAffiliation).trim().toUpperCase()); if (hasPersonalNumber &amp;&amp; hasPrimaryDoc &amp;&amp; hasAffiliation) { return 'active' } else { if (!hasPersonalNumber) { log.info('Bloque F lifecycle gate: {} sin personalNumber -> draft', focus?.name) }; if (!hasPrimaryDoc) { log.info('Bloque F lifecycle gate: {} sin documento primario -> draft', focus?.name) }; if (!hasAffiliation) { log.info('Bloque F lifecycle gate: {} sin afiliacion valida -> draft', focus?.name) }; return 'draft' }</code>
             </script>
         </expression>
         <target>
@@ -1193,126 +1142,12 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
             </source>
             <expression>
                 <script>
-                    <code><![CDATA[
-import javax.xml.namespace.QName
-import com.evolveum.midpoint.prism.path.ItemPath
-
-// --- 1. Extraer número de documento ---
-// Fuente primaria: upeu:lambDocNum (campo de transporte canónico desde inbound LAMB)
-// Fallback: sciback:taxId si contiene URN heredado (urn:schac:personalUniqueID:pe:DNI:PE:*)
-//   para retrocompatibilidad con usuarios creados antes de la migración.
-def rawDocNum = lambDocNum != null ? basic.stringify(lambDocNum).trim() : ''
-// rawTaxId siempre disponible en este scope para el fallback de tipo más abajo
-def rawTaxId  = taxId != null ? basic.stringify(taxId).trim() : ''
-def docNumber = null
-if (rawDocNum != '') {
-    docNumber = rawDocNum
-} else if (rawTaxId.startsWith('urn:schac:personalUniqueID:')) {
-    // Fallback heredado: taxId con URN SCHAC
-    def parts = rawTaxId.split(':')
-    docNumber = parts.length > 0 ? parts[parts.length - 1].trim() : null
-}
-if (!docNumber) return null
-
-// --- 2. Determinar tipo canónico desde lambDocType ---
-def rawType = lambDocType != null ? basic.stringify(lambDocType).trim() : ''
-def typeId = rawType != '' ? rawType : null
-
-// Tabla de conversión ID_TIPODOCUMENTO → canónico
-def INVALID_TYPES = ['0', '97', '98', '99'] as Set
-if (typeId != null && INVALID_TYPES.contains(typeId)) {
-    // Sin documento válido — no crear contenedor
-    log.debug('Bloque J: tipo LAMB {} inválido para {} — skip identityDocuments', typeId, focus?.name)
-    return null
-}
-
-def docType      = 'DNI'    // default
-def verifiedBy   = 'RENIEC' // default
-def countryIssue = 'PER'    // default
-
-if (typeId == null && rawTaxId.startsWith('urn:schac:personalUniqueID:pe:DNI:PE:')) {
-    // Fallback heredado: URN SCHAC con DNI explícito — tipo implícito DNI
-    docType = 'DNI'; verifiedBy = 'RENIEC'; countryIssue = 'PER'
-} else {
-    switch (typeId) {
-        case '1':  docType = 'DNI';      verifiedBy = 'RENIEC';      countryIssue = 'PER'; break
-        case '24': docType = 'DNI';      verifiedBy = 'RENIEC';      countryIssue = 'PER'; break  // DNI menores/CDI
-        case '4':  docType = 'CE';       verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break
-        case '6':  docType = 'CE';       verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break  // CE variante
-        case '31': docType = 'CE';       verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break  // visa especial
-        case '7':  docType = 'PASSPORT'; verifiedBy = 'MIGRACIONES'; countryIssue = '';    break
-        case '9':  docType = 'PASSPORT'; verifiedBy = 'MIGRACIONES'; countryIssue = '';    break  // PASSPORT variante
-        case '22': docType = 'PTP';      verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break
-        case '23': docType = 'CPP';      verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break
-        default:
-            // Tipo desconocido: asumir DNI + log warning para triage
-            log.warn('Bloque J: ID_TIPODOCUMENTO desconocido "{}" para {} — asumiendo DNI', typeId, focus?.name)
-            docType = 'DNI'; verifiedBy = 'RENIEC'; countryIssue = 'PER'
-    }
-}
-
-// --- 3. Construir PrismContainerValue via prismContext ---
-def NS = 'urn:sciback:midpoint:person'
-try {
-    def factory = midpoint.prismContext.itemFactory()
-    def containerDef = midpoint.prismContext.schemaRegistry
-        .findComplexTypeDefinitionByType(new QName(NS, 'IdentityDocumentType'))
-
-    if (containerDef == null) {
-        log.error('Bloque J: IdentityDocumentType no encontrado en registry — verifique schema sciback. user={}', focus?.name)
-        return null
-    }
-
-    def cv = factory.createContainerValue()
-
-    def setStr = { String localName, String value ->
-        if (value == null || value == '') return
-        def qn = new QName(NS, localName)
-        def propDef = containerDef.findPropertyDefinition(ItemPath.create(qn))
-        if (propDef == null) {
-            log.warn('Bloque J: propiedad {} no encontrada en IdentityDocumentType', localName)
-            return
-        }
-        def prop = factory.createProperty(qn, propDef)
-        prop.setRealValue(value)
-        cv.add(prop)
-    }
-
-    setStr('type',           docType)
-    setStr('number',         docNumber)
-    setStr('primary',        'true')
-    setStr('verifiedBy',     verifiedBy)
-    if (countryIssue) setStr('countryOfIssue', countryIssue)
-
-    log.debug('Bloque J: identityDocuments construido type={} number={} verifiedBy={} para {}',
-              docType, docNumber, verifiedBy, focus?.name)
-    return cv
-
-} catch (Exception e) {
-    log.error('Bloque J: error construyendo identityDocuments para {}: {}', focus?.name, e.message)
-    return null
-}
-                    ]]></code>
+                    <code>def rawDocNum = lambDocNum != null ? basic.stringify(lambDocNum).trim() : ''; def rawTaxId = taxId != null ? basic.stringify(taxId).trim() : ''; def docNumber = null; if (rawDocNum != '') { docNumber = rawDocNum } else if (rawTaxId.startsWith('urn:schac:personalUniqueID:')) { def parts = rawTaxId.split(':'); docNumber = parts.length > 0 ? parts[parts.length - 1].trim() : null }; if (!docNumber) return null; def rawType = lambDocType != null ? basic.stringify(lambDocType).trim() : ''; def typeId = rawType != '' ? rawType : null; def INVALID_TYPES = ['0', '97', '98', '99'] as Set; if (typeId != null &amp;&amp; INVALID_TYPES.contains(typeId)) { log.debug('Bloque J: tipo LAMB {} inválido para {} — skip identityDocuments', typeId, focus?.name); return null }; def docType = 'DNI'; def verifiedBy = 'RENIEC'; def countryIssue = 'PER'; if (typeId == null &amp;&amp; rawTaxId.startsWith('urn:schac:personalUniqueID:pe:DNI:PE:')) { docType = 'DNI'; verifiedBy = 'RENIEC'; countryIssue = 'PER' } else { switch (typeId) { case '1': docType = 'DNI'; verifiedBy = 'RENIEC'; countryIssue = 'PER'; break; case '24': docType = 'DNI'; verifiedBy = 'RENIEC'; countryIssue = 'PER'; break; case '4': docType = 'CE'; verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break; case '6': docType = 'CE'; verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break; case '31': docType = 'CE'; verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break; case '7': docType = 'PASSPORT'; verifiedBy = 'MIGRACIONES'; countryIssue = ''; break; case '9': docType = 'PASSPORT'; verifiedBy = 'MIGRACIONES'; countryIssue = ''; break; case '22': docType = 'PTP'; verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break; case '23': docType = 'CPP'; verifiedBy = 'MIGRACIONES'; countryIssue = 'PER'; break; default: log.warn('Bloque J: ID_TIPODOCUMENTO desconocido "{}" para {} — asumiendo DNI', typeId, focus?.name); docType = 'DNI'; verifiedBy = 'RENIEC'; countryIssue = 'PER' } }; def NS = 'urn:sciback:midpoint:person'; try { def factory = midpoint.prismContext.itemFactory(); def containerDef = midpoint.prismContext.schemaRegistry.findComplexTypeDefinitionByType(new javax.xml.namespace.QName(NS, 'IdentityDocumentType')); if (containerDef == null) { log.error('Bloque J: IdentityDocumentType no encontrado en registry — verifique schema sciback. user={}', focus?.name); return null }; def cv = factory.createContainerValue(); def setStr = { String localName, String value -> if (value == null || value == '') return; def qn = new javax.xml.namespace.QName(NS, localName); def propDef = containerDef.findPropertyDefinition(com.evolveum.midpoint.prism.path.ItemPath.create(qn)); if (propDef == null) { log.warn('Bloque J: propiedad {} no encontrada en IdentityDocumentType', localName); return }; def prop = factory.createProperty(qn, propDef); prop.setRealValue(value); cv.add(prop) }; setStr('type', docType); setStr('number', docNumber); setStr('primary', 'true'); setStr('verifiedBy', verifiedBy); if (countryIssue) setStr('countryOfIssue', countryIssue); log.debug('Bloque J: identityDocuments construido type={} number={} verifiedBy={} para {}', docType, docNumber, verifiedBy, focus?.name); return cv } catch (Exception e) { log.error('Bloque J: error construyendo identityDocuments para {}: {}', focus?.name, e.message); return null }</code>
                 </script>
             </expression>
             <condition>
                 <script>
-                    <code><![CDATA[
-// Condición: hay número de documento (desde lambDocNum o fallback taxId URN) Y tipo válido
-def rawDocNum = lambDocNum != null ? basic.stringify(lambDocNum).trim() : ''
-def hasNumber = false
-if (rawDocNum != '') {
-    hasNumber = true
-} else {
-    def rawTaxId = taxId != null ? basic.stringify(taxId).trim() : ''
-    hasNumber = rawTaxId.startsWith('urn:schac:personalUniqueID:pe:DNI:PE:') &&
-                rawTaxId != 'urn:schac:personalUniqueID:pe:DNI:PE:'
-}
-def rawType = lambDocType != null ? basic.stringify(lambDocType).trim() : ''
-def INVALID = ['0', '97', '98', '99'] as Set
-def typeOk = rawType == '' || !INVALID.contains(rawType)
-hasNumber && typeOk
-                    ]]></code>
+                    <code>def rawDocNum = lambDocNum != null ? basic.stringify(lambDocNum).trim() : ''; def hasNumber = false; if (rawDocNum != '') { hasNumber = true } else { def rawTaxId = taxId != null ? basic.stringify(taxId).trim() : ''; hasNumber = rawTaxId.startsWith('urn:schac:personalUniqueID:pe:DNI:PE:') &amp;&amp; rawTaxId != 'urn:schac:personalUniqueID:pe:DNI:PE:' }; def rawType = lambDocType != null ? basic.stringify(lambDocType).trim() : ''; def INVALID = ['0', '97', '98', '99'] as Set; def typeOk = rawType == '' || !INVALID.contains(rawType); hasNumber &amp;&amp; typeOk</code>
                 </script>
             </condition>
         </mapping>
@@ -1343,23 +1178,7 @@ hasNumber && typeOk
             </expression>
             <condition>
                 <script>
-                    <code><![CDATA[
-import com.evolveum.midpoint.prism.path.ItemPath
-import javax.xml.namespace.QName
-def docs = identityDocuments
-if (docs == null) return false
-try {
-    def docList = (docs instanceof java.util.Collection) ? docs : [docs]
-    def primPath = ItemPath.create(new QName('urn:sciback:midpoint:person', 'primary'))
-    return docList.any { doc ->
-        def primProp = doc?.findProperty(primPath)
-        primProp != null && 'true' == primProp?.realValue?.toString()
-    }
-} catch (Exception e) {
-    log.warn('Bloque J2: error verificando identityDocuments en {}: {}', focus?.name, e.message)
-    return false
-}
-                    ]]></code>
+                    <code>def docs = identityDocuments; if (docs == null) return false; try { def docList = (docs instanceof java.util.Collection) ? docs : [docs]; def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'primary')); return docList.any { doc -> def primProp = doc?.findProperty(primPath); primProp != null &amp;&amp; 'true' == primProp?.realValue?.toString() } } catch (Exception e) { log.warn('Bloque J2: error verificando identityDocuments en {}: {}', focus?.name, e.message); return false }</code>
                 </script>
             </condition>
         </mapping>
