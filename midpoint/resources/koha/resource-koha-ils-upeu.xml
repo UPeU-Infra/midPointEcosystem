@@ -1078,17 +1078,7 @@
                     </source>
                     <expression>
                         <script>
-                            <code>
-if (locality == null) return 'BUL'
-switch (locality.toString().trim().toUpperCase()) {
-    case 'LIMA':     return 'BUL'
-    case 'JULIACA':  return 'BUJ'
-    case 'TARAPOTO': return 'BUT'
-    case 'CIA':
-    case 'ICA':      return 'CIA'
-    default:         return 'BUL'
-}
-                                </code>
+                            <code>def loc = locality?.toString()?.trim()?.toUpperCase(); ['LIMA':'BUL','JULIACA':'BUJ','TARAPOTO':'BUT','CIA':'CIA','ICA':'CIA'].getOrDefault(loc ?: '', 'BUL')</code>
                         </script>
                     </expression>
                 </outbound>
