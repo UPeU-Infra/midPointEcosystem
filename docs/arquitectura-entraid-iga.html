@@ -181,14 +181,12 @@
 <!-- NAV -->
 <nav class="nav">
   <a href="#estado">Estado actual</a>
-  <a href="#arquitectura">Arquitectura objetivo</a>
-  <a href="#usuarios">Usuarios</a>
+  <a href="#arquitectura">Arquitectura</a>
   <a href="#grupos">Grupos y Licencias</a>
   <a href="#roles-mapa">Mapa BR→Licencia</a>
   <a href="#lifecycle">Ciclo de vida JML</a>
   <a href="#permisos">Permisos Graph</a>
   <a href="#fases">Fases</a>
-  <a href="#tecnico">Diseño técnico</a>
 </nav>
 
 <div class="main">
@@ -311,38 +309,38 @@
 <!-- 2. ECOSISTEMA ENTRA ID -->
 <!-- ============================================================ -->
 <section id="arquitectura">
-  <h2>2 · Cómo organizan el directorio MidPoint, Entra ID y OpenLDAP</h2>
+  <h2>2 · Arquitectura objetivo — 2 mundos paralelos bajo un solo decisor</h2>
 
   <div class="alert info" style="margin-bottom:20px;">
     <div class="alert-icon">ℹ</div>
     <div>
-      <strong>Entra ID y OpenLDAP son ambos planos actualmente</strong>
-      <p>Entra ID no tiene árbol de OUs — los usuarios se organizan con <strong>atributos</strong> (<code>department</code>, <code>jobTitle</code>) y <strong>Security Groups</strong>. OpenLDAP tiene la misma estructura plana hoy: <code>ou=people</code> con todos los usuarios al mismo nivel. La diferencia es que OpenLDAP <em>soporta</em> árboles jerárquicos (podría tener <code>ou=Lima → ou=Fac-Ingenieria</code>), pero implementarlo requiere una decisión de diseño. MidPoint orquesta ambos desde Oracle LAMB.</p>
+      <strong>MidPoint es el único decisor. Entra ID y OpenLDAP son destinos paralelos, no conectados entre sí.</strong>
+      <p>Oracle LAMB es la fuente de verdad. MidPoint lee LAMB, aplica Business Roles → Application Roles, y escribe en DOS sistemas simultáneamente: <strong>Entra ID</strong> (mundo Microsoft: licencias, Teams, OneDrive, apps cloud) y <strong>OpenLDAP</strong> (mundo on-premise: Keycloak, RADIUS, apps académicas). Keycloak autentica contra OpenLDAP via User Federation — <em>no contra Entra ID</em>. Crear grupos manualmente en Entra ID o LDAP, o asignar licencias usuario por usuario, rompe la cadena IGA (ISO 24760-2 §6.4).</p>
     </div>
   </div>
 
-  <!-- Nuevo diagrama: LAMB → MidPoint → Entra ID (plano) + OpenLDAP (árbol) -->
+  <!-- Diagrama: LAMB → MidPoint → Entra ID + OpenLDAP -->
   <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px;">
 
-    <!-- Top: LAMB -->
+    <!-- Fila 1: Oracle LAMB -->
     <div style="text-align:center;padding:16px 20px;background:#fffbf0;border-bottom:2px solid var(--border);">
       <div style="display:inline-flex;align-items:center;gap:10px;border:1px solid #f5c97d;border-radius:8px;padding:10px 24px;background:#fff;">
         <span style="font-size:24px;">🏛</span>
         <div style="text-align:left;">
-          <div style="font-weight:700;font-size:14px;">Oracle LAMB</div>
-          <div style="font-size:11px;color:#605e5c;">Fuente de verdad — Trabajadores · Estudiantes · Egresados</div>
+          <div style="font-weight:700;font-size:14px;">Oracle LAMB — Fuente de verdad</div>
+          <div style="font-size:11px;color:#605e5c;">Trabajadores (ELISEO.VW_APS_EMPLEADO) · Estudiantes (DAVID.VW_PERSONA_ALUMNO) · Egresados (DAVID.VW_PERSONA_EGRESADO)</div>
         </div>
       </div>
       <div style="font-size:22px;color:#8a8886;margin-top:10px;line-height:1;">↓</div>
     </div>
 
-    <!-- Middle: MidPoint -->
+    <!-- Fila 2: MidPoint IGA -->
     <div style="text-align:center;padding:14px 20px;background:var(--blue-lt);border-bottom:2px solid var(--border);">
       <div style="display:inline-flex;align-items:center;gap:10px;border:2px solid var(--blue);border-radius:8px;padding:10px 28px;background:#fff;">
         <span style="font-size:24px;">⚙</span>
         <div style="text-align:left;">
-          <div style="font-weight:700;font-size:14px;color:var(--blue-dk);">MidPoint IGA</div>
-          <div style="font-size:11px;color:#605e5c;">Lee LAMB · Determina tipo de usuario · Escribe atributos y membresías</div>
+          <div style="font-weight:700;font-size:14px;color:var(--blue-dk);">MidPoint IGA — Unico decisor</div>
+          <div style="font-size:11px;color:#605e5c;">Lee LAMB · Aplica Business Roles → Application Roles · Escribe en Entra ID y OpenLDAP</div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;margin-top:10px;font-size:20px;color:#8a8886;line-height:1;">
@@ -350,21 +348,21 @@
       </div>
     </div>
 
-    <!-- Bottom: dos columnas -->
+    <!-- Fila 3: dos columnas destino -->
     <div style="display:grid;grid-template-columns:1fr 1fr;">
 
-      <!-- Izquierda: Entra ID (plano) -->
+      <!-- Columna izquierda: Entra ID -->
       <div style="padding:20px;border-right:2px solid var(--border);">
         <div style="text-align:center;margin-bottom:14px;">
           <div style="display:inline-flex;align-items:center;gap:8px;background:var(--blue-lt);border:1px solid var(--blue);border-radius:8px;padding:6px 16px;">
             <span style="font-size:16px;">☁</span>
-            <div style="font-weight:700;font-size:12px;color:var(--blue-dk);">Entra ID — PLANO (sin árbol)</div>
+            <div style="font-weight:700;font-size:12px;color:var(--blue-dk);">Entra ID — Mundo Microsoft (plano, sin OUs)</div>
           </div>
         </div>
 
-        <!-- Atributos en usuario -->
+        <!-- Usuarios planos con atributos -->
         <div style="background:#f8f8f8;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#8a8886;margin-bottom:8px;">👤 Todos los usuarios al mismo nivel</div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#8a8886;margin-bottom:8px;">Usuarios — todos al mismo nivel (73,104 cuentas)</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
             <div style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:11px;">
               <div style="font-weight:600;word-break:break-all;">juan.perez@upeu.edu.pe</div>
@@ -375,90 +373,154 @@
               <div style="color:#605e5c;margin-top:4px;line-height:1.7;">department: Ing. Sistemas<br>jobTitle: Estudiante<br>givenName: Ana</div>
             </div>
           </div>
-          <div style="font-size:10px;color:var(--red);margin-top:8px;line-height:1.5;">⚠ Hoy estos campos están vacíos en el tenant UPeU. MidPoint los llenará desde LAMB post-B3.</div>
+          <div style="font-size:10px;color:var(--red);margin-top:8px;line-height:1.5;">Hoy givenName, surname, department, jobTitle estan vacios en el tenant UPeU. MidPoint los llenara desde LAMB post-B3.</div>
         </div>
 
-        <!-- Security Groups -->
-        <div style="background:#f8f8f8;border:1px solid var(--border);border-radius:8px;padding:12px;">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#8a8886;margin-bottom:8px;">🔑 Security Groups — propuesta (hoy: 0 en el tenant)</div>
+        <!-- Security Groups propuestos -->
+        <div style="background:#f8f8f8;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#8a8886;margin-bottom:8px;">Security Groups — propuesta (hoy: 0 en el tenant)</div>
           <div style="font-size:11px;line-height:2.2;">
             <code style="background:var(--blue-lt);padding:2px 6px;border-radius:4px;">lic-m365-a1-students</code> → SKU A1 Students<br>
             <code style="background:var(--blue-lt);padding:2px 6px;border-radius:4px;">lic-m365-a3-students</code> → SKU A3 Students<br>
             <code style="background:var(--blue-lt);padding:2px 6px;border-radius:4px;">lic-m365-a1-faculty</code> → SKU A1 Faculty<br>
             <code style="background:var(--blue-lt);padding:2px 6px;border-radius:4px;">lic-m365-a3-faculty</code> → SKU A3 Faculty
           </div>
-          <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
-            <span class="badge badge-blue">→ M365 licencias</span>
-            <span class="badge badge-gray">→ Intune políticas</span>
+          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+            <span class="badge badge-blue">→ licencias M365</span>
+            <span class="badge badge-gray">→ politicas Intune</span>
+          </div>
+        </div>
+
+        <!-- Apps que consume Entra ID -->
+        <div style="background:#f8f8f8;border:1px solid var(--border);border-radius:8px;padding:12px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#8a8886;margin-bottom:8px;">Apps autenticadas directamente contra Entra ID</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px;">
+            <span class="badge badge-blue">M365 (Word/Excel/Teams/OneDrive/SharePoint)</span>
+            <span class="badge badge-blue">Power BI</span>
+            <span class="badge badge-blue">Zoom</span>
+            <span class="badge badge-blue">Adobe CC</span>
+            <span class="badge badge-blue">Canva EDU</span>
+            <span class="badge badge-blue">GitHub Enterprise</span>
           </div>
         </div>
       </div>
 
-      <!-- Derecha: OpenLDAP (árbol) -->
+      <!-- Columna derecha: OpenLDAP -->
       <div style="padding:20px;background:#fafff9;">
         <div style="text-align:center;margin-bottom:14px;">
           <div style="display:inline-flex;align-items:center;gap:8px;background:#dff0d8;border:1px solid var(--green);border-radius:8px;padding:6px 16px;">
             <span style="font-size:16px;">🌲</span>
-            <div style="font-weight:700;font-size:12px;color:var(--green);">OpenLDAP — Estructura actual</div>
+            <div style="font-weight:700;font-size:12px;color:var(--green);">OpenLDAP — Mundo on-premise (Identity Cache)</div>
           </div>
         </div>
 
-        <!-- Árbol LDAP real -->
-        <pre style="background:#fff;border:1px solid #c8e6c9;border-radius:8px;padding:14px;font-family:monospace;font-size:11px;line-height:1.8;margin-bottom:10px;overflow-x:auto;color:#1b5e20;"><strong>dc=upeu,dc=edu,dc=pe</strong>
-├── cn=keycloak          ← cuenta de servicio
-├── ou=groups            ← grupos LDAP
-├── ou=people            ← 1000+ usuarios (plano)
+        <!-- Arbol LDAP real -->
+        <pre style="background:#fff;border:1px solid #c8e6c9;border-radius:8px;padding:14px;font-family:monospace;font-size:11px;line-height:1.8;overflow-x:auto;color:#1b5e20;margin-bottom:10px;"><strong>dc=upeu,dc=edu,dc=pe</strong>
+├── cn=keycloak       ← cuenta de servicio
+├── ou=groups         ← grupos LDAP para Keycloak/RADIUS
+├── ou=people         ← 1000+ usuarios (plano)
 │   ├── cn=juan.perez
 │   └── cn=ana.garcia
 └── ou=services
     ├── cn=keycloak
     └── cn=midpoint</pre>
 
-        <div style="background:#dff0d8;border:1px solid #a5d6a7;border-radius:8px;padding:10px;font-size:11px;">
-          <div style="font-weight:600;margin-bottom:4px;">🔑 Keycloak usa OpenLDAP como User Federation</div>
-          <div style="color:#2e7d32;line-height:1.6;">Los usuarios de Koha, Indico y Moodle se autentican contra el árbol LDAP. Keycloak lee el árbol y mapea grupos LDAP a roles de cada aplicación.</div>
+        <!-- Sub-seccion: Keycloak -->
+        <div style="background:#dff0d8;border:1px solid #a5d6a7;border-radius:8px;padding:12px;margin-bottom:8px;">
+          <div style="font-weight:600;font-size:12px;margin-bottom:6px;">Keycloak — User Federation desde OpenLDAP</div>
+          <div style="font-size:11px;color:#2e7d32;margin-bottom:8px;line-height:1.5;">Keycloak lee <code>ou=people</code> y <code>ou=groups</code> directamente via LDAP User Federation. El usuario NO necesita password separado: OpenLDAP es el backend de autenticacion.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;">
+            <span class="badge badge-green">Koha (bul/buj/but/cia)</span>
+            <span class="badge badge-green">Indico</span>
+            <span class="badge badge-green">OJS</span>
+            <span class="badge badge-green">DSpace</span>
+            <span class="badge badge-green">Moodle</span>
+            <span class="badge badge-green">GLPI</span>
+            <span class="badge badge-green">Documize</span>
+            <span class="badge badge-green">EZProxy → bases academicas</span>
+          </div>
         </div>
 
-        <div style="margin-top:8px;font-size:10px;color:#8a8886;font-style:italic;">* OpenLDAP también es plano actualmente (ou=people sin jerarquía). Una estructura de OUs por facultad/campus es posible técnicamente pero requiere decisión de diseño.</div>
+        <!-- Sub-seccion: FreeRADIUS -->
+        <div style="background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:12px;">
+          <div style="font-weight:600;font-size:12px;margin-bottom:6px;">FreeRADIUS — Autenticacion de red via OpenLDAP</div>
+          <div style="font-size:11px;color:#e65100;margin-bottom:8px;line-height:1.5;">FreeRADIUS consulta OpenLDAP para autenticar usuarios de red. Los grupos LDAP definen politicas de acceso.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;">
+            <span class="badge badge-orange">Wi-Fi 802.1X</span>
+            <span class="badge badge-orange">VPN</span>
+            <span class="badge badge-orange">Switches (TACACS+/RADIUS)</span>
+            <span class="badge badge-orange">Firewalls</span>
+            <span class="badge badge-orange">Impresoras</span>
+          </div>
+        </div>
       </div>
 
     </div>
-  </div><!-- /nuevo diagrama -->
-
-  <!-- Keycloak integration -->
-  <h3>Keycloak — un solo login para todas las apps UPeU</h3>
-  <div class="alert info">
-    <div class="alert-icon">🔑</div>
-    <div>
-      <strong>Keycloak se registra en Entra ID como Enterprise Application (OIDC)</strong>
-      <p>Cuando un usuario abre Koha, Indico, Moodle u otra app on-premise, Keycloak redirige al login de Microsoft. El usuario ingresa su cuenta <code>@upeu.edu.pe</code> (con MFA si está activo). Keycloak recibe el token verificado y da acceso. Resultado: <strong>una sola cuenta UPeU para todo</strong>, sin contraseñas separadas por sistema.</p>
-    </div>
-  </div>
-
-  <div class="cards cards-3" style="margin-top:12px;">
-    <div class="card blue">
-      <div class="card-header"><div class="card-icon" style="background:var(--blue-lt);font-weight:700;">1</div><div><div class="card-title">Usuario abre app</div></div></div>
-      <p style="font-size:13px;">Accede a Koha, Indico, Moodle u otra app federada. Keycloak detecta que no hay sesión activa.</p>
-    </div>
-    <div class="card blue">
-      <div class="card-header"><div class="card-icon" style="background:var(--blue-lt);font-weight:700;">2</div><div><div class="card-title">Redirige a Entra ID</div></div></div>
-      <p style="font-size:13px;">Keycloak redirige al login de Microsoft. El usuario ingresa su cuenta <code>@upeu.edu.pe</code>.</p>
-    </div>
-    <div class="card green">
-      <div class="card-header"><div class="card-icon" style="background:var(--green-lt);font-weight:700;">3</div><div><div class="card-title">Acceso otorgado</div></div></div>
-      <p style="font-size:13px;">Keycloak recibe token verificado de Entra ID y da acceso a la app. Sin contraseña adicional.</p>
-    </div>
-  </div>
+  </div><!-- /diagrama -->
 
   <div class="sep"></div>
 
-  <!-- MidPoint role -->
-  <h3>Rol de MidPoint en este ecosistema</h3>
-  <div class="alert ok">
-    <div class="alert-icon">⚙</div>
+  <!-- 3 canales de autenticacion -->
+  <h3>3 canales de autenticacion UPeU</h3>
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>Canal</th>
+        <th>Backend de autenticacion</th>
+        <th>Aplicaciones / servicios</th>
+        <th>Gestionado por</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Entra ID directo</strong></td>
+        <td>Microsoft Entra ID (OAuth 2.0 / OIDC)</td>
+        <td>
+          <span class="badge badge-blue">M365</span>
+          <span class="badge badge-blue">Power BI</span>
+          <span class="badge badge-blue">Zoom</span>
+          <span class="badge badge-blue">Adobe CC</span>
+          <span class="badge badge-blue">Canva EDU</span>
+          <span class="badge badge-blue">GitHub Enterprise</span>
+        </td>
+        <td>MidPoint → Entra ID<br><small style="color:#605e5c;">atributos + Security Groups</small></td>
+      </tr>
+      <tr>
+        <td><strong>Keycloak (via OpenLDAP)</strong></td>
+        <td>OpenLDAP User Federation en Keycloak</td>
+        <td>
+          <span class="badge badge-green">Koha</span>
+          <span class="badge badge-green">Indico</span>
+          <span class="badge badge-green">OJS</span>
+          <span class="badge badge-green">DSpace</span>
+          <span class="badge badge-green">Moodle</span>
+          <span class="badge badge-green">GLPI</span>
+          <span class="badge badge-green">Documize</span>
+          <span class="badge badge-green">EZProxy</span>
+          <span class="badge badge-green">Scopus/WoS/IEEE/ProQuest/EBSCO</span>
+        </td>
+        <td>MidPoint → OpenLDAP → Keycloak<br><small style="color:#605e5c;">ou=people + ou=groups</small></td>
+      </tr>
+      <tr>
+        <td><strong>RADIUS (via OpenLDAP)</strong></td>
+        <td>FreeRADIUS + OpenLDAP backend</td>
+        <td>
+          <span class="badge badge-orange">Wi-Fi 802.1X</span>
+          <span class="badge badge-orange">VPN</span>
+          <span class="badge badge-orange">Switches (TACACS+/RADIUS)</span>
+          <span class="badge badge-orange">Firewalls</span>
+          <span class="badge badge-orange">Impresoras</span>
+        </td>
+        <td>MidPoint → OpenLDAP → FreeRADIUS<br><small style="color:#605e5c;">grupos LDAP = politicas de red</small></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="alert warn" style="margin-top:16px;">
+    <div class="alert-icon">⚠</div>
     <div>
-      <strong>MidPoint determina quién entra a qué grupo, basado en datos de LAMB</strong>
-      <p>MidPoint lee Oracle LAMB, determina el tipo de usuario (estudiante, docente, administrativo), y gestiona la membresía en los grupos de seguridad de Entra ID. Los grupos controlan automáticamente las licencias M365 y las políticas Intune. <strong>No crea ni elimina cuentas</strong> — organiza lo que ya existe y define quién accede a qué.</p>
+      <strong>Keycloak NO autentica contra Entra ID</strong>
+      <p>El flujo correcto es: usuario abre app → Keycloak → OpenLDAP (User Federation) → usuario autenticado. Entra ID es un sistema TARGET paralelo para el mundo Microsoft, no un proveedor de identidad para Keycloak. Configurar Keycloak como Identity Broker contra Entra ID introduciria dependencia de disponibilidad cloud y rompe la arquitectura on-premise.</p>
     </div>
   </div>
 
