@@ -1053,8 +1053,18 @@
                     <name>statistics2-outbound</name>
                     <strength>normal</strength>
                     <source>
-                        <path>$focus/department</path>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:academicProgram</path>
                     </source>
+                    <expression>
+                        <script>
+                            <code>
+// academicProgram es multivalor; Koha acepta un solo valor en statistics_2
+// Tomamos el primer elemento si existe
+if (input == null) return null
+input instanceof java.util.Collection ? (input.isEmpty() ? null : input.iterator().next()?.toString()) : input.toString()
+                            </code>
+                        </script>
+                    </expression>
                 </outbound>
             </attribute>
             <attribute id="26">
