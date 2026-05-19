@@ -385,22 +385,13 @@
             </attribute>
             <attribute>
                 <ref>ri:UPEU_ARCHETYPE_NAME</ref>
-                <inbound>
-                    <name>upeu-archetype-assign</name>
-                    <strength>strong</strength>
-                    <expression>
-                        <assignmentTargetSearch>
-                            <targetType>ArchetypeType</targetType>
-                            <filter>
-                                <q:equal>
-                                    <q:path>name</q:path>
-                                    <expression><path>$input</path></expression>
-                                </q:equal>
-                            </filter>
-                        </assignmentTargetSearch>
-                    </expression>
-                    <target><path>assignment</path></target>
-                </inbound>
+                <!-- upeu-archetype-assign ELIMINADO 2026-05-18:
+                     El archetype structural lo decide el Bloque D7 del Object Template
+                     (UserTemplate-Person-Base) desde sb:affiliations con prioridad
+                     faculty > staff > student > alum. Asignarlo aquí causa
+                     PolicyViolationException "multiple structural archetypes" en usuarios
+                     con doble afiliación (egresados-trabajadores).
+                     MidPoint Book Cap. 8-9: resources aportan datos; templates deciden estructura. -->
                 <inbound>
                     <name>archetype-to-primaryAffiliation</name>
                     <strength>strong</strength>
