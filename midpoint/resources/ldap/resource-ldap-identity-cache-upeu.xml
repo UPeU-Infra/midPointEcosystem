@@ -14140,6 +14140,11 @@
                     <source>
                         <path>$focus/telephoneNumber</path>
                     </source>
+                    <expression>
+                        <script>
+                            <code>def p = telephoneNumber?.toString()?.trim(); if (!p || p.length() == 0) return null; def clean = p.replaceAll("[^A-Za-z0-9 '()+,-./:=? ]", '').trim(); clean.replaceAll('[^0-9]','').length() >= 7 ? clean : null</code>
+                        </script>
+                    </expression>
                 </outbound>
             </attribute>
             <attribute id="84">
