@@ -18,6 +18,7 @@
     --gray:    #323130;
     --gray-lt: #f3f2f1;
     --border:  #edebe9;
+    --muted:   #8a8886;
     --font:    'Segoe UI', system-ui, -apple-system, sans-serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,6 +42,25 @@
   section { margin-bottom: 40px; }
   h2 { font-size: 18px; font-weight: 600; color: var(--gray); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--blue); }
   h3 { font-size: 14px; font-weight: 600; color: var(--gray); margin: 16px 0 8px; }
+
+  /* Stat cards */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+  .stat-card { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
+  .stat-card .stat-num { font-size: 32px; font-weight: 700; line-height: 1; }
+  .stat-card .stat-lbl { font-size: 12px; color: #605e5c; margin-top: 4px; }
+  .stat-card .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .stat-card.linked { border-top: 4px solid var(--green); }
+  .stat-card.linked .stat-num { color: var(--green); }
+  .stat-card.unmatched { border-top: 4px solid var(--red); }
+  .stat-card.unmatched .stat-num { color: var(--red); }
+  .stat-card.disputed { border-top: 4px solid var(--orange); }
+  .stat-card.disputed .stat-num { color: var(--orange); }
+  .stat-card.total { border-top: 4px solid var(--blue); }
+  .stat-card.total .stat-num { color: var(--blue); }
+
+  /* Investigate badge */
+  .investigate { background: #fff8e1; border: 1px solid #f59e0b; border-radius: 8px; padding: 14px 16px; margin: 12px 0; }
+  .investigate-title { font-weight: 700; color: #92400e; margin-bottom: 8px; font-size: 13px; }
 
   /* Cards */
   .cards { display: grid; gap: 16px; }
@@ -116,36 +136,8 @@
   .alert p { font-size: 13px; }
   .alert strong { display: block; font-size: 13px; margin-bottom: 2px; }
 
-  /* Phase timeline */
-  .timeline { position: relative; padding-left: 32px; }
-  .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: var(--border); }
-  .timeline-item { position: relative; margin-bottom: 20px; }
-  .timeline-item::before { content: ''; position: absolute; left: -26px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--blue); border: 2px solid #fff; box-shadow: 0 0 0 2px var(--blue); }
-  .timeline-item.done::before { background: var(--green); box-shadow: 0 0 0 2px var(--green); }
-  .timeline-item.blocked::before { background: var(--red); box-shadow: 0 0 0 2px var(--red); }
-  .timeline-item.pending::before { background: #fff; box-shadow: 0 0 0 2px #8a8886; }
-  .timeline-phase { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #605e5c; }
-  .timeline-title { font-size: 14px; font-weight: 600; margin: 2px 0; }
-  .timeline-body { font-size: 13px; color: #605e5c; }
-
   /* Separator */
   .sep { height: 1px; background: var(--border); margin: 20px 0; }
-
-  /* Map */
-  .role-map { display: flex; flex-direction: column; gap: 6px; }
-  .role-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .role-row .br { background: #ede0ff; color: #5c2d91; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 600; min-width: 200px; }
-  .role-row .arrow { color: #8a8886; font-size: 14px; }
-  .role-row .ar { background: var(--blue-lt); color: var(--blue-dk); border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
-  .role-row .group { background: var(--orange-lt); color: var(--orange); border-radius: 6px; padding: 4px 10px; font-size: 12px; }
-  .role-row .lic { background: var(--green-lt); color: var(--green); border-radius: 6px; padding: 4px 10px; font-size: 12px; }
-
-  /* Org chart */
-  .org { display: flex; flex-direction: column; align-items: center; gap: 0; }
-  .org-level { display: flex; gap: 12px; justify-content: center; margin-bottom: 0; }
-  .org-node { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; text-align: center; font-size: 12px; font-weight: 600; min-width: 120px; }
-  .org-line { width: 2px; height: 20px; background: var(--border); margin: 0 auto; }
-  .org-h-line { height: 2px; background: var(--border); align-self: stretch; }
 
   /* Responsive */
   @media (max-width: 800px) {
@@ -155,6 +147,7 @@
     .header { flex-direction: column; gap: 16px; padding: 20px; }
     .flow { flex-direction: column; }
     .flow-arrow { transform: rotate(90deg); }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   /* Print */
@@ -167,12 +160,12 @@
 <div class="header">
   <div>
     <h1>Arquitectura IGA — Microsoft Entra ID · UPeU</h1>
-    <p>Diseño bajo estándares IGA · MidPoint 4.10.2 · Actualizado 2026-05-19</p>
+    <p>Diseño bajo estándares IGA · MidPoint 4.10.2 · Audit 2026-05-19</p>
   </div>
   <div style="display:flex;gap:12px;">
     <div class="header-badge">
-      <div class="num">73 K</div>
-      <div class="lbl">cuentas actuales<br>Entra ID</div>
+      <div class="num">35.4K</div>
+      <div class="lbl">shadows reconciliados<br>Entra ID en MidPoint</div>
     </div>
     <div class="header-badge">
       <div class="num">B3</div>
@@ -180,7 +173,7 @@
     </div>
     <div class="header-badge">
       <div class="num">4</div>
-      <div class="lbl">perfiles de licencia<br>A1/A3</div>
+      <div class="lbl">grupos de licencia<br>A1/A3</div>
     </div>
   </div>
 </div>
@@ -195,7 +188,7 @@
   <a href="#helpdesk">Mesa de Ayuda</a>
   <a href="#lifecycle">Ciclo de vida JML</a>
   <a href="#permisos">Permisos Graph</a>
-  <a href="#fases">Fases de implementación</a>
+  <a href="#fases">Fases</a>
   <a href="#tecnico">Diseño técnico</a>
 </nav>
 
@@ -205,53 +198,55 @@
 <!-- 1. ESTADO ACTUAL -->
 <!-- ============================================================ -->
 <section id="estado">
-  <h2>1 · Estado actual — Problemas identificados</h2>
+  <h2>1 · Estado actual — Audit 2026-05-19</h2>
 
-  <div class="alert err">
-    <div class="alert-icon">🚨</div>
-    <div>
-      <strong>Problema crítico: Licencias nunca se revocan</strong>
-      <p>El sistema de admisiones crea cuentas M365 automáticamente al admitir postulantes. La mesa de ayuda también asigna licencias de forma directa en Entra ID.
-      En ninguno de los dos flujos existe un proceso de baja: las licencias permanecen activas aunque el usuario no se haya matriculado, haya egresado o ya no sea trabajador activo.
-      Audit 2026-05-19: <strong>28,608 cuentas (81.5%)</strong> en Entra ID no tienen correspondencia en LAMB. Esto genera costo innecesario y riesgo de seguridad.</p>
+  <!-- Stat cards -->
+  <div class="stat-grid">
+    <div class="stat-card total">
+      <div class="stat-num">35,452</div>
+      <div class="stat-lbl">Total shadows reconciliados</div>
+      <div class="stat-sub">Entra ID en MidPoint (mayo 2026)</div>
+    </div>
+    <div class="stat-card linked">
+      <div class="stat-num">6,450</div>
+      <div class="stat-lbl">LINKED</div>
+      <div class="stat-sub">Con usuario en Oracle LAMB (18%)</div>
+    </div>
+    <div class="stat-card unmatched">
+      <div class="stat-num">28,608</div>
+      <div class="stat-lbl">UNMATCHED</div>
+      <div class="stat-sub">Sin registro en LAMB (81%)</div>
+    </div>
+    <div class="stat-card disputed">
+      <div class="stat-num">394</div>
+      <div class="stat-lbl">DISPUTED</div>
+      <div class="stat-sub">UPN coincide con varios candidatos</div>
     </div>
   </div>
 
-  <div class="cards cards-3" style="margin-top:16px;">
+  <!-- Problemas condensados -->
+  <div class="cards cards-2" style="margin-top:8px;">
     <div class="card red">
       <div class="card-header">
-        <div class="card-icon" style="background:var(--red-lt);">📋</div>
-        <div><div class="card-title">Cuentas sin ciclo de vida completo</div><div class="card-sub">Sistema de admisiones</div></div>
+        <div class="card-icon" style="background:var(--red-lt);">🚨</div>
+        <div><div class="card-title">28,608 cuentas sin ciclo de vida IGA</div><div class="card-sub">81% del total — sin control en MidPoint</div></div>
       </div>
       <ul class="list cross">
-        <li>El sistema de admisiones crea cuentas M365 automáticamente al admitir postulantes</li>
-        <li>Si el admitido no se matricula, la cuenta <strong>no se elimina ni desactiva</strong></li>
-        <li>28,608 cuentas en Entra ID sin correspondencia en LAMB (no son empleados ni alumnos activos)</li>
-        <li>73K cuentas con atributos vacíos (givenName, surname, dept...)</li>
+        <li>No son empleados ni alumnos activos en LAMB (verificado con cross-check directo en PostgreSQL)</li>
+        <li>Sin proceso de baja: licencias permanecen activas indefinidamente</li>
+        <li>Atributos vacíos en la mayoría (givenName, surname, department)</li>
         <li>Sin estándar de UPN — múltiples formatos coexistentes</li>
       </ul>
     </div>
     <div class="card red">
       <div class="card-header">
-        <div class="card-icon" style="background:var(--red-lt);">💳</div>
-        <div><div class="card-title">Licencias sin control de ciclo de vida</div><div class="card-sub">Sin IGA</div></div>
-      </div>
-      <ul class="list cross">
-        <li>Asignación manual → ningún proceso de revocación</li>
-        <li>Egresados siguen con licencia A1/A3 activa</li>
-        <li>Personal que renunció conserva acceso M365</li>
-        <li>No hay auditoría de quién asignó qué licencia ni cuándo</li>
-      </ul>
-    </div>
-    <div class="card red">
-      <div class="card-header">
         <div class="card-icon" style="background:var(--red-lt);">🔐</div>
-        <div><div class="card-title">Sin gestión de permisos Entra ID</div><div class="card-sub">Riesgo seguridad</div></div>
+        <div><div class="card-title">Gestión manual de permisos — riesgo de seguridad</div><div class="card-sub">Sin gobierno IGA</div></div>
       </div>
       <ul class="list cross">
-        <li>La mesa de ayuda tiene permisos excesivos en Entra ID</li>
-        <li>No hay separación entre operaciones de identidad y de licencias</li>
-        <li>MidPoint no tiene User.ReadWrite.All → no puede corregir esto aún</li>
+        <li>Mesa de ayuda asigna licencias directamente en Entra ID sin proceso de revocación</li>
+        <li>Mesa de ayuda tiene permisos excesivos — sin separación de funciones</li>
+        <li>MidPoint no tiene <code>User.ReadWrite.All</code> — no puede corregir esto aún (B3)</li>
         <li>Sin Administrative Units por campus/unidad</li>
       </ul>
     </div>
@@ -259,75 +254,88 @@
 
   <div class="sep"></div>
 
-  <h3>Situación técnica MidPoint ↔ Entra ID</h3>
-  <table class="tbl">
-    <thead><tr><th>Capacidad</th><th>Estado actual</th><th>Bloqueante</th></tr></thead>
+  <h3>Distribución UNMATCHED por formato de UPN</h3>
+  <table class="tbl" style="margin-bottom:12px;">
+    <thead><tr><th>Formato</th><th>Cuentas</th><th>Ejemplo</th><th>Origen probable</th><th>Verificado</th></tr></thead>
     <tbody>
-      <tr><td>Leer usuarios desde Entra ID (inbound)</td><td><span class="badge badge-green">✓ Activo</span></td><td>—</td></tr>
-      <tr><td>Correlacionar por emailAddress</td><td><span class="badge badge-green">✓ Activo</span></td><td>—</td></tr>
-      <tr><td>Crear/actualizar usuarios (outbound)</td><td><span class="badge badge-red">✗ Bloqueado</span></td><td>B3: David Urquizo → <code>User.ReadWrite.All</code></td></tr>
-      <tr><td>Gestionar membresía de grupos</td><td><span class="badge badge-red">✗ No configurado</span></td><td>B3 + <code>Group.ReadWrite.All</code> pendiente</td></tr>
-      <tr><td>Sync atributos (givenName, surname, dept)</td><td><span class="badge badge-red">✗ Bloqueado</span></td><td>B3</td></tr>
-      <tr><td>Activar/desactivar cuenta (accountEnabled)</td><td><span class="badge badge-red">✗ Bloqueado</span></td><td>B3</td></tr>
-      <tr><td>Asignación automática de licencias via grupos</td><td><span class="badge badge-orange">⏳ Diseñado</span></td><td>B3 + Group.ReadWrite.All</td></tr>
+      <tr>
+        <td><code>nombre.apellido@upeu.edu.pe</code></td>
+        <td><strong>12,958</strong></td>
+        <td><code>carlos.ramirez@upeu.edu.pe</code></td>
+        <td><span class="badge badge-orange">Hipótesis: admisiones</span></td>
+        <td>No confirmado — pendiente investigar</td>
+      </tr>
+      <tr>
+        <td>Sin punto / formato legacy</td>
+        <td><strong>9,720</strong></td>
+        <td><code>carlosascate@upeu.edu.pe</code></td>
+        <td><span class="badge badge-gray">Cuentas antiguas</span></td>
+        <td>No confirmado</td>
+      </tr>
+      <tr>
+        <td>Numérico histórico</td>
+        <td><strong>5,930</strong></td>
+        <td><code>001122288@upeu.edu.pe</code></td>
+        <td><span class="badge badge-gray">Formato anterior</span></td>
+        <td>No confirmado</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="investigate">
+    <div class="investigate-title">Pendiente investigar — datos no disponibles aun</div>
+    <ul class="list warn">
+      <li>Qué tipo de licencia tienen los 28,608 UNMATCHED (¿A1 gratuita? ¿A3 pagada?) — impacto en costo desconocido</li>
+      <li>Si M365 Education A1 free tiene algún costo indirecto para UPeU</li>
+      <li>El origen exacto de cada formato de UPN — hay hipótesis, no evidencia documentada</li>
+      <li>Si los egresados/retirados en LAMB (30,629 shadows de Egresados) todavía tienen licencias activas en Entra ID</li>
+    </ul>
+  </div>
+
+  <div class="sep"></div>
+
+  <h3>Cross-check Oracle LAMB vs UNMATCHED (verificado en PostgreSQL)</h3>
+  <table class="tbl" style="margin-bottom:16px;">
+    <thead><tr><th>Dato</th><th>Resultado</th><th>Método de verificación</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>UNMATCHED con email en Oracle LAMB</td>
+        <td><span class="badge badge-green">Solo 17 de 28,608</span></td>
+        <td>JOIN shadows Entra ID vs <code>CORREO_UPEU</code> + <code>CORREO_INST</code> en PostgreSQL</td>
+      </tr>
+      <tr>
+        <td>UNMATCHED sin ningún registro en LAMB</td>
+        <td><span class="badge badge-red">28,591 (99.94%)</span></td>
+        <td>Confirmado — no existen como empleado ni como alumno</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Shadows de Oracle LAMB en MidPoint</h3>
+  <table class="tbl">
+    <thead><tr><th>Resource</th><th>Shadows</th><th>Con email en Oracle</th><th>Notas</th></tr></thead>
+    <tbody>
+      <tr><td>Oracle LAMB Egresados v3</td><td>30,629</td><td>9,805 (32%)</td><td>Solo 32% tiene correo registrado</td></tr>
+      <tr><td>Oracle LAMB Trabajadores v3</td><td>3,802</td><td>2,137 (56%) via <code>CORREO_INST</code></td><td>—</td></tr>
+      <tr><td>Oracle LAMB Estudiantes v3</td><td>1,679</td><td>1,679 (100%)</td><td>Todos tienen correo</td></tr>
     </tbody>
   </table>
 
   <div class="sep"></div>
 
-  <h3>Audit técnico — Entra ID vs LAMB (2026-05-19)</h3>
-  <p style="color:var(--muted);font-size:.9em;margin-bottom:16px;">
-    Análisis realizado sobre la base de datos de MidPoint (PostgreSQL). Los 35,106 shadows de Entra ID fueron reconciliados en mayo 2026.
-  </p>
-
-  <div class="cards cards-3" style="margin-bottom:24px;">
-    <div class="card" style="border-color:var(--green);">
-      <div class="card-header">
-        <div class="card-icon" style="background:#e8f5e9;">🔗</div>
-        <div><div class="card-title" style="color:var(--green);">6,450 cuentas LINKED</div><div class="card-sub">17% del total Entra ID</div></div>
-      </div>
-      <ul class="list check">
-        <li>6,419 usuarios <code>active</code> en LAMB</li>
-        <li>27 en estado <code>draft</code></li>
-        <li>4 en estado <code>archived</code></li>
-        <li>Correlación funciona correctamente por <code>emailAddress</code></li>
-      </ul>
-    </div>
-    <div class="card red">
-      <div class="card-header">
-        <div class="card-icon" style="background:var(--red-lt);">🚨</div>
-        <div><div class="card-title">28,608 cuentas UNMATCHED</div><div class="card-sub">81.5% sin usuario en LAMB</div></div>
-      </div>
-      <ul class="list cross">
-        <li><strong>12,958</strong> formato <code>nombre.apellido@upeu.edu.pe</code> → admisiones</li>
-        <li><strong>9,720</strong> formato legacy (sin separador, guion bajo, etc.)</li>
-        <li><strong>5,930</strong> formato numérico histórico</li>
-        <li>Ninguna de estas cuentas tiene gestión activa en MidPoint</li>
-      </ul>
-    </div>
-    <div class="card" style="border-color:var(--orange);">
-      <div class="card-header">
-        <div class="card-icon" style="background:#fff3e0;">⚠️</div>
-        <div><div class="card-title">394 DISPUTED</div><div class="card-sub">Múltiples candidatos de correlación</div></div>
-      </div>
-      <ul class="list">
-        <li>Un UPN coincide con más de un usuario en LAMB</li>
-        <li>Requiere revisión manual caso a caso</li>
-        <li>Posibles duplicados en Oracle LAMB</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="alert" style="background:#fff8e1;border-color:#f59e0b;margin-bottom:8px;">
-    <div class="alert-icon">🔍</div>
-    <div>
-      <strong>Hallazgo clave — Flujo de admisiones sin cierre de ciclo de vida</strong>
-      <p>El sistema de admisiones crea cuentas M365 con el formato <code>nombre.apellido@upeu.edu.pe</code> automáticamente al admitir postulantes.
-      Si el postulante <strong>no se matricula</strong>, LAMB no genera registro de alumno activo, pero la cuenta M365 y su licencia asociada
-      <strong>permanecen activas indefinidamente</strong>. Esto explica los 12,958 UNMATCHED con formato de admisiones.
-      Una vez que MidPoint tenga <code>User.ReadWrite.All</code> (B3), podrá desactivar estas cuentas automáticamente.</p>
-    </div>
-  </div>
+  <h3>Estado técnico MidPoint ↔ Entra ID</h3>
+  <table class="tbl">
+    <thead><tr><th>Capacidad</th><th>Estado</th><th>Bloqueante</th></tr></thead>
+    <tbody>
+      <tr><td>Leer usuarios desde Entra ID (inbound)</td><td><span class="badge badge-green">✓ Activo</span></td><td>—</td></tr>
+      <tr><td>Correlacionar por emailAddress</td><td><span class="badge badge-green">✓ Activo</span></td><td>—</td></tr>
+      <tr><td>Crear/actualizar usuarios (outbound)</td><td><span class="badge badge-red">✗ Bloqueado</span></td><td>B3: David Urquizo → <code>User.ReadWrite.All</code></td></tr>
+      <tr><td>Gestionar membresía de grupos</td><td><span class="badge badge-red">✗ No configurado</span></td><td>B3 + <code>GroupMember.ReadWrite.All</code></td></tr>
+      <tr><td>Sync atributos (givenName, surname, dept)</td><td><span class="badge badge-red">✗ Bloqueado</span></td><td>B3</td></tr>
+      <tr><td>Activar/desactivar cuenta (accountEnabled)</td><td><span class="badge badge-red">✗ Bloqueado</span></td><td>B3</td></tr>
+      <tr><td>Asignación automática de licencias via grupos</td><td><span class="badge badge-orange">⏳ Diseñado</span></td><td>B3 + GroupMember.ReadWrite.All</td></tr>
+    </tbody>
+  </table>
 </section>
 
 <!-- ============================================================ -->
@@ -344,7 +352,6 @@
     </div>
   </div>
 
-  <!-- Flujo principal -->
   <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:24px;margin-top:16px;">
     <h3 style="margin-top:0;">Flujo de provisioning</h3>
     <div class="flow" style="justify-content:center;flex-wrap:wrap;gap:8px;">
@@ -393,27 +400,27 @@
     <div class="card blue">
       <div class="card-header">
         <div class="card-icon" style="background:var(--blue-lt);">⚙</div>
-        <div><div class="card-title">Responsabilidades de MidPoint</div></div>
+        <div><div class="card-title">MidPoint decide</div><div class="card-sub">Fuente de verdad operacional</div></div>
       </div>
       <ul class="list check">
-        <li>Crear cuentas Entra ID cuando el usuario recibe un Business Role con AR-EntraID-User</li>
-        <li>Sincronizar atributos: displayName, givenName, surname, jobTitle, department, employeeId</li>
-        <li>Activar / desactivar cuenta (<code>accountEnabled</code>) según <code>effectiveStatus</code></li>
-        <li>Agregar/quitar usuarios de grupos de licencia según sus Business Roles</li>
+        <li>Crear cuentas Entra ID cuando el usuario recibe AR-EntraID-User</li>
+        <li>Sincronizar: displayName, givenName, surname, jobTitle, department, employeeId</li>
+        <li>Activar/desactivar cuenta (<code>accountEnabled</code>) según <code>effectiveStatus</code></li>
+        <li>Agregar/quitar usuarios de grupos de licencia según Business Roles</li>
         <li>Eliminar cuenta al llegar a <code>lifecycleState=archived</code></li>
       </ul>
     </div>
     <div class="card green">
       <div class="card-header">
         <div class="card-icon" style="background:var(--green-lt);">☁</div>
-        <div><div class="card-title">Responsabilidades de Entra ID</div></div>
+        <div><div class="card-title">Entra ID ejecuta</div><div class="card-sub">Refleja lo que MidPoint decide</div></div>
       </div>
       <ul class="list check">
-        <li>Autenticar usuarios con contraseña corporativa</li>
-        <li>Gestionar licencias automáticamente vía Group-Based Licensing</li>
-        <li>Proveer MFA (Authenticator App, SSPR)</li>
-        <li>Servir como Identity Provider para apps M365 y OIDC externo</li>
+        <li>Autenticar usuarios con contraseña corporativa + MFA</li>
+        <li>Asignar/revocar licencias via Group-Based Licensing</li>
+        <li>Servir como IdP para M365 y OIDC externo</li>
         <li>Gestionar Conditional Access Policies</li>
+        <li>SSPR (Self-Service Password Reset)</li>
       </ul>
     </div>
   </div>
@@ -427,49 +434,39 @@
 
   <div class="cards cards-2">
     <div>
-      <h3>Identificadores y UPN</h3>
+      <h3>Identificadores y UPN canónico</h3>
       <table class="tbl">
-        <thead><tr><th>Campo</th><th>Valor</th><th>Fuente</th></tr></thead>
+        <thead><tr><th>Campo Entra ID</th><th>Valor objetivo</th><th>Fuente</th></tr></thead>
         <tbody>
-          <tr><td><strong>UPN</strong></td><td><code>{personalNumber}@upeu.edu.pe</code></td><td>MidPoint → LAMB</td></tr>
+          <tr><td><strong>UPN</strong></td><td><code>{personalNumber}@upeu.edu.pe</code></td><td>MidPoint ← LAMB</td></tr>
           <tr><td><strong>mail</strong></td><td>igual al UPN (auto Entra ID)</td><td>Entra ID</td></tr>
-          <tr><td><strong>employeeId</strong></td><td><code>{personalNumber}</code></td><td>MidPoint → LAMB</td></tr>
-          <tr><td><strong>displayName</strong></td><td><code>NOMBRE APELLIDO</code> (ALL CAPS RENIEC)</td><td>MidPoint → LAMB</td></tr>
-          <tr><td><strong>givenName</strong></td><td>Nombre desde LAMB</td><td>MidPoint → LAMB</td></tr>
-          <tr><td><strong>surname</strong></td><td>Apellido desde LAMB</td><td>MidPoint → LAMB</td></tr>
-          <tr><td><strong>jobTitle</strong></td><td>Denominación del cargo/afiliación</td><td>MidPoint → Position/LAMB</td></tr>
-          <tr><td><strong>department</strong></td><td>Unidad org / Facultad</td><td>MidPoint → OrgType</td></tr>
+          <tr><td><strong>employeeId</strong></td><td><code>{personalNumber}</code></td><td>MidPoint ← LAMB</td></tr>
+          <tr><td><strong>displayName</strong></td><td>NOMBRE APELLIDO (RENIEC)</td><td>MidPoint ← LAMB</td></tr>
+          <tr><td><strong>givenName / surname</strong></td><td>Desde LAMB</td><td>MidPoint ← LAMB</td></tr>
+          <tr><td><strong>jobTitle</strong></td><td>Denominación del cargo/afiliación</td><td>MidPoint ← Position</td></tr>
+          <tr><td><strong>department</strong></td><td>Unidad org / Facultad</td><td>MidPoint ← OrgType</td></tr>
           <tr><td><strong>accountEnabled</strong></td><td><code>true</code> si <code>lifecycleState=active</code></td><td>MidPoint</td></tr>
         </tbody>
       </table>
     </div>
     <div>
-      <h3>Egresados — ¿@alumni.upeu.edu.pe?</h3>
-      <div class="card orange">
-        <div class="card-header">
-          <div class="card-icon" style="background:var(--orange-lt);">⚠</div>
-          <div><div class="card-title">Decisión pendiente</div></div>
-        </div>
-        <p style="font-size:13px;margin-bottom:12px;">Mantener un solo dominio (<code>@upeu.edu.pe</code>) simplifica la operación. Crear <code>@alumni.upeu.edu.pe</code> requiere verificar dominio adicional en M365 y definir qué pasa con las cuentas al migrar UPN.</p>
-        <div class="sep"></div>
+      <h3>UPN para egresados — decision adoptada</h3>
+      <div class="card gray">
+        <p style="font-size:13px;margin-bottom:10px;"><strong>Mantener <code>@upeu.edu.pe</code> siempre.</strong> Agregar <code>@alumni.upeu.edu.pe</code> como <code>proxyAddress</code> secundaria al pasar a BR-Egresado. El UPN no cambia — se preserva historial de Teams/OneDrive/correo.</p>
         <table class="tbl" style="font-size:12px;">
-          <thead><tr><th>Opción</th><th>Pro</th><th>Contra</th></tr></thead>
+          <thead><tr><th>Opcion</th><th>Ventaja</th><th>Problema</th></tr></thead>
           <tbody>
-            <tr><td><code>@upeu.edu.pe</code> siempre</td><td>Sin cambio de UPN</td><td>No diferencia egresados</td></tr>
-            <tr><td><code>@alumni.upeu.edu.pe</code></td><td>Branding claro</td><td>Cambio de UPN → rompe Teams history</td></tr>
+            <tr><td><code>@upeu.edu.pe</code> + alias alumni</td><td>Sin cambio de UPN</td><td>Requiere verificar dominio adicional en M365</td></tr>
+            <tr><td>Cambiar UPN a <code>@alumni</code></td><td>Branding claro</td><td>Rompe historial Teams, sharepoints, correos</td></tr>
           </tbody>
         </table>
-        <div class="alert warn" style="margin-top:12px;">
-          <div class="alert-icon">💡</div>
-          <p><strong>Recomendación:</strong> Mantener <code>@upeu.edu.pe</code>. Agregar alias <code>@alumni.upeu.edu.pe</code> como proxyAddress secundaria. Así el UPN no cambia y el email de egresado funciona sin interrupciones.</p>
-        </div>
       </div>
 
-      <h3 style="margin-top:16px;">Administrative Units (OUs en Entra ID)</h3>
+      <h3 style="margin-top:16px;">Administrative Units (delegacion por perfil)</h3>
       <div class="card gray">
-        <p style="font-size:13px;margin-bottom:10px;">Las AU permiten delegar administración por unidad sin dar acceso global. Recomendado para UPeU:</p>
+        <p style="font-size:13px;margin-bottom:10px;">Permiten delegar administracion por unidad sin dar acceso global. Propuesta:</p>
         <ul class="list">
-          <li><code>AU-Estudiantes</code> — Mesa de ayuda académica</li>
+          <li><code>AU-Estudiantes</code> — Mesa de ayuda academica</li>
           <li><code>AU-Docentes-Staff</code> — Mesa de ayuda RRHH</li>
           <li><code>AU-Campus-Lima / Juliaca / Tarapoto</code></li>
         </ul>
@@ -487,8 +484,8 @@
   <div class="alert ok">
     <div class="alert-icon">✅</div>
     <div>
-      <strong>Estrategia: Group-Based Licensing</strong>
-      <p>Entra ID asigna y revoca licencias automáticamente según la membresía de grupos de seguridad. MidPoint controla quién está en cada grupo. Cero gestión manual de licencias.</p>
+      <strong>Estrategia: Group-Based Licensing — grupos estaticos gestionados por MidPoint</strong>
+      <p>NO usar grupos dinamicos de Entra ID (que filtran por atributos). Los grupos dinamicos no son controlados por MidPoint. Para IGA correcto: grupos estaticos donde MidPoint agrega/quita miembros explicitamente via Graph API (<code>POST /groups/{id}/members/$ref</code>). Entra ID asigna y revoca SKUs automaticamente segun membresía.</p>
     </div>
   </div>
 
@@ -501,13 +498,13 @@
       <div><span class="badge badge-blue">M365 A1 for Students</span></div>
       <ul class="list" style="margin-top:10px;">
         <li>Exchange Online (email)</li>
-        <li>Teams (básico)</li>
+        <li>Teams (basico)</li>
         <li>OneDrive 1TB</li>
         <li>Office Online (web)</li>
         <li>SharePoint</li>
       </ul>
       <div class="sep"></div>
-      <p style="font-size:12px;color:#605e5c;">Destinatarios: BR-Estudiante-Pregrado, BR-Estudiante-Posgrado, BR-Estudiante-Doctorado</p>
+      <p style="font-size:12px;color:#605e5c;">BR-Estudiante-Pregrado, Posgrado, Doctorado</p>
     </div>
 
     <div class="card orange">
@@ -517,14 +514,14 @@
       </div>
       <div><span class="badge badge-orange">M365 A3 for Faculty</span></div>
       <ul class="list" style="margin-top:10px;">
-        <li>Todo lo de A1 +</li>
+        <li>Todo A1 +</li>
         <li>Office Apps (escritorio)</li>
-        <li>Intune (gestión dispositivos)</li>
+        <li>Intune</li>
         <li>Azure AD P1</li>
         <li>Advanced Threat Protection</li>
       </ul>
       <div class="sep"></div>
-      <p style="font-size:12px;color:#605e5c;">Destinatarios: BR-Docente-TC, BR-Docente-TP, BR-Decano, BR-Investigador</p>
+      <p style="font-size:12px;color:#605e5c;">BR-Docente-TC, BR-Docente-TP, BR-Decano, BR-Investigador</p>
     </div>
 
     <div class="card green">
@@ -534,14 +531,14 @@
       </div>
       <div><span class="badge badge-green">M365 A3 for Faculty</span></div>
       <ul class="list" style="margin-top:10px;">
-        <li>Todo lo de A1 +</li>
+        <li>Todo A1 +</li>
         <li>Office Apps (escritorio)</li>
         <li>Intune</li>
         <li>Azure AD P1</li>
         <li>Advanced Compliance</li>
       </ul>
       <div class="sep"></div>
-      <p style="font-size:12px;color:#605e5c;">Destinatarios: BR-Personal-General, BR-Admin-Area, BR-Bibliotecario</p>
+      <p style="font-size:12px;color:#605e5c;">BR-Personal-General, BR-Admin-Area, BR-Bibliotecario</p>
     </div>
 
     <div class="card gray">
@@ -552,21 +549,13 @@
       <div><span class="badge badge-gray">M365 A1 for Students</span></div>
       <ul class="list" style="margin-top:10px;">
         <li>Exchange Online</li>
-        <li>Teams (básico)</li>
+        <li>Teams (basico)</li>
         <li>OneDrive 1TB</li>
         <li>Office Online</li>
         <li><em>Sin Office apps desktop</em></li>
       </ul>
       <div class="sep"></div>
-      <p style="font-size:12px;color:#605e5c;">Destinatarios: BR-Egresado. Acceso reducido post-graduación.</p>
-    </div>
-  </div>
-
-  <div class="alert info" style="margin-top:16px;">
-    <div class="alert-icon">ℹ</div>
-    <div>
-      <strong>Tipo de grupo: Security Group estático gestionado por MidPoint</strong>
-      <p>NO usar grupos dinámicos de Entra ID (que filtran por atributos). Los grupos dinámicos no son controlados por MidPoint — se actualizan solos por reglas de Entra ID. Para IGA correcto: grupos estáticos donde MidPoint agrega/quita miembros explícitamente via Graph API (<code>POST /groups/{id}/members/$ref</code>).</p>
+      <p style="font-size:12px;color:#605e5c;">BR-Egresado. Acceso reducido post-graduacion.</p>
     </div>
   </div>
 </section>
@@ -575,149 +564,98 @@
 <!-- 5. MAPA BR → LICENCIA -->
 <!-- ============================================================ -->
 <section id="roles-mapa">
-  <h2>5 · Mapa completo Business Role → Licencia M365</h2>
+  <h2>5 · Mapa Business Role → Grupo → Licencia</h2>
 
-  <div class="role-map">
-    <div class="role-row">
-      <div class="br">BR-Estudiante-Pregrado</div>
-      <div class="arrow">→</div>
-      <div class="ar">AR-EntraID-User</div>
-      <div class="arrow">+</div>
-      <div class="ar">AR-M365-Student-A1</div>
-      <div class="arrow">→</div>
-      <div class="group">lic-m365-a1-students</div>
-      <div class="arrow">→</div>
-      <div class="lic">M365 A1 Students</div>
-    </div>
-    <div class="role-row">
-      <div class="br">BR-Estudiante-Posgrado</div>
-      <div class="arrow">→</div>
-      <div class="ar">AR-EntraID-User</div>
-      <div class="arrow">+</div>
-      <div class="ar">AR-M365-Student-A1</div>
-      <div class="arrow">→</div>
-      <div class="group">lic-m365-a1-students</div>
-      <div class="arrow">→</div>
-      <div class="lic">M365 A1 Students</div>
-    </div>
-    <div class="role-row">
-      <div class="br">BR-Estudiante-Doctorado</div>
-      <div class="arrow">→</div>
-      <div class="ar">AR-EntraID-User</div>
-      <div class="arrow">+</div>
-      <div class="ar">AR-M365-Student-A1</div>
-      <div class="arrow">→</div>
-      <div class="group">lic-m365-a1-students</div>
-      <div class="arrow">→</div>
-      <div class="lic">M365 A1 Students</div>
-    </div>
-    <div class="sep"></div>
-    <div class="role-row">
-      <div class="br">BR-Docente-TC</div>
-      <div class="arrow">→</div>
-      <div class="ar">AR-EntraID-User</div>
-      <div class="arrow">+</div>
-      <div class="ar">AR-M365-Faculty-A3</div>
-      <div class="arrow">→</div>
-      <div class="group">lic-m365-a3-faculty</div>
-      <div class="arrow">→</div>
-      <div class="lic">M365 A3 Faculty</div>
-    </div>
-    <div class="role-row">
-      <div class="br">BR-Docente-TP</div>
-      <div class="arrow">→</div>
-      <div class="ar">AR-EntraID-User</div>
-      <div class="arrow">+</div>
-      <div class="ar">AR-M365-Faculty-A3</div>
-      <div class="arrow">→</div>
-      <div class="group">lic-m365-a3-faculty</div>
-      <div class="arrow">→</div>
-      <div class="lic">M365 A3 Faculty</div>
-    </div>
-    <div class="role-row">
-      <div class="br">BR-Investigador</div>
-      <div class="arrow">→</div>
-      <div class="ar">AR-EntraID-User</div>
-      <div class="arrow">+</div>
-      <div class="ar">AR-M365-Faculty-A3</div>
-      <div class="arrow">→</div>
-      <div class="group">lic-m365-a3-faculty</div>
-      <div class="arrow">→</div>
-      <div class="lic">M365 A3 Faculty</div>
-    </div>
-    <div class="role-row">
-      <div class="br">BR-Decano</div>
-      <div class="arrow">→</div>
-      <div class="ar">AR-EntraID-User</div>
-      <div class="arrow">+</div>
-      <div class="ar">AR-M365-Faculty-A3</div>
-      <div class="arrow">→</div>
-      <div class="group">lic-m365-a3-faculty</div>
-      <div class="arrow">→</div>
-      <div class="lic">M365 A3 Faculty</div>
-    </div>
-    <div class="sep"></div>
-    <div class="role-row">
-      <div class="br">BR-Personal-General</div>
-      <div class="arrow">→</div>
-      <div class="ar">AR-EntraID-User</div>
-      <div class="arrow">+</div>
-      <div class="ar">AR-M365-Staff-A3</div>
-      <div class="arrow">→</div>
-      <div class="group">lic-m365-a3-staff</div>
-      <div class="arrow">→</div>
-      <div class="lic">M365 A3 Faculty</div>
-    </div>
-    <div class="role-row">
-      <div class="br">BR-Admin-Area</div>
-      <div class="arrow">→</div>
-      <div class="ar">AR-EntraID-User</div>
-      <div class="arrow">+</div>
-      <div class="ar">AR-M365-Staff-A3</div>
-      <div class="arrow">→</div>
-      <div class="group">lic-m365-a3-staff</div>
-      <div class="arrow">→</div>
-      <div class="lic">M365 A3 Faculty</div>
-    </div>
-    <div class="role-row">
-      <div class="br">BR-Bibliotecario</div>
-      <div class="arrow">→</div>
-      <div class="ar">AR-EntraID-User</div>
-      <div class="arrow">+</div>
-      <div class="ar">AR-M365-Staff-A3</div>
-      <div class="arrow">→</div>
-      <div class="group">lic-m365-a3-staff</div>
-      <div class="arrow">→</div>
-      <div class="lic">M365 A3 Faculty</div>
-    </div>
-    <div class="sep"></div>
-    <div class="role-row">
-      <div class="br">BR-Egresado</div>
-      <div class="arrow">→</div>
-      <div class="ar">AR-EntraID-User</div>
-      <div class="arrow">+</div>
-      <div class="ar">AR-M365-Alumni-A1</div>
-      <div class="arrow">→</div>
-      <div class="group">lic-m365-a1-alumni</div>
-      <div class="arrow">→</div>
-      <div class="lic">M365 A1 Alumni</div>
-    </div>
-    <div class="role-row">
-      <div class="br" style="background:#f8f0ff;color:#8a8886;">BR-Visitante-Investigacion</div>
-      <div class="arrow">→</div>
-      <div class="ar">AR-EntraID-User</div>
-      <div class="arrow">+</div>
-      <div class="ar" style="background:var(--gray-lt);color:#8a8886;">Sin licencia M365</div>
-      <div class="arrow">→</div>
-      <div style="font-size:12px;color:#8a8886;padding:4px 10px;">Guest o sin licencia</div>
-    </div>
-  </div>
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>Business Role</th>
+        <th>Application Role</th>
+        <th>Grupo Entra ID</th>
+        <th>SKU</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>BR-Estudiante-Pregrado</code></td>
+        <td>AR-EntraID-User + AR-M365-Student-A1</td>
+        <td><code>lic-m365-a1-students</code></td>
+        <td><span class="badge badge-blue">M365 A1 Students</span></td>
+      </tr>
+      <tr>
+        <td><code>BR-Estudiante-Posgrado</code></td>
+        <td>AR-EntraID-User + AR-M365-Student-A1</td>
+        <td><code>lic-m365-a1-students</code></td>
+        <td><span class="badge badge-blue">M365 A1 Students</span></td>
+      </tr>
+      <tr>
+        <td><code>BR-Estudiante-Doctorado</code></td>
+        <td>AR-EntraID-User + AR-M365-Student-A1</td>
+        <td><code>lic-m365-a1-students</code></td>
+        <td><span class="badge badge-blue">M365 A1 Students</span></td>
+      </tr>
+      <tr style="background:#faf9f8;">
+        <td><code>BR-Docente-TC</code></td>
+        <td>AR-EntraID-User + AR-M365-Faculty-A3</td>
+        <td><code>lic-m365-a3-faculty</code></td>
+        <td><span class="badge badge-orange">M365 A3 Faculty</span></td>
+      </tr>
+      <tr style="background:#faf9f8;">
+        <td><code>BR-Docente-TP</code></td>
+        <td>AR-EntraID-User + AR-M365-Faculty-A3</td>
+        <td><code>lic-m365-a3-faculty</code></td>
+        <td><span class="badge badge-orange">M365 A3 Faculty</span></td>
+      </tr>
+      <tr style="background:#faf9f8;">
+        <td><code>BR-Investigador</code></td>
+        <td>AR-EntraID-User + AR-M365-Faculty-A3</td>
+        <td><code>lic-m365-a3-faculty</code></td>
+        <td><span class="badge badge-orange">M365 A3 Faculty</span></td>
+      </tr>
+      <tr style="background:#faf9f8;">
+        <td><code>BR-Decano</code></td>
+        <td>AR-EntraID-User + AR-M365-Faculty-A3</td>
+        <td><code>lic-m365-a3-faculty</code></td>
+        <td><span class="badge badge-orange">M365 A3 Faculty</span></td>
+      </tr>
+      <tr>
+        <td><code>BR-Personal-General</code></td>
+        <td>AR-EntraID-User + AR-M365-Staff-A3</td>
+        <td><code>lic-m365-a3-staff</code></td>
+        <td><span class="badge badge-green">M365 A3 Staff</span></td>
+      </tr>
+      <tr>
+        <td><code>BR-Admin-Area</code></td>
+        <td>AR-EntraID-User + AR-M365-Staff-A3</td>
+        <td><code>lic-m365-a3-staff</code></td>
+        <td><span class="badge badge-green">M365 A3 Staff</span></td>
+      </tr>
+      <tr>
+        <td><code>BR-Bibliotecario</code></td>
+        <td>AR-EntraID-User + AR-M365-Staff-A3</td>
+        <td><code>lic-m365-a3-staff</code></td>
+        <td><span class="badge badge-green">M365 A3 Staff</span></td>
+      </tr>
+      <tr style="background:#faf9f8;">
+        <td><code>BR-Egresado</code></td>
+        <td>AR-EntraID-User + AR-M365-Alumni-A1</td>
+        <td><code>lic-m365-a1-alumni</code></td>
+        <td><span class="badge badge-gray">M365 A1 Alumni</span></td>
+      </tr>
+      <tr style="background:#faf9f8;">
+        <td><code>BR-Visitante-Investigacion</code></td>
+        <td>AR-EntraID-User (sin AR-M365)</td>
+        <td><em>Sin grupo de licencia</em></td>
+        <td><span class="badge badge-gray">Guest / sin SKU</span></td>
+      </tr>
+    </tbody>
+  </table>
 
   <div class="alert warn" style="margin-top:16px;">
     <div class="alert-icon">⚠</div>
     <div>
-      <strong>Caso dual-afiliación: estudiante + trabajador</strong>
-      <p>Si un usuario tiene simultáneamente BR-Estudiante y BR-Personal-General, MidPoint le asignará ambos AR. Entra ID group-based licensing asigna la licencia más alta disponible. Para evitar licencias redundantes, MidPoint debe asignar solo la licencia mayor (A3 > A1). Esto se maneja con condiciones en el mapping del AR o con prioridad en la inducement.</p>
+      <strong>Dual-afiliacion: estudiante + trabajador</strong>
+      <p>Si un usuario tiene BR-Estudiante y BR-Personal-General simultaneamente, MidPoint le asigna ambos AR. Group-based licensing de Entra ID otorga la licencia mas alta disponible. Para evitar redundancia, el AR de menor privilegio debe omitir la construction de grupo cuando ya existe el de mayor privilegio. Se maneja con condicion en el inducement del AR-M365-Student-A1 (activeShadowExists en el recurso EntraID con kind=account y AR-M365-Staff-A3).</p>
     </div>
   </div>
 </section>
@@ -730,29 +668,24 @@
 
   <div class="compare">
     <div class="compare-side before">
-      <div class="compare-title">❌ Modelo actual (problemático)</div>
+      <div class="compare-title">Modelo actual — problematico</div>
       <ul class="list cross">
-        <li>Mesa de ayuda entra a <strong>Entra ID Admin Center</strong></li>
-        <li>Busca al usuario por nombre o código</li>
-        <li>Crea o edita la cuenta manualmente</li>
-        <li>Asigna licencia manualmente (selecciona SKU)</li>
-        <li>No hay proceso de revocación → licencia queda para siempre</li>
-        <li>Sin auditoría de quién hizo qué cambio</li>
-        <li>Sin correlación con los datos de LAMB/Oracle</li>
-        <li>Errores frecuentes: UPN mal escrito, licencia incorrecta</li>
+        <li>Mesa entra a Entra ID Admin Center directamente</li>
+        <li>Crea o edita cuentas y asigna licencias manualmente</li>
+        <li>Sin proceso de revocacion — licencias quedan indefinidamente</li>
+        <li>Sin auditoria de quién hizo qué cambio</li>
+        <li>Errores frecuentes: UPN mal escrito, licencia incorrecta, sin correlacion con LAMB</li>
       </ul>
     </div>
     <div class="compare-side after">
-      <div class="compare-title">✅ Modelo nuevo (con MidPoint IGA)</div>
+      <div class="compare-title">Modelo nuevo — con MidPoint IGA</div>
       <ul class="list check">
-        <li>Mesa de ayuda entra a <strong>MidPoint Admin UI</strong></li>
+        <li>Mesa opera exclusivamente en MidPoint Admin UI</li>
         <li>Busca al usuario por personalNumber, DNI o nombre</li>
-        <li>Verifica que el usuario ya existe (importado de LAMB)</li>
-        <li>Asigna el Business Role correcto (ej: BR-Personal-General)</li>
-        <li>MidPoint provisiona automáticamente: cuenta Entra ID + grupo de licencia</li>
-        <li>Al remover el rol: MidPoint revoca licencia automáticamente</li>
-        <li>Toda acción queda en el audit log de MidPoint</li>
-        <li>Sin errores de UPN: se genera automáticamente desde LAMB</li>
+        <li>Asigna Business Role correcto → MidPoint provisiona Entra ID automaticamente</li>
+        <li>Al remover el rol: licencia revocada automaticamente</li>
+        <li>Toda accion queda en audit log de MidPoint</li>
+        <li>UPN generado automaticamente desde LAMB — sin errores manuales</li>
       </ul>
     </div>
   </div>
@@ -763,52 +696,41 @@
     <div class="card blue">
       <div class="card-header">
         <div class="card-icon" style="background:var(--blue-lt);">🛠</div>
-        <div><div class="card-title">¿Qué hace la Mesa de Ayuda en MidPoint?</div></div>
+        <div><div class="card-title">Tareas de Mesa de Ayuda en MidPoint</div></div>
       </div>
       <table class="tbl" style="margin-top:8px;">
-        <thead><tr><th>Tarea</th><th>Cómo en MidPoint</th></tr></thead>
+        <thead><tr><th>Tarea</th><th>Como en MidPoint</th></tr></thead>
         <tbody>
           <tr><td>Asignar acceso M365</td><td>Agregar Business Role → auto-provisiona</td></tr>
           <tr><td>Revocar acceso M365</td><td>Quitar Business Role → auto-revoca licencia</td></tr>
-          <tr><td>Resetear contraseña</td><td>MidPoint → Credentials → Reset password (sincroniza a Entra ID)</td></tr>
-          <tr><td>Verificar estado cuenta</td><td>MidPoint → User → Projections → Entra ID shadow</td></tr>
-          <tr><td>Reportar accesos activos</td><td>MidPoint → Reports → Assignments</td></tr>
+          <tr><td>Resetear contraseña</td><td>Credentials → Reset (sincroniza a Entra ID)</td></tr>
+          <tr><td>Verificar estado cuenta</td><td>User → Projections → shadow Entra ID</td></tr>
+          <tr><td>Reportar accesos activos</td><td>Reports → Assignments</td></tr>
         </tbody>
       </table>
     </div>
     <div class="card orange">
       <div class="card-header">
         <div class="card-icon" style="background:var(--orange-lt);">🚫</div>
-        <div><div class="card-title">¿Qué NO debe hacer la Mesa de Ayuda?</div></div>
+        <div><div class="card-title">Roles Entra ID para Mesa de Ayuda (minimo privilegio)</div></div>
       </div>
-      <ul class="list cross" style="margin-top:8px;">
-        <li>Crear/editar cuentas directamente en <strong>Entra ID Admin Center</strong></li>
-        <li>Asignar licencias directamente en Entra ID (sin pasar por MidPoint)</li>
-        <li>Cambiar UPN o email directamente en Entra ID</li>
-        <li>Agregar usuarios a grupos de licencia manualmente</li>
-        <li>Modificar membresías de grupos de seguridad</li>
-      </ul>
+      <table class="tbl" style="margin-top:8px;font-size:12px;">
+        <thead><tr><th>Rol Entra ID</th><th>Asignar</th><th>Razon</th></tr></thead>
+        <tbody>
+          <tr><td>Global Administrator</td><td><span class="badge badge-red">No</span></td><td>Solo DTI/Infra</td></tr>
+          <tr><td>User Administrator</td><td><span class="badge badge-red">No</span></td><td>MidPoint gestiona usuarios</td></tr>
+          <tr><td>License Administrator</td><td><span class="badge badge-red">No</span></td><td>Group-based licensing es automatico</td></tr>
+          <tr><td>Helpdesk Administrator</td><td><span class="badge badge-green">Si</span></td><td>Reset MFA y desbloqueo de cuentas</td></tr>
+          <tr><td>Authentication Administrator</td><td><span class="badge badge-green">Si (scoped)</span></td><td>Reset MFA no-admin. Asignar en AU.</td></tr>
+          <tr><td>Reports Reader</td><td><span class="badge badge-green">Si</span></td><td>Auditoria y reportes</td></tr>
+        </tbody>
+      </table>
       <div class="alert warn" style="margin-top:12px;">
         <div class="alert-icon">⚠</div>
-        <p>Los cambios directos en Entra ID serán <strong>sobrescritos</strong> en el siguiente recompute de MidPoint. El modelo IGA requiere que MidPoint sea la única fuente de verdad operacional.</p>
+        <p>Los cambios directos en Entra ID seran sobrescritos en el siguiente recompute de MidPoint.</p>
       </div>
     </div>
   </div>
-
-  <div class="sep"></div>
-
-  <h3>Roles de Entra ID para Mesa de Ayuda (principio de mínimo privilegio)</h3>
-  <table class="tbl">
-    <thead><tr><th>Rol Entra ID</th><th>¿Asignar?</th><th>Razón</th></tr></thead>
-    <tbody>
-      <tr><td>Global Administrator</td><td><span class="badge badge-red">❌ No</span></td><td>Solo infraestructura TI (DTI/Infra)</td></tr>
-      <tr><td>User Administrator</td><td><span class="badge badge-red">❌ No</span></td><td>MidPoint gestiona usuarios — mesa no debe crear/editar cuentas</td></tr>
-      <tr><td>License Administrator</td><td><span class="badge badge-red">❌ No</span></td><td>Group-based licensing lo gestiona automáticamente</td></tr>
-      <tr><td>Helpdesk Administrator</td><td><span class="badge badge-green">✓ Sí</span></td><td>Solo para reset de MFA y desbloqueo de cuentas (no puede cambiar datos)</td></tr>
-      <tr><td>Authentication Administrator</td><td><span class="badge badge-green">✓ Sí (scoped)</span></td><td>Para resetear MFA de usuarios no-admin. Asignar en AU específica.</td></tr>
-      <tr><td>Reports Reader</td><td><span class="badge badge-green">✓ Sí</span></td><td>Para auditoría y reportes de licencias</td></tr>
-    </tbody>
-  </table>
 </section>
 
 <!-- ============================================================ -->
@@ -821,98 +743,51 @@
     <div class="card green">
       <div class="card-header">
         <div class="card-icon" style="background:var(--green-lt);font-size:18px;">👤+</div>
-        <div><div class="card-title">Joiner — Nuevo usuario</div></div>
+        <div><div class="card-title">Joiner</div></div>
       </div>
-      <div class="timeline" style="margin-top:8px;">
-        <div class="timeline-item done">
-          <div class="timeline-phase">Fuente</div>
-          <div class="timeline-title">Oracle LAMB registra al usuario</div>
-          <div class="timeline-body">Nuevo trabajador en RRHH o estudiante en Académico</div>
-        </div>
-        <div class="timeline-item done">
-          <div class="timeline-phase">Sync automático</div>
-          <div class="timeline-title">MidPoint importa el usuario</div>
-          <div class="timeline-body">Cron LAMB → MidPoint (<code>lifecycleState=active</code> si datos completos)</div>
-        </div>
-        <div class="timeline-item done">
-          <div class="timeline-phase">Política</div>
-          <div class="timeline-title">Object Template asigna Business Role</div>
-          <div class="timeline-body">Bloque D detecta <code>primaryAffiliation</code> → asigna BR automáticamente</div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-phase">Provisioning</div>
-          <div class="timeline-title">MidPoint crea cuenta Entra ID</div>
-          <div class="timeline-body">UPN auto, atributos desde LAMB, <code>accountEnabled=true</code></div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-phase">Licencia</div>
-          <div class="timeline-title">Entra ID asigna licencia automáticamente</div>
-          <div class="timeline-body">MidPoint agrega al grupo → group-based licensing asigna SKU</div>
-        </div>
-      </div>
+      <table class="tbl" style="font-size:12px;margin-top:8px;">
+        <thead><tr><th>Paso</th><th>Accion</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-green">1</span> Fuente</td><td>LAMB registra nuevo trabajador o alumno</td></tr>
+          <tr><td><span class="badge badge-green">2</span> Sync</td><td>MidPoint importa → <code>lifecycleState=active</code></td></tr>
+          <tr><td><span class="badge badge-green">3</span> Politica</td><td>Object Template asigna BR segun <code>primaryAffiliation</code></td></tr>
+          <tr><td><span class="badge badge-blue">4</span> Provisioning</td><td>MidPoint crea cuenta Entra ID con UPN auto</td></tr>
+          <tr><td><span class="badge badge-blue">5</span> Licencia</td><td>MidPoint agrega al grupo → Entra ID asigna SKU</td></tr>
+        </tbody>
+      </table>
     </div>
 
     <div class="card blue">
       <div class="card-header">
         <div class="card-icon" style="background:var(--blue-lt);font-size:18px;">🔄</div>
-        <div><div class="card-title">Mover — Cambio de rol</div></div>
+        <div><div class="card-title">Mover</div></div>
       </div>
-      <div class="timeline" style="margin-top:8px;">
-        <div class="timeline-item">
-          <div class="timeline-phase">Ejemplo</div>
-          <div class="timeline-title">Estudiante se gradúa → Egresado</div>
-          <div class="timeline-body">LAMB cambia registro: pasa de tabla Estudiantes a Egresados</div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-phase">Sync</div>
-          <div class="timeline-title">MidPoint detecta cambio</div>
-          <div class="timeline-body"><code>primaryAffiliation</code> cambia de <code>student</code> a <code>alum</code></div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-phase">Política</div>
-          <div class="timeline-title">BR-Estudiante se remueve, BR-Egresado se asigna</div>
-          <div class="timeline-body">Object Template Bloque D recalcula según nueva afiliación</div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-phase">Licencia</div>
-          <div class="timeline-title">Cambio de licencia automático</div>
-          <div class="timeline-body">Se quita de <code>lic-m365-a1-students</code>, se agrega a <code>lic-m365-a1-alumni</code> → Entra ID revoca A1-students, asigna A1-alumni</div>
-        </div>
-      </div>
+      <table class="tbl" style="font-size:12px;margin-top:8px;">
+        <thead><tr><th>Paso</th><th>Accion</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-blue">1</span> Fuente</td><td>LAMB cambia afiliacion (ej: alumno → egresado)</td></tr>
+          <tr><td><span class="badge badge-blue">2</span> Sync</td><td>MidPoint detecta cambio en <code>primaryAffiliation</code></td></tr>
+          <tr><td><span class="badge badge-blue">3</span> Politica</td><td>BR anterior se remueve, nuevo BR se asigna</td></tr>
+          <tr><td><span class="badge badge-blue">4</span> Licencia</td><td>Sale del grupo A1-students, entra a A1-alumni → Entra ID cambia SKU</td></tr>
+        </tbody>
+      </table>
     </div>
 
     <div class="card red">
       <div class="card-header">
         <div class="card-icon" style="background:var(--red-lt);font-size:18px;">👤–</div>
-        <div><div class="card-title">Leaver — Baja</div></div>
+        <div><div class="card-title">Leaver</div></div>
       </div>
-      <div class="timeline" style="margin-top:8px;">
-        <div class="timeline-item">
-          <div class="timeline-phase">Fuente</div>
-          <div class="timeline-title">LAMB marca fin de contrato / baja</div>
-          <div class="timeline-body">Trabajador sale de la institución</div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-phase">Sync</div>
-          <div class="timeline-title">MidPoint detecta el cambio</div>
-          <div class="timeline-body">Usuario pierde afiliaciones activas en LAMB</div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-phase">Lifecycle</div>
-          <div class="timeline-title"><code>lifecycleState</code> → <code>suspended</code> o <code>archived</code></div>
-          <div class="timeline-body">Política de retención: suspender 30 días, archivar y eliminar después</div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-phase">Acceso</div>
-          <div class="timeline-title">MidPoint deshabilita cuenta Entra ID</div>
-          <div class="timeline-body"><code>accountEnabled=false</code> → sin acceso M365. Todos los grupos de licencia removidos.</div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-phase">Licencia</div>
-          <div class="timeline-title">Licencia liberada automáticamente</div>
-          <div class="timeline-body">Al salir del grupo, Entra ID revoca el SKU. Licencia disponible para otro usuario.</div>
-        </div>
-      </div>
+      <table class="tbl" style="font-size:12px;margin-top:8px;">
+        <thead><tr><th>Paso</th><th>Accion</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-red">1</span> Fuente</td><td>LAMB marca baja o fin de contrato</td></tr>
+          <tr><td><span class="badge badge-red">2</span> Sync</td><td>MidPoint pierde afiliaciones activas</td></tr>
+          <tr><td><span class="badge badge-red">3</span> Lifecycle</td><td><code>lifecycleState</code> → <code>suspended</code> (30 dias) → <code>archived</code></td></tr>
+          <tr><td><span class="badge badge-red">4</span> Acceso</td><td><code>accountEnabled=false</code> → sin acceso M365</td></tr>
+          <tr><td><span class="badge badge-red">5</span> Licencia</td><td>Sale de grupos → Entra ID revoca SKU. Licencia liberada.</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
@@ -926,43 +801,43 @@
   <div class="alert err">
     <div class="alert-icon">🔴</div>
     <div>
-      <strong>Acción pendiente: David Urquizo debe conceder permisos en Azure Portal</strong>
+      <strong>Accion pendiente: David Urquizo debe conceder permisos en Azure Portal</strong>
       <p>App registration: <code>94dd7b5b-eae6-45bc-a60a-d28781ecefbd</code> · Tenant: <code>cfbd88b4-94bc-4fba-98bd-64d0726394a3</code></p>
     </div>
   </div>
 
   <table class="tbl" style="margin-top:16px;">
-    <thead><tr><th>Permiso</th><th>Tipo</th><th>Para qué</th><th>Estado</th></tr></thead>
+    <thead><tr><th>Permiso</th><th>Tipo</th><th>Para que</th><th>Estado</th></tr></thead>
     <tbody>
       <tr>
         <td><code>User.Read.All</code></td>
         <td>Application</td>
-        <td>Leer usuarios (inbound sync, correlación)</td>
+        <td>Leer usuarios (inbound sync, correlacion)</td>
         <td><span class="badge badge-green">✓ Concedido</span></td>
       </tr>
       <tr>
         <td><code>User.ReadWrite.All</code></td>
         <td>Application</td>
         <td>Crear, actualizar y deshabilitar usuarios. Sync de atributos.</td>
-        <td><span class="badge badge-red">❌ Pendiente — B3</span></td>
+        <td><span class="badge badge-red">Pendiente — B3</span></td>
       </tr>
       <tr>
         <td><code>GroupMember.ReadWrite.All</code></td>
         <td>Application</td>
-        <td>Agregar/quitar miembros de grupos de licencia — <strong>mínimo necesario para IGA</strong></td>
-        <td><span class="badge badge-red">❌ Pendiente — B3</span></td>
+        <td>Agregar/quitar miembros de grupos de licencia — <strong>minimo necesario para IGA</strong></td>
+        <td><span class="badge badge-red">Pendiente — B3</span></td>
       </tr>
       <tr>
         <td><code>Group.ReadWrite.All</code></td>
         <td>Application</td>
-        <td>Crear/eliminar grupos completos — <em>NO requerido</em> si DTI crea los grupos manualmente</td>
-        <td><span class="badge badge-orange">⚠ Evitar — excesivo</span></td>
+        <td>Crear/eliminar grupos completos — NO requerido si DTI crea los grupos manualmente</td>
+        <td><span class="badge badge-orange">Evitar — excesivo</span></td>
       </tr>
       <tr>
         <td><code>Organization.Read.All</code></td>
         <td>Application</td>
         <td>Leer SKUs disponibles en el tenant</td>
-        <td><span class="badge badge-orange">⏳ Opcional</span></td>
+        <td><span class="badge badge-orange">Opcional</span></td>
       </tr>
     </tbody>
   </table>
@@ -970,7 +845,7 @@
   <div class="alert info" style="margin-top:16px;">
     <div class="alert-icon">💡</div>
     <div>
-      <strong>Principio de mínimo privilegio: preferir GroupMember.ReadWrite.All sobre Group.ReadWrite.All</strong>
+      <strong>Principio de minimo privilegio: GroupMember.ReadWrite.All, no Group.ReadWrite.All</strong>
       <p><code>GroupMember.ReadWrite.All</code> solo permite gestionar membresía. <code>Group.ReadWrite.All</code> permite crear y eliminar grupos completos — innecesario si DTI crea los 4 grupos de licencia una sola vez manualmente en Entra ID.</p>
     </div>
   </div>
@@ -978,16 +853,15 @@
   <div class="card orange" style="margin-top:16px;">
     <div class="card-header">
       <div class="card-icon" style="background:var(--orange-lt);">📋</div>
-      <div><div class="card-title">Instrucciones exactas para David Urquizo</div></div>
+      <div><div class="card-title">Instrucciones para David Urquizo</div></div>
     </div>
-    <ol style="font-size:13px;padding-left:20px;line-height:2;">
-      <li>Azure Portal → <strong>Entra ID</strong> → <strong>App registrations</strong></li>
-      <li>Buscar <code>94dd7b5b-eae6-45bc-a60a-d28781ecefbd</code> o nombre "MidPoint IGA"</li>
-      <li>→ <strong>API permissions</strong> → <strong>Add a permission</strong></li>
-      <li>→ <strong>Microsoft Graph</strong> → <strong>Application permissions</strong></li>
+    <ol style="font-size:13px;padding-left:20px;line-height:2.2;">
+      <li>Azure Portal → Entra ID → App registrations</li>
+      <li>Buscar <code>94dd7b5b-eae6-45bc-a60a-d28781ecefbd</code> (o nombre "MidPoint IGA")</li>
+      <li>→ API permissions → Add a permission → Microsoft Graph → Application permissions</li>
       <li>Agregar: <code>User.ReadWrite.All</code> + <code>GroupMember.ReadWrite.All</code></li>
-      <li>→ <strong>Grant admin consent for [UPeU]</strong> (botón verde)</li>
-      <li>Confirmar que el estado muestra ✓ "Granted for UPeU"</li>
+      <li>→ Grant admin consent for [UPeU] (boton verde)</li>
+      <li>Confirmar que el estado muestra "Granted for UPeU" en ambos permisos</li>
     </ol>
   </div>
 </section>
@@ -996,100 +870,75 @@
 <!-- 9. FASES DE IMPLEMENTACIÓN -->
 <!-- ============================================================ -->
 <section id="fases">
-  <h2>9 · Fases de implementación</h2>
+  <h2>9 · Fases de implementacion</h2>
 
-  <div class="cards cards-2">
-    <div>
-      <div class="timeline">
-        <div class="timeline-item done">
-          <div class="timeline-phase">Fase 1 — Completada 2026-04-16</div>
-          <div class="timeline-title">Inbound sync Entra ID → MidPoint</div>
-          <div class="timeline-body">Resource creado, correlación por emailAddress activa, 73K usuarios correlacionados. Solo lectura.</div>
-        </div>
-        <div class="timeline-item done">
-          <div class="timeline-phase">Fase 5 — XMLs listos (commit 62e8a26)</div>
-          <div class="timeline-title">Outbound mappings preparados</div>
-          <div class="timeline-body">UPN, givenName, surname, displayName, accountEnabled. AR-EntraID-User + AR-M365-* definidos. Bloqueado en B3.</div>
-        </div>
-        <div class="timeline-item blocked">
-          <div class="timeline-phase">Bloqueante B3</div>
-          <div class="timeline-title">User.ReadWrite.All — David Urquizo</div>
-          <div class="timeline-body">Sin este permiso MidPoint no puede escribir a Entra ID.</div>
-        </div>
-        <div class="timeline-item pending">
-          <div class="timeline-phase">Fase 6A — Post B3</div>
-          <div class="timeline-title">Habilitar outbound usuarios</div>
-          <div class="timeline-body">Activar capabilities create/update en resource. Recompute de ~34K usuarios para sync atributos. Meta: 73K cuentas con datos correctos.</div>
-        </div>
-        <div class="timeline-item pending">
-          <div class="timeline-phase">Fase 6B — Post B3</div>
-          <div class="timeline-title">Configurar entitlements de grupos</div>
-          <div class="timeline-body">Agregar kind=entitlement en resource para 4 grupos de licencia. Actualizar AR-M365-* con la construction correcta. Solicitar Group.ReadWrite.All.</div>
-        </div>
-        <div class="timeline-item pending">
-          <div class="timeline-phase">Fase 7</div>
-          <div class="timeline-title">Migración de licencias existentes</div>
-          <div class="timeline-body">Auditar 73K cuentas: identificar licencias asignadas manualmente vs las que MidPoint debe gestionar. Reconciliar y eliminar asignaciones directas.</div>
-        </div>
-        <div class="timeline-item pending">
-          <div class="timeline-phase">Fase 8</div>
-          <div class="timeline-title">Restricción Mesa de Ayuda</div>
-          <div class="timeline-body">Reducir permisos de mesa de ayuda en Entra ID a solo Helpdesk Admin. Capacitación en flujo MidPoint. Crear Administrative Units por perfil.</div>
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <h3>Arquitectura técnica MidPoint — Entra ID (post Fase 6)</h3>
-      <pre><code><span class="comment">/* Resource UPEU-EntraID-Graph — 2 objectTypes */</span>
-
-<span class="key">objectType 1:</span> <span class="val">account / default</span>
-  <span class="comment">→ Usuarios Entra ID (ri:AccountObjectClass)</span>
-  <span class="comment">→ Outbound: UPN, displayName, givenName,</span>
-  <span class="comment">             surname, accountEnabled</span>
-  <span class="comment">→ Inbound: emailAddress, title (correlación)</span>
-
-<span class="key">objectType 2:</span> <span class="val">entitlement / group</span>
-  <span class="comment">→ Security Groups (ri:GroupObjectClass)</span>
-  <span class="comment">→ Identifier: ri:id (OID del grupo)</span>
-  <span class="comment">→ Los AR-M365-* referencian estos grupos</span>
-
-<span class="key">AR-M365-Faculty-A3</span>
-  inducement:
-    construction:
-      resource: UPEU-EntraID-Graph
-      <span class="key">kind:</span> <span class="val">account</span>     <span class="comment">← crea la cuenta</span>
-      <span class="key">kind:</span> <span class="val">entitlement</span>  <span class="comment">← agrega al grupo</span>
-      entitlementRef: lic-m365-a3-faculty</code></pre>
-
-      <div class="card gray" style="margin-top:16px;">
-        <div class="card-header">
-          <div class="card-icon" style="background:var(--gray-lt);">🔧</div>
-          <div><div class="card-title">Permisos MSGraph connector para grupos</div></div>
-        </div>
-        <p style="font-size:13px;margin-bottom:8px;">El conector <code>com.evolveum.polygon.connector.msgraphapi.MSGraphConnector</code> soporta nativamente:</p>
-        <ul class="list">
-          <li><code>ri:GroupObjectClass</code> para leer/crear/gestionar grupos</li>
-          <li>Atributo <code>ri:members</code> para gestionar membresía</li>
-          <li>Requiere <code>Group.ReadWrite.All</code> o <code>GroupMember.ReadWrite.All</code></li>
-        </ul>
-      </div>
-    </div>
-  </div>
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>Fase</th>
+        <th>Descripcion</th>
+        <th>Estado</th>
+        <th>Detalle</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Fase 1</strong></td>
+        <td>Inbound sync Entra ID → MidPoint</td>
+        <td><span class="badge badge-green">✓ Completada 2026-04-16</span></td>
+        <td>Resource creado, correlacion por emailAddress activa, 35K+ shadows</td>
+      </tr>
+      <tr>
+        <td><strong>Fase 5</strong></td>
+        <td>Outbound mappings preparados</td>
+        <td><span class="badge badge-blue">XMLs listos (commit 62e8a26)</span></td>
+        <td>UPN, givenName, surname, displayName, accountEnabled. AR-EntraID-User + AR-M365-* definidos. Bloqueado en B3.</td>
+      </tr>
+      <tr style="background:#fde7e9;">
+        <td><strong>B3</strong></td>
+        <td>User.ReadWrite.All — David Urquizo</td>
+        <td><span class="badge badge-red">Bloqueante activo</span></td>
+        <td>Sin este permiso MidPoint no puede escribir a Entra ID</td>
+      </tr>
+      <tr>
+        <td><strong>Fase 6A</strong></td>
+        <td>Habilitar outbound usuarios</td>
+        <td><span class="badge badge-gray">Pendiente post-B3</span></td>
+        <td>Activar capabilities create/update en resource. Recompute de ~34K usuarios. Meta: atributos completos en 35K cuentas.</td>
+      </tr>
+      <tr>
+        <td><strong>Fase 6B</strong></td>
+        <td>Entitlements de grupos de licencia</td>
+        <td><span class="badge badge-gray">Pendiente post-B3</span></td>
+        <td>Agregar kind=entitlement en resource para 4 grupos. Actualizar AR-M365-* con construction + associationTargetSearch.</td>
+      </tr>
+      <tr>
+        <td><strong>Fase 7</strong></td>
+        <td>Migracion de licencias existentes</td>
+        <td><span class="badge badge-gray">Pendiente</span></td>
+        <td>Auditar cuentas con licencia asignada manualmente. Reconciliar y eliminar asignaciones directas. Resolver 28,608 UNMATCHED.</td>
+      </tr>
+      <tr>
+        <td><strong>Fase 8</strong></td>
+        <td>Restriccion permisos Mesa de Ayuda</td>
+        <td><span class="badge badge-gray">Pendiente</span></td>
+        <td>Reducir a Helpdesk Admin + Auth Admin (scoped a AU). Capacitacion en flujo MidPoint. Crear Administrative Units.</td>
+      </tr>
+    </tbody>
+  </table>
 
   <div class="sep"></div>
 
-  <h3>Resumen de decisiones clave</h3>
+  <h3>Decisiones de diseno adoptadas</h3>
   <table class="tbl">
-    <thead><tr><th>Decisión</th><th>Elección</th><th>Motivo</th></tr></thead>
+    <thead><tr><th>Decision</th><th>Eleccion</th><th>Motivo</th></tr></thead>
     <tbody>
       <tr><td>UPN de egresados</td><td><code>@upeu.edu.pe</code> + alias <code>@alumni</code></td><td>Sin cambio de UPN — preserva historial Teams/OneDrive</td></tr>
-      <tr><td>Tipo de grupo para licencias</td><td>Security Group estático</td><td>Controlado por MidPoint, no por reglas dinámicas de Entra ID</td></tr>
-      <tr><td>Donde trabaja mesa de ayuda</td><td>MidPoint (no Entra ID)</td><td>MidPoint es la fuente de verdad; cambios directos en Entra ID son sobrescritos</td></tr>
-      <tr><td>Asignación de licencias</td><td>Group-based licensing automática</td><td>Cero gestión manual; revocación automática al salir del grupo</td></tr>
-      <tr><td>Permisos mesa de ayuda en Entra ID</td><td>Helpdesk Admin + Authentication Admin (scoped a AU)</td><td>Mínimo privilegio — solo MFA reset y desbloqueo</td></tr>
-      <tr><td>Groups dinámicos vs estáticos</td><td>Estáticos (MidPoint gestiona membresía)</td><td>MidPoint debe ser el único controlador; grupos dinámicos bypass el IGA</td></tr>
-      <tr><td>Usuarios sin afiliación en LAMB</td><td>Cuenta deshabilitada (accountEnabled=false)</td><td>Suspendidos hasta que LAMB actualice o admin resuelva manualmente</td></tr>
+      <tr><td>Tipo de grupo para licencias</td><td>Security Group estatico</td><td>Controlado por MidPoint; grupos dinamicos bypass el IGA</td></tr>
+      <tr><td>Donde trabaja mesa de ayuda</td><td>MidPoint (no Entra ID)</td><td>MidPoint es fuente de verdad; cambios directos en Entra ID son sobrescritos</td></tr>
+      <tr><td>Asignacion de licencias</td><td>Group-based licensing automatica</td><td>Revocacion automatica al salir del grupo — cero gestion manual</td></tr>
+      <tr><td>Permisos mesa de ayuda en Entra ID</td><td>Helpdesk Admin + Auth Admin (scoped)</td><td>Minimo privilegio — solo MFA reset y desbloqueo</td></tr>
+      <tr><td>Usuarios sin afiliacion en LAMB</td><td>Cuenta deshabilitada (<code>accountEnabled=false</code>)</td><td>Suspendidos hasta que LAMB actualice o admin resuelva</td></tr>
     </tbody>
   </table>
 </section>
@@ -1098,13 +947,13 @@
 <!-- 10. DISEÑO TÉCNICO MIDPOINT -->
 <!-- ============================================================ -->
 <section id="tecnico">
-  <h2>10 · Diseño técnico MidPoint — Entitlements de grupos</h2>
+  <h2>10 · Diseno tecnico MidPoint — Entitlements de grupos</h2>
 
   <div class="alert info">
     <div class="alert-icon">🔧</div>
     <div>
-      <strong>Patrón canónico: kind=entitlement, intent=group + &lt;association&gt;</strong>
-      <p>La membresía de grupos en Graph API NO se escribe como atributo outbound (<code>ri:memberOfGroup</code> es read-only). Se modela como <code>association</code> en el schemaHandling del resource. MidPoint llama <code>POST /groups/{id}/members/$ref</code> al agregar y <code>DELETE /groups/{id}/members/{userId}/$ref</code> al quitar.</p>
+      <strong>Patron canonico: kind=entitlement, intent=group + &lt;association&gt;</strong>
+      <p>La membresia de grupos en Graph API NO se escribe como atributo outbound (<code>ri:memberOfGroup</code> es read-only). Se modela como <code>association</code> en el schemaHandling. MidPoint llama <code>POST /groups/{id}/members/$ref</code> al agregar y <code>DELETE /groups/{id}/members/{userId}/$ref</code> al quitar.</p>
     </div>
   </div>
 
@@ -1136,12 +985,12 @@
   <span class="key">&lt;delineation&gt;</span>
     <span class="key">&lt;objectClass&gt;</span><span class="val">ri:GroupObjectClass</span><span class="key">&lt;/objectClass&gt;</span>
   <span class="key">&lt;/delineation&gt;</span>
-  <span class="comment">/* DTI crea los grupos — MidPoint solo gestiona members */</span>
+  <span class="comment">/* DTI crea grupos — MidPoint solo gestiona members */</span>
 <span class="key">&lt;/objectType&gt;</span></code></pre>
     </div>
     <div>
       <h3>Construction en AR-M365-Student-A1</h3>
-      <pre><code><span class="comment">/* AR-M365-Student-A1.xml — diseño objetivo post-B3 */</span>
+      <pre><code><span class="comment">/* AR-M365-Student-A1.xml — diseno objetivo post-B3 */</span>
 <span class="key">&lt;inducement&gt;</span>
   <span class="key">&lt;construction&gt;</span>
     <span class="key">&lt;resourceRef</span> <span class="val">oid="2f11c057-..."</span><span class="key">/&gt;</span>
@@ -1171,8 +1020,8 @@
       <div class="alert ok" style="margin-top:12px;">
         <div class="alert-icon">✅</div>
         <div>
-          <strong>El lifecycle de grupos es completamente automático</strong>
-          <p>Cuando MidPoint remueve un BR, las constructions del AR dejan de aplicar. MidPoint detecta la diferencia y llama la API de Graph para quitar al usuario del grupo → Entra ID revoca la licencia. Sin mappings especiales.</p>
+          <strong>Lifecycle de grupos completamente automatico</strong>
+          <p>Al remover un BR, las constructions dejan de aplicar. MidPoint detecta la diferencia y llama Graph para quitar al usuario del grupo → Entra ID revoca el SKU. Sin mappings adicionales.</p>
         </div>
       </div>
     </div>
@@ -1180,24 +1029,24 @@
 
   <div class="sep"></div>
 
-  <h3>Tabla de cambios pendientes en XMLs (post-B3)</h3>
+  <h3>Cambios pendientes en XMLs (post-B3)</h3>
   <table class="tbl">
     <thead><tr><th>Archivo</th><th>Cambio</th><th>Prioridad</th></tr></thead>
     <tbody>
       <tr><td><code>UPEU-EntraID-Graph.xml</code></td><td>Agregar objectType entitlement/group + association en account/default + habilitar capabilities create/update</td><td><span class="badge badge-red">Alta</span></td></tr>
-      <tr><td><code>AR-M365-Student-A1.xml</code></td><td>Construction con associationTargetSearch → grupo <code>lic-m365-a1-students</code></td><td><span class="badge badge-red">Alta</span></td></tr>
-      <tr><td><code>AR-M365-Faculty-A3.xml</code></td><td>Construction con associationTargetSearch → grupo <code>lic-m365-a3-faculty</code></td><td><span class="badge badge-red">Alta</span></td></tr>
-      <tr><td><code>AR-M365-Staff-A3.xml</code></td><td>Construction con associationTargetSearch → grupo <code>lic-m365-a3-staff</code></td><td><span class="badge badge-red">Alta</span></td></tr>
-      <tr><td><code>AR-M365-Alumni-A1.xml</code></td><td>Construction con associationTargetSearch → grupo <code>lic-m365-a1-alumni</code></td><td><span class="badge badge-red">Alta</span></td></tr>
-      <tr><td>Entra ID (DTI)</td><td>Crear los 4 grupos de seguridad si no existen + configurar group-based licensing con el SKU correcto</td><td><span class="badge badge-orange">Previo</span></td></tr>
+      <tr><td><code>AR-M365-Student-A1.xml</code></td><td>Construction con associationTargetSearch → <code>lic-m365-a1-students</code></td><td><span class="badge badge-red">Alta</span></td></tr>
+      <tr><td><code>AR-M365-Faculty-A3.xml</code></td><td>Construction con associationTargetSearch → <code>lic-m365-a3-faculty</code></td><td><span class="badge badge-red">Alta</span></td></tr>
+      <tr><td><code>AR-M365-Staff-A3.xml</code></td><td>Construction con associationTargetSearch → <code>lic-m365-a3-staff</code></td><td><span class="badge badge-red">Alta</span></td></tr>
+      <tr><td><code>AR-M365-Alumni-A1.xml</code></td><td>Construction con associationTargetSearch → <code>lic-m365-a1-alumni</code></td><td><span class="badge badge-red">Alta</span></td></tr>
+      <tr><td>Entra ID (DTI manual)</td><td>Crear los 4 grupos de seguridad si no existen + configurar group-based licensing con SKU correcto</td><td><span class="badge badge-orange">Previo</span></td></tr>
     </tbody>
   </table>
 
   <div class="sep"></div>
 
-  <h3>Script de auditoría — usuarios con licencia y cuenta deshabilitada</h3>
-  <pre><code><span class="comment"># Ejecutar mensualmente hasta migración completa a IGA</span>
-<span class="comment"># Detecta cuentas con licencia que deberían haber sido revocadas</span>
+  <h3>Script de auditoria — cuentas deshabilitadas con licencia activa</h3>
+  <pre><code><span class="comment"># Ejecutar mensualmente hasta migracion completa a IGA</span>
+<span class="comment"># Detecta cuentas con licencia que deberian haber sido revocadas</span>
 Connect-MgGraph -Scopes <span class="val">"User.Read.All"</span>,<span class="val">"Directory.Read.All"</span>
 
 Get-MgUser -Filter <span class="val">"accountEnabled eq false"</span> -All `
@@ -1207,14 +1056,14 @@ Get-MgUser -Filter <span class="val">"accountEnabled eq false"</span> -All `
     @{N=<span class="val">"Licencias"</span>;E={$_.AssignedLicenses.Count}} |
   Export-Csv <span class="val">"/tmp/audit-licencias-deshabilitadas.csv"</span> -NoTypeInformation
 
-<span class="comment"># Post-migración IGA: este CSV debería estar siempre vacío</span></code></pre>
+<span class="comment"># Post-migracion IGA: este CSV deberia estar siempre vacio</span></code></pre>
 </section>
 
 </div><!-- /main -->
 
 <div style="background:#fff;border-top:1px solid var(--border);padding:16px 40px;display:flex;justify-content:space-between;font-size:12px;color:#605e5c;margin-top:40px;">
   <span>UPeU · DTI Infraestructura · Arquitectura IGA 2026</span>
-  <span>MidPoint 4.10.2 · Entra ID · Group-Based Licensing · Versión 1.0 (2026-05-19)</span>
+  <span>MidPoint 4.10.2 · Entra ID · Group-Based Licensing · Actualizado 2026-05-19</span>
 </div>
 
 </body>
