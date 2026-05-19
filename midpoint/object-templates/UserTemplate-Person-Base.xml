@@ -1061,40 +1061,7 @@ if (hasPersonalNumber && hasPrimaryDoc && hasAffiliation) {
             </source>
             <expression>
                 <script>
-                    <code><![CDATA[
-if (photoUrl == null) return null
-def urlStr = basic.stringify(photoUrl)?.trim()
-if (!urlStr) return null
-try {
-    def url = new java.net.URL(urlStr)
-    def conn = (java.net.HttpURLConnection) url.openConnection()
-    conn.setConnectTimeout(5000)
-    conn.setReadTimeout(10000)
-    conn.setRequestMethod('GET')
-    conn.setRequestProperty('User-Agent', 'MidPoint-UPeU-IGA/1.0')
-    def status = conn.getResponseCode()
-    if (status != 200) {
-        log.warn('Bloque I jpegPhoto: HTTP {} al fetchear {} para {}', status, urlStr, focus?.name)
-        return null
-    }
-    def is = conn.getInputStream()
-    def baos = new java.io.ByteArrayOutputStream()
-    def buf = new byte[8192]
-    int n
-    while ((n = is.read(buf)) != -1) { baos.write(buf, 0, n) }
-    is.close()
-    def bytes = baos.toByteArray()
-    if (bytes.length == 0) {
-        log.warn('Bloque I jpegPhoto: respuesta vacía desde {} para {}', urlStr, focus?.name)
-        return null
-    }
-    log.debug('Bloque I jpegPhoto: {} bytes leídos desde {} para {}', bytes.length, urlStr, focus?.name)
-    return bytes
-} catch (Exception e) {
-    log.warn('Bloque I jpegPhoto: error fetcheando {} para {}: {}', urlStr, focus?.name, e.message)
-    return null
-}
-                    ]]></code>
+                    <code>if (photoUrl == null) return null; def urlStr = basic.stringify(photoUrl)?.trim(); if (!urlStr) return null; try { def url = new java.net.URL(urlStr); def conn = (java.net.HttpURLConnection) url.openConnection(); conn.setConnectTimeout(5000); conn.setReadTimeout(10000); conn.setRequestMethod('GET'); conn.setRequestProperty('User-Agent', 'MidPoint-UPeU-IGA/1.0'); def status = conn.getResponseCode(); if (status != 200) { log.warn('Bloque I jpegPhoto: HTTP {} al fetchear {} para {}', status, urlStr, focus?.name); return null }; def is = conn.getInputStream(); def baos = new java.io.ByteArrayOutputStream(); def buf = new byte[8192]; int n; while ((n = is.read(buf)) != -1) { baos.write(buf, 0, n) }; is.close(); def bytes = baos.toByteArray(); if (bytes.length == 0) { log.warn('Bloque I jpegPhoto: respuesta vacía desde {} para {}', urlStr, focus?.name); return null }; log.debug('Bloque I jpegPhoto: {} bytes leídos desde {} para {}', bytes.length, urlStr, focus?.name); return bytes } catch (Exception e) { log.warn('Bloque I jpegPhoto: error fetcheando {} para {}: {}', urlStr, focus?.name, e.message); return null }</code>
                 </script>
             </expression>
             <condition>
