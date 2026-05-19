@@ -2,7 +2,7 @@
 <!--
   UserTemplate-Person-Base — Template canónico base UPeU
   OID: 855caaca-68c4-4f7f-8ff8-b4e35dd7d390
-  Versión: 2.6 (2026-05-18)
+  Versión: 2.7 (2026-05-19)
   Schema: urn:sciback:midpoint:person (canónico) + urn:upeu:midpoint:local (LAMB)
   Aplica a: todos los UserType via archetypePolicy en Archetype-Person-Built-in
   Libro Cap.9: template se activa en cada create/modify/recompute del focus object.
@@ -12,6 +12,10 @@
     B — Datos derivados: fullName, emailAddress institucional (weak)
     C — eppn (eduPersonPrincipalName): strong, identificador federado
     D — Auto-asignación R-Affiliation-* via assignmentTargetSearch
+    D.3 — BR-Docente-TC (primaryAffiliation=FACULTY)
+    D.4 — BR-Admin-Area (primaryAffiliation=STAFF)
+    D.5-alum — BR-Egresado (primaryAffiliation=alum) [añadido v2.7]
+    D.5-base — BR-Personal-General piso mínimo (STAFF || FACULTY)
     D6 — OrgType EP desde academicProgramCode
     E — Asignación a Org (TODO: espera LAMB inbound depto→OU)
     F — Lifecycle gate draft→active (política estricta UPeU: doc primario + afiliación)
@@ -364,6 +368,42 @@
         <condition>
             <script>
                 <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toUpperCase() == 'STAFF'</code>
+            </script>
+        </condition>
+    </mapping>
+
+    <!-- D.5-alum — Auto-asignación BR-Egresado para egresados
+         Solo actúa cuando primaryAffiliation == 'alum' (minúsculas, como viene de LAMB).
+         El mapping D-assign-affiliation-role asigna R-Affiliation-Alumni (que da
+         acceso básico), pero BR-Egresado es el Business Role que induce los AR
+         específicos del egresado (M365-Alumni-A1, LDAP-Alumni, etc.).
+         Equivalente al patrón D.3 (Docente) y D.4 (Admin). -->
+    <mapping>
+        <name>D-autoassign-br-egresado</name>
+        <description>Auto-asigna BR-Egresado a usuarios con primaryAffiliation=alum. Resuelve los ~30.000 egresados activos sin BR-Egresado. Patrón idéntico a D.3/D.4. Opción A: lógica en base template.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>RoleType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <q:value>BR-Egresado</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'alum'</code>
             </script>
         </condition>
     </mapping>
