@@ -1200,16 +1200,15 @@ import com.evolveum.midpoint.prism.path.ItemPath
 // Fallback: sciback:taxId si contiene URN heredado (urn:schac:personalUniqueID:pe:DNI:PE:*)
 //   para retrocompatibilidad con usuarios creados antes de la migración.
 def rawDocNum = lambDocNum != null ? basic.stringify(lambDocNum).trim() : ''
+// rawTaxId siempre disponible en este scope para el fallback de tipo más abajo
+def rawTaxId  = taxId != null ? basic.stringify(taxId).trim() : ''
 def docNumber = null
 if (rawDocNum != '') {
     docNumber = rawDocNum
-} else {
+} else if (rawTaxId.startsWith('urn:schac:personalUniqueID:')) {
     // Fallback heredado: taxId con URN SCHAC
-    def rawTaxId = taxId != null ? basic.stringify(taxId).trim() : ''
-    if (rawTaxId.startsWith('urn:schac:personalUniqueID:')) {
-        def parts = rawTaxId.split(':')
-        docNumber = parts.length > 0 ? parts[parts.length - 1].trim() : null
-    }
+    def parts = rawTaxId.split(':')
+    docNumber = parts.length > 0 ? parts[parts.length - 1].trim() : null
 }
 if (!docNumber) return null
 
@@ -1230,7 +1229,7 @@ def verifiedBy   = 'RENIEC' // default
 def countryIssue = 'PER'    // default
 
 if (typeId == null && rawTaxId.startsWith('urn:schac:personalUniqueID:pe:DNI:PE:')) {
-    // Fallback heredado: URN SCHAC con DNI explícito
+    // Fallback heredado: URN SCHAC con DNI explícito — tipo implícito DNI
     docType = 'DNI'; verifiedBy = 'RENIEC'; countryIssue = 'PER'
 } else {
     switch (typeId) {
