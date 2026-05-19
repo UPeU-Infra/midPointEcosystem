@@ -311,112 +311,125 @@
 <!-- 2. ECOSISTEMA ENTRA ID -->
 <!-- ============================================================ -->
 <section id="arquitectura">
-  <h2>2 · Cómo se organiza el directorio Entra ID — propuesta</h2>
+  <h2>2 · Cómo organizan el directorio MidPoint, Entra ID y OpenLDAP</h2>
 
   <div class="alert info" style="margin-bottom:20px;">
     <div class="alert-icon">ℹ</div>
     <div>
-      <strong>Entra ID como hub central de identidad UPeU</strong>
-      <p>Entra ID no solo almacena cuentas — organiza identidades mediante grupos de seguridad, controla accesos mediante Conditional Access, y sirve como proveedor de identidad para todos los servicios institucionales: M365, Intune, y Keycloak (que da SSO a Koha, Indico, Moodle y otras apps on-premise). Esta es la propuesta de organización para potenciar lo que ya existe sin reemplazar nada.</p>
+      <strong>Entra ID es plano — OpenLDAP tiene el árbol jerárquico</strong>
+      <p>Entra ID no tiene árbol de unidades organizacionales como Active Directory on-premise. Todo está al mismo nivel: los usuarios se organizan mediante <strong>atributos</strong> (<code>department</code>, <code>jobTitle</code>) y <strong>Security Groups</strong>. El árbol jerárquico (Universidad → Campus → Facultad → Escuela) vive en <strong>OpenLDAP</strong>. MidPoint orquesta ambos desde Oracle LAMB.</p>
     </div>
   </div>
 
-  <!-- Ecosystem hub diagram -->
-  <div style="display:grid;grid-template-columns:180px 1fr 180px;gap:0;border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden;margin-bottom:24px;">
+  <!-- Nuevo diagrama: LAMB → MidPoint → Entra ID (plano) + OpenLDAP (árbol) -->
+  <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px;">
 
-    <!-- Left: Identity sources -->
-    <div style="background:#fffbf0;border-right:2px solid var(--border);padding:16px;">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#8a8886;margin-bottom:14px;text-align:center;letter-spacing:.5px;">Origen de identidades</div>
-      <div style="background:#fff;border:1px solid #f5c97d;border-radius:8px;padding:10px;margin-bottom:10px;text-align:center;">
-        <div style="font-size:20px;">🏛</div>
-        <div style="font-weight:600;font-size:12px;margin-top:4px;">Oracle LAMB</div>
-        <div style="font-size:11px;color:#605e5c;margin-top:3px;">Trabajadores y alumnos<br>registrados</div>
-        <div style="margin-top:6px;"><span class="badge badge-blue">via MidPoint</span></div>
+    <!-- Top: LAMB -->
+    <div style="text-align:center;padding:16px 20px;background:#fffbf0;border-bottom:2px solid var(--border);">
+      <div style="display:inline-flex;align-items:center;gap:10px;border:1px solid #f5c97d;border-radius:8px;padding:10px 24px;background:#fff;">
+        <span style="font-size:24px;">🏛</span>
+        <div style="text-align:left;">
+          <div style="font-weight:700;font-size:14px;">Oracle LAMB</div>
+          <div style="font-size:11px;color:#605e5c;">Fuente de verdad — Trabajadores · Estudiantes · Egresados</div>
+        </div>
       </div>
-      <div style="background:#fff;border:1px solid #f5c97d;border-radius:8px;padding:10px;text-align:center;">
-        <div style="font-size:20px;">🎓</div>
-        <div style="font-weight:600;font-size:12px;margin-top:4px;">Sistema Admisiones</div>
-        <div style="font-size:11px;color:#605e5c;margin-top:3px;">Crea cuentas M365<br>al admitir postulantes</div>
-        <div style="margin-top:6px;"><span class="badge badge-gray">autónomo</span></div>
-      </div>
-      <div style="text-align:center;margin-top:14px;font-size:22px;color:#8a8886;">→</div>
+      <div style="font-size:22px;color:#8a8886;margin-top:10px;line-height:1;">↓</div>
     </div>
 
-    <!-- Center: Entra ID hub -->
-    <div style="padding:20px;border-right:2px solid var(--border);">
-      <div style="text-align:center;margin-bottom:16px;">
-        <div style="display:inline-flex;align-items:center;gap:8px;background:var(--blue-lt);border:2px solid var(--blue);border-radius:10px;padding:8px 20px;">
-          <span style="font-size:22px;">☁</span>
-          <div>
-            <div style="font-weight:700;font-size:15px;color:var(--blue-dk);">Entra ID UPeU</div>
-            <div style="font-size:11px;color:#605e5c;">73.104 cuentas · upeu.edu.pe</div>
+    <!-- Middle: MidPoint -->
+    <div style="text-align:center;padding:14px 20px;background:var(--blue-lt);border-bottom:2px solid var(--border);">
+      <div style="display:inline-flex;align-items:center;gap:10px;border:2px solid var(--blue);border-radius:8px;padding:10px 28px;background:#fff;">
+        <span style="font-size:24px;">⚙</span>
+        <div style="text-align:left;">
+          <div style="font-weight:700;font-size:14px;color:var(--blue-dk);">MidPoint IGA</div>
+          <div style="font-size:11px;color:#605e5c;">Lee LAMB · Determina tipo de usuario · Escribe atributos y membresías</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;margin-top:10px;font-size:20px;color:#8a8886;line-height:1;">
+        <div>↙</div><div>↘</div>
+      </div>
+    </div>
+
+    <!-- Bottom: dos columnas -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;">
+
+      <!-- Izquierda: Entra ID (plano) -->
+      <div style="padding:20px;border-right:2px solid var(--border);">
+        <div style="text-align:center;margin-bottom:14px;">
+          <div style="display:inline-flex;align-items:center;gap:8px;background:var(--blue-lt);border:1px solid var(--blue);border-radius:8px;padding:6px 16px;">
+            <span style="font-size:16px;">☁</span>
+            <div style="font-weight:700;font-size:12px;color:var(--blue-dk);">Entra ID — PLANO (sin árbol)</div>
+          </div>
+        </div>
+
+        <!-- Atributos en usuario -->
+        <div style="background:#f8f8f8;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#8a8886;margin-bottom:8px;">👤 Todos los usuarios al mismo nivel</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <div style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:11px;">
+              <div style="font-weight:600;word-break:break-all;">juan.perez@upeu.edu.pe</div>
+              <div style="color:#605e5c;margin-top:4px;line-height:1.7;">department: Ing. Sistemas<br>jobTitle: Docente TC<br>givenName: Juan</div>
+            </div>
+            <div style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:11px;">
+              <div style="font-weight:600;word-break:break-all;">202210345@upeu.edu.pe</div>
+              <div style="color:#605e5c;margin-top:4px;line-height:1.7;">department: Ing. Sistemas<br>jobTitle: Estudiante<br>givenName: Ana</div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--red);margin-top:8px;line-height:1.5;">⚠ Hoy estos campos están vacíos en el tenant UPeU. MidPoint los llenará desde LAMB post-B3.</div>
+        </div>
+
+        <!-- Security Groups -->
+        <div style="background:#f8f8f8;border:1px solid var(--border);border-radius:8px;padding:12px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#8a8886;margin-bottom:8px;">🔑 Security Groups — propuesta (hoy: 0 en el tenant)</div>
+          <div style="font-size:11px;line-height:2.2;">
+            <code style="background:var(--blue-lt);padding:2px 6px;border-radius:4px;">lic-m365-a1-students</code> → SKU A1 Students<br>
+            <code style="background:var(--blue-lt);padding:2px 6px;border-radius:4px;">lic-m365-a3-students</code> → SKU A3 Students<br>
+            <code style="background:var(--blue-lt);padding:2px 6px;border-radius:4px;">lic-m365-a1-faculty</code> → SKU A1 Faculty<br>
+            <code style="background:var(--blue-lt);padding:2px 6px;border-radius:4px;">lic-m365-a3-faculty</code> → SKU A3 Faculty
+          </div>
+          <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
+            <span class="badge badge-blue">→ M365 licencias</span>
+            <span class="badge badge-gray">→ Intune políticas</span>
           </div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div style="border:1px solid var(--border);border-radius:8px;padding:12px;">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#605e5c;margin-bottom:8px;">🔑 Grupos de licencia</div>
-          <div style="font-size:11px;line-height:2;"><code>lic-m365-a1-students</code><br><code>lic-m365-a3-students</code><br><code>lic-m365-a3-faculty</code><br><code>lic-m365-a1-faculty</code></div>
-          <div style="margin-top:8px;font-size:10px;color:#8a8886;">Gestionados por MidPoint post-B3</div>
-        </div>
-        <div style="border:1px solid var(--border);border-radius:8px;padding:12px;">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#605e5c;margin-bottom:8px;">📱 Grupos Intune</div>
-          <div style="font-size:11px;line-height:2;"><code>intune-estudiantes</code><br><code>intune-staff</code></div>
-          <div style="margin-top:8px;font-size:10px;color:#8a8886;">Políticas de dispositivo<br>por tipo de usuario</div>
-        </div>
-        <div style="border:1px solid var(--border);border-radius:8px;padding:12px;">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#605e5c;margin-bottom:8px;">🛡 Conditional Access</div>
-          <ul class="list" style="font-size:11px;">
-            <li>MFA para roles admin</li>
-            <li>Bloquear auth legacy</li>
-            <li>Dispositivo cumplidor</li>
-          </ul>
-        </div>
-        <div style="border:1px solid var(--border);border-radius:8px;padding:12px;">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#605e5c;margin-bottom:8px;">🔗 Apps registradas</div>
-          <div style="font-size:11px;line-height:2;"><code>MidPoint IGA</code><br><code>Keycloak UPeU</code></div>
-          <div style="margin-top:8px;font-size:10px;color:#8a8886;">OIDC apps que leen<br>el directorio</div>
-        </div>
-      </div>
-      <div style="margin-top:10px;border:1px dashed #c8c6c4;border-radius:8px;padding:10px;text-align:center;">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#8a8886;margin-bottom:6px;">📐 Administrative Units — propuesta futura</div>
-        <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
-          <span class="badge badge-gray">AU-Lima</span>
-          <span class="badge badge-gray">AU-Juliaca</span>
-          <span class="badge badge-gray">AU-Tarapoto</span>
-        </div>
-        <div style="font-size:10px;color:#8a8886;margin-top:5px;">Administración delegada por campus sin dar acceso global</div>
-      </div>
-    </div>
 
-    <!-- Right: Consuming services -->
-    <div style="background:#f0f7ee;padding:16px;">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#8a8886;margin-bottom:14px;text-align:center;letter-spacing:.5px;">Servicios que consumen</div>
-      <div style="background:#fff;border:1px solid #a8d5a2;border-radius:8px;padding:10px;margin-bottom:8px;text-align:center;">
-        <div style="font-size:18px;">📧</div>
-        <div style="font-weight:600;font-size:12px;margin-top:3px;">M365</div>
-        <div style="font-size:10px;color:#605e5c;">Teams · Exchange<br>SharePoint · OneDrive</div>
-        <div style="margin-top:5px;"><span class="badge badge-blue" style="font-size:10px;">group-based licensing</span></div>
-      </div>
-      <div style="background:#fff;border:1px solid #a8d5a2;border-radius:8px;padding:10px;margin-bottom:8px;text-align:center;">
-        <div style="font-size:18px;">📱</div>
-        <div style="font-weight:600;font-size:12px;margin-top:3px;">Intune</div>
-        <div style="font-size:10px;color:#605e5c;">Gestión de dispositivos<br>y apps corporativas</div>
-        <div style="margin-top:5px;"><span class="badge badge-gray" style="font-size:10px;">propuesta</span></div>
-      </div>
-      <div style="background:#fff;border:1px solid #a8d5a2;border-radius:8px;padding:10px;text-align:center;">
-        <div style="font-size:18px;">🔑</div>
-        <div style="font-weight:600;font-size:12px;margin-top:3px;">Keycloak UPeU</div>
-        <div style="font-size:10px;color:#605e5c;">SSO a apps on-premise</div>
-        <div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:3px;justify-content:center;">
-          <span class="badge badge-gray" style="font-size:10px;">Koha</span>
-          <span class="badge badge-gray" style="font-size:10px;">Indico</span>
-          <span class="badge badge-gray" style="font-size:10px;">Moodle</span>
+      <!-- Derecha: OpenLDAP (árbol) -->
+      <div style="padding:20px;background:#fafff9;">
+        <div style="text-align:center;margin-bottom:14px;">
+          <div style="display:inline-flex;align-items:center;gap:8px;background:#dff0d8;border:1px solid var(--green);border-radius:8px;padding:6px 16px;">
+            <span style="font-size:16px;">🌲</span>
+            <div style="font-weight:700;font-size:12px;color:var(--green);">OpenLDAP — ÁRBOL JERÁRQUICO</div>
+          </div>
         </div>
+
+        <!-- Árbol LDAP -->
+        <div style="background:#fff;border:1px solid #c8e6c9;border-radius:8px;padding:14px;font-family:monospace;font-size:11px;line-height:2;margin-bottom:10px;">
+          <div style="font-weight:700;color:#1b5e20;">dc=upeu,dc=edu,dc=pe</div>
+          <div style="padding-left:14px;">
+            <div style="color:#2e7d32;">├── ou=personas</div>
+            <div style="padding-left:18px;color:#388e3c;">│&nbsp;&nbsp;├── cn=juan.perez</div>
+            <div style="padding-left:18px;color:#388e3c;">│&nbsp;&nbsp;└── cn=ana.garcia</div>
+            <div style="color:#2e7d32;">└── ou=org</div>
+            <div style="padding-left:18px;color:#388e3c;">├── ou=Lima</div>
+            <div style="padding-left:34px;color:#43a047;">│&nbsp;&nbsp;├── ou=Fac-Ingenieria</div>
+            <div style="padding-left:50px;color:#66bb6a;">│&nbsp;&nbsp;│&nbsp;&nbsp;└── ou=Esc-Sistemas</div>
+            <div style="padding-left:34px;color:#43a047;">│&nbsp;&nbsp;└── ou=Fac-Ciencias</div>
+            <div style="padding-left:18px;color:#388e3c;">├── ou=Juliaca</div>
+            <div style="padding-left:18px;color:#388e3c;">└── ou=Tarapoto</div>
+          </div>
+        </div>
+
+        <div style="background:#dff0d8;border:1px solid #a5d6a7;border-radius:8px;padding:10px;font-size:11px;">
+          <div style="font-weight:600;margin-bottom:4px;">🔑 Keycloak usa OpenLDAP como User Federation</div>
+          <div style="color:#2e7d32;line-height:1.6;">Los usuarios de Koha, Indico y Moodle se autentican contra el árbol LDAP. Keycloak lee el árbol y mapea grupos LDAP a roles de cada aplicación.</div>
+        </div>
+
+        <div style="margin-top:8px;font-size:10px;color:#8a8886;font-style:italic;">* Estructura exacta de ou= pendiente de definir con DTI</div>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:22px;color:#8a8886;">←</div>
+
     </div>
-  </div>
+  </div><!-- /nuevo diagrama -->
 
   <!-- Keycloak integration -->
   <h3>Keycloak — un solo login para todas las apps UPeU</h3>
