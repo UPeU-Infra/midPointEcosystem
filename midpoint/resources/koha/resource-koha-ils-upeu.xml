@@ -1079,8 +1079,8 @@
                     <expression>
                         <script>
                             <code>
-if (input == null) return 'BUL'
-switch (input.toString().trim().toUpperCase()) {
+if (locality == null) return 'BUL'
+switch (locality.toString().trim().toUpperCase()) {
     case 'LIMA':     return 'BUL'
     case 'JULIACA':  return 'BUJ'
     case 'TARAPOTO': return 'BUT'
