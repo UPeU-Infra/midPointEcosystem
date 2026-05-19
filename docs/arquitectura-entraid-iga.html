@@ -427,8 +427,11 @@
 
         <!-- Sub-seccion: Keycloak -->
         <div style="background:#dff0d8;border:1px solid #a5d6a7;border-radius:8px;padding:12px;margin-bottom:8px;">
-          <div style="font-weight:600;font-size:12px;margin-bottom:6px;">Keycloak — User Federation desde OpenLDAP</div>
-          <div style="font-size:11px;color:#2e7d32;margin-bottom:8px;line-height:1.5;">Keycloak lee <code>ou=people</code> y <code>ou=groups</code> directamente via LDAP User Federation. El usuario NO necesita password separado: OpenLDAP es el backend de autenticacion.</div>
+          <div style="font-weight:600;font-size:12px;margin-bottom:6px;">Keycloak — SSO broker para apps on-premise</div>
+          <div style="font-size:11px;color:#2e7d32;margin-bottom:6px;line-height:1.5;">
+            <strong>Hoy (prod):</strong> Keycloak tiene Entra ID como Identity Provider OIDC (<code>MicrosoftUPeU</code>). Los usuarios se autentican con sus credenciales Microsoft (@upeu.edu.pe).<br>
+            <strong>Fase 6 (planificado):</strong> Se agrega OpenLDAP como User Federation (<code>ou=people</code>) para autenticación on-premise independiente de Entra ID.
+          </div>
           <div style="display:flex;flex-wrap:wrap;gap:5px;">
             <span class="badge badge-green">Koha (bul/buj/but/cia)</span>
             <span class="badge badge-green">Indico</span>
@@ -486,8 +489,8 @@
         <td>MidPoint → Entra ID<br><small style="color:#605e5c;">atributos + Security Groups</small></td>
       </tr>
       <tr>
-        <td><strong>Keycloak (via OpenLDAP)</strong></td>
-        <td>OpenLDAP User Federation en Keycloak</td>
+        <td><strong>Keycloak</strong><br><span class="badge badge-green" style="margin-top:4px;">IDP: Entra ID (hoy)</span><br><span class="badge badge-gray" style="margin-top:4px;">+ LDAP Federation (Fase 6)</span></td>
+        <td><strong>Hoy:</strong> Entra ID OIDC IDP (<code>MicrosoftUPeU</code>)<br><strong>Fase 6:</strong> + OpenLDAP User Federation (<code>ou=people</code>)</td>
         <td>
           <span class="badge badge-green">Koha</span>
           <span class="badge badge-green">Indico</span>
@@ -499,7 +502,7 @@
           <span class="badge badge-green">EZProxy</span>
           <span class="badge badge-green">Scopus/WoS/IEEE/ProQuest/EBSCO</span>
         </td>
-        <td>MidPoint → OpenLDAP → Keycloak<br><small style="color:#605e5c;">ou=people + ou=groups</small></td>
+        <td>Hoy: Keycloak → Entra ID<br>Fase 6: Keycloak → OpenLDAP<br><small style="color:#605e5c;">MidPoint alimenta ambos</small></td>
       </tr>
       <tr>
         <td><strong>RADIUS (via OpenLDAP)</strong></td>
@@ -516,11 +519,12 @@
     </tbody>
   </table>
 
-  <div class="alert warn" style="margin-top:16px;">
-    <div class="alert-icon">⚠</div>
+  <div class="alert info" style="margin-top:16px;">
+    <div class="alert-icon">🔑</div>
     <div>
-      <strong>Keycloak NO autentica contra Entra ID</strong>
-      <p>El flujo correcto es: usuario abre app → Keycloak → OpenLDAP (User Federation) → usuario autenticado. Entra ID es un sistema TARGET paralelo para el mundo Microsoft, no un proveedor de identidad para Keycloak. Configurar Keycloak como Identity Broker contra Entra ID introduciria dependencia de disponibilidad cloud y rompe la arquitectura on-premise.</p>
+      <strong>Keycloak tiene Entra ID como IDP hoy — OpenLDAP User Federation es el objetivo Fase 6</strong>
+      <p><strong>Estado actual (producción):</strong> Keycloak realm <code>upeu</code> tiene configurado Entra ID como Identity Provider OIDC (<code>MicrosoftUPeU</code>, client <code>b2b58b88-15bf-45c8-b017-2736fe92413a</code>). Los usuarios de Koha e Indico se autentican con sus credenciales Microsoft — Keycloak redirige al login de Entra ID y recibe el token OIDC.</p>
+      <p style="margin-top:6px;"><strong>Objetivo Fase 6 (planificado):</strong> Agregar OpenLDAP (<code>192.168.15.168:389</code>) como User Federation en Keycloak. Esto permite autenticación on-premise independiente de Entra ID. Ambos pueden coexistir: Entra ID IDP para identidades cloud, LDAP federation para credenciales on-premise.</p>
     </div>
   </div>
 
