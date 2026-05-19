@@ -404,21 +404,17 @@
         </div>
 
         <!-- Árbol LDAP -->
-        <div style="background:#fff;border:1px solid #c8e6c9;border-radius:8px;padding:14px;font-family:monospace;font-size:11px;line-height:2;margin-bottom:10px;">
-          <div style="font-weight:700;color:#1b5e20;">dc=upeu,dc=edu,dc=pe</div>
-          <div style="padding-left:14px;">
-            <div style="color:#2e7d32;">├── ou=personas</div>
-            <div style="padding-left:18px;color:#388e3c;">│&nbsp;&nbsp;├── cn=juan.perez</div>
-            <div style="padding-left:18px;color:#388e3c;">│&nbsp;&nbsp;└── cn=ana.garcia</div>
-            <div style="color:#2e7d32;">└── ou=org</div>
-            <div style="padding-left:18px;color:#388e3c;">├── ou=Lima</div>
-            <div style="padding-left:34px;color:#43a047;">│&nbsp;&nbsp;├── ou=Fac-Ingenieria</div>
-            <div style="padding-left:50px;color:#66bb6a;">│&nbsp;&nbsp;│&nbsp;&nbsp;└── ou=Esc-Sistemas</div>
-            <div style="padding-left:34px;color:#43a047;">│&nbsp;&nbsp;└── ou=Fac-Ciencias</div>
-            <div style="padding-left:18px;color:#388e3c;">├── ou=Juliaca</div>
-            <div style="padding-left:18px;color:#388e3c;">└── ou=Tarapoto</div>
-          </div>
-        </div>
+        <pre style="background:#fff;border:1px solid #c8e6c9;border-radius:8px;padding:14px;font-family:monospace;font-size:11px;line-height:1.8;margin-bottom:10px;overflow-x:auto;color:#1b5e20;"><strong>dc=upeu,dc=edu,dc=pe</strong>
+├── ou=personas
+│   ├── cn=juan.perez
+│   └── cn=ana.garcia
+└── ou=org
+    ├── ou=Lima
+    │   ├── ou=Fac-Ingenieria
+    │   │   └── ou=Esc-Sistemas
+    │   └── ou=Fac-Ciencias
+    ├── ou=Juliaca
+    └── ou=Tarapoto</pre>
 
         <div style="background:#dff0d8;border:1px solid #a5d6a7;border-radius:8px;padding:10px;font-size:11px;">
           <div style="font-weight:600;margin-bottom:4px;">🔑 Keycloak usa OpenLDAP como User Federation</div>
