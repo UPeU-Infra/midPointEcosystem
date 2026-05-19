@@ -1,0 +1,36 @@
+# 02-midpointperson.ldif — Schema custom midPointPerson
+#
+# Propósito: añadir atributo midPointAccountStatus al directorio LDAP.
+# Sin este atributo, la simulated capability de activation en MidPoint
+# no tiene dónde escribir el estado enable/disable de la cuenta.
+#
+# OID privado: 1.3.6.1.4.1.99999 (placeholder — suficiente para producción interna)
+# Para registro formal de OID: aplicar en IANA https://www.iana.org/assignments/enterprise-numbers
+#
+# NOTA BITNAMI: Este LDIF se aplica vía LDAP_CUSTOM_LDIF_DIR en primer arranque.
+# bitnami/openldap 2.6 soporta cn=config (slapd dinámico).
+# Este LDIF usa la sintaxis de cn=config para añadir el schema.
+
+dn: cn=midpointperson,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: midpointperson
+
+# Atributo: midPointAccountStatus
+# Valores: "enabled" | "disabled"
+# Usado por MidPoint simulated capability para representar activation.administrativeStatus
+olcAttributeTypes: ( 1.3.6.1.4.1.99999.1.1.1
+  NAME 'midPointAccountStatus'
+  DESC 'Estado de la cuenta gestionada por MidPoint IGA (enabled/disabled)'
+  EQUALITY caseIgnoreMatch
+  SUBSTR caseIgnoreSubstringsMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.15
+  SINGLE-VALUE )
+
+# ObjectClass auxiliar: midPointPerson
+# Se apila sobre inetOrgPerson para añadir midPointAccountStatus
+olcObjectClasses: ( 1.3.6.1.4.1.99999.1.2.1
+  NAME 'midPointPerson'
+  DESC 'Auxiliar MidPoint IGA — añade midPointAccountStatus a entradas de persona'
+  SUP top
+  AUXILIARY
+  MAY ( midPointAccountStatus ) )

@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Resource: OpenLDAP Identity Cache UPeU
+    OID: 7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f
+    Versión: 1.0 (2026-05-15)
+    Propósito: Identity Cache canónico. MidPoint provisiona identidades activas.
+               Oracle LAMB → MidPoint → este LDAP → Keycloak User Federation
+
+    DOCTRINA:
+    - Este LDAP es un TARGET de MidPoint (projection), NO fuente de verdad.
+    - Solo usuarios con lifecycleState=active se proyectan aquí (controlado por AR-LDAP-Person).
+    - Reaction deleted→deleteFocus está explícitamente PROHIBIDA.
+    - Si un usuario se borra en LDAP, MidPoint NO borra el focus.
+
+    Servidor: ldap-identity-trust (192.168.15.168:389)
+    Conector: com.evolveum.polygon.connector.ldap.LdapConnector v3.9.2
+
+    ObjectClass principal: inetOrgPerson (estructural)
+    ObjectClasses auxiliares: eduPerson, schacPersonalCharacteristics, midPointPerson
+
+    Mappings outbound (MidPoint → LDAP):
+      dn              ← composeDnWithSuffix('uid', name, 'ou=people,dc=upeu,dc=edu,dc=pe')
+      uid             ← $focus/name (username, derivado de personalNumber)
+      cn              ← $focus/fullName (nombre completo RENIEC ALL CAPS)
+      sn              ← $focus/familyName
+      givenName       ← $focus/givenName
+      mail            ← $focus/emailAddress (correo institucional)
+      eduPersonPrincipalName ← $focus/extension/sciback:eppn (username@upeu.edu.pe)
+      eduPersonPrimaryAffiliation ← $focus/extension/sciback:primaryAffiliation
+      schacPersonalUniqueCode ← $focus/personalNumber
+      schacHomeOrganization   ← literal "upeu.edu.pe"
+      midPointAccountStatus   ← simulated capability activation
+-->
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+          xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+          xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+          xmlns:mr="http://prism.evolveum.com/xml/ns/public/matching-rule-3"
+          xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+          xmlns:sciback="urn:sciback:midpoint:person"
+          oid="7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f">
+
+    <name>LDAP-IdentityCache-UPeU</name>
+    <description>OpenLDAP Identity Cache UPeU. MidPoint provisiona identidades activas. Keycloak lee via User Federation.</description>
+
+    <!-- Conector LDAP bundled v3.9.2 -->
+    <connectorRef oid="31072286-b58e-4133-af79-fabdd4578fae" type="ConnectorType"/>
+
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:configurationProperties
+            xmlns:icfcldap="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.evolveum.polygon.connector-ldap/com.evolveum.polygon.connector.ldap.LdapConnector">
+
+            <!-- Conexión -->
+            <icfcldap:host>192.168.15.168</icfcldap:host>
+            <icfcldap:port>389</icfcldap:port>
+
+            <!-- Bind MidPoint service account -->
+            <icfcldap:bindDn>cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe</icfcldap:bindDn>
+            <icfcldap:bindPassword>
+                <t:clearValue>MidPt@Ldap2026!</t:clearValue>
+            </icfcldap:bindPassword>
+
+            <!-- Base DN -->
+            <icfcldap:baseContext>ou=people,dc=upeu,dc=edu,dc=pe</icfcldap:baseContext>
+
+            <!-- Seguridad: ninguna (red interna, TLS en Fase 7) -->
+            <icfcldap:connectionSecurity>none</icfcldap:connectionSecurity>
+
+            <!-- Paginación VLV (Virtual List View) — requerido por reconciliación MidPoint -->
+            <!-- sssvlv overlay activado en OpenLDAP -->
+            <icfcldap:vlvSortAttribute>uid</icfcldap:vlvSortAttribute>
+            <icfcldap:vlvSortOrderingRule>2.5.13.3</icfcldap:vlvSortOrderingRule>
+
+            <!-- Password hashing: SSHA (estándar OpenLDAP) -->
+            <icfcldap:passwordHashAlgorithm>SSHA</icfcldap:passwordHashAlgorithm>
+
+            <!-- Atributo de activación simulada (midPointPerson.midPointAccountStatus) -->
+            <!-- Se configura via simulated capabilities más abajo -->
+
+            <!-- Modo de operación: read-write -->
+            <icfcldap:usePermissiveModify>always</icfcldap:usePermissiveModify>
+
+        </icfc:configurationProperties>
+
+        <!-- Performance: deshabilitar handlers que degradan rendimiento con miles de usuarios -->
+        <!-- CRÍTICO para reconciliación masiva desde Oracle LAMB -->
+        <icfc:resultsHandlerConfiguration>
+            <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
+            <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
+            <icfc:enableAttributesToGetSearchResultsHandler>false</icfc:enableAttributesToGetSearchResultsHandler>
+        </icfc:resultsHandlerConfiguration>
+
+    </connectorConfiguration>
+
+    <!-- Capabilities: activation simulada via midPointAccountStatus -->
+    <capabilities>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:activation>
+                <cap:status>
+                    <cap:attribute>ri:midPointAccountStatus</cap:attribute>
+                    <cap:enableValue>enabled</cap:enableValue>
+                    <cap:disableValue>disabled</cap:disableValue>
+                </cap:status>
+            </cap:activation>
+        </configured>
+    </capabilities>
+
+    <!-- Schema del resource (se descubre automáticamente al hacer Test Connection) -->
+
+    <!-- Object Type: inetOrgPerson — cuenta LDAP de persona activa -->
+    <schemaHandling>
+        <objectType>
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>LDAP Person</displayName>
+            <description>Cuenta LDAP de persona activa (lifecycleState=active) proyectada desde MidPoint</description>
+            <default>true</default>
+            <objectClass>ri:inetOrgPerson</objectClass>
+            <auxiliaryObjectClass>ri:eduPerson</auxiliaryObjectClass>
+            <auxiliaryObjectClass>ri:schacPersonalCharacteristics</auxiliaryObjectClass>
+            <auxiliaryObjectClass>ri:schacEntryMetadata</auxiliaryObjectClass>
+            <auxiliaryObjectClass>ri:midPointPerson</auxiliaryObjectClass>
+
+            <attribute>
+                <!-- uid: username = name del focus (derivado de personalNumber en template) -->
+                <ref>ri:uid</ref>
+                <displayName>UID (username)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/name</path>
+                    </source>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <!-- cn: nombre completo RENIEC (ALL CAPS) -->
+                <ref>ri:cn</ref>
+                <displayName>Common Name</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/fullName</path>
+                    </source>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <!-- sn: apellidos -->
+                <ref>ri:sn</ref>
+                <displayName>Surname</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/familyName</path>
+                    </source>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <!-- givenName: nombre(s) -->
+                <ref>ri:givenName</ref>
+                <displayName>Given Name</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/givenName</path>
+                    </source>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <!-- mail: correo institucional @upeu.edu.pe -->
+                <ref>ri:mail</ref>
+                <displayName>Email Address</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/emailAddress</path>
+                    </source>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <!-- eduPersonPrincipalName: username@upeu.edu.pe (ePPN) -->
+                <!-- Fuente: sb:eppn del schema SciBack canónico -->
+                <ref>ri:eduPersonPrincipalName</ref>
+                <displayName>eduPersonPrincipalName (ePPN)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/extension/sciback:eppn</path>
+                    </source>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <!-- eduPersonPrimaryAffiliation: faculty|staff|student|alum|employee|affiliate -->
+                <!-- Vocabulario eduPerson 202208 §3.1 -->
+                <ref>ri:eduPersonPrimaryAffiliation</ref>
+                <displayName>eduPersonPrimaryAffiliation</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/extension/sciback:primaryAffiliation</path>
+                    </source>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <!-- schacPersonalUniqueCode: personalNumber (código institucional) -->
+                <!-- Forma canónica: urn:schac:personalUniqueCode:pe:studentID:upeu.edu.pe:{personalNumber} -->
+                <!-- Se escribe el valor directo; el mapping a forma URN lo hace el object template -->
+                <ref>ri:schacPersonalUniqueCode</ref>
+                <displayName>SCHAC Personal Unique Code (personalNumber)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/personalNumber</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+                                personalNumber != null ? 'urn:schac:personalUniqueCode:pe:institutionID:upeu.edu.pe:' + personalNumber : null
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <!-- schacHomeOrganization: siempre "upeu.edu.pe" para todos los usuarios -->
+                <ref>ri:schacHomeOrganization</ref>
+                <displayName>SCHAC Home Organization</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>upeu.edu.pe</value>
+                    </expression>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <!-- midPointAccountStatus: activation simulada (enabled/disabled) -->
+                <ref>ri:midPointAccountStatus</ref>
+                <displayName>MidPoint Account Status</displayName>
+                <outbound>
+                    <!-- La simulated capability escribe aquí automáticamente -->
+                </outbound>
+            </attribute>
+
+            <!-- Activation: controlada por simulated capability via midPointAccountStatus -->
+            <activation>
+                <administrativeStatus>
+                    <outbound/>
+                </administrativeStatus>
+            </activation>
+
+            <!-- Credentials: password sincronizada al crear la cuenta -->
+            <credentials>
+                <password>
+                    <outbound/>
+                </password>
+            </credentials>
+
+        </objectType>
+    </schemaHandling>
+
+    <!-- Synchronization: reacciones ante discrepancias LDAP ↔ MidPoint -->
+    <!-- DOCTRINA: LDAP es solo target. Jamás borrar focus si entrada LDAP desaparece. -->
+    <synchronization>
+        <objectSynchronization>
+            <name>LDAP Person Sync</name>
+            <objectClass>ri:inetOrgPerson</objectClass>
+            <kind>account</kind>
+            <intent>default</intent>
+            <enabled>true</enabled>
+
+            <!-- Correlación por uid → focus/name (personalNumber) -->
+            <correlation>
+                <q:equal>
+                    <q:path>name</q:path>
+                    <expression>
+                        <path>$account/attributes/ri:uid</path>
+                    </expression>
+                </q:equal>
+            </correlation>
+
+            <!-- Reactions -->
+            <reaction>
+                <!-- Cuenta LDAP enlazada al focus → sincronizar -->
+                <situation>linked</situation>
+                <synchronize>true</synchronize>
+            </reaction>
+            <reaction>
+                <!-- Cuenta LDAP existe pero focus desenlazado → enlazar -->
+                <situation>unlinked</situation>
+                <action>
+                    <handlerUri>http://midpoint.evolveum.com/xml/ns/public/model/action-3#link</handlerUri>
+                </action>
+            </reaction>
+            <reaction>
+                <!-- Cuenta LDAP existe pero NO hay focus → agregar focus (caso excepcional) -->
+                <!-- Esto SOLO ocurre si alguien creó una entrada manualmente en LDAP -->
+                <situation>unmatched</situation>
+                <action>
+                    <handlerUri>http://midpoint.evolveum.com/xml/ns/public/model/action-3#addFocus</handlerUri>
+                </action>
+            </reaction>
+            <!-- PROHIBIDO: deleted → deleteFocus. LDAP es target, no IIA. -->
+            <!-- Si se borra entrada LDAP, MidPoint regenera en próxima reconciliación. -->
+        </objectSynchronization>
+    </synchronization>
+
+</resource>

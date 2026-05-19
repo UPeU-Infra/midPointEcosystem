@@ -1,0 +1,123 @@
+# 04-schac.ldif — Schema SCHAC (SCHema for ACademia) v2.0 para OpenLDAP cn=config
+# Fuente: GÉANT SCHAC specification (https://wiki.refeds.org/display/STAN/SCHAC)
+# OID arc SCHAC: 1.3.6.1.4.1.25178
+# Formato: cn=config (slapd dinámico)
+#
+# Se aplica runtime via ldapadd:
+#   ldapadd -Y EXTERNAL -H ldapi:/// -f /ldifs/04-schac.ldif
+#
+# Atributos incluidos relevantes para UPeU IGA:
+#   schacPersonalUniqueID   — DNI/CE en forma URN
+#   schacPersonalUniqueCode — código estudiantil/empleado
+#   schacHomeOrganization   — dominio de la institución (upeu.edu.pe)
+#   schacHomeOrganizationType — clasificación institucional
+#   schacDateOfBirth        — fecha de nacimiento (YYYYMMDD)
+#   schacGender             — género (ISO 5218: 0-9)
+#   schacCountryOfCitizenship — país ISO 3166-1 alpha-2
+#   schacUserPresenceID     — identidades en redes sociales/sistemas externos
+
+dn: cn=schac,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: schac
+
+# schacPersonalUniqueID — identificador personal único nacional
+# Forma: urn:schac:personalUniqueID:pe:DNI:PE:{dni}
+olcAttributeTypes: ( 1.3.6.1.4.1.25178.1.2.15
+    NAME 'schacPersonalUniqueID'
+    DESC 'SCHAC: identifier unique to a person (national ID, passport, etc.)'
+    EQUALITY caseExactMatch
+    SUBSTR caseExactSubstringsMatch
+    SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
+
+# schacPersonalUniqueCode — código único interno de la institución
+# Forma: urn:schac:personalUniqueCode:pe:studentID:upeu.edu.pe:{codigo}
+olcAttributeTypes: ( 1.3.6.1.4.1.25178.1.2.14
+    NAME 'schacPersonalUniqueCode'
+    DESC 'SCHAC: unique code assigned by the institution to the person'
+    EQUALITY caseExactMatch
+    SUBSTR caseExactSubstringsMatch
+    SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
+
+# schacHomeOrganization — dominio de la organización de origen
+# Valor UPeU: "upeu.edu.pe"
+olcAttributeTypes: ( 1.3.6.1.4.1.25178.1.2.9
+    NAME 'schacHomeOrganization'
+    DESC 'SCHAC: domain name of the persons home organization'
+    EQUALITY caseIgnoreMatch
+    SUBSTR caseIgnoreSubstringsMatch
+    SYNTAX '1.3.6.1.4.1.1466.115.121.1.15'
+    SINGLE-VALUE )
+
+# schacHomeOrganizationType — tipo de institución de origen
+# Valor UPeU: "urn:schac:homeOrganizationType:pe:university"
+olcAttributeTypes: ( 1.3.6.1.4.1.25178.1.2.10
+    NAME 'schacHomeOrganizationType'
+    DESC 'SCHAC: type of the home organization of the person'
+    EQUALITY caseIgnoreMatch
+    SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
+
+# schacDateOfBirth — fecha de nacimiento en formato YYYYMMDD
+olcAttributeTypes: ( 1.3.6.1.4.1.25178.1.2.3
+    NAME 'schacDateOfBirth'
+    DESC 'SCHAC: date of birth in YYYYMMDD format'
+    EQUALITY numericStringMatch
+    ORDERING numericStringOrderingMatch
+    SUBSTR numericStringSubstringsMatch
+    SYNTAX '1.3.6.1.4.1.1466.115.121.1.36'
+    SINGLE-VALUE )
+
+# schacGender — género según ISO 5218 (0=unknown, 1=male, 2=female, 9=not applicable)
+olcAttributeTypes: ( 1.3.6.1.4.1.25178.1.2.2
+    NAME 'schacGender'
+    DESC 'SCHAC: gender of a person (ISO 5218)'
+    EQUALITY integerMatch
+    SYNTAX '1.3.6.1.4.1.1466.115.121.1.27'
+    SINGLE-VALUE )
+
+# schacCountryOfCitizenship — país de ciudadanía (ISO 3166-1 alpha-2)
+olcAttributeTypes: ( 1.3.6.1.4.1.25178.1.2.5
+    NAME 'schacCountryOfCitizenship'
+    DESC 'SCHAC: country of citizenship of the person (ISO 3166-1 alpha-2)'
+    EQUALITY caseIgnoreMatch
+    SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
+
+# schacUserPresenceID — identificadores en servicios externos
+# Multivalor: urn:schac:userPresenceID:upeu.edu.pe:orcid:{orcid}
+olcAttributeTypes: ( 1.3.6.1.4.1.25178.1.2.20
+    NAME 'schacUserPresenceID'
+    DESC 'SCHAC: identifier in an external presence system'
+    EQUALITY caseExactMatch
+    SYNTAX '1.3.6.1.4.1.1466.115.121.1.15' )
+
+# schacExpiryDate — fecha de expiración de la afiliación (YYYYMMDDHHMMSSZ)
+olcAttributeTypes: ( 1.3.6.1.4.1.25178.1.2.19
+    NAME 'schacExpiryDate'
+    DESC 'SCHAC: expiry date of the account or affiliation'
+    EQUALITY generalizedTimeMatch
+    ORDERING generalizedTimeOrderingMatch
+    SYNTAX '1.3.6.1.4.1.1466.115.121.1.24'
+    SINGLE-VALUE )
+
+# ObjectClass auxiliar schacPersonalCharacteristics
+olcObjectClasses: ( 1.3.6.1.4.1.25178.1.1.2
+    NAME 'schacPersonalCharacteristics'
+    DESC 'SCHAC: personal characteristics of a person'
+    AUXILIARY
+    MAY ( schacPersonalUniqueID $ schacPersonalUniqueCode $
+          schacDateOfBirth $ schacGender $
+          schacCountryOfCitizenship $ schacUserPresenceID $
+          schacExpiryDate ) )
+
+# ObjectClass auxiliar schacLinkageIdentifiers
+olcObjectClasses: ( 1.3.6.1.4.1.25178.1.1.4
+    NAME 'schacLinkageIdentifiers'
+    DESC 'SCHAC: linkage identifiers for a person'
+    AUXILIARY
+    MAY ( schacPersonalUniqueID $ schacPersonalUniqueCode ) )
+
+# ObjectClass auxiliar schacEntryMetadata (homeOrg)
+olcObjectClasses: ( 1.3.6.1.4.1.25178.1.1.7
+    NAME 'schacEntryMetadata'
+    DESC 'SCHAC: metadata about an entry'
+    AUXILIARY
+    MAY ( schacHomeOrganization $ schacHomeOrganizationType $ schacExpiryDate ) )

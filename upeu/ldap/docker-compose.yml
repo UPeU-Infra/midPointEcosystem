@@ -1,0 +1,88 @@
+---
+# OpenLDAP Identity Cache — UPeU IGA
+# Servidor: 192.168.15.168 (ldap-identity-trust)
+# Propósito: Identity Cache. MidPoint escribe, Keycloak lee.
+# DOCTRINA: NO es fuente de verdad. Oracle LAMB → MidPoint → este LDAP.
+#
+# Imagen: osixia/openldap:1.5.0 (OpenLDAP 2.5.x, cn=config dinámico)
+# bitnami/openldap ya no está disponible en Docker Hub (comercial desde 2024).
+#
+# Volúmenes named (permanentes):
+#   ldap_data    → datos LDAP (/var/lib/ldap)
+#   ldap_config  → configuración cn=config (/etc/ldap/slapd.d)
+
+services:
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: openldap
+    restart: always
+    ports:
+      # Puerto 389 accesible solo desde la red interna (192.168.15.x, 192.168.12.x)
+      - "192.168.15.168:389:389"
+    environment:
+      LDAP_ORGANISATION: "Universidad Peruana Union"
+      LDAP_DOMAIN: "upeu.edu.pe"
+      LDAP_BASE_DN: "dc=upeu,dc=edu,dc=pe"
+
+      # Admin account: cn=admin,dc=upeu,dc=edu,dc=pe
+      LDAP_ADMIN_PASSWORD: "${LDAP_ADMIN_PASS}"
+
+      # Config admin (cn=admin,cn=config) — para ldapadd schemas via bind simple
+      LDAP_CONFIG_PASSWORD: "${LDAP_CONFIG_PASS}"
+
+      # TLS deshabilitado (red interna — habilitar en Fase 7 con EJBCA cert)
+      LDAP_TLS: "false"
+
+      # Readonly user para Keycloak (cn=readonly,dc=upeu,dc=edu,dc=pe)
+      LDAP_READONLY_USER: "true"
+      LDAP_READONLY_USER_USERNAME: "keycloak"
+      LDAP_READONLY_USER_PASSWORD: "${LDAP_KEYCLOAK_PASS}"
+
+    env_file:
+      - .env
+
+    volumes:
+      # Datos LDAP persistentes (named volumes)
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap/slapd.d
+      # LDIFs de bootstrap: osixia los aplica en el primer arranque
+      # Se montan directamente en el path que osixia espera
+      - ./ldifs/bootstrap:/container/service/slapd/assets/config/bootstrap/ldif/custom:ro
+
+    command: --copy-service --loglevel warning
+
+    healthcheck:
+      test: ["CMD-SHELL", "ldapsearch -x -H ldap://localhost -D 'cn=admin,dc=upeu,dc=edu,dc=pe' -w \"${LDAP_ADMIN_PASS}\" -b 'dc=upeu,dc=edu,dc=pe' -s base '(objectClass=*)' dn 2>/dev/null | grep -q 'dn:'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+
+    networks:
+      - ldap_net
+
+  # phpLDAPadmin — GUI de administración (solo red interna, puerto 8081)
+  phpldapadmin:
+    image: osixia/phpldapadmin:0.9.0
+    container_name: phpldapadmin
+    restart: always
+    ports:
+      - "192.168.15.168:8081:80"
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "openldap"
+      PHPLDAPADMIN_HTTPS: "false"
+    depends_on:
+      openldap:
+        condition: service_healthy
+    networks:
+      - ldap_net
+
+volumes:
+  ldap_data:
+    driver: local
+  ldap_config:
+    driver: local
+
+networks:
+  ldap_net:
+    driver: bridge

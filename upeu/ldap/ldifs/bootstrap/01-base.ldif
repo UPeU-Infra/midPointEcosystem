@@ -1,0 +1,36 @@
+# 01-base.ldif — Estructura base UPeU
+# Aplicado por osixia/openldap en el primer arranque (--copy-service)
+# Solo se ejecuta si el directorio de datos está vacío.
+#
+# dc=upeu,dc=edu,dc=pe lo crea osixia automáticamente con LDAP_DOMAIN.
+# Este LDIF añade las OUs y service accounts.
+
+# OU personas — proyecciones de MidPoint lifecycleState=active
+dn: ou=people,dc=upeu,dc=edu,dc=pe
+objectClass: organizationalUnit
+ou: people
+description: Personas activas proyectadas desde MidPoint IGA
+
+# OU servicios — service accounts técnicos
+dn: ou=services,dc=upeu,dc=edu,dc=pe
+objectClass: organizationalUnit
+ou: services
+description: Cuentas de servicio tecnicas (MidPoint write, Keycloak read)
+
+# OU grupos — uso futuro (application groups)
+dn: ou=groups,dc=upeu,dc=edu,dc=pe
+objectClass: organizationalUnit
+ou: groups
+description: Grupos de aplicacion y rol
+
+# Service account MidPoint — acceso de escritura a ou=people
+# Keycloak readonly user lo crea osixia con LDAP_READONLY_USER_USERNAME.
+# MidPoint SA se agrega aquí manualmente; password se actualiza post-arranque.
+dn: cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+cn: midpoint
+sn: MidPoint
+description: Cuenta de servicio MidPoint IGA - acceso de escritura a ou=people
+userPassword: ChangeMeOnDeploy

@@ -1,0 +1,49 @@
+# 01-base.ldif — Estructura base del directorio UPeU
+# Aplicado por bitnami en primer arranque (LDAP_CUSTOM_LDIF_DIR=/ldifs)
+# Solo se aplica si el volumen ldap_data está vacío.
+#
+# NOTA: dc=upeu,dc=edu,dc=pe lo crea bitnami automáticamente con LDAP_ROOT.
+# Este LDIF añade las OUs y service accounts encima.
+#
+# Las passwords de service accounts (cn=midpoint, cn=keycloak) se actualizan
+# con valores reales en el paso post-arranque del deploy script.
+
+# OU personas — proyecciones de MidPoint lifecycleState=active
+dn: ou=people,dc=upeu,dc=edu,dc=pe
+objectClass: organizationalUnit
+ou: people
+description: Personas activas proyectadas desde MidPoint IGA
+
+# OU servicios — service accounts técnicos
+dn: ou=services,dc=upeu,dc=edu,dc=pe
+objectClass: organizationalUnit
+ou: services
+description: Cuentas de servicio tecnicas (MidPoint, Keycloak)
+
+# OU grupos — grupos de aplicación (uso futuro)
+dn: ou=groups,dc=upeu,dc=edu,dc=pe
+objectClass: organizationalUnit
+ou: groups
+description: Grupos de aplicacion y rol
+
+# Service account MidPoint — acceso de escritura a ou=people
+# Password se actualiza post-arranque con valor real de LDAP_MIDPOINT_PASS
+dn: cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+cn: midpoint
+sn: MidPoint
+description: Cuenta de servicio MidPoint IGA - acceso de escritura a ou=people
+userPassword: ChangeMeOnDeploy
+
+# Service account Keycloak — solo lectura
+# Password se actualiza post-arranque con valor real de LDAP_KEYCLOAK_PASS
+dn: cn=keycloak,ou=services,dc=upeu,dc=edu,dc=pe
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+cn: keycloak
+sn: Keycloak
+description: Cuenta de servicio Keycloak - solo lectura a ou=people
+userPassword: ChangeMeOnDeploy
