@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "identidad-slides",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "7890", "--directory", "/Users/alberto/proyectos/upeu/midPointEcosystem/docs/comunicacion"],
+      "port": 7890
+    }
+  ]
+}
