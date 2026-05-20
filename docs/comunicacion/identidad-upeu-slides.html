@@ -397,7 +397,59 @@
     <p class="sub" style="margin-top:24px;">Una <strong>Unidad Administrativa</strong> en Azure es simplemente un <span class="accent2">contenedor de usuarios</span> que permite aplicar políticas y permisos por grupo. El sistema las crea y las mantiene automáticamente.<br><br>No hay que configurar nada. Solo observar.</p>
   </div>
 
-  <!-- SLIDE 6: AVISO NO BORRAR -->
+  <!-- SLIDE 6: DELEGACIÓN ADMIN POR AU -->
+  <div class="slide s9" id="s9">
+    <div class="tag">Gestión delegada — Entra ID</div>
+    <h2>Cada admin solo ve y gestiona<br><span style="color:#67e8f9">lo que le corresponde</span></h2>
+
+    <table class="deleg-table">
+      <thead>
+        <tr>
+          <th>Perfil</th>
+          <th>Rol en Azure</th>
+          <th>Alcance (AU)</th>
+          <th>Puede hacer</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>👑 DTI Central</td>
+          <td><span class="role-chip role-global">Global Admin</span></td>
+          <td><span class="scope-badge">Todo el tenant</span></td>
+          <td>Control completo — usuarios, grupos, licencias, políticas</td>
+        </tr>
+        <tr>
+          <td>🖥️ Mesa de ayuda Lima</td>
+          <td><span class="role-chip role-helpdesk">Helpdesk Admin</span></td>
+          <td><span class="scope-badge">AU Sede Lima</span></td>
+          <td>Resetear contraseñas · desbloquear cuentas · ver perfil</td>
+        </tr>
+        <tr>
+          <td>🖥️ Mesa de ayuda Juliaca</td>
+          <td><span class="role-chip role-helpdesk">Helpdesk Admin</span></td>
+          <td><span class="scope-badge">AU Sede Juliaca</span></td>
+          <td>Solo usuarios de Juliaca — sin acceso a otras sedes</td>
+        </tr>
+        <tr>
+          <td>🖥️ Mesa de ayuda Tarapoto</td>
+          <td><span class="role-chip role-helpdesk">Helpdesk Admin</span></td>
+          <td><span class="scope-badge">AU Sede Tarapoto</span></td>
+          <td>Solo usuarios de Tarapoto — sin acceso a otras sedes</td>
+        </tr>
+        <tr>
+          <td>🎓 Coordinador Facultad</td>
+          <td><span class="role-chip role-coord">User Admin</span></td>
+          <td><span class="scope-badge">AU Facultad X</span></td>
+          <td>Ver usuarios · aplicar licencias M365 de su facultad</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="badge" style="margin-top:8px;">🔑 Principio clave: nadie necesita ser Global Admin para hacer su trabajo diario — cada rol tiene exactamente el alcance que necesita</div>
+    <p class="sub" style="margin-top:12px;font-size:12px;opacity:.55;">Las AUs las crea el sistema automáticamente. DTI solo asigna los roles con el scope correcto una sola vez.</p>
+  </div>
+
+  <!-- SLIDE 7: AVISO NO BORRAR -->
   <div class="slide s6" id="s6">
     <div class="tag">Importante para el equipo DTI</div>
     <h2>Si ven algo nuevo en Azure —<br><span style="color:#fca5a5">¡no lo borren!</span></h2>
@@ -500,57 +552,6 @@
     <div class="badge" style="margin-top:32px;">📬 ¿Preguntas? → Juan Alberto Sánchez · DTI Infraestructura</div>
   </div>
 
-  <!-- SLIDE 9: DELEGACIÓN ADMIN POR AU -->
-  <div class="slide s9" id="s9">
-    <div class="tag">Gestión delegada — Entra ID</div>
-    <h2>Cada admin solo ve y gestiona<br><span style="color:#67e8f9">lo que le corresponde</span></h2>
-
-    <table class="deleg-table">
-      <thead>
-        <tr>
-          <th>Perfil</th>
-          <th>Rol en Azure</th>
-          <th>Alcance (AU)</th>
-          <th>Puede hacer</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>👑 DTI Central</td>
-          <td><span class="role-chip role-global">Global Admin</span></td>
-          <td><span class="scope-badge">Todo el tenant</span></td>
-          <td>Control completo — usuarios, grupos, licencias, políticas</td>
-        </tr>
-        <tr>
-          <td>🖥️ Mesa de ayuda Lima</td>
-          <td><span class="role-chip role-helpdesk">Helpdesk Admin</span></td>
-          <td><span class="scope-badge">AU Sede Lima</span></td>
-          <td>Resetear contraseñas · desbloquear cuentas · ver perfil</td>
-        </tr>
-        <tr>
-          <td>🖥️ Mesa de ayuda Juliaca</td>
-          <td><span class="role-chip role-helpdesk">Helpdesk Admin</span></td>
-          <td><span class="scope-badge">AU Sede Juliaca</span></td>
-          <td>Solo usuarios de Juliaca — sin acceso a otras sedes</td>
-        </tr>
-        <tr>
-          <td>🖥️ Mesa de ayuda Tarapoto</td>
-          <td><span class="role-chip role-helpdesk">Helpdesk Admin</span></td>
-          <td><span class="scope-badge">AU Sede Tarapoto</span></td>
-          <td>Solo usuarios de Tarapoto — sin acceso a otras sedes</td>
-        </tr>
-        <tr>
-          <td>🎓 Coordinador Facultad</td>
-          <td><span class="role-chip role-coord">User Admin</span></td>
-          <td><span class="scope-badge">AU Facultad X</span></td>
-          <td>Ver usuarios · aplicar licencias M365 de su facultad</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="badge" style="margin-top:8px;">🔑 Principio clave: nadie necesita ser Global Admin para hacer su trabajo diario — cada rol tiene exactamente el alcance que necesita</div>
-    <p class="sub" style="margin-top:12px;font-size:12px;opacity:.55;">Las AUs las crea el sistema automáticamente. DTI solo asigna los roles con el scope correcto una sola vez.</p>
-  </div>
 
 </div><!-- /slides -->
 
