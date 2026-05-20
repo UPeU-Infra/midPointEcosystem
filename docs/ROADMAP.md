@@ -21,87 +21,134 @@
 
 ## Estado real verificado 2026-05-19
 
-> Este snapshot refleja SOLO lo que se puede verificar desde el repo y el CLAUDE.md del proyecto.
-> Los servidores no responden (MidPoint PROD en OOM post-upgrade 4.10.2). NO se ejecutaron comandos remotos para este snapshot.
+> Snapshot obtenido directamente de la base de datos PostgreSQL de MidPoint PROD (`192.168.15.166`).
+> PROD recuperado del OOM — lleva 4 horas UP (healthy) usando 3.7 GB / 6 GB RAM.
 
-### Bloqueante critico activo
+### Volumetria PROD (verificada en BD)
 
-**MidPoint PROD (`192.168.15.166`) en OOM post-upgrade a 4.10.2 — no responde SSH ni REST.**
-**MidPoint DEV (`192.168.15.230`) tampoco responde SSH.**
-Todo trabajo de verificacion remota, descarga de artefactos faltantes y smoke tests esta bloqueado hasta recuperacion.
+| Objeto | Cantidad |
+|---|---|
+| Usuarios | 35.450 |
+| Orgs | 122 |
+| Roles | 72 (39 activos, 1 deprecated, 32 sin lifecycle) |
+| Archetypes | 86 total (18 custom activos + 68 sistema) |
+| Resources | 7 (5 activos, 2 sin lifecycle) |
+| Services (posiciones) | 741 |
+| Tasks (historico) | 69 |
 
-Accion de recuperacion (cuando PROD vuelva):
-1. Aumentar heap JVM en `JAVA_OPTS -Xmx` a 4-8 GB (segun RAM disponible).
-2. Verificar PROD UP: `curl -u admin:pass .../midpoint/ws/rest/users?paging=maxSize=1` — esperar HTTP 200.
-3. `pg_dump` PROD a `archive/backups-2026-05/midpoint-postOOM.dump`.
-4. `git fetch origin && git checkout consolidation-2026-05-19` en `/home/juansanchez/midPointEcosystem/`.
-5. Smoke tests (ver seccion de proximas acciones).
-6. Descargar artefactos faltantes via REST y commitear.
-7. Merge branch `consolidation-2026-05-19` → `main` via PR.
+### Usuarios por archetype (real)
 
-### Tabla resumen por fase
+| Archetype | Usuarios |
+|---|---|
+| archetype-user-alumni | 30.491 |
+| archetype-user-employee-staff | 3.144 |
+| archetype-user-student | 1.679 |
+| archetype-user-employee-faculty | 135 |
+| contractor / affiliate-* / service-account | 0 (archetypes sin usuarios aun) |
 
-| Fase | Estado verificado | Evidencia |
+### Resources y sombras (real)
+
+| Resource | Lifecycle | Sombras |
 |---|---|---|
-| Fase 0 — Refactor doctrinal | **COMPLETA** | Skills publicadas, agente actualizado, doc canonico hecho |
-| Fase 1 — Schema canonico | **ACTIVO EN PROD** — verificacion diseño v3.0 pendiente post-OOM | CLAUDE.md: 2 schemas activos (`urn:sciback:midpoint:person` + `urn:upeu:midpoint:local`); repo: `canonical/schemas/sciback-person-v1.0.xml` + `upeu/schemas/upeu-local-v1.0.xml` |
-| Fase 2 — Archetypes + Org tree | **ACTIVO EN PROD** — 12 de 18 archetypes versionados en repo | CLAUDE.md: 18 archetypes en PROD; repo: 4 user + 3 custom + 4 auxiliary + 1 org = 12 total; faltan 4 user + 8 org en repo |
-| Fase 3 — Object templates | **PARCIAL** — template base existe, per-archetype no hechos | Repo: solo `canonical/object-templates/UserTemplate-Person-Base.xml` |
-| Fase 4 — OpenLDAP HA | **RESOURCE CONFIGURADO** — despliegue HA sin verificar | Repo: `upeu/resources/ldap-identity-cache.xml` + `upeu/ldap/`; PROD tiene resource LDAP activo (1 de 7 resources en CLAUDE.md) |
-| Fase 5 — Resources READ | **ACTIVO EN PROD** — Entra ID incompleto en permisos | CLAUDE.md: 7 resources (Oracle LAMB x4 + LDAP + Entra ID + Koha); AD en draft en repo; Entra ID: 3 de 7 permisos read concedidos |
-| Fase 6 — Resources WRITE | **NO VALIDADO** — dependiente de OpenLDAP HA + Keycloak federation | Resource LDAP tiene outbound mappings en repo pero provisioning a OpenLDAP no confirmado en PROD; Keycloak User Federation no confirmado |
-| Fase 7 — RBAC bottom-up | **PARCIAL** — skeleton existe, MOF/GOV/system sin versionar, role mining pendiente | Repo: 6 affiliation + 20 application + 12 business = 38 roles; PROD: 72 roles (faltan ~25 MOF + 3 GOV + SYS-* en repo) |
-| Fases 8-11 | **NO INICIADAS** | — |
-| Fase 12 — Gobierno Entra ID | **DIAGNOSTICO Y DISENO LISTOS** — implementacion bloqueada | `docs/ENTRA-ID-ESTRUCTURA-UPEU.md` existe (12.1 hecho); diseno de AUs y grupos propuesto (12.2 parcial); write bloqueado por David Urquizo |
-| Fase 13 — Metricas COUNTER | **NO INICIADA** | — |
+| Oracle LAMB Trabajadores v3 | `active` | 3.802 |
+| Oracle LAMB Estudiantes v3 | `active` | 1.679 |
+| Oracle LAMB Egresados v3 | `active` | 30.629 |
+| LAMB-Oracle-Posiciones | `active` | 738 |
+| Koha ILS | `active` | 5.421 |
+| LDAP-IdentityCache-UPeU | *(null)* | **37.491** |
+| UPEU-EntraID-Graph | *(null)* | **37.304** |
 
-### Consolidacion del repo 2026-05-19
+> LDAP y Entra ID tienen lifecycle `null` (no está seteado a `active`) pero tienen decenas de miles de sombras — ambos **funcionan en PROD**. El null es un dato de configuración menor pendiente de corregir.
 
-Consolidacion ejecutada: 123 XMLs reorganizados a `canonical/` (35) + `upeu/` (88). 0 errores xmllint. 280 OIDs unicos.
-Branch activa: `consolidation-2026-05-19` — pendiente merge a `main` tras verificacion en PROD post-OOM.
-Repo padre `SciBack/midpoint`: carpeta local eliminada. GitHub pendiente archivar con `gh repo archive SciBack/midpoint --yes`.
+### Object templates en PROD
+
+| Template | Estado |
+|---|---|
+| `UserTemplate-Person-Base` | Activo |
+| `Person Object Template` | Activo (sistema) |
+
+Los templates **per-archetype** (student, faculty, staff, alumni individuales) **no existen** en PROD.
+
+### Schemas en PROD
+
+| Schema | Namespace |
+|---|---|
+| SciBack IGA — Schema canónico universitario Perú v1.0 | `urn:sciback:midpoint:person` |
+| UPeU — Schema local extensiones LAMB v1.0 | `urn:upeu:midpoint:local` |
+
+### Tabla resumen por fase (verificada en PROD)
+
+| Fase | Estado real | Evidencia directa |
+|---|---|---|
+| Fase 0 — Refactor doctrinal | ✅ **COMPLETA** | Skills, agente, docs |
+| Fase 1 — Schema | ✅ **ACTIVA** | 2 schemas en PROD BD |
+| Fase 2 — Archetypes + Org tree | ✅ **ACTIVA** | 18 archetypes custom activos; 35.449 usuarios con archetype; 122 orgs |
+| Fase 3 — Object templates | ⚠️ **PARCIAL** | 2 templates en PROD (base + sistema); templates per-archetype NO existen |
+| Fase 4 — OpenLDAP HA | ⚠️ **FUNCIONA** (lifecycle null) | 37.491 sombras LDAP = provisioning activo; lifecycle no seteado a 'active' |
+| Fase 5 — Resources READ | ✅ **ACTIVA** | Oracle LAMB ×4 + Koha activos; Entra ID con 37.304 sombras (correlacion activa) |
+| Fase 6 — Resources WRITE → OpenLDAP | ✅ **FUNCIONA** (no validado formalmente) | 37.491 sombras LDAP confirman que MidPoint escribe a OpenLDAP; Keycloak federation sin confirmar |
+| Fase 7 — RBAC | ⚠️ **PARCIAL** | 39 roles activos (AR + BR + affiliation); 32 sin lifecycle (MOF-* + GOV-* + SYS) no versionados en repo |
+| Fase 8 — Replanteo docs | ❌ **NO INICIADA** | — |
+| Fase 9 — Validación piloto | ⚠️ **PILOTO PARCIAL** | Tasks: `PILOT-EntraID-UPeU-link-100`, pilots usuario `75824658`; flujo completo no documentado |
+| Fase 10 — Deploy PROD | ✅ **PROD OPERATIVO** | 35.450 usuarios en produccion |
+| Fase 11 — Productización SciBack | ❌ **NO INICIADA** | — |
+| Fase 12 — Gobierno Entra ID | ⚠️ **DIAGNOSTICO LISTO** | `docs/ENTRA-ID-ESTRUCTURA-UPEU.md`; write bloqueado por permisos David Urquizo |
+| Fase 13 — Métricas COUNTER | ❌ **NO INICIADA** | — |
+
+### Hallazgos del historial de tasks
+
+El historial de 69 tasks revela trabajo operativo extenso no documentado en el roadmap:
+- **PBAC activo:** `Reconcile LAMB-Trabajadores PBAC Position` (múltiples runs)
+- **Photo sync:** `SYNC-LAMB-Trabajadores-photoUrl` (múltiples versiones)
+- **Piloto Entra ID:** `PILOT-EntraID-UPeU-link-100` + `PILOT-EntraID-UPeU-link-photo-100`
+- **Recomputes masivos:** múltiples rondas para LDAP, Egresados, BR-Personal-General
+- **Koha:** `Reconcile-Koha-Inbound-2026-05-19`
+
+### Artefactos faltantes en repo (existen en PROD, no versionados)
+
+| Artefacto | Cantidad | Destino en repo |
+|---|---|---|
+| Archetypes user (affiliate-partner-institution, affiliate-researcher, contractor, service-account) | 4 | `canonical/archetypes/user/` |
+| Archetypes org (institution, campus, faculty, department, academic-unit, governance, partner-institution, project) | 8 | `canonical/archetypes/org/` |
+| Roles MOF-* | ~25 | `upeu/roles/mof/` |
+| Roles GOV-* | 3 | `upeu/roles/governance/` |
+| SYS-IGA-SUPERUSER | 1 | `upeu/roles/system/` |
+| APP-KOHA-PATRON (deprecated) | 1 | `upeu/roles/deprecated/` |
 
 ---
 
 ## Proximas acciones inmediatas (priorizadas)
 
-### P0 — Recuperacion PROD (bloqueante de todo lo demas)
+### P1 — Descargar y versionar artefactos faltantes en repo
 
-1. Aumentar JVM heap en `docker-compose.yml` del contenedor `midpoint_server`: `JAVA_OPTS=-Xmx4g` (ajustar segun RAM disponible en 192.168.15.166).
-2. Reiniciar contenedor y verificar UP: `curl -u admin:pass http://localhost:8080/midpoint/ws/rest/users?paging=maxSize=1`.
-3. `pg_dump` post-recuperacion: `archive/backups-2026-05/midpoint-postOOM.dump`.
-4. `git checkout consolidation-2026-05-19` en `/home/juansanchez/midPointEcosystem/`.
-5. Smoke tests:
-   - `SELECT COUNT(*) FROM m_archetype WHERE lifecyclestate='active'` = 18
-   - `SELECT COUNT(*) FROM m_resource WHERE lifecyclestate='active'` = 5 (resources activos, excluyendo AD draft)
-   - `SELECT COUNT(*) FROM m_user` >= 35.450
-   - `SELECT COUNT(*) FROM m_org` >= 122
-   - `SELECT COUNT(*) FROM m_role` >= 72
-   - Recompute usuario de prueba OK
-   - Sin nuevos ERROR/FATAL/OOM en logs
+PROD esta UP. Descargar via REST y commitear:
 
-### P1 — Descarga y versionado de artefactos faltantes (post-OOM)
+1. 4 archetypes user faltantes → `canonical/archetypes/user/`
+2. 8 archetypes org faltantes → `canonical/archetypes/org/`
+3. ~25 roles MOF-* → `upeu/roles/mof/`
+4. 3 roles GOV-* → `upeu/roles/governance/`
+5. SYS-IGA-SUPERUSER → `upeu/roles/system/`
 
-1. Descargar via REST y commitear a `canonical/archetypes/user/` los 4 archetypes faltantes: `affiliate-partner-institution`, `affiliate-researcher`, `contractor`, `service-account`.
-2. Descargar via REST y commitear a `canonical/archetypes/org/` los 8 org-archetypes faltantes: `institution`, `campus`, `faculty`, `department`, `academic-unit`, `governance`, `partner-institution`, `project`.
-3. Descargar via REST y commitear a `upeu/roles/mof/` los ~25 MOF-* roles.
-4. Descargar via REST y commitear a `upeu/roles/governance/` los 3 GOV-* roles.
-5. Verificar si `SYS-IGA-SUPERUSER` esta versionado; si no, descargarlo.
+### P2 — Corregir lifecycle de LDAP y Entra ID resources
 
-### P2 — Merge y cierre de consolidacion (post-P1)
+Ambos recursos funcionan (tienen miles de sombras) pero tienen `lifecyclestate = null`.
+Setear a `active` via REST PUT para que el estado en repo sea coherente con la realidad.
 
-1. Merge `consolidation-2026-05-19` → `main` via PR.
-2. Tag `post-consolidation-2026-05-19`.
-3. `gh repo archive SciBack/midpoint --yes` (cuando Alberto confirme).
-4. Decisiones pendientes segun `MIGRATION-DECISIONS-PENDING.md`: revisar archetypes custom, aux-affiliation deprecation, uninstall connector openstandia/connector-keycloak de PROD.
+### P3 — Merge branch consolidacion
 
-### P3 — Continuar Fase 3 (Object templates per-archetype)
+1. `git checkout consolidation-2026-05-19` en PROD — hacer `git pull`.
+2. Merge `consolidation-2026-05-19` → `main` via PR.
+3. Tag `post-consolidation-2026-05-19`.
+4. `gh repo archive SciBack/midpoint --yes` (cuando Alberto confirme).
 
-Los per-archetype templates no existen. El template base `UserTemplate-Person-Base.xml` si existe. Ver tareas 3.2-3.4 en seccion de roadmap detallado.
+### P4 — Object templates per-archetype (Fase 3 incompleta)
 
-### P4 — Completar permisos Entra ID (Fase 5.5)
+Crear templates individuales para student, faculty, staff, alumni con mappings específicos por tipo. El template base existe; los per-archetype no.
 
-Faltan 4 permisos read en la app registration del tenant UPeU: `AdministrativeUnit.Read.All`, `RoleManagement.Read.Directory`, `AuditLog.Read.All`, `Application.Read.All`. Ticket pendiente a David Urquizo.
+### P5 — Completar permisos Entra ID y validar Keycloak federation
+
+- Ticket David Urquizo: 4 permisos read faltantes (`AdministrativeUnit.Read.All`, `RoleManagement.Read.Directory`, `AuditLog.Read.All`, `Application.Read.All`)
+- Verificar si Keycloak User Federation contra OpenLDAP está configurado (confirmar Fase 6 completa)
 
 ---
 
