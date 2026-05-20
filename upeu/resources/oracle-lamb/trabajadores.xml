@@ -99,21 +99,6 @@
             </attribute>
             <attribute>
                 <ref>ri:NUM_DOCUMENTO</ref>
-                <!-- Correlator explícito 4.10: el shorthand <correlator/> en 4.10 no puede resolver
-                     el item de foco cuando los únicos inbounds con beforeCorrelation están archived.
-                     Forma explícita: atributo shadow → extension/upeu:lambDocNum (único inbound activo
-                     con beforeCorrelation). MidPoint busca usuarios donde lambDocNum == NUM_DOCUMENTO. -->
-                <correlators>
-                    <items>
-                        <name>correlate-by-num-documento</name>
-                        <item>
-                            <ref>attributes/ri:NUM_DOCUMENTO</ref>
-                            <search>
-                                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</path>
-                            </search>
-                        </item>
-                    </items>
-                </correlators>
                 <inbound>
                     <!-- DEPRECADO: mapeo antiguo que asumía siempre DNI y usaba taxId (campo deprecated).
                          Reemplazado por el Bloque J del UserTemplate-Person-Base que construye
@@ -430,6 +415,22 @@
                     </target>
                 </inbound>
             </attribute>
+            <!-- Correlator explícito 4.10: reemplaza <correlator/> shorthand en ri:NUM_DOCUMENTO.
+                 El shorthand en 4.10 no resuelve el focus item cuando los únicos inbounds con
+                 beforeCorrelation están en lifecycleState archived.
+                 MidPoint busca UserType donde extension/upeu:lambDocNum == ri:NUM_DOCUMENTO del shadow.
+                 El inbound activo num-documento-to-lambDocNum popula lambDocNum antes de correlación
+                 (evaluationPhases: beforeCorrelation). -->
+            <correlation>
+                <correlators>
+                    <items>
+                        <name>correlate-by-num-documento</name>
+                        <item>
+                            <ref xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</ref>
+                        </item>
+                    </items>
+                </correlators>
+            </correlation>
             <synchronization>
                 <reaction>
                     <situation>linked</situation>
