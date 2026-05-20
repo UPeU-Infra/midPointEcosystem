@@ -1,6 +1,6 @@
 # UPeU IGA — Roadmap de Ejecución 2026
 
-**Versión:** 2026-05-19 rev2 (actualizado post-P1/P2/P3) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
+**Versión:** 2026-05-20 rev3 (actualizado post-P6 pipeline + fix correlación) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
 **Documento base:** [`iga-canonical-analysis-2026-05.md`](./iga-canonical-analysis-2026-05.md) · [`SKILL: iga-canonical-standards`](~/.claude/skills/iga-canonical-standards/SKILL.md) · [`SKILL: midpoint-best-practices`](~/.claude/skills/midpoint-best-practices/SKILL.md)
 
 ---
@@ -150,17 +150,45 @@ Reactivación en orden:
 
 | Task | Estado | Resultado | Notas |
 |---|---|---|---|
-| `Reconcile Oracle LAMB Estudiantes` | ✅ COMPLETADO | PARTIAL_ERROR — 1.690 obj / 11 errores | Shadows duplicados en Koha (11 usuarios). Cron diario 2AM UTC activo. |
-| `Reconcile Oracle LAMB Trabajadores` | 🔄 EN CURSO | — | — |
+| `Reconcile Oracle LAMB Estudiantes` | ✅ COMPLETADO 2026-05-20 | PARTIAL_ERROR — 1.690 obj / 11 errores | Shadows duplicados en Koha (11 usuarios). Cron 02:00 UTC activo. |
+| `Reconcile Oracle LAMB Trabajadores` | ✅ COMPLETADO 2026-05-20 | PARTIAL_ERROR — 3.802 obj / 0 errores correlación | Fix correlación `NUM_DOCUMENTO` aplicado (commit `db70026`). Cron 02:00 UTC activo. |
 | `Reconcile Oracle LAMB Egresados` | ⏳ Pendiente | — | 30.629 sombras — el más pesado |
-| `Reconcile-Koha-Inbound` | ⏳ Pendiente | — | Depende de Trabajadores/Egresados primero |
+| `Reconcile-Koha-Inbound` | ⏳ Pendiente | — | — |
 | `Trigger Scanner` | ⏳ Pendiente | — | Procesa validTo/validFrom de activaciones |
 | `Validity Scanner` | ⏳ Pendiente | — | Desactiva/activa usuarios por fecha |
 
-**Errores a resolver post-reactivación:**
-- 11 shadows duplicados en Koha ILS → limpiar via UI/REST (Shadows huérfanos)
+### ✅ P8 — Fix correlación Oracle LAMB Trabajadores v3 — COMPLETADO 2026-05-20
+
+**Causa raíz:** Shorthand `<correlator/>` dentro de `<attribute>` dejó de funcionar en MidPoint 4.10
+cuando los inbound mappings con `beforeCorrelation` están en `lifecycleState: archived`.
+El motor no podía resolver el focus item para correlación.
+
+**Fix aplicado:** Correlator explícito a nivel `<objectType>`:
+```xml
+<correlation>
+  <correlators>
+    <items>
+      <name>correlate-by-num-documento</name>
+      <item>
+        <ref xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</ref>
+      </item>
+    </items>
+  </correlators>
+</correlation>
+```
+- Archivo: `upeu/resources/oracle-lamb/trabajadores.xml`
+- Commits: `3729479` (intento) → `db70026` (fix final)
+- Verificado: `ConfigurationException: NUM_DOCUMENTO` desapareció completamente de logs
+
+**Errores pendientes a resolver (no bloquean operación):**
+- 11 shadows duplicados en Koha ILS → limpiar via UI/REST (shadows huérfanos de 11 estudiantes)
 - Dependencia circular en mappings object template estudiantes `#[12,21,22,23,25,32,33]` → revisar en P4
 - Deep clone innecesario de `identityDocuments` → optimización para P4
+
+**Estado del servidor PROD (2026-05-20):**
+- Disco `/`: 19 GB / 33 GB usados (62%) — sin riesgo
+- RAM: 6.1 GB activa / 9.7 GB total — estable
+- Tasks corriendo: solo `Cleanup` (sistema). Estudiantes y Trabajadores en RUNNABLE/READY esperando cron.
 
 ### ✅ P7 — Keycloak→OpenLDAP User Federation — COMPLETADO 2026-05-19
 
