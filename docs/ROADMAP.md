@@ -1,6 +1,6 @@
 # UPeU IGA — Roadmap de Ejecución 2026
 
-**Versión:** 2026-05-20 rev8 (OpenLDAP N-Way Multimaster activado) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
+**Versión:** 2026-05-20 rev9 (OpenLDAP N-Way Multimaster HA completo + MidPoint failover activo) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
 **Documento base:** [`iga-canonical-analysis-2026-05.md`](./iga-canonical-analysis-2026-05.md) · [`SKILL: iga-canonical-standards`](~/.claude/skills/iga-canonical-standards/SKILL.md) · [`SKILL: midpoint-best-practices`](~/.claude/skills/midpoint-best-practices/SKILL.md)
 
 ---
@@ -84,7 +84,7 @@ Los templates **per-archetype** (student, faculty, staff, alumni individuales) *
 | Fase 1 — Schema | ✅ **ACTIVA** | 2 schemas en PROD BD |
 | Fase 2 — Archetypes + Org tree | ✅ **ACTIVA / REPO COMPLETO** | 18 archetypes en PROD; repo ahora tiene los 18 (8 user + 9 org + 2 role) — commit `19590be` |
 | Fase 3 — Object templates | ⚠️ **PARCIAL** | 2 templates en PROD (base + sistema); templates per-archetype NO existen |
-| Fase 4 — OpenLDAP HA | ✅ **N-WAY MULTIMASTER ACTIVO** | Node 1 (168) + Node 2 (169): N-Way mirrormode ✅; replicación bidireccional verificada 2026-05-20; ~15.100 entradas; ulimits 65536 (N2 activo, N1 pendiente reinicio) |
+| Fase 4 — OpenLDAP HA | ✅ **COMPLETA** | N-Way mirrormode Node 1 (168) + Node 2 (169) ✅; replicación bidireccional verificada; ulimits 65536 ambos nodos ✅; cn=midpoint password sincronizado ✅; MidPoint cfg:servers failover activo ✅; phpldapadmin en ambos nodos ✅; resource test SUCCESS 2026-05-20 |
 | Fase 5 — Resources READ | ✅ **ACTIVA** | Oracle LAMB ×4 + Koha + Entra ID activos; todos con lifecycleState `active` |
 | Fase 6 — Resources WRITE → OpenLDAP | ✅ **FUNCIONA** (no validado formalmente) | 37.491 sombras LDAP confirman que MidPoint escribe a OpenLDAP; Keycloak federation sin confirmar |
 | Fase 7 — RBAC | ⚠️ **PARCIAL** | 39 roles activos (AR + BR + affiliation); MOF-*/GOV-*/SYS ahora versionados en repo (commit `19590be`) — lifecycle null pendiente |
@@ -283,10 +283,12 @@ Fase 3 — Object templates canonicos (2-3 dias)  PARCIAL
    Hecho: UserTemplate-Person-Base.xml
    Pendiente: 8 per-archetype templates
 
-Fase 4 — OpenLDAP HA Identity Cache (3 dias)    RESOURCE CONFIGURADO / HA SIN VERIFICAR
-   Resource LDAP activo en PROD (1 de 7 resources)
-   Config en repo: upeu/resources/ldap-identity-cache.xml + upeu/ldap/
-   Pendiente: verificar N-Way Multimaster desplegado
+Fase 4 — OpenLDAP HA Identity Cache (3 dias)    ✅ COMPLETA 2026-05-20
+   N-Way Multimaster: Node 1 (168) + Node 2 (169) activo
+   ulimits nofile=65536 en ambos nodos
+   MidPoint cfg:servers failover a Node 2 activo
+   Resource test: SUCCESS
+   phpldapadmin: activo en ambos nodos
 
 Fase 5 — Resources read (1 semana)              ACTIVO EN PROD / ENTRA ID INCOMPLETO
    7 resources activos: Oracle LAMB x4 + LDAP + Entra ID + Koha
