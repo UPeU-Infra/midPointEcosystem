@@ -1,0 +1,20 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="a0c2e4e3-911c-4146-9447-f91a1416feff">
+    <name>archetype-org-campus</name>
+    <description>Sede física de la institución. Nivel jerárquico inmediato bajo institution. Naming: C-LIM, C-JUL, C-TPP (3 letras consistente con ELISEO.ORG_SEDE.SIGLA).</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <assignmentRelation>
+            <holderType>OrgType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Campus</label>
+            <pluralLabel>Campus / Sedes</pluralLabel>
+            <icon>
+                <cssClass>fa fa-map-marker-alt</cssClass>
+                <color>#2980b9</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+</archetype>

@@ -1,0 +1,9 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="ed4b893c-6b33-4243-ba19-3d58cd02dea7">
+    <name>MOF-DIRECTOR-CRAI</name>
+    <description>Dirige la gestión integral del CRAI, supervisando las áreas de servicios al usuario, procesos técnicos, repositorio institucional, adquisiciones y servicios tecnológicos. Responsable de la planificación, mejora continua y cumplimiento de estándares de información, servicio y calidad.</description>
+    <assignment>
+        <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <displayName>Director del CRAI</displayName>
+    <identifier>mof.director.crai</identifier>
+</role>

@@ -1,0 +1,20 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="455d90ab-b54a-4aa7-a402-a6b6ffc0c0d9">
+    <name>archetype-org-institution</name>
+    <description>Universidad o institución educativa raíz del árbol organizacional. Único nodo de este tipo por deployment. eduPersonOrgDN apunta a este nodo.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <assignmentRelation>
+            <holderType>OrgType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Institución</label>
+            <pluralLabel>Instituciones</pluralLabel>
+            <icon>
+                <cssClass>fa fa-university</cssClass>
+                <color>#1e3a5f</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+</archetype>

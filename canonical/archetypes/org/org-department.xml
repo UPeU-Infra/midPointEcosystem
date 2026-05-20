@@ -1,0 +1,20 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="73795c10-2417-4323-b6fa-b88449a8bba4">
+    <name>archetype-org-department</name>
+    <description>Unidad académica operativa (Escuela Profesional, Departamento Académico). Tercer nivel bajo facultad. Mapea a ELISEO.ORG_ESCUELA_PROFESIONAL.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <assignmentRelation>
+            <holderType>OrgType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Departamento / Escuela Profesional</label>
+            <pluralLabel>Departamentos</pluralLabel>
+            <icon>
+                <cssClass>fa fa-folder-open</cssClass>
+                <color>#16a085</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+</archetype>

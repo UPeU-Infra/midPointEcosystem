@@ -1,0 +1,20 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="87f84549-d101-4ae4-8036-42fb6abdfeec">
+    <name>archetype-org-faculty</name>
+    <description>Unidad académica de segundo nivel bajo campus. Agrupa departamentos y escuelas profesionales. Mapea a tipos MISIONALES en ELISEO.ORG_DEPENDENCIA (FACULTAD, UNIDAD ACADEMICA).</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <assignmentRelation>
+            <holderType>OrgType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Facultad</label>
+            <pluralLabel>Facultades</pluralLabel>
+            <icon>
+                <cssClass>fa fa-school</cssClass>
+                <color>#27ae60</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+</archetype>

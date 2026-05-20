@@ -1,0 +1,9 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="14d29aa1-4e9c-4f71-9dc6-996541bb0d18">
+    <name>MOF-COORD-FAC-FILIAL</name>
+    <description>Coordina procesos académicos de facultad dentro de la filial.</description>
+    <assignment>
+        <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <displayName>Coordinador de Facultad (Filial)</displayName>
+    <identifier>mof.coord.fac.filial</identifier>
+</role>

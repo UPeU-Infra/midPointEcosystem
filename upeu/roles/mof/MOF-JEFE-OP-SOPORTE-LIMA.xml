@@ -1,0 +1,9 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="36bbc4b4-4afb-4f62-8360-cb9fab5ca540">
+    <name>MOF-JEFE-OP-SOPORTE-LIMA</name>
+    <description>Dirige las operaciones TI y los equipos de soporte tecnológico en el campus Lima. Responsable del soporte técnico, atención de incidentes, operación de laboratorio de cómputo, mesa de ayuda y soporte especializado</description>
+    <assignment>
+        <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <displayName>Jefe de Operaciones y Soporte Tecnológico Lima</displayName>
+    <identifier>mof.jefe.op.soporte.lima</identifier>
+</role>

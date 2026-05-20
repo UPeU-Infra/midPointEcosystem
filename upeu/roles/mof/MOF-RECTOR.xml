@@ -1,0 +1,11 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="79f62ee4-463c-43f7-acdd-ed750cd269ba">
+    <name>MOF-RECTOR</name>
+    <description>Máxima autoridad ejecutiva y académica de la Universidad Peruana Unión. Responsable de la dirección institucional, la representación oficial, la supervisión de políticas, la coordinación de vicerrectorados y el cumplimiento estratégico.</description>
+    <documentation>Requiere ser Docente Ordinario Principal acreditado por la UPeU y reconocido por la Promotora IASD.</documentation>
+    <assignment>
+        <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <displayName>Rector</displayName>
+    <identifier>mof.rector</identifier>
+    <riskLevel>High</riskLevel>
+</role>

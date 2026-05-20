@@ -1,0 +1,9 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="a48a8f9d-24ad-40c2-863c-7461e16f69e9">
+    <name>MOF-JEFE</name>
+    <description>Supervisa un área operativa o administrativa. Responsable de la planificación, control, asignación de tareas, cumplimiento de KPIs y apoyo institucional.</description>
+    <assignment>
+        <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <displayName>Jefe de Área</displayName>
+    <identifier>mof.jefe</identifier>
+</role>

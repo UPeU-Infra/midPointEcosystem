@@ -1,0 +1,19 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="00000000-0000-0000-0000-000000000004">
+    <name>SYS-IGA-SUPERUSER</name>
+    <description>Role that gives user full authorization in MidPoint.</description>
+    <indestructible>true</indestructible>
+    <assignment>
+        <identifier>archetype</identifier>
+        <targetRef oid="00000000-0000-0000-0000-000000000320" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <assignment>
+        <identifier>privileged-access</identifier>
+        <documentation>Superuser role provides privileged access - by definition.</documentation>
+        <targetRef oid="00000000-0000-0000-0000-000000000332" relation="org:default" type="c:PolicyType"/>
+    </assignment>
+    <displayName>Superuser</displayName>
+    <identifier>sys.superuser</identifier>
+    <authorization>
+        <action>http://midpoint.evolveum.com/xml/ns/public/security/authorization-3#all</action>
+    </authorization>
+</role>

@@ -1,0 +1,20 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="20ee260b-8591-4a5b-8b93-f1607eb501a7">
+    <name>archetype-org-governance</name>
+    <description>Órganos de gobierno y supervisión universitaria: Asamblea, Consejo, Rectorado, Vicerrectorados, Secretaría General, Auditoría Interna, Defensoría. ISO 27001 A.5.18 — son aprobadores/supervisores, no operadores. Habilita SoD distinguible.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <assignmentRelation>
+            <holderType>OrgType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Órgano de Gobernanza</label>
+            <pluralLabel>Órganos de Gobernanza</pluralLabel>
+            <icon>
+                <cssClass>fa fa-gavel</cssClass>
+                <color>#34495e</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+</archetype>

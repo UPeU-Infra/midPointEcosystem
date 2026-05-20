@@ -1,0 +1,20 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="79bd8a9e-78f0-430f-8133-e8f3be6859c1">
+    <name>archetype-org-partner-institution</name>
+    <description>Institución afín a UPeU (red adventista o convenio). NO es campus de UPeU. Usuarios reciben archetype affiliate-partner-institution con scope diferenciado. Ejemplos: Colegio Unión, Clínica Good Hope, ISTAT, AGTU.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <assignmentRelation>
+            <holderType>OrgType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Institución Socia</label>
+            <pluralLabel>Instituciones Socias</pluralLabel>
+            <icon>
+                <cssClass>fa fa-handshake</cssClass>
+                <color>#9b59b6</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+</archetype>

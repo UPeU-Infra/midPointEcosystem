@@ -1,0 +1,9 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="399d8ae5-56cb-462c-8f1b-07f930f36ce6">
+    <name>MOF-COORDINADOR</name>
+    <description>Responsable de coordinar procesos académicos, administrativos o de servicio dentro de su unidad. Enlace operativo entre la dirección y los equipos de trabajo.</description>
+    <assignment>
+        <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <displayName>Coordinador</displayName>
+    <identifier>mof.coordinador</identifier>
+</role>

@@ -1,0 +1,9 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="c439befb-28ce-4bab-a24c-d1c214e2aadc">
+    <name>MOF-RESP-PROC-TECNICOS-CRAI</name>
+    <description>Lidera la catalogación, clasificación y organización técnica de recursos. Garantiza la correcta aplicación de normas (MARC21, RDA, CDU) y la actualización del catálogo del CRAI.</description>
+    <assignment>
+        <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <displayName>Responsable de Procesos Técnicos - CRAI</displayName>
+    <identifier>mof.proc.tecnicos.crai</identifier>
+</role>

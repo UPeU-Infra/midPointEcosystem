@@ -1,0 +1,21 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="ce162f6b-f6fb-4dc4-b395-a942ee5b491b">
+    <name>archetype-user-affiliate-researcher</name>
+    <description>Investigadores externos con afiliación temporal a UPeU (proyectos CONCYTEC, convenios internacionales). eduPersonAffiliation: affiliate + member.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <assignmentRelation>
+            <holderType>UserType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Investigador Visitante</label>
+            <pluralLabel>Investigadores Visitantes</pluralLabel>
+            <icon>
+                <cssClass>fa fa-microscope</cssClass>
+                <color>#16a085</color>
+            </icon>
+        </display>
+        <objectTemplateRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" relation="org:default" type="c:ObjectTemplateType"/>
+    </archetypePolicy>
+</archetype>

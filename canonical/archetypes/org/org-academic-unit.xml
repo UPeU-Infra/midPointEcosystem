@@ -1,0 +1,20 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f">
+    <name>archetype-org-academic-unit</name>
+    <description>Unidad académica de soporte que NO es Facultad: CRAI, Centro de Idiomas, Conservatorio, Coordinación Académica, Educación Continua, Gabinete Pedagógico, Tutoría, Centro Pre-Universitario, Educación a Distancia, Investigación. Distinto de Faculty (estructura formal de carreras) y de Department (administrativo).</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <assignmentRelation>
+            <holderType>OrgType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Unidad Académica de Soporte</label>
+            <pluralLabel>Unidades Académicas de Soporte</pluralLabel>
+            <icon>
+                <cssClass>fa fa-book-reader</cssClass>
+                <color>#8e44ad</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+</archetype>

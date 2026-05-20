@@ -1,0 +1,20 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="07ed171e-c9cc-44d2-81b4-1655e1420970">
+    <name>archetype-org-project</name>
+    <description>Agrupación transversal por proyecto (investigación, comité, task force). Ciclo de vida corto. Soporta relations: default, manager, owner.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <assignmentRelation>
+            <holderType>OrgType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Proyecto</label>
+            <pluralLabel>Proyectos</pluralLabel>
+            <icon>
+                <cssClass>fa fa-project-diagram</cssClass>
+                <color>#e67e22</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+</archetype>

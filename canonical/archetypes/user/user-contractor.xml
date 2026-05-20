@@ -1,0 +1,21 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="18337126-27ad-421b-8860-59403c36f1b8">
+    <name>archetype-user-contractor</name>
+    <description>Personas con contrato temporal para servicios específicos (no incluye docentes contratados, que son employee-faculty). eduPersonAffiliation: affiliate. Requiere validTo obligatorio.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <assignmentRelation>
+            <holderType>UserType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Contratista Externo</label>
+            <pluralLabel>Contratistas</pluralLabel>
+            <icon>
+                <cssClass>fa fa-user-clock</cssClass>
+                <color>#f1c40f</color>
+            </icon>
+        </display>
+        <objectTemplateRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" relation="org:default" type="c:ObjectTemplateType"/>
+    </archetypePolicy>
+</archetype>
