@@ -1,0 +1,2049 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estructura Entra ID — Universidad Peruana Unión</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.0/github-markdown.min.css">
+  <style>
+    body { max-width: 960px; margin: 0 auto; padding: 2rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .markdown-body { box-sizing: border-box; min-width: 200px; max-width: 980px; margin: 0 auto; padding: 2rem; }
+    #toc { background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; padding: 1rem 1.5rem; margin-bottom: 2rem; }
+    #toc h2 { font-size: 1rem; margin-top: 0; color: #57606a; }
+    #toc ul { margin: 0; padding-left: 1.2rem; }
+    #toc li { line-height: 1.8; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f6f8fa; }
+    .metadata { color: #57606a; font-size: 0.9rem; border-bottom: 1px solid #d0d7de; padding-bottom: 1rem; margin-bottom: 2rem; }
+    h1 { border-bottom: 2px solid #0969da; padding-bottom: 0.5rem; }
+    h2 { border-bottom: 1px solid #d0d7de; }
+    @media print { #toc { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+<article class="markdown-body">
+<h1>Estructura Entra ID — Universidad Peruana Unión</h1>
+<nav id="toc">
+<h2>Tabla de contenidos</h2>
+<ul>
+<li><a href="#estructura-entra-id-universidad-peruana-unión"
+id="toc-estructura-entra-id-universidad-peruana-unión">Estructura Entra
+ID — Universidad Peruana Unión</a>
+<ul>
+<li><a href="#tabla-de-contenidos" id="toc-tabla-de-contenidos">Tabla de
+contenidos</a></li>
+<li><a href="#resumen-ejecutivo" id="toc-resumen-ejecutivo">1. Resumen
+ejecutivo</a></li>
+<li><a href="#tenant-y-dominios" id="toc-tenant-y-dominios">2. Tenant y
+dominios</a></li>
+<li><a href="#licencias" id="toc-licencias">3. Licencias</a></li>
+<li><a href="#usuarios" id="toc-usuarios">4. Usuarios</a></li>
+<li><a href="#administrative-units-estado-actual"
+id="toc-administrative-units-estado-actual">5. Administrative Units
+(estado actual)</a></li>
+<li><a href="#roles-y-permisos-estado-actual"
+id="toc-roles-y-permisos-estado-actual">6. Roles y permisos (estado
+actual)</a></li>
+<li><a href="#grupos" id="toc-grupos">7. Grupos</a></li>
+<li><a href="#app-registrations" id="toc-app-registrations">8. App
+Registrations</a></li>
+<li><a href="#diseño-propuesto-iga-administrative-units"
+id="toc-diseño-propuesto-iga-administrative-units">9. Diseño propuesto
+IGA — Administrative Units</a></li>
+<li><a href="#diseño-propuesto-roles-delegados-por-sede"
+id="toc-diseño-propuesto-roles-delegados-por-sede">10. Diseño propuesto
+— Roles delegados por sede</a></li>
+<li><a href="#diseño-propuesto-grupos-de-seguridad-a-crear"
+id="toc-diseño-propuesto-grupos-de-seguridad-a-crear">11. Diseño
+propuesto — Grupos de seguridad a crear</a></li>
+<li><a href="#prerrequisitos-para-activar-iga"
+id="toc-prerrequisitos-para-activar-iga">12. Prerrequisitos para activar
+IGA</a></li>
+<li><a href="#problemas-a-resolver" id="toc-problemas-a-resolver">13.
+Problemas a resolver</a></li>
+<li><a href="#apendice-relacion-con-el-roadmap-iga"
+id="toc-apendice-relacion-con-el-roadmap-iga">Apendice — Relacion con el
+roadmap IGA</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="estructura-entra-id-universidad-peruana-unión">Estructura Entra
+ID — Universidad Peruana Unión</h1>
+<p><strong>Fecha de snapshot:</strong> 2026-05-19
+<strong>Autor:</strong> Alberto Sánchez — DTI / SciBack IGA
+<strong>Destinatario principal:</strong> David Urquizo (Global
+Administrator UPeU) <strong>Estado:</strong> Borrador de trabajo —
+insumo para Fase 12 IGA</p>
+<hr />
+<h2 id="tabla-de-contenidos">Tabla de contenidos</h2>
+<ol type="1">
+<li><a href="#1-resumen-ejecutivo">Resumen ejecutivo</a></li>
+<li><a href="#2-tenant-y-dominios">Tenant y dominios</a></li>
+<li><a href="#3-licencias">Licencias</a></li>
+<li><a href="#4-usuarios">Usuarios</a></li>
+<li><a href="#5-administrative-units-estado-actual">Administrative Units
+(estado actual)</a></li>
+<li><a href="#6-roles-y-permisos-estado-actual">Roles y permisos (estado
+actual)</a></li>
+<li><a href="#7-grupos">Grupos</a></li>
+<li><a href="#8-app-registrations">App Registrations</a></li>
+<li><a href="#9-diseño-propuesto-iga--administrative-units">Diseño
+propuesto IGA — Administrative Units</a></li>
+<li><a href="#10-diseño-propuesto--roles-delegados-por-sede">Diseño
+propuesto — Roles delegados por sede</a></li>
+<li><a href="#11-diseño-propuesto--grupos-de-seguridad-a-crear">Diseño
+propuesto — Grupos de seguridad a crear</a></li>
+<li><a href="#12-prerrequisitos-para-activar-iga">Prerrequisitos para
+activar IGA</a></li>
+<li><a href="#13-problemas-a-resolver">Problemas a resolver</a></li>
+</ol>
+<hr />
+<h2 id="resumen-ejecutivo">1. Resumen ejecutivo</h2>
+<p>El tenant Entra ID de la UPeU contiene <strong>73.196 usuarios
+activos</strong> y es el directorio de identidad más grande de la
+institución en nube. Sin embargo, el estado actual refleja un
+crecimiento orgánico sin gobernanza: los atributos de departamento y
+tipo de empleado están vacíos en prácticamente el 100% de los usuarios,
+no existen dynamic groups, los roles de directorio se asignan con scope
+global cuando deberían ser scoped por Administrative Unit, y 999 grupos
+M365/Teams se crearon sin ninguna política de ciclo de vida.</p>
+<h3 id="lo-que-funciona-bien">Lo que funciona bien</h3>
+<ul>
+<li>El tenant está consolidado en un solo directorio (cloud-only, sin
+sync AD on-prem).</li>
+<li>Las Administrative Units para ISTAT, UNION-PE e IMPRENTAUNION-COM
+existen y tienen scope correcto para la delegación a sus respectivos
+administradores locales.</li>
+<li>La App Registration <code>MidPoint-UPeU</code> ya existe y es la
+base del conector IGA.</li>
+<li>La licencia A3 Faculty incluye Azure AD P1, que habilita dynamic
+groups y Conditional Access — capacidades que aún no se usan.</li>
+</ul>
+<h3 id="hallazgos-criticos">Hallazgos criticos</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Hallazgo</th>
+<th>Impacto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1</td>
+<td><code>department</code>, <code>officeLocation</code>,
+<code>companyName</code>, <code>employeeType</code> vacíos en ~99.9% de
+usuarios</td>
+<td>MidPoint no puede correlacionar ni clasificar usuarios sin atributos
+estructurados</td>
+</tr>
+<tr>
+<td>C2</td>
+<td>84 de 86 role assignments con scope en tenant completo</td>
+<td>Un administrador de Juliaca tiene los mismos poderes que uno de
+Lima</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>0 dynamic groups</td>
+<td>No es posible automatizar membresías basadas en atributos</td>
+</tr>
+<tr>
+<td>C4</td>
+<td>999 grupos M365/Teams sin gobernanza</td>
+<td>No hay propietario, sin fecha de expiración, sin naming policy</td>
+</tr>
+<tr>
+<td>C5</td>
+<td>Dos licencias sobreusadas (<code>M365EDU_A5_FACULTY</code> 16/15,
+<code>Teams_Premium</code> 19/18)</td>
+<td>Riesgo de incumplimiento con Microsoft</td>
+</tr>
+<tr>
+<td>C6</td>
+<td><code>Microsoft_365_Copilot_EDU</code> con 8 asignaciones y 0
+licencias prepagadas</td>
+<td>Posible costo no presupuestado</td>
+</tr>
+<tr>
+<td>C7</td>
+<td>~30 App Registrations sin nombre claro o de prueba</td>
+<td>Surface de ataque expandida, riesgo de tokens huerfanos</td>
+</tr>
+<tr>
+<td>C8</td>
+<td><code>mesa.sti@upeu.edu.pe</code> acumula Helpdesk + User + Exchange
++ Teams + otros roles simultaneamente</td>
+<td>Violación del principio de menor privilegio</td>
+</tr>
+</tbody>
+</table>
+<h3 id="impacto-en-el-proyecto-iga">Impacto en el proyecto IGA</h3>
+<p>Entra ID está declarado como <strong>solo lectura en Fases 1 a
+11</strong> del roadmap IGA. MidPoint lee Entra ID para correlacionar
+identidades, pero no escribe. La escritura (provisioning outbound) se
+habilita en Fase 12 una vez que el modelo de atributos esté resuelto.
+Las acciones propuestas en este documento son preparatorias para esa
+fase: sin atributos estructurados, Entra ID no puede ser target de
+provisioning útil.</p>
+<hr />
+<h2 id="tenant-y-dominios">2. Tenant y dominios</h2>
+<h3 id="datos-del-tenant">Datos del tenant</h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nombre de organización</td>
+<td>Universidad Peruana Unión</td>
+</tr>
+<tr>
+<td>Tenant ID</td>
+<td><code>cfbd88b4-94bc-4fba-98bd-64d0726394a3</code></td>
+</tr>
+<tr>
+<td>Dominio principal</td>
+<td><code>upeu.edu.pe</code></td>
+</tr>
+<tr>
+<td>Dominio onmicrosoft</td>
+<td><code>upeuedupe.onmicrosoft.com</code></td>
+</tr>
+<tr>
+<td>Sync AD on-prem</td>
+<td>No (cloud-only)</td>
+</tr>
+<tr>
+<td>Modelo de usuario</td>
+<td>Cloud-only</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dominios-registrados-y-entidades-asociadas">Dominios registrados
+y entidades asociadas</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Dominio</th>
+<th>Entidad</th>
+<th>Rol en la institución</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>upeu.edu.pe</code></td>
+<td>Universidad Peruana Unión</td>
+<td>Universidad principal (~73K usuarios)</td>
+</tr>
+<tr>
+<td><code>istat.edu.pe</code></td>
+<td>Instituto Tecnológico Adventista del Titicaca</td>
+<td>Instituto afiliado (Juliaca)</td>
+</tr>
+<tr>
+<td><code>union.pe</code></td>
+<td>Productos Unión S.A.C.</td>
+<td>Editorial / librería universitaria</td>
+</tr>
+<tr>
+<td><code>imprentaunion.com</code></td>
+<td>Imprenta Unión</td>
+<td>Empresa editorial asociada</td>
+</tr>
+<tr>
+<td><code>upeuedupe.onmicrosoft.com</code></td>
+<td>Tenant técnico</td>
+<td>Dominio de fallback Microsoft</td>
+</tr>
+</tbody>
+</table>
+<h3 id="implicancias-de-la-estructura-multi-dominio">Implicancias de la
+estructura multi-dominio</h3>
+<p>El tenant UPeU aloja <strong>cuatro entidades legales
+distintas</strong> en un único directorio. Esto es operativamente
+correcto para tener SSO unificado con M365, pero requiere que la
+gobernanza de identidades trate a cada entidad como un dominio de
+administración separado. Las Administrative Units ya reflejan
+parcialmente este diseño (ver sección 5).</p>
+<p>Para el modelo IGA, cada dominio tiene su propia IIA (fuente
+autoritativa de identidad). ISTAT, UNION-PE e IMPRENTAUNION-COM no
+provienen de Oracle LAMB UPeU sino de sus propios sistemas locales. Esta
+separación debe mantenerse en el modelo de correlación MidPoint.</p>
+<hr />
+<h2 id="licencias">3. Licencias</h2>
+<h3 id="licencias-activas">Licencias activas</h3>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+<col style="width: 16%" />
+</colgroup>
+<thead>
+<tr>
+<th>SKU</th>
+<th>Nombre</th>
+<th>Usadas</th>
+<th>Disponibles</th>
+<th>Uso %</th>
+<th>Estado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>STANDARDWOFFPACK_FACULTY</code></td>
+<td>Office 365 A1 Faculty</td>
+<td>40.949</td>
+<td>500.000</td>
+<td>8%</td>
+<td>Normal</td>
+</tr>
+<tr>
+<td><code>STANDARDWOFFPACK_STUDENT</code></td>
+<td>Office 365 A1 Student</td>
+<td>15.959</td>
+<td>1.000.000</td>
+<td>2%</td>
+<td>Normal</td>
+</tr>
+<tr>
+<td><code>M365EDU_A3_STUUSEBNFT</code></td>
+<td>M365 A3 Student</td>
+<td>12.864</td>
+<td>39.400</td>
+<td>33%</td>
+<td>Normal</td>
+</tr>
+<tr>
+<td><code>M365EDU_A3_FACULTY</code></td>
+<td>M365 A3 Faculty</td>
+<td>265</td>
+<td>985</td>
+<td>27%</td>
+<td>Normal</td>
+</tr>
+<tr>
+<td><code>M365EDU_A5_FACULTY</code></td>
+<td>M365 A5 Faculty</td>
+<td><strong>16</strong></td>
+<td><strong>15</strong></td>
+<td><strong>107%</strong></td>
+<td>SOBREUSADA</td>
+</tr>
+<tr>
+<td><code>M365EDU_A5_STUUSEBNFT</code></td>
+<td>M365 A5 Student</td>
+<td>56</td>
+<td>600</td>
+<td>9%</td>
+<td>Normal</td>
+</tr>
+<tr>
+<td><code>POWER_BI_PRO_FACULTY</code></td>
+<td>Power BI Pro Faculty</td>
+<td>51</td>
+<td>74</td>
+<td>69%</td>
+<td>Vigilar</td>
+</tr>
+<tr>
+<td><code>VISIOCLIENT</code></td>
+<td>Visio Plan 2</td>
+<td>4</td>
+<td>4</td>
+<td>100%</td>
+<td>Limite</td>
+</tr>
+<tr>
+<td><code>Teams_Premium_(for_Departments)</code></td>
+<td>Teams Premium</td>
+<td><strong>19</strong></td>
+<td><strong>18</strong></td>
+<td><strong>106%</strong></td>
+<td>SOBREUSADA</td>
+</tr>
+<tr>
+<td><code>Microsoft_365_Copilot_EDU</code></td>
+<td>M365 Copilot Edu</td>
+<td>8</td>
+<td>0 prepagadas</td>
+<td>N/A</td>
+<td>REVISAR</td>
+</tr>
+</tbody>
+</table>
+<h3 id="capacidades-iga-habilitadas-por-licencia">Capacidades IGA
+habilitadas por licencia</h3>
+<p>La licencia <strong>M365 A3</strong> incluye <strong>Azure AD
+P1</strong> (ahora Entra ID P1). Las licencias <strong>M365 A5</strong>
+incluyen <strong>Entra ID P2</strong>. Esto significa que UPeU tiene
+habilitadas las siguientes capacidades relevantes para IGA que
+actualmente no se usan:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Capacidad</th>
+<th>Licencia requerida</th>
+<th>Estado UPeU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dynamic Groups (reglas de membresía automática)</td>
+<td>Entra ID P1 (A3+)</td>
+<td>Disponible, NO usada</td>
+</tr>
+<tr>
+<td>Conditional Access policies</td>
+<td>Entra ID P1 (A3+)</td>
+<td>Disponible, uso limitado</td>
+</tr>
+<tr>
+<td>Administrative Units con roles scoped</td>
+<td>Entra ID P1 (A3+)</td>
+<td>Disponible, uso parcial</td>
+</tr>
+<tr>
+<td>Privileged Identity Management (PIM)</td>
+<td>Entra ID P2 (A5)</td>
+<td>Disponible para 16 usuarios A5</td>
+</tr>
+<tr>
+<td>Access Reviews</td>
+<td>Entra ID P2 (A5)</td>
+<td>Disponible para 16 usuarios A5</td>
+</tr>
+<tr>
+<td>Entitlement Management</td>
+<td>Entra ID P2 (A5)</td>
+<td>Disponible para 16 usuarios A5</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Conclusion:</strong> UPeU tiene las licencias necesarias para
+implementar gobierno de identidades robusto en Entra ID. El gap no es de
+licencias sino de configuracion.</p>
+<h3 id="alertas-inmediatas">Alertas inmediatas</h3>
+<ul>
+<li><strong>M365EDU_A5_FACULTY sobreusada (16/15):</strong> revocar una
+asignacion o comprar 1 licencia adicional.</li>
+<li><strong>Teams_Premium sobreusada (19/18):</strong> idem.</li>
+<li><strong>M365 Copilot EDU (8 asignadas, 0 prepagadas):</strong>
+investigar si estas son licencias de trial activo o si se estan
+consumiendo sin contrato. Riesgo de facturacion imprevista.</li>
+</ul>
+<hr />
+<h2 id="usuarios">4. Usuarios</h2>
+<h3 id="volumetria">Volumetria</h3>
+<table>
+<thead>
+<tr>
+<th>Metrica</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Total usuarios en directorio</td>
+<td>73.196</td>
+</tr>
+<tr>
+<td>Usuarios habilitados</td>
+<td>73.116</td>
+</tr>
+<tr>
+<td>Usuarios deshabilitados</td>
+<td>80</td>
+</tr>
+<tr>
+<td>Usuarios con licencia asignada</td>
+<td>69.483</td>
+</tr>
+<tr>
+<td>Usuarios sin licencia</td>
+<td>3.713</td>
+</tr>
+</tbody>
+</table>
+<h3 id="problema-central-atributos-estructurales-vacios">Problema
+central: atributos estructurales vacios</h3>
+<p>Los atributos que MidPoint usa para clasificar, correlacionar y
+asignar roles en Entra ID estan practicamente vacios:</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr>
+<th>Atributo Entra ID</th>
+<th>Equivalente canonico</th>
+<th>Vacios</th>
+<th>Con valor</th>
+<th>Observacion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>department</code></td>
+<td><code>organizationalUnit</code> / OU org</td>
+<td>72.475</td>
+<td>721 (~1%)</td>
+<td>No estructurado; valores ad-hoc</td>
+</tr>
+<tr>
+<td><code>officeLocation</code></td>
+<td><code>locality</code> / sede</td>
+<td>72.943</td>
+<td>253 (~0.3%)</td>
+<td>Practicamente no usado</td>
+</tr>
+<tr>
+<td><code>companyName</code></td>
+<td><code>organization</code></td>
+<td>73.195</td>
+<td>1 (&lt;0.01%)</td>
+<td>Solo 1 usuario tiene valor</td>
+</tr>
+<tr>
+<td><code>employeeType</code></td>
+<td><code>employeeType</code> (core MidPoint)</td>
+<td>73.196</td>
+<td>0 (0%)</td>
+<td>Nadie tiene valor</td>
+</tr>
+<tr>
+<td><code>jobTitle</code></td>
+<td><code>title</code></td>
+<td>No medido</td>
+<td>Variable</td>
+<td>Uso inconsistente</td>
+</tr>
+</tbody>
+</table>
+<h3 id="impacto-en-iga">Impacto en IGA</h3>
+<p>Sin estos atributos poblados, Entra ID no puede ser un target de
+provisioning util. MidPoint no puede:</p>
+<ol type="1">
+<li>Saber si un usuario de Entra ID es estudiante, docente o
+administrativo.</li>
+<li>Aplicar politicas de licencia diferenciadas por tipo de
+afiliacion.</li>
+<li>Crear dynamic groups por sede, facultad o tipo de usuario.</li>
+<li>Hacer reconciliacion correcta sin falsos positivos.</li>
+</ol>
+<p><strong>La solucion no es poblar atributos manualmente.</strong> La
+solucion es que MidPoint, en Fase 12, sea quien escriba estos atributos
+desde Oracle LAMB como IIA. El flujo sera:</p>
+<pre><code>Oracle LAMB (IIA) → MidPoint → Entra ID (atributos estructurados)
+                             → Dynamic Groups (reglas en Entra ID)
+                             → Licencias asignadas por grupo</code></pre>
+<p>Hasta que Fase 12 este activa, Entra ID permanece como fuente de
+lectura para correlacion de UPN solamente.</p>
+<h3 id="estrategia-de-correlacion-actual-fases-1-11">Estrategia de
+correlacion actual (Fases 1-11)</h3>
+<p>MidPoint correlaciona usuarios Entra ID con identidades MidPoint
+usando el UPN (<code>userPrincipalName</code>). El UPN sigue el patron
+<code>{primer.apellido}@upeu.edu.pe</code> para usuarios regulares. La
+correlacion definitiva usara <code>employeeNumber</code> o
+<code>externalSystemId</code> una vez que Fase 12 active el
+write-back.</p>
+<hr />
+<h2 id="administrative-units-estado-actual">5. Administrative Units
+(estado actual)</h2>
+<h3 id="las-5-aus-existentes">Las 5 AUs existentes</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>AU</th>
+<th>Miembros</th>
+<th>Proposito declarado</th>
+<th>Analisis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DTI</strong></td>
+<td>11</td>
+<td>Personal DTI Lima — cuentas funcionales de soporte</td>
+<td>Correcto como AU pero deberia ser un Security Group. Las AUs son
+para delegar administracion de usuarios, no para agrupar cuentas
+funcionales.</td>
+</tr>
+<tr>
+<td><strong>IMPRENTAUNION-COM</strong></td>
+<td>45</td>
+<td>Usuarios del dominio <code>imprentaunion.com</code></td>
+<td>Correcto. Tiene Helpdesk Administrator scoped para Andy
+Espinoza.</td>
+</tr>
+<tr>
+<td><strong>ISTAT</strong></td>
+<td>10</td>
+<td>Usuarios del dominio <code>istat.edu.pe</code></td>
+<td>Correcto. Tiene Helpdesk Administrator scoped para
+<code>notify@istat.edu.pe</code>.</td>
+</tr>
+<tr>
+<td><strong>ITService</strong></td>
+<td>19</td>
+<td>Correos desatendidos y cuentas de servicio</td>
+<td>Incorrecto como AU. Deberia ser un Security Group etiquetado. Las
+cuentas de servicio no necesitan AU de delegacion administrativa.</td>
+</tr>
+<tr>
+<td><strong>UNION-PE</strong></td>
+<td>223</td>
+<td>Usuarios del dominio <code>union.pe</code></td>
+<td>Correcto. Tiene User Administrator + Helpdesk Administrator scoped
+para Sergio Calizaya.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="hallazgos">Hallazgos</h3>
+<ol type="1">
+<li><strong>IMPRENTAUNION-COM, ISTAT y UNION-PE estan bien
+conceptualizadas:</strong> corresponden a entidades legales distintas
+con sus propios administradores. Este patron debe mantenerse.</li>
+<li><strong>DTI como AU es un anti-patron:</strong> una AU modela un
+dominio de administracion delegada, no un grupo de personas. El personal
+DTI Lima deberia estar en un Security Group <code>GRP-DTI-Lima</code>.
+Si se necesita que alguien administre solo cuentas DTI, ahi si tiene
+sentido una AU.</li>
+<li><strong>ITService como AU es un anti-patron:</strong> las cuentas de
+servicio no son un dominio de usuarios que necesitan administracion
+delegada. Convertir a Security Group
+<code>GRP-ServiceAccounts</code>.</li>
+<li><strong>No existe AU para UPeU-Core (dominio principal):</strong>
+los 73K usuarios de <code>upeu.edu.pe</code> no tienen AU, por lo que
+todos los role assignments que los afectan tienen scope en tenant
+completo. Este es el gap mas importante para la Fase 12.</li>
+<li><strong>No existen AUs por sede (Lima, Juliaca, Tarapoto):</strong>
+la delegacion de Helpdesk y User Administrator para sedes se hace con
+scope global, cuando deberia ser scoped.</li>
+</ol>
+<hr />
+<h2 id="roles-y-permisos-estado-actual">6. Roles y permisos (estado
+actual)</h2>
+<h3 id="resumen-de-assignments">Resumen de assignments</h3>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Metrica</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Total role assignments</td>
+<td>86</td>
+</tr>
+<tr>
+<td>Scope tenant completo</td>
+<td>84</td>
+</tr>
+<tr>
+<td>Scope AU UNION-PE</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Scope AU ISTAT</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Scope AU IMPRENTAUNION-COM</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Roles con 5+ assignments</td>
+<td>Global Admin (3), Helpdesk Admin (10), User Admin (13), Exchange
+Admin (12)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="principals-con-global-administrator">Principals con Global
+Administrator</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Usuario</th>
+<th>UPN</th>
+<th>Observacion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>David Urquizo</td>
+<td><code>daiurqz@upeu.edu.pe</code></td>
+<td>Administrador principal — correcto</td>
+</tr>
+<tr>
+<td>DIGETI Direccion General TI</td>
+<td><code>digesi@upeu.edu.pe</code></td>
+<td>Cuenta funcional de direccion — revisar si necesita Global Admin o
+si Billing Admin alcanza</td>
+</tr>
+<tr>
+<td>Microsoft Office 365 Portal</td>
+<td>(service principal)</td>
+<td>Service principal de Microsoft — normal</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Observacion:</strong> dos cuentas humanas con Global
+Administrator es el minimo aceptable. Sin embargo,
+<code>digesi@upeu.edu.pe</code> es una cuenta funcional compartida (no
+personal), lo que significa que multiples personas pueden ejercer Global
+Admin sin auditoria individual. Recomendacion: migrar
+<code>digesi@upeu.edu.pe</code> a Billing Administrator y que el Global
+Admin sea solo <code>daiurqz@upeu.edu.pe</code> con PIM para elevacion
+just-in-time.</p>
+<h3
+id="problema-de-acumulacion-de-roles-en-mesa.stiupeu.edu.pe">Problema de
+acumulacion de roles en <code>mesa.sti@upeu.edu.pe</code></h3>
+<p>La cuenta <code>mesa.sti@upeu.edu.pe</code> acumula simultaneamente:
+Helpdesk Administrator, User Administrator, Authentication
+Administrator, Exchange Administrator, Teams Administrator y
+posiblemente otros. Esto viola el principio de menor privilegio y crea
+un punto unico de compromiso critico. Si esta cuenta se ve comprometida,
+el atacante tiene control casi total del tenant.</p>
+<h3 id="roles-globales-que-deberian-ser-scoped">Roles globales que
+deberian ser scoped</h3>
+<p>Los siguientes roles estan asignados con scope en tenant completo
+pero su funcion es local:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Rol</th>
+<th>Usuarios afectados</th>
+<th>Scope correcto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Helpdesk Administrator</td>
+<td><code>mesadeayuda.jul@upeu.edu.pe</code>,
+<code>mesadeayuda.tpp@upeu.edu.pe</code>,
+<code>digesi.tarapoto@upeu.edu.pe</code>,
+<code>dti.jul@upeu.edu.pe</code></td>
+<td>AU por sede (Juliaca, Tarapoto)</td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td><code>direccionti.fcs@upeu.edu.pe</code>,
+<code>coordti.epg@upeu.edu.pe</code>,
+<code>direccionti.fia@upeu.edu.pe</code>,
+<code>ti.fce@upeu.edu.pe</code>,
+<code>teologia.ti@upeu.edu.pe</code></td>
+<td>AU por facultad o AU UPeU-Core</td>
+</tr>
+<tr>
+<td>Authentication Administrator</td>
+<td><code>alexileiva@upeu.edu.pe</code>,
+<code>ti.medicina@upeu.edu.pe</code></td>
+<td>AU por facultad</td>
+</tr>
+<tr>
+<td>Exchange Administrator</td>
+<td><code>notify@istat.edu.pe</code>,
+<code>jefatura.ti@union.pe</code></td>
+<td>AU ISTAT, AU UNION-PE (ya existen)</td>
+</tr>
+</tbody>
+</table>
+<h3
+id="tabla-completa-de-role-assignments-por-principal-84-assignments-scope-global">Tabla
+completa de role assignments por principal (84 assignments scope
+global)</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Rol</th>
+<th>Principal</th>
+<th>UPN</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Global Administrator</td>
+<td>David Urquizo</td>
+<td>daiurqz@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Global Administrator</td>
+<td>DIGETI Direccion General TI</td>
+<td>digesi@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Global Administrator</td>
+<td>Microsoft Office 365 Portal</td>
+<td>(service principal)</td>
+</tr>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>Mesa de Servicios TI</td>
+<td>mesa.sti@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>Mesa de Ayuda Juliaca</td>
+<td>mesadeayuda.jul@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>Mesa de Ayuda Tarapoto</td>
+<td>mesadeayuda.tpp@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>Miguel Chaponan</td>
+<td>soporte@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>DTI Tarapoto</td>
+<td>digesi.tarapoto@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>Jenson Chambi (DTI Juliaca)</td>
+<td>dti.jul@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>Alcy Saavedra (redes UNION)</td>
+<td>redes@union.pe</td>
+</tr>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>Sistema Academico EPG</td>
+<td>sistemaacademico.epg@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>Soporte Posgrado</td>
+<td>soporteposgrado@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td>Mesa de Servicios TI</td>
+<td>mesa.sti@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td>Coordinador de Sistemas FCS</td>
+<td>direccionti.fcs@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td>Coordinador TI EPG</td>
+<td>coordti.epg@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td>Direccion TI FIA</td>
+<td>direccionti.fia@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td>TI FCE Semipresencial</td>
+<td>ti.fcesemi@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td>TI PROESAD UPEU FT</td>
+<td>tiproesad.tpp@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td>Web Master EPG</td>
+<td>webmaster.epg@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td>Zileri Arapa TI EP Teologia</td>
+<td>teologia.ti@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td>ti.fce</td>
+<td>ti.fce@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td>Atencion al estudiante Academico UPeU</td>
+<td>ae.academico@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td>Jos Villegas (Plataforma Virtual)</td>
+<td>aulavirtual@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td>Sergio Calizaya Milla (UNION TI)</td>
+<td>jefatura.ti@union.pe</td>
+</tr>
+<tr>
+<td>Authentication Administrator</td>
+<td>Alexi Josue Leiva Gonzales</td>
+<td>alexileiva@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Authentication Administrator</td>
+<td>Medicina TI</td>
+<td>ti.medicina@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Authentication Administrator</td>
+<td>Mesa de Ayuda Juliaca</td>
+<td>mesadeayuda.jul@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Authentication Administrator</td>
+<td>Mesa de Servicios TI</td>
+<td>mesa.sti@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>License Administrator</td>
+<td>Coordinacion de Operaciones y Servicios TI Lima</td>
+<td>costi.lim@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>License Administrator</td>
+<td>Denis Villegas STI</td>
+<td>ad.sti@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>License Administrator</td>
+<td>Tesoreria UPeU</td>
+<td>tesoreria@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Exchange Administrator</td>
+<td>Joselito Valdez</td>
+<td>joselito@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Exchange Administrator</td>
+<td>Yostey Acuna</td>
+<td>yostey.acuna@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Exchange Administrator</td>
+<td>Denis Villegas STI</td>
+<td>ad.sti@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Exchange Administrator</td>
+<td>Mesa de Servicios TI</td>
+<td>mesa.sti@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Exchange Administrator</td>
+<td>Mesa de Ayuda Juliaca</td>
+<td>mesadeayuda.jul@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Exchange Administrator</td>
+<td>Mesa de Ayuda Tarapoto</td>
+<td>mesadeayuda.tpp@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Exchange Administrator</td>
+<td>Jenson Chambi DTI Juliaca</td>
+<td>dti.jul@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Exchange Administrator</td>
+<td>Notify ISTAT</td>
+<td>notify@istat.edu.pe</td>
+</tr>
+<tr>
+<td>Exchange Administrator</td>
+<td>Sergio Calizaya Milla (UNION)</td>
+<td>jefatura.ti@union.pe</td>
+</tr>
+<tr>
+<td>Exchange Administrator</td>
+<td>Miguel Chaponan</td>
+<td>soporte@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Security Administrator</td>
+<td>Denis Villegas STI</td>
+<td>ad.sti@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>SharePoint Administrator</td>
+<td>Shiane Farfan Vergara</td>
+<td>shiane.farfan@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>SharePoint Administrator</td>
+<td>automatizacion.crai</td>
+<td>automatizacion.crai@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Teams Administrator</td>
+<td>Mesa de Servicios TI</td>
+<td>mesa.sti@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Billing Administrator</td>
+<td>David Barrantes (Director DTI)</td>
+<td>digeti@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Dynamics 365 Administrator</td>
+<td>David Vilca Ccama</td>
+<td>davidvilca@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Compliance Administrator</td>
+<td>Soporte COEM</td>
+<td>soportecoem@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Global Reader</td>
+<td>Jenson Chambi DTI Juliaca</td>
+<td>dti.jul@upeu.edu.pe</td>
+</tr>
+<tr>
+<td>Reports Reader</td>
+<td>Admin CRM</td>
+<td>admincrm@upeu.edu.pe</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Nota:</strong> <code>mesa.sti@upeu.edu.pe</code> aparece en
+al menos 6 roles distintos con scope global. Requiere revision
+urgente.</p>
+<hr />
+<h2 id="grupos">7. Grupos</h2>
+<h3 id="estado-actual">Estado actual</h3>
+<table>
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Cantidad</th>
+<th>Observacion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M365 Groups / Teams</td>
+<td>995</td>
+<td>Creados por usuarios sin gobernanza</td>
+</tr>
+<tr>
+<td>Security Groups (cloud-only)</td>
+<td>2</td>
+<td>Sin dynamic membership</td>
+</tr>
+<tr>
+<td>Distribution Lists</td>
+<td>Variable (incluido en M365)</td>
+<td></td>
+</tr>
+<tr>
+<td>Dynamic Groups</td>
+<td><strong>0</strong></td>
+<td>Ninguno configurado</td>
+</tr>
+<tr>
+<td>AD-synced Groups</td>
+<td><strong>0</strong></td>
+<td>No hay AD on-prem</td>
+</tr>
+</tbody>
+</table>
+<h3 id="los-2-security-groups-existentes">Los 2 security groups
+existentes</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Nombre</th>
+<th>Proposito declarado</th>
+<th>Analisis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>“Estrategias basadas en la ciencia…”</td>
+<td>No claro</td>
+<td>Nombre no descriptivo, proposito desconocido. Revisar y
+probablemente eliminar.</td>
+</tr>
+<tr>
+<td><code>windows11</code></td>
+<td>Politica Windows 11 Enterprise (Intune)</td>
+<td>Unico security group con proposito tecnico claro.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="problemas">Problemas</h3>
+<ol type="1">
+<li><strong>0 dynamic groups</strong> significa que ninguna membresía se
+actualiza automaticamente. Si un usuario cambia de facultad o tipo,
+ningun grupo se actualiza.</li>
+<li><strong>995 grupos M365/Teams</strong> sin naming policy, sin
+propietario obligatorio, sin expiracion. Se acumulan
+indefinidamente.</li>
+<li><strong>Sin security groups para licenciamiento:</strong> las
+licencias se asignan individualmente (probablemente via Microsoft School
+Data Sync o manualmente), no via grupos. Esto hace imposible auditar
+quien tiene que licencia por que razon.</li>
+<li><strong>Sin grupos para Conditional Access:</strong> no hay grupos
+que definan politicas de acceso por tipo de usuario.</li>
+</ol>
+<h3 id="lo-que-se-necesita-para-iga">Lo que se necesita para IGA</h3>
+<p>MidPoint en Fase 12 creara y mantendra security groups en Entra ID
+con estas caracteristicas:</p>
+<ul>
+<li>Creados por MidPoint (no por usuarios finales)</li>
+<li>Named con convencion <code>GRP-{TIPO}-{SCOPE}</code> (ej.
+<code>GRP-Student-Lima</code>)</li>
+<li>Con <code>description</code> que documente el origen IGA</li>
+<li>Usados como base para asignacion de licencias y Conditional
+Access</li>
+<li>Nunca editados manualmente una vez bajo gobierno IGA</li>
+</ul>
+<hr />
+<h2 id="app-registrations">8. App Registrations</h2>
+<h3 id="volumen-total-200-aplicaciones">Volumen total: 200
+aplicaciones</h3>
+<p>El tenant tiene 200 App Registrations, lo que indica una
+proliferacion no gobernada. Muchas de estas son bots de Copilot Studio
+creados por usuarios de negocio sin participacion de TI central.</p>
+<h3 id="aplicaciones-relevantes-para-iga">Aplicaciones relevantes para
+IGA</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>App</th>
+<th>Fecha creacion</th>
+<th>Proposito</th>
+<th>Estado IGA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MidPoint-UPeU</code></td>
+<td>2026-04-16</td>
+<td>Conector IGA — Graph API read/write</td>
+<td>Activa — ampliar permisos Fase 12</td>
+</tr>
+<tr>
+<td><code>KeycloakUPeU</code></td>
+<td>2024-05-13</td>
+<td>SSO Keycloak ↔︎ Entra ID</td>
+<td>Activa — mantener</td>
+</tr>
+<tr>
+<td><code>ITService-UPeU</code></td>
+<td>2022-12-01</td>
+<td>Automatizacion TI interna</td>
+<td>Revisar si coexiste con MidPoint</td>
+</tr>
+<tr>
+<td><code>CANVAS UPEU</code></td>
+<td>2022-11-23</td>
+<td>LMS Canvas — SSO/provisioning</td>
+<td>Activa — inventariar permisos</td>
+</tr>
+<tr>
+<td><code>Autodesk SSO UPeU</code></td>
+<td>2024-05-07</td>
+<td>SSO Autodesk</td>
+<td>Activa — mantener</td>
+</tr>
+<tr>
+<td><code>Lamb Learning</code> / <code>Lamb Mission</code></td>
+<td>Variable</td>
+<td>Sistemas academicos UPeU</td>
+<td>Revisar alcance</td>
+</tr>
+<tr>
+<td><code>n8n</code></td>
+<td>2026-02-06</td>
+<td>Automatizacion de procesos</td>
+<td>Revisar si duplica con MidPoint</td>
+</tr>
+</tbody>
+</table>
+<h3 id="bots-copilot-studio-50-apps">Bots Copilot Studio (~50 apps)</h3>
+<p>Aproximadamente 50 App Registrations corresponden a bots de Microsoft
+Copilot Studio creados por distintas unidades (Portafolio Internado
+Medicina, Colportaje, etc.). Cada bot crea automaticamente su App
+Registration con permisos que varían. Problemas:</p>
+<ul>
+<li>Sin inventario centralizado de permisos delegados vs
+aplicacion.</li>
+<li>Sin revisiones periodicas de acceso.</li>
+<li>Tokens potencialmente activos sin propietario que los
+monitoree.</li>
+<li>Algunos pueden tener permisos excesivos heredados de templates.</li>
+</ul>
+<h3 id="apps-de-dynamics-365-20-apps">Apps de Dynamics 365 (~20
+apps)</h3>
+<p>Relacionadas con el despliegue de Dynamics 365 Sales (CRM).
+Gestionadas por David Vilca Ccama (Dynamics 365 Administrator). Fuera
+del alcance inmediato de IGA pero deben incluirse en el inventario de
+aplicaciones del catalogo IGA.</p>
+<h3 id="apps-sin-nombre-claro-30-apps">Apps sin nombre claro (~30
+apps)</h3>
+<p>Aproximadamente 30 App Registrations con nombres como “app-1”,
+timestamps, o nombres de prueba. Candidatas a revision y eliminacion
+tras auditoria de propietario.</p>
+<h3 id="accion-requerida">Accion requerida</h3>
+<p>Antes de Fase 12, David Urquizo debe ejecutar una auditoria de App
+Registrations con:</p>
+<ol type="1">
+<li>Identificar propietario de cada app.</li>
+<li>Revocar apps huerfanas (sin propietario, sin uso en 90+ dias).</li>
+<li>Documentar permisos de <code>MidPoint-UPeU</code> y expandirlos
+segun necesidades Fase 12.</li>
+<li>Establecer proceso de aprobacion para nuevas App Registrations.</li>
+</ol>
+<hr />
+<h2 id="diseño-propuesto-iga-administrative-units">9. Diseño propuesto
+IGA — Administrative Units</h2>
+<h3 id="principio-de-diseño">Principio de diseño</h3>
+<p>Cada AU modela un <strong>dominio de delegacion
+administrativa</strong>, no un grupo de usuarios. La estructura
+propuesta sigue el patron: una AU por entidad legal + una AU por sede
+para UPeU-Core.</p>
+<h3 id="aus-propuestas">AUs propuestas</h3>
+<pre><code>Tenant UPeU
+├── AU: UPeU-Core-Lima          ← upeu.edu.pe usuarios sede Lima
+├── AU: UPeU-Core-Juliaca       ← upeu.edu.pe usuarios sede Juliaca (FILIAL)
+├── AU: UPeU-Core-Tarapoto      ← upeu.edu.pe usuarios sede Tarapoto (FILIAL)
+├── AU: UNION-PE                ← dominio union.pe (YA EXISTE — mantener)
+├── AU: ISTAT                   ← dominio istat.edu.pe (YA EXISTE — mantener)
+└── AU: IMPRENTAUNION-COM       ← dominio imprentaunion.com (YA EXISTE — mantener)</code></pre>
+<h3 id="aus-a-convertir-en-security-groups">AUs a convertir en Security
+Groups</h3>
+<table>
+<thead>
+<tr>
+<th>AU actual</th>
+<th>Accion</th>
+<th>Reemplazar con</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DTI</td>
+<td>Convertir</td>
+<td>Security Group <code>GRP-DTI-Lima</code></td>
+</tr>
+<tr>
+<td>ITService</td>
+<td>Convertir</td>
+<td>Security Group <code>GRP-ServiceAccounts</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="como-midpoint-poblaria-las-aus-fase-12">Como MidPoint poblaria
+las AUs (Fase 12)</h3>
+<p>MidPoint asignaria usuarios a AUs via outbound mapping basado en
+atributos del usuario:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Condicion (desde Oracle LAMB)</th>
+<th>AU destino</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>campus = 'Lima'</code> AND
+<code>organization = 'upeu.edu.pe'</code></td>
+<td>AU: UPeU-Core-Lima</td>
+</tr>
+<tr>
+<td><code>campus = 'Juliaca'</code> AND
+<code>organization = 'upeu.edu.pe'</code></td>
+<td>AU: UPeU-Core-Juliaca</td>
+</tr>
+<tr>
+<td><code>campus = 'Tarapoto'</code> AND
+<code>organization = 'upeu.edu.pe'</code></td>
+<td>AU: UPeU-Core-Tarapoto</td>
+</tr>
+<tr>
+<td><code>domain = 'union.pe'</code></td>
+<td>AU: UNION-PE</td>
+</tr>
+<tr>
+<td><code>domain = 'istat.edu.pe'</code></td>
+<td>AU: ISTAT</td>
+</tr>
+<tr>
+<td><code>domain = 'imprentaunion.com'</code></td>
+<td>AU: IMPRENTAUNION-COM</td>
+</tr>
+</tbody>
+</table>
+<p>La membresía en AUs en Entra ID no se gestiona via dynamic groups
+sino via el outbound resource MidPoint→Entra ID. MidPoint es la unica
+fuente de verdad para la asignacion de AU membership.</p>
+<hr />
+<h2 id="diseño-propuesto-roles-delegados-por-sede">10. Diseño propuesto
+— Roles delegados por sede</h2>
+<h3 id="modelo-target">Modelo target</h3>
+<p>Reemplazar los 84 role assignments con scope global por assignments
+scoped a AU:</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Rol</th>
+<th>Scope actual</th>
+<th>Scope propuesto</th>
+<th>Quien</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>Tenant (global)</td>
+<td>AU: UPeU-Core-Lima</td>
+<td><code>mesa.sti@upeu.edu.pe</code></td>
+</tr>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>Tenant (global)</td>
+<td>AU: UPeU-Core-Juliaca</td>
+<td><code>mesadeayuda.jul@upeu.edu.pe</code>,
+<code>dti.jul@upeu.edu.pe</code></td>
+</tr>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>Tenant (global)</td>
+<td>AU: UPeU-Core-Tarapoto</td>
+<td><code>mesadeayuda.tpp@upeu.edu.pe</code>,
+<code>digesi.tarapoto@upeu.edu.pe</code></td>
+</tr>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>AU ISTAT</td>
+<td>AU: ISTAT (ya correcto)</td>
+<td><code>notify@istat.edu.pe</code></td>
+</tr>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>AU UNION-PE</td>
+<td>AU: UNION-PE (ya correcto)</td>
+<td><code>jefatura.ti@union.pe</code></td>
+</tr>
+<tr>
+<td>Helpdesk Administrator</td>
+<td>AU IMPRENTAUNION-COM</td>
+<td>AU: IMPRENTAUNION-COM (ya correcto)</td>
+<td><code>andy.espinoza@imprentaunion.com</code></td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td>Tenant (global)</td>
+<td>AU: UPeU-Core-Lima</td>
+<td><code>mesa.sti@upeu.edu.pe</code></td>
+</tr>
+<tr>
+<td>User Administrator</td>
+<td>Tenant (global)</td>
+<td>AU por facultad (a definir)</td>
+<td><code>direccionti.fcs@upeu.edu.pe</code>,
+<code>ti.fce@upeu.edu.pe</code>, <code>teologia.ti@upeu.edu.pe</code>,
+etc.</td>
+</tr>
+<tr>
+<td>Authentication Administrator</td>
+<td>Tenant (global)</td>
+<td>AU: UPeU-Core-Lima</td>
+<td><code>alexileiva@upeu.edu.pe</code>,
+<code>ti.medicina@upeu.edu.pe</code>,
+<code>mesa.sti@upeu.edu.pe</code></td>
+</tr>
+<tr>
+<td>Exchange Administrator</td>
+<td>AU ISTAT</td>
+<td>AU: ISTAT (ya correcto)</td>
+<td><code>notify@istat.edu.pe</code></td>
+</tr>
+<tr>
+<td>Exchange Administrator</td>
+<td>AU UNION-PE</td>
+<td>AU: UNION-PE (ya correcto)</td>
+<td><code>jefatura.ti@union.pe</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="roles-que-quedan-en-scope-global-justificados">Roles que quedan
+en scope global (justificados)</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Rol</th>
+<th>Principal</th>
+<th>Justificacion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Global Administrator</td>
+<td>David Urquizo (<code>daiurqz@upeu.edu.pe</code>)</td>
+<td>Administrador del tenant — debe ser global</td>
+</tr>
+<tr>
+<td>Billing Administrator</td>
+<td>David Barrantes (<code>digeti@upeu.edu.pe</code>)</td>
+<td>Las suscripciones son tenant-wide</td>
+</tr>
+<tr>
+<td>Security Administrator</td>
+<td>Denis Villegas (<code>ad.sti@upeu.edu.pe</code>)</td>
+<td>La seguridad es tenant-wide</td>
+</tr>
+<tr>
+<td>Exchange Administrator</td>
+<td>Joselito Valdez, Yostey Acuna, Denis Villegas</td>
+<td>Exchange Online es tenant-wide</td>
+</tr>
+<tr>
+<td>SharePoint Administrator</td>
+<td>Shiane Farfan, <code>automatizacion.crai</code></td>
+<td>SharePoint Online es tenant-wide</td>
+</tr>
+<tr>
+<td>Compliance Administrator</td>
+<td>Soporte COEM</td>
+<td>Compliance es tenant-wide</td>
+</tr>
+<tr>
+<td>Dynamics 365 Administrator</td>
+<td>David Vilca Ccama</td>
+<td>Dynamics 365 es tenant-wide</td>
+</tr>
+</tbody>
+</table>
+<h3 id="roles-a-revisar-posiblemente-eliminar-o-reducir">Roles a revisar
+(posiblemente eliminar o reducir)</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Principal</th>
+<th>Roles actuales</th>
+<th>Recomendacion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mesa.sti@upeu.edu.pe</code></td>
+<td>Helpdesk + User + Auth + Exchange + Teams (global)</td>
+<td>Reducir a Helpdesk Admin scoped a AU Lima. Los otros roles a cuentas
+dedicadas.</td>
+</tr>
+<tr>
+<td><code>digesi@upeu.edu.pe</code></td>
+<td>Global Administrator</td>
+<td>Bajar a Billing Administrator o similar. Si necesita Global Admin,
+usar PIM (just-in-time).</td>
+</tr>
+<tr>
+<td><code>jefatura.ti@union.pe</code></td>
+<td>User Admin global + Helpdesk AU UNION-PE</td>
+<td>Eliminar User Admin global. Solo AU UNION-PE.</td>
+</tr>
+<tr>
+<td><code>dti.jul@upeu.edu.pe</code></td>
+<td>Helpdesk + Exchange + Global Reader (global)</td>
+<td>Reducir a Helpdesk scoped AU Juliaca. Quitar Exchange y Global
+Reader globales.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="diseño-propuesto-grupos-de-seguridad-a-crear">11. Diseño
+propuesto — Grupos de seguridad a crear</h2>
+<h3 id="grupos-de-seguridad-prioritarios-pre-fase-12">Grupos de
+seguridad prioritarios (pre-Fase 12)</h3>
+<p>A diferencia de los grupos M365/Teams (que los crean usuarios), estos
+grupos los crea y mantiene el equipo DTI o MidPoint. Son la base para
+Conditional Access y asignacion de licencias.</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr>
+<th>Nombre</th>
+<th>Tipo</th>
+<th>Proposito</th>
+<th>Membresía</th>
+<th>Quien gestiona</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GRP-Helpdesk-Lima</code></td>
+<td>Security</td>
+<td>Agentes de helpdesk sede Lima</td>
+<td>Manual → MidPoint Fase 12</td>
+<td>DTI Lima</td>
+</tr>
+<tr>
+<td><code>GRP-Helpdesk-Juliaca</code></td>
+<td>Security</td>
+<td>Agentes de helpdesk sede Juliaca</td>
+<td>Manual → MidPoint Fase 12</td>
+<td>DTI Juliaca</td>
+</tr>
+<tr>
+<td><code>GRP-Helpdesk-Tarapoto</code></td>
+<td>Security</td>
+<td>Agentes de helpdesk sede Tarapoto</td>
+<td>Manual → MidPoint Fase 12</td>
+<td>DTI Tarapoto</td>
+</tr>
+<tr>
+<td><code>GRP-DTI-Lima</code></td>
+<td>Security</td>
+<td>Personal DTI Lima (reemplaza AU DTI)</td>
+<td>Manual</td>
+<td>DTI Lima</td>
+</tr>
+<tr>
+<td><code>GRP-ServiceAccounts</code></td>
+<td>Security</td>
+<td>Cuentas desatendidas y de servicio (reemplaza AU ITService)</td>
+<td>Manual</td>
+<td>DTI Lima</td>
+</tr>
+<tr>
+<td><code>GRP-LIC-A3-Faculty</code></td>
+<td>Security</td>
+<td>Receptores licencia M365 A3 Faculty</td>
+<td>MidPoint Fase 12</td>
+<td>MidPoint</td>
+</tr>
+<tr>
+<td><code>GRP-LIC-A1-Student</code></td>
+<td>Security</td>
+<td>Receptores licencia O365 A1 Student</td>
+<td>MidPoint Fase 12</td>
+<td>MidPoint</td>
+</tr>
+<tr>
+<td><code>GRP-LIC-A1-Faculty</code></td>
+<td>Security</td>
+<td>Receptores licencia O365 A1 Faculty</td>
+<td>MidPoint Fase 12</td>
+<td>MidPoint</td>
+</tr>
+<tr>
+<td><code>GRP-CA-MFA-Required</code></td>
+<td>Security</td>
+<td>Usuarios que requieren MFA (Conditional Access)</td>
+<td>MidPoint Fase 12</td>
+<td>MidPoint</td>
+</tr>
+<tr>
+<td><code>GRP-CA-Trusted-Devices</code></td>
+<td>Security</td>
+<td>Dispositivos corporativos confiables (Intune)</td>
+<td>Intune</td>
+<td>DTI</td>
+</tr>
+</tbody>
+</table>
+<h3
+id="grupos-a-crear-antes-de-midpoint-accion-inmediata-de-david">Grupos a
+crear antes de MidPoint (accion inmediata de David)</h3>
+<p>Los tres grupos de Helpdesk por sede pueden crearse ahora manualmente
+para permitir scope correcto en role assignments:</p>
+<pre><code>GRP-Helpdesk-Lima       → miembros actuales: mesa.sti, soporte, alexileiva, ti.medicina
+GRP-Helpdesk-Juliaca    → miembros actuales: mesadeayuda.jul, dti.jul
+GRP-Helpdesk-Tarapoto   → miembros actuales: mesadeayuda.tpp, digesi.tarapoto</code></pre>
+<hr />
+<h2 id="prerrequisitos-para-activar-iga">12. Prerrequisitos para activar
+IGA</h2>
+<h3
+id="permisos-que-david-urquizo-debe-conceder-a-midpoint-upeu">Permisos
+que David Urquizo debe conceder a <code>MidPoint-UPeU</code></h3>
+<p>La App Registration <code>MidPoint-UPeU</code> existe desde
+2026-04-16. Para que MidPoint pueda operar en Fase 12 (provisioning
+outbound hacia Entra ID), David debe conceder los siguientes permisos
+via la consola de Entra ID
+(<code>App registrations &gt; MidPoint-UPeU &gt; API permissions</code>):</p>
+<p><strong>Permisos de lectura (ya deberan estar activos para Fases
+1-11):</strong></p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Tipo</th>
+<th>Justificacion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>User.Read.All</code></td>
+<td>Application</td>
+<td>Leer todos los usuarios para correlacion</td>
+</tr>
+<tr>
+<td><code>Group.Read.All</code></td>
+<td>Application</td>
+<td>Leer grupos para inventario</td>
+</tr>
+<tr>
+<td><code>Directory.Read.All</code></td>
+<td>Application</td>
+<td>Leer estructura del directorio</td>
+</tr>
+<tr>
+<td><code>AuditLog.Read.All</code></td>
+<td>Application</td>
+<td>Lectura de audit log para evidencia ISO 27001</td>
+</tr>
+<tr>
+<td><code>AdministrativeUnit.Read.All</code></td>
+<td>Application</td>
+<td>Leer AUs para correlacion</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Permisos de escritura (activar en Fase 12 — requieren
+aprobacion explicita):</strong></p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Tipo</th>
+<th>Justificacion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>User.ReadWrite.All</code></td>
+<td>Application</td>
+<td>Escribir atributos estructurados (department, employeeType,
+officeLocation)</td>
+</tr>
+<tr>
+<td><code>Group.ReadWrite.All</code></td>
+<td>Application</td>
+<td>Crear y mantener security groups IGA</td>
+</tr>
+<tr>
+<td><code>AdministrativeUnit.ReadWrite.All</code></td>
+<td>Application</td>
+<td>Agregar/remover usuarios de AUs</td>
+</tr>
+<tr>
+<td><code>Directory.ReadWrite.All</code></td>
+<td>Application</td>
+<td>Operaciones de directorio generales</td>
+</tr>
+</tbody>
+</table>
+<p><strong>IMPORTANTE:</strong> los permisos de escritura requieren
+<code>Grant admin consent</code> por parte de David Urquizo. No se
+activan solos con la asignacion. Este es el paso que Alberto no puede
+hacer por su cuenta.</p>
+<h3 id="acciones-previas-que-debe-ejecutar-david-sin-midpoint">Acciones
+previas que debe ejecutar David (sin MidPoint)</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Accion</th>
+<th>Razon</th>
+<th>Urgencia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1</td>
+<td>Resolver licencias sobreusadas (<code>A5_Faculty</code>,
+<code>Teams_Premium</code>)</td>
+<td>Compliance Microsoft</td>
+<td>Inmediata</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>Investigar y resolver <code>Copilot_EDU</code> 8 asignadas / 0
+prepagadas</td>
+<td>Evitar facturacion imprevista</td>
+<td>Inmediata</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>Crear AUs <code>UPeU-Core-Lima</code>,
+<code>UPeU-Core-Juliaca</code>, <code>UPeU-Core-Tarapoto</code></td>
+<td>Base para scope de roles</td>
+<td>Alta</td>
+</tr>
+<tr>
+<td>D4</td>
+<td>Reducir scope de 84 role assignments globales a AUs
+correspondientes</td>
+<td>Seguridad — menor privilegio</td>
+<td>Alta</td>
+</tr>
+<tr>
+<td>D5</td>
+<td>Separar roles de <code>mesa.sti@upeu.edu.pe</code> en cuentas
+dedicadas</td>
+<td>Eliminar punto unico de compromiso</td>
+<td>Alta</td>
+</tr>
+<tr>
+<td>D6</td>
+<td>Conceder permisos de lectura a <code>MidPoint-UPeU</code> y hacer
+Grant admin consent</td>
+<td>Habilitar correlacion IGA</td>
+<td>Alta</td>
+</tr>
+<tr>
+<td>D7</td>
+<td>Auditar App Registrations sin propietario (target: 200 → menos de
+100)</td>
+<td>Reducir superficie de ataque</td>
+<td>Media</td>
+</tr>
+<tr>
+<td>D8</td>
+<td>Implementar naming policy para grupos M365/Teams</td>
+<td>Gobernanza de grupos</td>
+<td>Media</td>
+</tr>
+<tr>
+<td>D9</td>
+<td>Habilitar expiracion de grupos M365 (90-180 dias)</td>
+<td>Higiene del directorio</td>
+<td>Media</td>
+</tr>
+<tr>
+<td>D10</td>
+<td>Mover <code>digesi@upeu.edu.pe</code> de Global Admin a rol menor +
+PIM</td>
+<td>Menor privilegio en cuentas funcionales</td>
+<td>Media</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="problemas-a-resolver">13. Problemas a resolver</h2>
+<p>Lista priorizada de problemas identificados. Clasificados por impacto
+en el proyecto IGA y en la seguridad del tenant.</p>
+<h3
+id="criticos-bloquean-fase-12-o-representan-riesgo-de-seguridad-activo">Criticos
+(bloquean Fase 12 o representan riesgo de seguridad activo)</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Problema</th>
+<th>Impacto</th>
+<th>Accion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P1</td>
+<td><code>department</code>, <code>employeeType</code>,
+<code>officeLocation</code>, <code>companyName</code> vacios en ~100%
+usuarios</td>
+<td>MidPoint no puede clasificar ni correlacionar usuarios en Entra
+ID</td>
+<td>Resolver via write-back MidPoint Fase 12. No poblar
+manualmente.</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>84 role assignments con scope global cuando deberian ser scoped</td>
+<td>Un Helpdesk de Juliaca puede resetear passwords de cualquier usuario
+del tenant</td>
+<td>Crear AUs por sede y re-scopear. Accion D3 + D4.</td>
+</tr>
+<tr>
+<td>P3</td>
+<td><code>mesa.sti@upeu.edu.pe</code> con 6+ roles globales
+simultaneamente</td>
+<td>Punto unico de compromiso critico</td>
+<td>Separar en cuentas dedicadas por funcion. Accion D5.</td>
+</tr>
+<tr>
+<td>P4</td>
+<td>0 dynamic groups con P1 habilitado</td>
+<td>Licencias y Conditional Access no pueden automatizarse</td>
+<td>Crear dynamic groups tras resolver atributos. Post-Fase 12.</td>
+</tr>
+<tr>
+<td>P5</td>
+<td>Licencias sobreusadas (<code>A5_Faculty</code> 16/15,
+<code>Teams_Premium</code> 19/18)</td>
+<td>Incumplimiento contractual con Microsoft</td>
+<td>Accion D1 — inmediata.</td>
+</tr>
+<tr>
+<td>P6</td>
+<td><code>Copilot_EDU</code> 8 asignadas / 0 prepagadas</td>
+<td>Posible deuda oculta</td>
+<td>Accion D2 — inmediata.</td>
+</tr>
+</tbody>
+</table>
+<h3
+id="importantes-degradan-la-calidad-del-gobierno-de-identidades">Importantes
+(degradan la calidad del gobierno de identidades)</h3>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Problema</th>
+<th>Impacto</th>
+<th>Accion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P7</td>
+<td>0 security groups para licenciamiento</td>
+<td>No hay auditoria de “quien tiene que licencia por que”</td>
+<td>Crear GRP-LIC-* y migrar asignaciones. Post-Fase 12 con
+MidPoint.</td>
+</tr>
+<tr>
+<td>P8</td>
+<td><code>digesi@upeu.edu.pe</code> como Global Admin (cuenta funcional
+compartida)</td>
+<td>Multiples personas con Global Admin sin auditoria individual</td>
+<td>Bajar a Billing Admin + PIM. Accion D10.</td>
+</tr>
+<tr>
+<td>P9</td>
+<td>AU <code>DTI</code> y AU <code>ITService</code> con proposito
+incorrecto (son grupos, no dominios de delegacion)</td>
+<td>Confusion en el modelo de governance</td>
+<td>Convertir a Security Groups.</td>
+</tr>
+<tr>
+<td>P10</td>
+<td>~30 App Registrations sin nombre o huerfanas</td>
+<td>Superficie de ataque activa con tokens validos potencialmente</td>
+<td>Auditoria y limpieza. Accion D7.</td>
+</tr>
+<tr>
+<td>P11</td>
+<td>~50 bots Copilot Studio sin gobernanza de permisos</td>
+<td>Permisos delegados no revisados en Graph API</td>
+<td>Inventariar y aplicar Access Reviews (requiere Entra P2).</td>
+</tr>
+<tr>
+<td>P12</td>
+<td>No existe AU <code>UPeU-Core</code> para los 73K usuarios de
+<code>upeu.edu.pe</code></td>
+<td>Sin base estructural para governance del dominio principal</td>
+<td>Crear AUs por sede. Accion D3.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="menores-mejoras-de-higiene">Menores (mejoras de higiene)</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Problema</th>
+<th>Accion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P13</td>
+<td>995 grupos M365/Teams sin naming policy ni expiracion</td>
+<td>Implementar naming policy + expiracion 180 dias. Accion D8 +
+D9.</td>
+</tr>
+<tr>
+<td>P14</td>
+<td>Security Group “Estrategias basadas en la ciencia…” sin proposito
+claro</td>
+<td>Revisar y eliminar o renombrar.</td>
+</tr>
+<tr>
+<td>P15</td>
+<td><code>jefatura.ti@union.pe</code> con User Administrator global
+ademas de roles AU UNION-PE</td>
+<td>Revocar User Admin global. Solo AU UNION-PE es suficiente.</td>
+</tr>
+<tr>
+<td>P16</td>
+<td><code>dti.jul@upeu.edu.pe</code> con Exchange Administrator + Global
+Reader globales</td>
+<td>Revocar ambos. Solo Helpdesk scoped a AU Juliaca.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="apendice-relacion-con-el-roadmap-iga">Apendice — Relacion con el
+roadmap IGA</h2>
+<p>Este documento es insumo para la planificacion de la <strong>Fase
+12</strong> del roadmap IGA UPeU (provisioning outbound hacia Entra ID).
+Las fases anteriores (1-11) tratan Entra ID como solo lectura.</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Fase IGA</th>
+<th>Accion sobre Entra ID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fase 5 (actual)</td>
+<td>Resource Entra ID read-only — correlacion de usuarios via UPN</td>
+</tr>
+<tr>
+<td>Fases 6-11</td>
+<td>Sin cambios en Entra ID. Provisioning va a OpenLDAP + Keycloak.</td>
+</tr>
+<tr>
+<td>Fase 12</td>
+<td>Write-back MidPoint→Entra ID: atributos estructurados + AU
+membership + security groups + asignacion de licencias via grupos</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Prerequisito no negociable para Fase 12:</strong> David
+Urquizo debe completar las acciones D1-D6 de la seccion 12 antes de que
+MidPoint pueda escribir en Entra ID de forma segura y util.</p>
+<hr />
+<p><em>Documento generado el 2026-05-19 por Alberto Sanchez (DTI UPeU /
+SciBack IGA) como parte del proyecto IGA canónico UPeU. Snapshot basado
+en datos del tenant a la misma fecha.</em></p>
+</article>
+</body>
+</html>
