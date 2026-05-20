@@ -1,30 +1,36 @@
 <!DOCTYPE html>
-<html lang="es">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>Estructura Entra ID — Universidad Peruana Unión</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.0/github-markdown.min.css">
   <style>
-    body { max-width: 960px; margin: 0 auto; padding: 2rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-    .markdown-body { box-sizing: border-box; min-width: 200px; max-width: 980px; margin: 0 auto; padding: 2rem; }
-    #toc { background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; padding: 1rem 1.5rem; margin-bottom: 2rem; }
-    #toc h2 { font-size: 1rem; margin-top: 0; color: #57606a; }
-    #toc ul { margin: 0; padding-left: 1.2rem; }
-    #toc li { line-height: 1.8; }
-    table { width: 100%; border-collapse: collapse; }
-    th { background: #f6f8fa; }
-    .metadata { color: #57606a; font-size: 0.9rem; border-bottom: 1px solid #d0d7de; padding-bottom: 1rem; margin-bottom: 2rem; }
-    h1 { border-bottom: 2px solid #0969da; padding-bottom: 0.5rem; }
-    h2 { border-bottom: 1px solid #d0d7de; }
-    @media print { #toc { break-inside: avoid; } }
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.0/github-markdown.min.css" />
 </head>
 <body>
-<article class="markdown-body">
-<h1>Estructura Entra ID — Universidad Peruana Unión</h1>
-<nav id="toc">
-<h2>Tabla de contenidos</h2>
+<header id="title-block-header">
+<h1 class="title">Estructura Entra ID — Universidad Peruana Unión</h1>
+</header>
+<nav id="TOC" role="doc-toc">
 <ul>
 <li><a href="#estructura-entra-id-universidad-peruana-unión"
 id="toc-estructura-entra-id-universidad-peruana-unión">Estructura Entra
@@ -228,55 +234,87 @@ provisioning útil.</p>
 </tr>
 </tbody>
 </table>
-<h3 id="dominios-registrados-y-entidades-asociadas">Dominios registrados
-y entidades asociadas</h3>
+<h3 id="dominios-registrados">Dominios registrados</h3>
+<p>Datos obtenidos directamente de la Graph API
+(<code>GET /organization?$select=verifiedDomains</code>).</p>
 <table>
 <colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
+<col style="width: 15%" />
+<col style="width: 20%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 15%" />
 </colgroup>
 <thead>
 <tr>
 <th>Dominio</th>
-<th>Entidad</th>
-<th>Rol en la institución</th>
+<th style="text-align: right;">Usuarios</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">Initial</th>
+<th>Capacidades</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>upeu.edu.pe</code></td>
-<td>Universidad Peruana Unión</td>
-<td>Universidad principal (~73K usuarios)</td>
-</tr>
-<tr>
-<td><code>istat.edu.pe</code></td>
-<td>Instituto Tecnológico Adventista del Titicaca</td>
-<td>Instituto afiliado (Juliaca)</td>
+<td style="text-align: right;">72.439</td>
+<td style="text-align: center;">✓</td>
+<td style="text-align: center;">—</td>
+<td>Email, OfficeCommunicationsOnline, OrgIdAuthentication, Yammer,
+Intune</td>
 </tr>
 <tr>
 <td><code>union.pe</code></td>
-<td>Productos Unión S.A.C.</td>
-<td>Editorial / librería universitaria</td>
-</tr>
-<tr>
-<td><code>imprentaunion.com</code></td>
-<td>Imprenta Unión</td>
-<td>Empresa editorial asociada</td>
+<td style="text-align: right;">339</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">—</td>
+<td>Email</td>
 </tr>
 <tr>
 <td><code>upeuedupe.onmicrosoft.com</code></td>
-<td>Tenant técnico</td>
-<td>Dominio de fallback Microsoft</td>
+<td style="text-align: right;">264</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">✓</td>
+<td>Email, OfficeCommunicationsOnline</td>
+</tr>
+<tr>
+<td><code>istat.edu.pe</code></td>
+<td style="text-align: right;">84</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">—</td>
+<td>Email</td>
+</tr>
+<tr>
+<td><code>imprentaunion.com</code></td>
+<td style="text-align: right;">70</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">—</td>
+<td>Email, OfficeCommunicationsOnline, Intune</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td style="text-align: right;"><strong>73.196</strong></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td></td>
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p><strong>Nota:</strong> la API no expone el nombre legal de la
+organización propietaria de cada dominio. Los nombres de entidad
+mostrados en versiones anteriores de este documento (“Instituto
+Tecnológico Adventista del Titicaca”, “Productos Unión S.A.C.”,
+“Imprenta Unión”) fueron inferidos por el redactor y deben ser
+verificados con David Urquizo antes de usarlos en documentación
+oficial.</p>
+</blockquote>
 <h3 id="implicancias-de-la-estructura-multi-dominio">Implicancias de la
 estructura multi-dominio</h3>
-<p>El tenant UPeU aloja <strong>cuatro entidades legales
-distintas</strong> en un único directorio. Esto es operativamente
+<p>El tenant UPeU aloja <strong>al menos cuatro dominios de diferentes
+organizaciones</strong> en un único directorio. Esto es operativamente
 correcto para tener SSO unificado con M365, pero requiere que la
-gobernanza de identidades trate a cada entidad como un dominio de
+gobernanza de identidades trate a cada dominio como un ámbito de
 administración separado. Las Administrative Units ya reflejan
 parcialmente este diseño (ver sección 5).</p>
 <p>Para el modelo IGA, cada dominio tiene su propia IIA (fuente
@@ -2044,6 +2082,5 @@ MidPoint pueda escribir en Entra ID de forma segura y util.</p>
 <p><em>Documento generado el 2026-05-19 por Alberto Sanchez (DTI UPeU /
 SciBack IGA) como parte del proyecto IGA canónico UPeU. Snapshot basado
 en datos del tenant a la misma fecha.</em></p>
-</article>
 </body>
 </html>

@@ -68,19 +68,24 @@ Entra ID está declarado como **solo lectura en Fases 1 a 11** del roadmap IGA. 
 | Sync AD on-prem | No (cloud-only) |
 | Modelo de usuario | Cloud-only |
 
-### Dominios registrados y entidades asociadas
+### Dominios registrados
 
-| Dominio | Entidad | Rol en la institución |
-|---|---|---|
-| `upeu.edu.pe` | Universidad Peruana Unión | Universidad principal (~73K usuarios) |
-| `istat.edu.pe` | Instituto Tecnológico Adventista del Titicaca | Instituto afiliado (Juliaca) |
-| `union.pe` | Productos Unión S.A.C. | Editorial / librería universitaria |
-| `imprentaunion.com` | Imprenta Unión | Empresa editorial asociada |
-| `upeuedupe.onmicrosoft.com` | Tenant técnico | Dominio de fallback Microsoft |
+Datos obtenidos directamente de la Graph API (`GET /organization?$select=verifiedDomains`).
+
+| Dominio | Usuarios | Default | Initial | Capacidades |
+|---|---:|:---:|:---:|---|
+| `upeu.edu.pe` | 72.439 | ✓ | — | Email, OfficeCommunicationsOnline, OrgIdAuthentication, Yammer, Intune |
+| `union.pe` | 339 | — | — | Email |
+| `upeuedupe.onmicrosoft.com` | 264 | — | ✓ | Email, OfficeCommunicationsOnline |
+| `istat.edu.pe` | 84 | — | — | Email |
+| `imprentaunion.com` | 70 | — | — | Email, OfficeCommunicationsOnline, Intune |
+| **Total** | **73.196** | | | |
+
+> **Nota:** la API no expone el nombre legal de la organización propietaria de cada dominio. Los nombres de entidad mostrados en versiones anteriores de este documento ("Instituto Tecnológico Adventista del Titicaca", "Productos Unión S.A.C.", "Imprenta Unión") fueron inferidos por el redactor y deben ser verificados con David Urquizo antes de usarlos en documentación oficial.
 
 ### Implicancias de la estructura multi-dominio
 
-El tenant UPeU aloja **cuatro entidades legales distintas** en un único directorio. Esto es operativamente correcto para tener SSO unificado con M365, pero requiere que la gobernanza de identidades trate a cada entidad como un dominio de administración separado. Las Administrative Units ya reflejan parcialmente este diseño (ver sección 5).
+El tenant UPeU aloja **al menos cuatro dominios de diferentes organizaciones** en un único directorio. Esto es operativamente correcto para tener SSO unificado con M365, pero requiere que la gobernanza de identidades trate a cada dominio como un ámbito de administración separado. Las Administrative Units ya reflejan parcialmente este diseño (ver sección 5).
 
 Para el modelo IGA, cada dominio tiene su propia IIA (fuente autoritativa de identidad). ISTAT, UNION-PE e IMPRENTAUNION-COM no provienen de Oracle LAMB UPeU sino de sus propios sistemas locales. Esta separación debe mantenerse en el modelo de correlación MidPoint.
 
