@@ -143,7 +143,8 @@
         <timestamp>2026-04-16T16:16:00.402Z</timestamp>
         <nodeId>DefaultNode</nodeId>
     </operationalStateHistory>
-    <connectorRef oid="b7982b43-a0e8-4341-a063-eff440ae2cf4" relation="org:default" type="c:ConnectorType"/>
+    <connectorRef oid="dabc7359-a65a-47cc-89db-d05b2f0c204e" relation="org:default" type="c:ConnectorType"/>
+    <!-- connector-koha v1.2.1 — fix DT-7: CREATE sin patron_id no corrompe shadow -->
     <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
         <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.identicum.midpoint.connector-koha/com.identicum.connectors.KohaConnector">
             <cfg:serviceAddress>https://biblioteca-staff.upeu.edu.pe</cfg:serviceAddress>
