@@ -142,7 +142,7 @@ PATCH REST aplicado. Commit `1a5fb52`:
 
 - Tag `post-consolidation-2026-05-19` creado sobre commit `ca01197` y pusheado
 - `git pull` en PROD: fast-forward exitoso hasta `1a5fb52`
-- Pendiente (espera confirmación Alberto): `gh repo archive SciBack/midpoint --yes`
+- `gh repo archive SciBack/midpoint --yes` ✅ **EJECUTADO 2026-05-20** — repo ya estaba archivado
 
 ### ✅ P6 — Reactivar pipeline de sincronización post-OOM — COMPLETADO 2026-05-20
 
@@ -189,7 +189,7 @@ El motor no podía resolver el focus item para correlación.
 | DT-3 | `SchemaException: category_id [STAFF, DOCEN]` en usuarios con doble rol Koha | Recompute | ✅ **RESUELTO** — `strong`→`weak` en `AR-Koha-Patron-Staff`. Commit `31a7785` |
 | DT-4 | Dependencia circular en mappings OT estudiantes `#[12,21,22,23,25,32,33]` | Object Template | ✅ **RESUELTO** — Bloque H leía `lifecycleState` como source de sí mismo. Fix: `focus?.lifecycleState` (snapshot). Commit `639d37b` |
 | DT-5 | Deep clone innecesario de `identityDocuments` en OT | Object Template | Pendiente — optimización futura |
-| DT-7 | Conector Koha: ADD falla con `Expected primary identification, but got Secondary identifier userid` para 2 usuarios (202311327, 72887579) | Conector `pe.upeu.connector.koha-http` v1.2.0 | Pendiente — bug del conector, no del shadow. Investigar en `UPeU-Infra/connector-koha` |
+| DT-7 | Conector Koha: ADD falla con `Expected primary identification, but got Secondary identifier userid` para 2 usuarios (202311327, 72887579) | Conector `pe.upeu.connector.koha-http` v1.2.0 | ✅ **RESUELTO** — v1.2.1: `response.opt()` + validación explícita de patron_id (commit `eb8bcc2`). Datos: 202311327 → primaryidentifiervalue=37742 corregido en DB; 72887579 → patron Koha 30502 migrado a cardnumber=72887579, reconcile inbound relinkea. Conectores PROD actualizados 2026-05-20. |
 | DT-6 | `Reconcile-Koha-Inbound` es one-shot manual, sin cron | Koha ILS | ✅ **RESUELTO** — Task `reconcile-koha-daily` creada, cron `0 0 3 * * ?`. Commit `eb25950` |
 
 **Fix correlación aplicado a 2 resources (patrón MidPoint 4.10):**
