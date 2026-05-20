@@ -1,7 +1,7 @@
 # Estructura Entra ID — Universidad Peruana Unión
 
 **Fecha de snapshot:** 2026-05-19
-**Autor:** Alberto Sánchez — DTI / SciBack IGA
+**Autor:** Alberto Sánchez — DTI UPeU
 **Destinatario principal:** David Urquizo (Global Administrator UPeU)
 **Estado:** Borrador de trabajo — insumo para Fase 12 IGA
 
@@ -65,8 +65,8 @@ Entra ID está declarado como **solo lectura en Fases 1 a 11** del roadmap IGA. 
 | Tenant ID | `cfbd88b4-94bc-4fba-98bd-64d0726394a3` |
 | Dominio principal | `upeu.edu.pe` |
 | Dominio onmicrosoft | `upeuedupe.onmicrosoft.com` |
-| Sync AD on-prem | No (cloud-only) |
-| Modelo de usuario | Cloud-only |
+| Sync AD on-prem | No — `onPremisesSyncEnabled: null`, `onPremisesLastSyncDateTime: null` (Graph API) |
+| Modelo de usuario | Cloud-only (sin AD Connect configurado) |
 
 ### Dominios registrados
 
@@ -87,7 +87,7 @@ Datos obtenidos directamente de la Graph API (`GET /organization?$select=verifie
 
 El tenant UPeU aloja **al menos cuatro dominios de diferentes organizaciones** en un único directorio. Esto es operativamente correcto para tener SSO unificado con M365, pero requiere que la gobernanza de identidades trate a cada dominio como un ámbito de administración separado. Las Administrative Units ya reflejan parcialmente este diseño (ver sección 5).
 
-Para el modelo IGA, cada dominio tiene su propia IIA (fuente autoritativa de identidad). ISTAT, UNION-PE e IMPRENTAUNION-COM no provienen de Oracle LAMB UPeU sino de sus propios sistemas locales. Esta separación debe mantenerse en el modelo de correlación MidPoint.
+> **Pendiente de verificar con David Urquizo:** cuál es el sistema de identidad de origen para los usuarios de `istat.edu.pe`, `union.pe` e `imprentaunion.com`. No se puede asumir desde los datos del tenant.
 
 ---
 
@@ -594,4 +594,4 @@ Este documento es insumo para la planificacion de la **Fase 12** del roadmap IGA
 
 ---
 
-*Documento generado el 2026-05-19 por Alberto Sanchez (DTI UPeU / SciBack IGA) como parte del proyecto IGA canónico UPeU. Snapshot basado en datos del tenant a la misma fecha.*
+*Documento generado el 2026-05-19 por Alberto Sánchez (DTI UPeU). Snapshot basado en datos del tenant a la misma fecha.*

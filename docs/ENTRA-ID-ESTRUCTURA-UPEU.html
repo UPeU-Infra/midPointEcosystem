@@ -58,10 +58,10 @@ roadmap IGA</a></li>
 <h1 id="estructura-entra-id-universidad-peruana-unión">Estructura Entra
 ID — Universidad Peruana Unión</h1>
 <p><strong>Fecha de snapshot:</strong> 2026-05-19
-<strong>Autor:</strong> Alberto Sánchez — DTI / SciBack IGA
-<strong>Destinatario principal:</strong> David Urquizo (Global
-Administrator UPeU) <strong>Estado:</strong> Borrador de trabajo —
-insumo para Fase 12 IGA</p>
+<strong>Autor:</strong> Alberto Sánchez — DTI UPeU <strong>Destinatario
+principal:</strong> David Urquizo (Global Administrator UPeU)
+<strong>Estado:</strong> Borrador de trabajo — insumo para Fase 12
+IGA</p>
 <hr />
 <h2 id="tabla-de-contenidos">Tabla de contenidos</h2>
 <ol type="1">
@@ -183,6 +183,10 @@ provisioning útil.</p>
 <h2 id="tenant-y-dominios">2. Tenant y dominios</h2>
 <h3 id="datos-del-tenant">Datos del tenant</h3>
 <table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
 <thead>
 <tr>
 <th>Campo</th>
@@ -208,11 +212,12 @@ provisioning útil.</p>
 </tr>
 <tr>
 <td>Sync AD on-prem</td>
-<td>No (cloud-only)</td>
+<td>No — <code>onPremisesSyncEnabled: null</code>,
+<code>onPremisesLastSyncDateTime: null</code> (Graph API)</td>
 </tr>
 <tr>
 <td>Modelo de usuario</td>
-<td>Cloud-only</td>
+<td>Cloud-only (sin AD Connect configurado)</td>
 </tr>
 </tbody>
 </table>
@@ -299,10 +304,13 @@ correcto para tener SSO unificado con M365, pero requiere que la
 gobernanza de identidades trate a cada dominio como un ámbito de
 administración separado. Las Administrative Units ya reflejan
 parcialmente este diseño (ver sección 5).</p>
-<p>Para el modelo IGA, cada dominio tiene su propia IIA (fuente
-autoritativa de identidad). ISTAT, UNION-PE e IMPRENTAUNION-COM no
-provienen de Oracle LAMB UPeU sino de sus propios sistemas locales. Esta
-separación debe mantenerse en el modelo de correlación MidPoint.</p>
+<blockquote>
+<p><strong>Pendiente de verificar con David Urquizo:</strong> cuál es el
+sistema de identidad de origen para los usuarios de
+<code>istat.edu.pe</code>, <code>union.pe</code> e
+<code>imprentaunion.com</code>. No se puede asumir desde los datos del
+tenant.</p>
+</blockquote>
 <hr />
 <h2 id="licencias">3. Licencias</h2>
 <h3 id="licencias-activas">Licencias activas</h3>
@@ -2061,8 +2069,7 @@ membership + security groups + asignacion de licencias via grupos</td>
 Urquizo debe completar las acciones D1-D6 de la seccion 12 antes de que
 MidPoint pueda escribir en Entra ID de forma segura y util.</p>
 <hr />
-<p><em>Documento generado el 2026-05-19 por Alberto Sanchez (DTI UPeU /
-SciBack IGA) como parte del proyecto IGA canónico UPeU. Snapshot basado
-en datos del tenant a la misma fecha.</em></p>
+<p><em>Documento generado el 2026-05-19 por Alberto Sánchez (DTI UPeU).
+Snapshot basado en datos del tenant a la misma fecha.</em></p>
 </body>
 </html>
