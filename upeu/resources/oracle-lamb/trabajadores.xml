@@ -99,13 +99,27 @@
             </attribute>
             <attribute>
                 <ref>ri:NUM_DOCUMENTO</ref>
-                <correlator/>
+                <!-- Correlator explícito 4.10: el shorthand <correlator/> en 4.10 no puede resolver
+                     el item de foco cuando los únicos inbounds con beforeCorrelation están archived.
+                     Forma explícita: atributo shadow → extension/upeu:lambDocNum (único inbound activo
+                     con beforeCorrelation). MidPoint busca usuarios donde lambDocNum == NUM_DOCUMENTO. -->
+                <correlators>
+                    <items>
+                        <name>correlate-by-num-documento</name>
+                        <item>
+                            <ref>attributes/ri:NUM_DOCUMENTO</ref>
+                            <search>
+                                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</path>
+                            </search>
+                        </item>
+                    </items>
+                </correlators>
                 <inbound>
                     <!-- DEPRECADO: mapeo antiguo que asumía siempre DNI y usaba taxId (campo deprecated).
                          Reemplazado por el Bloque J del UserTemplate-Person-Base que construye
                          el contenedor canónico sciback:identityDocuments usando lambDocType + taxId.
-                         Se mantiene archived para trazabilidad y para el correlador (beforeCorrelation).
-                         El correlador sigue funcionando porque lee ri:NUM_DOCUMENTO directamente. -->
+                         Se mantiene archived para trazabilidad.
+                         El correlador ya no depende de este mapping. -->
                     <name>dni-to-taxId-urn</name>
                     <lifecycleState>archived</lifecycleState>
                     <strength>strong</strength>
@@ -125,8 +139,7 @@
                 <inbound>
                     <!-- DEPRECADO: transportaba el número raw a sciback:taxId (campo de transporte legacy).
                          Reemplazado por num-documento-to-lambDocNum que usa upeu:lambDocNum.
-                         Se mantiene archived para trazabilidad.
-                         El Bloque J2 del UserTemplate limpia taxId en cada recompute. -->
+                         Se mantiene archived para trazabilidad. -->
                     <name>num-documento-raw-to-taxId-transport</name>
                     <lifecycleState>archived</lifecycleState>
                     <strength>strong</strength>
