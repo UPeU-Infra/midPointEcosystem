@@ -1,6 +1,6 @@
 # UPeU IGA — Roadmap de Ejecución 2026
 
-**Versión:** 2026-05-20 rev6 (P1 completo + DT-2/DT-4 cerrados + limpieza SciBack) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
+**Versión:** 2026-05-20 rev7 (DT-1 resuelto + docs actualizados) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
 **Documento base:** [`iga-canonical-analysis-2026-05.md`](./iga-canonical-analysis-2026-05.md) · [`SKILL: iga-canonical-standards`](~/.claude/skills/iga-canonical-standards/SKILL.md) · [`SKILL: midpoint-best-practices`](~/.claude/skills/midpoint-best-practices/SKILL.md)
 
 ---
@@ -184,11 +184,12 @@ El motor no podía resolver el focus item para correlación.
 
 | # | Problema | Origen | Acción |
 |---|---|---|---|
-| DT-1 | 4 pares de shadows duplicados Koha (usuarios con 2 shadows vivos, exists=false, pendingOp=ADD) | Recompute masivo 2026-05-19 mientras Koha tenía HTTP 500 | ⏳ **EN CURSO** — Koha sacado de mantenimiento, recompute de 4 usuarios lanzado |
+| DT-1 | 4 pares de shadows duplicados Koha | Recompute masivo 2026-05-19 mientras Koha tenía HTTP 500 | ✅ **RESUELTO** — Koha `maintenance`→`operational`, shadows duplicados marcados dead, linkRefs limpiados, recompute 4/4 OK |
 | DT-2 | 8 shadows huérfanos Koha | Reconcile Koha | ✅ **CERRADO** — Query PROD confirma 0 shadows huérfanos reales |
 | DT-3 | `SchemaException: category_id [STAFF, DOCEN]` en usuarios con doble rol Koha | Recompute | ✅ **RESUELTO** — `strong`→`weak` en `AR-Koha-Patron-Staff`. Commit `31a7785` |
 | DT-4 | Dependencia circular en mappings OT estudiantes `#[12,21,22,23,25,32,33]` | Object Template | ✅ **RESUELTO** — Bloque H leía `lifecycleState` como source de sí mismo. Fix: `focus?.lifecycleState` (snapshot). Commit `639d37b` |
 | DT-5 | Deep clone innecesario de `identityDocuments` en OT | Object Template | Pendiente — optimización futura |
+| DT-7 | Conector Koha: ADD falla con `Expected primary identification, but got Secondary identifier userid` para 2 usuarios (202311327, 72887579) | Conector `pe.upeu.connector.koha-http` v1.2.0 | Pendiente — bug del conector, no del shadow. Investigar en `UPeU-Infra/connector-koha` |
 | DT-6 | `Reconcile-Koha-Inbound` es one-shot manual, sin cron | Koha ILS | ✅ **RESUELTO** — Task `reconcile-koha-daily` creada, cron `0 0 3 * * ?`. Commit `eb25950` |
 
 **Fix correlación aplicado a 2 resources (patrón MidPoint 4.10):**
