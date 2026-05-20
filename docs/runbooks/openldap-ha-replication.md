@@ -347,8 +347,23 @@ Ver runbook `keycloak-ldap-federation.md`.
 
 ## Estado actual (2026-05-20)
 
-- Nodo 1 (168): healthy, en recuperación de datos via MidPoint recompute (progreso ~2000/35000)
-- Nodo 2 (169): contenedor parado, pendiente de re-configuración
-- Replicación N-Way Multimaster: PENDIENTE (re-configurar después de recuperación nodo 1)
-- MidPoint → Nodo 1: funcionando (test connection OK)
+- Nodo 1 (168): healthy, recuperación en progreso via MidPoint recompute (10.508/35.450 usuarios)
+  - ServerID: 1, syncprov activo, sin consumer activo (correcto — esperando que nodo 2 complete sync)
+- Nodo 2 (169): healthy, sincronizando desde nodo 1 (10.526 usuarios, lag ~18)
+  - ServerID: 2, syncprov activo, syncrepl consumer activo (rid=001 → nodo 1)
+  - schemachecking=off (temporalmente para evitar errores de schema)
+  - Schemas cargados: core, cosine, nis, inetorgperson, ppolicy, kopano, openssh-lpk, postfix-book, samba, eduPerson, schac, midpointperson
+- Replicación: Consumer-only activa (nodo 2 jala de nodo 1 en tiempo real)
+- mirrormode N-Way: PENDIENTE — activar cuando recuperación esté completa (ver FASE 4)
+- MidPoint → Nodo 1: funcionando (test connection OK, re-provisión activa)
 - Keycloak → Nodo 1: pendiente verificación post-recuperación
+
+### Pendiente para completar la HA
+
+1. Esperar que los tasks de recompute completen (~35.450 usuarios en nodo 1)
+2. Verificar que nodo 2 alcanza el mismo count
+3. Activar mirrormode en nodo 2: `olcMirrorMode: TRUE`
+4. Configurar syncrepl en nodo 1 + mirrormode: `rid=002 provider=ldap://192.168.15.169:389 + olcMirrorMode: TRUE`
+5. Actualizar resource LDAP en MidPoint para incluir failover a nodo 2
+6. Actualizar Keycloak User Federation para incluir nodo 2
+7. Activar schemachecking=on en nodo 2 (cambiar el olcSyncRepl)
