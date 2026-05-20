@@ -49,6 +49,14 @@ services:
       # Se montan directamente en el path que osixia espera
       - ./ldifs/bootstrap:/container/service/slapd/assets/config/bootstrap/ldif/custom:ro
 
+    # FD limit: 1024 (default) es insuficiente para producción con MidPoint + Keycloak + syncrepl.
+    # Con ~20 conexiones MidPoint pool + 5-10 Keycloak + 2 syncrepl + health + overhead → mínimo 512 activas.
+    # 65536 es el valor estándar de producción para OpenLDAP.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
     command: --copy-service --loglevel warning
 
     healthcheck:
@@ -56,7 +64,10 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 45s
+      # 600s: la primera vez (o tras volume wipe) osixia genera parámetros DH 2048-bit,
+      # lo cual toma 3-5 min en hardware modesto. Sin este margen, el health check
+      # mata el contenedor antes de que slapd arranque.
+      start_period: 600s
 
     networks:
       - ldap_net
