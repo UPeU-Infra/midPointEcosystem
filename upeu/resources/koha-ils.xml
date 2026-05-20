@@ -1102,6 +1102,78 @@
                     </expression>
                 </outbound>
             </attribute>
+            <!-- ===== Campos adicionales UPeU — agregados 2026-05-20 ===== -->
+            <attribute>
+                <ref>ri:date_of_birth</ref>
+                <displayName>Fecha de Nacimiento</displayName>
+                <outbound>
+                    <name>date-of-birth-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:birthDate</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <!-- sb:birthDate viene como 'YYYY-MM-DD HH:MM:SS' desde Oracle; Koha acepta 'YYYY-MM-DD' -->
+                            <code>if (birthDate == null) return null; birthDate.toString().take(10)</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:gender</ref>
+                <displayName>Género</displayName>
+                <outbound>
+                    <name>gender-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:gender</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <!-- sb:gender es ISO 5218: '1'=Masculino, '2'=Femenino, '0'=No especificado.
+                                 Koha acepta 'M', 'F', o null. -->
+                            <code><![CDATA[switch ((gender ?: '').toString()) { case '1': return 'M'; case '2': return 'F'; default: return null }]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:mobile</ref>
+                <displayName>Móvil (Koha)</displayName>
+                <outbound>
+                    <name>mobile-outbound</name>
+                    <!-- weak: phone (normal) ya usa telephoneNumber; mobile como respaldo -->
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/telephoneNumber</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:middle_name</ref>
+                <displayName>Segundo Nombre</displayName>
+                <outbound>
+                    <name>middle-name-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/additionalName</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:secondary_email</ref>
+                <displayName>Correo de Recuperación</displayName>
+                <outbound>
+                    <name>secondary-email-outbound</name>
+                    <!-- Correo personal libre (gmail, hotmail) — no institucional.
+                         Viene de MOISES.PERSONA_NATURAL.CORREO vía sb:personalEmail. -->
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:personalEmail</path>
+                    </source>
+                </outbound>
+            </attribute>
             <activation>
                 <administrativeStatus>
                     <outbound id="29">
