@@ -1,6 +1,6 @@
 # UPeU IGA — Roadmap de Ejecución 2026
 
-**Versión:** 2026-05-20 rev7 (DT-1 resuelto + docs actualizados) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
+**Versión:** 2026-05-20 rev8 (OpenLDAP N-Way Multimaster activado) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
 **Documento base:** [`iga-canonical-analysis-2026-05.md`](./iga-canonical-analysis-2026-05.md) · [`SKILL: iga-canonical-standards`](~/.claude/skills/iga-canonical-standards/SKILL.md) · [`SKILL: midpoint-best-practices`](~/.claude/skills/midpoint-best-practices/SKILL.md)
 
 ---
@@ -84,7 +84,7 @@ Los templates **per-archetype** (student, faculty, staff, alumni individuales) *
 | Fase 1 — Schema | ✅ **ACTIVA** | 2 schemas en PROD BD |
 | Fase 2 — Archetypes + Org tree | ✅ **ACTIVA / REPO COMPLETO** | 18 archetypes en PROD; repo ahora tiene los 18 (8 user + 9 org + 2 role) — commit `19590be` |
 | Fase 3 — Object templates | ⚠️ **PARCIAL** | 2 templates en PROD (base + sistema); templates per-archetype NO existen |
-| Fase 4 — OpenLDAP HA | ✅ **ACTIVA** | 37.491 sombras LDAP; lifecycleState seteado a `active` vía REST — commit `1a5fb52` |
+| Fase 4 — OpenLDAP HA | ✅ **N-WAY MULTIMASTER ACTIVO** | Node 1 (168) + Node 2 (169): N-Way mirrormode ✅; replicación bidireccional verificada 2026-05-20; ~15.100 entradas; ulimits 65536 (N2 activo, N1 pendiente reinicio) |
 | Fase 5 — Resources READ | ✅ **ACTIVA** | Oracle LAMB ×4 + Koha + Entra ID activos; todos con lifecycleState `active` |
 | Fase 6 — Resources WRITE → OpenLDAP | ✅ **FUNCIONA** (no validado formalmente) | 37.491 sombras LDAP confirman que MidPoint escribe a OpenLDAP; Keycloak federation sin confirmar |
 | Fase 7 — RBAC | ⚠️ **PARCIAL** | 39 roles activos (AR + BR + affiliation); MOF-*/GOV-*/SYS ahora versionados en repo (commit `19590be`) — lifecycle null pendiente |
