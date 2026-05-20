@@ -21,13 +21,13 @@
     - Soporta multi-pertenencia (un programa puede ser interfacultativo via
       múltiples relations en assignments).
 
-  Spec canónica SciBack §4 — modelo de orgs.
+  Spec canónica IGA UPeU §4 — modelo de orgs.
   F2 — Archetypes UPeU 2026-05
 -->
 <archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
            oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73">
     <name>Academic-Program</name>
-    <description>Programa academico (Escuela Profesional, Maestria, Doctorado, Especializacion). OrgType. El archetype solo tipifica el Org; los inducements de afiliacion (R-Affiliation-Student/Faculty) se asignan desde el Object Template de User via assignmentTargetSearch sobre extension/sciback:academicProgramUri + academicProgramRole. Spec SciBack §4.</description>
+    <description>Programa academico (Escuela Profesional, Maestria, Doctorado, Especializacion). OrgType. El archetype solo tipifica el Org; los inducements de afiliacion (R-Affiliation-Student/Faculty) se asignan desde el Object Template de User via assignmentTargetSearch sobre extension/sciback:academicProgramUri + academicProgramRole. Spec IGA UPeU §4.</description>
     <archetypePolicy>
         <display>
             <label>Programa Academico</label>

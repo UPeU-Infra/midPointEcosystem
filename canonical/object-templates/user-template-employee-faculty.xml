@@ -42,7 +42,7 @@
     no es posible diferenciar. Pendiente de Fase 5+ cuando ENOC provea campo discriminador.
     Decisión registrada en docs/MIGRATION-DECISIONS-PENDING.md.
 
-  SciBack blueprint: overlay UPeU. Generalizable a universidades con RRHH en IIA JDBC.
+  Patrón canónico IGA: overlay UPeU. Generalizable a universidades con RRHH en IIA JDBC.
 -->
 <objectTemplate xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
                 xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"

@@ -31,7 +31,7 @@
     - Q1: title fallback "Egresado" (weak) cuando LAMB no provee title
     - Q2: log.warn si admissionPeriod ausente para alumni activo (validación de calidad de datos)
 
-  SciBack blueprint: overlay UPeU. Generalizable a cualquier universidad con egresados en IIA JDBC.
+  Patrón canónico IGA: overlay UPeU. Generalizable a cualquier universidad con egresados en IIA JDBC.
 -->
 <objectTemplate xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
                 xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"

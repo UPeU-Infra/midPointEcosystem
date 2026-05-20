@@ -8,7 +8,7 @@
                depender del archetype Person built-in de MidPoint.
     IIA: Oracle LAMB (schacHomeOrganization mapeado en resource LAMB inbound)
     Estándar: SCHAC 1.6.0 — schacHomeOrganization
-    Scope: UPeU. Reutilizable en SciBack con cambio de valor del filtro.
+    Scope: UPeU. Reutilizable en otra institución cambiando el valor del filtro.
     Creado: 2026-05-15
 -->
 <objectCollection oid="00000000-0000-0000-0002-000000000100"

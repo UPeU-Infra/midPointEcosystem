@@ -5,7 +5,7 @@
   Tipo: auxiliary (asignado automáticamente desde ObjectTemplate-Person-Base)
   Condición: extension/sciback:primaryAffiliation = 'staff'
   Estándar: eduPersonPrimaryAffiliation = 'staff' (eduPerson 202208)
-  SciBack: bloque canónico — no hardcodear lógica de afiliación aquí
+  IGA canónico — no hardcodear lógica de afiliación aquí
 -->
 <archetype oid="43529dfa-e8ce-4d5d-9ff1-94a2c9833590"
            xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">

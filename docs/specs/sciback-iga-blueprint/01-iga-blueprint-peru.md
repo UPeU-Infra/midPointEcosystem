@@ -1,8 +1,8 @@
-# Blueprint IGA para Universidades Peruanas — SciBack v1.0
+# Blueprint IGA para Universidades Peruanas — v1.0
 
 > **Propósito:** Modelo canónico de Identity Governance & Administration (IGA) aplicable a cualquier universidad peruana licenciada por SUNEDU. Basado en la implementación de referencia UPeU (ver `../iga-canonical-model-upeu/01-spec.md`).
 >
-> **Uso:** Cada cliente SciBack instancia este blueprint reemplazando las variables `{UNIVERSITY_*}` y añadiendo su propia Capa 3 (LOCAL). Los pilares y la Capa 1 (Ley 30220) son **no negociables**.
+> **Uso:** Cada institución instancia este blueprint reemplazando las variables `{UNIVERSITY_*}` y añadiendo su propia Capa 3 (LOCAL). Los pilares y la Capa 1 (Ley 30220) son **no negociables**.
 >
 > **Versión:** 1.0 — 2026-05-14 — derivado de UPeU (ref. implementation).
 

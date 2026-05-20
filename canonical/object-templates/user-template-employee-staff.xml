@@ -36,7 +36,7 @@
     - Q2: log.warn si hireDate ausente para personal admin activo (dato crítico para leaver policy)
     - Q3: log.warn si costCenter ausente para personal admin activo (necesario para org assignment E)
 
-  SciBack blueprint: overlay UPeU. Generalizable a universidades con RRHH en IIA JDBC.
+  Patrón canónico IGA: overlay UPeU. Generalizable a universidades con RRHH en IIA JDBC.
 -->
 <objectTemplate xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
                 xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"

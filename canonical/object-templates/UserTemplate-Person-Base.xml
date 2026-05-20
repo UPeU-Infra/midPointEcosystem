@@ -982,7 +982,7 @@
          no existe en MidPoint (sync del resource posiciones no ejecutado aún)
          el mapping no falla, simplemente no agrega el assignment.
 
-         SciBack blueprint: patrón PBAC reusable. El identifier del ServiceType
+         Patrón canónico IGA: patrón PBAC reusable. El identifier del ServiceType
          debe ser el ID_PUESTO de la IIA de cada universidad (LAMB en UPeU).
          ============================================================ -->
     <mapping>
@@ -1036,7 +1036,7 @@
          Nota: si Entra ID inbound (ri:photo → jpegPhoto, strength=strong) ya tiene
            valor, este mapping de strength=normal no lo sobreescribe. El binding
            Entra ID foto es la imagen elegida por el usuario → tiene prioridad.
-         SciBack blueprint: patrón reusable para fetch foto desde URL externa.
+         Patrón canónico IGA: patrón reusable para fetch foto desde URL externa.
          ============================================================ -->
     <item>
         <ref>jpegPhoto</ref>
@@ -1159,7 +1159,7 @@
          documento primario (lógica actual en Bloque F ya lo hace).
 
          IIA: ELISEO.VW_APS_EMPLEADO (via Oracle LAMB Trabajadores v3 inbound).
-         SciBack blueprint: patrón reutilizable para otros ERP con campo tipo doc.
+         Patrón canónico IGA: patrón reutilizable para otros ERP con campo tipo doc.
          ============================================================ -->
     <item>
         <ref>extension/sciback:identityDocuments</ref>

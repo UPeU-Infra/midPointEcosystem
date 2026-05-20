@@ -31,7 +31,7 @@
     - Q1: title fallback "Estudiante" (weak) cuando LAMB no provee title
     - Q2: log.warn si studentCycle ausente para student (complementa D-student-warn del base)
 
-  SciBack blueprint: overlay UPeU. Generalizable a cualquier universidad con estudiantes en IIA JDBC.
+  Patrón canónico IGA: overlay UPeU. Generalizable a cualquier universidad con estudiantes en IIA JDBC.
 -->
 <objectTemplate xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
                 xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"

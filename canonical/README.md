@@ -24,7 +24,7 @@ Cualquier institución universitaria peruana debería poder reutilizar esta capa
 ```
 canonical/
 ├── schemas/
-│   └── sciback-person-v1.0.xml         # urn:sciback:midpoint:person — schema canónico SciBack
+│   └── sciback-person-v1.0.xml         # urn:sciback:midpoint:person — schema canónico universitario
 ├── archetypes/
 │   ├── user/                            # eduPerson sub-types (student/faculty/staff/alumni/...)
 │   └── org/                             # OrgType jerárquico (institution/campus/faculty/...)
@@ -42,7 +42,7 @@ canonical/
 
 1. **Schema is the law.** Antes de extender, buscar en core (`UserType` ya tiene `givenName`, `familyName`, `personalNumber`, etc.). Solo agregar al `<extension>` lo que NO encaje.
 2. **IIA documentada.** Cada atributo tiene UNA Identity Information Authority.
-3. **OIDs estables.** Los OIDs aquí están en PROD UPeU. NO modificar — los nuevos clientes SciBack pueden re-importar con OIDs propios.
+3. **OIDs estables.** Los OIDs aquí están en PROD UPeU. NO modificar — otras instituciones que reutilicen esta capa deben asignar OIDs propios.
 4. **Naming canónico:** kebab-case sin prefijo de tipo dentro de cada carpeta (`user-student.xml`, no `archetype-user-student.xml`).
 5. **`displayName` y `name` interno del XML** se mantienen para no romper UI/refs internas. Solo cambia el filename.
 

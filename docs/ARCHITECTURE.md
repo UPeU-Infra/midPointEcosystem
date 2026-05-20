@@ -373,13 +373,13 @@ Leyenda: ✅ correcto · ⚠️ aceptable · ❌ corregir.
 
 ---
 
-## 6. Productización SciBack
+## 6. Productización IGA UPeU (capa canónica reutilizable)
 
 ### 6.1 Modelo de overlays
 
-`sciback-iga-blueprint` (repo canónico en `github.com/SciBack/iga-blueprint`) contiene el modelo canónico universal **agnóstico a cualquier universidad peruana**. Cada cliente (UPeU, Univ. X, Univ. Y) tiene su propia carpeta hermana en `~/proyectos/<cliente>/` con sus overlays.
+`midPointEcosystem/canonical/` (en `github.com/UPeU-Infra/midPointEcosystem`) contiene el modelo canónico universal **agnóstico a cualquier universidad peruana**. Cada institución que lo reutilice tiene su propio overlay en una carpeta separada con sus adaptaciones.
 
-### 6.2 Estructura propuesta del repo `sciback-iga-blueprint`
+### 6.2 Estructura de la capa canónica
 
 ```
 sciback-iga-blueprint/

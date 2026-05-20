@@ -26,7 +26,7 @@
     - midpoint        (MidpointFunctions, para acceder al repo)
     - log             (Logger)
 
-  Spec SciBack F3 / Paso-3 IGA.
+  Spec IGA UPeU F3 / Paso-3.
 -->
 <functionLibrary xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
                  xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"

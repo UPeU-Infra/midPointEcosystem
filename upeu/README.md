@@ -62,11 +62,11 @@ Kebab-case sin prefijo de tipo en filename donde sea limpio. Excepciones legíti
 - `position-NNN-{slug}` — incluye id catálogo Resol. 0001-2026.
 - `org-OU-CAMPUS-{LIMA|JULIACA|TARAPOTO}` — convención existente.
 
-## OIDs UPeU vs SciBack
+## OIDs — UPeU (PROD)
 
 - Los OIDs de los objetos en `upeu/` son los vivos en PROD (`192.168.15.166`).
-- Cuando esta capa se reuse para SciBack/otro cliente: regenerar OIDs (no copiar).
-- Los OIDs de `canonical/` SÍ pueden ser portables (registry SciBack).
+- Cuando esta capa se reutilice para otra institución: regenerar OIDs (no copiar).
+- Los OIDs de `canonical/` SÍ pueden ser portables entre instituciones.
 
 ## Decisiones doctrinales reflejadas aquí
 
