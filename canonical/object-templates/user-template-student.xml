@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  UserTemplate-Student — Template per-archetype para estudiantes (archetype-user-student)
+  OID: 3afb8196-008e-4284-abb2-574f2aba7e13
+  Versión: 1.0 (2026-05-20)
+  Schema: urn:sciback:midpoint:person (canónico) + urn:upeu:midpoint:local (LAMB)
+  Aplica a: archetype-user-student (OID: 3037fbd2-db02-4ffd-8b1a-83fab5e686aa)
+  Extiende: UserTemplate-Person-Base (OID: 855caaca-68c4-4f7f-8ff8-b4e35dd7d390)
+  IIA: Oracle LAMB Estudiantes v3 (VW_PERSONA_ALUMNO via DAVID schema)
+
+  Fuente autoritativa (inbounds verificados en estudiantes.xml):
+    - personalNumber, givenName, familyName, emailAddress, telephoneNumber
+    - taxId/identityDocuments (via J/J2 en base template)
+    - birthDate, gender
+    - studentCycle, academicProgram/Code, primaryAffiliation=student
+
+  Lo que el base template YA cubre (NO duplicar):
+    - A: username desde personalNumber
+    - B: fullName, emailAddress weak
+    - C: schacHomeOrganization, eppn
+    - D: R-Affiliation-Student, BR-Estudiante-Pregrado/Posgrado/Doctorado (por studentCycle)
+    - D-student-warn-missing-program: log.warn si studentCycle presente pero sin academicProgramCode
+    - D5: AuxAff-Student
+    - D6: org EP desde academicProgramCode
+    - D7: structural archetype desde affiliations
+    - F: lifecycle gate draft→active
+    - G/H: rejection + ISO 24760 lifecycle
+    - J/J2: identityDocuments + taxId cleanup
+
+  Mappings propios de este template:
+    - Q1: title fallback "Estudiante" (weak) cuando LAMB no provee title
+    - Q2: log.warn si studentCycle ausente para student (complementa D-student-warn del base)
+
+  SciBack blueprint: overlay UPeU. Generalizable a cualquier universidad con estudiantes en IIA JDBC.
+-->
+<objectTemplate xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+                xmlns:sb="urn:sciback:midpoint:person"
+                xmlns:upeu="urn:upeu:midpoint:local"
+                oid="3afb8196-008e-4284-abb2-574f2aba7e13">
+    <name>UserTemplate-Student</name>
+    <description>Template per-archetype para estudiantes UPeU. Extiende UserTemplate-Person-Base. Agrega title fallback y validación de studentCycle ausente.</description>
+    <lifecycleState>active</lifecycleState>
+
+    <!-- Incluir el base template — toda la lógica A-P ya corre desde ahí -->
+    <includeRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" type="ObjectTemplateType"/>
+
+    <!--
+      BLOQUE Q1 — TITLE FALLBACK PARA ESTUDIANTES
+      Asigna title="Estudiante" cuando LAMB no provee un título.
+      weak: no sobreescribe si ya tiene valor (e.g., estudiante que también trabaja).
+    -->
+    <item>
+        <ref>title</ref>
+        <mapping>
+            <name>Q1-student-title-fallback</name>
+            <description>Asigna title="Estudiante" como fallback canónico. weak: cede ante cualquier valor existente incluyendo título de puesto si el estudiante también trabaja.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <expression>
+                <value>Estudiante</value>
+            </expression>
+        </mapping>
+    </item>
+
+    <!--
+      BLOQUE Q2 — VALIDACIÓN studentCycle PARA ESTUDIANTES
+      Log.warn si un usuario student activo no tiene studentCycle.
+      studentCycle = nivel de estudios desde Oracle LAMB Estudiantes (campo CICLO).
+      Valores típicos: 1-6 pregrado, 7-8 posgrado, 9+ doctorado.
+      El base template D.2 ya advierte sobre studentCycle+sin-program.
+      Este complementa: advierte si el student no tiene studentCycle en absoluto.
+      strength=weak: no modifica el valor, pasthrough con efecto de log.
+    -->
+    <item>
+        <ref xmlns:sb="urn:sciback:midpoint:person">extension/sb:studentCycle</ref>
+        <mapping>
+            <name>Q2-student-warn-missing-cycle</name>
+            <description>Advierte si estudiante activo no tiene studentCycle. Calidad de datos crítica para el auto-assign de BR-Estudiante-Pregrado/Posgrado/Doctorado.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <source>
+                <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:primaryAffiliation</path>
+            </source>
+            <source>
+                <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:studentCycle</path>
+            </source>
+            <expression>
+                <script>
+                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+def cycle = studentCycle;
+def hasCycle = cycle != null &amp;&amp; !((cycle instanceof java.util.Collection) ? cycle.isEmpty() : basic.stringify(cycle).trim() == '');
+if (affil == 'student' &amp;&amp; !hasCycle) {
+    log.warn("UPeU Student: studentCycle ausente en {} — BR-Estudiante no podrá asignarse por ciclo", focus?.name)
+};
+return cycle</code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'student'</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+</objectTemplate>

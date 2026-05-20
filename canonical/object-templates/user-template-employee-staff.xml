@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  UserTemplate-EmployeeStaff — Template per-archetype para personal admin (archetype-user-employee-staff)
+  OID: 59b1e325-e9f2-421f-bfe8-37a3d70b13e3
+  Versión: 1.0 (2026-05-20)
+  Schema: urn:sciback:midpoint:person (canónico) + urn:upeu:midpoint:local (LAMB)
+  Aplica a: archetype-user-employee-staff (OID: 6460facf-3abf-4851-966e-0c95aa1a6c46)
+  Extiende: UserTemplate-Person-Base (OID: 855caaca-68c4-4f7f-8ff8-b4e35dd7d390)
+  IIA: Oracle LAMB Trabajadores v3 (ELISEO.VW_APS_EMPLEADO + ENOC.VW_TRABAJADOR + ENOC.PLLA_PUESTO)
+
+  Fuente autoritativa (inbounds verificados en trabajadores.xml):
+    - personalNumber, givenName, familyName, emailAddress, telephoneNumber
+    - lambDocNum/lambDocType/identityDocuments (via J/J2 en base template)
+    - hireDate, terminationDate, birthDate, gender
+    - employeeCategory (ID_CATEGORIAOCUPACIONAL), title (NOMBRE_PUESTO desde PLLA_PUESTO)
+    - costCenter (ID_SEDEAREA), lambPositionId (ID_PUESTO)
+    - photoUrl (MinIO LAMB), primaryAffiliation=staff, affiliations
+
+  Lo que el base template YA cubre (NO duplicar):
+    - A: username desde personalNumber
+    - B: fullName, emailAddress weak
+    - C: schacHomeOrganization, eppn
+    - D: R-Affiliation-Staff, BR-Admin-Area (autoassign desde primaryAffiliation=staff)
+    - D-autoassign-br-personal-general: BR-Personal-General para STAFF
+    - D5: AuxAff-Staff
+    - D7: structural archetype desde affiliations
+    - E: org desde costCenter (area.*)
+    - F: lifecycle gate draft→active
+    - G/H: rejection + ISO 24760 lifecycle (leaver a 180d post terminationDate)
+    - I: jpegPhoto fetch desde photoUrl
+    - J/J2: identityDocuments + taxId cleanup
+    - P: position desde lambPositionId
+
+  Mappings propios de este template:
+    - Q1: title fallback "Personal Administrativo" (weak) cuando LAMB no provee NOMBRE_PUESTO
+    - Q2: log.warn si hireDate ausente para personal admin activo (dato crítico para leaver policy)
+    - Q3: log.warn si costCenter ausente para personal admin activo (necesario para org assignment E)
+
+  SciBack blueprint: overlay UPeU. Generalizable a universidades con RRHH en IIA JDBC.
+-->
+<objectTemplate xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+                xmlns:sb="urn:sciback:midpoint:person"
+                xmlns:upeu="urn:upeu:midpoint:local"
+                oid="59b1e325-e9f2-421f-bfe8-37a3d70b13e3">
+    <name>UserTemplate-EmployeeStaff</name>
+    <description>Template per-archetype para personal administrativo UPeU. Extiende UserTemplate-Person-Base. Agrega title fallback y validaciones de hireDate y costCenter.</description>
+    <lifecycleState>active</lifecycleState>
+
+    <!-- Incluir el base template — toda la lógica A-P ya corre desde ahí -->
+    <includeRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" type="ObjectTemplateType"/>
+
+    <!--
+      BLOQUE Q1 — TITLE FALLBACK PARA PERSONAL ADMINISTRATIVO
+      Asigna title="Personal Administrativo" cuando LAMB no provee NOMBRE_PUESTO.
+      weak: no sobreescribe el title que ya llega del inbound nombre-puesto-to-title (strength=normal
+      en trabajadores.xml). Solo actúa cuando title está vacío.
+    -->
+    <item>
+        <ref>title</ref>
+        <mapping>
+            <name>Q1-staff-title-fallback</name>
+            <description>Asigna title="Personal Administrativo" como fallback cuando LAMB no provee nombre de puesto. weak: cede ante el inbound título del resource (normal) y ante cualquier valor existente.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <expression>
+                <value>Personal Administrativo</value>
+            </expression>
+        </mapping>
+    </item>
+
+    <!--
+      BLOQUE Q2 — VALIDACIÓN hireDate PARA PERSONAL ADMINISTRATIVO
+      Log.warn si personal admin activo no tiene hireDate (fecha de ingreso).
+      hireDate es crítico para la leaver policy (base template H: archived 180d post terminationDate).
+      strength=weak: pasthrough sin modificar, solo log.
+    -->
+    <item>
+        <ref xmlns:sb="urn:sciback:midpoint:person">extension/sb:hireDate</ref>
+        <mapping>
+            <name>Q2-staff-warn-missing-hireDate</name>
+            <description>Advierte si personal administrativo activo no tiene hireDate desde LAMB. Crítico para leaver policy y evidencia ISO 27001 A.8.18.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <source>
+                <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:primaryAffiliation</path>
+            </source>
+            <source>
+                <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:hireDate</path>
+            </source>
+            <expression>
+                <script>
+                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+if (affil == 'staff' &amp;&amp; (hireDate == null || basic.stringify(hireDate).trim() == '')) {
+    log.warn("UPeU Staff: hireDate ausente en personal {} — leaver policy y evidencia ISO 27001 incompletas", focus?.name)
+};
+return hireDate</code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'staff'</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!--
+      BLOQUE Q3 — VALIDACIÓN costCenter PARA PERSONAL ADMINISTRATIVO
+      Log.warn si personal admin activo no tiene costCenter (ID_SEDEAREA).
+      costCenter es la clave para el auto-assign org del bloque E (base template).
+      Sin costCenter, el usuario no se asigna a ninguna unidad organizativa.
+      strength=weak: pasthrough sin modificar, solo log.
+    -->
+    <item>
+        <ref>costCenter</ref>
+        <mapping>
+            <name>Q3-staff-warn-missing-costCenter</name>
+            <description>Advierte si personal administrativo no tiene costCenter desde LAMB. Sin costCenter, el bloque E (base template) no puede asignar la org unit correspondiente.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <source>
+                <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:primaryAffiliation</path>
+            </source>
+            <source>
+                <path>costCenter</path>
+            </source>
+            <expression>
+                <script>
+                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+if (affil == 'staff' &amp;&amp; (costCenter == null || basic.stringify(costCenter).trim() == '')) {
+    log.warn("UPeU Staff: costCenter ausente en personal {} — no se asignará org unit (bloque E)", focus?.name)
+};
+return costCenter</code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'staff'</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+</objectTemplate>

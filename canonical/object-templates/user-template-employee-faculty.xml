@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  UserTemplate-EmployeeFaculty — Template per-archetype para docentes (archetype-user-employee-faculty)
+  OID: 5d9e22af-2000-458c-8e0b-6efec1ef12a2
+  Versión: 1.0 (2026-05-20)
+  Schema: urn:sciback:midpoint:person (canónico) + urn:upeu:midpoint:local (LAMB)
+  Aplica a: archetype-user-employee-faculty (OID: c93083ca-f4c5-4704-acf4-d53b97c9556e)
+  Extiende: UserTemplate-Person-Base (OID: 855caaca-68c4-4f7f-8ff8-b4e35dd7d390)
+  IIA: Oracle LAMB Trabajadores v3 (ELISEO.VW_APS_EMPLEADO + ENOC.CAT_DOCENTE + ENOC.VW_TRABAJADOR)
+
+  Fuente autoritativa (inbounds verificados en trabajadores.xml):
+    - personalNumber, givenName, familyName, emailAddress, telephoneNumber
+    - lambDocNum/lambDocType/identityDocuments (via J/J2 en base template)
+    - hireDate, terminationDate, birthDate, gender
+    - employeeCategory (ID_CATEGORIAOCUPACIONAL), title (NOMBRE_PUESTO desde PLLA_PUESTO)
+    - costCenter (ID_SEDEAREA), lambPositionId (ID_PUESTO)
+    - photoUrl (MinIO LAMB), primaryAffiliation=faculty, affiliations
+
+  Lo que el base template YA cubre (NO duplicar):
+    - A: username desde personalNumber
+    - B: fullName, emailAddress weak
+    - C: schacHomeOrganization, eppn
+    - D: R-Affiliation-Faculty, BR-Docente-TC (piso para todos los FACULTY)
+    - D-autoassign-br-personal-general: BR-Personal-General para FACULTY
+    - D5: AuxAff-Faculty
+    - D7: structural archetype desde affiliations
+    - E: org desde costCenter (area.*)
+    - F: lifecycle gate draft→active
+    - G/H: rejection + ISO 24760 lifecycle (leaver a 180d post terminationDate)
+    - I: jpegPhoto fetch desde photoUrl
+    - J/J2: identityDocuments + taxId cleanup
+    - P: position desde lambPositionId
+
+  Mappings propios de este template:
+    - Q1: log.warn si hireDate ausente para docente activo (dato crítico para leaver policy)
+    - Q2: log.warn si employeeCategory ausente (dato necesario para futura diferenciación TC/TP)
+
+  Nota TC/TP:
+    El base template asigna BR-Docente-TC a todos los FACULTY como piso mínimo.
+    La diferenciación TC/TP requiere que ID_CATEGORIAOCUPACIONAL tenga valores distintos
+    para docentes TC y TP en Oracle LAMB. Con los datos actuales (todos employeeCategory=3),
+    no es posible diferenciar. Pendiente de Fase 5+ cuando ENOC provea campo discriminador.
+    Decisión registrada en docs/MIGRATION-DECISIONS-PENDING.md.
+
+  SciBack blueprint: overlay UPeU. Generalizable a universidades con RRHH en IIA JDBC.
+-->
+<objectTemplate xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+                xmlns:sb="urn:sciback:midpoint:person"
+                xmlns:upeu="urn:upeu:midpoint:local"
+                oid="5d9e22af-2000-458c-8e0b-6efec1ef12a2">
+    <name>UserTemplate-EmployeeFaculty</name>
+    <description>Template per-archetype para docentes UPeU. Extiende UserTemplate-Person-Base. Agrega validaciones de calidad de datos específicas para empleados docentes (hireDate, employeeCategory).</description>
+    <lifecycleState>active</lifecycleState>
+
+    <!-- Incluir el base template — toda la lógica A-P ya corre desde ahí -->
+    <includeRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" type="ObjectTemplateType"/>
+
+    <!--
+      BLOQUE Q1 — VALIDACIÓN hireDate PARA DOCENTES
+      Log.warn si un docente activo no tiene hireDate (fecha de ingreso).
+      hireDate es crítico para la leaver policy (base template H: archived 180d post terminationDate).
+      Sin hireDate, el cálculo de senioridad y la evidencia ISO 27001 quedan incompletos.
+      strength=weak: pasthrough sin modificar, solo log.
+    -->
+    <item>
+        <ref xmlns:sb="urn:sciback:midpoint:person">extension/sb:hireDate</ref>
+        <mapping>
+            <name>Q1-faculty-warn-missing-hireDate</name>
+            <description>Advierte si docente activo no tiene hireDate desde LAMB. Crítico para leaver policy y evidencia ISO 27001 A.8.18.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <source>
+                <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:primaryAffiliation</path>
+            </source>
+            <source>
+                <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:hireDate</path>
+            </source>
+            <expression>
+                <script>
+                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+if (affil == 'faculty' &amp;&amp; (hireDate == null || basic.stringify(hireDate).trim() == '')) {
+    log.warn("UPeU Faculty: hireDate ausente en docente {} — leaver policy y evidencia ISO 27001 incompletas", focus?.name)
+};
+return hireDate</code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'faculty'</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!--
+      BLOQUE Q2 — VALIDACIÓN employeeCategory PARA DOCENTES
+      Log.warn si un docente activo no tiene employeeCategory.
+      employeeCategory (ID_CATEGORIAOCUPACIONAL) es el discriminador futuro TC/TP.
+      strength=weak: pasthrough sin modificar, solo log.
+    -->
+    <item>
+        <ref xmlns:sb="urn:sciback:midpoint:person">extension/sb:employeeCategory</ref>
+        <mapping>
+            <name>Q2-faculty-warn-missing-employeeCategory</name>
+            <description>Advierte si docente no tiene employeeCategory desde LAMB. Necesario para futura diferenciación BR-Docente-TC vs BR-Docente-TP.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <source>
+                <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:primaryAffiliation</path>
+            </source>
+            <source>
+                <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:employeeCategory</path>
+            </source>
+            <expression>
+                <script>
+                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+if (affil == 'faculty' &amp;&amp; (employeeCategory == null || basic.stringify(employeeCategory).trim() == '')) {
+    log.warn("UPeU Faculty: employeeCategory ausente en docente {} — diferenciación TC/TP no posible", focus?.name)
+};
+return employeeCategory</code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'faculty'</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+</objectTemplate>
