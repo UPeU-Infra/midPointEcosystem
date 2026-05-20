@@ -31,6 +31,18 @@
   .s6  { background: linear-gradient(135deg,#1c0a0a 0%,#5c1a1a 60%,#dc2626 100%); }
   .s7  { background: linear-gradient(135deg,#0a1c1a 0%,#0a3d35 60%,#0f766e 100%); }
   .s8  { background: linear-gradient(135deg,#1a1f4e 0%,#2d3a8c 60%,#6366f1 100%); }
+  .s9  { background: linear-gradient(135deg,#0d1f2d 0%,#1a3a4a 60%,#0891b2 100%); }
+
+  /* Delegación de roles */
+  .deleg-table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; }
+  .deleg-table th { background:rgba(255,255,255,.1); padding:8px 12px; text-align:left; font-size:11px; letter-spacing:1px; text-transform:uppercase; opacity:.7; }
+  .deleg-table td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.07); vertical-align:middle; }
+  .deleg-table tr:hover td { background:rgba(255,255,255,.04); }
+  .role-chip { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700; }
+  .role-global  { background:rgba(251,191,36,.18); border:1px solid rgba(251,191,36,.5); color:#fde68a; }
+  .role-helpdesk{ background:rgba(52,211,153,.18); border:1px solid rgba(52,211,153,.5); color:#6ee7b7; }
+  .role-coord   { background:rgba(167,139,250,.18); border:1px solid rgba(167,139,250,.5); color:#c4b5fd; }
+  .scope-badge  { background:rgba(14,165,233,.15); border:1px solid rgba(14,165,233,.35); border-radius:6px; padding:2px 8px; font-size:11px; color:#7dd3fc; }
 
   /* TIPOGRAFÍA */
   .tag { font-size:12px; font-weight:700; letter-spacing:3px; text-transform:uppercase; opacity:.7; margin-bottom:16px; }
@@ -488,6 +500,58 @@
     <div class="badge" style="margin-top:32px;">📬 ¿Preguntas? → Juan Alberto Sánchez · DTI Infraestructura</div>
   </div>
 
+  <!-- SLIDE 9: DELEGACIÓN ADMIN POR AU -->
+  <div class="slide s9" id="s9">
+    <div class="tag">Gestión delegada — Entra ID</div>
+    <h2>Cada admin solo ve y gestiona<br><span style="color:#67e8f9">lo que le corresponde</span></h2>
+
+    <table class="deleg-table">
+      <thead>
+        <tr>
+          <th>Perfil</th>
+          <th>Rol en Azure</th>
+          <th>Alcance (AU)</th>
+          <th>Puede hacer</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>👑 DTI Central</td>
+          <td><span class="role-chip role-global">Global Admin</span></td>
+          <td><span class="scope-badge">Todo el tenant</span></td>
+          <td>Control completo — usuarios, grupos, licencias, políticas</td>
+        </tr>
+        <tr>
+          <td>🖥️ Mesa de ayuda Lima</td>
+          <td><span class="role-chip role-helpdesk">Helpdesk Admin</span></td>
+          <td><span class="scope-badge">AU Sede Lima</span></td>
+          <td>Resetear contraseñas · desbloquear cuentas · ver perfil</td>
+        </tr>
+        <tr>
+          <td>🖥️ Mesa de ayuda Juliaca</td>
+          <td><span class="role-chip role-helpdesk">Helpdesk Admin</span></td>
+          <td><span class="scope-badge">AU Sede Juliaca</span></td>
+          <td>Solo usuarios de Juliaca — sin acceso a otras sedes</td>
+        </tr>
+        <tr>
+          <td>🖥️ Mesa de ayuda Tarapoto</td>
+          <td><span class="role-chip role-helpdesk">Helpdesk Admin</span></td>
+          <td><span class="scope-badge">AU Sede Tarapoto</span></td>
+          <td>Solo usuarios de Tarapoto — sin acceso a otras sedes</td>
+        </tr>
+        <tr>
+          <td>🎓 Coordinador Facultad</td>
+          <td><span class="role-chip role-coord">User Admin</span></td>
+          <td><span class="scope-badge">AU Facultad X</span></td>
+          <td>Ver usuarios · aplicar licencias M365 de su facultad</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="badge" style="margin-top:8px;">🔑 Principio clave: nadie necesita ser Global Admin para hacer su trabajo diario — cada rol tiene exactamente el alcance que necesita</div>
+    <p class="sub" style="margin-top:12px;font-size:12px;opacity:.55;">Las AUs las crea el sistema automáticamente. DTI solo asigna los roles con el scope correcto una sola vez.</p>
+  </div>
+
 </div><!-- /slides -->
 
 <!-- NAV DOTS -->
@@ -500,6 +564,7 @@
   <div class="dot" onclick="goTo(5)"></div>
   <div class="dot" onclick="goTo(6)"></div>
   <div class="dot" onclick="goTo(7)"></div>
+  <div class="dot" onclick="goTo(8)"></div>
 </div>
 
 <!-- ARROWS -->
