@@ -499,19 +499,30 @@ GRP-Helpdesk-Tarapoto   → miembros actuales: mesadeayuda.tpp, digesi.tarapoto
 
 ---
 
-## 12. Prerrequisitos para activar IGA
+## 12. Permisos MidPoint en Entra ID
 
-### Estado actual de permisos — App Registrations MidPoint
+### Situación actual — dos App Registrations
 
-Existen **dos** App Registrations relacionadas con MidPoint en el tenant. Datos obtenidos via Graph API el 2026-05-19.
+Se encontraron **dos** App Registrations relacionadas con MidPoint. Datos verificados via Graph API el 2026-05-19.
 
-#### `MidPoint-UPeU` (app activa — la que usa el conector)
+| | `MidPoint-UPeU` | `MidPointUPeU` |
+|---|---|---|
+| **App ID** | `94dd7b5b-...ecefbd` | `9e3523a9-...112a3` |
+| **Creada** | 2026-04-16 | 2024-06-25 |
+| **Uso** | ✅ Activa — conector IGA | ❌ Obsoleta — prueba inicial 2024 |
+| **Permisos concedidos** | 3 | 5 |
 
-- **App ID:** `94dd7b5b-eae6-45bc-a60a-d28781ecefbd`
-- **Object ID:** `0c979413-9a62-44f1-8e33-c22ac10ec762`
-- **Creada:** 2026-04-16
+**Acción requerida — eliminar `MidPointUPeU` (2024):**
 
-**Permisos actualmente concedidos (con admin consent):**
+La app de 2024 fue creada en una prueba inicial antes de formalizar la integración. Ya no se usa pero sigue activa con credenciales y permisos válidos en el tenant. Mientras exista es superficie de ataque: cualquiera que tenga el client secret puede leer usuarios, grupos y directorio completo de UPeU.
+
+David Urquizo debe eliminarla desde: `Entra ID > App registrations > MidPointUPeU > Delete`.
+
+---
+
+### Permisos de `MidPoint-UPeU` — estado actual y requerido
+
+#### Permisos actuales (concedidos con admin consent)
 
 | Permission | Tipo | Estado |
 |---|---|---|
@@ -519,35 +530,45 @@ Existen **dos** App Registrations relacionadas con MidPoint en el tenant. Datos 
 | `Group.Read.All` | Application | ✓ Concedido |
 | `Directory.Read.All` | Application | ✓ Concedido |
 
-**Permisos faltantes — lectura (necesarios ya, para correlacion IGA):**
+#### Permisos faltantes — lectura (agregar ahora, antes de Fase 12)
 
-| Permission | Tipo | Para qué sirve |
+Necesarios para que MidPoint pueda leer toda la estructura del tenant correctamente:
+
+| Permission | Tipo | Para qué sirve en IGA |
 |---|---|---|
-| `AuditLog.Read.All` | Application | Leer log de auditoría del tenant |
-| `AdministrativeUnit.Read.All` | Application | Leer Administrative Units y sus miembros |
-| `RoleManagement.Read.Directory` | Application | Leer role assignments del directorio |
-| `Application.Read.All` | Application | Leer App Registrations para inventario |
+| `AdministrativeUnit.Read.All` | Application | Leer AUs existentes y sus miembros para correlación |
+| `RoleManagement.Read.Directory` | Application | Leer role assignments actuales para inventario y auditoría |
+| `AuditLog.Read.All` | Application | Leer log de auditoría del tenant (evidencia ISO 27001) |
+| `Application.Read.All` | Application | Inventariar App Registrations desde MidPoint |
 
-**Permisos faltantes — escritura (para Fase 12, provisioning outbound):**
+#### Permisos de escritura (agregar en Fase 12 — provisioning outbound)
 
-| Permission | Tipo | Para qué sirve |
+Necesarios para que MidPoint pueda escribir en Entra ID como target de provisioning:
+
+| Permission | Tipo | Para qué sirve en IGA |
 |---|---|---|
-| `User.ReadWrite.All` | Application | Escribir atributos: `department`, `employeeType`, `officeLocation`, `companyName` |
-| `Group.ReadWrite.All` | Application | Crear y mantener security groups gestionados por IGA |
-| `AdministrativeUnit.ReadWrite.All` | Application | Agregar y remover usuarios de AUs por sede/facultad |
-| `RoleManagement.ReadWrite.Directory` | Application | Asignar roles scoped a AUs (requiere P1) |
+| `User.ReadWrite.All` | Application | Escribir `department`, `employeeType`, `officeLocation`, `companyName` desde Oracle LAMB |
+| `Group.ReadWrite.All` | Application | Crear y mantener security groups gestionados por IGA (GRP-LIC-*, GRP-CA-*) |
+| `AdministrativeUnit.ReadWrite.All` | Application | Asignar usuarios a AUs por sede/facultad/dominio |
+| `RoleManagement.ReadWrite.Directory` | Application | Crear role assignments scoped a AUs (helpdesk por sede) |
 
-> **IMPORTANTE:** todos los permisos de tipo `Application` requieren `Grant admin consent` por parte de David Urquizo (`daiurqz@upeu.edu.pe`). La ruta en el portal es: `Entra ID > App registrations > MidPoint-UPeU > API permissions > Grant admin consent for Universidad Peruana Unión`. Sin ese paso los permisos declarados en el manifest no tienen efecto.
+#### Tabla consolidada — todos los permisos necesarios
 
----
+| Permission | Tipo | Fase | Estado |
+|---|---|---|---|
+| `User.Read.All` | Application | Lectura | ✓ Concedido |
+| `Group.Read.All` | Application | Lectura | ✓ Concedido |
+| `Directory.Read.All` | Application | Lectura | ✓ Concedido |
+| `AdministrativeUnit.Read.All` | Application | Lectura | ⚠ Falta conceder |
+| `RoleManagement.Read.Directory` | Application | Lectura | ⚠ Falta conceder |
+| `AuditLog.Read.All` | Application | Lectura | ⚠ Falta conceder |
+| `Application.Read.All` | Application | Lectura | ⚠ Falta conceder |
+| `User.ReadWrite.All` | Application | Fase 12 | ⏳ Agregar en Fase 12 |
+| `Group.ReadWrite.All` | Application | Fase 12 | ⏳ Agregar en Fase 12 |
+| `AdministrativeUnit.ReadWrite.All` | Application | Fase 12 | ⏳ Agregar en Fase 12 |
+| `RoleManagement.ReadWrite.Directory` | Application | Fase 12 | ⏳ Agregar en Fase 12 |
 
-#### `MidPointUPeU` (app antigua — creada en 2024)
-
-- **App ID:** `9e3523a9-3e17-45a4-a7f0-e0e21d5112a3`
-- **Object ID:** `e95af028-1eeb-432f-8c7c-f0e091356235`
-- **Creada:** 2024-06-25
-
-Tiene declarados en el manifest: `User.Read` (Delegated), `User.Read.All`, `Group.Read.All`, `Directory.Read.All`, `Application.Read.All`, `UserAuthenticationMethod.Read.All`. No se ha verificado si tiene admin consent concedido ni si el conector activo la usa. **Accion requerida:** David Urquizo debe confirmar si esta app sigue en uso o puede eliminarse. Tener dos apps con credenciales activas para el mismo propósito duplica la superficie de ataque.
+> **Cómo conceder:** `Entra ID > App registrations > MidPoint-UPeU > API permissions > Add a permission > Microsoft Graph > Application permissions` → buscar cada permiso → Add. Al terminar: `Grant admin consent for Universidad Peruana Unión`. Solo David Urquizo puede hacer este último paso.
 
 ### Acciones previas que debe ejecutar David (sin MidPoint)
 

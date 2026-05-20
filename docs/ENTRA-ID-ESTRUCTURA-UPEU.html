@@ -45,9 +45,9 @@ id="toc-diseño-propuesto-roles-delegados-por-sede">10. Diseño propuesto
 <li><a href="#diseño-propuesto-grupos-de-seguridad-a-crear"
 id="toc-diseño-propuesto-grupos-de-seguridad-a-crear">11. Diseño
 propuesto — Grupos de seguridad a crear</a></li>
-<li><a href="#prerrequisitos-para-activar-iga"
-id="toc-prerrequisitos-para-activar-iga">12. Prerrequisitos para activar
-IGA</a></li>
+<li><a href="#permisos-midpoint-en-entra-id"
+id="toc-permisos-midpoint-en-entra-id">12. Permisos MidPoint en Entra
+ID</a></li>
 <li><a href="#problemas-a-resolver" id="toc-problemas-a-resolver">13.
 Problemas a resolver</a></li>
 <li><a href="#apendice-relacion-con-el-roadmap-iga"
@@ -1679,24 +1679,62 @@ para permitir scope correcto en role assignments:</p>
 GRP-Helpdesk-Juliaca    → miembros actuales: mesadeayuda.jul, dti.jul
 GRP-Helpdesk-Tarapoto   → miembros actuales: mesadeayuda.tpp, digesi.tarapoto</code></pre>
 <hr />
-<h2 id="prerrequisitos-para-activar-iga">12. Prerrequisitos para activar
-IGA</h2>
-<h3 id="estado-actual-de-permisos-app-registrations-midpoint">Estado
-actual de permisos — App Registrations MidPoint</h3>
-<p>Existen <strong>dos</strong> App Registrations relacionadas con
-MidPoint en el tenant. Datos obtenidos via Graph API el 2026-05-19.</p>
-<h4
-id="midpoint-upeu-app-activa-la-que-usa-el-conector"><code>MidPoint-UPeU</code>
-(app activa — la que usa el conector)</h4>
-<ul>
-<li><strong>App ID:</strong>
-<code>94dd7b5b-eae6-45bc-a60a-d28781ecefbd</code></li>
-<li><strong>Object ID:</strong>
-<code>0c979413-9a62-44f1-8e33-c22ac10ec762</code></li>
-<li><strong>Creada:</strong> 2026-04-16</li>
-</ul>
-<p><strong>Permisos actualmente concedidos (con admin
-consent):</strong></p>
+<h2 id="permisos-midpoint-en-entra-id">12. Permisos MidPoint en Entra
+ID</h2>
+<h3 id="situación-actual-dos-app-registrations">Situación actual — dos
+App Registrations</h3>
+<p>Se encontraron <strong>dos</strong> App Registrations relacionadas
+con MidPoint. Datos verificados via Graph API el 2026-05-19.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th></th>
+<th><code>MidPoint-UPeU</code></th>
+<th><code>MidPointUPeU</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>App ID</strong></td>
+<td><code>94dd7b5b-...ecefbd</code></td>
+<td><code>9e3523a9-...112a3</code></td>
+</tr>
+<tr>
+<td><strong>Creada</strong></td>
+<td>2026-04-16</td>
+<td>2024-06-25</td>
+</tr>
+<tr>
+<td><strong>Uso</strong></td>
+<td>✅ Activa — conector IGA</td>
+<td>❌ Obsoleta — prueba inicial 2024</td>
+</tr>
+<tr>
+<td><strong>Permisos concedidos</strong></td>
+<td>3</td>
+<td>5</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Acción requerida — eliminar <code>MidPointUPeU</code>
+(2024):</strong></p>
+<p>La app de 2024 fue creada en una prueba inicial antes de formalizar
+la integración. Ya no se usa pero sigue activa con credenciales y
+permisos válidos en el tenant. Mientras exista es superficie de ataque:
+cualquiera que tenga el client secret puede leer usuarios, grupos y
+directorio completo de UPeU.</p>
+<p>David Urquizo debe eliminarla desde:
+<code>Entra ID &gt; App registrations &gt; MidPointUPeU &gt; Delete</code>.</p>
+<hr />
+<h3 id="permisos-de-midpoint-upeu-estado-actual-y-requerido">Permisos de
+<code>MidPoint-UPeU</code> — estado actual y requerido</h3>
+<h4 id="permisos-actuales-concedidos-con-admin-consent">Permisos
+actuales (concedidos con admin consent)</h4>
 <table>
 <thead>
 <tr>
@@ -1723,8 +1761,11 @@ consent):</strong></p>
 </tr>
 </tbody>
 </table>
-<p><strong>Permisos faltantes — lectura (necesarios ya, para correlacion
-IGA):</strong></p>
+<h4
+id="permisos-faltantes-lectura-agregar-ahora-antes-de-fase-12">Permisos
+faltantes — lectura (agregar ahora, antes de Fase 12)</h4>
+<p>Necesarios para que MidPoint pueda leer toda la estructura del tenant
+correctamente:</p>
 <table>
 <colgroup>
 <col style="width: 33%" />
@@ -1735,34 +1776,37 @@ IGA):</strong></p>
 <tr>
 <th>Permission</th>
 <th>Tipo</th>
-<th>Para qué sirve</th>
+<th>Para qué sirve en IGA</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>AuditLog.Read.All</code></td>
-<td>Application</td>
-<td>Leer log de auditoría del tenant</td>
-</tr>
-<tr>
 <td><code>AdministrativeUnit.Read.All</code></td>
 <td>Application</td>
-<td>Leer Administrative Units y sus miembros</td>
+<td>Leer AUs existentes y sus miembros para correlación</td>
 </tr>
 <tr>
 <td><code>RoleManagement.Read.Directory</code></td>
 <td>Application</td>
-<td>Leer role assignments del directorio</td>
+<td>Leer role assignments actuales para inventario y auditoría</td>
+</tr>
+<tr>
+<td><code>AuditLog.Read.All</code></td>
+<td>Application</td>
+<td>Leer log de auditoría del tenant (evidencia ISO 27001)</td>
 </tr>
 <tr>
 <td><code>Application.Read.All</code></td>
 <td>Application</td>
-<td>Leer App Registrations para inventario</td>
+<td>Inventariar App Registrations desde MidPoint</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Permisos faltantes — escritura (para Fase 12, provisioning
-outbound):</strong></p>
+<h4
+id="permisos-de-escritura-agregar-en-fase-12-provisioning-outbound">Permisos
+de escritura (agregar en Fase 12 — provisioning outbound)</h4>
+<p>Necesarios para que MidPoint pueda escribir en Entra ID como target
+de provisioning:</p>
 <table>
 <colgroup>
 <col style="width: 33%" />
@@ -1773,62 +1817,128 @@ outbound):</strong></p>
 <tr>
 <th>Permission</th>
 <th>Tipo</th>
-<th>Para qué sirve</th>
+<th>Para qué sirve en IGA</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>User.ReadWrite.All</code></td>
 <td>Application</td>
-<td>Escribir atributos: <code>department</code>,
-<code>employeeType</code>, <code>officeLocation</code>,
-<code>companyName</code></td>
+<td>Escribir <code>department</code>, <code>employeeType</code>,
+<code>officeLocation</code>, <code>companyName</code> desde Oracle
+LAMB</td>
 </tr>
 <tr>
 <td><code>Group.ReadWrite.All</code></td>
 <td>Application</td>
-<td>Crear y mantener security groups gestionados por IGA</td>
+<td>Crear y mantener security groups gestionados por IGA (GRP-LIC-<em>,
+GRP-CA-</em>)</td>
 </tr>
 <tr>
 <td><code>AdministrativeUnit.ReadWrite.All</code></td>
 <td>Application</td>
-<td>Agregar y remover usuarios de AUs por sede/facultad</td>
+<td>Asignar usuarios a AUs por sede/facultad/dominio</td>
 </tr>
 <tr>
 <td><code>RoleManagement.ReadWrite.Directory</code></td>
 <td>Application</td>
-<td>Asignar roles scoped a AUs (requiere P1)</td>
+<td>Crear role assignments scoped a AUs (helpdesk por sede)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="tabla-consolidada-todos-los-permisos-necesarios">Tabla
+consolidada — todos los permisos necesarios</h4>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Tipo</th>
+<th>Fase</th>
+<th>Estado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>User.Read.All</code></td>
+<td>Application</td>
+<td>Lectura</td>
+<td>✓ Concedido</td>
+</tr>
+<tr>
+<td><code>Group.Read.All</code></td>
+<td>Application</td>
+<td>Lectura</td>
+<td>✓ Concedido</td>
+</tr>
+<tr>
+<td><code>Directory.Read.All</code></td>
+<td>Application</td>
+<td>Lectura</td>
+<td>✓ Concedido</td>
+</tr>
+<tr>
+<td><code>AdministrativeUnit.Read.All</code></td>
+<td>Application</td>
+<td>Lectura</td>
+<td>⚠ Falta conceder</td>
+</tr>
+<tr>
+<td><code>RoleManagement.Read.Directory</code></td>
+<td>Application</td>
+<td>Lectura</td>
+<td>⚠ Falta conceder</td>
+</tr>
+<tr>
+<td><code>AuditLog.Read.All</code></td>
+<td>Application</td>
+<td>Lectura</td>
+<td>⚠ Falta conceder</td>
+</tr>
+<tr>
+<td><code>Application.Read.All</code></td>
+<td>Application</td>
+<td>Lectura</td>
+<td>⚠ Falta conceder</td>
+</tr>
+<tr>
+<td><code>User.ReadWrite.All</code></td>
+<td>Application</td>
+<td>Fase 12</td>
+<td>⏳ Agregar en Fase 12</td>
+</tr>
+<tr>
+<td><code>Group.ReadWrite.All</code></td>
+<td>Application</td>
+<td>Fase 12</td>
+<td>⏳ Agregar en Fase 12</td>
+</tr>
+<tr>
+<td><code>AdministrativeUnit.ReadWrite.All</code></td>
+<td>Application</td>
+<td>Fase 12</td>
+<td>⏳ Agregar en Fase 12</td>
+</tr>
+<tr>
+<td><code>RoleManagement.ReadWrite.Directory</code></td>
+<td>Application</td>
+<td>Fase 12</td>
+<td>⏳ Agregar en Fase 12</td>
 </tr>
 </tbody>
 </table>
 <blockquote>
-<p><strong>IMPORTANTE:</strong> todos los permisos de tipo
-<code>Application</code> requieren <code>Grant admin consent</code> por
-parte de David Urquizo (<code>daiurqz@upeu.edu.pe</code>). La ruta en el
-portal es:
-<code>Entra ID &gt; App registrations &gt; MidPoint-UPeU &gt; API permissions &gt; Grant admin consent for Universidad Peruana Unión</code>.
-Sin ese paso los permisos declarados en el manifest no tienen
-efecto.</p>
+<p><strong>Cómo conceder:</strong>
+<code>Entra ID &gt; App registrations &gt; MidPoint-UPeU &gt; API permissions &gt; Add a permission &gt; Microsoft Graph &gt; Application permissions</code>
+→ buscar cada permiso → Add. Al terminar:
+<code>Grant admin consent for Universidad Peruana Unión</code>. Solo
+David Urquizo puede hacer este último paso.</p>
 </blockquote>
-<hr />
-<h4
-id="midpointupeu-app-antigua-creada-en-2024"><code>MidPointUPeU</code>
-(app antigua — creada en 2024)</h4>
-<ul>
-<li><strong>App ID:</strong>
-<code>9e3523a9-3e17-45a4-a7f0-e0e21d5112a3</code></li>
-<li><strong>Object ID:</strong>
-<code>e95af028-1eeb-432f-8c7c-f0e091356235</code></li>
-<li><strong>Creada:</strong> 2024-06-25</li>
-</ul>
-<p>Tiene declarados en el manifest: <code>User.Read</code> (Delegated),
-<code>User.Read.All</code>, <code>Group.Read.All</code>,
-<code>Directory.Read.All</code>, <code>Application.Read.All</code>,
-<code>UserAuthenticationMethod.Read.All</code>. No se ha verificado si
-tiene admin consent concedido ni si el conector activo la usa.
-<strong>Accion requerida:</strong> David Urquizo debe confirmar si esta
-app sigue en uso o puede eliminarse. Tener dos apps con credenciales
-activas para el mismo propósito duplica la superficie de ataque.</p>
 <h3 id="acciones-previas-que-debe-ejecutar-david-sin-midpoint">Acciones
 previas que debe ejecutar David (sin MidPoint)</h3>
 <table>
