@@ -1,6 +1,6 @@
 # UPeU IGA — Roadmap de Ejecución 2026
 
-**Versión:** 2026-05-20 rev5 (P4 + DT-3 + DT-6 completados) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
+**Versión:** 2026-05-20 rev6 (P1 completo + DT-2/DT-4 cerrados + limpieza SciBack) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
 **Documento base:** [`iga-canonical-analysis-2026-05.md`](./iga-canonical-analysis-2026-05.md) · [`SKILL: iga-canonical-standards`](~/.claude/skills/iga-canonical-standards/SKILL.md) · [`SKILL: midpoint-best-practices`](~/.claude/skills/midpoint-best-practices/SKILL.md)
 
 ---
@@ -113,22 +113,23 @@ El historial de 69 tasks revela trabajo operativo extenso no documentado en el r
 | Roles MOF-* | 25 | ✅ **Versionados** `upeu/roles/mof/` | `19590be` |
 | Roles GOV-* | 3 | ✅ **Versionados** `upeu/roles/governance/` | `19590be` |
 | SYS-IGA-SUPERUSER | 1 | ✅ **Versionados** `upeu/roles/system/` | `19590be` |
-| APP-KOHA-PATRON (deprecated) | 1 | ⏳ Pendiente | — |
+| APP-KOHA-PATRON (deprecated) | 1 | ✅ **Versionado** `upeu/roles/deprecated/` | `437813c` |
 
 ---
 
 ## Proximas acciones inmediatas (priorizadas)
 
-### ✅ P1 — Descargar y versionar artefactos faltantes en repo — COMPLETADO 2026-05-19
+### ✅ P1 — Descargar y versionar artefactos faltantes en repo — COMPLETADO 2026-05-20
 
-Ejecutado via REST API desde PROD. Commit `19590be`:
+Ejecutado via REST API desde PROD. Commits `19590be` + `437813c`:
 - 4 archetypes user → `canonical/archetypes/user/`
 - 8 archetypes org → `canonical/archetypes/org/`
 - 25 roles MOF-* → `upeu/roles/mof/`
 - 3 roles GOV-* → `upeu/roles/governance/`
 - SYS-IGA-SUPERUSER → `upeu/roles/system/`
+- `APP-KOHA-PATRON` (deprecated, OID `3fe3ca52`) → `upeu/roles/deprecated/` — commit `437813c`
 - Limpieza de metadata operacional aplicada a todos los XMLs
-- Pendiente: `APP-KOHA-PATRON` (deprecated) → `upeu/roles/deprecated/`
+- **Repo 100% en sync con PROD — ningún artefacto faltante**
 
 ### ✅ P2 — Corregir lifecycle de LDAP y Entra ID resources — COMPLETADO 2026-05-19
 
@@ -183,10 +184,10 @@ El motor no podía resolver el focus item para correlación.
 
 | # | Problema | Origen | Acción |
 |---|---|---|---|
-| DT-1 | 11 shadows duplicados Koha (estudiantes con doble sombra) | Reconcile Estudiantes | Limpiar shadows huérfanos via UI/REST |
-| DT-2 | 8 shadows huérfanos Koha (patrones borrados en Koha sin pasar por MidPoint) | Reconcile Koha | Marcar `dead` manualmente (IDs: 730, 736, 200610446...) |
+| DT-1 | 4 pares de shadows duplicados Koha (usuarios con 2 shadows vivos, exists=false, pendingOp=ADD) | Recompute masivo 2026-05-19 mientras Koha tenía HTTP 500 | ⏳ **EN CURSO** — Koha sacado de mantenimiento, recompute de 4 usuarios lanzado |
+| DT-2 | 8 shadows huérfanos Koha | Reconcile Koha | ✅ **CERRADO** — Query PROD confirma 0 shadows huérfanos reales |
 | DT-3 | `SchemaException: category_id [STAFF, DOCEN]` en usuarios con doble rol Koha | Recompute | ✅ **RESUELTO** — `strong`→`weak` en `AR-Koha-Patron-Staff`. Commit `31a7785` |
-| DT-4 | Dependencia circular en mappings OT estudiantes `#[12,21,22,23,25,32,33]` | Object Template | Pendiente — revisar tras estabilización templates |
+| DT-4 | Dependencia circular en mappings OT estudiantes `#[12,21,22,23,25,32,33]` | Object Template | ✅ **RESUELTO** — Bloque H leía `lifecycleState` como source de sí mismo. Fix: `focus?.lifecycleState` (snapshot). Commit `639d37b` |
 | DT-5 | Deep clone innecesario de `identityDocuments` en OT | Object Template | Pendiente — optimización futura |
 | DT-6 | `Reconcile-Koha-Inbound` es one-shot manual, sin cron | Koha ILS | ✅ **RESUELTO** — Task `reconcile-koha-daily` creada, cron `0 0 3 * * ?`. Commit `eb25950` |
 
@@ -209,6 +210,20 @@ Conexión directa Keycloak (192.168.12.88) → OpenLDAP (192.168.15.168:389) fun
 - `connectionUrl` corregido: `ldap://192.168.15.166:8080` → `ldap://192.168.15.168:389`
 - `bindCredential` corregido: password inválido → `Kc@Ldap2026!`
 - Runbook: `docs/runbooks/keycloak-ldap-federation.md`
+
+### ✅ Limpieza branding — Referencias cosméticas eliminadas — 2026-05-20
+
+Commit `70101c6` — 17 archivos actualizados. Eliminadas referencias a "SciBack" como marca en comentarios, docs y specs.
+
+**NO tocado (namespace técnico desplegado en PROD):**
+- `urn:sciback:midpoint:person` — namespace del schema canónico (35K usuarios en PROD)
+- `extension/sciback:*` — referencias a campos del schema en mappings
+- `canonical/schemas/sciback-person-v1.0.xml` — archivo del schema
+- `archive/` y `docs/sciback-entra-snapshot-2026-05-19/` — historial factual
+
+**Cambiado (cosmético):** comentarios XML, sección 6 ARCHITECTURE.md, specs, READMEs, aux-affiliation archetypes.
+
+---
 
 ### ✅ P4 — Object templates per-archetype — COMPLETADO 2026-05-20
 
