@@ -147,30 +147,35 @@
     </div>
   </div>
 
-  <!-- SLIDE 2: EL PROBLEMA HOY (con ilustración SVG) -->
-  <div class="slide s2" id="s2">
+  <!-- SLIDE 2: EL PROBLEMA HOY (imagen PNG real) -->
+  <div class="slide s2" id="s2" style="justify-content:flex-start;padding-top:28px;">
     <div class="tag">La situación actual</div>
-    <h2 style="margin-bottom:8px;">Hoy, DTI hace de <span style="color:#f0abfc">puente manual</span><br>entre Oracle y Azure</h2>
+    <h2 style="margin-bottom:6px;">Hoy, DTI hace de <span style="color:#f0abfc">puente manual</span><br>entre Oracle y Azure</h2>
 
-    <svg viewBox="0 0 860 250" xmlns="http://www.w3.org/2000/svg"
-         style="width:100%;max-width:900px;height:auto;margin:2px 0;">
-      <defs>
-        <filter id="pglow" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="6" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <style>
-          @keyframes bobP{0%,100%{transform:translateY(0px)}50%{transform:translateY(-8px)}}
-          @keyframes pulseBadge{0%,100%{opacity:.4}50%{opacity:1}}
-          @keyframes sweatD{0%{opacity:0;transform:translateY(0)}50%{opacity:.9;transform:translateY(10px)}100%{opacity:0;transform:translateY(20px)}}
-          .person-g { animation: bobP 2.2s ease-in-out infinite; }
-          .badge-pulse { animation: pulseBadge 1.6s ease-in-out infinite; }
-          .sweat  { animation: sweatD 2s ease-in-out infinite; }
-          .sweat2 { animation: sweatD 2s ease-in-out .5s infinite; }
-        </style>
-      </defs>
+    <!-- Contenedor imagen + labels superpuestos -->
+    <div style="position:relative;width:100%;max-width:860px;margin:0 auto 8px;">
+      <img src="broken-bridge.png" alt="Puente roto entre Oracle y Azure"
+           style="width:100%;height:auto;display:block;max-height:320px;object-fit:contain;object-position:center;mix-blend-mode:normal;filter:drop-shadow(0 4px 24px rgba(0,0,0,.5));"/>
+      <!-- Label Oracle (izquierda) -->
+      <div style="position:absolute;top:10%;left:4%;background:rgba(109,40,217,.75);border:1.5px solid #a78bfa;border-radius:999px;padding:4px 14px;font-size:13px;font-weight:700;color:#e9d5ff;backdrop-filter:blur(4px);">🏛️ Oracle · 35,000+ personas</div>
+      <!-- Label Azure (derecha) -->
+      <div style="position:absolute;top:8%;right:4%;background:rgba(3,105,161,.75);border:1.5px solid #38bdf8;border-radius:999px;padding:4px 14px;font-size:13px;font-weight:700;color:#e0f2fe;backdrop-filter:blur(4px);">☁️ Azure / M365</div>
+      <!-- Badge proceso manual (centro arriba) -->
+      <div class="badge-s2" style="position:absolute;top:2%;left:50%;transform:translateX(-50%);background:rgba(220,38,38,.25);border:1.5px solid #f87171;border-radius:999px;padding:4px 16px;font-size:12px;font-weight:700;color:#fca5a5;white-space:nowrap;">⚠ proceso manual — sin automatización</div>
+    </div>
 
-      <!-- SUELO IZQUIERDO -->
+    <!-- bullets -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:820px;">
+      <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:5px 13px;font-size:12.5px;">❌ Onboarding manual por ciclo</span>
+      <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:5px 13px;font-size:12.5px;">❌ Perfiles incompletos en M365</span>
+      <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:5px 13px;font-size:12.5px;">❌ Cambios de carrera no se reflejan</span>
+      <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:5px 13px;font-size:12.5px;">❌ Retirados conservan acceso</span>
+      <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:5px 13px;font-size:12.5px;">❌ Koha / Moodle / Azure desconectados</span>
+    </div>
+  </div>
+
+    <!-- [SVG eliminado — reemplazado por broken-bridge.png] -->
+    <svg viewBox="0 0 1 1" style="display:none"><!-- SUELO IZQUIERDO -->
       <rect x="0" y="185" width="320" height="65" fill="#1e0a40"/>
       <!-- SUELO DERECHO -->
       <rect x="540" y="185" width="320" height="65" fill="#0a1c3d"/>
@@ -292,24 +297,7 @@
         <!-- gotas sudor -->
         <ellipse class="sweat"  cx="30" cy="58" rx="3.5" ry="5.5" fill="#93c5fd" opacity=".85"/>
         <ellipse class="sweat2" cx="36" cy="68" rx="3" ry="4.5" fill="#93c5fd" opacity=".7"/>
-      </g></g>
-
-      <!-- BADGE proceso manual (pulsante) -->
-      <g class="badge-pulse">
-        <rect x="348" y="5" width="144" height="24" rx="12" fill="rgba(239,68,68,.22)" stroke="#f87171" stroke-width="1.5"/>
-        <text x="420" y="21" text-anchor="middle" font-size="12" font-weight="700" fill="#fca5a5" font-family="Segoe UI,Arial,sans-serif">⚠ proceso manual</text>
-      </g>
-    </svg>
-
-    <!-- bullets compactos debajo -->
-    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:820px;">
-      <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:5px 14px;font-size:13px;">❌ Onboarding manual por ciclo</span>
-      <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:5px 14px;font-size:13px;">❌ Perfiles incompletos en M365</span>
-      <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:5px 14px;font-size:13px;">❌ Cambios de carrera no se reflejan</span>
-      <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:5px 14px;font-size:13px;">❌ Retirados con acceso activo</span>
-      <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:5px 14px;font-size:13px;">❌ Koha / Moodle / Azure desconectados</span>
-    </div>
-  </div>
+      </g></g></svg>
 
   <!-- SLIDE 3: CÓMO FUNCIONA (flujo simple) -->
   <div class="slide s3" id="s3">
