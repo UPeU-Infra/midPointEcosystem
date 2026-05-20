@@ -131,7 +131,6 @@
             </attribute>
             <attribute>
                 <ref>ri:NUM_DOCUMENTO</ref>
-                <correlator/>
                 <inbound>
                     <name>dni-to-taxId-urn</name>
                     <strength>strong</strength>
@@ -303,6 +302,20 @@
                     </target>
                 </inbound>
             </attribute>
+            <correlation>
+                <!-- fix MidPoint 4.10: <correlator/> shorthand dentro de <attribute> roto
+                     cuando hay inbounds con beforeCorrelation. Correlator explícito a nivel objectType.
+                     El inbound dni-to-taxId-urn (beforeCorrelation) normaliza NUM_DOCUMENTO a URN
+                     en extension/sb:taxId antes de que este correlator evalúe. -->
+                <correlators>
+                    <items>
+                        <name>correlate-by-taxId</name>
+                        <item>
+                            <ref xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</ref>
+                        </item>
+                    </items>
+                </correlators>
+            </correlation>
             <synchronization>
                 <reaction>
                     <situation>linked</situation>
