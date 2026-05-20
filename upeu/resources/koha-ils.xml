@@ -1091,11 +1091,13 @@
                     <name>expiry-date-outbound</name>
                     <strength>normal</strength>
                     <source>
-                        <path>$focus/activation/validTo</path>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:terminationDate</path>
                     </source>
                     <expression>
                         <script>
-                            <code>if (validTo == null) return null; validTo instanceof javax.xml.datatype.XMLGregorianCalendar ? validTo.toGregorianCalendar().toZonedDateTime().toLocalDate().toString() : validTo.toString().take(10)</code>
+                            <!-- terminationDate es String 'YYYY-MM-DD' desde Oracle (estudiantes/trabajadores).
+                                 Si es null Koha usará el default de la categoría (correcto para STAFF sin contrato fijo). -->
+                            <code>if (terminationDate == null) return null; terminationDate.toString().take(10)</code>
                         </script>
                     </expression>
                 </outbound>

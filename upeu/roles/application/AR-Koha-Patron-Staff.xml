@@ -15,11 +15,11 @@
             <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
             <kind>account</kind>
             <intent>default</intent>
-            <!-- Override category_id: código de categoría Koha para personal administrativo -->
+            <!-- Override category_id: normal — supera ESTUDI (weak) pero cede ante DOCEN (strong) -->
             <attribute>
                 <ref>ri:category_id</ref>
                 <outbound>
-                    <strength>weak</strength>
+                    <strength>normal</strength>
                     <expression><value>STAFF</value></expression>
                 </outbound>
             </attribute>
