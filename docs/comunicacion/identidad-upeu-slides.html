@@ -102,8 +102,8 @@
   .atrib .aname { font-size:13px; font-weight:700; }
   .atrib .aval  { font-size:12px; opacity:.6; margin-top:2px; }
 
-  /* LOGO AREA slide 1 */
-  .logo-area { display:flex; align-items:center; gap:16px; margin-bottom:32px; }
+  /* LOGO AREA slide 1 — header fijo en la parte superior */
+  .logo-area { display:flex; align-items:center; gap:16px; width:100%; padding:0 0 16px 0; margin-bottom:24px; border-bottom:1px solid rgba(255,255,255,0.15); }
   .logo-circle { width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-size:28px; border:2px solid rgba(255,255,255,0.25); }
 
   /* AVISO NO-BORRAR */
@@ -129,22 +129,26 @@
 <div class="slides">
 
   <!-- SLIDE 1: PORTADA -->
-  <div class="slide s1 active" id="s1">
+  <div class="slide s1 active" id="s1" style="justify-content:flex-start;padding-top:28px;">
+    <!-- HEADER con logo -->
     <div class="logo-area">
       <img src="https://upeu.edu.pe/wp-content/uploads/2022/07/logo-upeu-white-svg-02.svg"
-           alt="UPeU" style="height:64px;width:auto;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4));"/>
-      <div>
-        <div style="font-size:13px;opacity:.6;letter-spacing:2px;text-transform:uppercase">Universidad Peruana Unión</div>
-        <div style="font-size:16px;font-weight:700">Dirección de Tecnologías de Información</div>
+           alt="UPeU" style="height:52px;width:auto;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4));"/>
+      <div style="border-left:1px solid rgba(255,255,255,0.25);padding-left:16px;margin-left:4px;">
+        <div style="font-size:11px;opacity:.55;letter-spacing:2px;text-transform:uppercase">Universidad Peruana Unión</div>
+        <div style="font-size:14px;font-weight:700;margin-top:2px;">Dirección de Tecnologías de Información</div>
       </div>
     </div>
-    <div class="tag">Proyecto de Identidad Digital</div>
-    <h1>Tu identidad en Azure<br><span class="accent">siempre actualizada,<br>siempre correcta</span></h1>
-    <p class="sub">Qué va a cambiar en Azure / Microsoft 365 cuando el sistema entre en operación — y por qué es bueno para todos</p>
-    <div class="stats">
-      <div class="stat"><div class="num">35 K+</div><div class="lbl">personas gestionadas</div></div>
-      <div class="stat"><div class="num">7</div><div class="lbl">sistemas conectados</div></div>
-      <div class="stat"><div class="num">0</div><div class="lbl">actualizaciones manuales</div></div>
+    <!-- CONTENIDO centrado -->
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;">
+      <div class="tag">Proyecto de Identidad Digital</div>
+      <h1>Tu identidad en Azure<br><span class="accent">siempre actualizada,<br>siempre correcta</span></h1>
+      <p class="sub">Qué va a cambiar en Azure / Microsoft 365 cuando el sistema entre en operación — y por qué es bueno para todos</p>
+      <div class="stats">
+        <div class="stat"><div class="num">35 K+</div><div class="lbl">personas gestionadas</div></div>
+        <div class="stat"><div class="num">7</div><div class="lbl">sistemas conectados</div></div>
+        <div class="stat"><div class="num">0</div><div class="lbl">actualizaciones manuales</div></div>
+      </div>
     </div>
   </div>
 
@@ -171,7 +175,7 @@
       <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:4px 12px;font-size:12px;">❌ Perfiles incompletos en M365</span>
       <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:4px 12px;font-size:12px;">❌ Cambios de carrera no se reflejan</span>
       <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:4px 12px;font-size:12px;">❌ Retirados conservan acceso</span>
-      <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:4px 12px;font-size:12px;">❌ Koha / Moodle / Azure desconectados</span>
+      <span style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35);border-radius:999px;padding:4px 12px;font-size:12px;">❌ Koha / LAMB / Azure desconectados</span>
     </div>
   </div>
 
@@ -263,7 +267,7 @@
         <line x1="713" y1="187" x2="716" y2="215" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4,3" opacity=".4"/>
         <line x1="743" y1="187" x2="746" y2="212" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4,3" opacity=".4"/>
         <text x="630" y="226" text-anchor="middle" font-size="9.5" fill="#7dd3fc" opacity=".6" font-family="Segoe UI,Arial,sans-serif">Koha</text>
-        <text x="690" y="229" text-anchor="middle" font-size="9.5" fill="#7dd3fc" opacity=".6" font-family="Segoe UI,Arial,sans-serif">Moodle</text>
+        <text x="690" y="229" text-anchor="middle" font-size="9.5" fill="#7dd3fc" opacity=".6" font-family="Segoe UI,Arial,sans-serif">LAMB</text>
         <text x="748" y="226" text-anchor="middle" font-size="9.5" fill="#7dd3fc" opacity=".6" font-family="Segoe UI,Arial,sans-serif">LDAP</text>
       </g>
 
@@ -328,7 +332,7 @@
     </div>
     <div class="flow">
       <div class="fbox"><div class="ficon">📚</div><div class="fname">Koha</div><div class="fdesc">Biblioteca</div></div>
-      <div class="fbox"><div class="ficon">🎓</div><div class="fname">Moodle</div><div class="fdesc">Aula virtual</div></div>
+      <div class="fbox"><div class="ficon">🎓</div><div class="fname">LAMB</div><div class="fdesc">Academic · Financial<br>Talent · más</div></div>
       <div class="fbox"><div class="ficon">📂</div><div class="fname">LDAP</div><div class="fdesc">Directorio</div></div>
       <div class="fbox"><div class="ficon">🔑</div><div class="fname">Keycloak</div><div class="fdesc">SSO</div></div>
     </div>
@@ -427,7 +431,7 @@
       <div class="ben">
         <div class="icon">🤝</div>
         <h3>Un solo lugar para gestionar</h3>
-        <p>Cuando algo cambia en Oracle, el sistema lo propaga a Azure, Koha, Moodle y más — sin trabajo duplicado.</p>
+        <p>Cuando algo cambia en Oracle, el sistema lo propaga a Azure, Koha, LAMB y más — sin trabajo duplicado.</p>
       </div>
     </div>
   </div>

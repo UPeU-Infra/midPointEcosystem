@@ -39,9 +39,9 @@
 > **Narrador:**  
 > La solución es un **motor central de identidad** — un sistema que lee los datos de Oracle y los distribuye automáticamente a todos los demás sistemas.
 
-*[Animación tipo engranaje central: Oracle → Motor → Azure, Koha, Moodle, LDAP, Keycloak]*
+*[Animación tipo engranaje central: Oracle → Motor → Azure, Koha, LAMB, LDAP, Keycloak]*
 
-> Piénsenlo como un **traductor automático** que trabaja las 24 horas. Oracle dice "este estudiante se matriculó en Ingeniería de Sistemas, sede Lima" — y el motor lo convierte en: cuenta en Azure con el perfil completo, acceso a Moodle, acceso a la biblioteca Koha, y el directorio corporativo actualizado.
+> Piénsenlo como un **traductor automático** que trabaja las 24 horas. Oracle dice "este estudiante se matriculó en Ingeniería de Sistemas, sede Lima" — y el motor lo convierte en: cuenta en Azure con el perfil completo, acceso a los sistemas LAMB, acceso a la biblioteca Koha, y el directorio corporativo actualizado.
 
 > Todo eso, sin que DTI haga nada manualmente.
 
@@ -91,7 +91,7 @@
 > - **Datos confiables.** Todo viene de Oracle. Si Oracle dice que alguien está activo, Azure lo refleja.
 > - **Políticas más precisas.** Con grupos por facultad, pueden aplicar licencias y configuraciones específicas sin trabajo manual.
 > - **Auditoría completa.** Cada cambio queda registrado. Si algo falla, hay trazabilidad de qué cambió, cuándo y por qué.
-> - **Un solo flujo para todo.** El mismo ciclo que actualiza Azure, actualiza Koha, Moodle y el resto — sin duplicar trabajo.
+> - **Un solo flujo para todo.** El mismo ciclo que actualiza Azure, actualiza Koha, LAMB y el resto — sin duplicar trabajo.
 
 ---
 
@@ -133,7 +133,7 @@
 
 **Fuente de datos:** Oracle LAMB Academic — sistema académico oficial con 35,000+ personas registradas (estudiantes, docentes, administrativos de múltiples sedes: Lima, Juliaca, Tarapoto y más).
 
-**Destinos conectados:** Microsoft Azure / Entra ID (M365), OpenLDAP (directorio corporativo), Koha (sistema de biblioteca), Moodle (aula virtual), Keycloak (SSO corporativo).
+**Destinos conectados:** Microsoft Azure / Entra ID (M365), OpenLDAP (directorio corporativo), Koha (sistema de biblioteca), LAMB Academic / Financial / Talent (ecosistema académico), Keycloak (SSO corporativo).
 
 **Estado actual:** Motor IGA operativo. Koha y LDAP integrados. Azure en proceso de integración (pendiente permisos de Entra ID).
 
