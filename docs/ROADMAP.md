@@ -1,6 +1,6 @@
 # UPeU IGA — Roadmap de Ejecución 2026
 
-**Versión:** 2026-05-20 rev9 (OpenLDAP N-Way Multimaster HA completo + MidPoint failover activo) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
+**Versión:** 2026-05-20 rev10 (DT-7 resuelto · conector Koha v1.2.1 · HA completo) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
 **Documento base:** [`iga-canonical-analysis-2026-05.md`](./iga-canonical-analysis-2026-05.md) · [`SKILL: iga-canonical-standards`](~/.claude/skills/iga-canonical-standards/SKILL.md) · [`SKILL: midpoint-best-practices`](~/.claude/skills/midpoint-best-practices/SKILL.md)
 
 ---
@@ -55,10 +55,8 @@
 | Oracle LAMB Egresados v3 | `active` | 30.629 |
 | LAMB-Oracle-Posiciones | `active` | 738 |
 | Koha ILS | `active` | 5.421 |
-| LDAP-IdentityCache-UPeU | *(null)* | **37.491** |
-| UPEU-EntraID-Graph | *(null)* | **37.304** |
-
-> LDAP y Entra ID tienen lifecycle `null` (no está seteado a `active`) pero tienen decenas de miles de sombras — ambos **funcionan en PROD**. El null es un dato de configuración menor pendiente de corregir.
+| LDAP-IdentityCache-UPeU | `active` ✅ | **37.491** |
+| UPEU-EntraID-Graph | `active` ✅ | **37.304** |
 
 ### Object templates en PROD
 
@@ -67,7 +65,7 @@
 | `UserTemplate-Person-Base` | Activo |
 | `Person Object Template` | Activo (sistema) |
 
-Los templates **per-archetype** (student, faculty, staff, alumni individuales) **no existen** en PROD.
+Los 4 templates per-archetype (alumni, student, faculty, staff) existen en PROD desde 2026-05-20.
 
 ### Schemas en PROD
 
@@ -83,10 +81,10 @@ Los templates **per-archetype** (student, faculty, staff, alumni individuales) *
 | Fase 0 — Refactor doctrinal | ✅ **COMPLETA** | Skills, agente, docs |
 | Fase 1 — Schema | ✅ **ACTIVA** | 2 schemas en PROD BD |
 | Fase 2 — Archetypes + Org tree | ✅ **ACTIVA / REPO COMPLETO** | 18 archetypes en PROD; repo ahora tiene los 18 (8 user + 9 org + 2 role) — commit `19590be` |
-| Fase 3 — Object templates | ⚠️ **PARCIAL** | 2 templates en PROD (base + sistema); templates per-archetype NO existen |
+| Fase 3 — Object templates | ✅ **COMPLETA** | Base + 4 per-archetype (Alumni, Student, Faculty, Staff) activos en PROD — commits `77aad6e` + `85aaa19` |
 | Fase 4 — OpenLDAP HA | ✅ **COMPLETA** | N-Way mirrormode Node 1 (168) + Node 2 (169) ✅; replicación bidireccional verificada; ulimits 65536 ambos nodos ✅; cn=midpoint password sincronizado ✅; MidPoint cfg:servers failover activo ✅; phpldapadmin en ambos nodos ✅; resource test SUCCESS 2026-05-20 |
 | Fase 5 — Resources READ | ✅ **ACTIVA** | Oracle LAMB ×4 + Koha + Entra ID activos; todos con lifecycleState `active` |
-| Fase 6 — Resources WRITE → OpenLDAP | ✅ **FUNCIONA** (no validado formalmente) | 37.491 sombras LDAP confirman que MidPoint escribe a OpenLDAP; Keycloak federation sin confirmar |
+| Fase 6 — Resources WRITE → OpenLDAP | ✅ **VALIDADO** | 37.491 sombras LDAP ✅; Keycloak User Federation activa (P7 ✅); Keycloak lee de OpenLDAP correctamente |
 | Fase 7 — RBAC | ⚠️ **PARCIAL** | 39 roles activos (AR + BR + affiliation); MOF-*/GOV-*/SYS ahora versionados en repo (commit `19590be`) — lifecycle null pendiente |
 | Fase 8 — Replanteo docs | ❌ **NO INICIADA** | — |
 | Fase 9 — Validación piloto | ⚠️ **PILOTO PARCIAL** | Tasks: `PILOT-EntraID-UPeU-link-100`, pilots usuario `75824658`; flujo completo no documentado |
@@ -191,6 +189,7 @@ El motor no podía resolver el focus item para correlación.
 | DT-5 | Deep clone innecesario de `identityDocuments` en OT | Object Template | Pendiente — optimización futura |
 | DT-7 | Conector Koha: ADD falla con `Expected primary identification, but got Secondary identifier userid` para 2 usuarios (202311327, 72887579) | Conector `pe.upeu.connector.koha-http` v1.2.0 | ✅ **RESUELTO** — v1.2.1: `response.opt()` + validación explícita de patron_id (commit `eb8bcc2`). Datos: 202311327 → primaryidentifiervalue=37742 corregido en DB; 72887579 → patron Koha 30502 migrado a cardnumber=72887579, reconcile inbound relinkea. Conectores PROD actualizados 2026-05-20. |
 | DT-6 | `Reconcile-Koha-Inbound` es one-shot manual, sin cron | Koha ILS | ✅ **RESUELTO** — Task `reconcile-koha-daily` creada, cron `0 0 3 * * ?`. Commit `eb25950` |
+| DT-8 | `AlreadyExistsException` Koha en CREATE para usuarios con patron existente de nombre duplicado (descubierto durante DT-7). Más de los 2 originales. | Koha ILS / datos | **Pendiente** — Hay usuarios en MidPoint cuyo nombre coincide con un patron Koha ya existente (cardnumber diferente). MidPoint intenta CREATE; Koha rechaza con 409. Requiere: (a) auditar todos los usuarios sin shadow Koha activo que tengan `PARTIAL_ERROR` en Koha, (b) actualizar cardnumber en Koha o ajustar correlación. |
 
 **Fix correlación aplicado a 2 resources (patrón MidPoint 4.10):**
 - `Oracle LAMB Trabajadores v3` — commit `db70026`
@@ -274,14 +273,13 @@ Fase 1 — Schema canonico v3.0 (3-4 dias)       ACTIVO EN PROD
    Activo: urn:sciback:midpoint:person + urn:upeu:midpoint:local
    Pendiente: verificar contra diseno v3.0 post-OOM
 
-Fase 2 — Arquetipos y org tree (3-4 dias)       ACTIVO EN PROD / REPO INCOMPLETO
-   Activo en PROD: 18 archetypes (8 user + 8 org + 2 role)
-   En repo: 12 de 18 (faltan 4 user + 7 org sin versionar)
-   Pendiente: descargar y commitear faltantes post-OOM
+Fase 2 — Arquetipos y org tree (3-4 dias)       ✅ COMPLETA 2026-05-20
+   18 archetypes en PROD (8 user + 8 org + 2 role)
+   Repo 100% en sync — commit 19590be
 
-Fase 3 — Object templates canonicos (2-3 dias)  PARCIAL
-   Hecho: UserTemplate-Person-Base.xml
-   Pendiente: 8 per-archetype templates
+Fase 3 — Object templates canonicos (2-3 dias)  ✅ COMPLETA 2026-05-20
+   Base + 4 per-archetype (Alumni, Student, Faculty, Staff)
+   Commits 77aad6e + 85aaa19
 
 Fase 4 — OpenLDAP HA Identity Cache (3 dias)    ✅ COMPLETA 2026-05-20
    N-Way Multimaster: Node 1 (168) + Node 2 (169) activo
@@ -294,10 +292,9 @@ Fase 5 — Resources read (1 semana)              ACTIVO EN PROD / ENTRA ID INCO
    7 resources activos: Oracle LAMB x4 + LDAP + Entra ID + Koha
    Entra ID: 3 de 7 permisos read concedidos (faltan 4)
 
-Fase 6 — Resources write controlled (3-4 dias)  NO VALIDADO
-   Resource LDAP tiene outbound en repo
-   Provisioning a OpenLDAP: sin confirmar en PROD
-   Keycloak User Federation: sin confirmar
+Fase 6 — Resources write controlled (3-4 dias)  ✅ VALIDADO 2026-05-20
+   37.491 sombras LDAP en PROD
+   Keycloak User Federation activa contra OpenLDAP (P7)
 
 Fase 7 — RBAC bottom-up (1 semana)             PARCIAL
    38 roles en repo (6 affiliation + 20 app + 12 business)
