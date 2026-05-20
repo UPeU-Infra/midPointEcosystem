@@ -1,7 +1,8 @@
 # Modelo IGA Canónico UPeU — Spec Maestro v1.0
 
-> **Estado:** Canon vigente. Aprobado 2026-05-14.
+> **Estado:** Canon vigente. Aprobado 2026-05-14. Última revisión de estado: 2026-05-20.
 > **Autor:** midpoint-expert (Claude) bajo dirección de Alberto Sánchez.
+> **Versión MidPoint:** 4.10.2 (actualizado desde 4.9.5 el 2026-05-19).
 > **Alcance:** Toda decisión de modelado, XML, importación, provisioning y workflow del proyecto MidPoint UPeU se valida contra este documento.
 > **Sustitución:** Reemplaza implícitamente cualquier decisión previa documentada en `project_midpoint_upeu.md` que entre en conflicto con los 4 pilares.
 
@@ -1554,4 +1555,10 @@ Las siguientes decisiones requieren intervención de Alberto / DTI / owners exte
 
 **Fin del spec v1.0.**
 Decisiones cerradas: D-01 (identityDocuments[]), D-04 (catálogo Positions UPeU — parcial).
-Próximo paso bloqueante: Alberto revisa y aprueba; luego avanzar F1 (Schema v3.1) con D-02, D-03, D-07 y D-08 resueltas.
+
+**Estado de fases (2026-05-20):**
+- F1 (Schema) ✅, F2 (Archetypes) ✅, F3 (Org tree) ✅, F4 (RBAC + Object Templates) ✅
+- F5 (Resources LAMB + LDAP + Entra ID + Koha) ✅ — 35.450 usuarios, 122 orgs, 72 roles, 741 posiciones en PROD
+- Próximas: F5.edu (outbound eduPerson LDAP), F6 (Entra ID write), F7 (role mining), F8 (SoD), F9 (LDAP HA)
+
+Bloqueantes activos: D-14 (Rudy — VMs OpenLDAP HA), D-16 (David Urquizo — Graph API write permisos).

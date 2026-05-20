@@ -1,7 +1,7 @@
 # Perfiles de Identidad UPeU — Modelado MidPoint IGA
 
 > Documento vivo. Fuente: exploración directa Oracle LAMB (192.168.13.9:1521/UPEU) — solo lectura.
-> Validado con midpoint-expert. Última actualización: 2026-04-22
+> Validado con midpoint-expert. Última actualización: 2026-05-20
 
 ---
 
@@ -66,10 +66,12 @@ Es el identificador maestro que une todos los schemas.
 
 ### 3.1 Trabajadores (MOISES.TRABAJADOR)
 
-Conteo actual:
-- **5,216** — Activo o Subsidiado
-- **186** — En Proceso de Contratación
-- **6,080** — Baja (histórico)
+Conteo en Oracle LAMB (referencia, no refleja MidPoint):
+- ~5.216 — Activo o Subsidiado
+- ~186 — En Proceso de Contratación
+- ~6.080 — Baja (histórico)
+
+**En MidPoint PROD (2026-05-20):** staff 3.144 · faculty 135 (activos con sombra LAMB; la diferencia con Oracle se debe a la política de correlación: solo usuarios con `personalNumber` válido y DNI no-corrupto se correlacionan).
 
 #### Condición Laboral (`MOISES.CONDICION_LABORAL`)
 
@@ -149,7 +151,9 @@ Un docente puede ser simultáneamente `TRABAJADOR` en MOISES (si es TC) — en e
 
 ### 3.3 Estudiantes (DAVID)
 
-Semestre 267: ~19,566 estudiantes matriculados activos.
+Semestre 267: ~19.566 estudiantes matriculados activos en Oracle.
+
+**En MidPoint PROD (2026-05-20):** student 1.679 activos (semestre vigente con correlación exitosa) · alumni 30.491 (egresados con archetype `alumni`). La volumetría total de usuarios MidPoint es 35.450.
 
 #### Tipos de Programa — todos activos
 
@@ -182,23 +186,26 @@ Semestre 267: ~19,566 estudiantes matriculados activos.
 
 ## 4. Modelado MidPoint
 
-### 4.1 Arquetipos — decisión final (máximo 5)
+### 4.1 Arquetipos — estado actual en PROD (2026-05-20)
 
 > Regla: los arquetipos definen **ciclo de vida y política de aprovisionamiento**, no permisos.
 > Los permisos específicos van en Roles.
 
-| Arquetipo               | Perfil Oracle                                       | Ciclo de vida                                      |
-|-------------------------|-----------------------------------------------------|----------------------------------------------------|
-| `StudentType`           | Todo matriculado activo (DAVID)                     | Joiner=matrícula, Leaver=fin semestre + 6 meses    |
-| `ProfessorType`         | Docentes con carga académica (DAVID)                | Leaver diferido 30 días, conservar correo inst.    |
-| `AdministrativeStaffType` | Personal CONDICION E/C/CTC/TP/P/PP/CND (MOISES)  | Leaver diferido 15 días                            |
-| `MisionaryType`         | Personal CONDICION M (MOISES)                       | Ciclo propio (baja/SPA distinto)                   |
-| `AlumniType`            | Ex-alumnos post-egreso                              | Solo lectura, acceso limitado 6 meses              |
+Los arquetipos canónicos activos en PROD son los nombres eduPerson estándar (sin sufijo `Type`):
 
-**Arquetipos existentes en producción**: StudentType, ProfessorType, AdministrativeStaffType, TechnicalStaffType.
-**Acción**: fusionar `TechnicalStaffType` con `AdministrativeStaffType` si el ciclo de vida es idéntico. Agregar `MisionaryType` y `AlumniType`.
+| Arquetipo (canónico) | Perfil Oracle | Ciclo de vida | Usuarios PROD |
+|---|---|---|---|
+| `student` | Matriculados activos (DAVID) | Joiner=matrícula, Leaver=fin semestre + 6 meses | 1.679 |
+| `faculty` | Docentes con carga académica (DAVID) | Leaver diferido 30 días, conservar correo inst. | 135 |
+| `staff` | Personal E/C/CTC/TP/P/PP/CND/M (MOISES) | Leaver diferido 15 días | 3.144 |
+| `alumni` | Ex-alumnos post-egreso (DAVID.VW_PERSONA_EGRESADO) | Solo lectura, acceso Alumni indefinido | 30.491 |
+| `affiliate-partner-institution` | Clínica GH, Colegio Unión, ISTAT, AGTU | Alta manual + `validTo` | pendiente poblar |
+| `contractor` | Prestadores de servicios sin relación laboral | Alta manual + `validTo` | pendiente poblar |
+| `service-account` | Cuentas técnicas (apps, daemons) | Sin auth interactiva | pendiente poblar |
 
-> `ContractedStaffType`, `InternType`, `PensionerType` **NO serán arquetipos** — serán roles de negocio asignados sobre el arquetipo base.
+> Los arquetipos `MisionaryType` y `TechnicalStaffType` de versiones anteriores fueron **consolidados en `staff`**. La condición laboral misionero (código M) se modela como business role `BR-Staff-Misionario` sobre el archetype `staff`.
+>
+> `ContractedStaffType`, `InternType`, `PensionerType` **NO son arquetipos** — son business roles asignados sobre el arquetipo base.
 
 ---
 
@@ -328,14 +335,18 @@ input?.split('\\|')?.toList()
 
 ### 4.5 Correlación y Reconciliación
 
-#### Reglas de correlación por recurso
+#### Reglas de correlación por recurso (estado PROD 2026-05-20)
 
-| Recurso          | Atributo correlación        | Campo MidPoint           |
-|------------------|-----------------------------|--------------------------|
-| Lamb-Trabajadores| NUM_DOCUMENTO (DNI/CE)      | `extension/taxId`        |
-| Lamb-Estudiantes | NUM_DOCUMENTO (DNI/CE)      | `extension/taxId`        |
-| Azure Entra ID   | mail / userPrincipalName    | `emailAddress`           |
-| Koha BUL         | EMAIL                       | `emailAddress`           |
+| Recurso | Atributo correlación | Campo MidPoint | Notas |
+|---|---|---|---|
+| LAMB Trabajadores v3 | NUM_DOCUMENTO (DNI/CE) | `personalNumber` (core) | Correlación principal activos |
+| LAMB Trabajadores v3 | COD_TRABAJADOR | `extension/upeu:lambDocNum` | Correlación por código LAMB |
+| LAMB Estudiantes v3 | NUM_DOCUMENTO (DNI/CE) | `personalNumber` (core) | |
+| LAMB Egresados v3 | NUM_DOCUMENTO | `extension/sb:taxId` | Correlación legado egresados |
+| LAMB Posiciones | ID_PUESTO | (ServiceType) | Resource de posiciones |
+| Entra ID | userPrincipalName | `emailAddress` | Solo lectura |
+| Koha ILS | EMAIL | `emailAddress` | |
+| LDAP Identity Cache | uid | `name` | Outbound desde MidPoint |
 
 #### Reacciones por situación
 
@@ -493,74 +504,56 @@ GROUP BY
 
 ## 6. Org Units — actual y pendiente
 
-#### Existentes (88 OUs en producción)
+#### Estado en PROD (2026-05-20): 122 OUs tipificadas
 
 ```
-UPeU (raíz)
-├── Lima      → Facultades + Rectorado + AreaTecnologia
-├── Juliaca   → Facultades espejo
-├── Tarapoto  → Facultades espejo
-└── Posgrado
+UPeU (institution, raíz)
+├── Lima / Juliaca / Tarapoto       (3 campus)
+├── Instituciones afines            (3 partner-institution: Clínica GH, Colegio Unión, ISTAT)
+├── Gobierno                        (12 governance: Rectorado, Decanatos, etc.)
+├── Facultades                      (5 faculty con archetypes)
+├── Unidades académicas             (31 academic-unit)
+└── Departamentos                   (36 department)
 ```
 
-#### Pendientes de crear
+Total: 1 institution + 3 campus + 3 partner + 12 governance + 5 faculty + 31 academic-unit + 36 department = 91 estructurales + ~31 adicionales = 122.
 
-```
-UPeU
-├── Centro de Idiomas              — TIPO_PROGRAMA I
-├── Conservatorio                  — TIPO_PROGRAMA CS
-├── CEPRE                          — TIPO_PROGRAMA CEP
-├── PROESAD (Educación a Distancia)— TIPO_PROGRAMA AD / SP
-├── Instituto SALT                 — TIPO_PROGRAMA S
-├── Productos Unión                — Entidad separada (ELISEO)
-└── Rectorado / DTH (RRHH)        — Gestiona nómina
-```
+Los organismos especiales (Centro de Idiomas, Conservatorio, CEPRE, PROESAD, SALT, Productos Unión) están modelados como `academic-unit` o `department` según su naturaleza en el organigrama.
 
 ---
 
-## 7. Pipeline — fases de activación
+## 7. Pipeline — estado actual (2026-05-20)
 
-> **Decisión arquitectural (Abril 2026):** MidPoint NO se conecta directamente a Oracle.
-> Se usa un pipeline CDC (Debezium + Kafka) que replica Oracle → PostgreSQL en tiempo real.
-> MidPoint lee de PostgreSQL vía JDBC estándar (sin ojdbc). Ver `oracle-cdc/` en este repo.
+> **Decisión arquitectural ejecutada:** MidPoint 4.10.2 se conecta **directamente a Oracle LAMB** vía JDBC (`ojdbc11` + driver bundled). El enfoque CDC (Debezium + Kafka) fue evaluado y descartado — no fue necesario: el driver ojdbc11 está disponible en MidPoint y Oracle 11g es accesible directamente desde el servidor PROD.
 
 ```
-Oracle LAMB (fuente de verdad, solo lectura)
-    ↓  Debezium CDC — LogMiner (13 tablas, 4 schemas)
-Apache Kafka (buffer de eventos)
-    ↓  JDBC Sink Connector
-PostgreSQL "mirror-lamb" (schema: lamb)
-    ├── iga.vw_iga_trabajadores ──┐
-    └── iga.vw_iga_estudiantes  ──┤
-                                   │
-                             MidPoint 4.9.5
-                             (reconciliación)
-                                   │
-                ┌──────────────────┼────────────────┐
-                │                  │                │
-          Azure EntraID         Koha BUL        Keycloak
-          (provisioning)     (dateexpiry sync)  (realm upeu)
+Oracle LAMB (fuente de verdad, solo lectura — 192.168.13.9:1521/UPEU)
+    │  JDBC directo (ojdbc11) — cuenta JUANSANCHEZ/DEVELOP_READ
+    ▼
+MidPoint 4.10.2 (192.168.15.166:8080)
+    │  Reconciliación — 3 crons LAMB a las 02:00 UTC
+    │  Trigger Scanner — polling 5 min
+    │  Validity Scanner — 15 min (lifecycles)
+    │
+    ├──► OpenLDAP Identity Cache (192.168.15.168:389) — 37.491 sombras
+    │       └──► Keycloak 26.6.1 (User Federation LDAP)
+    │
+    ├──► Entra ID (Graph API, solo lectura) — 37.304 sombras
+    │       └── write pendiente (David Urquizo, DU-001a)
+    │
+    └──► Koha ILS — 5.421 sombras (cron 03:00 UTC)
 ```
 
-**Ventajas del enfoque CDC:**
-- Resuelve bloqueante ojdbc11 — driver PostgreSQL nativo incluido en MidPoint
-- Las vistas `VW_IGA_*` se crean en PostgreSQL sin tocar Oracle (no necesita DBA)
-- Oracle permanece intacto — solo se habilita ARCHIVELOG + usuario de solo lectura
-
-| Fase | Descripción                                               | Estado       |
-|------|-----------------------------------------------------------|--------------|
-| 0    | Exploración Oracle — mapeo de esquema completo             | ✅ Completo   |
-| 1    | Spec tablas CDC — 13 tablas, 4 schemas documentadas        | ✅ Completo   |
-| 2    | Vistas PostgreSQL `VW_IGA_*` — SQL listo                   | ✅ Completo   |
-| 3    | Confirmar ARCHIVELOG + usuario dbzuser con Carlomagno      | ⏳ Pendiente  |
-| 4    | Asignar servidor nuevo para stack CDC (16GB, 4 cores)      | ⏳ Pendiente  |
-| 5    | Desplegar stack CDC y verificar snapshot inicial           | ⏳ Pendiente  |
-| 6    | Actualizar schema extension v2.2 → v2.3 nuevos campos      | ⏳ Pendiente  |
-| 7    | Crear Resource JDBC Lamb-Trabajadores (apunta a PG)        | ⏳ Pendiente  |
-| 8    | Crear Resource JDBC Lamb-Estudiantes (apunta a PG)         | ⏳ Pendiente  |
-| 9    | Reconciliación inicial + asignación de arquetipos          | ⏳ Pendiente  |
-| 10   | Outbound EntraID (requiere autorización de David)          | ⏳ Pendiente  |
-| 11   | Reemplazar sync_oracle_koha.py por outbound MidPoint       | ⏳ Pendiente  |
+| Componente | Estado |
+|---|---|
+| Oracle LAMB Trabajadores v3 | ✅ Activo — 3.144 staff + 135 faculty |
+| Oracle LAMB Estudiantes v3 | ✅ Activo — 1.679 student |
+| Oracle LAMB Egresados v3 | ✅ Activo — 30.491 alumni |
+| LAMB-Oracle-Posiciones | ✅ Activo — 741 ServiceType |
+| LDAP Identity Cache | ✅ Activo — 37.491 sombras |
+| Entra ID | ✅ Activo solo lectura — write pendiente |
+| Koha ILS | ✅ Activo — 5.421 sombras |
+| CDC Debezium/Kafka | ❌ Descartado — no necesario |
 
 ---
 

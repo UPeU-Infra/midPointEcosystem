@@ -1,6 +1,8 @@
 # Diccionario de atributos eduPerson para SAML federado
 
 > Referencia técnica de los atributos eduPerson estándar que se exponen vía Keycloak SAML a vendors externos (Scopus, WoS, EBSCO, etc.). Este es el "contrato" entre MidPoint UPeU y el mundo externo.
+>
+> **Fuente de atributos (2026-05-20):** MidPoint provisiona atributos a OpenLDAP (192.168.15.168:389); Keycloak User Federation lee de OpenLDAP. Los atributos eduPerson derivados (ePPN, ePSA, eduPersonAffiliation) están pendientes de mapear en el outbound LDAP (F5 del roadmap). Los campos fuente del schema canónico son `urn:sciback:midpoint:person` y overlay `urn:upeu:midpoint:local`.
 
 ## Atributos núcleo (siempre se emiten)
 
@@ -102,18 +104,20 @@
 - **Cuándo usarlo**: para licenciamiento granular (ej: solo posgrado puede acceder)
 - **Ejemplo**: `urn:upeu:entitlement:postgrado-only`
 
-## Mapeo de valores `primaryAffiliationCode` (UPeU específico)
+## Mapeo de valores afiliación (UPeU)
 
-| primaryAffiliationCode (Lamb/MidPoint) | eduPersonAffiliation | Notas |
+En el modelo canónico actual, `eduPersonAffiliation` se **deriva del archetype** del usuario MidPoint, no de un atributo string:
+
+| Archetype MidPoint | eduPersonAffiliation | eduPersonScopedAffiliation |
 |---|---|---|
-| `DOCENTE_TC` (Tiempo Completo) | `faculty` | Docente principal |
-| `DOCENTE_TP` (Tiempo Parcial) | `faculty` | Docente part-time |
-| `ESTUDIANTE_PRE` | `student` | Pregrado |
-| `ESTUDIANTE_POS` | `student` | Posgrado (también member) |
-| `ADMIN` | `staff` | Administrativo |
-| `TRABAJADOR` | `staff` | Personal de servicios |
-| `EGRESADO` | `alum` | Si tiene acceso vigente |
-| `INVITADO` | `affiliate` | Externos con afiliación temporal |
+| `faculty` | `faculty`, `employee`, `member` | `faculty@upeu.edu.pe` |
+| `student` | `student`, `member` | `student@upeu.edu.pe` |
+| `staff` | `staff`, `employee`, `member` | `staff@upeu.edu.pe` |
+| `alumni` | `alum`, `member` | `alum@upeu.edu.pe` |
+| `affiliate-partner-institution` | `affiliate` | `affiliate@upeu.edu.pe` |
+| `contractor` | `affiliate` | `affiliate@upeu.edu.pe` |
+
+El atributo `primaryAffiliationCode` de versiones anteriores del schema fue reemplazado por este modelo basado en archetype. El outbound mapping al LDAP cache calculará `eduPersonAffiliation` y `ePSA` desde el archetype del objeto focus.
 
 ## Multivalor: cuando un user tiene múltiples roles
 

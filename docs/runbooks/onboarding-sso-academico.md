@@ -1,5 +1,7 @@
 # Prompt de onboarding — SSO Académico (caso de uso nuevo para MidPoint UPeU)
 
+> **NOTA 2026-05-20:** Este runbook es histórico — describe el onboarding del caso SSO Académico antes de que se implementara la arquitectura MidPoint→OpenLDAP←Keycloak. La arquitectura descrita (provisionar Keycloak directo) está **SUPERSEDIDA**. Ver `docs/canonical/sso-academic-vendors.md` para el estado actual.
+>
 > Copiar este prompt completo en una nueva sesión de Claude Code abierta en `/Users/alberto/proyectos/upeu/midpoint`.
 
 ---
@@ -84,7 +86,7 @@ CONTEXTO ADICIONAL DISPONIBLE EN EL CODEBASE
 - Schema v2.3 está consolidado en MidPoint repo (no XSD físico)
 - OID SchemaType: b7d55017-599f-4f2f-9493-9f64bba62c5b
 - Namespace: urn:upeu:midpoint:person
-- MidPoint prod: 4.9.5 en 192.168.15.166
+- MidPoint prod: 4.10.2 en 192.168.15.166
 - Keycloak prod: 26.6.1 en identity.upeu.edu.pe (192.168.12.88)
 - Acceso vía secrets en ~/.secrets/keycloak-prod.env y
   ~/.secrets/midpoint-upeu.env

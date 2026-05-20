@@ -1,16 +1,19 @@
-# SSO Académico — Mapeo Schema v2.3 → SAML eduPerson para vendors
+# SSO Académico — Mapeo Schema canónico → SAML eduPerson para vendors
 
-> **Contexto nuevo (2026-05-08)**: el proyecto SciBack "SSO Académico" usa Keycloak como IdP SAML 2.0 para federar el acceso a bases de datos científicas (Scopus, WoS, EBSCO, ScienceDirect, etc.). MidPoint UPeU es la **fuente de atributos enriquecidos** que Keycloak expone vía SAML a los vendors. Este documento mapea el schema v2.3 actual a los atributos eduPerson estándar que cada vendor espera.
+> **Contexto (2026-05-20)**: Keycloak UPeU (192.168.12.88, realm `upeu`) actúa como IdP SAML 2.0 para federar el acceso a bases de datos científicas (Scopus, WoS, EBSCO, ScienceDirect, etc.). MidPoint 4.10.2 **provisiona los atributos enriquecidos a OpenLDAP** (Identity Cache, 192.168.15.168:389), y Keycloak lee esos atributos vía **User Federation LDAP** — no hay conector directo MidPoint→Keycloak. Este documento mapea el schema canónico a los atributos eduPerson que cada vendor espera.
 
 ## Resumen ejecutivo
 
-El schema v2.3 (`urn:upeu:midpoint:person`) **ya cubre el 90%** de los atributos que requieren los vendors académicos. Solo se necesitan:
+El schema canónico (`urn:sciback:midpoint:person` + overlay `urn:upeu:midpoint:local`) **ya cubre los atributos fuente** que requieren los vendors académicos. La cadena de valor es:
 
-1. **Outbound mappings** desde MidPoint → Keycloak (provisionar atributos al user en Keycloak)
-2. **Protocol mappers SAML** en Keycloak (exponer esos atributos como eduPerson en SAML responses)
-3. **Cálculo derivado** de 2-3 atributos eduPerson que no existen literal en el schema (`eduPersonScopedAffiliation`, `eduPersonTargetedID`)
+1. **Inbound desde Oracle LAMB** → atributos en MidPoint (affiliation, faculty, campus, programa)
+2. **Outbound desde MidPoint → OpenLDAP** (Identity Cache) con mapeos a eduPerson/SCHAC (pendiente F5)
+3. **Keycloak User Federation** lee atributos del OpenLDAP
+4. **Protocol mappers SAML** en Keycloak exponen esos atributos como eduPerson en SAML responses
 
-**No requiere modificación del schema XSD ni nuevos ComplexTypes.**
+**Estado actual (2026-05-20):** el paso 1 está completo (37.491 usuarios en OpenLDAP). Los mapeos eduPerson en el outbound LDAP (paso 2) están **pendientes** — Keycloak ve los usuarios pero aún no los atributos enriquecidos.
+
+**No requiere conector MidPoint→Keycloak** — la arquitectura es MidPoint→OpenLDAP←Keycloak.
 
 ## Mapeo completo: Schema v2.3 → eduPerson SAML
 
@@ -98,78 +101,44 @@ return "${role}@${scope}"
 
 **Total estimado para tener atributos llenos en SAML responses**: 1-2 semanas.
 
-## Arquitectura de provisionamiento
+## Arquitectura de provisionamiento (estado 2026-05-20)
 
 ```
-Lamb Academic (Oracle)
-   │ vistas IGA_V_PERSONAS, etc.
+Oracle LAMB (fuente de verdad, solo lectura — 192.168.13.9:1521/UPEU)
+   │ JDBC directo — 4 resources activos
    ▼
-MidPoint UPeU (4.9.5)
-   │ inbound mappings → schema v2.3
-   │ - primaryAffiliationCode (calculado de TIPO_PERSONA)
-   │ - faculty, academicProgram, campus, academicPhase
-   │ - institutionalIdCard, externalSystemId
+MidPoint 4.10.2 (192.168.15.166:8080)
+   │ inbound mappings → schema canónico
+   │ - affiliation desde archetype (student/faculty/staff/alumni)
+   │ - campus/faculty desde OrgType (parentOrgRef)
+   │ - academicProgram, studentCycle desde LAMB Estudiantes v3
    │
-   │ outbound mapping → Keycloak resource
+   │ outbound → OpenLDAP Identity Cache (Resource LDAP activo)
    ▼
-Keycloak prod (identity.upeu.edu.pe)
-   │ user attributes:
-   │ - primaryAffiliation
-   │ - faculty
-   │ - academicProgram
-   │ - campus
-   │ - academicPhase
-   │
+OpenLDAP Identity Cache (192.168.15.168:389) — 37.491 entradas
+   │ User Federation LDAP (Keycloak lee en tiempo real)
+   ▼
+Keycloak 26.6.1 (192.168.12.88, realm upeu)
    │ Client Scope SAML "academic-databases-eduperson"
-   │ con mappers que exponen los atributos como eduPerson SAML
+   │ PENDIENTE: mappers eduPerson desde LDAP attributes
    ▼
 SAML Response a vendor
-   │ urn:oid:1.3.6.1.4.1.5923.1.1.1.6 = jsanchez@upeu.edu.pe
-   │ urn:oid:1.3.6.1.4.1.5923.1.1.1.9 = faculty@lima.upeu.edu.pe
-   │ urn:oid:1.3.6.1.4.1.5923.1.1.1.4 = Facultad de Ingeniería
+   │ urn:oid:1.3.6.1.4.1.5923.1.1.1.6 = jsanchez@upeu.edu.pe       (ePPN)
+   │ urn:oid:1.3.6.1.4.1.5923.1.1.1.9 = faculty@upeu.edu.pe        (ePSA)
+   │ urn:oid:1.3.6.1.4.1.5923.1.1.1.4 = Facultad de Ingeniería     (orgUnitDN)
    │ ...
    ▼
 Vendor (Scopus, WoS, EBSCO, ScienceDirect, etc.)
 ```
 
-## Recurso Keycloak necesario en MidPoint
+**NO hay Resource MidPoint→Keycloak** — decisión arquitectural 2026-05-11. El conector HTTP custom `pe.upeu.connector.keycloak-http v1.0.0` fue archivado. MidPoint solo escribe en OpenLDAP; Keycloak lee de OpenLDAP.
 
-**Falta crear**: un Resource MidPoint que provisiona users a Keycloak con los atributos enriquecidos. Hoy MidPoint UPeU no tiene este resource (los users en Keycloak son locales/manuales según diagnóstico 2026-05-08).
+## Próximos pasos (desde 2026-05-20)
 
-### Especificación del Resource Keycloak
-
-```
-Resource: Keycloak UPeU Producción
-  Connector: ConnIdRESTConnector (o connector Keycloak custom)
-  URL: https://identity.upeu.edu.pe/admin/realms/upeu
-  Auth: client_credentials (service account)
-
-  Schema:
-    __ACCOUNT__:
-      __NAME__         ← name (UserType)  [PRIMARY]
-      email           ← emailAddress
-      firstName       ← givenName
-      lastName        ← familyName
-      enabled         ← lifecycleState == "active"
-      attributes:
-        primaryAffiliation     ← extension/primaryAffiliationCode
-        primaryAffiliationName ← extension/primaryAffiliationName
-        faculty                ← extension/faculty
-        academicProgram        ← extension/academicProgram
-        campus                 ← extension/campus
-        academicPhase          ← extension/academicPhase
-        institutionalIdCard    ← extension/institutionalIdCard
-        orcid                  ← extension/orcid
-        scopedAffiliation      ← (calculated: see Groovy script above)
-```
-
-## Próximos pasos
-
-1. **Definir formalmente los valores válidos de `primaryAffiliationCode`** con DTI/CRAI UPeU
-2. **Crear Resource MidPoint → Keycloak** con outbound mappings
-3. **Crear Client Scope SAML en Keycloak** con todos los mappers eduPerson
-4. **Validar con un user real** que los atributos llegan correctamente a un SP de prueba (SAMLTest.id)
-5. **Documentar el "diccionario de atributos UPeU"** como referencia oficial institucional
+1. **F5 — Outbound mappings eduPerson en Resource LDAP**: agregar atributos `ePPN`, `ePSA`, `eduPersonAffiliation`, `schacHomeOrganization` al outbound del Resource LDAP-IdentityCache-UPeU
+2. **Configurar mappers SAML en Client Scope Keycloak**: mapear los atributos LDAP a URN OIDs eduPerson en el Client Scope `academic-databases-eduperson`
+3. **Validar con un user real**: verificar que los atributos llegan correctamente a un SP de prueba (SAMLTest.id)
+4. **Documentar el "diccionario de atributos UPeU"**: referencia oficial institucional para negociaciones con vendors
 
 ## Documentos relacionados
 

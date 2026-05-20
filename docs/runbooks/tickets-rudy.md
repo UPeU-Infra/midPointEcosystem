@@ -207,7 +207,7 @@ MidPoint hará:
 ## Información que Rudy quizás necesite
 
 **Cliente que se conectará:**
-- Software: MidPoint 4.9.5 (Java 21)
+- Software: MidPoint 4.10.2 (Java 21)
 - Driver: Oracle JDBC `ojdbc11.jar` (compatible Oracle 11g+)
 - Host cliente: `192.168.15.166` (MidPoint PROD, Ubuntu 24.04)
 - Conexión: JDBC URL `jdbc:oracle:thin:@//192.168.13.9:1521/UPEU`
@@ -225,7 +225,10 @@ MidPoint hará:
 
 ## Tareas completadas
 
-_(ninguna aún — esperando ejecución de RU-001 y RU-002)_
+_(2026-05-20)_
+
+- **Conexión MidPoint → Oracle LAMB funcional**: MidPoint PROD tiene 4 resources JDBC activos contra Oracle LAMB (Trabajadores v3, Estudiantes v3, Egresados v3, Posiciones). 35.450 usuarios sincronizados. El acceso JDBC directo con cuenta `JUANSANCHEZ` (DEVELOP_READ) es operativo.
+- **TCP 389 abierto**: OpenLDAP Identity Cache activo en 192.168.15.168:389, Keycloak User Federation activa con 37.491 entradas. El acceso de red MidPoint PROD → OpenLDAP y Keycloak → OpenLDAP está confirmado.
 
 ---
 
