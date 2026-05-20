@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="58ef8e82-867e-432a-923e-98adcd7c57fa">
+    <name>Reconcile-Koha-ILS-Daily</name>
+    <description>Reconciliacion diaria Koha ILS — inbound sync de patrones a MidPoint. Cron 03:00 UTC. No solapar con Oracle LAMB (02:00 UTC). Ref: DT-6.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="UserType"/>
+    <executionState>runnable</executionState>
+    <schedule>
+        <cronLikePattern>0 0 3 * * ?</cronLikePattern>
+        <misfireAction>executeImmediately</misfireAction>
+    </schedule>
+    <activity>
+        <work>
+            <reconciliation>
+                <resourceObjects>
+                    <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
+                </resourceObjects>
+            </reconciliation>
+        </work>
+    </activity>
+</task>
