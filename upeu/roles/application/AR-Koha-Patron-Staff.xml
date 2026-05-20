@@ -19,7 +19,7 @@
             <attribute>
                 <ref>ri:category_id</ref>
                 <outbound>
-                    <strength>strong</strength>
+                    <strength>weak</strength>
                     <expression><value>STAFF</value></expression>
                 </outbound>
             </attribute>
