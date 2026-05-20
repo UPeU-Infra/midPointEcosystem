@@ -2,7 +2,7 @@
 
 **Fecha de snapshot:** 2026-05-19
 **Autor:** Alberto Sánchez — DTI UPeU
-**Destinatario principal:** David Urquizo (Global Administrator UPeU)
+**Destinatario principal:** David Urquizo — CTO InfraTI, DTI Lima (`daiurqz@upeu.edu.pe`)
 **Estado:** Borrador de trabajo — insumo para Fase 12 IGA
 
 ---
@@ -219,7 +219,7 @@ MidPoint correlaciona usuarios Entra ID con identidades MidPoint usando el UPN (
 
 | Usuario | UPN | Observacion |
 |---|---|---|
-| David Urquizo | `daiurqz@upeu.edu.pe` | Administrador principal — correcto |
+| David Urquizo | `daiurqz@upeu.edu.pe` | CTO InfraTI, DTI Lima — Global Admin correcto para este cargo |
 | DIGETI Direccion General TI | `digesi@upeu.edu.pe` | Cuenta funcional de direccion — revisar si necesita Global Admin o si Billing Admin alcanza |
 | Microsoft Office 365 Portal | (service principal) | Service principal de Microsoft — normal |
 
@@ -449,7 +449,7 @@ Reemplazar los 84 role assignments con scope global por assignments scoped a AU:
 
 | Rol | Principal | Justificacion |
 |---|---|---|
-| Global Administrator | David Urquizo (`daiurqz@upeu.edu.pe`) | Administrador del tenant — debe ser global |
+| Global Administrator | David Urquizo (`daiurqz@upeu.edu.pe`) | CTO InfraTI DTI Lima — administrador del tenant, scope global correcto |
 | Billing Administrator | David Barrantes (`digeti@upeu.edu.pe`) | Las suscripciones son tenant-wide |
 | Security Administrator | Denis Villegas (`ad.sti@upeu.edu.pe`) | La seguridad es tenant-wide |
 | Exchange Administrator | Joselito Valdez, Yostey Acuna, Denis Villegas | Exchange Online es tenant-wide |
