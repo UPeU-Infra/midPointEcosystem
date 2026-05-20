@@ -860,7 +860,10 @@
         <ref>lifecycleState</ref>
         <mapping>
             <name>auto-archive-after-termination-grace-period</name>
-            <description>Transición active→archived para staff/faculty 180 días después de terminationDate. Implementa el ciclo completo ISO 24760 §6.3.</description>
+            <description>Transición active→archived para staff/faculty 180 días después de terminationDate. Implementa el ciclo completo ISO 24760 §6.3.
+FIX DT-4 (2026-05-20): eliminada source lifecycleState para romper dependencia circular
+detectada en reconcile. lifecycleState se lee via focus?.lifecycleState en condición
+(snapshot del repositorio, no valor computado en el mismo ciclo de evaluación).</description>
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
             <source>
@@ -869,12 +872,9 @@
             <source>
                 <path>extension/sciback:terminationDate</path>
             </source>
-            <source>
-                <path>lifecycleState</path>
-            </source>
             <condition>
                 <script>
-                    <code>import java.time.LocalDate; import java.time.temporal.ChronoUnit; def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; def termStr = terminationDate != null ? basic.stringify(terminationDate).trim() : ''; def curState = lifecycleState != null ? basic.stringify(lifecycleState).trim() : ''; def eligible = ['staff', 'faculty'].contains(aff) &amp;&amp; termStr != '' &amp;&amp; curState != 'archived'; def result = false; if (eligible) { try { result = ChronoUnit.DAYS.between(LocalDate.parse(termStr.substring(0, 10)), LocalDate.now()) > 180 } catch (Exception e) { log.warn('BloqueH: terminationDate no parseable {} en {}: {}', termStr, focus?.name, e.message) } }; result</code>
+                    <code>import java.time.LocalDate; import java.time.temporal.ChronoUnit; def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; def termStr = terminationDate != null ? basic.stringify(terminationDate).trim() : ''; def curState = focus?.lifecycleState != null ? focus.lifecycleState.toString().trim() : ''; def eligible = ['staff', 'faculty'].contains(aff) &amp;&amp; termStr != '' &amp;&amp; curState != 'archived'; def result = false; if (eligible) { try { result = ChronoUnit.DAYS.between(LocalDate.parse(termStr.substring(0, 10)), LocalDate.now()) > 180 } catch (Exception e) { log.warn('BloqueH: terminationDate no parseable {} en {}: {}', termStr, focus?.name, e.message) } }; result</code>
                 </script>
             </condition>
             <expression>
