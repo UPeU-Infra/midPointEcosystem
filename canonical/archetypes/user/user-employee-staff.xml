@@ -21,6 +21,7 @@
                 <color>#e67e22</color>
             </icon>
         </display>
-        <objectTemplateRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" type="ObjectTemplateType"/>
+        <objectTemplateRef oid="59b1e325-e9f2-421f-bfe8-37a3d70b13e3" type="ObjectTemplateType"/>
+        <!-- UserTemplate-EmployeeStaff — extiende UserTemplate-Person-Base via includeRef -->
     </archetypePolicy>
 </archetype>
