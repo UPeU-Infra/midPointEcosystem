@@ -1,6 +1,6 @@
 # UPeU IGA — Roadmap de Ejecución 2026
 
-**Versión:** 2026-05-20 rev4 (pipeline post-OOM 100% completado) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
+**Versión:** 2026-05-20 rev5 (P4 + DT-3 + DT-6 completados) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
 **Documento base:** [`iga-canonical-analysis-2026-05.md`](./iga-canonical-analysis-2026-05.md) · [`SKILL: iga-canonical-standards`](~/.claude/skills/iga-canonical-standards/SKILL.md) · [`SKILL: midpoint-best-practices`](~/.claude/skills/midpoint-best-practices/SKILL.md)
 
 ---
@@ -185,10 +185,10 @@ El motor no podía resolver el focus item para correlación.
 |---|---|---|---|
 | DT-1 | 11 shadows duplicados Koha (estudiantes con doble sombra) | Reconcile Estudiantes | Limpiar shadows huérfanos via UI/REST |
 | DT-2 | 8 shadows huérfanos Koha (patrones borrados en Koha sin pasar por MidPoint) | Reconcile Koha | Marcar `dead` manualmente (IDs: 730, 736, 200610446...) |
-| DT-3 | `SchemaException: category_id [STAFF, DOCEN]` en usuarios con doble rol Koha | Recompute | Cambiar `AR-Koha-Patron-Staff` de `strong` a `weak` en `category_id` |
-| DT-4 | Dependencia circular en mappings OT estudiantes `#[12,21,22,23,25,32,33]` | Object Template | Revisar en P4 |
-| DT-5 | Deep clone innecesario de `identityDocuments` en OT | Object Template | Optimización en P4 |
-| DT-6 | `Reconcile-Koha-Inbound` es one-shot manual, sin cron | Koha ILS | Crear task recurrente con schedule |
+| DT-3 | `SchemaException: category_id [STAFF, DOCEN]` en usuarios con doble rol Koha | Recompute | ✅ **RESUELTO** — `strong`→`weak` en `AR-Koha-Patron-Staff`. Commit `31a7785` |
+| DT-4 | Dependencia circular en mappings OT estudiantes `#[12,21,22,23,25,32,33]` | Object Template | Pendiente — revisar tras estabilización templates |
+| DT-5 | Deep clone innecesario de `identityDocuments` en OT | Object Template | Pendiente — optimización futura |
+| DT-6 | `Reconcile-Koha-Inbound` es one-shot manual, sin cron | Koha ILS | ✅ **RESUELTO** — Task `reconcile-koha-daily` creada, cron `0 0 3 * * ?`. Commit `eb25950` |
 
 **Fix correlación aplicado a 2 resources (patrón MidPoint 4.10):**
 - `Oracle LAMB Trabajadores v3` — commit `db70026`
@@ -210,15 +210,41 @@ Conexión directa Keycloak (192.168.12.88) → OpenLDAP (192.168.15.168:389) fun
 - `bindCredential` corregido: password inválido → `Kc@Ldap2026!`
 - Runbook: `docs/runbooks/keycloak-ldap-federation.md`
 
-### P4 — Object templates per-archetype (Fase 3 incompleta)
+### ✅ P4 — Object templates per-archetype — COMPLETADO 2026-05-20
 
-Crear templates individuales para student, faculty, staff, alumni con mappings específicos por tipo. El template base `UserTemplate-Person-Base` existe; los 4 per-archetype no.
-Bloqueado hasta completar P6 (pipeline estable).
+4 templates per-archetype creados, aplicados a PROD y versionados en repo. Commits `77aad6e` (templates) + `85aaa19` (archetypes).
 
-### P5 — Completar permisos Entra ID y validar Keycloak federation
+| Template | OID | Archetype vinculado | Estado |
+|---|---|---|---|
+| `UserTemplate-Alumni` | `b668e431-b7cf-405d-bde3-74af5ba3290e` | `archetype-user-alumni` (`87552943`) | ✅ PROD |
+| `UserTemplate-Student` | `3afb8196-008e-4284-abb2-574f2aba7e13` | `archetype-user-student` (`3037fbd2`) | ✅ PROD |
+| `UserTemplate-Employee-Faculty` | `5d9e22af-2000-458c-8e0b-6efec1ef12a2` | `archetype-user-employee-faculty` (`c93083ca`) | ✅ PROD |
+| `UserTemplate-Employee-Staff` | `59b1e325-e9f2-421f-bfe8-37a3d70b13e3` | `archetype-user-employee-staff` (`6460facf`) | ✅ PROD |
 
-- Ticket David Urquizo: 4 permisos read faltantes (`AdministrativeUnit.Read.All`, `RoleManagement.Read.Directory`, `AuditLog.Read.All`, `Application.Read.All`)
-- Keycloak User Federation contra OpenLDAP: ✅ ACTIVA (ver P7)
+**Mappings incluidos por template (sobre la base de `UserTemplate-Person-Base`):**
+- **Alumni:** `title="Egresado"` (weak), warn si `admissionPeriod` ausente
+- **Student:** `title="Estudiante"` (weak), warn si `studentCycle` ausente
+- **Faculty:** warn si `hireDate` ausente, warn si `employeeCategory` ausente; TC/TP diferenciación pendiente (todos en cat. 3)
+- **Staff:** `title="Personal Administrativo"` (weak), warn si `hireDate` ausente, warn si `costCenter` ausente
+
+**Deuda técnica pendiente en templates:**
+- DT-4: dependencia circular en student OT mappings `#[12,21,22,23,25,32,33]`
+- DT-5: deep clone innecesario de `identityDocuments` en OT base
+- TC/TP en Faculty: 135 docentes todos con `employeeCategory=3` — investigar ENOC para discriminar
+
+### P5 — Completar permisos Entra ID
+
+- **Keycloak User Federation contra OpenLDAP:** ✅ ACTIVA (ver P7 — completado)
+- **Ticket David Urquizo (pendiente):** App `MidPoint-UPeU` (appId `94dd7b5b`) en tenant UPeU tiene 3/7 permisos read — le faltan:
+
+| Permiso | Para qué |
+|---|---|
+| `AdministrativeUnit.Read.All` | Leer AUs (5 existentes, 3 correctas, 2 anti-patrón) |
+| `RoleManagement.Read.Directory` | Auditar 86 role assignments actuales |
+| `AuditLog.Read.All` | Logs de cambios para governance |
+| `Application.Read.All` | Inventariar 200 app registrations (incluye bots Copilot Studio obsoletos) |
+
+Ver tarea `DU-001b` en `docs/runbooks/tickets-david-urquizo.md`.
 
 ---
 

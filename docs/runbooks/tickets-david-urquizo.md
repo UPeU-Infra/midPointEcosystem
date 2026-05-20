@@ -30,6 +30,45 @@ Este documento concentra las tareas que MidPoint **no puede ejecutar por API** y
 
 ## Tareas activas para Fases 1–11
 
+### DU-001b — Ampliar permisos App `MidPoint-UPeU` con 4 permisos read faltantes 🟡
+
+**Para:** Fase 5.5 (Resource Entra ID READ ONLY — completar cobertura).
+**Sistema:** Microsoft Entra ID UPeU (`upeu.onmicrosoft.com`) — App Registration ya existente.
+**Contexto:**
+
+La App `MidPoint-UPeU` (appId `94dd7b5b-...`, creada 2026-04-16) ya tiene 3 permisos Application concedidos:
+- `User.Read.All` ✅
+- `Group.Read.All` ✅
+- `Directory.Read.All` ✅
+
+MidPoint puede leer usuarios y grupos. Para completar la cobertura de lectura necesitamos 4 más.
+
+**Acción solicitada:**
+
+En el tenant UPeU, sobre la App Registration `MidPoint-UPeU` existente (appId `94dd7b5b-...`):
+
+1. Ir a **Azure Portal → Entra ID → App registrations → MidPoint-UPeU → API permissions**.
+2. Agregar los siguientes permisos (**Microsoft Graph**, tipo **Application**, no Delegated):
+   - `AdministrativeUnit.Read.All`
+   - `RoleManagement.Read.Directory`
+   - `AuditLog.Read.All`
+   - `Application.Read.All`
+3. **Grant admin consent** explícitamente para los 4 permisos nuevos.
+4. Confirmar que el total queda en 7 permisos Application con estado "Granted for UPeU".
+
+**Justificación:**
+
+| Permiso | Para qué lo necesita MidPoint |
+|---|---|
+| `AdministrativeUnit.Read.All` | Leer las 5 AUs existentes (3 correctas, 2 anti-patrón detectadas en análisis 2026-05-19) |
+| `RoleManagement.Read.Directory` | Auditar 86 role assignments actuales — prerequisito para governance de roles |
+| `AuditLog.Read.All` | Logs de cambios de identidad — prerequisito para informes de cumplimiento |
+| `Application.Read.All` | Inventariar 200 app registrations (incluye bots Copilot Studio a revisar) |
+
+**Output esperado:** Confirmación de "Granted" en los 4 permisos. No se necesita nuevo secreto.
+
+---
+
 ### DU-001a — Credenciales Graph API para tenant UPeU real (no sandbox) 🟡
 
 **Para:** Fase 5.5 (Resource Entra ID READ ONLY).
