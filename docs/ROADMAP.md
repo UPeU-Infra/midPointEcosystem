@@ -1,6 +1,6 @@
 # UPeU IGA — Roadmap de Ejecución 2026
 
-**Versión:** 2026-05-19 (actualizado post-consolidación) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
+**Versión:** 2026-05-19 rev2 (actualizado post-P1/P2/P3) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
 **Documento base:** [`iga-canonical-analysis-2026-05.md`](./iga-canonical-analysis-2026-05.md) · [`SKILL: iga-canonical-standards`](~/.claude/skills/iga-canonical-standards/SKILL.md) · [`SKILL: midpoint-best-practices`](~/.claude/skills/midpoint-best-practices/SKILL.md)
 
 ---
@@ -82,12 +82,12 @@ Los templates **per-archetype** (student, faculty, staff, alumni individuales) *
 |---|---|---|
 | Fase 0 — Refactor doctrinal | ✅ **COMPLETA** | Skills, agente, docs |
 | Fase 1 — Schema | ✅ **ACTIVA** | 2 schemas en PROD BD |
-| Fase 2 — Archetypes + Org tree | ✅ **ACTIVA** | 18 archetypes custom activos; 35.449 usuarios con archetype; 122 orgs |
+| Fase 2 — Archetypes + Org tree | ✅ **ACTIVA / REPO COMPLETO** | 18 archetypes en PROD; repo ahora tiene los 18 (8 user + 9 org + 2 role) — commit `19590be` |
 | Fase 3 — Object templates | ⚠️ **PARCIAL** | 2 templates en PROD (base + sistema); templates per-archetype NO existen |
-| Fase 4 — OpenLDAP HA | ⚠️ **FUNCIONA** (lifecycle null) | 37.491 sombras LDAP = provisioning activo; lifecycle no seteado a 'active' |
-| Fase 5 — Resources READ | ✅ **ACTIVA** | Oracle LAMB ×4 + Koha activos; Entra ID con 37.304 sombras (correlacion activa) |
+| Fase 4 — OpenLDAP HA | ✅ **ACTIVA** | 37.491 sombras LDAP; lifecycleState seteado a `active` vía REST — commit `1a5fb52` |
+| Fase 5 — Resources READ | ✅ **ACTIVA** | Oracle LAMB ×4 + Koha + Entra ID activos; todos con lifecycleState `active` |
 | Fase 6 — Resources WRITE → OpenLDAP | ✅ **FUNCIONA** (no validado formalmente) | 37.491 sombras LDAP confirman que MidPoint escribe a OpenLDAP; Keycloak federation sin confirmar |
-| Fase 7 — RBAC | ⚠️ **PARCIAL** | 39 roles activos (AR + BR + affiliation); 32 sin lifecycle (MOF-* + GOV-* + SYS) no versionados en repo |
+| Fase 7 — RBAC | ⚠️ **PARCIAL** | 39 roles activos (AR + BR + affiliation); MOF-*/GOV-*/SYS ahora versionados en repo (commit `19590be`) — lifecycle null pendiente |
 | Fase 8 — Replanteo docs | ❌ **NO INICIADA** | — |
 | Fase 9 — Validación piloto | ⚠️ **PILOTO PARCIAL** | Tasks: `PILOT-EntraID-UPeU-link-100`, pilots usuario `75824658`; flujo completo no documentado |
 | Fase 10 — Deploy PROD | ✅ **PROD OPERATIVO** | 35.450 usuarios en produccion |
@@ -106,44 +106,46 @@ El historial de 69 tasks revela trabajo operativo extenso no documentado en el r
 
 ### Artefactos faltantes en repo (existen en PROD, no versionados)
 
-| Artefacto | Cantidad | Destino en repo |
-|---|---|---|
-| Archetypes user (affiliate-partner-institution, affiliate-researcher, contractor, service-account) | 4 | `canonical/archetypes/user/` |
-| Archetypes org (institution, campus, faculty, department, academic-unit, governance, partner-institution, project) | 8 | `canonical/archetypes/org/` |
-| Roles MOF-* | ~25 | `upeu/roles/mof/` |
-| Roles GOV-* | 3 | `upeu/roles/governance/` |
-| SYS-IGA-SUPERUSER | 1 | `upeu/roles/system/` |
-| APP-KOHA-PATRON (deprecated) | 1 | `upeu/roles/deprecated/` |
+| Artefacto | Cantidad | Estado | Commit |
+|---|---|---|---|
+| Archetypes user (affiliate-partner-institution, affiliate-researcher, contractor, service-account) | 4 | ✅ **Versionados** `canonical/archetypes/user/` | `19590be` |
+| Archetypes org (institution, campus, faculty, department, academic-unit, governance, partner-institution, project) | 8 | ✅ **Versionados** `canonical/archetypes/org/` | `19590be` |
+| Roles MOF-* | 25 | ✅ **Versionados** `upeu/roles/mof/` | `19590be` |
+| Roles GOV-* | 3 | ✅ **Versionados** `upeu/roles/governance/` | `19590be` |
+| SYS-IGA-SUPERUSER | 1 | ✅ **Versionados** `upeu/roles/system/` | `19590be` |
+| APP-KOHA-PATRON (deprecated) | 1 | ⏳ Pendiente | — |
 
 ---
 
 ## Proximas acciones inmediatas (priorizadas)
 
-### P1 — Descargar y versionar artefactos faltantes en repo
+### ✅ P1 — Descargar y versionar artefactos faltantes en repo — COMPLETADO 2026-05-19
 
-PROD esta UP. Descargar via REST y commitear:
+Ejecutado via REST API desde PROD. Commit `19590be`:
+- 4 archetypes user → `canonical/archetypes/user/`
+- 8 archetypes org → `canonical/archetypes/org/`
+- 25 roles MOF-* → `upeu/roles/mof/`
+- 3 roles GOV-* → `upeu/roles/governance/`
+- SYS-IGA-SUPERUSER → `upeu/roles/system/`
+- Limpieza de metadata operacional aplicada a todos los XMLs
+- Pendiente: `APP-KOHA-PATRON` (deprecated) → `upeu/roles/deprecated/`
 
-1. 4 archetypes user faltantes → `canonical/archetypes/user/`
-2. 8 archetypes org faltantes → `canonical/archetypes/org/`
-3. ~25 roles MOF-* → `upeu/roles/mof/`
-4. 3 roles GOV-* → `upeu/roles/governance/`
-5. SYS-IGA-SUPERUSER → `upeu/roles/system/`
+### ✅ P2 — Corregir lifecycle de LDAP y Entra ID resources — COMPLETADO 2026-05-19
 
-### P2 — Corregir lifecycle de LDAP y Entra ID resources
+PATCH REST aplicado. Commit `1a5fb52`:
+- `LDAP-IdentityCache-UPeU` (OID `7b4e1c2d`) → `lifecycleState: active`
+- `UPEU-EntraID-Graph` (OID `2f11c057`) → `lifecycleState: active`
+- XMLs del repo actualizados; PROD y repo en sync
 
-Ambos recursos funcionan (tienen miles de sombras) pero tienen `lifecyclestate = null`.
-Setear a `active` via REST PUT para que el estado en repo sea coherente con la realidad.
+### ✅ P3 — Tag post-consolidación y git pull en PROD — COMPLETADO 2026-05-19
 
-### P3 — Merge branch consolidacion
-
-1. `git checkout consolidation-2026-05-19` en PROD — hacer `git pull`.
-2. Merge `consolidation-2026-05-19` → `main` via PR.
-3. Tag `post-consolidation-2026-05-19`.
-4. `gh repo archive SciBack/midpoint --yes` (cuando Alberto confirme).
+- Tag `post-consolidation-2026-05-19` creado sobre commit `ca01197` y pusheado
+- `git pull` en PROD: fast-forward exitoso hasta `1a5fb52`
+- Pendiente (espera confirmación Alberto): `gh repo archive SciBack/midpoint --yes`
 
 ### P4 — Object templates per-archetype (Fase 3 incompleta)
 
-Crear templates individuales para student, faculty, staff, alumni con mappings específicos por tipo. El template base existe; los per-archetype no.
+Crear templates individuales para student, faculty, staff, alumni con mappings específicos por tipo. El template base `UserTemplate-Person-Base` existe; los 4 per-archetype no.
 
 ### P5 — Completar permisos Entra ID y validar Keycloak federation
 
