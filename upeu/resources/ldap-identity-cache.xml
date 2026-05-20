@@ -1,6 +1,7 @@
 <resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f" version="8">
     <name>LDAP-IdentityCache-UPeU</name>
     <description>OpenLDAP Identity Cache UPeU. MidPoint provisiona identidades activas. Keycloak lee via User Federation.</description>
+    <lifecycleState>active</lifecycleState>
     <operationalState>
         <lastAvailabilityStatus>up</lastAvailabilityStatus>
         <message>Status set to UP because resource schema was successfully fetched</message>

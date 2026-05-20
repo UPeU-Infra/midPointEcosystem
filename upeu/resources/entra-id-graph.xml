@@ -38,6 +38,7 @@
 
     <name>UPEU-EntraID-Graph</name>
     <description>Microsoft Graph API · tenant upeu.edu.pe · Fase 5: outbound preparado (bloqueante: User.ReadWrite.All pendiente David Urquizo)</description>
+    <lifecycleState>active</lifecycleState>
 
     <!-- connectorRef OID real en PROD: 01a9df66-90e9-4fd6-b296-bbe28f2b6b0b -->
     <connectorRef oid="01a9df66-90e9-4fd6-b296-bbe28f2b6b0b" type="ConnectorType"/>
