@@ -143,14 +143,42 @@ PATCH REST aplicado. Commit `1a5fb52`:
 - `git pull` en PROD: fast-forward exitoso hasta `1a5fb52`
 - Pendiente (espera confirmación Alberto): `gh repo archive SciBack/midpoint --yes`
 
+### ✅ P6 — Reactivar pipeline de sincronización post-OOM — EN CURSO (2026-05-20)
+
+Todos los reconcile tasks y scanners quedaron SUSPENDED tras el OOM del upgrade 4.10.2.
+Reactivación en orden:
+
+| Task | Estado | Resultado | Notas |
+|---|---|---|---|
+| `Reconcile Oracle LAMB Estudiantes` | ✅ COMPLETADO | PARTIAL_ERROR — 1.690 obj / 11 errores | Shadows duplicados en Koha (11 usuarios). Cron diario 2AM UTC activo. |
+| `Reconcile Oracle LAMB Trabajadores` | 🔄 EN CURSO | — | — |
+| `Reconcile Oracle LAMB Egresados` | ⏳ Pendiente | — | 30.629 sombras — el más pesado |
+| `Reconcile-Koha-Inbound` | ⏳ Pendiente | — | Depende de Trabajadores/Egresados primero |
+| `Trigger Scanner` | ⏳ Pendiente | — | Procesa validTo/validFrom de activaciones |
+| `Validity Scanner` | ⏳ Pendiente | — | Desactiva/activa usuarios por fecha |
+
+**Errores a resolver post-reactivación:**
+- 11 shadows duplicados en Koha ILS → limpiar via UI/REST (Shadows huérfanos)
+- Dependencia circular en mappings object template estudiantes `#[12,21,22,23,25,32,33]` → revisar en P4
+- Deep clone innecesario de `identityDocuments` → optimización para P4
+
+### ✅ P7 — Keycloak→OpenLDAP User Federation — COMPLETADO 2026-05-19
+
+Conexión directa Keycloak (192.168.12.88) → OpenLDAP (192.168.15.168:389) funcionando.
+- Firewall TCP 389 abierto por Rudy
+- `connectionUrl` corregido: `ldap://192.168.15.166:8080` → `ldap://192.168.15.168:389`
+- `bindCredential` corregido: password inválido → `Kc@Ldap2026!`
+- Runbook: `docs/runbooks/keycloak-ldap-federation.md`
+
 ### P4 — Object templates per-archetype (Fase 3 incompleta)
 
 Crear templates individuales para student, faculty, staff, alumni con mappings específicos por tipo. El template base `UserTemplate-Person-Base` existe; los 4 per-archetype no.
+Bloqueado hasta completar P6 (pipeline estable).
 
 ### P5 — Completar permisos Entra ID y validar Keycloak federation
 
 - Ticket David Urquizo: 4 permisos read faltantes (`AdministrativeUnit.Read.All`, `RoleManagement.Read.Directory`, `AuditLog.Read.All`, `Application.Read.All`)
-- Verificar si Keycloak User Federation contra OpenLDAP está configurado (confirmar Fase 6 completa)
+- Keycloak User Federation contra OpenLDAP: ✅ ACTIVA (ver P7)
 
 ---
 
