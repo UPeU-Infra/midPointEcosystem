@@ -1,6 +1,6 @@
 # UPeU IGA — Roadmap de Ejecución 2026
 
-**Versión:** 2026-05-20 rev3 (actualizado post-P6 pipeline + fix correlación) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
+**Versión:** 2026-05-20 rev4 (pipeline post-OOM 100% completado) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
 **Documento base:** [`iga-canonical-analysis-2026-05.md`](./iga-canonical-analysis-2026-05.md) · [`SKILL: iga-canonical-standards`](~/.claude/skills/iga-canonical-standards/SKILL.md) · [`SKILL: midpoint-best-practices`](~/.claude/skills/midpoint-best-practices/SKILL.md)
 
 ---
@@ -143,19 +143,18 @@ PATCH REST aplicado. Commit `1a5fb52`:
 - `git pull` en PROD: fast-forward exitoso hasta `1a5fb52`
 - Pendiente (espera confirmación Alberto): `gh repo archive SciBack/midpoint --yes`
 
-### ✅ P6 — Reactivar pipeline de sincronización post-OOM — EN CURSO (2026-05-20)
+### ✅ P6 — Reactivar pipeline de sincronización post-OOM — COMPLETADO 2026-05-20
 
-Todos los reconcile tasks y scanners quedaron SUSPENDED tras el OOM del upgrade 4.10.2.
-Reactivación en orden:
+Todos los reconcile tasks y scanners reactivados. Pipeline 100% operativo.
 
 | Task | Estado | Resultado | Notas |
 |---|---|---|---|
-| `Reconcile Oracle LAMB Estudiantes` | ✅ COMPLETADO 2026-05-20 | PARTIAL_ERROR — 1.690 obj / 11 errores | Shadows duplicados en Koha (11 usuarios). Cron 02:00 UTC activo. |
-| `Reconcile Oracle LAMB Trabajadores` | ✅ COMPLETADO 2026-05-20 | PARTIAL_ERROR — 3.802 obj / 0 errores correlación | Fix correlación `NUM_DOCUMENTO` aplicado (commit `db70026`). Cron 02:00 UTC activo. |
-| `Reconcile Oracle LAMB Egresados` | ⏳ Pendiente | — | 30.629 sombras — el más pesado |
-| `Reconcile-Koha-Inbound` | ⏳ Pendiente | — | — |
-| `Trigger Scanner` | ⏳ Pendiente | — | Procesa validTo/validFrom de activaciones |
-| `Validity Scanner` | ⏳ Pendiente | — | Desactiva/activa usuarios por fecha |
+| `Reconcile Oracle LAMB Estudiantes` | ✅ 2026-05-20 | PARTIAL_ERROR — 1.690 obj | 11 shadows duplicados Koha. Cron 02:00 UTC activo. |
+| `Reconcile Oracle LAMB Trabajadores` | ✅ 2026-05-20 | PARTIAL_ERROR — 3.802 obj | Fix correlación `NUM_DOCUMENTO` (commit `db70026`). Cron 02:00 UTC activo. |
+| `Reconcile Oracle LAMB Egresados` | ✅ 2026-05-20 | PARTIAL_ERROR — 30.723 obj / 57 min | +51 alumni nuevos (30.491→30.542). Fix correlación `NUM_DOCUMENTO` (commit `44d189f`). Cron 02:00 UTC activo. |
+| `Trigger Scanner` | ✅ 2026-05-20 | SUCCESS | OID `000...0007`. Intervalo 5 min. 0 usuarios con validTo inconsistente. |
+| `Validity Scanner` | ✅ 2026-05-20 | SUCCESS | OID `000...0006`. Intervalo 15 min. |
+| `Reconcile-Koha-Inbound` | ✅ 2026-05-20 | WARNING — 4.931 sombras | FATAL_ERROR era del OOM, no fallo real. Conector v1.2.0 compatible con 4.10.2. One-shot manual (sin cron). |
 
 ### ✅ P8 — Fix correlación Oracle LAMB Trabajadores v3 — COMPLETADO 2026-05-20
 
@@ -180,14 +179,27 @@ El motor no podía resolver el focus item para correlación.
 - Commits: `3729479` (intento) → `db70026` (fix final)
 - Verificado: `ConfigurationException: NUM_DOCUMENTO` desapareció completamente de logs
 
-**Errores pendientes a resolver (no bloquean operación):**
-- 11 shadows duplicados en Koha ILS → limpiar via UI/REST (shadows huérfanos de 11 estudiantes)
-- Dependencia circular en mappings object template estudiantes `#[12,21,22,23,25,32,33]` → revisar en P4
-- Deep clone innecesario de `identityDocuments` → optimización para P4
+**Deuda técnica registrada (no bloquea operación):**
+
+| # | Problema | Origen | Acción |
+|---|---|---|---|
+| DT-1 | 11 shadows duplicados Koha (estudiantes con doble sombra) | Reconcile Estudiantes | Limpiar shadows huérfanos via UI/REST |
+| DT-2 | 8 shadows huérfanos Koha (patrones borrados en Koha sin pasar por MidPoint) | Reconcile Koha | Marcar `dead` manualmente (IDs: 730, 736, 200610446...) |
+| DT-3 | `SchemaException: category_id [STAFF, DOCEN]` en usuarios con doble rol Koha | Recompute | Cambiar `AR-Koha-Patron-Staff` de `strong` a `weak` en `category_id` |
+| DT-4 | Dependencia circular en mappings OT estudiantes `#[12,21,22,23,25,32,33]` | Object Template | Revisar en P4 |
+| DT-5 | Deep clone innecesario de `identityDocuments` en OT | Object Template | Optimización en P4 |
+| DT-6 | `Reconcile-Koha-Inbound` es one-shot manual, sin cron | Koha ILS | Crear task recurrente con schedule |
+
+**Fix correlación aplicado a 2 resources (patrón MidPoint 4.10):**
+- `Oracle LAMB Trabajadores v3` — commit `db70026`
+- `Oracle LAMB Egresados v3` — commit `44d189f`
+- `Oracle LAMB Estudiantes v3` — no afectado (inbounds activos, sin archived)
+- Lección: en MidPoint 4.10, `<correlator/>` shorthand dentro de `<attribute>` falla cuando los inbounds `beforeCorrelation` están `archived`. Usar siempre correlator explícito a nivel `<objectType>`.
 
 **Estado del servidor PROD (2026-05-20):**
 - Disco `/`: 19 GB / 33 GB usados (62%) — sin riesgo
 - RAM: 6.1 GB activa / 9.7 GB total — estable
+- Tasks activos: Cleanup + Trigger Scanner (5 min) + Validity Scanner (15 min) + 3 crons LAMB 02:00 UTC
 - Tasks corriendo: solo `Cleanup` (sistema). Estudiantes y Trabajadores en RUNNABLE/READY esperando cron.
 
 ### ✅ P7 — Keycloak→OpenLDAP User Federation — COMPLETADO 2026-05-19
