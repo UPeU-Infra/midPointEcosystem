@@ -501,30 +501,53 @@ GRP-Helpdesk-Tarapoto   → miembros actuales: mesadeayuda.tpp, digesi.tarapoto
 
 ## 12. Prerrequisitos para activar IGA
 
-### Permisos que David Urquizo debe conceder a `MidPoint-UPeU`
+### Estado actual de permisos — App Registrations MidPoint
 
-La App Registration `MidPoint-UPeU` existe desde 2026-04-16. Para que MidPoint pueda operar en Fase 12 (provisioning outbound hacia Entra ID), David debe conceder los siguientes permisos via la consola de Entra ID (`App registrations > MidPoint-UPeU > API permissions`):
+Existen **dos** App Registrations relacionadas con MidPoint en el tenant. Datos obtenidos via Graph API el 2026-05-19.
 
-**Permisos de lectura (ya deberan estar activos para Fases 1-11):**
+#### `MidPoint-UPeU` (app activa — la que usa el conector)
 
-| Permission | Tipo | Justificacion |
+- **App ID:** `94dd7b5b-eae6-45bc-a60a-d28781ecefbd`
+- **Object ID:** `0c979413-9a62-44f1-8e33-c22ac10ec762`
+- **Creada:** 2026-04-16
+
+**Permisos actualmente concedidos (con admin consent):**
+
+| Permission | Tipo | Estado |
 |---|---|---|
-| `User.Read.All` | Application | Leer todos los usuarios para correlacion |
-| `Group.Read.All` | Application | Leer grupos para inventario |
-| `Directory.Read.All` | Application | Leer estructura del directorio |
-| `AuditLog.Read.All` | Application | Lectura de audit log para evidencia ISO 27001 |
-| `AdministrativeUnit.Read.All` | Application | Leer AUs para correlacion |
+| `User.Read.All` | Application | ✓ Concedido |
+| `Group.Read.All` | Application | ✓ Concedido |
+| `Directory.Read.All` | Application | ✓ Concedido |
 
-**Permisos de escritura (activar en Fase 12 — requieren aprobacion explicita):**
+**Permisos faltantes — lectura (necesarios ya, para correlacion IGA):**
 
-| Permission | Tipo | Justificacion |
+| Permission | Tipo | Para qué sirve |
 |---|---|---|
-| `User.ReadWrite.All` | Application | Escribir atributos estructurados (department, employeeType, officeLocation) |
-| `Group.ReadWrite.All` | Application | Crear y mantener security groups IGA |
-| `AdministrativeUnit.ReadWrite.All` | Application | Agregar/remover usuarios de AUs |
-| `Directory.ReadWrite.All` | Application | Operaciones de directorio generales |
+| `AuditLog.Read.All` | Application | Leer log de auditoría del tenant |
+| `AdministrativeUnit.Read.All` | Application | Leer Administrative Units y sus miembros |
+| `RoleManagement.Read.Directory` | Application | Leer role assignments del directorio |
+| `Application.Read.All` | Application | Leer App Registrations para inventario |
 
-**IMPORTANTE:** los permisos de escritura requieren `Grant admin consent` por parte de David Urquizo. No se activan solos con la asignacion. Este es el paso que Alberto no puede hacer por su cuenta.
+**Permisos faltantes — escritura (para Fase 12, provisioning outbound):**
+
+| Permission | Tipo | Para qué sirve |
+|---|---|---|
+| `User.ReadWrite.All` | Application | Escribir atributos: `department`, `employeeType`, `officeLocation`, `companyName` |
+| `Group.ReadWrite.All` | Application | Crear y mantener security groups gestionados por IGA |
+| `AdministrativeUnit.ReadWrite.All` | Application | Agregar y remover usuarios de AUs por sede/facultad |
+| `RoleManagement.ReadWrite.Directory` | Application | Asignar roles scoped a AUs (requiere P1) |
+
+> **IMPORTANTE:** todos los permisos de tipo `Application` requieren `Grant admin consent` por parte de David Urquizo (`daiurqz@upeu.edu.pe`). La ruta en el portal es: `Entra ID > App registrations > MidPoint-UPeU > API permissions > Grant admin consent for Universidad Peruana Unión`. Sin ese paso los permisos declarados en el manifest no tienen efecto.
+
+---
+
+#### `MidPointUPeU` (app antigua — creada en 2024)
+
+- **App ID:** `9e3523a9-3e17-45a4-a7f0-e0e21d5112a3`
+- **Object ID:** `e95af028-1eeb-432f-8c7c-f0e091356235`
+- **Creada:** 2024-06-25
+
+Tiene declarados en el manifest: `User.Read` (Delegated), `User.Read.All`, `Group.Read.All`, `Directory.Read.All`, `Application.Read.All`, `UserAuthenticationMethod.Read.All`. No se ha verificado si tiene admin consent concedido ni si el conector activo la usa. **Accion requerida:** David Urquizo debe confirmar si esta app sigue en uso o puede eliminarse. Tener dos apps con credenciales activas para el mismo propósito duplica la superficie de ataque.
 
 ### Acciones previas que debe ejecutar David (sin MidPoint)
 
