@@ -330,9 +330,9 @@ const doc = new Document({
           fichaRow("Infraestructura", "Rudy Milan — Administrador de Infraestructura", true),
           fichaRow("Gestor del proyecto", "Alberto Sanchez — Especialista IGA", false),
           fichaRow("Fecha de inicio", "Enero 2026 (Fase 0 iniciada)", true),
-          fichaRow("Fecha estimada de finalizacion", "Diciembre 2026 (Fases 1-11 completas)", false),
+          fichaRow("Fecha estimada de finalizacion", "Diciembre 2026 (Fases 1-10 completas; Fases 12-13 sujetas a desbloqueo)", false),
           fichaRow("Presupuesto adicional", "S/ 0 (100% open source + recursos DTI existentes)", true),
-          fichaRow("Costo por horas DTI", "~224 horas (estimado total Fases 1-13)", false),
+          fichaRow("Costo por horas DTI", "~210 horas (estimado total Fases 1-10, 12 y 13)", false),
           fichaRow("Estado actual", "En ejecucion — Fases 1-6 completadas, Fase 7 parcial", true),
           fichaRow("Version del documento", "1.1 — 21 de mayo de 2026 (cifras verificadas contra Oracle LAMB y MidPoint PROD)", false),
           fichaRow("Clasificacion", "Uso interno DTI — No publicar externamente", true),
@@ -481,7 +481,7 @@ const doc = new Document({
       spacer(),
       hdr(HeadingLevel.HEADING_2, "3.3 Valor estrategico"),
       bullet("Habilitador de acreditacion: los controles IGA son evidencia directa para indicadores SUNEDU CBC (Dimension 5) y SINEACE (Estandar 5.4)."),
-      bullet("Modelo replicable: la arquitectura en capas (canonical/ + upeu/) permite que la inversion de DTI se convierta en un activo reutilizable para otras universidades peruanas sin costo adicional."),
+      bullet("Arquitectura mantenible: el diseño en capas separa el modelo canonico basado en estandares internacionales de las particularidades institucionales de UPeU, lo que facilita el mantenimiento, las auditorias y la evolucion futura del sistema."),
       bullet("Seguridad por diseno: elimina cuentas huerfanas sistematicamente, reduce superficie de ataque y permite demostracion de controles ante auditores ISO 27001."),
       bullet("Autonomia tecnologica: sin dependencia de proveedor externo. DTI controla completamente el ciclo de vida de identidades."),
 
@@ -618,7 +618,7 @@ const doc = new Document({
       spacer(),
       hdr(HeadingLevel.HEADING_2, "7.4 Infraestructura y GitOps"),
       para("MidPoint PROD se ejecuta en el servidor 192.168.15.166 (Ubuntu 22.04, Docker, 9.7 GB RAM). Toda la configuracion (resources, archetypes, roles, object templates, schemas) se versiona en el repositorio github.com/UPeU-Infra/midPointEcosystem con una estructura en dos capas:"),
-      bullet("canonical/: modelo generico reutilizable por cualquier universidad peruana (archetypes, schemas eduPerson/SCHAC, roles, templates)."),
+      bullet("canonical/: capa estandar agnostica a la institucion, basada en estandares internacionales (archetypes, schemas eduPerson/SCHAC, roles, object templates)."),
       bullet("upeu/: overlay especifico UPeU (resources Oracle LAMB, orgs bootstrap, catálogos de sedes/facultades, roles MOF/GOV)."),
       para("El flujo de cambios es siempre: modificar local -> commit -> push -> git pull en servidor PROD -> aplicar via REST API. Nunca se usa scp."),
 
@@ -647,9 +647,8 @@ const doc = new Document({
           cronRow("Fase 8", "Replanteo de documentacion interna", "", "", "X", "", "NO INICIADA"),
           cronRow("Fase 9", "Validacion end-to-end con piloto real", "", "", "X", "", "NO INICIADA", true),
           cronRow("Fase 10", "Deploy PROD formal post-validacion", "", "", "X", "", "PROD YA OPERATIVO"),
-          cronRow("Fase 11", "Productizacion SciBack (canon reutilizable)", "", "", "X", "X", "NO INICIADA", true),
-          cronRow("Fase 12", "Gobierno completo Entra ID (writes + AUs)", "", "", "X", "X", "DIAGNOSTICO LISTO / BLOQUEADO"),
-          cronRow("Fase 13", "Metricas COUNTER 5 bases academicas", "", "", "", "X", "NO INICIADA", true),
+          cronRow("Fase 12", "Gobierno completo Entra ID (writes + AUs)", "", "", "X", "X", "DIAGNOSTICO LISTO / BLOQUEADO", true),
+          cronRow("Fase 13", "Metricas COUNTER 5 bases academicas", "", "", "", "X", "NO INICIADA"),
         ]
       }),
 
@@ -789,7 +788,7 @@ const doc = new Document({
             ["Fase 5: Resources READ", "25h", "~28h", "Alberto Sanchez + David Urquizo (Entra ID)"],
             ["Fase 6: Resources WRITE + Keycloak", "13h", "~13h", "Alberto Sanchez"],
             ["Fase 7: RBAC completo (pendiente)", "28h", "~20h realizadas", "Alberto Sanchez"],
-            ["Fases 8-11: Docs, piloto, prod, productizacion", "37.5h", "Pendiente", "Alberto Sanchez"],
+            ["Fases 8-10: Docs, piloto, deploy PROD", "25h", "Pendiente", "Alberto Sanchez"],
             ["Fase 12: Gobierno Entra ID", "52h", "Pendiente (bloqueado)", "Alberto Sanchez + David Urquizo"],
             ["Fase 13: Metricas COUNTER", "20h", "Pendiente", "Alberto Sanchez"],
           ].map(([e, h, r, resp], i) => {
@@ -803,7 +802,7 @@ const doc = new Document({
           }),
           new TableRow({ children: [
             cell("TOTAL ESTIMADO", { bg: C.headerBg, bold: true, color: C.white, width: 3600, size: 20 }),
-            cell("~223.5h", { bg: C.headerBg, bold: true, color: "93C5FD", width: 1200, size: 20, align: AlignmentType.CENTER }),
+            cell("~210h", { bg: C.headerBg, bold: true, color: "93C5FD", width: 1200, size: 20, align: AlignmentType.CENTER }),
             cell("~115h realizadas", { bg: C.headerBg, bold: true, color: "93C5FD", width: 1200, size: 20, align: AlignmentType.CENTER }),
             cell("Proyecto en ejecucion", { bg: C.headerBg, color: C.white, width: 3360, size: 18 }),
           ]})
@@ -827,7 +826,7 @@ const doc = new Document({
           new TableRow({ children: [hCell("ID", 700), hCell("Descripcion del riesgo", 2800), hCell("Probabilidad", 600), hCell("Impacto", 600), hCell("Nivel", 700), hCell("Plan de mitigacion", 2960)] }),
           riskRow("R-01", "OOM en servidor MidPoint PROD por insuficiencia de RAM bajo carga alta de reconciliacion", "Media", "Alto", "MEDIO", "Monitoreo proactivo de heap JVM. Aumento de RAM a 12 GB si supera 85% de uso sostenido.", C.yellowBg),
           riskRow("R-02", "Cambio de estructura de vistas Oracle LAMB sin previo aviso (actualizacion ERP)", "Baja", "Alto", "MEDIO", "Resources MidPoint con correlacion por clave estable (cod_trabajador, DNI). Test de reconciliacion tras cada actualizacion LAMB.", C.white),
-          riskRow("R-03", "Demora en obtencion de permisos Entra ID (David Urquizo) bloquea Fase 12", "Alta", "Medio", "ALTO", "Escalamiento formal con fecha limite. Fases 1-11 no requieren write Entra ID. Fase 12 tiene fecha floating.", C.redBg),
+          riskRow("R-03", "Demora en obtencion de permisos Entra ID (David Urquizo) bloquea Fase 12", "Alta", "Medio", "ALTO", "Escalamiento formal con fecha limite. Fases 1-10 no requieren write Entra ID. Fase 12 tiene fecha floating.", C.redBg),
           riskRow("R-04", "Corrupcion del repositorio GitOps o perdida de configuracion", "Muy Baja", "Critico", "MEDIO", "Repositorio GitHub con historial completo. Tags de version por hito. Backup PostgreSQL semanal del servidor PROD.", C.white),
           riskRow("R-05", "Resistencia del personal DTI a adoptar el nuevo flujo GitOps", "Media", "Medio", "BAJO", "Documentacion clara en runbooks. Capacitacion presencial de 2h para el equipo DTI. Flujo CLI simple documentado.", C.rowAlt),
           riskRow("R-06", "Incidente de seguridad por exposicion de credenciales Oracle LAMB", "Baja", "Critico", "MEDIO", "Secretos en ~/.secrets/ con permisos 600. Cuenta Oracle dedicada MIDPOINT_IGA_RO (lectura). Rotacion anual de passwords.", C.white),
@@ -887,7 +886,7 @@ const doc = new Document({
       bullet("34.551 cuentas vivas sincronizadas en el directorio OpenLDAP con atributos federados, habilitando SSO via Keycloak hacia sistemas internos."),
       bullet("Pipeline de reconciliacion automatico operativo: Trigger Scanner (5 min), Validity Scanner (15 min), 3 crons LAMB diarios, Koha cron diario."),
       bullet("Repositorio GitOps 100% en sync con PROD: 18 archetypes, 72 roles, 5 object templates, 7 resources, 2 schemas — todos versionados."),
-      bullet("Modelo de dos capas canonical/ + upeu/ que convierte la inversion DTI en un activo reutilizable para otras universidades peruanas."),
+      bullet("Arquitectura en dos capas (modelo canonico estandar + overlay UPeU) que mantiene la configuracion ordenada, versionada y alineada con estandares internacionales (eduPerson, SCHAC, ISO 24760)."),
 
       spacer(),
       hdr(HeadingLevel.HEADING_2, "13.2 Proximos pasos criticos"),
@@ -901,7 +900,7 @@ const doc = new Document({
       spacer(),
       hdr(HeadingLevel.HEADING_2, "13.3 Solicitud de aprobacion"),
       para("Se solicita al Director DTI David Barrantes la aprobacion formal de este documento de proyecto, que habilita:"),
-      bullet("La continuacion de las fases pendientes (7, 8, 9, 11, 12, 13) dentro del calendario establecido."),
+      bullet("La continuacion de las fases pendientes (7, 8, 9, 12, 13) dentro del calendario establecido."),
       bullet("La gestion formal de los bloqueantes activos: solicitar a David Urquizo los 4 permisos Entra ID faltantes para desbloquer Fase 12."),
       bullet("La asignacion formal del equipo del proyecto (David Barrantes, David Urquizo, Rudy Milan, Alberto Sanchez) con los roles y responsabilidades descritos en la Seccion 9."),
       bullet("El uso de la infraestructura interna ya existente para completar las fases restantes sin costo adicional."),
