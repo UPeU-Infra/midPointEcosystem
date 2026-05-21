@@ -147,8 +147,11 @@
     <!-- connector-koha v1.2.1 — fix DT-7: CREATE sin patron_id no corrompe shadow -->
     <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
         <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.identicum.midpoint.connector-koha/com.identicum.connectors.KohaConnector">
-            <cfg:serviceAddress>https://biblioteca-staff.upeu.edu.pe</cfg:serviceAddress>
-            <cfg:trustAllCertificates>true</cfg:trustAllCertificates>
+            <!-- Conexión directa por IP interna — sin pasar por LB (192.168.12.199).
+                 Koha corre en Apache port 8001 (staff/intranet) en HTTP plano (sin SSL).
+                 La ruta 192.168.15.166 → 192.168.12.135:8001 debe estar abierta en firewall. -->
+            <cfg:serviceAddress>http://192.168.12.135:8001</cfg:serviceAddress>
+            <cfg:trustAllCertificates>false</cfg:trustAllCertificates>
             <cfg:authenticationMethodStrategy>OAUTH2</cfg:authenticationMethodStrategy>
             <cfg:clientId>62feb76d-c054-45b1-be03-5ff7da6faca3</cfg:clientId>
             <cfg:clientSecret>
