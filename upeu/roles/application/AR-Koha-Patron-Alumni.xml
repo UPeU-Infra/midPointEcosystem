@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+      oid="a1b2c3d4-e5f6-7890-abcd-ef1234567804">
+    <name>AR-Koha-Patron-Alumni</name>
+    <description>Application Role: cuenta patron egresado en Koha ILS. Categoría ALUMNI. Strength weak — cede ante cualquier rol activo de mayor jerarquía. Para usuarios con primaryAffiliation=alum.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application role (OID canónico PROD) -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <inducement>
+        <construction>
+            <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+            <!-- Override category_id: weak — cede ante cualquier categoria de mayor prioridad -->
+            <attribute>
+                <ref>ri:category_id</ref>
+                <outbound>
+                    <strength>weak</strength>
+                    <expression><value>ALUMNI</value></expression>
+                </outbound>
+            </attribute>
+        </construction>
+    </inducement>
+</role>

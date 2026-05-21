@@ -27,4 +27,8 @@
         <targetRef oid="dd0ea6b7-816f-4bff-b654-67f8650480a8" relation="org:default" type="RoleType"/>
     </inducement>
     -->
+    <!-- AR-Koha-Patron-Alumni: cuenta Koha ILS categoría ALUMNI para egresados -->
+    <inducement>
+        <targetRef oid="a1b2c3d4-e5f6-7890-abcd-ef1234567804" relation="org:default" type="RoleType"/>
+    </inducement>
 </role>
