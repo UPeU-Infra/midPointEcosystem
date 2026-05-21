@@ -190,15 +190,17 @@
         <autoassignEnabled>true</autoassignEnabled>
     </roleManagement>
     <!-- Hardening retención de auditoría post-incidente disco-100% 2026-05-21.
-         auditRecords reducido P90D->P30D: el incidente fue causado por la tabla
+         auditRecords reducido P90D->P14D: el incidente fue causado por la tabla
          ma_audit_delta_default creciendo a ~8 GB sin retención. Durante el rollout
          activo (Koha ~38K patrons + 35K usuarios) la reconciliación genera audit
-         masivo. P30D es el valor acordado con el usuario.
+         masivo (estimado P30D = 6-12 GB, riesgo de rellenar el disco). P14D durante
+         el rollout (estimado 3-6 GB); volver a P30D cuando termine la carga de
+         reconciliaciones full.
          La tarea "Cleanup" (OID 00000000-0000-0000-0000-000000000005, diaria,
          interval 86400s) aplica esta política. -->
     <cleanupPolicy>
         <auditRecords>
-            <maxAge>P30D</maxAge>
+            <maxAge>P14D</maxAge>
         </auditRecords>
         <closedTasks>
             <maxAge>P30D</maxAge>
