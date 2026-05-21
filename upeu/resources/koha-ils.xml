@@ -150,19 +150,9 @@
             <cfg:serviceAddress>https://biblioteca-staff.upeu.edu.pe</cfg:serviceAddress>
             <cfg:trustAllCertificates>true</cfg:trustAllCertificates>
             <cfg:authenticationMethodStrategy>OAUTH2</cfg:authenticationMethodStrategy>
-            <cfg:clientId>2c058922-f09b-425a-9932-0a3ea5d54c00</cfg:clientId>
+            <cfg:clientId>62feb76d-c054-45b1-be03-5ff7da6faca3</cfg:clientId>
             <cfg:clientSecret>
-                <t:encryptedData>
-                    <t:encryptionMethod>
-                        <t:algorithm>http://www.w3.org/2001/04/xmlenc#aes256-cbc</t:algorithm>
-                    </t:encryptionMethod>
-                    <t:keyInfo>
-                        <t:keyName>nkZ4VieDLlRmwD8hdryrmjz8IxQ=</t:keyName>
-                    </t:keyInfo>
-                    <t:cipherData>
-                        <t:cipherValue>lZX7hMpuAyvQrEt9v2KUZzAL3Zyo4DmMW2v+LIwrCalzQZMbGDlHgy7znD8+LYV6M4sEVDpEAXYjbAm/Xng6xw==</t:cipherValue>
-                    </t:cipherData>
-                </t:encryptedData>
+                <t:clearValue>2c4a8608-d8c1-433d-8cdd-2d1aa8aff7b3</t:clearValue>
             </cfg:clientSecret>
         </icfc:configurationProperties>
     </connectorConfiguration>
