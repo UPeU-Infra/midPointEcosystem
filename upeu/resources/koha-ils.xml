@@ -827,20 +827,27 @@
             <attribute>
                 <ref>ri:userid</ref>
                 <displayName>User ID (login)</displayName>
+                <!-- fix 2026-05-21: ANTES outbound strong desde emailAddress
+                     -> generaba userid con dominio ('jhoselyn.quispe@upeu.edu.pe')
+                     mientras Koha tiene el login sin dominio o el codigo
+                     ('jhoselyn.quispe' / '70073344'). Esa discrepancia rompia
+                     el discovery post-409: MidPoint hacia GET por el userid
+                     equivocado y no recuperaba la cuenta existente.
+                     Ahora: userid = name (codigo UPeU), consistente con
+                     cardnumber. weak: NO sobreescribe el login real de cuentas
+                     Koha ya existentes (preserva reality). Solo aplica a
+                     patrones nuevos creados por MidPoint. -->
                 <outbound>
                     <name>userid-outbound</name>
-                    <strength>strong</strength>
+                    <strength>weak</strength>
                     <source>
-                        <path>$focus/emailAddress</path>
+                        <path>$focus/name</path>
                     </source>
                 </outbound>
-                <inbound>
-                    <name>userid-inbound</name>
-                    <strength>weak</strength>
-                    <target>
-                        <path>$user/name</path>
-                    </target>
-                </inbound>
+                <!-- inbound userid->name ELIMINADO: Koha no es IIA de 'name'.
+                     El name del user lo fija el IIA Oracle LAMB. Mantenerlo
+                     causaba ambiguedad de correlacion (competia con
+                     cardnumber-inbound, ambos a $user/name). -->
             </attribute>
             <attribute>
                 <ref>ri:cardnumber</ref>
@@ -852,9 +859,13 @@
                         <path>$focus/name</path>
                     </source>
                 </outbound>
+                <!-- fix 2026-05-21: strength strong -> weak. Koha NO es IIA de
+                     'name'; el IIA es Oracle LAMB. weak = solo rellena name si
+                     estuviera vacio (defensivo). Evita que Koha gobierne el
+                     identificador inmutable del user. -->
                 <inbound>
                     <name>cardnumber-inbound</name>
-                    <strength>strong</strength>
+                    <strength>weak</strength>
                     <target>
                         <path>$user/name</path>
                     </target>
@@ -1208,14 +1219,32 @@
                     </outbound>
                 </administrativeStatus>
             </activation>
+            <!-- ================================================================
+                 CORRELACION — fix 2026-05-21 (causa raiz AlreadyExistsException)
+                 Correlator de filtro EXPLICITO. El correlator anterior
+                 (items <ref>name</ref>) era ambiguo: dos atributos (userid y
+                 cardnumber) tienen inbound a $user/name, y MidPoint resolvia
+                 'name' con el inbound de userid (que trae el login Koha, p.ej.
+                 'jhoselyn.quispe'), nunca con el codigo UPeU del user
+                 ('202012377'). Resultado: 4.734 cuentas Koha reales quedaban
+                 UNMATCHED -> MidPoint intentaba CREATE -> Koha 409.
+                 El cardnumber de Koha == codigo UPeU == $user/name. Este filtro
+                 correlaciona inequivocamente sin depender de los inbounds.
+                 ================================================================ -->
             <correlation>
                 <correlators>
-                    <items>
+                    <filter>
                         <name>correlate-by-cardnumber</name>
-                        <item>
-                            <ref>name</ref>
-                        </item>
-                    </items>
+                        <documentation>cardnumber del patron Koha == name (codigo UPeU) del user.</documentation>
+                        <ownerFilter>
+                            <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
+                                <q:path>name</q:path>
+                                <expression>
+                                    <path>$projection/attributes/ri:cardnumber</path>
+                                </expression>
+                            </q:equal>
+                        </ownerFilter>
+                    </filter>
                 </correlators>
             </correlation>
             <synchronization>
@@ -1231,11 +1260,16 @@
                         <link/>
                     </actions>
                 </reaction>
+                <!-- ============================================================
+                     unmatched: fix 2026-05-21. ANTES inactivateResourceObject
+                     -> peligroso: una reconciliacion masiva habria DESACTIVADO
+                     miles de cuentas Koha reales de patrones sin user en
+                     MidPoint. Koha NO es IIA; MidPoint no debe inactivar
+                     cuentas que no reconoce. Sin accion: la cuenta unmatched
+                     se ignora (reality preservada, policy no resta).
+                     ============================================================ -->
                 <reaction>
                     <situation>unmatched</situation>
-                    <actions>
-                        <inactivateResourceObject/>
-                    </actions>
                 </reaction>
                 <reaction>
                     <situation>deleted</situation>
