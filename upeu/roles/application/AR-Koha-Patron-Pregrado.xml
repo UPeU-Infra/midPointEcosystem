@@ -2,10 +2,10 @@
 <role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
-      oid="e7447183-cba1-441d-b57f-d3b69cd56662">
-    <name>AR-Koha-Patron-Student</name>
-    <description>DEPRECADO — Fase B. Reemplazado por AR-Koha-Patron-Pregrado (OID a1b2c3d4-e5f6-7890-abcd-ef1234567801). Mantener hasta que Koha migre categoría ESTUDI→PREGRADO y todos los patrons sean reasignados. NO asignar a usuarios nuevos.</description>
-    <lifecycleState>deprecated</lifecycleState>
+      oid="a1b2c3d4-e5f6-7890-abcd-ef1234567801">
+    <name>AR-Koha-Patron-Pregrado</name>
+    <description>Application Role: cuenta patron estudiante de pregrado en Koha ILS. Categoría PREGRADO. Strength weak — cede ante POSGRADO (normal), STAFF (normal) y DOCEN (strong). Reemplaza AR-Koha-Patron-Student cuando Koha migre ESTUDI→PREGRADO.</description>
+    <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
         <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
@@ -15,12 +15,12 @@
             <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
             <kind>account</kind>
             <intent>default</intent>
-            <!-- Override category_id: weak — cede ante STAFF (normal) y DOCEN (strong) -->
+            <!-- Override category_id: weak — cede ante POSGRADO (normal), STAFF (normal) y DOCEN (strong) -->
             <attribute>
                 <ref>ri:category_id</ref>
                 <outbound>
                     <strength>weak</strength>
-                    <expression><value>ESTUDI</value></expression>
+                    <expression><value>PREGRADO</value></expression>
                 </outbound>
             </attribute>
         </construction>
