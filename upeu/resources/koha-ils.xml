@@ -1031,18 +1031,18 @@
                                     case 'faculty':
                                         return 'DOCEN';
                                     case 'student':
-                                        // (a) studyLevel — IIA canonica (LAMB Fase 5)
+                                        /* (a) studyLevel - IIA canonica (LAMB Fase 5) */
                                         def level = studyLevel != null ? basic.stringify(studyLevel).trim().toLowerCase() : '';
                                         if (level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion' || level.contains('posgrado')) return 'POSGRADO';
                                         if (level == 'pregrado') return 'PREGRADO';
-                                        // (b) studentCycle — multivalor; ciclo >= 7 => posgrado
+                                        /* (b) studentCycle - multivalor; ciclo >= 7 => posgrado */
                                         def cycles = (studentCycle instanceof Collection) ? studentCycle : (studentCycle != null ? [studentCycle] : []);
                                         for (c in cycles) {
                                             def n = c?.toString()?.trim()?.isInteger() ? c.toString().trim().toInteger() : -1;
                                             if (n >= 7) return 'POSGRADO';
                                         }
                                         if (!cycles.isEmpty()) return 'PREGRADO';
-                                        // (c) realidad: roleMembershipRef hacia AR-Koha-Patron-Posgrado
+                                        /* (c) realidad: roleMembershipRef hacia AR-Koha-Patron-Posgrado */
                                         def hasPosgradoRole = focus?.roleMembershipRef?.any { it?.oid == 'a1b2c3d4-e5f6-7890-abcd-ef1234567802' };
                                         return hasPosgradoRole ? 'POSGRADO' : 'PREGRADO';
                                     case 'staff':
