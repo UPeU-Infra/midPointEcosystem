@@ -1023,38 +1023,34 @@
                         <path>$focus/extension/sb:studentCycle</path>
                     </source>
                     <expression>
+                        <!-- fix 2026-05-21: reescrito como IIFE con if/else plano.
+                             El switch colapsado a una linea por MidPoint provocaba
+                             "Unexpected input: switch" al compilar el Groovy.
+                             Sin switch, sin comentarios de linea: robusto al
+                             colapso de saltos de linea. -->
                         <script>
-                            <code>
+                            <code>{ ->
                                 def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
                                 if (aff == '') return null;
-                                switch (aff) {
-                                    case 'faculty':
-                                        return 'DOCEN';
-                                    case 'student':
-                                        /* (a) studyLevel - IIA canonica (LAMB Fase 5) */
-                                        def level = studyLevel != null ? basic.stringify(studyLevel).trim().toLowerCase() : '';
-                                        if (level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion' || level.contains('posgrado')) return 'POSGRADO';
-                                        if (level == 'pregrado') return 'PREGRADO';
-                                        /* (b) studentCycle - multivalor; ciclo >= 7 => posgrado */
-                                        def cycles = (studentCycle instanceof Collection) ? studentCycle : (studentCycle != null ? [studentCycle] : []);
-                                        for (c in cycles) {
-                                            def n = c?.toString()?.trim()?.isInteger() ? c.toString().trim().toInteger() : -1;
-                                            if (n >= 7) return 'POSGRADO';
-                                        }
-                                        if (!cycles.isEmpty()) return 'PREGRADO';
-                                        /* (c) realidad: roleMembershipRef hacia AR-Koha-Patron-Posgrado */
-                                        def hasPosgradoRole = focus?.roleMembershipRef?.any { it?.oid == 'a1b2c3d4-e5f6-7890-abcd-ef1234567802' };
-                                        return hasPosgradoRole ? 'POSGRADO' : 'PREGRADO';
-                                    case 'staff':
-                                    case 'employee':
-                                        return 'ADMINIST';
-                                    case 'alum':
-                                        return 'ALUMNI';
-                                    default:
-                                        log.warn('Koha category_id: primaryAffiliation no mapeado a categoria Koha: {}', aff);
-                                        return null;
+                                if (aff == 'faculty') return 'DOCEN';
+                                if (aff == 'staff' || aff == 'employee') return 'ADMINIST';
+                                if (aff == 'alum') return 'ALUMNI';
+                                if (aff == 'student') {
+                                    def level = studyLevel != null ? basic.stringify(studyLevel).trim().toLowerCase() : '';
+                                    if (level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion' || level.contains('posgrado')) return 'POSGRADO';
+                                    if (level == 'pregrado') return 'PREGRADO';
+                                    def cycles = (studentCycle instanceof Collection) ? studentCycle : (studentCycle != null ? [studentCycle] : []);
+                                    for (c in cycles) {
+                                        def n = c?.toString()?.trim()?.isInteger() ? c.toString().trim().toInteger() : -1;
+                                        if (n >= 7) return 'POSGRADO';
+                                    }
+                                    if (!cycles.isEmpty()) return 'PREGRADO';
+                                    def hasPosgradoRole = focus?.roleMembershipRef?.any { it?.oid == 'a1b2c3d4-e5f6-7890-abcd-ef1234567802' };
+                                    return hasPosgradoRole ? 'POSGRADO' : 'PREGRADO';
                                 }
-                            </code>
+                                log.warn('Koha category_id: primaryAffiliation no mapeado a categoria Koha: {}', aff);
+                                return null;
+                            }()</code>
                         </script>
                     </expression>
                 </outbound>
