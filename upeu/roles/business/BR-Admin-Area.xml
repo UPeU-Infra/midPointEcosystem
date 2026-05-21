@@ -31,9 +31,10 @@
     <inducement>
         <targetRef oid="7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d" relation="org:default" type="RoleType"/>
     </inducement>
-    <!-- AR-Koha-Patron-Staff: cuenta Koha ILS perfil Staff -->
+    <!-- AR-Koha-Patron-Administrativo: cuenta Koha ILS categoría ADMINIST para personal administrativo (Fase C)
+         AR-Koha-Patron-Staff (STAFF) queda reservado para BR-Bibliotecario (strength normal, gana sobre ADMINIST weak) -->
     <inducement>
-        <targetRef oid="72589f9c-84d2-47d0-9412-9d2a6b9ef8e0" relation="org:default" type="RoleType"/>
+        <targetRef oid="a1b2c3d4-e5f6-7890-abcd-ef1234567803" relation="org:default" type="RoleType"/>
     </inducement>
     <!-- AR-WiFi-Staff: acceso red WiFi corporativa staff -->
     <inducement>

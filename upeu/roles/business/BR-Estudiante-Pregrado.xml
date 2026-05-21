@@ -31,9 +31,9 @@
     <inducement>
         <targetRef oid="7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d" relation="org:default" type="RoleType"/>
     </inducement>
-    <!-- AR-Koha-Patron-Student: cuenta Koha ILS perfil Student -->
+    <!-- AR-Koha-Patron-Pregrado: cuenta Koha ILS categoría PREGRADO (Fase C) -->
     <inducement>
-        <targetRef oid="e7447183-cba1-441d-b57f-d3b69cd56662" relation="org:default" type="RoleType"/>
+        <targetRef oid="a1b2c3d4-e5f6-7890-abcd-ef1234567801" relation="org:default" type="RoleType"/>
     </inducement>
     <!-- AR-WiFi-Estudiantes: acceso red WiFi estudiantes -->
     <inducement>

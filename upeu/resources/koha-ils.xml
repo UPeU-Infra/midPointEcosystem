@@ -919,9 +919,10 @@
                 <displayName>User ID (login)</displayName>
                 <outbound>
                     <name>userid-outbound</name>
+                    <!-- Cambio 1 Fase C: userid = emailAddress (SSO Keycloak, no código institucional) -->
                     <strength>strong</strength>
                     <source>
-                        <path>$focus/name</path>
+                        <path>$focus/emailAddress</path>
                     </source>
                 </outbound>
                 <inbound id="13">
@@ -1090,6 +1091,20 @@
                             <code>if (terminationDate == null) return null; terminationDate.toString().take(10)</code>
                         </script>
                     </expression>
+                </outbound>
+            </attribute>
+            <!-- ===== Cambio 5 Fase C: title → cargo/puesto del trabajador ===== -->
+            <attribute>
+                <ref>ri:title</ref>
+                <displayName>Cargo / Puesto</displayName>
+                <outbound>
+                    <name>title-outbound</name>
+                    <!-- weak: solo aplica si Koha no tiene ya un valor; para trabajadores
+                         $focus/title contiene NOMBRE_PUESTO desde Oracle LAMB vía inbound. -->
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/title</path>
+                    </source>
                 </outbound>
             </attribute>
             <!-- ===== Campos adicionales UPeU — agregados 2026-05-20 ===== -->

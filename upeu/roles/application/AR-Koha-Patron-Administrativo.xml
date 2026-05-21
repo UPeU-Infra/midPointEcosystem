@@ -4,7 +4,7 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="a1b2c3d4-e5f6-7890-abcd-ef1234567803">
     <name>AR-Koha-Patron-Administrativo</name>
-    <description>Application Role: cuenta patron trabajador administrativo no-biblioteca en Koha ILS. Categoría ADMINISTRATIVO. Strength weak — cede ante STAFF (normal), POSGRADO (normal) y DOCEN (strong). Para usuarios con primaryAffiliation=staff que no tengan acceso a AR-Koha-Patron-Staff.</description>
+    <description>Application Role: cuenta patron trabajador administrativo no-biblioteca en Koha ILS. Categoría ADMINIST (8 chars, código real en Koha). Strength weak — cede ante STAFF (normal), POSGRADO (normal) y DOCEN (strong). Para usuarios con primaryAffiliation=staff que no tengan acceso a AR-Koha-Patron-Staff.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
@@ -15,12 +15,13 @@
             <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
             <kind>account</kind>
             <intent>default</intent>
-            <!-- Override category_id: weak — cede ante STAFF (normal), POSGRADO (normal) y DOCEN (strong) -->
+            <!-- Override category_id: weak — cede ante STAFF (normal), POSGRADO (normal) y DOCEN (strong)
+                 Código correcto en Koha: ADMINIST (máximo 8 chars, truncado de ADMINISTRATIVO) -->
             <attribute>
                 <ref>ri:category_id</ref>
                 <outbound>
                     <strength>weak</strength>
-                    <expression><value>ADMINISTRATIVO</value></expression>
+                    <expression><value>ADMINIST</value></expression>
                 </outbound>
             </attribute>
         </construction>
