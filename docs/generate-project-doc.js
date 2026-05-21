@@ -362,7 +362,7 @@ const doc = new Document({
       hdr(HeadingLevel.HEADING_1, "1. Antecedentes y Situacion Actual", { pageBreak: true }),
 
       hdr(HeadingLevel.HEADING_2, "1.1 Contexto institucional"),
-      para("La UPeU es una institucion de educacion superior adventista con presencia en tres campus: Lima (sede central), Juliaca (region andina) y Tarapoto (region amazonica). Su comunidad academica, verificada contra la base de datos institucional Oracle LAMB en mayo de 2026, comprende alrededor de 24.000 estudiantes con matricula vigente en el año academico 2026 (23.620 en el ciclo regular vigente), 30.635 egresados, 3.144 trabajadores administrativos y 135 docentes."),
+      para("La UPeU es una institucion de educacion superior adventista con presencia en tres campus: Lima (sede central), Juliaca (region andina) y Tarapoto (region amazonica). Su comunidad academica, verificada contra la base de datos institucional Oracle LAMB en mayo de 2026, comprende alrededor de 24.000 estudiantes con matricula vigente en el año academico 2026 (23.620 en el ciclo regular vigente), 30.635 egresados y aproximadamente 3.800 trabajadores activos, de los cuales cerca de 1.190 son docentes universitarios y el resto personal administrativo y operativo."),
       para("La base de datos institucional de verdad es Oracle LAMB — un ERP propio desarrollado sobre Oracle 11g con cuatro esquemas principales: MOISES (recursos humanos), DAVID (academico), ELISEO (estructura organizacional) y JOSUE (finanzas). LAMB es la fuente autoritativa de toda identidad activa en UPeU."),
       para("Los sistemas institucionales que dependen de cuentas de usuario incluyen: Microsoft 365 (correo, Teams, OneDrive), Koha (sistema de biblioteca), Keycloak (SSO institucional), OpenLDAP (directorio de identidades), EJBCA (PKI corporativa), FreeRADIUS (Wi-Fi 802.1X) y repositorios academicos (DSpace, OJS)."),
 
@@ -537,11 +537,11 @@ const doc = new Document({
           new TableRow({ children: [hCell("Beneficiario", 2400), hCell("Poblacion", 1600), hCell("Beneficio especifico", 5360)] }),
           ...[
             ["Estudiantes con matricula vigente", "~24.000", "Cuenta institucional activa desde el primer dia de matricula. Acceso inmediato a M365, Koha, LDAP y sistemas academicos. Actualmente 1.679 cargados (ciclo Verano 2026); el resto se incorpora al completar la carga del ciclo regular."],
-            ["Personal docente", "135", "Alta automatica al registrarse en LAMB. Licencia M365 A3 correcta por tipo de contrato (TC/TP). Acceso a bases cientificas via SSO SAML."],
+            ["Personal docente", "~1.190", "Alta automatica al registrarse en LAMB. Licencia M365 correcta por tipo de contrato (TC/TP). Acceso a bases cientificas via SSO SAML. Actualmente 135 clasificados como archetype faculty; el resto figura provisionalmente como staff (ver nota seccion 7.2)."],
             ["Personal administrativo", "3.144", "Acceso a sistemas segun funcion real. Desactivacion automatica al cese. Sin cuentas huerfanas que representen riesgo."],
             ["Egresados registrados", "30.635", "Correo alumni activo mientras figure en LAMB. Acceso al catalogo Koha y OPAC externo."],
-            ["Equipo DTI", "~10", "Eliminacion de tareas manuales repetitivas. Visibilidad completa de identidades. Evidencia para auditorias sin recoleccion adicional."],
-            ["Autoridades academicas (Decanos, Directores)", "~40", "Pueden delegar acceso a sistemas de sus unidades sin intervenir en la configuracion tecnica. Delegacion de administracion en Entra ID por AU (campus/sede)."],
+            ["Equipo DTI", "72", "Eliminacion de tareas manuales repetitivas. Visibilidad completa de identidades. Evidencia para auditorias sin recoleccion adicional. Personal DTI distribuido en los tres campus (Lima 38, Juliaca 23, Tarapoto 11)."],
+            ["Autoridades academicas (Decanos, Directores)", "27", "Pueden delegar acceso a sistemas de sus unidades sin intervenir en la configuracion tecnica. Comprende 5 decanos de facultad, 13 directores de escuela profesional, 2 directores de filial y 7 directores de posgrado. Delegacion de administracion en Entra ID por AU (campus/sede)."],
             ["Auditores externos (SUNEDU/SINEACE/ISO)", "— (ocasional)", "Acceso a reportes de ciclo de vida de identidades, registro de cambios y evidencia de controles de acceso exportable desde MidPoint."],
           ].map(([b, p, ben], i) => new TableRow({ children: [
             cell(b, { bg: i % 2 ? C.rowAlt : C.white, width: 2400, size: 18, bold: true }),
@@ -575,9 +575,9 @@ const doc = new Document({
           new TableRow({ children: [hCell("Archetype", 2400), hCell("Cantidad PROD", 1600), hCell("IIA principal", 1600), hCell("eduPersonAffiliation", 3760)] }),
           ...[
             ["alumni (egresados)", "30.543", "Oracle DAVID", "alum"],
-            ["employee-staff (personal administrativo)", "3.144", "Oracle MOISES/ELISEO", "staff, employee, member"],
+            ["employee-staff (personal administrativo) **", "3.144", "Oracle MOISES/ELISEO", "staff, employee, member"],
             ["student (estudiantes) *", "1.679", "Oracle DAVID", "student, member"],
-            ["employee-faculty (docentes)", "135", "Oracle MOISES/ENOC", "faculty, employee, member"],
+            ["employee-faculty (docentes) **", "135", "Oracle MOISES/ENOC", "faculty, employee, member"],
             ["affiliate-* / contractor / service-account", "0 (pendiente poblar)", "Alta manual / ITSM", "affiliate / n/a"],
           ].map(([a, c, iia, edu], i) => new TableRow({ children: [
             cell(a, { bg: i % 2 ? C.rowAlt : C.white, width: 2400, size: 18, bold: true }),
@@ -588,6 +588,7 @@ const doc = new Document({
         ]
       }),
       para("* El archetype student refleja actualmente 1.679 usuarios correspondientes al ciclo Verano 2026. El resource Oracle LAMB Estudiantes esta configurado con el identificador de semestre fijo (ID_SEMESTRE = 279); la carga del padron del ciclo regular vigente — aproximadamente 23.620 estudiantes — requiere parametrizar dinamicamente el semestre y constituye una tarea pendiente priorizada del proyecto.", { italic: true, color: C.gray, size: 18, before: 80 }),
+      para("** Los archetypes employee-faculty (135) y employee-staff (3.144) reflejan la clasificacion actual del resource Trabajadores, que identifica como docente unicamente a quienes poseen categorizacion academica formal en ENOC.CAT_DOCENTE (estado 02). La planta docente real es de aproximadamente 1.190 docentes universitarios; los docentes sin categorizacion formal figuran provisionalmente bajo employee-staff. Ajustar el criterio de clasificacion docente/administrativo es una tarea pendiente del proyecto.", { italic: true, color: C.gray, size: 18, before: 40 }),
 
       spacer(),
       hdr(HeadingLevel.HEADING_2, "7.3 Integraciones activas (estado mayo 2026)"),
@@ -855,6 +856,7 @@ const doc = new Document({
             ["Cuentas Koha gestionadas automaticamente", "> 5.000", "5.274 ✓", "Resource Koha stats"],
             ["Identidades Entra ID sincronizadas (lectura)", "> 35.000", "37.305 ✓", "Resource Entra ID stats"],
             ["Estudiantes del ciclo regular cargados en MidPoint", "> 23.000", "Pendiente (resource fijado a Verano 2026)", "Resource Estudiantes"],
+            ["Docentes clasificados con archetype faculty", "~1.190", "Pendiente (135; criterio CAT_DOCENTE estado 02)", "BD PostgreSQL PROD"],
             ["Roles activos en repo (GitOps sync)", "100% en repo", "72/72 ✓ (post commit 19590be)", "git diff PROD vs repo"],
             ["Archetypes custom activos en PROD", "18", "18 ✓", "BD PostgreSQL PROD"],
             ["Uptime MidPoint PROD (mensual)", "> 99%", "En seguimiento", "UptimeRobot"],
@@ -890,6 +892,7 @@ const doc = new Document({
       spacer(),
       hdr(HeadingLevel.HEADING_2, "13.2 Proximos pasos criticos"),
       bullet("Carga del padron estudiantil completo: parametrizar dinamicamente el semestre en el resource Oracle LAMB Estudiantes (hoy fijado al ciclo Verano 2026, ID_SEMESTRE = 279) para incorporar los aproximadamente 23.620 estudiantes del ciclo regular vigente."),
+      bullet("Correccion del criterio docente/administrativo: ajustar el resource Trabajadores para clasificar como employee-faculty a los aproximadamente 1.190 docentes universitarios reales, no solo a los 135 con categorizacion academica formal en ENOC.CAT_DOCENTE."),
       bullet("RBAC completo (Fase 7): finalizar role mining LAMB, definir las 2 reglas SoD ISO 27001 A.8.2, y activar la cascada Business Role -> Application Role para todos los arquetipos."),
       bullet("Validacion end-to-end (Fase 9): ejecutar el flujo completo joiner-mover-leaver con 3 usuarios piloto reales y documentar evidencia para SUNEDU/SINEACE."),
       bullet("Gobierno Entra ID (Fase 12): una vez David Urquizo otorgue los 4 permisos pendientes, activar el gobierno de licencias M365 A1/A3/A5 por archetype y construir las Administrative Units por campus."),
