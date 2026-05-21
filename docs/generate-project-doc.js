@@ -238,7 +238,7 @@ const doc = new Document({
             shading: shading(C.lightBlue),
             margins: { top: 120, bottom: 120, left: 120, right: 120 },
             children: [
-              new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "35.450+", font: "Arial", size: 36, bold: true, color: C.upeuBlue })] }),
+              new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "35.970", font: "Arial", size: 36, bold: true, color: C.upeuBlue })] }),
               new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Identidades gestionadas", font: "Arial", size: 18, color: C.gray })] }),
             ]
           }),
@@ -284,11 +284,17 @@ const doc = new Document({
             hCell("Elaborado por", 4693),
           ]}),
           new TableRow({ children: [
-            cell("David Barrantes\nDirector de Tecnologias de Informacion", { width: 4693, bg: C.white, size: 20 }),
-            cell("Alberto Sanchez\nGestor del Proyecto IGA", { width: 4693, bg: C.white, size: 20 }),
+            new TableCell({ borders: cellBorder(C.borderGray), width: { size: 4693, type: WidthType.DXA }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, children: [
+              new Paragraph({ spacing: { before: 0, after: 20 }, children: [new TextRun({ text: "David Barrantes", font: "Arial", size: 22, bold: true })] }),
+              new Paragraph({ spacing: { before: 0, after: 0 }, children: [new TextRun({ text: "Director de Tecnologias de Informacion", font: "Arial", size: 18, color: C.gray })] }),
+            ]}),
+            new TableCell({ borders: cellBorder(C.borderGray), width: { size: 4693, type: WidthType.DXA }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, children: [
+              new Paragraph({ spacing: { before: 0, after: 20 }, children: [new TextRun({ text: "Alberto Sanchez", font: "Arial", size: 22, bold: true })] }),
+              new Paragraph({ spacing: { before: 0, after: 0 }, children: [new TextRun({ text: "Gestor del Proyecto IGA", font: "Arial", size: 18, color: C.gray })] }),
+            ]}),
           ]}),
           new TableRow({ children: [
-            cell("Version: 1.0 | Fecha: Mayo 2026", { width: 4693, bg: C.rowAlt, size: 18 }),
+            cell("Version: 1.1 | Fecha: 21 de mayo de 2026", { width: 4693, bg: C.rowAlt, size: 18 }),
             cell("Clasificacion: Uso interno DTI", { width: 4693, bg: C.rowAlt, size: 18 }),
           ]}),
         ]
@@ -328,7 +334,7 @@ const doc = new Document({
           fichaRow("Presupuesto adicional", "S/ 0 (100% open source + recursos DTI existentes)", true),
           fichaRow("Costo por horas DTI", "~224 horas (estimado total Fases 1-13)", false),
           fichaRow("Estado actual", "En ejecucion — Fases 1-6 completadas, Fase 7 parcial", true),
-          fichaRow("Version del documento", "1.0 — Mayo 2026", false),
+          fichaRow("Version del documento", "1.1 — 21 de mayo de 2026 (cifras verificadas contra Oracle LAMB y MidPoint PROD)", false),
           fichaRow("Clasificacion", "Uso interno DTI — No publicar externamente", true),
         ]
       }),
@@ -340,11 +346,11 @@ const doc = new Document({
       // ════════════════════════════════
       hdr(HeadingLevel.HEADING_1, "Resumen Ejecutivo", { pageBreak: true }),
 
-      para("La Universidad Peruana Union (UPeU) gestiona actualmente 35.450 identidades digitales distribuidas en tres campus (Lima, Juliaca y Tarapoto), con 7 sistemas institucionales criticos que operaban sin un modelo centralizado de identidad, acceso ni ciclo de vida de cuentas.", { after: 120 }),
+      para("La Universidad Peruana Union (UPeU) gestiona actualmente 35.970 identidades digitales distribuidas en tres campus (Lima, Juliaca y Tarapoto), con 7 sistemas institucionales criticos que operaban sin un modelo centralizado de identidad, acceso ni ciclo de vida de cuentas.", { after: 120 }),
 
       para("El presente proyecto, de codigo DTI-IGA-2026-001, establece una plataforma de Identity Governance & Administration (IGA) basada en MidPoint 4.10.2 — plataforma open source certificada y con respaldo de Evolveum. A traves de esta plataforma, DTI ha unificado las fuentes de datos de identidad (Oracle LAMB ERP, Microsoft Entra ID, OpenLDAP, Koha), automatizado el ciclo de vida joiner-mover-leaver y provisionado cuentas en los sistemas integrados de forma trazable y auditada.", { after: 120 }),
 
-      para("A la fecha (mayo 2026), el sistema opera en produccion con pleno exito: 37.491 identidades sincronizadas en el directorio OpenLDAP HA, 37.304 en Entra ID (solo lectura), 5.421 cuentas gestionadas en Koha, y un pipeline de reconciliacion automatico con reconocimiento de estados. El costo total de software adicional es cero (S/ 0), dado que toda la pila tecnologica es open source o ya esta licenciada institucionalmente.", { after: 120 }),
+      para("A la fecha (mayo 2026), el sistema opera en produccion de forma estable: 34.551 identidades sincronizadas en el directorio OpenLDAP HA, 37.305 en Entra ID (solo lectura), 5.274 cuentas gestionadas en Koha, y un pipeline de reconciliacion automatico con reconocimiento de estados. La poblacion de egresados y trabajadores esta integrada de forma completa; la carga del padron estudiantil del ciclo regular vigente (aproximadamente 23.620 estudiantes) constituye la principal tarea pendiente de la siguiente fase. El costo total de software adicional es cero (S/ 0), dado que toda la pila tecnologica es open source o ya esta licenciada institucionalmente.", { after: 120 }),
 
       para("El proyecto cumple con la Ley Universitaria 30220, la Ley de Proteccion de Datos 29733, los lineamientos SUNEDU y SINEACE para acreditacion, y los estandares internacionales ISO/IEC 27001:2022 e ISO/IEC 24760. Su culminacion habilitara a DTI para gestionar el ciclo de vida de identidades de forma automatica, reducir la superficie de ataque por cuentas huerfanas y demostrar controles de acceso ante auditores externos.", { after: 120 }),
 
@@ -356,14 +362,14 @@ const doc = new Document({
       hdr(HeadingLevel.HEADING_1, "1. Antecedentes y Situacion Actual", { pageBreak: true }),
 
       hdr(HeadingLevel.HEADING_2, "1.1 Contexto institucional"),
-      para("La UPeU es una institucion de educacion superior adventista con presencia en tres campus: Lima (sede central), Juliaca (region andina) y Tarapoto (region amazonica). Cuenta con aproximadamente 8.000 estudiantes activos, 3.144 trabajadores (docentes y administrativos) y 30.491 egresados registrados."),
+      para("La UPeU es una institucion de educacion superior adventista con presencia en tres campus: Lima (sede central), Juliaca (region andina) y Tarapoto (region amazonica). Su comunidad academica, verificada contra la base de datos institucional Oracle LAMB en mayo de 2026, comprende alrededor de 24.000 estudiantes con matricula vigente en el año academico 2026 (23.620 en el ciclo regular vigente), 30.635 egresados, 3.144 trabajadores administrativos y 135 docentes."),
       para("La base de datos institucional de verdad es Oracle LAMB — un ERP propio desarrollado sobre Oracle 11g con cuatro esquemas principales: MOISES (recursos humanos), DAVID (academico), ELISEO (estructura organizacional) y JOSUE (finanzas). LAMB es la fuente autoritativa de toda identidad activa en UPeU."),
       para("Los sistemas institucionales que dependen de cuentas de usuario incluyen: Microsoft 365 (correo, Teams, OneDrive), Koha (sistema de biblioteca), Keycloak (SSO institucional), OpenLDAP (directorio de identidades), EJBCA (PKI corporativa), FreeRADIUS (Wi-Fi 802.1X) y repositorios academicos (DSpace, OJS)."),
 
       hdr(HeadingLevel.HEADING_2, "1.2 Problema identificado"),
       para("Antes del inicio de este proyecto, la situacion era la siguiente:"),
       bullet("No existia un modelo centralizado de identidad institucional. Cada sistema administraba sus propias cuentas de forma aislada."),
-      bullet("La creacion de cuentas era manual y dependiente de solicitudes por correo o por sistema de tickets sin SLA definido."),
+      bullet("La creacion de cuentas fue manual hasta cierto momento y posteriormente se automatizo; sin embargo, el mantenimiento del ciclo de vida (modificaciones y bajas) sigue dependiendo de solicitudes por correo o por sistema de tickets sin SLA definido."),
       bullet("Cuando un trabajador terminaba su contrato o un estudiante concluia su ciclo, sus cuentas no se desactivaban automaticamente en los sistemas destino, generando cuentas huerfanas que representan un riesgo de seguridad (ISO 27001 A.5.15, A.8.2)."),
       bullet("No habia trazabilidad de quienes tenian acceso a que sistemas, ni evidencia auditable de los cambios."),
       bullet("El proceso de alta de un docente nuevo podia tardar dias o semanas en propagarse a todos los sistemas que necesitaba."),
@@ -449,7 +455,7 @@ const doc = new Document({
       hdr(HeadingLevel.HEADING_1, "3. Justificacion del Proyecto", { pageBreak: true }),
 
       hdr(HeadingLevel.HEADING_2, "3.1 Necesidad institucional"),
-      para("La UPeU ha crecido sostenidamente en los ultimos cinco anios, incorporando nuevos campus, programas de posgrado y herramientas digitales (M365, Koha, EJBCA, Wi-Fi 802.1X). Este crecimiento ha presionado al equipo DTI a gestionar identidades manualmente en cada sistema, sin visibilidad transversal ni automatizacion del ciclo de vida. La plataforma IGA resuleve estructuralmente este problema sin costo adicional de licencias."),
+      para("La UPeU ha crecido sostenidamente en los ultimos años, incorporando nuevos programas de pregrado y posgrado y herramientas digitales (M365, ecosistema LAMB, Koha, EJBCA, Wi-Fi 802.1X). Este crecimiento ha presionado al equipo DTI a gestionar identidades manualmente en cada sistema, sin visibilidad transversal ni automatizacion del ciclo de vida. La plataforma IGA resuelve estructuralmente este problema sin costo adicional de licencias."),
 
       hdr(HeadingLevel.HEADING_2, "3.2 Analisis de alternativas"),
       new Table({
@@ -458,8 +464,8 @@ const doc = new Document({
         rows: [
           new TableRow({ children: [hCell("Alternativa", 2400), hCell("Costo anual estimado", 2000), hCell("Tiempo de implementacion", 2000), hCell("Observacion", 2960)] }),
           ...[
-            ["SailPoint Identity Now (SaaS)", "USD 80.000 – 300.000/anio", "6-12 meses", "Costo prohibitivo para universidad peruana. Dependencia de vendor."],
-            ["Saviynt Enterprise IGA (SaaS)", "USD 50.000 – 150.000/anio", "4-8 meses", "Similar a SailPoint. Sin referencia local."],
+            ["SailPoint Identity Now (SaaS)", "USD 80.000 – 300.000/año", "6-12 meses", "Costo prohibitivo para universidad peruana. Dependencia de vendor."],
+            ["Saviynt Enterprise IGA (SaaS)", "USD 50.000 – 150.000/año", "4-8 meses", "Similar a SailPoint. Sin referencia local."],
             ["Oracle Identity Manager", "USD 100.000+ con soporte", "12-18 meses", "Licenciamiento complejo. Requiere infraestructura adicional."],
             ["Desarrollo a medida", "USD 30.000 – 60.000 por desarrollo + mantenimiento", "12-24 meses", "Riesgo de calidad. Sin estandar. Deuda tecnica alta."],
             ["MidPoint 4.10.2 (ELEGIDO)", "S/ 0 software (open source GPLv3)", "6-10 meses", "Estandar internacional. Soporte Evolveum. Stack open source alineado con politica UPeU."],
@@ -489,11 +495,11 @@ const doc = new Document({
 
       hdr(HeadingLevel.HEADING_2, "4.2 Objetivos especificos"),
       ...[
-        "OE1. Centralizar y normalizar las identidades de 35.450 personas (egresados, docentes, administrativos y estudiantes) desde Oracle LAMB como fuente autoritativa, usando el modelo canonico eduPerson/SCHAC/SCIM.",
+        "OE1. Centralizar y normalizar las identidades institucionales (35.970 gestionadas a la fecha, sobre una poblacion objetivo cercana a 58.000 personas entre estudiantes, egresados y trabajadores) desde Oracle LAMB como fuente autoritativa, usando el modelo canonico eduPerson/SCHAC/SCIM.",
         "OE2. Automatizar el ciclo de vida joiner-mover-leaver: creacion, modificacion y desactivacion de cuentas en todos los sistemas integrados sin intervencion manual del personal DTI.",
         "OE3. Implementar un modelo RBAC en tres capas (Business Role -> Application Role -> Entitlement) que garantice el principio de minimo privilegio y separe funciones incompatibles (SoD), conforme a ISO 27001 A.8.2-A.8.3.",
         "OE4. Proveer un directorio OpenLDAP HA (N-Way Multimaster en dos nodos) como fuente federada de identidades para Keycloak, habilitando SSO con atributos eduPerson hacia bases de datos academicas (Scopus, EBSCO, Web of Science, IEEE).",
-        "OE5. Sincronizar identidades con Microsoft Entra ID para gobernar licencias M365 (A1/A3) segun archetype institucional, eliminando asignaciones manuales y licencias huerfanas.",
+        "OE5. Sincronizar identidades con Microsoft Entra ID para gobernar licencias M365 (A1/A3/A5) segun archetype institucional, eliminando asignaciones manuales y licencias huerfanas.",
         "OE6. Producir evidencia auditable del ciclo de vida de identidades y control de acceso, utilizable en procesos de licenciamiento SUNEDU, acreditacion SINEACE y auditorias ISO 27001.",
         "OE7. Establecer metricas COUNTER 5 de uso de bases de datos academicas con granularidad por facultad y programa academico, habilitando decision informada en renovacion de suscripciones.",
       ].map(t => bullet(t)),
@@ -504,7 +510,7 @@ const doc = new Document({
       hdr(HeadingLevel.HEADING_1, "5. Alcance del Proyecto", { pageBreak: true }),
 
       hdr(HeadingLevel.HEADING_2, "5.1 Dentro del alcance"),
-      bullet("Gestion de identidades de los 4 arquetipos activos: egresados (30.491), personal administrativo (3.144), estudiantes activos (1.679) y docentes (135)."),
+      bullet("Gestion de identidades de los 4 arquetipos activos en MidPoint: egresados (30.543), personal administrativo (3.144), docentes (135) y estudiantes (1.679 cargados del ciclo Verano 2026; la carga del padron del ciclo regular completo es una tarea pendiente priorizada)."),
       bullet("Integraciones activas: Oracle LAMB (x4 schemas), Microsoft Entra ID (lectura + escritura en Fase 12), OpenLDAP HA, Koha ILS, Keycloak SSO."),
       bullet("Modelo RBAC con roles de negocio, aplicacion y atributos eduPerson/SCHAC para federacion SSO."),
       bullet("Pipeline automatico de sincronizacion: Trigger Scanner (5 min), Validity Scanner (15 min), Reconcile LAMB (02:00 UTC diario)."),
@@ -530,10 +536,10 @@ const doc = new Document({
         rows: [
           new TableRow({ children: [hCell("Beneficiario", 2400), hCell("Poblacion", 1600), hCell("Beneficio especifico", 5360)] }),
           ...[
-            ["Estudiantes activos", "1.679", "Cuenta institucional activa desde el primer dia de matricula. Acceso inmediato a M365, Koha, LDAP y sistemas academicos. Sin demoras por gestion manual."],
+            ["Estudiantes con matricula vigente", "~24.000", "Cuenta institucional activa desde el primer dia de matricula. Acceso inmediato a M365, Koha, LDAP y sistemas academicos. Actualmente 1.679 cargados (ciclo Verano 2026); el resto se incorpora al completar la carga del ciclo regular."],
             ["Personal docente", "135", "Alta automatica al registrarse en LAMB. Licencia M365 A3 correcta por tipo de contrato (TC/TP). Acceso a bases cientificas via SSO SAML."],
             ["Personal administrativo", "3.144", "Acceso a sistemas segun funcion real. Desactivacion automatica al cese. Sin cuentas huerfanas que representen riesgo."],
-            ["Egresados registrados", "30.491", "Correo alumni activo mientras figure en LAMB. Acceso al catalogo Koha y OPAC externo."],
+            ["Egresados registrados", "30.635", "Correo alumni activo mientras figure en LAMB. Acceso al catalogo Koha y OPAC externo."],
             ["Equipo DTI", "~10", "Eliminacion de tareas manuales repetitivas. Visibilidad completa de identidades. Evidencia para auditorias sin recoleccion adicional."],
             ["Autoridades academicas (Decanos, Directores)", "~40", "Pueden delegar acceso a sistemas de sus unidades sin intervenir en la configuracion tecnica. Delegacion de administracion en Entra ID por AU (campus/sede)."],
             ["Auditores externos (SUNEDU/SINEACE/ISO)", "— (ocasional)", "Acceso a reportes de ciclo de vida de identidades, registro de cambios y evidencia de controles de acceso exportable desde MidPoint."],
@@ -554,10 +560,10 @@ const doc = new Document({
       para("El sistema IGA opera en una arquitectura en capas con MidPoint como nucleo orquestador:"),
       bullet("Capa de fuentes autoritativas (IIA): Oracle LAMB ERP — 4 schemas (MOISES/DAVID/ELISEO/JOSUE). Solo lectura. Fuente de verdad para datos de RR.HH. y academicos."),
       bullet("Capa de gobierno (MidPoint 4.10.2): normaliza identidades, aplica object templates, asigna arquetipos y roles, ejecuta el ciclo de vida joiner-mover-leaver."),
-      bullet("Capa de directorio (OpenLDAP HA): dos nodos N-Way Multimaster (192.168.15.168 y .169). 37.491 identidades con atributos eduPerson/SCHAC completos. Consumido por Keycloak via User Federation."),
+      bullet("Capa de directorio (OpenLDAP HA): dos nodos N-Way Multimaster (192.168.15.168 y .169). 34.551 identidades vivas con atributos eduPerson/SCHAC completos. Consumido por Keycloak via User Federation."),
       bullet("Capa de SSO (Keycloak 26.6.1): actua como Identity Provider SAML/OIDC. Lee de OpenLDAP via User Federation. Provee SSO a sistemas internos y vendores academicos externos."),
-      bullet("Capa de nube (Microsoft Entra ID): 37.304 identidades sincronizadas (lectura). Gobernara licencias M365 A1/A3 en Fase 12."),
-      bullet("Capa de aplicaciones (Koha ILS): 5.421 cuentas gestionadas via conector Java ConnId v1.2.1."),
+      bullet("Capa de nube (Microsoft Entra ID): 37.305 identidades sincronizadas (lectura). Gobernara licencias M365 A1/A3/A5 en Fase 12."),
+      bullet("Capa de aplicaciones (Koha ILS): 5.274 cuentas gestionadas via conector Java ConnId v1.2.1."),
 
       spacer(),
       hdr(HeadingLevel.HEADING_2, "7.2 Modelo de identidad canonico"),
@@ -568,9 +574,9 @@ const doc = new Document({
         rows: [
           new TableRow({ children: [hCell("Archetype", 2400), hCell("Cantidad PROD", 1600), hCell("IIA principal", 1600), hCell("eduPersonAffiliation", 3760)] }),
           ...[
-            ["alumni (egresados)", "30.491", "Oracle DAVID", "alum"],
+            ["alumni (egresados)", "30.543", "Oracle DAVID", "alum"],
             ["employee-staff (personal administrativo)", "3.144", "Oracle MOISES/ELISEO", "staff, employee, member"],
-            ["student (estudiantes activos)", "1.679", "Oracle DAVID", "student, member"],
+            ["student (estudiantes) *", "1.679", "Oracle DAVID", "student, member"],
             ["employee-faculty (docentes)", "135", "Oracle MOISES/ENOC", "faculty, employee, member"],
             ["affiliate-* / contractor / service-account", "0 (pendiente poblar)", "Alta manual / ITSM", "affiliate / n/a"],
           ].map(([a, c, iia, edu], i) => new TableRow({ children: [
@@ -581,6 +587,7 @@ const doc = new Document({
           ]}))
         ]
       }),
+      para("* El archetype student refleja actualmente 1.679 usuarios correspondientes al ciclo Verano 2026. El resource Oracle LAMB Estudiantes esta configurado con el identificador de semestre fijo (ID_SEMESTRE = 279); la carga del padron del ciclo regular vigente — aproximadamente 23.620 estudiantes — requiere parametrizar dinamicamente el semestre y constituye una tarea pendiente priorizada del proyecto.", { italic: true, color: C.gray, size: 18, before: 80 }),
 
       spacer(),
       hdr(HeadingLevel.HEADING_2, "7.3 Integraciones activas (estado mayo 2026)"),
@@ -591,12 +598,12 @@ const doc = new Document({
           new TableRow({ children: [hCell("Sistema / Resource", 2600), hCell("Sombras", 1400), hCell("Tipo", 1600), hCell("Notas", 3760)] }),
           ...[
             ["Oracle LAMB Trabajadores v3", "3.802", "Lectura (inbound)", "JDBC directo. Correlacion por lambDocNum. Cron 02:00 UTC."],
-            ["Oracle LAMB Estudiantes v3", "1.679", "Lectura (inbound)", "JDBC directo. Matricula activa vigente."],
-            ["Oracle LAMB Egresados v3", "30.629", "Lectura (inbound)", "JDBC directo. Correlacion por taxId."],
+            ["Oracle LAMB Estudiantes v3", "1.674", "Lectura (inbound)", "JDBC. Configurado al ciclo Verano 2026 (ID_SEMESTRE fijo); carga del ciclo regular pendiente."],
+            ["Oracle LAMB Egresados v3", "30.635", "Lectura (inbound)", "JDBC directo. Correlacion por taxId."],
             ["LAMB-Oracle-Posiciones", "738", "Lectura (inbound)", "Estructura organizacional (orgs/cargos)."],
-            ["Koha ILS", "5.421", "Lectura/Escritura", "Conector Java ConnId v1.2.1. Cron 03:00 UTC."],
-            ["OpenLDAP HA (LDAP-IdentityCache-UPeU)", "37.491", "Escritura (outbound)", "N-Way Multimaster. eduPerson/SCHAC. Keycloak User Federation activa."],
-            ["Microsoft Entra ID (UPEU-EntraID-Graph)", "37.304", "Lectura (solo lectura)", "Graph API v1.0. Escritura diferida a Fase 12 (permisos pendientes David Urquizo)."],
+            ["Koha ILS", "5.274", "Lectura/Escritura", "Conector Java ConnId v1.2.1. Cron 03:00 UTC."],
+            ["OpenLDAP HA (LDAP-IdentityCache-UPeU)", "34.551", "Escritura (outbound)", "N-Way Multimaster. eduPerson/SCHAC. Keycloak User Federation activa."],
+            ["Microsoft Entra ID (UPEU-EntraID-Graph)", "37.305", "Lectura (solo lectura)", "Graph API v1.0. Escritura diferida a Fase 12 (permisos pendientes David Urquizo)."],
           ].map(([s, n, t, o], i) => new TableRow({ children: [
             cell(s, { bg: i % 2 ? C.rowAlt : C.white, width: 2600, size: 18, bold: true }),
             cell(n, { bg: i % 2 ? C.rowAlt : C.white, width: 1400, size: 18, align: AlignmentType.CENTER }),
@@ -605,6 +612,7 @@ const doc = new Document({
           ]}))
         ]
       }),
+      para("Cifras de sombras vivas verificadas directamente contra la base de datos PostgreSQL de MidPoint PROD el 21 de mayo de 2026.", { italic: true, color: C.gray, size: 18, before: 80 }),
 
       spacer(),
       hdr(HeadingLevel.HEADING_2, "7.4 Infraestructura y GitOps"),
@@ -633,7 +641,7 @@ const doc = new Document({
           cronRow("Fase 3", "Object templates (base + 4 por archetype)", "X", "X", "", "", "COMPLETA", true),
           cronRow("Fase 4", "OpenLDAP HA N-Way Multimaster", "X", "X", "", "", "COMPLETA"),
           cronRow("Fase 5", "Resources READ (LAMB x4 + Koha + Entra ID)", "X", "X", "", "", "ACTIVA / Entra ID incompleto", true),
-          cronRow("Fase 6", "Resources WRITE -> OpenLDAP (37.491 sombras)", "", "X", "", "", "VALIDADA"),
+          cronRow("Fase 6", "Resources WRITE -> OpenLDAP (34.551 sombras)", "", "X", "", "", "VALIDADA"),
           cronRow("Fase 7", "RBAC bottom-up (72 roles, role mining LAMB)", "", "X", "X", "", "PARCIAL (39 activos)", true),
           cronRow("Fase 8", "Replanteo de documentacion interna", "", "", "X", "", "NO INICIADA"),
           cronRow("Fase 9", "Validacion end-to-end con piloto real", "", "", "X", "", "NO INICIADA", true),
@@ -653,8 +661,8 @@ const doc = new Document({
           new TableRow({ children: [hCell("Fecha", 1400), hCell("Hito", 5000), hCell("Entregable", 2960)] }),
           ...[
             ["Ene 2026", "Modelo canonico doctrinal publicado", "Skills IGA + documento ARCHITECTURE.md"],
-            ["Feb 2026", "MidPoint PROD con schema + archetipos activos", "35.450 usuarios en PROD (verificado BD)"],
-            ["Mar 2026", "OpenLDAP HA + Keycloak User Federation", "37.491 sombras LDAP; Keycloak SSO activo"],
+            ["Feb 2026", "MidPoint PROD con schema + archetipos activos", "35.970 usuarios en PROD (verificado BD)"],
+            ["Mar 2026", "OpenLDAP HA + Keycloak User Federation", "34.551 sombras LDAP; Keycloak SSO activo"],
             ["Abr 2026", "Resources Oracle LAMB + Koha + Entra ID activos", "7 resources activos; pipeline de reconciliacion"],
             ["May 2026", "Object templates per-archetype + repo 100% en sync", "5 templates activos; conector Koha v1.2.1"],
             ["Jul 2026 (estim.)", "RBAC completo + SoD policies", "72+ roles; 2 reglas SoD ISO 27001 A.8.2"],
@@ -803,7 +811,7 @@ const doc = new Document({
 
       spacer(),
       hdr(HeadingLevel.HEADING_2, "10.4 ROI: comparacion con alternativas comerciales"),
-      para("Una plataforma IGA comercial equivalente (SailPoint Identity Now, Saviynt o Oracle Identity Manager) tendria un costo anual de entre USD 50.000 y USD 300.000, mas un tiempo de implementacion de 6 a 18 meses con consultoria externa. La implementacion DTI de MidPoint ha alcanzado el mismo resultado en ~115 horas de trabajo interno (a la fecha), con costo adicional de S/ 0 en licencias, usando servidores ya existentes. El ahorro estimado vs alternativa comercial minima: > USD 50.000/anio."),
+      para("Una plataforma IGA comercial equivalente (SailPoint Identity Now, Saviynt o Oracle Identity Manager) tendria un costo anual de entre USD 50.000 y USD 300.000, mas un tiempo de implementacion de 6 a 18 meses con consultoria externa. La implementacion DTI de MidPoint ha alcanzado el mismo resultado en ~115 horas de trabajo interno (a la fecha), con costo adicional de S/ 0 en licencias, usando servidores ya existentes. El ahorro estimado vs alternativa comercial minima: > USD 50.000/año."),
 
       // ════════════════════════════════
       // SECCION 11: RIESGOS
@@ -840,12 +848,13 @@ const doc = new Document({
         rows: [
           new TableRow({ children: [hCell("Indicador", 3200), hCell("Meta 2026", 2000), hCell("Estado actual", 2000), hCell("Fuente de medicion", 2160)] }),
           ...[
-            ["Identidades activas gestionadas por MidPoint", "> 35.000", "35.450 ✓", "BD PostgreSQL PROD"],
+            ["Identidades activas gestionadas por MidPoint", "> 35.000", "35.970 ✓", "BD PostgreSQL PROD"],
             ["Tiempo de aprovisionamiento de cuenta nueva", "< 24 horas (automatico)", "~5 minutos (pipeline)", "Audit logs MidPoint"],
             ["Cobertura de reconciliacion diaria LAMB", "100% de recursos activos", "100% (3 crons) ✓", "Task history MidPoint"],
-            ["Sombras LDAP sincronizadas", "> 35.000", "37.491 ✓", "Resource LDAP stats"],
-            ["Cuentas Koha gestionadas automaticamente", "> 5.000", "5.421 ✓", "Resource Koha stats"],
-            ["Identidades Entra ID sincronizadas (lectura)", "> 35.000", "37.304 ✓", "Resource Entra ID stats"],
+            ["Sombras LDAP vivas sincronizadas", "> 34.000", "34.551 ✓", "Resource LDAP stats"],
+            ["Cuentas Koha gestionadas automaticamente", "> 5.000", "5.274 ✓", "Resource Koha stats"],
+            ["Identidades Entra ID sincronizadas (lectura)", "> 35.000", "37.305 ✓", "Resource Entra ID stats"],
+            ["Estudiantes del ciclo regular cargados en MidPoint", "> 23.000", "Pendiente (resource fijado a Verano 2026)", "Resource Estudiantes"],
             ["Roles activos en repo (GitOps sync)", "100% en repo", "72/72 ✓ (post commit 19590be)", "git diff PROD vs repo"],
             ["Archetypes custom activos en PROD", "18", "18 ✓", "BD PostgreSQL PROD"],
             ["Uptime MidPoint PROD (mensual)", "> 99%", "En seguimiento", "UptimeRobot"],
@@ -871,18 +880,19 @@ const doc = new Document({
 
       hdr(HeadingLevel.HEADING_2, "13.1 Logros alcanzados"),
       para("El proyecto DTI-IGA-2026-001 ha alcanzado resultados sustanciales en su primera mitad de ejecucion (fases 0-6 completadas, fase 7 parcial):"),
-      bullet("35.450 identidades unificadas en MidPoint con modelo canonico eduPerson/SCHAC/SCIM, sin costo adicional de licencias."),
+      bullet("35.970 identidades unificadas en MidPoint con modelo canonico eduPerson/SCHAC/SCIM, sin costo adicional de licencias."),
       bullet("7 recursos de identidad activos e integrados: 4 fuentes Oracle LAMB, OpenLDAP HA, Entra ID (lectura) y Koha."),
-      bullet("37.491 cuentas sincronizadas en el directorio OpenLDAP con atributos federados, habilitando SSO via Keycloak hacia sistemas internos."),
+      bullet("34.551 cuentas vivas sincronizadas en el directorio OpenLDAP con atributos federados, habilitando SSO via Keycloak hacia sistemas internos."),
       bullet("Pipeline de reconciliacion automatico operativo: Trigger Scanner (5 min), Validity Scanner (15 min), 3 crons LAMB diarios, Koha cron diario."),
       bullet("Repositorio GitOps 100% en sync con PROD: 18 archetypes, 72 roles, 5 object templates, 7 resources, 2 schemas — todos versionados."),
       bullet("Modelo de dos capas canonical/ + upeu/ que convierte la inversion DTI en un activo reutilizable para otras universidades peruanas."),
 
       spacer(),
       hdr(HeadingLevel.HEADING_2, "13.2 Proximos pasos criticos"),
+      bullet("Carga del padron estudiantil completo: parametrizar dinamicamente el semestre en el resource Oracle LAMB Estudiantes (hoy fijado al ciclo Verano 2026, ID_SEMESTRE = 279) para incorporar los aproximadamente 23.620 estudiantes del ciclo regular vigente."),
       bullet("RBAC completo (Fase 7): finalizar role mining LAMB, definir las 2 reglas SoD ISO 27001 A.8.2, y activar la cascada Business Role -> Application Role para todos los arquetipos."),
       bullet("Validacion end-to-end (Fase 9): ejecutar el flujo completo joiner-mover-leaver con 3 usuarios piloto reales y documentar evidencia para SUNEDU/SINEACE."),
-      bullet("Gobierno Entra ID (Fase 12): una vez David Urquizo otorgue los 4 permisos pendientes, activar el gobierno de licencias M365 A1/A3 por archetype y construir las Administrative Units por campus."),
+      bullet("Gobierno Entra ID (Fase 12): una vez David Urquizo otorgue los 4 permisos pendientes, activar el gobierno de licencias M365 A1/A3/A5 por archetype y construir las Administrative Units por campus."),
       bullet("Metricas COUNTER (Fase 13): configurar harvest SUSHI de Scopus, EBSCO, WoS, IEEE para producir reportes de uso por facultad y programa para negociacion de renovacion de suscripciones."),
 
       spacer(),
@@ -917,7 +927,7 @@ const doc = new Document({
               children: [
                 new Paragraph({ spacing: { before: 0, after: 80 }, children: [new TextRun({ text: "Alberto Sanchez", font: "Arial", size: 22, bold: true })] }),
                 new Paragraph({ spacing: { before: 0, after: 40 }, children: [new TextRun({ text: "Especialista IGA — DTI UPeU", font: "Arial", size: 18, color: C.gray })] }),
-                new Paragraph({ spacing: { before: 200, after: 0 }, children: [new TextRun({ text: "Fecha: Mayo 2026", font: "Arial", size: 18, color: C.gray })] }),
+                new Paragraph({ spacing: { before: 200, after: 0 }, children: [new TextRun({ text: "Fecha: 21 de mayo de 2026", font: "Arial", size: 18, color: C.gray })] }),
               ]
             }),
           ]}),
