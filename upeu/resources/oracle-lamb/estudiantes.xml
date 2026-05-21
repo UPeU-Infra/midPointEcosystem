@@ -170,7 +170,9 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code><![CDATA[switch ((input ?: '').toString().toUpperCase()) { case 'M': return '1'; case 'F': return '2'; default: return '0' }]]></code>
+                            <!-- MOISES.PERSONA_NATURAL.SEXO ya envía ISO 5218: '1'=Masculino, '2'=Femenino.
+                                 Solo validar y pasar; null si valor desconocido. -->
+                            <code>def v = (input ?: '').toString().trim(); ['1','2'].contains(v) ? v : null</code>
                         </script>
                     </expression>
                     <target>
