@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="91b2cbcd-3db9-4e90-b72e-b874b3c48fa6">
     <name>AR-Koha-Librarian</name>
-    <description>Application Role: rol bibliotecario interno Koha CRAI — circulación, catalogación, administración ILS. Categoría patron Librarian. ConnId Java conector custom UPeU. Construction activa — Fase B.</description>
+    <description>Application Role: rol bibliotecario interno Koha CRAI — circulación, catalogación, administración ILS. Categoría patron STAFF ("Personal de Biblioteca"). ConnId Java conector custom UPeU. Construction activa — Fase B.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
@@ -13,7 +14,21 @@
         <construction>
             <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
             <kind>account</kind>
-            <intent>librarian</intent>
+            <!-- FASE 0 fix: el resource solo define intent=default para kind=account.
+                 'librarian' no existía en el schemaHandling → corregido a default. -->
+            <intent>default</intent>
+            <!-- Override category_id: STAFF = "Personal de Biblioteca"
+                 (categories.categorycode en Koha PROD, category_type=S, 1909 patrons).
+                 strength=normal: gana sobre los overrides weak de patron
+                 (PREGRADO/POSGRADO/ESTUDI/ALUMNI), de modo que un bibliotecario que
+                 también es alumno queda clasificado como STAFF. -->
+            <attribute>
+                <ref>ri:category_id</ref>
+                <outbound>
+                    <strength>normal</strength>
+                    <expression><value>STAFF</value></expression>
+                </outbound>
+            </attribute>
         </construction>
     </inducement>
 </role>
