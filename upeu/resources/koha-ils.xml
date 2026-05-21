@@ -8,7 +8,7 @@
             <ns2:serviceAddress>http://192.168.12.135:8001</ns2:serviceAddress>
             <ns2:trustAllCertificates>false</ns2:trustAllCertificates>
             <ns2:authenticationMethodStrategy>OAUTH2</ns2:authenticationMethodStrategy>
-            <ns2:clientId>62feb76d-c054-45b1-be03-5ff7da6faca3</ns2:clientId>
+            <ns2:clientId>b429f07a-ea87-44c1-bba8-91dbbb7d9b72</ns2:clientId>
             <ns2:clientSecret>
                 <t:encryptedData>
                     <t:encryptionMethod>
@@ -18,7 +18,7 @@
                         <t:keyName>nkZ4VieDLlRmwD8hdryrmjz8IxQ=</t:keyName>
                     </t:keyInfo>
                     <t:cipherData>
-                        <t:cipherValue>WjYKha4i+ShT3KJNqH9Ru/RrB1albpgvS/5BQeHG/wMTbOtRlXB09jwGlVFRUicj63IRbXPuAw1gmZ3v+AE9nw==</t:cipherValue>
+                        <t:cipherValue>zfHGuGFNt9hYE4y2ht9wu0oxpwateGUCymLydKmzpC2mEh6QCwEhE7d25OQ3Y08b7xP9LyW+VbGKW0voerYH9Q==</t:cipherValue>
                     </t:cipherData>
                 </t:encryptedData>
             </ns2:clientSecret>
