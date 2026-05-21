@@ -1023,34 +1023,28 @@
                         <path>$focus/extension/sb:studentCycle</path>
                     </source>
                     <expression>
-                        <!-- fix 2026-05-21: reescrito como IIFE con if/else plano.
-                             El switch colapsado a una linea por MidPoint provocaba
-                             "Unexpected input: switch" al compilar el Groovy.
-                             Sin switch, sin comentarios de linea: robusto al
-                             colapso de saltos de linea. -->
+                        <!-- fix 2026-05-21: script lineal sin bloques { } anidados
+                             de if. Solo if(cond) sentencia-simple; (un statement,
+                             sin llaves). Robusto al colapso de saltos de linea que
+                             MidPoint aplica al persistir el resource. -->
                         <script>
-                            <code>{ ->
+                            <code>
                                 def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
                                 if (aff == '') return null;
                                 if (aff == 'faculty') return 'DOCEN';
                                 if (aff == 'staff' || aff == 'employee') return 'ADMINIST';
                                 if (aff == 'alum') return 'ALUMNI';
-                                if (aff == 'student') {
-                                    def level = studyLevel != null ? basic.stringify(studyLevel).trim().toLowerCase() : '';
-                                    if (level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion' || level.contains('posgrado')) return 'POSGRADO';
-                                    if (level == 'pregrado') return 'PREGRADO';
-                                    def cycles = (studentCycle instanceof Collection) ? studentCycle : (studentCycle != null ? [studentCycle] : []);
-                                    for (c in cycles) {
-                                        def n = c?.toString()?.trim()?.isInteger() ? c.toString().trim().toInteger() : -1;
-                                        if (n >= 7) return 'POSGRADO';
-                                    }
-                                    if (!cycles.isEmpty()) return 'PREGRADO';
-                                    def hasPosgradoRole = focus?.roleMembershipRef?.any { it?.oid == 'a1b2c3d4-e5f6-7890-abcd-ef1234567802' };
-                                    return hasPosgradoRole ? 'POSGRADO' : 'PREGRADO';
-                                }
-                                log.warn('Koha category_id: primaryAffiliation no mapeado a categoria Koha: {}', aff);
-                                return null;
-                            }()</code>
+                                if (aff != 'student') return null;
+                                def level = studyLevel != null ? basic.stringify(studyLevel).trim().toLowerCase() : '';
+                                if (level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion' || level.contains('posgrado')) return 'POSGRADO';
+                                if (level == 'pregrado') return 'PREGRADO';
+                                def cycles = (studentCycle instanceof Collection) ? studentCycle : (studentCycle != null ? [studentCycle] : []);
+                                def maxCycle = cycles.collect { it?.toString()?.trim()?.isInteger() ? it.toString().trim().toInteger() : -1 }.max();
+                                if (maxCycle != null &amp;&amp; maxCycle >= 7) return 'POSGRADO';
+                                if (!cycles.isEmpty()) return 'PREGRADO';
+                                def hasPosgradoRole = focus?.roleMembershipRef?.any { it?.oid == 'a1b2c3d4-e5f6-7890-abcd-ef1234567802' };
+                                return hasPosgradoRole ? 'POSGRADO' : 'PREGRADO';
+                            </code>
                         </script>
                     </expression>
                 </outbound>
