@@ -14249,22 +14249,24 @@
                 </outbound>
             </attribute>
 
-            <!-- jpegPhoto: fetch desde upeu:photoUrl (LAMB MinIO) en outbound.
-                 MidPoint descarga el binario en memoria — no se almacena en MidPoint DB.
-                 Solo se escribe en LDAP para que Keycloak, Koha y otros lo lean. -->
+            <!-- jpegPhoto: consume la propiedad nativa $focus/jpegPhoto ya poblada.
+                 R10 (FASE 4): este outbound YA NO re-descarga el binario desde
+                 upeu:photoUrl. El Bloque I del UserTemplate-Person-Base hace la
+                 ÚNICA descarga HTTP (photoUrl → jpegPhoto). Este outbound, igual
+                 que cualquier otro consumidor (Koha, Entra ID), solo lee la
+                 propiedad nativa jpegPhoto ya en memoria.
+                 Patrón canónico: una sola descarga (Bloque I) → jpegPhoto →
+                 N outbounds que consumen $focus/jpegPhoto.
+                 jpegPhoto null (usuario sin foto): identity mapping retorna null,
+                 no escribe el atributo en LDAP — no rompe el provisioning. -->
             <attribute>
                 <ref>ri:jpegPhoto</ref>
                 <outbound>
-                    <name>photoUrl-to-jpegPhoto-ldap</name>
+                    <name>jpegPhoto-from-focus-ldap</name>
                     <strength>normal</strength>
                     <source>
-                        <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:photoUrl</path>
+                        <path>$focus/jpegPhoto</path>
                     </source>
-                    <expression>
-                        <script>
-                            <code>if (!photoUrl) return null; try { def conn = new URL(photoUrl).openConnection(); conn.connectTimeout = 5000; conn.readTimeout = 10000; return conn.inputStream.bytes } catch (Exception e) { log.warn('jpegPhoto fetch failed: ' + photoUrl + ' — ' + e.message); return null }</code>
-                        </script>
-                    </expression>
                 </outbound>
             </attribute>
         </objectType>

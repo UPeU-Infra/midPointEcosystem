@@ -4,7 +4,7 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="a1b2c3d4-e5f6-7890-abcd-ef1234567804">
     <name>AR-Koha-Patron-Alumni</name>
-    <description>Application Role: cuenta patron egresado en Koha ILS. Categoría ALUMNI. Strength weak — cede ante cualquier rol activo de mayor jerarquía. Para usuarios con primaryAffiliation=alum.</description>
+    <description>Application Role: cuenta patron egresado en Koha ILS. La categoría (ALUMNI) la deriva el mapping category-id-from-primary-affiliation del resource koha-ils (R5 FASE 4) cuando primaryAffiliation=alum: ya NO hay override por-rol. Para usuarios con primaryAffiliation=alum.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
@@ -15,14 +15,9 @@
             <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
             <kind>account</kind>
             <intent>default</intent>
-            <!-- Override category_id: weak — cede ante cualquier categoria de mayor prioridad -->
-            <attribute>
-                <ref>ri:category_id</ref>
-                <outbound>
-                    <strength>weak</strength>
-                    <expression><value>ALUMNI</value></expression>
-                </outbound>
-            </attribute>
+            <!-- R5 (FASE 4): override category_id eliminado.
+                 category_id lo resuelve el resource koha-ils desde
+                 extension/sciback:primaryAffiliation (mapping unico, deterministico). -->
         </construction>
     </inducement>
 </role>

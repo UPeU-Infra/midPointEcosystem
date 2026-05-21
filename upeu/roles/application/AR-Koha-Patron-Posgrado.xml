@@ -4,7 +4,7 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="a1b2c3d4-e5f6-7890-abcd-ef1234567802">
     <name>AR-Koha-Patron-Posgrado</name>
-    <description>Application Role: cuenta patron estudiante de posgrado en Koha ILS. Categoría POSGRADO. Strength normal — supera PREGRADO (weak) pero cede ante DOCEN (strong). Asignar a estudiantes con academicProgramCode que contenga "EPG" o academicProgram que contenga "POSGRADO".</description>
+    <description>Application Role: cuenta patron estudiante de posgrado en Koha ILS. La categoría (POSGRADO) la deriva el mapping category-id-from-primary-affiliation del resource koha-ils (R5 FASE 4) cuando primaryAffiliation=student y studyLevel es maestria/doctorado/especializacion: ya NO hay override por-rol ni empate de strengths.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
@@ -15,14 +15,10 @@
             <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
             <kind>account</kind>
             <intent>default</intent>
-            <!-- Override category_id: normal — supera PREGRADO (weak), cede ante DOCEN (strong) -->
-            <attribute>
-                <ref>ri:category_id</ref>
-                <outbound>
-                    <strength>normal</strength>
-                    <expression><value>POSGRADO</value></expression>
-                </outbound>
-            </attribute>
+            <!-- R5 (FASE 4): override category_id eliminado (resolvía el empate
+                 normal/normal con AR-Koha-Patron-Staff). category_id lo resuelve
+                 el resource koha-ils desde extension/sciback:primaryAffiliation
+                 + extension/sciback:studyLevel (mapping unico, deterministico). -->
         </construction>
     </inducement>
 </role>

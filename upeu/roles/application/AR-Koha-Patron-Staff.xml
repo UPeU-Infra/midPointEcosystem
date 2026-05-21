@@ -4,7 +4,7 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="72589f9c-84d2-47d0-9412-9d2a6b9ef8e0">
     <name>AR-Koha-Patron-Staff</name>
-    <description>Application Role: cuenta patron administrativo en Koha ILS (BUL/BUJ/BUT/CIA). Categoría patron Staff. ConnId Java conector custom UPeU. Construction activa — Fase 7.</description>
+    <description>Application Role: cuenta patron Koha ILS categoría STAFF, reservada para bibliotecarios / personal CRAI (BUL/BUJ/BUT/CIA). Único AR-Koha-Patron-* que conserva override de category_id tras R5 (FASE 4): la categoría STAFF es role-based explícita (no derivable de primaryAffiliation, que para bibliotecarios es 'staff' y derivaría ADMINIST). Override strong para ganar al mapping deterministico del resource. NO induce empate: es el único override por-rol que sobrevive.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
@@ -15,11 +15,15 @@
             <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
             <kind>account</kind>
             <intent>default</intent>
-            <!-- Override category_id: normal — supera ESTUDI (weak) pero cede ante DOCEN (strong) -->
+            <!-- R5 (FASE 4): ÚNICO override category_id que se conserva.
+                 STAFF es role-based (bibliotecario), no derivable de primaryAffiliation.
+                 strength=strong para ganar al mapping category-id-from-primary-affiliation
+                 (strong) del resource, que derivaría ADMINIST desde primaryAffiliation=staff.
+                 Sin empate: es el único override por-rol que sobrevive a R5. -->
             <attribute>
                 <ref>ri:category_id</ref>
                 <outbound>
-                    <strength>normal</strength>
+                    <strength>strong</strength>
                     <expression><value>STAFF</value></expression>
                 </outbound>
             </attribute>

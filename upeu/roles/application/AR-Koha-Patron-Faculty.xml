@@ -4,7 +4,7 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="3294189e-958f-447d-a07b-83f986a7a1c7">
     <name>AR-Koha-Patron-Faculty</name>
-    <description>Application Role: cuenta patron docente en Koha ILS — bases académicas, préstamos extendidos. Categoría patron Faculty. ConnId Java conector custom UPeU. Construction activa — Fase 7.</description>
+    <description>Application Role: cuenta patron docente en Koha ILS — bases académicas, préstamos extendidos. La categoría (DOCEN) la deriva el mapping category-id-from-primary-affiliation del resource koha-ils (R5 FASE 4) cuando primaryAffiliation=faculty: ya NO hay override por-rol. ConnId Java conector custom UPeU.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
@@ -15,14 +15,9 @@
             <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
             <kind>account</kind>
             <intent>default</intent>
-            <!-- Override category_id: código de categoría Koha para docentes -->
-            <attribute>
-                <ref>ri:category_id</ref>
-                <outbound>
-                    <strength>strong</strength>
-                    <expression><value>DOCEN</value></expression>
-                </outbound>
-            </attribute>
+            <!-- R5 (FASE 4): override category_id eliminado.
+                 category_id lo resuelve el resource koha-ils desde
+                 extension/sciback:primaryAffiliation (mapping unico, deterministico). -->
         </construction>
     </inducement>
 </role>

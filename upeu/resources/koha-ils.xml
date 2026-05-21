@@ -924,6 +924,63 @@
             <attribute>
                 <ref>ri:category_id</ref>
                 <displayName>Categoría Patrón Koha</displayName>
+                <!-- ============================================================
+                     R5 (FASE 4) — category_id resuelto en el RESOURCE, no por-rol.
+                     Reemplaza los overrides por-rol con strengths heterogéneas
+                     (weak/normal/strong) de los 8 AR-Koha-Patron-* que producían
+                     EMPATE 'normal'/'normal' entre POSGRADO y STAFF para usuarios
+                     con doble afiliación (merge no determinístico / cardinalidad).
+
+                     Solución canónica (Semančík cap.7: precedencia explícita en
+                     script > "magia de strengths"): un único mapping deterministico
+                     que prioriza por extension/sciback:primaryAffiliation, con
+                     desempate posgrado/pregrado vía extension/sciback:studyLevel.
+
+                     Prioridad fija (mayor jerarquía gana):
+                       1. faculty                       -> DOCEN
+                       2. student + studyLevel posgrado -> POSGRADO
+                       3. student (resto)               -> PREGRADO
+                       4. staff / employee              -> ADMINIST
+                       5. alum                          -> ALUMNI
+                     primaryAffiliation llega en lowercase desde LAMB inbound.
+
+                     strength=strong: re-evalúa en cada recompute, fuente única.
+                     El override strong de AR-Koha-Patron-Staff (único override
+                     por-rol que sobrevive) sigue ganando para bibliotecarios.
+                     ============================================================ -->
+                <outbound>
+                    <name>category-id-from-primary-affiliation</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/extension/sb:primaryAffiliation</path>
+                    </source>
+                    <source>
+                        <path>$focus/extension/sb:studyLevel</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+                                def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+                                if (aff == '') return null;
+                                def level = studyLevel != null ? basic.stringify(studyLevel).trim().toLowerCase() : '';
+                                switch (aff) {
+                                    case 'faculty':
+                                        return 'DOCEN';
+                                    case 'student':
+                                        return (level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion' || level.contains('posgrado')) ? 'POSGRADO' : 'PREGRADO';
+                                    case 'staff':
+                                    case 'employee':
+                                        return 'ADMINIST';
+                                    case 'alum':
+                                        return 'ALUMNI';
+                                    default:
+                                        log.warn('Koha category_id: primaryAffiliation no mapeado a categoria Koha: {}', aff);
+                                        return null;
+                                }
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
             </attribute>
             <attribute>
                 <ref>ri:library_id</ref>
