@@ -933,16 +933,25 @@
 
                      Solución canónica (Semančík cap.7: precedencia explícita en
                      script > "magia de strengths"): un único mapping deterministico
-                     que prioriza por extension/sciback:primaryAffiliation, con
-                     desempate posgrado/pregrado vía extension/sciback:studyLevel.
+                     que prioriza por extension/sciback:primaryAffiliation.
 
                      Prioridad fija (mayor jerarquía gana):
-                       1. faculty                       -> DOCEN
-                       2. student + studyLevel posgrado -> POSGRADO
-                       3. student (resto)               -> PREGRADO
-                       4. staff / employee              -> ADMINIST
-                       5. alum                          -> ALUMNI
+                       1. faculty                  -> DOCEN
+                       2. student de posgrado      -> POSGRADO
+                       3. student (resto)          -> PREGRADO
+                       4. staff / employee         -> ADMINIST
+                       5. alum                     -> ALUMNI
                      primaryAffiliation llega en lowercase desde LAMB inbound.
+
+                     Desempate posgrado/pregrado (robusto a datos incompletos):
+                       a) extension/sciback:studyLevel  (IIA Fase 5 LAMB; hoy aún
+                          no poblado en la mayoría de users)
+                       b) extension/sciback:studentCycle (cycle 7-8 posgrado,
+                          >=9 doctorado — misma lógica que UserTemplate D.2)
+                       c) realidad de asignación: roleMembershipRef hacia
+                          AR-Koha-Patron-Posgrado (a1b2c3d4-...-7802). Cubre los
+                          posgrados ya asignados por BR-Estudiante-Posgrado cuando
+                          ni studyLevel ni studentCycle están poblados.
 
                      strength=strong: re-evalúa en cada recompute, fuente única.
                      El override strong de AR-Koha-Patron-Staff (único override
@@ -957,17 +966,32 @@
                     <source>
                         <path>$focus/extension/sb:studyLevel</path>
                     </source>
+                    <source>
+                        <path>$focus/extension/sb:studentCycle</path>
+                    </source>
                     <expression>
                         <script>
                             <code>
                                 def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
                                 if (aff == '') return null;
-                                def level = studyLevel != null ? basic.stringify(studyLevel).trim().toLowerCase() : '';
                                 switch (aff) {
                                     case 'faculty':
                                         return 'DOCEN';
                                     case 'student':
-                                        return (level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion' || level.contains('posgrado')) ? 'POSGRADO' : 'PREGRADO';
+                                        // (a) studyLevel — IIA canonica (LAMB Fase 5)
+                                        def level = studyLevel != null ? basic.stringify(studyLevel).trim().toLowerCase() : '';
+                                        if (level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion' || level.contains('posgrado')) return 'POSGRADO';
+                                        if (level == 'pregrado') return 'PREGRADO';
+                                        // (b) studentCycle — multivalor; ciclo >= 7 => posgrado
+                                        def cycles = (studentCycle instanceof Collection) ? studentCycle : (studentCycle != null ? [studentCycle] : []);
+                                        for (c in cycles) {
+                                            def n = c?.toString()?.trim()?.isInteger() ? c.toString().trim().toInteger() : -1;
+                                            if (n >= 7) return 'POSGRADO';
+                                        }
+                                        if (!cycles.isEmpty()) return 'PREGRADO';
+                                        // (c) realidad: roleMembershipRef hacia AR-Koha-Patron-Posgrado
+                                        def hasPosgradoRole = focus?.roleMembershipRef?.any { it?.oid == 'a1b2c3d4-e5f6-7890-abcd-ef1234567802' };
+                                        return hasPosgradoRole ? 'POSGRADO' : 'PREGRADO';
                                     case 'staff':
                                     case 'employee':
                                         return 'ADMINIST';
