@@ -30,8 +30,10 @@
             <shadowCleanup>
                 <shadows>
                     <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
                 </shadows>
-                <interval>P7D</interval>
+                <interval>P3D</interval>
             </shadowCleanup>
         </work>
     </activity>
