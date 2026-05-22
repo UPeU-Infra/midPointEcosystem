@@ -1146,36 +1146,40 @@ detectada en reconcile. lifecycleState se lee via focus?.lifecycleState en condi
            area.625 = CRAI Tarapoto
          Revocación automática si costCenter cambia fuera de esas áreas.
          Birthright canónico via assignmentTargetSearch (Semancik Cap.9 regla 10).
+         NOTA: usa forma <mapping> con <target> (consistente con D, D.3, D.4, E, P)
+         en lugar de <item><ref>assignment</ref> para garantizar procesamiento
+         homogéneo en todos los archetypes (staff y faculty).
     -->
-    <item>
-        <ref>assignment</ref>
-        <mapping>
-            <name>Q4-birthright-koha-librarian-crai</name>
-            <description>Auto-asigna AR-Koha-Librarian al personal del CRAI según costCenter (área de biblioteca). Fuente de verdad: ID_SEDEAREA de Oracle LAMB. Aplica a cualquier afiliación (faculty o staff). Movido al base template para cobertura universal.</description>
-            <lifecycleState>active</lifecycleState>
-            <strength>strong</strength>
-            <source>
-                <path>costCenter</path>
-            </source>
-            <expression>
-                <assignmentTargetSearch>
-                    <targetType>RoleType</targetType>
-                    <filter>
-                        <q:equal>
-                            <q:path>name</q:path>
-                            <q:value>AR-Koha-Librarian</q:value>
-                        </q:equal>
-                    </filter>
-                </assignmentTargetSearch>
-            </expression>
-            <condition>
-                <script>
-                    <code>def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
+    <mapping>
+        <name>Q4-birthright-koha-librarian-crai</name>
+        <description>Auto-asigna AR-Koha-Librarian al personal del CRAI según costCenter (área de biblioteca). Fuente de verdad: ID_SEDEAREA de Oracle LAMB. Aplica a cualquier afiliación (faculty o staff). Movido al base template para cobertura universal.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>costCenter</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>RoleType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <q:value>AR-Koha-Librarian</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
 ['area.97','area.522','area.625'].contains(cc)</code>
-                </script>
-            </condition>
-        </mapping>
-    </item>
+            </script>
+        </condition>
+    </mapping>
 
     <!--
       BLOQUE Q5 — BIRTHRIGHT CARGO→TIER PARA PERSONAL CRAI
@@ -1189,29 +1193,28 @@ detectada en reconcile. lifecycleState se lee via focus?.lifecycleState en condi
       Salida: assignment del AR-Koha-Librarian-{tier}.
       Fallback: si lambPositionId vacío o ausente en LT → tier mínimo (circulacion).
       Revocación automática si costCenter cambia fuera de áreas CRAI.
+      NOTA: usa forma <mapping> con <target> (consistente con patrones D.x, E, P).
     -->
-    <item>
-        <ref>assignment</ref>
-        <mapping>
-            <name>Q5-birthright-koha-crai-tier</name>
-            <description>Auto-asigna AR-Koha-Librarian-{tier} según cargo (ID_PUESTO) del personal CRAI, resuelto via LookupTable LT-CRAI-Puesto-Tier. Fallback al tier mínimo (circulacion) ante cargo desconocido. Aplica a cualquier afiliación. Movido al base template para cobertura universal.</description>
-            <lifecycleState>active</lifecycleState>
-            <strength>strong</strength>
-            <source>
-                <path>costCenter</path>
-            </source>
-            <source>
-                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambPositionId</path>
-            </source>
-            <expression>
-                <assignmentTargetSearch>
-                    <targetType>RoleType</targetType>
-                    <filter>
-                        <q:equal>
-                            <q:path>name</q:path>
-                            <expression>
-                                <script>
-                                    <code>// Resolución ID_PUESTO -> tier via LookupTable LT-CRAI-Puesto-Tier.
+    <mapping>
+        <name>Q5-birthright-koha-crai-tier</name>
+        <description>Auto-asigna AR-Koha-Librarian-{tier} según cargo (ID_PUESTO) del personal CRAI, resuelto via LookupTable LT-CRAI-Puesto-Tier. Fallback al tier mínimo (circulacion) ante cargo desconocido. Aplica a cualquier afiliación. Movido al base template para cobertura universal.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>costCenter</path>
+        </source>
+        <source>
+            <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambPositionId</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>RoleType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <expression>
+                            <script>
+                                <code>// Resolución ID_PUESTO -> tier via LookupTable LT-CRAI-Puesto-Tier.
 // API verificada en MidPoint 4.10.2 (2026-05-22): la interfaz MidpointFunctions
 // NO expone getLookupTableEntry(). Lectura robusta = getObject(LookupTableType)
 // recuperando el contenedor incremental F_ROW con GetOperationOptions.createRetrieve()
@@ -1254,20 +1257,23 @@ if (roleName == null) {
     roleName = 'AR-Koha-Librarian-Circulacion';
 }
 return roleName</code>
-                                </script>
-                            </expression>
-                        </q:equal>
-                    </filter>
-                </assignmentTargetSearch>
-            </expression>
-            <condition>
-                <script>
-                    <code>def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
+                            </script>
+                        </expression>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
 ['area.97','area.522','area.625'].contains(cc)</code>
-                </script>
-            </condition>
-        </mapping>
-    </item>
+            </script>
+        </condition>
+    </mapping>
 
     <!-- ================================================================
          BLOQUE D.7 — ARCHETYPE ESTRUCTURAL POR PRIORIDAD DE AFILIACIONES
