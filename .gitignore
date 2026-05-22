@@ -77,7 +77,8 @@ export/
 *.pdf
 *.xlsx
 *.csv
-!datasets/csv/*.csv  # except dataset sources
+!datasets/csv/*.csv           # except dataset CSV sources
+!datasets/fuentes-externas/*  # fuentes externas (Excel DGI, Infra, etc.)
 
 # --- Seguridad / secretos ---
 secrets/
