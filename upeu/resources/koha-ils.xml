@@ -978,33 +978,33 @@
                 <ref>ri:category_id</ref>
                 <displayName>Categoría Patrón Koha</displayName>
                 <!-- ============================================================
-                     R5 (FASE 4) — category_id resuelto en el RESOURCE, no por-rol.
-                     Reemplaza los overrides por-rol con strengths heterogéneas
-                     (weak/normal/strong) de los 8 AR-Koha-Patron-* que producían
-                     EMPATE 'normal'/'normal' entre POSGRADO y STAFF para usuarios
-                     con doble afiliación (merge no determinístico / cardinalidad).
+                     GOBIERNO IGA → KOHA — Matriz canónica de categorías
+                     MidPoint es la ÚNICA fuente de verdad para category_id.
+                     Nadie asigna categorías manualmente en Koha.
 
-                     Solución canónica (Semančík cap.7: precedencia explícita en
-                     script > "magia de strengths"): un único mapping deterministico
-                     que prioriza por extension/sciback:primaryAffiliation.
+                     Categorías gestionadas por MidPoint:
+                       primaryAffiliation=faculty      → DOCEN
+                       primaryAffiliation=researcher   → INVESTI
+                       primaryAffiliation=staff/
+                                          employee     → ADMINIST
+                       primaryAffiliation=alum         → ALUMNI
+                       primaryAffiliation=student
+                         + posgrado/maestría/doctorado → POSGRADO
+                         + pregrado / ciclo ≤6         → PREGRADO
+                       role AR-Koha-Librarian          → STAFF (override por rol)
 
-                     Prioridad fija (mayor jerarquía gana):
-                       1. faculty                  -> DOCEN
-                       2. student de posgrado      -> POSGRADO
-                       3. student (resto)          -> PREGRADO
-                       4. staff / employee         -> ADMINIST
-                       5. alum                     -> ALUMNI
-                     primaryAffiliation llega en lowercase desde LAMB inbound.
+                     Categorías NO gestionadas por MidPoint (Koha-only):
+                       ADMIN  — super admin Koha (operacional)
+                       ANON   — usuario anónimo sistema (operacional)
+                       VISITA — visitas / externos (alta manual en Koha)
+
+                     ESTUDI — categoría legacy; se vacía gradualmente a medida
+                     que los patrons son recomputados y migran a PREGRADO/POSGRADO.
 
                      Desempate posgrado/pregrado (robusto a datos incompletos):
-                       a) extension/sciback:studyLevel  (IIA Fase 5 LAMB; hoy aún
-                          no poblado en la mayoría de users)
-                       b) extension/sciback:studentCycle (cycle 7-8 posgrado,
-                          >=9 doctorado — misma lógica que UserTemplate D.2)
-                       c) realidad de asignación: roleMembershipRef hacia
-                          AR-Koha-Patron-Posgrado (a1b2c3d4-...-7802). Cubre los
-                          posgrados ya asignados por BR-Estudiante-Posgrado cuando
-                          ni studyLevel ni studentCycle están poblados.
+                       a) extension/sciback:studyLevel  (LAMB inbound)
+                       b) extension/sciback:studentCycle (ciclo ≥7 → posgrado)
+                       c) roleMembershipRef AR-Koha-Patron-Posgrado (fallback)
 
                      strength=strong: re-evalúa en cada recompute, fuente única.
                      El override strong de AR-Koha-Patron-Staff (único override
@@ -1032,6 +1032,7 @@
                                 def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
                                 if (aff == '') return null;
                                 if (aff == 'faculty') return 'DOCEN';
+                                if (aff == 'researcher') return 'INVESTI';
                                 if (aff == 'staff' || aff == 'employee') return 'ADMINIST';
                                 if (aff == 'alum') return 'ALUMNI';
                                 if (aff != 'student') return null;
