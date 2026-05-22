@@ -1068,11 +1068,14 @@
                                                 (DNI, SEDE, TIPO_VINC, ORCID,
                                                 COD_UPEU, SHOW_BCODE) se preservan
                                                 intactos: MidPoint nunca los borra.
-                     intolerantValuePattern   → el par "type":"AREA" SÍ está bajo
+                     intolerantValuePattern   → los pares "type":"AREA" y
+                                                "type":"CRAI_TIER" SÍ están bajo
                                                 gobierno MidPoint: si ninguna
-                                                construction activa lo produce,
+                                                construction activa los produce,
                                                 MidPoint emite el delete-value
                                                 granular de ese par (y solo de ese).
+                                                CRAI_TIER añadido 2026-05-22
+                                                (niveles de acceso CRAI, Fase A).
 
                      El conector declara addRemoveAttributeValues=true → los deltas
                      se aplican como add/remove-value, nunca como replace total.
@@ -1082,7 +1085,7 @@
                      mecánica de tenancy de valores. Sin outbound a propósito.
                      ============================================================ -->
                 <tolerant>true</tolerant>
-                <intolerantValuePattern>.*"type"\s*:\s*"AREA".*</intolerantValuePattern>
+                <intolerantValuePattern>.*"type"\s*:\s*"(AREA|CRAI_TIER)".*</intolerantValuePattern>
             </attribute>
             <attribute>
                 <ref>ri:library_id</ref>

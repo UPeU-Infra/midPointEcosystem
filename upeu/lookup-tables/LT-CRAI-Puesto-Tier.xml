@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  LookupTable: LT-CRAI-Puesto-Tier
+  OID: ebe291d2-6375-49f8-aa6f-5afeee959f4e
+  Versión: 1.0 (2026-05-22)
+
+  Mapa cargo del CRAI → nivel de acceso (tier). El usuario tiene
+  extension/sb:lambPositionId (= ID_PUESTO de ENOC.PLLA_PUESTO, identificador
+  global e inmutable poblado por el resource trabajadores, bloque P del
+  template). Este LookupTable resuelve ese ID_PUESTO al tier canónico CRAI:
+
+    direccion          → Director / Coordinador de CRAI
+    supervision        → Encargado de Circulación, Supervisores
+    procesos-tecnicos  → Asistente de Procesos Técnicos
+    circulacion        → Auxiliares (tier mínimo; también es el fallback)
+    soporte            → Soporte Tecnológico
+
+  Usado por: UserTemplate-EmployeeStaff bloque Q5 (birthright cargo→tier).
+  El expression de Q5 lee este LookupTable y asigna el AR-Koha-Librarian-{tier}.
+
+  Por qué un LookupTable y no un script con un mapa literal:
+  RRHH crea/renombra puestos en Oracle LAMB con frecuencia. Cuando aparezca un
+  ID_PUESTO nuevo del CRAI, basta agregar 1 row vía la UI de MidPoint
+  (Repository objects → Lookup tables) — sin tocar XML ni redesplegar el
+  template. El fallback de Q5 cubre el intervalo hasta que se agregue la row.
+
+  key   = ID_PUESTO (string, clave de ENOC.PLLA_PUESTO)
+  value = tier canónico
+  label = nombre del cargo (inspección visual)
+
+  Total: 10 rows. Verificado en Oracle LAMB 2026-05-22.
+-->
+<lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+             oid="ebe291d2-6375-49f8-aa6f-5afeee959f4e">
+    <name>LT-CRAI-Puesto-Tier</name>
+    <description>Mapa cargo del CRAI (ID_PUESTO de ENOC.PLLA_PUESTO) hacia el nivel de acceso (tier) canónico. Editable vía UI sin redeploy.</description>
+    <row>
+        <key>112</key>
+        <value>direccion</value>
+        <label>Director del CRAI</label>
+    </row>
+    <row>
+        <key>291</key>
+        <value>direccion</value>
+        <label>Coordinador de CRAI</label>
+    </row>
+    <row>
+        <key>128</key>
+        <value>supervision</value>
+        <label>Encargado de Circulación</label>
+    </row>
+    <row>
+        <key>211</key>
+        <value>supervision</value>
+        <label>Supervisor de la Gestión Documental</label>
+    </row>
+    <row>
+        <key>212</key>
+        <value>supervision</value>
+        <label>Supervisor de Procesos Técnicos</label>
+    </row>
+    <row>
+        <key>216</key>
+        <value>supervision</value>
+        <label>Supervisor de Servicios</label>
+    </row>
+    <row>
+        <key>339</key>
+        <value>procesos-tecnicos</value>
+        <label>Asistente de Procesos Técnicos</label>
+    </row>
+    <row>
+        <key>42</key>
+        <value>circulacion</value>
+        <label>Auxiliar de circulación</label>
+    </row>
+    <row>
+        <key>292</key>
+        <value>circulacion</value>
+        <label>Auxiliar de CRAI</label>
+    </row>
+    <row>
+        <key>257</key>
+        <value>soporte</value>
+        <label>Soporte Tecnológico</label>
+    </row>
+</lookupTable>
