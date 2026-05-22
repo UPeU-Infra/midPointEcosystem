@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Tarea: Cleanup de shadows muertos — Koha ILS (semanal)
+  Resource: Koha ILS (OID: 9b5a7c81-47aa-42ac-9a08-4de8b64935af)
+  Frecuencia: cada 7 días (604800 segundos)
+  interval: P7D — elimina shadows que no han sido actualizados en más de 7 días
+
+  Actividad: shadowCleanup (ShadowCleanupWorkDefinitionType, common-tasks-3.xsd §4.4+)
+  NO usar cleanup > shadows — ese es CleanupWorkDefinitionType (limpieza de tasks/cases/audit).
+  shadowCleanup es el tipo correcto para borrar m_shadow rows obsoletos.
+
+  Contexto: creada el 2026-05-21 tras DELETE masivo de 90.973 shadows muertos
+  acumulados desde la migración. Evita re-acumulación futura.
+
+  Canónico SciBack: reutilizable para cualquier resource.
+  Para otro resource: cambiar resourceRef OID y el nombre de la tarea.
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      oid="4eacfa96-e18a-4bf0-8f1b-54c805396028">
+    <name>Cleanup dead shadows — Koha ILS (semanal)</name>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>runnable</executionState>
+    <schedule>
+        <recurrence>recurring</recurrence>
+        <interval>604800</interval>
+        <misfireAction>executeImmediately</misfireAction>
+    </schedule>
+    <activity>
+        <work>
+            <shadowCleanup>
+                <shadows>
+                    <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
+                </shadows>
+                <interval>P7D</interval>
+            </shadowCleanup>
+        </work>
+    </activity>
+</task>
