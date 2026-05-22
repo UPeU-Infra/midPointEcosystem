@@ -1293,20 +1293,21 @@
          directamente en Koha (sin pasar por MidPoint). Cuando clockwork
          intenta PATCH → Koha responde 404 → ObjectNotFoundException.
 
-         objectNotFound=partial: MidPoint marca el shadow dead=true y
-         desvincula al user en lugar de generar failure. La reconciliación
-         (fase 2) detectará estos shadows como deleted → reaction unlink
-         (ya configurada en synchronization) limpia el vínculo.
+         MidPoint maneja este caso nativamente: marca el shadow dead=true.
+         La reconciliación (fase 2) detecta estos shadows como deleted →
+         la reaction unlink (configurada en synchronization) limpia el
+         vínculo automáticamente.
 
          deadShadowRetentionPeriod=P3D: limpia tombstones en 3 días
          (default=7). Combinado con la tarea shadowCleanup semanal.
+
+         NOTA: ErrorSelectorType en MidPoint 4.10 NO tiene selector
+         objectNotFound — ese elemento no existe en el schema. Los
+         selectores válidos son: network, security, policy, schema,
+         configuration, unsupported, generic (EXPERIMENTAL, peligroso).
+         El manejo de 404 es nativo, no requiere connectorErrorCriticality.
          ================================================================ -->
     <consistency>
-        <connectorErrorCriticality>
-            <objectNotFound>
-                <operationCriticality>partial</operationCriticality>
-            </objectNotFound>
-        </connectorErrorCriticality>
         <deadShadowRetentionPeriod>P3D</deadShadowRetentionPeriod>
     </consistency>
 
