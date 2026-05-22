@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: Reconcile Oracle LAMB Grados
+  Resource: Oracle LAMB Grados v1 (OID 3b2d8c4a-6f17-4e90-a1d5-9c0e7b5a4f62)
+  Fuente PARCIAL de enriquecimiento (Secretaría General) — solo aporta
+  sciback:conferredDegree + conferredDegreeAbbrev a users ya existentes,
+  correlacionados por taxId (DNI). NO crea ni desactiva users.
+
+  Estado: suspended — NO ejecutar automáticamente.
+    Coherente con (a) el resource grados.xml en lifecycleState=proposed y
+    (b) el patrón de las otras tres recon LAMB (estudiantes/egresados/
+    trabajadores), todas suspended hasta aprobación del piloto de import.
+    Activar manualmente desde la UI cuando el piloto de Fase 5e esté aprobado.
+
+  HORARIO: 04:00 UTC nightly (cronLikePattern '0 0 4 * * ?').
+    Slots ocupados en el ecosistema:
+      - 02:00 UTC → recon LAMB Estudiantes/Egresados/Trabajadores (suspended)
+      - 03:00 UTC → Reconcile-Koha-ILS-Daily (runnable)
+    04:00 UTC es slot libre. Además es semánticamente correcto: grados es
+    una FUENTE DE ENRIQUECIMIENTO — debe correr DESPUÉS de las fuentes
+    primarias que crean los users (02:00). Un user que aún no existe en el
+    IGA no recibe grado (reaction unmatched sin addFocus en el resource).
+
+  Sintaxis: activity-based reconciliation MidPoint 4.10.x (resourceObjects
+  wrapper). objectclass account / intent default — el resource grados.xml
+  define un único objectType account/default (default=true).
+  Fase: 5e — IGA UPeU canónico 2026-05-22.
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="d9f1a3b7-2c64-4e85-b0a9-7e5c1d8f6042">
+    <name>Reconcile Oracle LAMB Grados</name>
+    <description>Reconciliacion nocturna del resource Oracle LAMB Grados v1 (fuente parcial de enriquecimiento — Secretaria General). Propaga conferredDegree + conferredDegreeAbbrev a users existentes correlacionados por DNI. No crea ni desactiva users. Cron 04:00 UTC: no solapa con LAMB primarias (02:00) ni Koha (03:00). suspended hasta aprobacion del piloto Fase 5e. Ref: Fase 5e.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="UserType"/>
+    <executionState>suspended</executionState>
+    <schedule>
+        <recurrence>recurring</recurrence>
+        <cronLikePattern>0 0 4 * * ?</cronLikePattern>
+        <misfireAction>executeImmediately</misfireAction>
+    </schedule>
+    <activity>
+        <work>
+            <reconciliation>
+                <resourceObjects>
+                    <resourceRef oid="3b2d8c4a-6f17-4e90-a1d5-9c0e7b5a4f62" type="c:ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
+                </resourceObjects>
+            </reconciliation>
+        </work>
+    </activity>
+</task>

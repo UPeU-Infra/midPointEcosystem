@@ -167,6 +167,21 @@
                         <xsd:annotation><xsd:appinfo><a:displayName>Rol del usuario en el programa</a:displayName><a:help>Vocabulario controlado: student|faculty|coordinator|director|alum. Multivalor: una persona puede ser docente de un programa y coordinador de otro.</a:help><a:displayOrder>570</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
 
+                    <!-- S5b — GRADOS Y TÍTULOS CONFERIDOS (Secretaría General) -->
+                    <!-- IIA: Secretaría General (Oracle LAMB DAVID.VW_PERSONA_GRADO). Grado/título
+                         académico efectivamente conferido por la institución. Concepto canónico:
+                         toda universidad confiere grados (Perú: Ley 30220 art. 44-45, registro SUNEDU).
+                         NO confundir con studyLevel (nivel del programa que se cursa). -->
+                    <xsd:element name="conferredDegree" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Grado/título conferido</a:displayName><a:help>Grado académico o título profesional más alto efectivamente conferido por la institución. Vocabulario controlado normalizado: BACHILLER | TITULO_PROFESIONAL | MAESTRIA | DOCTORADO | POSDOCTORADO. Single-value: una persona porta el grado más alto obtenido. IIA: Secretaría General. Para uso en SCHAC schacPersonalTitle y eduPerson.</a:help><a:indexed>true</a:indexed><a:displayOrder>580</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="conferredDegreeAbbrev" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Abreviatura del grado conferido</a:displayName><a:help>Abreviatura honorífica del grado/título conferido (Bach., Mg., Dr.). Mapea a SCHAC schacPersonalTitle. Puede ser nula para títulos profesionales sin abreviatura honorífica estándar.</a:help><a:displayOrder>585</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="schacPersonalTitle" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Título personal (schacPersonalTitle)</a:displayName><a:help>Atributo canónico SCHAC 1.6.0 schacPersonalTitle: tratamiento/título honorífico de la persona (Bach., Mg., Dr.). Valor DERIVADO por el object template desde conferredDegreeAbbrev — no se importa directamente desde ninguna IIA. Single-value. Destino de outbound hacia LDAP (schacPersonalTitle / personalTitle) y Keycloak. Puede ser nulo si la persona no tiene grado conferido con abreviatura honorífica estándar.</a:help><a:displayOrder>590</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
                     <!-- S6 — LABORAL -->
                     <xsd:element name="employeeCategory" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>Categoría ocupacional</a:displayName><a:displayOrder>600</a:displayOrder></xsd:appinfo></xsd:annotation>

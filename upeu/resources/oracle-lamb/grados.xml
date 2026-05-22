@@ -1,0 +1,236 @@
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+    xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+    xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    oid="3b2d8c4a-6f17-4e90-a1d5-9c0e7b5a4f62">
+    <name>Oracle LAMB Grados v1</name>
+    <description>Fuente parcial de enriquecimiento. Inbound ScriptedSQL desde DAVID.VW_PERSONA_GRADO (Secretaría General), unida a MOISES.PERSONA_NATURAL por ID_PERSONA para obtener el DNI. Aporta UNICAMENTE el grado/título conferido (sciback:conferredDegree + conferredDegreeAbbrev) a users que YA existen, correlacionados por taxId (DNI). NO crea usuarios, NO toca activation/lifecycleState/affiliation. Fase 5e. Libro MidPoint cap. 9 — partial source / enrichment resource.</description>
+    <lifecycleState>proposed</lifecycleState>
+    <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="c:ConnectorType"/>
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:resultsHandlerConfiguration>
+            <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
+            <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
+            <icfc:filteredResultsHandlerInValidationMode>true</icfc:filteredResultsHandlerInValidationMode>
+            <icfc:enableAttributesToGetSearchResultsHandler>false</icfc:enableAttributesToGetSearchResultsHandler>
+        </icfc:resultsHandlerConfiguration>
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">
+            <cfg:host>192.168.13.9</cfg:host>
+            <cfg:port>1521</cfg:port>
+            <cfg:user>JUANSANCHEZ</cfg:user>
+            <cfg:password>
+                <t:encryptedData>
+                    <t:encryptionMethod>
+                        <t:algorithm>http://www.w3.org/2001/04/xmlenc#aes256-cbc</t:algorithm>
+                    </t:encryptionMethod>
+                    <t:keyInfo>
+                        <t:keyName>nkZ4VieDLlRmwD8hdryrmjz8IxQ=</t:keyName>
+                    </t:keyInfo>
+                    <t:cipherData>
+                        <t:cipherValue>cbS0z8iJBH65IpXN1rHu7W+A4kDoVjubqe3LR3iXW/GlGCOKqSJT4lDv6GSwUeQl</t:cipherValue>
+                    </t:cipherData>
+                </t:encryptedData>
+            </cfg:password>
+            <cfg:database>UPEU</cfg:database>
+            <cfg:jdbcDriver>oracle.jdbc.OracleDriver</cfg:jdbcDriver>
+            <cfg:jdbcUrlTemplate>jdbc:oracle:thin:@%h:%p/%d</cfg:jdbcUrlTemplate>
+            <cfg:rethrowAllSQLExceptions>true</cfg:rethrowAllSQLExceptions>
+            <cfg:nativeTimestamps>true</cfg:nativeTimestamps>
+            <cfg:allNative>false</cfg:allNative>
+            <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
+            <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
+            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT g.ID_PERSONA, pn.NUM_DOCUMENTO, g.NOMBRE, g.NOMBRE_CORTO, g.ABREVIATURA, g.CONDICION, g.VIGENCIA FROM DAVID.VW_PERSONA_GRADO g JOIN MOISES.PERSONA_NATURAL pn ON pn.ID_PERSONA = g.ID_PERSONA WHERE pn.NUM_DOCUMENTO IS NOT NULL'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE NUM_DOCUMENTO = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Grados-v1 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { row -&gt; result &lt;&lt; ['__UID__': row.NUM_DOCUMENTO as String, '__NAME__': row.NUM_DOCUMENTO as String, 'NUM_DOCUMENTO': row.NUM_DOCUMENTO as String, 'ID_PERSONA': row.ID_PERSONA?.toString(), 'NOMBRE': row.NOMBRE as String, 'NOMBRE_CORTO': row.NOMBRE_CORTO as String, 'ABREVIATURA': row.ABREVIATURA as String, 'CONDICION': row.CONDICION as String, 'VIGENCIA': row.VIGENCIA?.toString()] }; return result</cfg:searchScript>
+            <cfg:syncScript>return null</cfg:syncScript>
+            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", true)); ocib.addAttributeInfo(ro("ID_PERSONA", false)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("NOMBRE_CORTO", false)); ocib.addAttributeInfo(ro("ABREVIATURA", false)); ocib.addAttributeInfo(ro("CONDICION", false)); ocib.addAttributeInfo(ro("VIGENCIA", false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
+            <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); sql.firstRow("SELECT 1 AS OK FROM DUAL"); return "OK"</cfg:testScript>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+    <schemaHandling>
+        <objectType>
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>Grado conferido UPeU (LAMB Secretaría General v1)</displayName>
+            <default>true</default>
+            <delineation>
+                <objectClass>ri:AccountObjectClass</objectClass>
+            </delineation>
+            <focus>
+                <type>UserType</type>
+                <!-- Sin archetypeRef: este resource es una FUENTE PARCIAL de enriquecimiento.
+                     No define la naturaleza del user; solo aporta el grado conferido a users
+                     que ya tienen archetype estructural asignado por otras fuentes (estudiantes,
+                     egresados, trabajadores). MidPoint Book cap. 8-9: las fuentes parciales
+                     proveen datos, no deciden tipo ni lifecycle. -->
+            </focus>
+            <attribute>
+                <ref>ri:NUM_DOCUMENTO</ref>
+                <!-- DNI → extension/sb:taxId en forma URN SCHAC, fase beforeCorrelation.
+                     Idéntico patrón a egresados.xml (dni-to-taxId-urn). Normaliza el valor
+                     ANTES de que el correlator evalúe. strength=strong: el DNI normalizado
+                     es identidad legal; coincide con lo que otras fuentes ya escriben. -->
+                <inbound>
+                    <name>dni-to-taxId-urn</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def d = (input ?: '').toString().trim(); d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</path>
+                    </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:NOMBRE</ref>
+                <!-- NOMBRE (5 valores Oracle) → sb:conferredDegree con vocabulario canónico
+                     normalizado. CONDICION discrimina: 'T' = título profesional, 'G' = grado.
+                     IIA: Secretaría General. strength=strong: ninguna otra fuente del IGA
+                     aporta este atributo, por lo que strong es autoritativo sin conflicto;
+                     garantiza que un cambio en Secretaría General se propague (recompute). -->
+                <inbound>
+                    <name>nombre-to-conferredDegree</name>
+                    <strength>strong</strength>
+                    <source><path>$shadow/attributes/ri:NOMBRE</path></source>
+                    <source><path>$shadow/attributes/ri:CONDICION</path></source>
+                    <expression>
+                        <script>
+                            <code>
+def n = (NOMBRE ?: '').toString().trim().toUpperCase()
+def c = (CONDICION ?: '').toString().trim().toUpperCase()
+if (!n) return null
+// Mapeo a vocabulario canónico sciback:conferredDegree
+if (n == 'TITULADO' || c == 'T') return 'TITULO_PROFESIONAL'
+if (n.contains('BACHILLER')) return 'BACHILLER'
+if (n.contains('MAESTR') || n.contains('MAGISTER')) return 'MAESTRIA'
+if (n.contains('POSDOCTORADO') || n.contains('POST-DOCTORADO') || n.contains('POSTDOCTORADO')) return 'POSDOCTORADO'
+if (n.contains('DOCTOR')) return 'DOCTORADO'
+return null
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:conferredDegree</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:ABREVIATURA</ref>
+                <!-- ABREVIATURA Oracle ('Mg.','Dr.','Bach.', null para TITULADO) →
+                     sb:conferredDegreeAbbrev. strength=strong: misma IIA, sin competencia.
+                     Puede quedar nula (títulos profesionales sin abreviatura honorífica). -->
+                <inbound>
+                    <name>abreviatura-to-conferredDegreeAbbrev</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>(input ?: '').toString().trim() ?: null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:conferredDegreeAbbrev</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:ID_PERSONA</ref>
+                <!-- ID_PERSONA → upeu:lambIdPersona. strength=weak: identificador interno LAMB
+                     que otras fuentes (estudiantes/trabajadores) ya proveen como autoritativas;
+                     weak evita que esta fuente parcial lo pise. -->
+                <inbound>
+                    <name>idpersona-to-lambIdPersona</name>
+                    <strength>weak</strength>
+                    <expression>
+                        <script>
+                            <code>(input ?: '').toString().trim() ?: null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambIdPersona</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:NOMBRE_CORTO</ref>
+                <!-- Sin inbound: NOMBRE_CORTO no aporta dato canónico adicional;
+                     conservado en el schema para diagnóstico/trazabilidad. -->
+            </attribute>
+            <attribute>
+                <ref>ri:VIGENCIA</ref>
+                <!-- Sin inbound: la vigencia del registro de grado no modela un atributo
+                     canónico del user. Un grado conferido es permanente; su revocación
+                     (caso excepcional) se gestiona fuera de scope. -->
+            </attribute>
+            <correlation>
+                <!-- Correlator explícito a nivel objectType (fix MidPoint 4.10: shorthand
+                     <correlator/> dentro de <attribute> roto cuando hay inbounds con
+                     beforeCorrelation). El inbound dni-to-taxId-urn normaliza NUM_DOCUMENTO
+                     a URN en extension/sb:taxId antes de que este correlator evalúe. -->
+                <correlators>
+                    <items>
+                        <name>correlate-by-taxId</name>
+                        <item>
+                            <ref xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</ref>
+                        </item>
+                    </items>
+                </correlators>
+            </correlation>
+            <synchronization>
+                <!-- FUENTE PARCIAL DE ENRIQUECIMIENTO (MidPoint Book cap. 9):
+                     este resource solo enriquece users existentes, NUNCA crea ni desactiva.
+                     - linked   → synchronize: propaga el grado al user ya vinculado.
+                     - unlinked → link: si el user existe (correlado por DNI) pero aún no
+                       tiene shadow de este resource, se vincula. NO se crea user.
+                     - unmatched → NINGUNA acción (sin addFocus): si el DNI del grado no
+                       corresponde a ningún user del IGA, se ignora. Conservador: una persona
+                       graduada que no existe en el IGA no debe nacer desde esta fuente —
+                       su existencia depende de las 4 fuentes primarias.
+                     - deleted → NINGUNA acción (sin inactivateFocus): que un registro
+                       desaparezca de VW_PERSONA_GRADO no implica desactivar al user; el
+                       lifecycle lo gobiernan las fuentes primarias (HR/SIS), no Secretaría
+                       General. A lo sumo se limpiaría el shadow muerto. -->
+                <reaction>
+                    <situation>linked</situation>
+                    <actions><synchronize/></actions>
+                </reaction>
+                <reaction>
+                    <situation>unlinked</situation>
+                    <actions><link/></actions>
+                </reaction>
+                <reaction>
+                    <situation>unmatched</situation>
+                    <!-- sin actions: NO crear focus. Fuente parcial no es autoridad de existencia. -->
+                </reaction>
+                <reaction>
+                    <situation>deleted</situation>
+                    <!-- sin actions: NO desactivar focus. El lifecycle lo gobiernan las
+                         fuentes primarias, no esta fuente de enriquecimiento. -->
+                </reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>
+    <capabilities>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:create>
+                <cap:enabled>false</cap:enabled>
+            </cap:create>
+            <cap:update>
+                <cap:enabled>false</cap:enabled>
+            </cap:update>
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
+        </configured>
+    </capabilities>
+    <projection>
+        <assignmentPolicyEnforcement>relative</assignmentPolicyEnforcement>
+    </projection>
+</resource>

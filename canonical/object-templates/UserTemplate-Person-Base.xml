@@ -24,6 +24,7 @@
     I — jpegPhoto fetch desde LAMB MinIO (upeu:photoUrl → jpegPhoto, normal, try/catch)
     J — Migración lambDocNum → identityDocuments: construye contenedor canónico + limpia taxId
     P — Position assignment (PBAC Pilar 3): ServiceType Position desde upeu:lambPositionId
+    S — schacPersonalTitle DERIVADO desde conferredDegreeAbbrev (Bach./Mg./Dr., strong) [añadido v2.8]
 
   Validaciones de formato (weak/log-warn):
     birthDate (YYYY-MM-DD), gender (ISO 5218), nationality (ISO 3166 alpha-3),
@@ -1073,6 +1074,59 @@ detectada en reconcile. lifecycleState se lee via focus?.lifecycleState en condi
             <expression>
                 <script>
                     <code>if (terminationDate == null) return null; def v = basic.stringify(terminationDate); if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) { log.warn("UPeU template: terminationDate invalido '{}' en {} (esperado YYYY-MM-DD)", v, focus?.name) }; return v</code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
+         BLOQUE S — TÍTULO HONORÍFICO CANÓNICO (schacPersonalTitle DERIVADO)
+         Source : extension/sciback:conferredDegreeAbbrev
+                  (escrito por inbound del resource Oracle LAMB Grados v1,
+                   OID 3b2d8c4a-6f17-4e90-a1d5-9c0e7b5a4f62 — Secretaría General)
+         Target : extension/sciback:schacPersonalTitle (atributo canónico SCHAC 1.6.0)
+
+         DECISIÓN DE STRENGTH = strong:
+           schacPersonalTitle es un valor 100% DERIVADO de otro atributo del
+           propio foco. Ninguna IIA lo escribe directamente; ningún otro mapping
+           compite por él. strong garantiza que en cada recompute refleje el
+           estado actual del grado conferido — si Secretaría General eleva el
+           grado (Mg. → Dr.) el título sigue; si el grado se revoca/pierde la
+           abreviatura, el título se LIMPIA (return null). weak no serviría
+           porque dejaría valores obsoletos; normal tampoco, no hay competencia.
+           Libro Cap.9 (Focus Processing): mappings derivados dentro del object
+           template = strong cuando el template es la única autoridad del dato.
+
+         MANEJO DE NULL (títulos profesionales sin abreviatura honorífica):
+           conferredDegreeAbbrev puede ser null para TITULO_PROFESIONAL (Oracle
+           devuelve ABREVIATURA vacía en esos casos). Cuando la abreviatura es
+           null/vacía, este mapping retorna null y schacPersonalTitle queda sin
+           valor — comportamiento correcto: un titulado sin abreviatura honorífica
+           estándar no porta tratamiento. El sin-condición + strong asegura la
+           limpieza si el valor desaparece.
+
+         PROPAGACIÓN A LDAP/KEYCLOAK:
+           Este bloque SOLO deriva el atributo canónico en el foco. La propagación
+           a OpenLDAP (schacPersonalTitle / personalTitle) y a Keycloak la realiza
+           el OUTBOUND del resource LDAP/Keycloak respectivo (schemaHandling), NO
+           el object template. Canónicamente el template gobierna el foco; los
+           resources gobiernan sus cuentas. Pendiente Fase 6: añadir outbound
+           extension/sb:schacPersonalTitle → ri:schacPersonalTitle en el resource
+           OpenLDAP (no se edita aquí, fuera de alcance de esta tarea).
+         ============================================================ -->
+    <item>
+        <ref>extension/sciback:schacPersonalTitle</ref>
+        <mapping>
+            <name>S-schacPersonalTitle-from-conferredDegreeAbbrev</name>
+            <description>Deriva el título honorífico canónico SCHAC schacPersonalTitle desde sciback:conferredDegreeAbbrev (Bach./Mg./Dr., IIA Secretaría General vía resource Oracle LAMB Grados v1). strong: el template es la única autoridad del dato derivado. Retorna null cuando la abreviatura es nula/vacía (títulos profesionales sin tratamiento honorífico) — limpia el valor obsoleto. Libro Cap.9 Focus Processing.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>extension/sciback:conferredDegreeAbbrev</path>
+            </source>
+            <expression>
+                <script>
+                    <code>if (conferredDegreeAbbrev == null) return null; def v = basic.stringify(conferredDegreeAbbrev).trim(); return v != '' ? v : null</code>
                 </script>
             </expression>
         </mapping>
