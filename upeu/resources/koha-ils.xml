@@ -1035,6 +1035,7 @@
                                 if (aff == 'researcher') return 'INVESTI';
                                 if (aff == 'staff' || aff == 'employee') return 'ADMINIST';
                                 if (aff == 'alum') return 'ALUMNI';
+                                if (aff == 'affiliate') return 'VISITA';
                                 if (aff != 'student') return null;
                                 def level = studyLevel != null ? basic.stringify(studyLevel).trim().toLowerCase() : '';
                                 if (level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion' || level.contains('posgrado')) return 'POSGRADO';

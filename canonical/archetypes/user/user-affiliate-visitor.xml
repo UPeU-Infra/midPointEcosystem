@@ -1,0 +1,21 @@
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="c5cdc4b5-e14f-4b2f-b65e-0a3fee8f6bde">
+    <name>archetype-user-affiliate-visitor</name>
+    <description>Personas externas con acceso temporal a servicios UPeU: padres de familia, estudiantes del Instituto de Idiomas o Conservatorio, visitantes y comunidad adventista sin vínculo académico/laboral formal. eduPersonAffiliation: affiliate. Koha: categoría VISITA. OBLIGATORIO definir validTo al crear — no hay miembros externos permanentes.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <assignmentRelation>
+            <holderType>UserType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Visitante Externo</label>
+            <pluralLabel>Visitantes Externos</pluralLabel>
+            <icon>
+                <cssClass>fa fa-id-card-alt</cssClass>
+                <color>#e67e22</color>
+            </icon>
+        </display>
+        <objectTemplateRef oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390" relation="org:default" type="c:ObjectTemplateType"/>
+    </archetypePolicy>
+</archetype>
