@@ -47,7 +47,7 @@
                     </t:cipherData>
                 </t:encryptedData>
             </ns2:dbPassword>
-            <ns2:dbPoolSize>2</ns2:dbPoolSize>
+            <ns2:dbPoolSize>8</ns2:dbPoolSize>
         </ns1:configurationProperties>
     </connectorConfiguration>
     <schema>
