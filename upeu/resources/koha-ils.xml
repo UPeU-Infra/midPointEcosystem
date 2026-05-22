@@ -2,7 +2,8 @@
 <resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:sciback="urn:sciback:midpoint:person" xmlns:sb="urn:sciback:midpoint:person" xmlns:ns1="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3" xmlns:ns2="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.identicum.midpoint.connector-koha/com.identicum.connectors.KohaConnector" xmlns:ns5="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:ns6="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:ns7="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xs="http://www.w3.org/2001/XMLSchema" oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af">
     <name>Koha ILS</name>
     <lifecycleState>active</lifecycleState>
-    <connectorRef oid="0bda47cd-66c7-47a8-b623-a41c0be20d16" relation="org:default" type="c:ConnectorType"/>
+    <!-- 2026-05-22: actualizado a connector-koha v1.3.1 (OID 2db3480b). v1.3.0 era 0bda47cd. -->
+    <connectorRef oid="2db3480b-635c-4e58-a100-287f8ae22b28" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration>
         <ns1:configurationProperties>
             <ns2:serviceAddress>http://192.168.12.135:8001</ns2:serviceAddress>
