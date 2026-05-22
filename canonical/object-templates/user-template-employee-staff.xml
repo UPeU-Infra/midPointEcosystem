@@ -142,4 +142,49 @@ return costCenter</code>
         </mapping>
     </item>
 
+    <!--
+      BLOQUE Q4 — BIRTHRIGHT AR-Koha-Librarian PARA PERSONAL CRAI
+      Auto-asigna el Application Role AR-Koha-Librarian cuando el trabajador
+      pertenece a un area CRAI (costCenter = ID_SEDEAREA de biblioteca):
+        area.97  = CRAI Lima
+        area.522 = CRAI Juliaca
+        area.625 = CRAI Tarapoto
+      El rol marca al patron Koha con extended_attributes AREA=CRAI, filtrable
+      en la busqueda de usuarios del intranet.
+      Revocacion automatica: si costCenter cambia a un area no-CRAI (RRHH mueve
+      al trabajador en Oracle LAMB), la condicion pasa true→false y MidPoint
+      retira el rol → la construction desaparece → MidPoint borra el par
+      AREA:* en Koha (intolerantValuePattern del resource koha-ils).
+      Birthright canonico via assignmentTargetSearch (Semancik cap. 9, regla 10).
+    -->
+    <item>
+        <ref>assignment</ref>
+        <mapping>
+            <name>Q4-birthright-koha-librarian-crai</name>
+            <description>Auto-asigna AR-Koha-Librarian al personal del CRAI segun costCenter (area de biblioteca). Fuente de verdad: ID_SEDEAREA de Oracle LAMB.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>costCenter</path>
+            </source>
+            <expression>
+                <assignmentTargetSearch>
+                    <targetType>RoleType</targetType>
+                    <filter>
+                        <q:equal>
+                            <q:path>name</q:path>
+                            <q:value>AR-Koha-Librarian</q:value>
+                        </q:equal>
+                    </filter>
+                </assignmentTargetSearch>
+            </expression>
+            <condition>
+                <script>
+                    <code>def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
+['area.97','area.522','area.625'].contains(cc)</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
 </objectTemplate>

@@ -4,8 +4,15 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="72589f9c-84d2-47d0-9412-9d2a6b9ef8e0">
     <name>AR-Koha-Patron-Staff</name>
-    <description>Application Role: cuenta patron Koha ILS categoría STAFF, reservada para bibliotecarios / personal CRAI (BUL/BUJ/BUT/CIA). Único AR-Koha-Patron-* que conserva override de category_id tras R5 (FASE 4): la categoría STAFF es role-based explícita (no derivable de primaryAffiliation, que para bibliotecarios es 'staff' y derivaría ADMINIST). Override strong para ganar al mapping deterministico del resource. NO induce empate: es el único override por-rol que sobrevive.</description>
-    <lifecycleState>active</lifecycleState>
+    <description>DEPRECATED 2026-05-22: la categoria Koha STAFF fue eliminada y
+        unificada en ADMINIST. Este rol ya NO aporta override de category_id —
+        construction vaciada. Los ~80 holders quedan en ADMINIST (categoria
+        derivada por el resource koha-ils desde primaryAffiliation=staff).
+        El personal CRAI se distingue ahora por el atributo extendido AREA=CRAI
+        (rol AR-Koha-Librarian), no por categoria. Rol conservado como no-op
+        para no romper assignments existentes; retirar de los holders en limpieza
+        posterior. NO asignar a nuevos usuarios.</description>
+    <lifecycleState>deprecated</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
         <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
@@ -15,18 +22,10 @@
             <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
             <kind>account</kind>
             <intent>default</intent>
-            <!-- R5 (FASE 4): ÚNICO override category_id que se conserva.
-                 STAFF es role-based (bibliotecario), no derivable de primaryAffiliation.
-                 strength=strong para ganar al mapping category-id-from-primary-affiliation
-                 (strong) del resource, que derivaría ADMINIST desde primaryAffiliation=staff.
-                 Sin empate: es el único override por-rol que sobrevive a R5. -->
-            <attribute>
-                <ref>ri:category_id</ref>
-                <outbound>
-                    <strength>strong</strength>
-                    <expression><value>STAFF</value></expression>
-                </outbound>
-            </attribute>
+            <!-- 2026-05-22: override category_id=STAFF eliminado. STAFF se unifica
+                 en ADMINIST. category_id lo deriva el resource koha-ils desde
+                 extension/sciback:primaryAffiliation (mapping unico, deterministico).
+                 Construction vacia = no-op: el holder solo conserva el vinculo. -->
         </construction>
     </inducement>
 </role>

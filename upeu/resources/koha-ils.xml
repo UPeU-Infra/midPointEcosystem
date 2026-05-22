@@ -1052,6 +1052,38 @@
                 </outbound>
             </attribute>
             <attribute>
+                <ref>ri:extended_attributes</ref>
+                <displayName>Atributos extendidos de patrón (pares JSON)</displayName>
+                <!-- ============================================================
+                     GOBIERNO IGA → KOHA — extended_attributes
+                     Atributo multivaluado. Cada valor es un string JSON
+                     {"type":"CODE","value":"..."} (formato del conector v1.3.0,
+                     PatronMapper.convertExtendedAttributes*).
+
+                     MidPoint NO es dueño del atributo completo: es dueño SOLO de
+                     los pares cuyo "type" aparece en <intolerantValuePattern>.
+
+                     tolerant=true            → los pares NO intolerantes
+                                                (DNI, SEDE, TIPO_VINC, ORCID,
+                                                COD_UPEU, SHOW_BCODE) se preservan
+                                                intactos: MidPoint nunca los borra.
+                     intolerantValuePattern   → el par "type":"AREA" SÍ está bajo
+                                                gobierno MidPoint: si ninguna
+                                                construction activa lo produce,
+                                                MidPoint emite el delete-value
+                                                granular de ese par (y solo de ese).
+
+                     El conector declara addRemoveAttributeValues=true → los deltas
+                     se aplican como add/remove-value, nunca como replace total.
+
+                     La construction que PRODUCE el par AREA vive en el Application
+                     Role AR-Koha-Librarian (no aquí). Este bloque solo declara la
+                     mecánica de tenancy de valores. Sin outbound a propósito.
+                     ============================================================ -->
+                <tolerant>true</tolerant>
+                <intolerantValuePattern>.*"type"\s*:\s*"AREA".*</intolerantValuePattern>
+            </attribute>
+            <attribute>
                 <ref>ri:library_id</ref>
                 <displayName>Sede Biblioteca</displayName>
                 <outbound>

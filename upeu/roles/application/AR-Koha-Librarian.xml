@@ -4,7 +4,13 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="91b2cbcd-3db9-4e90-b72e-b874b3c48fa6">
     <name>AR-Koha-Librarian</name>
-    <description>Application Role: rol bibliotecario interno Koha CRAI — circulación, catalogación, administración ILS. Categoría patron STAFF ("Personal de Biblioteca"). ConnId Java conector custom UPeU. Construction activa — Fase B.</description>
+    <description>Application Role: personal del CRAI (biblioteca). Marca al patron Koha
+        con el atributo extendido AREA=CRAI (extended_attributes), filtrable en la
+        busqueda de usuarios del intranet de Koha. La categoria patron es ADMINIST
+        (derivada por el resource desde primaryAffiliation=staff) — la categoria STAFF
+        fue eliminada 2026-05-22 y unificada en ADMINIST. En connector v1.4.0 este
+        mismo rol sumara la construction de borrowers.flags (permisos de intranet).
+        Fuente de verdad unica para "es personal CRAI".</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
@@ -14,19 +20,23 @@
         <construction>
             <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
             <kind>account</kind>
-            <!-- FASE 0 fix: el resource solo define intent=default para kind=account.
-                 'librarian' no existía en el schemaHandling → corregido a default. -->
             <intent>default</intent>
-            <!-- Override category_id: STAFF = "Personal de Biblioteca"
-                 (categories.categorycode en Koha PROD, category_type=S, 1909 patrons).
-                 strength=normal: gana sobre los overrides weak de patron
-                 (PREGRADO/POSGRADO/ESTUDI/ALUMNI), de modo que un bibliotecario que
-                 también es alumno queda clasificado como STAFF. -->
+            <!-- 2026-05-22: el override category_id=STAFF fue eliminado. STAFF se
+                 unifico en ADMINIST. Este rol ahora marca al patron con el par
+                 AREA=CRAI dentro de extended_attributes (atributo multivaluado).
+                 El resource koha-ils declara ri:extended_attributes como
+                 tolerant=true + intolerantValuePattern "type":"AREA" → MidPoint
+                 gobierna SOLO el par AREA:* y nunca pisa DNI/SEDE/otros pares.
+                 El valor JSON debe coincidir con el formato que el conector
+                 v1.3.0 produce al leer (PatronMapper.convertExtendedAttributes*). -->
             <attribute>
-                <ref>ri:category_id</ref>
+                <ref>ri:extended_attributes</ref>
                 <outbound>
-                    <strength>normal</strength>
-                    <expression><value>STAFF</value></expression>
+                    <name>area-crai-extended-attribute</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>{"type":"AREA","value":"CRAI"}</value>
+                    </expression>
                 </outbound>
             </attribute>
         </construction>
