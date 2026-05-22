@@ -191,7 +191,7 @@ return costCenter</code>
       BLOQUE Q5 — BIRTHRIGHT CARGO→TIER PARA PERSONAL CRAI
       Auto-asigna el nivel de acceso (tier) CRAI segun el cargo del trabajador.
 
-      Entrada:  extension/sb:lambPositionId (= ID_PUESTO de ENOC.PLLA_PUESTO,
+      Entrada:  extension/upeu:lambPositionId (= ID_PUESTO de ENOC.PLLA_PUESTO,
                 identificador global e inmutable, poblado por el bloque P del
                 base template desde el resource trabajadores).
       Resolucion: LookupTable LT-CRAI-Puesto-Tier (OID
@@ -233,7 +233,7 @@ return costCenter</code>
                 <path>costCenter</path>
             </source>
             <source>
-                <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:lambPositionId</path>
+                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambPositionId</path>
             </source>
             <expression>
                 <assignmentTargetSearch>

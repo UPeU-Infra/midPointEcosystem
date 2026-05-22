@@ -5,7 +5,7 @@
   Versión: 1.0 (2026-05-22)
 
   Mapa cargo del CRAI → nivel de acceso (tier). El usuario tiene
-  extension/sb:lambPositionId (= ID_PUESTO de ENOC.PLLA_PUESTO, identificador
+  extension/upeu:lambPositionId (= ID_PUESTO de ENOC.PLLA_PUESTO, identificador
   global e inmutable poblado por el resource trabajadores, bloque P del
   template). Este LookupTable resuelve ese ID_PUESTO al tier canónico CRAI:
 

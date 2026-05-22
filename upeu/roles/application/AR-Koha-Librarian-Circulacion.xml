@@ -16,7 +16,7 @@
   del patrón Koha.
 
   Asignado por: UserTemplate-EmployeeStaff bloque Q5 (birthright cargo→tier)
-  vía assignmentTargetSearch, resolviendo extension/sb:lambPositionId contra
+  vía assignmentTargetSearch, resolviendo extension/upeu:lambPositionId contra
   el LookupTable LT-CRAI-Puesto-Tier.
 -->
 <role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
