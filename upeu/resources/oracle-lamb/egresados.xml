@@ -276,7 +276,11 @@
                     <strength>weak</strength>
                     <expression>
                         <script>
-                            <code>input ? 'https://lamb-files.upeu.edu.pe/lamb-academic/' + input : null</code>
+                            <code>
+if (!input) return null
+def path = input.replaceAll('^lamb-academic/', '')
+return 'https://lamb-files.upeu.edu.pe/lamb-academic/' + path
+                            </code>
                         </script>
                     </expression>
                     <target>
