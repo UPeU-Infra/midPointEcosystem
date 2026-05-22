@@ -60,6 +60,13 @@
             </delineation>
             <focus>
                 <type>UserType</type>
+                <!-- OID del archetype Person built-in de MidPoint 4.9+.
+                     Asigna archetype Person como primer archetype al crear el foco.
+                     El bloque D7 del base template lo reemplaza luego por el archetype
+                     específico (staff/faculty) basado en sb:affiliations.
+                     Restaurado 2026-05-22: previene zombies sin archetype tras el fix
+                     del bug dual-archetype (D7 centraliza la decisión final). -->
+                <archetypeRef oid="00000000-0000-0000-0000-000000000702" type="ArchetypeType"/>
             </focus>
             <attribute>
                 <ref>ri:COD_APS</ref>

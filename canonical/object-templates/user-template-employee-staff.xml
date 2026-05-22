@@ -2,7 +2,7 @@
 <!--
   UserTemplate-EmployeeStaff — Template per-archetype para personal admin (archetype-user-employee-staff)
   OID: 59b1e325-e9f2-421f-bfe8-37a3d70b13e3
-  Versión: 1.0 (2026-05-20)
+  Versión: 1.1 (2026-05-22)
   Schema: urn:sciback:midpoint:person (canónico) + urn:upeu:midpoint:local (LAMB)
   Aplica a: archetype-user-employee-staff (OID: 6460facf-3abf-4851-966e-0c95aa1a6c46)
   Extiende: UserTemplate-Person-Base (OID: 855caaca-68c4-4f7f-8ff8-b4e35dd7d390)
@@ -35,6 +35,9 @@
     - Q1: title fallback "Personal Administrativo" (weak) cuando LAMB no provee NOMBRE_PUESTO
     - Q2: log.warn si hireDate ausente para personal admin activo (dato crítico para leaver policy)
     - Q3: log.warn si costCenter ausente para personal admin activo (necesario para org assignment E)
+    NOTA v1.1 (2026-05-22): Q4 y Q5 (birthright CRAI) movidos al base template para cubrir también
+    docentes (faculty) físicamente ubicados en el CRAI. El acceso CRAI se otorga por atributo
+    (costCenter) no por archetype — principio ISO 24760 + Semancik Cap.9.
 
   Patrón canónico IGA: overlay UPeU. Generalizable a universidades con RRHH en IIA JDBC.
 -->
@@ -142,163 +145,5 @@ return costCenter</code>
         </mapping>
     </item>
 
-    <!--
-      BLOQUE Q4 — BIRTHRIGHT AR-Koha-Librarian PARA PERSONAL CRAI
-      Auto-asigna el Application Role AR-Koha-Librarian cuando el trabajador
-      pertenece a un area CRAI (costCenter = ID_SEDEAREA de biblioteca):
-        area.97  = CRAI Lima
-        area.522 = CRAI Juliaca
-        area.625 = CRAI Tarapoto
-      El rol marca al patron Koha con extended_attributes AREA=CRAI, filtrable
-      en la busqueda de usuarios del intranet.
-      Revocacion automatica: si costCenter cambia a un area no-CRAI (RRHH mueve
-      al trabajador en Oracle LAMB), la condicion pasa true→false y MidPoint
-      retira el rol → la construction desaparece → MidPoint borra el par
-      AREA:* en Koha (intolerantValuePattern del resource koha-ils).
-      Birthright canonico via assignmentTargetSearch (Semancik cap. 9, regla 10).
-    -->
-    <item>
-        <ref>assignment</ref>
-        <mapping>
-            <name>Q4-birthright-koha-librarian-crai</name>
-            <description>Auto-asigna AR-Koha-Librarian al personal del CRAI segun costCenter (area de biblioteca). Fuente de verdad: ID_SEDEAREA de Oracle LAMB.</description>
-            <lifecycleState>active</lifecycleState>
-            <strength>strong</strength>
-            <source>
-                <path>costCenter</path>
-            </source>
-            <expression>
-                <assignmentTargetSearch>
-                    <targetType>RoleType</targetType>
-                    <filter>
-                        <q:equal>
-                            <q:path>name</q:path>
-                            <q:value>AR-Koha-Librarian</q:value>
-                        </q:equal>
-                    </filter>
-                </assignmentTargetSearch>
-            </expression>
-            <condition>
-                <script>
-                    <code>def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
-['area.97','area.522','area.625'].contains(cc)</code>
-                </script>
-            </condition>
-        </mapping>
-    </item>
-
-    <!--
-      BLOQUE Q5 — BIRTHRIGHT CARGO→TIER PARA PERSONAL CRAI
-      Auto-asigna el nivel de acceso (tier) CRAI segun el cargo del trabajador.
-
-      Entrada:  extension/upeu:lambPositionId (= ID_PUESTO de ENOC.PLLA_PUESTO,
-                identificador global e inmutable, poblado por el bloque P del
-                base template desde el resource trabajadores).
-      Resolucion: LookupTable LT-CRAI-Puesto-Tier (OID
-                ebe291d2-6375-49f8-aa6f-5afeee959f4e) — key=ID_PUESTO, value=tier.
-                Editable via UI sin redeploy: RRHH agrega 1 row por puesto nuevo.
-      Salida:   assignment del Application Role AR-Koha-Librarian-{tier}
-                (Direccion|Supervision|ProcesosTecnicos|Circulacion|Soporte),
-                que escribe el par CRAI_TIER en extended_attributes del patron Koha.
-
-      Alcance: SOLO personal CRAI — misma condicion que Q4 (costCenter =
-               ID_SEDEAREA de biblioteca: area.97 Lima, area.522 Juliaca,
-               area.625 Tarapoto). El expression resuelve el tier; la condition
-               restringe a CRAI.
-
-      Fallback "no sumar privilegios": si lambPositionId esta vacio o su
-               ID_PUESTO no figura en el LookupTable → se asigna el tier minimo
-               (circulacion) y se emite log.warn con el ID_PUESTO desconocido,
-               para que RRHH/CRAI agreguen la row faltante.
-
-      Relativista: si RRHH cambia el cargo del trabajador en Oracle LAMB,
-               lambPositionId cambia → en el recompute Q5 resuelve un tier
-               distinto → assignmentTargetSearch retira el AR-tier viejo y
-               asigna el nuevo (un solo AR-tier vigente por usuario).
-               Si el trabajador deja de ser CRAI (costCenter no-CRAI), la
-               condition pasa true→false y MidPoint retira el AR-tier
-               (la construction CRAI_TIER desaparece → Koha borra el par
-               CRAI_TIER por intolerantValuePattern del resource koha-ils).
-
-      Birthright canonico via assignmentTargetSearch (Semancik cap. 9, regla 10).
-    -->
-    <item>
-        <ref>assignment</ref>
-        <mapping>
-            <name>Q5-birthright-koha-crai-tier</name>
-            <description>Auto-asigna el AR-Koha-Librarian-{tier} segun el cargo (ID_PUESTO) del personal CRAI, resuelto via LookupTable LT-CRAI-Puesto-Tier. Fallback al tier minimo (circulacion) ante cargo desconocido.</description>
-            <lifecycleState>active</lifecycleState>
-            <strength>strong</strength>
-            <source>
-                <path>costCenter</path>
-            </source>
-            <source>
-                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambPositionId</path>
-            </source>
-            <expression>
-                <assignmentTargetSearch>
-                    <targetType>RoleType</targetType>
-                    <filter>
-                        <q:equal>
-                            <q:path>name</q:path>
-                            <expression>
-                                <script>
-                                    <code>// Resolucion ID_PUESTO -> tier via LookupTable LT-CRAI-Puesto-Tier.
-// API verificada en MidPoint 4.10.2 (2026-05-22): la interfaz MidpointFunctions
-// NO expone getLookupTableEntry(). Lectura robusta = getObject(LookupTableType)
-// recuperando el contenedor incremental F_ROW con GetOperationOptions.createRetrieve()
-// e iterando las filas. Mismo patron canonico ya productivo en la
-// FunctionLibrary sb-program-resolver (OID 6a99f9de-5db6-43d5-9b20-0cfd2b79ecf9).
-def pid = lambPositionId != null ? basic.stringify(lambPositionId).trim() : '';
-def tierMap = [
-    'direccion'         : 'AR-Koha-Librarian-Direccion',
-    'supervision'       : 'AR-Koha-Librarian-Supervision',
-    'procesos-tecnicos' : 'AR-Koha-Librarian-ProcesosTecnicos',
-    'circulacion'       : 'AR-Koha-Librarian-Circulacion',
-    'soporte'           : 'AR-Koha-Librarian-Soporte'
-];
-def tier = null;
-if (pid != '') {
-    try {
-        def tableOid = 'ebe291d2-6375-49f8-aa6f-5afeee959f4e';
-        def ltClass = com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.class;
-        def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(
-            prismContext.toUniformPath(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.F_ROW),
-            com.evolveum.midpoint.schema.GetOperationOptions.createRetrieve()
-        );
-        def tableObj = midpoint.getObject(ltClass, tableOid, options);
-        def rows = tableObj != null ? tableObj.getRow() : null;
-        if (rows != null) {
-            for (def row : rows) {
-                if (row.getKey() != null &amp;&amp; row.getKey().trim() == pid) {
-                    tier = row.getValue() != null ? row.getValue().trim() : null;
-                    break;
-                }
-            }
-        }
-    } catch (Exception e) {
-        log.warn("UPeU CRAI tier: error leyendo LookupTable LT-CRAI-Puesto-Tier para ID_PUESTO '{}': {} — fallback a tier minimo.", pid, e.getMessage());
-    }
-}
-def roleName = tierMap[tier];
-if (roleName == null) {
-    log.warn("UPeU CRAI tier: ID_PUESTO '{}' desconocido o ausente para {} — fallback a tier minimo (circulacion). Agregar la fila a LT-CRAI-Puesto-Tier.", pid, focus?.name);
-    roleName = 'AR-Koha-Librarian-Circulacion';
-}
-return roleName</code>
-                                </script>
-                            </expression>
-                        </q:equal>
-                    </filter>
-                </assignmentTargetSearch>
-            </expression>
-            <condition>
-                <script>
-                    <code>def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
-['area.97','area.522','area.625'].contains(cc)</code>
-                </script>
-            </condition>
-        </mapping>
-    </item>
 
 </objectTemplate>

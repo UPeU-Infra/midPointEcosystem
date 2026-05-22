@@ -2,7 +2,7 @@
 <!--
   UserTemplate-Person-Base — Template canónico base UPeU
   OID: 855caaca-68c4-4f7f-8ff8-b4e35dd7d390
-  Versión: 2.7 (2026-05-19)
+  Versión: 2.9 (2026-05-22)
   Schema: urn:sciback:midpoint:person (canónico) + urn:upeu:midpoint:local (LAMB)
   Aplica a: todos los UserType via archetypePolicy en Archetype-Person-Built-in
   Libro Cap.9: template se activa en cada create/modify/recompute del focus object.
@@ -24,6 +24,8 @@
     I — jpegPhoto fetch desde LAMB MinIO (upeu:photoUrl → jpegPhoto, normal, try/catch)
     J — Migración lambDocNum → identityDocuments: construye contenedor canónico + limpia taxId
     P — Position assignment (PBAC Pilar 3): ServiceType Position desde upeu:lambPositionId
+    Q4 — Birthright AR-Koha-Librarian para personal CRAI (costCenter=area.97/522/625) [movido de staff template v2.9]
+    Q5 — Birthright AR-Koha-Librarian-{tier} via LookupTable LT-CRAI-Puesto-Tier [movido de staff template v2.9]
     S — schacPersonalTitle DERIVADO desde conferredDegreeAbbrev (Bach./Mg./Dr., strong) [añadido v2.8]
 
   Validaciones de formato (weak/log-warn):
@@ -1129,6 +1131,141 @@ detectada en reconcile. lifecycleState se lee via focus?.lifecycleState en condi
                     <code>if (conferredDegreeAbbrev == null) return null; def v = basic.stringify(conferredDegreeAbbrev).trim(); return v != '' ? v : null</code>
                 </script>
             </expression>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
+         BLOQUE Q4 — BIRTHRIGHT AR-Koha-Librarian PARA PERSONAL CRAI
+         Movido desde UserTemplate-EmployeeStaff (v2.9, 2026-05-22) para cubrir
+         también a docentes (faculty) físicamente ubicados en el CRAI.
+         Principio ISO 24760 + Semancik Cap.9: el acceso CRAI se otorga por
+         atributo (costCenter) no por archetype. Aplica a cualquier afiliación.
+         Auto-asigna AR-Koha-Librarian cuando el trabajador pertenece a:
+           area.97  = CRAI Lima
+           area.522 = CRAI Juliaca
+           area.625 = CRAI Tarapoto
+         Revocación automática si costCenter cambia fuera de esas áreas.
+         Birthright canónico via assignmentTargetSearch (Semancik Cap.9 regla 10).
+    -->
+    <item>
+        <ref>assignment</ref>
+        <mapping>
+            <name>Q4-birthright-koha-librarian-crai</name>
+            <description>Auto-asigna AR-Koha-Librarian al personal del CRAI según costCenter (área de biblioteca). Fuente de verdad: ID_SEDEAREA de Oracle LAMB. Aplica a cualquier afiliación (faculty o staff). Movido al base template para cobertura universal.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>costCenter</path>
+            </source>
+            <expression>
+                <assignmentTargetSearch>
+                    <targetType>RoleType</targetType>
+                    <filter>
+                        <q:equal>
+                            <q:path>name</q:path>
+                            <q:value>AR-Koha-Librarian</q:value>
+                        </q:equal>
+                    </filter>
+                </assignmentTargetSearch>
+            </expression>
+            <condition>
+                <script>
+                    <code>def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
+['area.97','area.522','area.625'].contains(cc)</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!--
+      BLOQUE Q5 — BIRTHRIGHT CARGO→TIER PARA PERSONAL CRAI
+      Movido desde UserTemplate-EmployeeStaff (v2.9, 2026-05-22) para cubrir
+      también a docentes (faculty) físicamente ubicados en el CRAI.
+      Principio ISO 24760 + Semancik Cap.9: el tier CRAI se otorga por
+      atributo (lambPositionId via LookupTable) no por archetype.
+
+      Resolución: LookupTable LT-CRAI-Puesto-Tier
+                  (OID ebe291d2-6375-49f8-aa6f-5afeee959f4e) — key=ID_PUESTO, value=tier.
+      Salida: assignment del AR-Koha-Librarian-{tier}.
+      Fallback: si lambPositionId vacío o ausente en LT → tier mínimo (circulacion).
+      Revocación automática si costCenter cambia fuera de áreas CRAI.
+    -->
+    <item>
+        <ref>assignment</ref>
+        <mapping>
+            <name>Q5-birthright-koha-crai-tier</name>
+            <description>Auto-asigna AR-Koha-Librarian-{tier} según cargo (ID_PUESTO) del personal CRAI, resuelto via LookupTable LT-CRAI-Puesto-Tier. Fallback al tier mínimo (circulacion) ante cargo desconocido. Aplica a cualquier afiliación. Movido al base template para cobertura universal.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>costCenter</path>
+            </source>
+            <source>
+                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambPositionId</path>
+            </source>
+            <expression>
+                <assignmentTargetSearch>
+                    <targetType>RoleType</targetType>
+                    <filter>
+                        <q:equal>
+                            <q:path>name</q:path>
+                            <expression>
+                                <script>
+                                    <code>// Resolución ID_PUESTO -> tier via LookupTable LT-CRAI-Puesto-Tier.
+// API verificada en MidPoint 4.10.2 (2026-05-22): la interfaz MidpointFunctions
+// NO expone getLookupTableEntry(). Lectura robusta = getObject(LookupTableType)
+// recuperando el contenedor incremental F_ROW con GetOperationOptions.createRetrieve()
+// e iterando las filas. Mismo patrón canónico ya productivo en la
+// FunctionLibrary sb-program-resolver (OID 6a99f9de-5db6-43d5-9b20-0cfd2b79ecf9).
+def pid = lambPositionId != null ? basic.stringify(lambPositionId).trim() : '';
+def tierMap = [
+    'direccion'         : 'AR-Koha-Librarian-Direccion',
+    'supervision'       : 'AR-Koha-Librarian-Supervision',
+    'procesos-tecnicos' : 'AR-Koha-Librarian-ProcesosTecnicos',
+    'circulacion'       : 'AR-Koha-Librarian-Circulacion',
+    'soporte'           : 'AR-Koha-Librarian-Soporte'
+];
+def tier = null;
+if (pid != '') {
+    try {
+        def tableOid = 'ebe291d2-6375-49f8-aa6f-5afeee959f4e';
+        def ltClass = com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.class;
+        def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(
+            prismContext.toUniformPath(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.F_ROW),
+            com.evolveum.midpoint.schema.GetOperationOptions.createRetrieve()
+        );
+        def tableObj = midpoint.getObject(ltClass, tableOid, options);
+        def rows = tableObj != null ? tableObj.getRow() : null;
+        if (rows != null) {
+            for (def row : rows) {
+                if (row.getKey() != null &amp;&amp; row.getKey().trim() == pid) {
+                    tier = row.getValue() != null ? row.getValue().trim() : null;
+                    break;
+                }
+            }
+        }
+    } catch (Exception e) {
+        log.warn("UPeU CRAI tier: error leyendo LookupTable LT-CRAI-Puesto-Tier para ID_PUESTO '{}': {} — fallback a tier mínimo.", pid, e.getMessage());
+    }
+}
+def roleName = tierMap[tier];
+if (roleName == null) {
+    log.warn("UPeU CRAI tier: ID_PUESTO '{}' desconocido o ausente para {} — fallback a tier mínimo (circulacion). Agregar la fila a LT-CRAI-Puesto-Tier.", pid, focus?.name);
+    roleName = 'AR-Koha-Librarian-Circulacion';
+}
+return roleName</code>
+                                </script>
+                            </expression>
+                        </q:equal>
+                    </filter>
+                </assignmentTargetSearch>
+            </expression>
+            <condition>
+                <script>
+                    <code>def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
+['area.97','area.522','area.625'].contains(cc)</code>
+                </script>
+            </condition>
         </mapping>
     </item>
 
