@@ -1260,13 +1260,34 @@
                  correlaciona inequivocamente sin depender de los inbounds.
                  ================================================================ -->
             <correlation>
+                <!-- Correlación en dos capas:
+                     1. correlate-by-cardnumber (primary): cardnumber Koha == user.name (COD_APS).
+                        Cubre TODOS los patrones creados/gestionados por MidPoint.
+                     2. correlate-by-dni (secondary): cardnumber Koha == extension/upeu:lambDocNum (DNI/NUM_DOCUMENTO).
+                        Cubre patrones STAFF/DOCEN legacy importados antes de MidPoint, cuyo
+                        cardnumber en Koha es el DNI en lugar del COD_APS.
+                        Permite que una reconciliación Oracle LAMB encuentre y actualice estas
+                        cuentas legacy en vez de crear duplicados. -->
                 <correlators>
                     <filter>
                         <name>correlate-by-cardnumber</name>
-                        <documentation>cardnumber del patron Koha == name (codigo UPeU) del user.</documentation>
+                        <documentation>cardnumber del patron Koha == name (COD_APS / codigo UPeU) del user.</documentation>
                         <ownerFilter>
                             <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
                                 <q:path>name</q:path>
+                                <expression>
+                                    <path>$projection/attributes/ri:cardnumber</path>
+                                </expression>
+                            </q:equal>
+                        </ownerFilter>
+                    </filter>
+                    <filter>
+                        <name>correlate-by-dni</name>
+                        <documentation>cardnumber del patron Koha == lambDocNum (DNI raw de Oracle LAMB). Para patrones STAFF/DOCEN legacy con DNI como cardnumber.</documentation>
+                        <ownerFilter>
+                            <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+                                     xmlns:upeu="urn:upeu:midpoint:local">
+                                <q:path>extension/upeu:lambDocNum</q:path>
                                 <expression>
                                     <path>$projection/attributes/ri:cardnumber</path>
                                 </expression>
