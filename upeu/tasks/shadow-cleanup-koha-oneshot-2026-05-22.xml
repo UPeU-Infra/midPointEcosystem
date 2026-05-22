@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Tarea: Cleanup one-shot de shadows muertos Koha — 2026-05-22
+  Motivo: Después del recompute masivo del 2026-05-22 quedaron 112 shadows
+  dead (109 LINKED+dead + 3 DELETED+dead) más 292 UNLINKED que necesitan
+  limpieza inmediata. La tarea semanal usa interval=P7D y no los toca
+  porque son del mismo día.
+  interval=PT0S: elimina cualquier shadow dead sin importar su antigüedad.
+  Esta tarea se ejecuta una sola vez (recurrence=single) y puede eliminarse
+  después de verificar los resultados.
+  OID diferente al semanal para no colisionar.
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      oid="f1a2b3c4-d5e6-4f78-9a0b-1c2d3e4f5a6b">
+    <name>Cleanup dead shadows Koha ILS — one-shot 2026-05-22</name>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>runnable</executionState>
+    <schedule>
+        <recurrence>single</recurrence>
+    </schedule>
+    <activity>
+        <work>
+            <shadowCleanup>
+                <shadows>
+                    <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
+                </shadows>
+                <interval>PT0S</interval>
+            </shadowCleanup>
+        </work>
+    </activity>
+</task>
