@@ -12,8 +12,8 @@
 #   - SIN préstamos históricos (old_issues)
 #   - SIN multas pendientes (account_lines con amountoutstanding > 0)
 #
-# Koha::Patron->delete() mueve el patron a deletedborrowers — NO es hard delete.
-# Los datos son recuperables por DBA via: INSERT INTO borrowers SELECT * FROM deletedborrowers WHERE ...
+# IMPORTANTE: En Koha 25.11 Koha::Patron->delete() hace hard delete directo (no mueve a deletedborrowers).
+# Versiones anteriores sí movían a deletedborrowers — verificar comportamiento según versión instalada.
 #
 # USO:
 #   sudo koha-shell bul -c "perl /tmp/koha-delete-nocardnumber.pl --dry-run"
@@ -57,16 +57,16 @@ my $sql = q{
         b.surname,
         b.firstname,
         b.categorycode,
-        b.date_enrolled,
+        b.dateenrolled,
         b.dateexpiry,
         (SELECT COUNT(*) FROM issues      WHERE borrowernumber = b.borrowernumber) AS activos,
         (SELECT COUNT(*) FROM old_issues  WHERE borrowernumber = b.borrowernumber) AS historicos,
         (SELECT COALESCE(SUM(amountoutstanding),0)
-           FROM account_lines             WHERE borrowernumber = b.borrowernumber) AS deuda
+           FROM accountlines             WHERE borrowernumber = b.borrowernumber) AS deuda
     FROM borrowers b
     WHERE (b.cardnumber IS NULL OR b.cardnumber = '')
       AND b.userid REGEXP '^[a-zA-Z][a-zA-ZáéíóúÁÉÍÓÚñÑ]+\\.[a-zA-ZáéíóúÁÉÍÓÚñÑ]'
-      AND b.date_enrolled >= '2026-03-19'
+      AND b.dateenrolled >= '2026-03-19'
       AND b.categorycode IN ('PREGRADO','POSGRADO','ESTUDI','ALUMNI','ADMINIST','DOCEN','STAFF')
     ORDER BY b.borrowernumber
 };
@@ -84,7 +84,7 @@ for my $c (@$candidates) {
     my $bn   = $c->{borrowernumber};
     my $name = sprintf('%s, %s', $c->{surname} // '', $c->{firstname} // '');
     my $info = sprintf('bn=%-6s | cat=%-8s | userid=%-30s | enrolled=%s',
-                       $bn, $c->{categorycode}, $c->{userid} // '', $c->{date_enrolled} // '');
+                       $bn, $c->{categorycode}, $c->{userid} // '', $c->{dateenrolled} // '');
 
     # Guardianes de seguridad
     if ($c->{activos} > 0) {
@@ -136,4 +136,4 @@ printf "%-25s %d\n", 'Skip (préstamos activos):',  $skipped_loans;
 printf "%-25s %d\n", 'Skip (deuda pendiente):',    $skipped_debt;
 printf "%-25s %d\n", 'Skip (historial préstamos):',  $skipped_history;
 printf "%-25s %d\n", 'Errores:',                   $errors;
-printf "\nNota: los registros eliminados quedan en la tabla deletedborrowers (recuperables).\n" unless $dry_run;
+printf "\nNota: en Koha 25.11+ los registros eliminados son HARD DELETE (no van a deletedborrowers).\n" unless $dry_run;
