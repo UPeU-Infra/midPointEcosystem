@@ -23,8 +23,10 @@
             <shadowCleanup>
                 <shadows>
                     <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
                 </shadows>
-                <interval>PT0S</interval>
+                <interval>PT1M</interval>
             </shadowCleanup>
         </work>
     </activity>
