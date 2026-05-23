@@ -2,8 +2,8 @@
 <resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:sciback="urn:sciback:midpoint:person" xmlns:sb="urn:sciback:midpoint:person" xmlns:ns1="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3" xmlns:ns2="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.identicum.midpoint.connector-koha/com.identicum.connectors.KohaConnector" xmlns:ns5="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:ns6="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:ns7="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xs="http://www.w3.org/2001/XMLSchema" oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af">
     <name>Koha ILS</name>
     <lifecycleState>active</lifecycleState>
-    <!-- 2026-05-23: v1.3.4 (OID 04c0a44d-984c-45f0-91d3-a4a84a3794c0) — GET+merge+PUT fix. v1.3.3=9dec137c. v1.3.2=93abd55d. v1.3.0=0bda47cd. -->
-    <connectorRef oid="04c0a44d-984c-45f0-91d3-a4a84a3794c0" relation="org:default" type="c:ConnectorType"/>
+    <!-- 2026-05-23: v1.3.5 (OID 2cd4db5d-29cd-40b3-98bc-02acf2a80820) — JDBC photo non-fatal (best-effort). v1.3.4=04c0a44d. v1.3.3=9dec137c. v1.3.0=0bda47cd. -->
+    <connectorRef oid="2cd4db5d-29cd-40b3-98bc-02acf2a80820" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration>
         <ns1:configurationProperties>
             <ns2:serviceAddress>http://192.168.12.135:8001</ns2:serviceAddress>
