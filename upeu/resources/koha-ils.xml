@@ -1247,6 +1247,22 @@
                     <outbound>
                         <name>activation-outbound</name>
                         <strength>strong</strength>
+                        <!-- Si el usuario es jubilado (motivoCese=jubilacion), forzar enabled
+                             aunque lifecycleState=archived lleve administrativeStatus=disabled.
+                             Los jubilados tienen acceso perenne a Koha (categoría JUBILADO).
+                             En cualquier otro caso, passthrough normal del focus. -->
+                        <expression>
+                            <script>
+                                <code>
+import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+def motivoCese = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:upeu:midpoint:local', 'motivoCese'))
+if (motivoCese == 'jubilacion') {
+    return ActivationStatusType.ENABLED
+}
+return focus?.activation?.administrativeStatus
+                                </code>
+                            </script>
+                        </expression>
                     </outbound>
                 </administrativeStatus>
             </activation>

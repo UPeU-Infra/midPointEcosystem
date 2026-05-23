@@ -23,10 +23,11 @@
     expiry_date=null vía strong override: los jubilados no tienen fecha de
     expiración en Koha (acceso perenne). El mapping expiry-date-outbound
     del resource enviaría terminationDate si no se sobreescribe aquí.
-    activation/administrativeStatus=enabled: override del passthrough
-    activation-outbound del resource. Cuando el usuario está archived el
-    administrativeStatus=disabled se propagaría al shadow Koha dejando el
-    patrón bloqueado. Los jubilados tienen acceso perenne a biblioteca.
+    activation/administrativeStatus: el override NO se puede hacer en la
+    construction del rol (ConstructionType no tiene el item activation en
+    su schema — SchemaException en MidPoint 4.10). El override correcto
+    va en el resource koha-ils.xml via script condicional en activation-outbound:
+    si motivoCese=jubilacion → enabled, sino passthrough del focus.
 
   Patrón IGA: rol birthright por condición de cese. Modelo reutilizable para
   otras universidades peruanas con ERP que registre motivos de cese.
@@ -81,23 +82,6 @@
                     </expression>
                 </outbound>
             </attribute>
-            <!-- Override activation: el shadow Koha del jubilado debe permanecer ENABLED
-                 aunque el usuario MidPoint esté archived/disabled.
-                 El jubilado tiene acceso perenne a la biblioteca (categoría JUBILADO).
-                 strength=strong: prevalece sobre el passthrough activation-outbound
-                 del resource (que enviaría 'disabled' cuando el usuario está archived).
-                 MidPoint Book Cap.8: constructions en inducements pueden override activation. -->
-            <activation>
-                <administrativeStatus>
-                    <outbound>
-                        <name>jubilado-activation-override</name>
-                        <strength>strong</strength>
-                        <expression>
-                            <value>enabled</value>
-                        </expression>
-                    </outbound>
-                </administrativeStatus>
-            </activation>
         </construction>
     </inducement>
 </role>
