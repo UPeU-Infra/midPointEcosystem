@@ -810,9 +810,30 @@
             <name>taxId</name>
             <path>extension/sciback:taxId</path>
         </source>
+        <source>
+            <name>terminationDate</name>
+            <path>extension/sciback:terminationDate</path>
+        </source>
         <expression>
             <script>
-                <code>def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''; def hasPersonalNumber = (pn != ''); def hasPrimaryDoc = false; try { def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'primary')); def docs = identityDocuments; if (docs != null) { def docList = (docs instanceof List) ? docs : [docs]; hasPrimaryDoc = docList.any { doc -> def primProp = doc?.findProperty(primPath); primProp != null &amp;&amp; 'true' == primProp?.realValue?.toString() } } } catch (Exception e) { log.warn('Bloque F: error leyendo identityDocuments en {}: {}', focus?.name, e.message) }; if (!hasPrimaryDoc &amp;&amp; taxId != null) { def txStr = basic.stringify(taxId)?.trim(); if (txStr?.startsWith('urn:schac:personalUniqueID:')) hasPrimaryDoc = true }; def validAffiliations = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUM','AFFILIATE-CU']; def hasAffiliation = primaryAffiliation != null &amp;&amp; validAffiliations.contains(basic.stringify(primaryAffiliation).trim().toUpperCase()); if (hasPersonalNumber &amp;&amp; hasPrimaryDoc &amp;&amp; hasAffiliation) { return 'active' } else { if (!hasPersonalNumber) { log.info('Bloque F lifecycle gate: {} sin personalNumber -> draft', focus?.name) }; if (!hasPrimaryDoc) { log.info('Bloque F lifecycle gate: {} sin documento primario -> draft', focus?.name) }; if (!hasAffiliation) { log.info('Bloque F lifecycle gate: {} sin afiliacion valida -> draft', focus?.name) }; return 'draft' }</code>
+                <code>
+// FIX DT-5 (2026-05-23): evitar conflicto multi-value con Bloque H (auto-archive).
+// Si las condiciones de archivo se cumplen (staff/faculty + terminationDate > 180d),
+// retornar null → Bloque H asume el control de lifecycleState.
+import java.time.LocalDate; import java.time.temporal.ChronoUnit;
+def aff2 = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+def termStr2 = terminationDate != null ? basic.stringify(terminationDate).trim() : '';
+if (['staff', 'faculty'].contains(aff2) &amp;&amp; termStr2 != '') {
+    try {
+        if (ChronoUnit.DAYS.between(LocalDate.parse(termStr2.length() >= 10 ? termStr2.substring(0,10) : termStr2), LocalDate.now()) > 180) {
+            return null
+        }
+    } catch (Exception e) {
+        log.warn('Bloque F archive-guard: terminationDate no parseable {} en {}: {}', termStr2, focus?.name, e.message)
+    }
+}
+def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''; def hasPersonalNumber = (pn != ''); def hasPrimaryDoc = false; try { def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'primary')); def docs = identityDocuments; if (docs != null) { def docList = (docs instanceof List) ? docs : [docs]; hasPrimaryDoc = docList.any { doc -> def primProp = doc?.findProperty(primPath); primProp != null &amp;&amp; 'true' == primProp?.realValue?.toString() } } } catch (Exception e) { log.warn('Bloque F: error leyendo identityDocuments en {}: {}', focus?.name, e.message) }; if (!hasPrimaryDoc &amp;&amp; taxId != null) { def txStr = basic.stringify(taxId)?.trim(); if (txStr?.startsWith('urn:schac:personalUniqueID:')) hasPrimaryDoc = true }; def validAffiliations = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUM','AFFILIATE-CU']; def hasAffiliation = primaryAffiliation != null &amp;&amp; validAffiliations.contains(basic.stringify(primaryAffiliation).trim().toUpperCase()); if (hasPersonalNumber &amp;&amp; hasPrimaryDoc &amp;&amp; hasAffiliation) { return 'active' } else { if (!hasPersonalNumber) { log.info('Bloque F lifecycle gate: {} sin personalNumber -> draft', focus?.name) }; if (!hasPrimaryDoc) { log.info('Bloque F lifecycle gate: {} sin documento primario -> draft', focus?.name) }; if (!hasAffiliation) { log.info('Bloque F lifecycle gate: {} sin afiliacion valida -> draft', focus?.name) }; return 'draft' }
+                </code>
             </script>
         </expression>
         <target>
