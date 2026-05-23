@@ -2,8 +2,8 @@
 <resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:sciback="urn:sciback:midpoint:person" xmlns:sb="urn:sciback:midpoint:person" xmlns:ns1="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3" xmlns:ns2="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.identicum.midpoint.connector-koha/com.identicum.connectors.KohaConnector" xmlns:ns5="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:ns6="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:ns7="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xs="http://www.w3.org/2001/XMLSchema" oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af">
     <name>Koha ILS</name>
     <lifecycleState>active</lifecycleState>
-    <!-- 2026-05-23: v1.3.7 (OID f50111d4-ab4a-4977-8668-92ea8e992b32) — 409 recovery fallback por userid. v1.3.6=e9478d50. v1.3.5=2cd4db5d. v1.3.0=0bda47cd. -->
-    <connectorRef oid="f50111d4-ab4a-4977-8668-92ea8e992b32" relation="org:default" type="c:ConnectorType"/>
+    <!-- 2026-05-23: v1.3.8 (OID 6fb37940-6fc6-4b87-a8c9-8eabc0dea4ae) — fallback JDBC por DNI extended_attribute en 409. v1.3.7=f50111d4. v1.3.6=e9478d50. v1.3.5=2cd4db5d. v1.3.0=0bda47cd. -->
+    <connectorRef oid="6fb37940-6fc6-4b87-a8c9-8eabc0dea4ae" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration>
         <ns1:configurationProperties>
             <ns2:serviceAddress>http://192.168.12.135:8001</ns2:serviceAddress>
