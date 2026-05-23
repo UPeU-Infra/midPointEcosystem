@@ -2,7 +2,7 @@
 <!--
   UserTemplate-Person-Base — Template canónico base UPeU
   OID: 855caaca-68c4-4f7f-8ff8-b4e35dd7d390
-  Versión: 2.9 (2026-05-22)
+  Versión: 3.0 (2026-05-23)
   Schema: urn:sciback:midpoint:person (canónico) + urn:upeu:midpoint:local (LAMB)
   Aplica a: todos los UserType via archetypePolicy en Archetype-Person-Built-in
   Libro Cap.9: template se activa en cada create/modify/recompute del focus object.
@@ -20,7 +20,8 @@
     E — Asignación a Org (TODO: espera LAMB inbound depto→OU)
     F — Lifecycle gate draft→active (política estricta UPeU: doc primario + afiliación)
     G — Rejection reasons: trazabilidad de perfiles incompletos en draft
-    H — Baja definitiva: active→archived para staff/faculty 180d post-terminationDate (ISO 24760 §6.3)
+    H — Baja definitiva: active→archived para staff/faculty con grace periods por motivoCese (ISO 24760 §6.3)
+         fallecimiento=0d, despido=7d, termino_contrato=0d, renuncia/mutuo_disenso/otro=30d, jubilacion=nunca
     I — jpegPhoto fetch desde LAMB MinIO (upeu:photoUrl → jpegPhoto, normal, try/catch)
     J — Migración lambDocNum → identityDocuments: construye contenedor canónico + limpia taxId
     P — Position assignment (PBAC Pilar 3): ServiceType Position desde upeu:lambPositionId
@@ -34,7 +35,9 @@
 
   Leaver policy (ciclo ISO 24760 completo):
     activation/administrativeStatus ← terminationDate <= today → DISABLED (strong) [Bloque leaver]
-    lifecycleState ← 180d post-terminationDate + staff/faculty → archived (strong) [Bloque H]
+    lifecycleState ← grace period post-terminationDate + staff/faculty → archived (strong) [Bloque H]
+    Grace periods: fallecimiento=0d, despido=7d, termino_contrato=0d, renuncia/mutuo_disenso/otro=30d
+    Jubilados: nunca archivados via H (acceso Koha JUBILADO permanente via Bloque R)
 -->
 <objectTemplate
     xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
@@ -45,7 +48,7 @@
     oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390">
 
     <name>UserTemplate-Person-Base</name>
-    <description>Template canónico base UPeU v2.6. Bloques A-H + D6 + I + J + P implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque H: ciclo ISO 24760 §6.3 active→archived. D6: OrgType EP desde academicProgramCode. Bloque I: jpegPhoto fetch desde LAMB MinIO (photoUrl→jpegPhoto, normal). Bloque J: lambDocNum→identityDocuments (upeu:lambDocNum = transport canónico, reemplaza taxId como campo de transporte). J2: limpia taxId. Bloque P: PBAC Position desde lambPositionId.</description>
+    <description>Template canónico base UPeU v3.0. Bloques A-H + D6 + I + J + P + Q4 + Q5 + R + S implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque H: grace periods diferenciados por motivoCese (fallecimiento=0d, despido=7d, termino_contrato=0d, renuncia/mutuo_disenso/otro=30d, jubilacion=nunca). Bloque R: jubilados→AR-Koha-Jubilado. D6: OrgType EP desde academicProgramCode. Bloque J: lambDocNum→identityDocuments. J2: limpia taxId. Bloque P: PBAC Position desde lambPositionId.</description>
     <lifecycleState>active</lifecycleState>
 
     <!-- ============================================================
@@ -814,18 +817,33 @@
             <name>terminationDate</name>
             <path>extension/sciback:terminationDate</path>
         </source>
+        <source>
+            <name>motivoCese</name>
+            <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:motivoCese</path>
+        </source>
         <expression>
             <script>
                 <code>
-// FIX DT-5 (2026-05-23): evitar conflicto multi-value con Bloque H (auto-archive).
-// Si las condiciones de archivo se cumplen (staff/faculty + terminationDate > 180d),
-// retornar null → Bloque H asume el control de lifecycleState.
+// FIX DT-5 (2026-05-23, actualizado v3.0): evitar conflicto multi-value con Bloque H (auto-archive).
+// Si H va a tomar control (terminationDate superó grace period), F no compite.
+// Grace periods sincronizados con Bloque H: fallecimiento=0d, despido=7d,
+// termino_contrato=0d, renuncia/mutuo_disenso/otro=30d. Jubilados: F no cede (H no archiva jubilados).
 import java.time.LocalDate; import java.time.temporal.ChronoUnit;
 def aff2 = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
 def termStr2 = terminationDate != null ? basic.stringify(terminationDate).trim() : '';
-if (['staff', 'faculty'].contains(aff2) &amp;&amp; termStr2 != '') {
+def mc2 = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : '';
+if (['staff', 'faculty'].contains(aff2) &amp;&amp; termStr2 != '' &amp;&amp; mc2 != 'jubilacion') {
+    def graceDays2;
+    switch (mc2) {
+        case 'fallecimiento':    graceDays2 = 0;  break;
+        case 'despido':          graceDays2 = 7;  break;
+        case 'termino_contrato': graceDays2 = 0;  break;
+        case 'renuncia':         graceDays2 = 30; break;
+        case 'mutuo_disenso':    graceDays2 = 30; break;
+        default:                 graceDays2 = 30; break;
+    }
     try {
-        if (ChronoUnit.DAYS.between(LocalDate.parse(termStr2.length() >= 10 ? termStr2.substring(0,10) : termStr2), LocalDate.now()) > 180) {
+        if (ChronoUnit.DAYS.between(LocalDate.parse(termStr2.length() >= 10 ? termStr2.substring(0,10) : termStr2), LocalDate.now()) > graceDays2) {
             return null
         }
     } catch (Exception e) {
@@ -884,7 +902,10 @@ def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''; d
         <ref>lifecycleState</ref>
         <mapping>
             <name>auto-archive-after-termination-grace-period</name>
-            <description>Transición active→archived para staff/faculty 180 días después de terminationDate. Implementa el ciclo completo ISO 24760 §6.3.
+            <description>Transición active→archived para staff/faculty con grace period diferenciado por motivoCese.
+Grace periods: fallecimiento=0d, despido=7d, termino_contrato=0d, renuncia/mutuo_disenso/otro=30d.
+Jubilados: NUNCA archivados via H (acceso Koha JUBILADO permanente via Bloque R).
+Implementa el ciclo completo ISO 24760 §6.3. v3.0 (2026-05-23).
 FIX DT-4 (2026-05-20): eliminada source lifecycleState para romper dependencia circular
 detectada en reconcile. lifecycleState se lee via focus?.lifecycleState en condición
 (snapshot del repositorio, no valor computado en el mismo ciclo de evaluación).</description>
@@ -896,9 +917,39 @@ detectada en reconcile. lifecycleState se lee via focus?.lifecycleState en condi
             <source>
                 <path>extension/sciback:terminationDate</path>
             </source>
+            <source>
+                <name>motivoCese</name>
+                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:motivoCese</path>
+            </source>
             <condition>
                 <script>
-                    <code>import java.time.LocalDate; import java.time.temporal.ChronoUnit; def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; def termStr = terminationDate != null ? basic.stringify(terminationDate).trim() : ''; def curState = focus?.lifecycleState != null ? focus.lifecycleState.toString().trim() : ''; def eligible = ['staff', 'faculty'].contains(aff) &amp;&amp; termStr != '' &amp;&amp; curState != 'archived'; def result = false; if (eligible) { try { result = ChronoUnit.DAYS.between(LocalDate.parse(termStr.substring(0, 10)), LocalDate.now()) > 180 } catch (Exception e) { log.warn('BloqueH: terminationDate no parseable {} en {}: {}', termStr, focus?.name, e.message) } }; result</code>
+                    <code>import java.time.LocalDate; import java.time.temporal.ChronoUnit;
+def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+def termStr = terminationDate != null ? basic.stringify(terminationDate).trim() : '';
+def curState = focus?.lifecycleState != null ? focus.lifecycleState.toString().trim() : '';
+def mc = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : '';
+
+// jubilados: nunca archivar via H (acceso Koha JUBILADO permanente via Bloque R)
+if (mc == 'jubilacion') return false;
+
+def eligible = ['staff', 'faculty'].contains(aff) &amp;&amp; termStr != '' &amp;&amp; curState != 'archived';
+if (!eligible) return false;
+
+def graceDays;
+switch (mc) {
+    case 'fallecimiento':    graceDays = 0;  break;
+    case 'despido':          graceDays = 7;  break;
+    case 'termino_contrato': graceDays = 0;  break;
+    case 'renuncia':         graceDays = 30; break;
+    case 'mutuo_disenso':    graceDays = 30; break;
+    default:                 graceDays = 30; break; // null/otro: conservador
+}
+try {
+    return ChronoUnit.DAYS.between(LocalDate.parse(termStr.substring(0, 10)), LocalDate.now()) > graceDays;
+} catch (Exception e) {
+    log.warn('BloqueH: terminationDate no parseable {} en {}: {}', termStr, focus?.name, e.message);
+    return false;
+}</code>
                 </script>
             </condition>
             <expression>
@@ -1459,8 +1510,7 @@ return roleName</code>
            1. LAMB Trabajadores sync: empleado pasa a ESTADO='I' con
               PLLA_CESE.ID_MOTIVO_CESE = '05' o '18'.
            2. El searchScript (v3) incluye al jubilado en el resultset
-              (filtro: ESTADO='I' AND ID_MOTIVO_CESE IN ('05','18')
-              AND FEC_TERMINO >= SYSDATE-730).
+              (filtro: ESTADO='I' AND FEC_TERMINO >= SYSDATE-730 — todos los motivos).
            3. Inbound MOTIVO_CESE_RAW: '05'/'18' → upeu:motivoCese = 'jubilacion'.
            4. Inbound ESTADO='I' → activation/administrativeStatus = 'disabled'.
            5. El base template H (leaver policy): cuando terminationDate <= today,
