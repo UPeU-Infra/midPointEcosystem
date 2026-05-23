@@ -1333,6 +1333,28 @@ return focus?.activation?.administrativeStatus
                             </q:equal>
                         </ownerFilter>
                     </filter>
+                    <filter>
+                        <name>correlate-by-taxid</name>
+                        <documentation>cardnumber del patron Koha (DNI raw) construido como URI SCHAC == sciback:taxId.
+                             Cubre egresados/alumnos cuyos patrones Koha tienen cardnumber=DNI y MidPoint solo
+                             tiene taxId (no lambDocNum). Construye urn:schac:personalUniqueID:pe:DNI:PE:{cardnumber}
+                             y busca en extension/sciback:taxId.</documentation>
+                        <ownerFilter>
+                            <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+                                     xmlns:sb="urn:sciback:midpoint:person">
+                                <q:path>extension/sb:taxId</q:path>
+                                <expression>
+                                    <script>
+                                        <code><![CDATA[
+def cn = basic.getAttributeValue(projection, 'cardnumber')
+if (!cn || !(cn ==~ /^\d{8}$/)) return null
+return "urn:schac:personalUniqueID:pe:DNI:PE:${cn}"
+                                        ]]></code>
+                                    </script>
+                                </expression>
+                            </q:equal>
+                        </ownerFilter>
+                    </filter>
                 </correlators>
             </correlation>
             <synchronization>
