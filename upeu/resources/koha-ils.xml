@@ -881,6 +881,18 @@
                     <source>
                         <path>$focus/familyName</path>
                     </source>
+                    <source>
+                        <path>$focus/fullName</path>
+                    </source>
+                    <expression>
+                        <!-- Fallback: si familyName es null (datos LAMB incompletos),
+                             usar fullName para que Koha no rechace el POST por surname vacío.
+                             fix 2026-05-23: jubilados y otros usuarios con nombre completo
+                             en givenName/fullName sin familyName separado. -->
+                        <script>
+                            <code>if (familyName != null &amp;&amp; basic.stringify(familyName).trim() != '') return basic.stringify(familyName).trim(); if (fullName != null &amp;&amp; basic.stringify(fullName).trim() != '') return basic.stringify(fullName).trim(); return null</code>
+                        </script>
+                    </expression>
                 </outbound>
                 <inbound>
                     <name>surname-inbound</name>
