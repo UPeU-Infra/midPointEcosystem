@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:sciback="urn:sciback:midpoint:person" xmlns:sb="urn:sciback:midpoint:person" xmlns:ns1="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3" xmlns:ns2="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.identicum.midpoint.connector-koha/com.identicum.connectors.KohaConnector" xmlns:ns5="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:ns6="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:ns7="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xs="http://www.w3.org/2001/XMLSchema" oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af">
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:sciback="urn:sciback:midpoint:person" xmlns:sb="urn:sciback:midpoint:person" xmlns:upeu="urn:upeu:midpoint:local" xmlns:ns1="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3" xmlns:ns2="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.identicum.midpoint.connector-koha/com.identicum.connectors.KohaConnector" xmlns:ns5="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:ns6="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:ns7="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xs="http://www.w3.org/2001/XMLSchema" oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af">
     <name>Koha ILS</name>
     <lifecycleState>active</lifecycleState>
     <!-- 2026-05-23: v1.3.8 (OID 6fb37940-6fc6-4b87-a8c9-8eabc0dea4ae) — fallback JDBC por DNI extended_attribute en 409. v1.3.7=f50111d4. v1.3.6=e9478d50. v1.3.5=2cd4db5d. v1.3.0=0bda47cd. -->
@@ -1026,13 +1026,21 @@
                     <source>
                         <path>$focus/extension/sb:studentCycle</path>
                     </source>
+                    <source>
+                        <path>$focus/extension/upeu:motivoCese</path>
+                    </source>
                     <expression>
                         <!-- fix 2026-05-21: script lineal sin bloques { } anidados
                              de if. Solo if(cond) sentencia-simple; (un statement,
                              sin llaves). Robusto al colapso de saltos de linea que
-                             MidPoint aplica al persistir el resource. -->
+                             MidPoint aplica al persistir el resource.
+                             fix 2026-05-23: jubilados → return null para que el
+                             inducement strong de AR-Koha-Jubilado sea el único
+                             valor strong (evita "more than one value" conflict). -->
                         <script>
                             <code>
+                                def motive = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : '';
+                                if (motive == 'jubilacion') return null;
                                 def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
                                 if (aff == '') return null;
                                 if (aff == 'faculty') return 'DOCEN';
