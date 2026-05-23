@@ -1304,9 +1304,13 @@
                     </actions>
                 </reaction>
                 <reaction>
+                    <!-- 2026-05-23: revertido a link. synchronize causaba POST 400
+                         (missing surname) para usuarios sin shadow que tienen familyName
+                         vacío. link solo vincula el shadow existente sin intentar CREATE.
+                         Los unlinked sin shadow se gestionan via reconciliación Koha. -->
                     <situation>unlinked</situation>
                     <actions>
-                        <synchronize/>
+                        <link/>
                     </actions>
                 </reaction>
                 <!-- ============================================================
