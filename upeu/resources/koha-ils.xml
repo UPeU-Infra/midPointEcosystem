@@ -1306,7 +1306,7 @@
                 <reaction>
                     <situation>unlinked</situation>
                     <actions>
-                        <link/>
+                        <synchronize/>
                     </actions>
                 </reaction>
                 <!-- ============================================================
