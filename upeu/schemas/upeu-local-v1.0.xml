@@ -76,6 +76,34 @@
                         </xsd:annotation>
                     </xsd:element>
 
+                    <!-- L8 — MOTIVO DE CESE LAMB -->
+                    <!-- IIA: ENOC.PLLA_CESE.ID_MOTIVO_CESE (enlazado por PLLA_CESE.APS = VW_APS_EMPLEADO.COD_APS).
+                         Campo de transporte canónico: el resource Oracle LAMB Trabajadores hace LEFT JOIN
+                         con ENOC.PLLA_CESE para traer el motivo del último cese registrado.
+                         Vocabulario controlado normalizado (ver inbound en trabajadores.xml):
+                           jubilacion        — PLLA_CESE.ID_MOTIVO_CESE IN ('05','18')
+                           fallecimiento     — ID_MOTIVO_CESE = '09'
+                           renuncia          — ID_MOTIVO_CESE IN ('01','21')
+                           despido           — ID_MOTIVO_CESE = '03'
+                           termino_contrato  — ID_MOTIVO_CESE = '07'
+                           otro              — cualquier otro valor no nulo
+                         Solo se popula cuando ESTADO='I' (inactivo) con motivo registrado.
+                         El object template usa este campo para asignar AR-Koha-Jubilado
+                         vía assignmentTargetSearch cuando motivoCese='jubilacion'.
+                         Específico UPeU/LAMB: no reutilizable directamente entre universidades
+                         (los códigos de cese son del ERP LAMB). El concepto semántico
+                         ('jubilacion') sí es canónico. -->
+                    <xsd:element name="motivoCese" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Motivo de cese</a:displayName>
+                                <a:help>Motivo normalizado del cese del empleado. Vocabulario: jubilacion|fallecimiento|renuncia|despido|termino_contrato|otro. IIA: ENOC.PLLA_CESE.ID_MOTIVO_CESE (JOIN por COD_APS). Solo presente cuando el empleado cesó con motivo registrado en LAMB. Vacío para empleados activos o ceses sin registro.</a:help>
+                                <a:indexed>true</a:indexed>
+                                <a:displayOrder>80</a:displayOrder>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+
                 </xsd:sequence>
             </xsd:complexType>
 

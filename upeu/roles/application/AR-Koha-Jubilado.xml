@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AR-Koha-Jubilado — Application Role para jubilados en Koha ILS
+  OID: 7e973c41-cde4-4d8d-a6da-f8285ccd5b06
+  Versión: 1.0 (2026-05-23)
+  Resource target: Koha ILS (OID: 9b5a7c81-47aa-42ac-9a08-4de8b64935af)
+  Archetype: Application Role (OID: 279ad5be-a892-4add-946f-8cb3740bfc31)
+
+  Propósito:
+    Asigna la categoría JUBILADO en Koha para ex-empleados jubilados.
+    JUBILADO es una categoría especial (category_type=A, sin fecha de expiración)
+    que otorga acceso perenne a los servicios de biblioteca.
+
+  Condición de asignación (gestionada por el object template, no aquí):
+    - upeu:motivoCese = 'jubilacion'
+    - El usuario puede estar en cualquier lifecycleState (incluido archived)
+
+  Construcción:
+    Override de category_id=JUBILADO: sobreescribe el mapping del resource
+    (category-id-from-primary-affiliation, strength=strong) para garantizar
+    que la categoría Koha refleje la condición de jubilado, independientemente
+    de la primaryAffiliation histórica (faculty/staff).
+    expiry_date=null vía strong override: los jubilados no tienen fecha de
+    expiración en Koha (acceso perenne). El mapping expiry-date-outbound
+    del resource enviaría terminationDate si no se sobreescribe aquí.
+
+  Patrón IGA: rol birthright por condición de cese. Modelo reutilizable para
+  otras universidades peruanas con ERP que registre motivos de cese.
+
+  Nota MidPoint Book Cap.8: cuando un rol tiene construction con atributo
+  strength=strong y el resource también tiene un outbound strong para el mismo
+  atributo, el valor del rol (inducement) prevalece porque el evaluador de
+  construcciones de MidPoint consolida los valores del rol antes del outbound
+  del resource. Esto es comportamiento documentado.
+-->
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+      oid="7e973c41-cde4-4d8d-a6da-f8285ccd5b06">
+    <name>AR-Koha-Jubilado</name>
+    <description>Application Role: cuenta patron jubilado en Koha ILS. Categoría JUBILADO (category_type=A, acceso perenne). Asignado automáticamente por el object template cuando upeu:motivoCese=jubilacion. Override de category_id y expiry_date para garantizar acceso perenne independientemente de la afiliación histórica del empleado.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application role (OID canónico PROD) -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <inducement>
+        <construction>
+            <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+            <!-- Override category_id=JUBILADO.
+                 Prevalece sobre el mapping category-id-from-primary-affiliation del resource
+                 (que asignaría DOCEN o ADMINIST según la afiliación histórica del empleado).
+                 Los jubilados deben tener JUBILADO independientemente de si fueron faculty/staff. -->
+            <attribute>
+                <ref>ri:category_id</ref>
+                <outbound>
+                    <name>jubilado-category-override</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>JUBILADO</value>
+                    </expression>
+                </outbound>
+            </attribute>
+            <!-- Override expiry_date=null: acceso perenne.
+                 El mapping expiry-date-outbound del resource (strength=normal) enviaría
+                 terminationDate si no se sobreescribe. Para jubilados, el acceso a Koha
+                 es perenne (no expira). Strong para garantizar que null prevalezca. -->
+            <attribute>
+                <ref>ri:expiry_date</ref>
+                <outbound>
+                    <name>jubilado-expiry-date-none</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <value/>
+                    </expression>
+                </outbound>
+            </attribute>
+        </construction>
+    </inducement>
+</role>

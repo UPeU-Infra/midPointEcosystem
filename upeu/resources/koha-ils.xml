@@ -994,6 +994,9 @@
                          + pregrado / ciclo ≤6         → PREGRADO
                        role AR-Koha-Librarian          → STAFF (override por rol)
 
+                     Categorías gestionadas por rol (override del mapping):
+                       role AR-Koha-Jubilado → JUBILADO (override por rol, acceso perenne)
+
                      Categorías NO gestionadas por MidPoint (Koha-only):
                        ADMIN  — super admin Koha (operacional)
                        ANON   — usuario anónimo sistema (operacional)

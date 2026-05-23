@@ -1429,4 +1429,69 @@ return roleName</code>
         </mapping>
     </item>
 
+    <!-- ============================================================
+         BLOQUE R — BIRTHRIGHT JUBILADOS: AR-Koha-Jubilado
+         Asignación automática del rol AR-Koha-Jubilado cuando el empleado
+         se jubila (upeu:motivoCese = 'jubilacion').
+
+         Flujo completo:
+           1. LAMB Trabajadores sync: empleado pasa a ESTADO='I' con
+              PLLA_CESE.ID_MOTIVO_CESE = '05' o '18'.
+           2. El searchScript (v3) incluye al jubilado en el resultset
+              (filtro: ESTADO='I' AND ID_MOTIVO_CESE IN ('05','18')
+              AND FEC_TERMINO >= SYSDATE-730).
+           3. Inbound MOTIVO_CESE_RAW: '05'/'18' → upeu:motivoCese = 'jubilacion'.
+           4. Inbound ESTADO='I' → activation/administrativeStatus = 'disabled'.
+           5. El base template H (leaver policy): cuando terminationDate <= today,
+              el usuario pasa a lifecycleState=archived.
+           6. Este bloque R detecta motivoCese='jubilacion' y asigna AR-Koha-Jubilado.
+           7. AR-Koha-Jubilado override category_id=JUBILADO y expiry_date=null en Koha.
+
+         Nota sobre lifecycleState:
+           El assignment se activa con motivoCese='jubilacion' independientemente
+           del lifecycleState. Esto cubre el período entre el sync (ESTADO='I')
+           y la transición a archived (hasta 180d post-terminationDate por bloque H).
+           MidPoint Book Cap.9: assignments en usuarios archived se evalúan solo si
+           la política de enforcement lo permite — pero el acceso Koha debe mantenerse
+           desde el día del cese, no esperar los 180d.
+
+         Condición de DESACTIVACIÓN:
+           Si motivoCese cambia (corrección de HR en LAMB), el mapping re-evalúa
+           en el próximo recompute y retira la asignación automáticamente.
+
+         IIA: ENOC.PLLA_CESE.ID_MOTIVO_CESE (via Oracle LAMB Trabajadores v3).
+         Patrón reutilizable: cualquier universidad con campo de motivo de cese
+         en su ERP puede usar este bloque con su propio vocabulario normalizado.
+         ============================================================ -->
+    <mapping>
+        <name>R-assign-koha-jubilado</name>
+        <description>Birthright AR-Koha-Jubilado para empleados jubilados (motivoCese=jubilacion). Asignacion automatica via assignmentTargetSearch. Se activa cuando Oracle LAMB PLLA_CESE registra motivo 05 o 18 (jubilacion voluntaria o limite 70 anos). IIA: ENOC.PLLA_CESE.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <name>motivoCese</name>
+            <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:motivoCese</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>RoleType</targetType>
+                <filter>
+                    <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
+                        <q:path>name</q:path>
+                        <q:value>AR-Koha-Jubilado</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>def mc = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : ''; mc == 'jubilacion'</code>
+            </script>
+        </condition>
+    </mapping>
+
 </objectTemplate>
