@@ -200,14 +200,70 @@
                     </xsd:element>
 
                     <!-- S7 — INVESTIGACIÓN -->
+                    <!-- orcid: ORCID iD canónico (https://orcid.org/0000-0000-0000-0000).
+                         IIA futura: CTI Vitae / ORCID Public API. -->
                     <xsd:element name="orcid" type="xsd:string" minOccurs="0" maxOccurs="1">
-                        <xsd:annotation><xsd:appinfo><a:displayName>ORCID iD</a:displayName><a:indexed>true</a:indexed><a:displayOrder>700</a:displayOrder></xsd:appinfo></xsd:annotation>
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>ORCID iD</a:displayName>
+                            <a:help>ORCID iD del investigador. Formato: 0000-0000-0000-0000 (sin prefijo URL). IIA futura: CTI Vitae portal / ORCID Public API. Persistente e inmutable.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>700</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
                     </xsd:element>
+                    <!-- concytecId: código de registro RENACYT (ej: P0012345).
+                         IIA: lista anual DGI (Excel Charmín) → sciback-research-projects M4. -->
                     <xsd:element name="concytecId" type="xsd:string" minOccurs="0" maxOccurs="1">
-                        <xsd:annotation><xsd:appinfo><a:displayName>ID CONCYTEC/RENACYT</a:displayName><a:indexed>true</a:indexed><a:displayOrder>710</a:displayOrder></xsd:appinfo></xsd:annotation>
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Código RENACYT</a:displayName>
+                            <a:help>Código de registro del investigador en el padrón RENACYT/CONCYTEC (ej: P0012345). IIA: lista anual DGI / sciback-research-projects. Indexed para búsquedas de validación.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>710</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
                     </xsd:element>
+                    <!-- ctiVitaeId: ID de perfil en el portal CTI Vitae de CONCYTEC.
+                         Distinto de concytecId (código RENACYT): es el identificador interno
+                         del perfil en el portal web CTI Vitae (ej: 161494).
+                         IIA futura: sciback-research-projects CtiVitaeAdapter (M5). -->
+                    <xsd:element name="ctiVitaeId" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>ID CTI Vitae</a:displayName>
+                            <a:help>Identificador del perfil en el portal CTI Vitae de CONCYTEC (ej: 161494). Distinto del código RENACYT (concytecId). Disponible en la columna F del Excel DGI anual. IIA futura: CtiVitaeAdapter en sciback-research-projects M5.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>715</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- renacytLevel: nivel de calificación en el padrón RENACYT 2022.
+                         Vocabulario controlado alineado con Reglamento RENACYT Art. 11.
+                         IIA: lista anual DGI / sciback-research-projects M4. -->
+                    <xsd:element name="renacytLevel" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Nivel RENACYT</a:displayName>
+                            <a:help>Nivel de calificación en el padrón RENACYT. Vocabulario controlado: DISTINGUIDO | NIVEL_I | NIVEL_II | NIVEL_III | NIVEL_IV | NIVEL_V | NIVEL_VI | NIVEL_VII. Alineado con Reglamento RENACYT 2022 (Res. Pres. Ejecutiva 045-2021-CONCYTEC-PE). IIA: lista anual DGI / sciback-research-projects M4.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>718</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- renacytStatus: estado de vigencia en el padrón RENACYT.
+                         Determina si el investigador puede liderar proyectos, asesorar tesis, etc.
+                         IIA: lista anual DGI / sciback-research-projects M4. -->
+                    <xsd:element name="renacytStatus" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Estado RENACYT</a:displayName>
+                            <a:help>Estado de vigencia en el padrón RENACYT. Vocabulario controlado: ACTIVO | ACTIVO_AFILIADO | NO_ACTIVO | EXCLUIDO. Solo ACTIVO y ACTIVO_AFILIADO habilitan liderar proyectos/asesorar tesis (Reglamento RENACYT Art. 11). IIA: lista anual DGI / sciback-research-projects M4.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>719</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- researcherCategory: categoría institucional de investigador (uso interno).
+                         Distinto de renacytLevel (padrón CONCYTEC). Para clasificaciones
+                         propias de la universidad (ej: SENIOR, JUNIOR, FORMATIVO). -->
                     <xsd:element name="researcherCategory" type="xsd:string" minOccurs="0" maxOccurs="1">
-                        <xsd:annotation><xsd:appinfo><a:displayName>Categoría investigador</a:displayName><a:displayOrder>720</a:displayOrder></xsd:appinfo></xsd:annotation>
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Categoría investigador (institucional)</a:displayName>
+                            <a:help>Categoría de investigador según clasificación interna de la universidad. Distinto de renacytLevel (padrón CONCYTEC). Vocabulario libre por institución.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>720</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
                     </xsd:element>
 
                     <!-- S8 — ORGANIZACIÓN / CAMPUS -->
