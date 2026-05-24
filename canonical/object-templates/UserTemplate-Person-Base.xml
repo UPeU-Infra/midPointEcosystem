@@ -242,7 +242,11 @@
 
     <!-- D.1b — Validación: log warning si studentCycle presente sin academicProgramCode
          Solo evalúa cuando primaryAffiliation == STUDENT. weak: no bloquea.
-         Migrado desde UserTemplate-Student (upeu3: → sciback:). -->
+         Migrado desde UserTemplate-Student (upeu3: → sciback:).
+         FIX 2026-05-24: studentCycle REMOVIDO de <source> para romper self-cycle en
+         MappingSorter (el mapping leía y escribía el mismo campo). La expresión accede
+         al valor via focus?.extension; devuelve null (weak → no sobrescribe el campo).
+         La lógica de log.warn se preserva intacta. -->
     <item>
         <ref>extension/sciback:studentCycle</ref>
         <mapping>
@@ -253,21 +257,19 @@
                 <path>extension/sciback:primaryAffiliation</path>
             </source>
             <source>
-                <path>extension/sciback:studentCycle</path>
-            </source>
-            <source>
                 <path>extension/sciback:academicProgramCode</path>
             </source>
             <expression>
                 <script>
-                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; if (affil != 'student') return studentCycle; if (studentCycle != null &amp;&amp; (academicProgramCode == null || (academicProgramCode instanceof java.util.Collection ? academicProgramCode.isEmpty() : academicProgramCode.toString().isEmpty()))) { log.warn("UPeU Student: cycle={} sin academicProgramCode en user {}", studentCycle, focus?.name) }; return studentCycle</code>
+                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+if (affil != 'student') return null; // weak: no sobrescribe — solo side-effect
+def sc = focus?.extension?.findExtension(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'studentCycle'))?.getRealValue()
+if (sc != null &amp;&amp; (academicProgramCode == null || (academicProgramCode instanceof java.util.Collection ? academicProgramCode.isEmpty() : academicProgramCode.toString().isEmpty()))) {
+    log.warn("UPeU Student: cycle={} sin academicProgramCode en user {}", sc, focus?.name)
+}
+return null // weak: no sobrescribe studentCycle — solo side-effect de log</code>
                 </script>
             </expression>
-            <condition>
-                <script>
-                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; affil == 'student' &amp;&amp; studentCycle != null</code>
-                </script>
-            </condition>
         </mapping>
     </item>
 
