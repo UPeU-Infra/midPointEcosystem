@@ -1028,11 +1028,11 @@
                      ============================================================ -->
                 <outbound>
                     <name>category-id-from-primary-affiliation</name>
-                    <!-- strength=normal: permite que los roles override (AR-Koha-Investigador,
-                         AR-Koha-Jubilado) con strength=strong ganen en consolidación.
-                         Sin rol override → este mapping aplica normalmente.
-                         Con rol override strength=strong → el rol gana, este cede. -->
-                    <strength>normal</strength>
+                    <!-- strength=strong: re-evalúa en cada recompute, fuente única.
+                         Los roles override (AR-Koha-Investigador, AR-Koha-Jubilado) hacen
+                         que el expression retorne null → solo el inducement del rol provee
+                         el valor strong. Sin null de este mapping + strong del rol = conflicto. -->
+                    <strength>strong</strength>
                     <source>
                         <path>$focus/extension/sb:primaryAffiliation</path>
                     </source>
@@ -1057,6 +1057,8 @@
                             <code>
                                 def motive = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : '';
                                 if (motive == 'jubilacion') return null;
+                                def isInvestigador = focus?.roleMembershipRef?.any { it?.oid == '251f52db-af86-435d-9307-cc18ee0c3fa8' };
+                                if (isInvestigador) return null;
                                 def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
                                 if (aff == '') return null;
                                 if (aff == 'faculty') return 'DOCEN';
