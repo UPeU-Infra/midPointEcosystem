@@ -73,16 +73,20 @@
             <source>
                 <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:primaryAffiliation</path>
             </source>
-            <source>
-                <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:hireDate</path>
-            </source>
+            <!-- hireDate NO se declara como source para evitar ciclo con validate-hiredate-format (base).
+                 Ambos mappings escriben a hireDate: declarar hireDate como source aquí crearía
+                 dependencia circular. Se accede via focus directamente. DT-CYCLE-FIX-1 -->
             <expression>
                 <script>
-                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+                    <code>// Acceso directo via Prism sin source dependency (rompe ciclo con validate-hiredate-format)
+import com.evolveum.midpoint.prism.path.ItemName
+def hireDate = focus?.getExtension()?.asPrismContainerValue()?.findProperty(
+    new ItemName("urn:sciback:midpoint:person", "hireDate"))?.getRealValue()
+def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''
 if (affil == 'faculty' &amp;&amp; (hireDate == null || basic.stringify(hireDate).trim() == '')) {
     log.warn("UPeU Faculty: hireDate ausente en docente {} — leaver policy y evidencia ISO 27001 incompletas", focus?.name)
-};
-return hireDate</code>
+}
+return null  // weak: no sobrescribe; validate-hiredate-format (base) setea el valor real</code>
                 </script>
             </expression>
             <condition>
