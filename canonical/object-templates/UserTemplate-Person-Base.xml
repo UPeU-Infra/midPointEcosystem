@@ -1479,7 +1479,6 @@ return null</code>
             <expression>
                 <script>
                     <code>def mc = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : '';
-log.warn('K-DIAG mc={} affiliations={} focus={}', mc, affiliations, focus?.name);
 if (mc != 'jubilacion') return null; // no aplica — J3 calcula normalmente
 
 // Decisión B: si hay afiliación activa de mayor prioridad que alum, J3 gana
@@ -1487,12 +1486,12 @@ def affs = (affiliations ?: []).collect { basic.stringify(it).trim().toLowerCase
     .findAll { it in ['faculty','staff','student','alum','affiliate'] } as Set;
 def HIGHER_THAN_ALUM = ['faculty','staff','student'] as Set;
 if (affs.any { it in HIGHER_THAN_ALUM }) {
-    log.warn('K-jubilado: afiliación mayor {} — J3 calcula para {}', affs, focus?.name);
+    log.debug('K-jubilado: afiliación de mayor prioridad encontrada {} — J3 calcula para {}', affs, focus?.name);
     return null; // J3 ganará
 }
 
 // Jubilado puro o jubilado + affiliate → forzar alum
-log.warn('K-jubilado: RETURNING ALUM para {}', focus?.name);
+log.info('K-jubilado: motivoCese=jubilacion, sin afiliación mayor → alum para {}', focus?.name);
 return 'alum'</code>
                 </script>
             </expression>
