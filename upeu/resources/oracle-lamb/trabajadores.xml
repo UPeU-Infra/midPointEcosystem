@@ -402,11 +402,7 @@
                     <strength>normal</strength>
                     <expression>
                         <script>
-                            <code>
-if (!input) return null
-def path = input.replaceAll('^lamb-academic/', '')
-return 'https://lamb-files.upeu.edu.pe/lamb-academic/' + path
-                            </code>
+                            <code>input ? 'https://lamb-files.upeu.edu.pe/lamb-academic/' + input.toString().replaceAll('^lamb-academic/', '') : null</code>
                         </script>
                     </expression>
                     <target>
