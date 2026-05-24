@@ -468,11 +468,21 @@ return 'https://lamb-files.upeu.edu.pe/lamb-academic/' + path
                     <name>archetype-to-affiliations</name>
                     <!-- Fuente principal para Bloque J3. normal: permite coexistencia con
                          affiliations de egresados/estudiantes en usuarios dual-affiliation.
-                         Valor: faculty o staff (lowercase eduPerson 202208). -->
+                         Valor: faculty o staff (lowercase eduPerson 202208).
+                         ESTADO='I' (jubilados en período 730d): retorna null — NO escribir
+                         affiliation activa. Bloque K en el template maneja el override
+                         jubilacion→alum basándose en motivoCese, SIN interferencia de
+                         affiliations que J3 priorizaría sobre alum. Si el jubilado también
+                         es estudiante activo, affiliations=['student'] → J3 elige student
+                         correctamente (prioridad > alum), y Bloque K lo respeta. -->
                     <strength>normal</strength>
                     <expression>
                         <script>
-                            <code>input == 'archetype-user-employee-faculty' ? 'faculty' : 'staff'</code>
+                            <code>
+def estado = basic.getAttributeValue(shadow, 'ESTADO')
+if (estado == 'I') return null
+input == 'archetype-user-employee-faculty' ? 'faculty' : 'staff'
+                            </code>
                         </script>
                     </expression>
                     <target>
