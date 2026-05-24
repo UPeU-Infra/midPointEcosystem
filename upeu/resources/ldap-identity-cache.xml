@@ -14202,7 +14202,7 @@
                     </source>
                     <expression>
                         <script>
-                            <code>gender != null ? Integer.parseInt(gender.toString().trim()) : null</code>
+                            <code>if (gender == null) return null; def g = gender.toString().trim(); switch(g) { case '1': case 'M': case 'm': return 1; case '2': case 'F': case 'f': return 2; case '0': case '9': return Integer.parseInt(g); default: try { return Integer.parseInt(g) } catch(e) { return 0 } }</code>
                         </script>
                     </expression>
                 </outbound>
