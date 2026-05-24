@@ -12,10 +12,10 @@
     B — Datos derivados: fullName, emailAddress institucional (weak)
     C — eppn (eduPersonPrincipalName): strong, identificador federado
     D — Auto-asignación R-Affiliation-* via assignmentTargetSearch
-    D.3 — BR-Docente-TC (primaryAffiliation=FACULTY)
-    D.4 — BR-Admin-Area (primaryAffiliation=STAFF)
+    D.3 — BR-Docente-TC (primaryAffiliation=faculty)
+    D.4 — BR-Admin-Area (primaryAffiliation=staff)
     D.5-alum — BR-Egresado (primaryAffiliation=alum) [añadido v2.7]
-    D.5-base — BR-Personal-General piso mínimo (STAFF || FACULTY)
+    D.5-base — BR-Personal-General piso mínimo (staff || faculty)
     D6 — OrgType EP desde academicProgramCode
     E — Asignación a Org (TODO: espera LAMB inbound depto→OU)
     F — Lifecycle gate draft→active (política estricta UPeU: doc primario + afiliación)
@@ -24,6 +24,8 @@
          fallecimiento=0d, despido=7d, termino_contrato=0d, renuncia/mutuo_disenso/otro=30d, jubilacion=nunca
     I — jpegPhoto fetch desde LAMB MinIO (upeu:photoUrl → jpegPhoto, normal, try/catch)
     J — Migración lambDocNum → identityDocuments: construye contenedor canónico + limpia taxId
+    J3 — Calcula primaryAffiliation desde affiliations multi-valor por prioridad (faculty>staff>student>alum>affiliate)
+    K — Override jubilados→alum (Decisión B): strong, condicional a motivoCese=jubilacion y sin afiliación mayor
     P — Position assignment (PBAC Pilar 3): ServiceType Position desde upeu:lambPositionId
     Q4 — Birthright AR-Koha-Librarian para personal CRAI (costCenter=area.97/522/625) [movido de staff template v2.9]
     Q5 — Birthright AR-Koha-Librarian-{tier} via LookupTable LT-CRAI-Puesto-Tier [movido de staff template v2.9]
@@ -37,7 +39,7 @@
     activation/administrativeStatus ← terminationDate <= today → DISABLED (strong) [Bloque leaver]
     lifecycleState ← grace period post-terminationDate + staff/faculty → archived (strong) [Bloque H]
     Grace periods: fallecimiento=0d, despido=7d, termino_contrato=0d, renuncia/mutuo_disenso/otro=30d
-    Jubilados: nunca archivados via H (acceso Koha JUBILADO permanente via Bloque R)
+    Jubilados: nunca archivados via H (Bloque K los clasifica como alum, acceso Koha via AR-Koha-Patron-Alum)
 -->
 <objectTemplate
     xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
@@ -48,7 +50,7 @@
     oid="855caaca-68c4-4f7f-8ff8-b4e35dd7d390">
 
     <name>UserTemplate-Person-Base</name>
-    <description>Template canónico base UPeU v3.0. Bloques A-H + D6 + I + J + P + Q4 + Q5 + R + S implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque H: grace periods diferenciados por motivoCese (fallecimiento=0d, despido=7d, termino_contrato=0d, renuncia/mutuo_disenso/otro=30d, jubilacion=nunca). Bloque R: jubilados→AR-Koha-Jubilado. D6: OrgType EP desde academicProgramCode. Bloque J: lambDocNum→identityDocuments. J2: limpia taxId. Bloque P: PBAC Position desde lambPositionId.</description>
+    <description>Template canónico base UPeU v3.1 (Fase 1 — eduPerson 202208). Bloques A-H + D6 + I + J + J3 + K + P + Q4 + Q5 + S implementados. Schema: sciback:person (canónico) + upeu:local (LAMB). Libro Cap.9 compliant. Bloque J3: calcula primaryAffiliation desde affiliations multi-valor (normal, prioridad faculty>staff>student>alum>affiliate). Bloque K: override jubilados→alum (Decisión B, strong). Bloque H: grace periods diferenciados por motivoCese (fallecimiento=0d, despido=7d, termino_contrato=0d, renuncia/mutuo_disenso/otro=30d, jubilacion=nunca). Bloque R: REMOVIDO (reemplazado por K). D6: OrgType EP desde academicProgramCode. Bloque J: lambDocNum→identityDocuments. J2: limpia taxId. Bloque P: PBAC Position desde lambPositionId. VOCABULARIO: todo lowercase eduPerson 202208 (faculty|staff|student|alum|affiliate). EMPLOYEE y AFFILIATE-CU eliminados del vocabulario canónico.</description>
     <lifecycleState>active</lifecycleState>
 
     <!-- ============================================================
@@ -192,19 +194,18 @@
          y construye el assignment completo. Patrón birthright roles.
 
          Fuente: extension/sciback:primaryAffiliation
-         Valores esperados desde LAMB inbound:
-           STUDENT     → R-Affiliation-Student  (79ad22c7-...)
-           FACULTY     → R-Affiliation-Faculty  (94a03f65-...)
-           STAFF       → R-Affiliation-Staff    (0da0b3b8-...)
-           EMPLOYEE    → R-Affiliation-Employee (7d4e89fb-...)
-           ALUM        → R-Affiliation-Alumni   (485dc678-...)
-           AFFILIATE-CU → R-Affiliation-Affiliate-CU (31f25974-...)
+         Vocabulario canónico eduPerson 202208 (todo lowercase):
+           student   → R-Affiliation-Student  (79ad22c7-...)
+           faculty   → R-Affiliation-Faculty  (94a03f65-...)
+           staff     → R-Affiliation-Staff    (0da0b3b8-...)
+           alum      → R-Affiliation-Alumni   (485dc678-...)
+           affiliate → R-Affiliation-Affiliate (si existe)
 
-         Lógica: busca rol por name = "R-Affiliation-" + capitalize(primaryAffiliation)
-         AFFILIATE-CU requiere manejo especial (guion en el valor).
+         EMPLOYEE y AFFILIATE-CU eliminados (no son eduPerson 202208 canónicos).
+         Lógica: busca rol por name en roleMap lowercase.
 
          strong: fuerza asignación en cada recompute.
-         Condición: solo cuando primaryAffiliation tiene valor no vacío.
+         Condición: solo cuando primaryAffiliation tiene valor canónico.
          ============================================================ -->
     <mapping>
         <name>D-assign-affiliation-role-from-primaryAffiliation</name>
@@ -221,7 +222,7 @@
                         <q:path>name</q:path>
                         <expression>
                             <script>
-                                <code>if (primaryAffiliation == null) return null; def val = basic.stringify(primaryAffiliation).trim().toUpperCase(); def roleMap = ['STUDENT': 'R-Affiliation-Student', 'FACULTY': 'R-Affiliation-Faculty', 'STAFF': 'R-Affiliation-Staff', 'EMPLOYEE': 'R-Affiliation-Employee', 'ALUM': 'R-Affiliation-Alumni', 'AFFILIATE-CU': 'R-Affiliation-Affiliate-CU']; return roleMap[val]</code>
+                                <code>if (primaryAffiliation == null) return null; def val = basic.stringify(primaryAffiliation).trim().toLowerCase(); def roleMap = ['student': 'R-Affiliation-Student', 'faculty': 'R-Affiliation-Faculty', 'staff': 'R-Affiliation-Staff', 'alum': 'R-Affiliation-Alumni', 'affiliate': 'R-Affiliation-Affiliate']; return roleMap[val]</code>
                             </script>
                         </expression>
                     </q:equal>
@@ -234,7 +235,7 @@
         </target>
         <condition>
             <script>
-                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim() != '' &amp;&amp; ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUM','AFFILIATE-CU'].contains(basic.stringify(primaryAffiliation).trim().toUpperCase())</code>
+                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim() != '' &amp;&amp; ['student','faculty','staff','alum','affiliate'].contains(basic.stringify(primaryAffiliation).trim().toLowerCase())</code>
             </script>
         </condition>
     </mapping>
@@ -259,12 +260,12 @@
             </source>
             <expression>
                 <script>
-                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''; if (affil != 'STUDENT') return studentCycle; if (studentCycle != null &amp;&amp; (academicProgramCode == null || (academicProgramCode instanceof java.util.Collection ? academicProgramCode.isEmpty() : academicProgramCode.toString().isEmpty()))) { log.warn("UPeU Student: cycle={} sin academicProgramCode en user {}", studentCycle, focus?.name) }; return studentCycle</code>
+                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; if (affil != 'student') return studentCycle; if (studentCycle != null &amp;&amp; (academicProgramCode == null || (academicProgramCode instanceof java.util.Collection ? academicProgramCode.isEmpty() : academicProgramCode.toString().isEmpty()))) { log.warn("UPeU Student: cycle={} sin academicProgramCode en user {}", studentCycle, focus?.name) }; return studentCycle</code>
                 </script>
             </expression>
             <condition>
                 <script>
-                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''; affil == 'STUDENT' &amp;&amp; studentCycle != null</code>
+                    <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; affil == 'student' &amp;&amp; studentCycle != null</code>
                 </script>
             </condition>
         </mapping>
@@ -306,18 +307,18 @@
         </target>
         <condition>
             <script>
-                <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''; affil == 'STUDENT' &amp;&amp; studentCycle != null</code>
+                <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; affil == 'student' &amp;&amp; studentCycle != null</code>
             </script>
         </condition>
     </mapping>
 
     <!-- D.3 — Auto-asignación BR-Docente-TC para docentes activos
-         Solo actúa cuando primaryAffiliation == FACULTY.
+         Solo actúa cuando primaryAffiliation == faculty.
          Nota: diferenciación TC/TP pendiente de datos LAMB (employeeCategory).
          Migrado desde UserTemplate-Employee-Faculty (upeu3: → sciback:). -->
     <mapping>
         <name>D-autoassign-br-docente-tc</name>
-        <description>Auto-asigna BR-Docente-TC a usuarios con primaryAffiliation=FACULTY. Diferenciación TC/TP pendiente de Fase 5 LAMB inbound. Opción A: lógica en base template.</description>
+        <description>Auto-asigna BR-Docente-TC a usuarios con primaryAffiliation=faculty (eduPerson 202208). Diferenciación TC/TP pendiente de Fase 5 LAMB inbound. Opción A: lógica en base template.</description>
         <lifecycleState>active</lifecycleState>
         <strength>strong</strength>
         <source>
@@ -340,17 +341,17 @@
         </target>
         <condition>
             <script>
-                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toUpperCase() == 'FACULTY'</code>
+                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'faculty'</code>
             </script>
         </condition>
     </mapping>
 
     <!-- D.4 — Auto-asignación BR-Admin-Area para personal administrativo
-         Solo actúa cuando primaryAffiliation == STAFF.
+         Solo actúa cuando primaryAffiliation == staff.
          Migrado desde UserTemplate-Employee-Staff (upeu3: → sciback:). -->
     <mapping>
         <name>D-autoassign-br-admin-area</name>
-        <description>Auto-asigna BR-Admin-Area a usuarios con primaryAffiliation=STAFF. Opción A: lógica en base template.</description>
+        <description>Auto-asigna BR-Admin-Area a usuarios con primaryAffiliation=staff (eduPerson 202208). Opción A: lógica en base template.</description>
         <lifecycleState>active</lifecycleState>
         <strength>strong</strength>
         <source>
@@ -373,7 +374,7 @@
         </target>
         <condition>
             <script>
-                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toUpperCase() == 'STAFF'</code>
+                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'staff'</code>
             </script>
         </condition>
     </mapping>
@@ -421,7 +422,7 @@
          Garantiza acceso LDAP/Keycloak a trabajadores sin posición tipificada. -->
     <mapping>
         <name>D-autoassign-br-personal-general</name>
-        <description>Auto-asigna BR-Personal-General (piso mínimo) a todo usuario con primaryAffiliation=STAFF o FACULTY. Resuelve los 29.730 trabajadores activos sin BR que no llegan a LDAP/Keycloak. AR-LDAP-Person ya inducido en otros BRs — MidPoint lo deduplica. Opción A: lógica en base template.</description>
+        <description>Auto-asigna BR-Personal-General (piso mínimo) a todo usuario con primaryAffiliation=staff o faculty (eduPerson 202208). Resuelve los 29.730 trabajadores activos sin BR que no llegan a LDAP/Keycloak. AR-LDAP-Person ya inducido en otros BRs — MidPoint lo deduplica. Opción A: lógica en base template.</description>
         <lifecycleState>active</lifecycleState>
         <strength>strong</strength>
         <source>
@@ -444,7 +445,7 @@
         </target>
         <condition>
             <script>
-                <code>def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''; aff == 'STAFF' || aff == 'FACULTY'</code>
+                <code>def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; aff == 'staff' || aff == 'faculty'</code>
             </script>
         </condition>
     </mapping>
@@ -729,7 +730,7 @@
             </source>
             <expression>
                 <script>
-                    <code><![CDATA[def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''; if (ls != 'draft' && ls != 'proposed') return null; def SCIBACK_NS = 'urn:sciback:midpoint:person'; def AFFIL_OIDS = ['79ad22c7-b828-4b8c-a562-2ee01b214d7f','94a03f65-e866-4d49-a996-26c4dc227413','0da0b3b8-a93b-4765-ad71-30c535ff7512','7d4e89fb-163c-478c-a224-4e4be733bc1b','485dc678-94a5-4d20-9463-71568c625a33','31f25974-62c9-404a-a038-b17a08059fe5'] as Set; def VALID_AFFILIATIONS = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUM','AFFILIATE-CU'] as Set; def reasons = []; def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''; if (pn == '') reasons << 'PR-02: personalNumber ausente o vacio'; def hasPrimary = false; def primaryDocNumber = null; def primaryDocType = null; try { def primQN = new javax.xml.namespace.QName(SCIBACK_NS, 'primary'); def numQN = new javax.xml.namespace.QName(SCIBACK_NS, 'number'); def typeQN = new javax.xml.namespace.QName(SCIBACK_NS, 'type'); def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(primQN); def numPath = com.evolveum.midpoint.prism.path.ItemPath.create(numQN); def typePath = com.evolveum.midpoint.prism.path.ItemPath.create(typeQN); def docs = identityDocuments; if (docs != null) { def docList = (docs instanceof List) ? docs : [docs]; docList.each { doc -> def primProp = doc?.findProperty(primPath); if ('true' == primProp?.realValue?.toString()) { hasPrimary = true; primaryDocNumber = doc?.findProperty(numPath)?.realValue?.toString(); primaryDocType = doc?.findProperty(typePath)?.realValue?.toString() } } } } catch (Exception e) { log.warn('Bloque G: error leyendo identityDocuments en {}: {}', focus?.name, e.message) }; if (!hasPrimary && taxId != null) { def txStr = basic.stringify(taxId)?.trim(); if (txStr?.startsWith('urn:schac:personalUniqueID:')) { hasPrimary = true; def parts = txStr.split(':'); primaryDocNumber = parts.length > 0 ? parts[parts.length - 1] : null; primaryDocType = 'DNI' } }; if (!hasPrimary) { reasons << 'PR-03: sin documento de identidad primario (primary=true)' } else if (primaryDocNumber != null) { def docType = primaryDocType?.toUpperCase() ?: 'DNI'; if (docType == 'DNI' || docType == '') { if (!(primaryDocNumber ==~ /^\d{8}$/)) reasons << "PR-04: DNI invalido '${primaryDocNumber}' (debe ser 8 digitos)" } }; def hasAffil = focus?.assignment?.any { a -> a.targetRef?.oid in AFFIL_OIDS }; if (!hasAffil) reasons << 'PR-05: sin rol R-Affiliation-* asignado'; def primAffil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''; if (!primAffil || !(primAffil in VALID_AFFILIATIONS)) reasons << "PR-06: primaryAffiliation invalido ('${primAffil}'). Validos: ${VALID_AFFILIATIONS.sort().join('|')}"; def email = emailAddress != null ? basic.stringify(emailAddress) : ''; if (!email.endsWith('@upeu.edu.pe')) reasons << "PR-07: emailAddress institucional invalido ('${email}')"; def gn = givenName != null ? basic.stringify(givenName).trim() : ''; if (gn == '') reasons << 'PR-08a: givenName ausente o vacio'; def fn = familyName != null ? basic.stringify(familyName).trim() : ''; if (fn == '') reasons << 'PR-08b: familyName ausente o vacio'; if (reasons) { log.info('Bloque G [{}]: {} fallos: {}', focus?.name, reasons.size(), reasons.join(' | ')); return reasons }; return null]]></code>
+                    <code><![CDATA[def ls = lifecycleState != null ? basic.stringify(lifecycleState) : ''; if (ls != 'draft' && ls != 'proposed') return null; def SCIBACK_NS = 'urn:sciback:midpoint:person'; def AFFIL_OIDS = ['79ad22c7-b828-4b8c-a562-2ee01b214d7f','94a03f65-e866-4d49-a996-26c4dc227413','0da0b3b8-a93b-4765-ad71-30c535ff7512','7d4e89fb-163c-478c-a224-4e4be733bc1b','485dc678-94a5-4d20-9463-71568c625a33','31f25974-62c9-404a-a038-b17a08059fe5'] as Set; def VALID_AFFILIATIONS = ['student','faculty','staff','alum','affiliate'] as Set; def reasons = []; def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''; if (pn == '') reasons << 'PR-02: personalNumber ausente o vacio'; def hasPrimary = false; def primaryDocNumber = null; def primaryDocType = null; try { def primQN = new javax.xml.namespace.QName(SCIBACK_NS, 'primary'); def numQN = new javax.xml.namespace.QName(SCIBACK_NS, 'number'); def typeQN = new javax.xml.namespace.QName(SCIBACK_NS, 'type'); def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(primQN); def numPath = com.evolveum.midpoint.prism.path.ItemPath.create(numQN); def typePath = com.evolveum.midpoint.prism.path.ItemPath.create(typeQN); def docs = identityDocuments; if (docs != null) { def docList = (docs instanceof List) ? docs : [docs]; docList.each { doc -> def primProp = doc?.findProperty(primPath); if ('true' == primProp?.realValue?.toString()) { hasPrimary = true; primaryDocNumber = doc?.findProperty(numPath)?.realValue?.toString(); primaryDocType = doc?.findProperty(typePath)?.realValue?.toString() } } } } catch (Exception e) { log.warn('Bloque G: error leyendo identityDocuments en {}: {}', focus?.name, e.message) }; if (!hasPrimary && taxId != null) { def txStr = basic.stringify(taxId)?.trim(); if (txStr?.startsWith('urn:schac:personalUniqueID:')) { hasPrimary = true; def parts = txStr.split(':'); primaryDocNumber = parts.length > 0 ? parts[parts.length - 1] : null; primaryDocType = 'DNI' } }; if (!hasPrimary) { reasons << 'PR-03: sin documento de identidad primario (primary=true)' } else if (primaryDocNumber != null) { def docType = primaryDocType?.toUpperCase() ?: 'DNI'; if (docType == 'DNI' || docType == '') { if (!(primaryDocNumber ==~ /^\d{8}$/)) reasons << "PR-04: DNI invalido '${primaryDocNumber}' (debe ser 8 digitos)" } }; def hasAffil = focus?.assignment?.any { a -> a.targetRef?.oid in AFFIL_OIDS }; if (!hasAffil) reasons << 'PR-05: sin rol R-Affiliation-* asignado'; def primAffil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; if (!primAffil || !(primAffil in VALID_AFFILIATIONS)) reasons << "PR-06: primaryAffiliation invalido ('${primAffil}'). Validos: ${VALID_AFFILIATIONS.sort().join('|')}"; def email = emailAddress != null ? basic.stringify(emailAddress) : ''; if (!email.endsWith('@upeu.edu.pe')) reasons << "PR-07: emailAddress institucional invalido ('${email}')"; def gn = givenName != null ? basic.stringify(givenName).trim() : ''; if (gn == '') reasons << 'PR-08a: givenName ausente o vacio'; def fn = familyName != null ? basic.stringify(familyName).trim() : ''; if (fn == '') reasons << 'PR-08b: familyName ausente o vacio'; if (reasons) { log.info('Bloque G [{}]: {} fallos: {}', focus?.name, reasons.size(), reasons.join(' | ')); return reasons }; return null]]></code>
                 </script>
             </expression>
             <condition>
@@ -850,7 +851,7 @@ if (['staff', 'faculty'].contains(aff2) &amp;&amp; termStr2 != '' &amp;&amp; mc2
         log.warn('Bloque F archive-guard: terminationDate no parseable {} en {}: {}', termStr2, focus?.name, e.message)
     }
 }
-def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''; def hasPersonalNumber = (pn != ''); def hasPrimaryDoc = false; try { def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'primary')); def docs = identityDocuments; if (docs != null) { def docList = (docs instanceof List) ? docs : [docs]; hasPrimaryDoc = docList.any { doc -> def primProp = doc?.findProperty(primPath); primProp != null &amp;&amp; 'true' == primProp?.realValue?.toString() } } } catch (Exception e) { log.warn('Bloque F: error leyendo identityDocuments en {}: {}', focus?.name, e.message) }; if (!hasPrimaryDoc &amp;&amp; taxId != null) { def txStr = basic.stringify(taxId)?.trim(); if (txStr?.startsWith('urn:schac:personalUniqueID:')) hasPrimaryDoc = true }; def validAffiliations = ['STUDENT','FACULTY','STAFF','EMPLOYEE','ALUM','AFFILIATE-CU']; def hasAffiliation = primaryAffiliation != null &amp;&amp; validAffiliations.contains(basic.stringify(primaryAffiliation).trim().toUpperCase()); if (hasPersonalNumber &amp;&amp; hasPrimaryDoc &amp;&amp; hasAffiliation) { return 'active' } else { if (!hasPersonalNumber) { log.info('Bloque F lifecycle gate: {} sin personalNumber -> draft', focus?.name) }; if (!hasPrimaryDoc) { log.info('Bloque F lifecycle gate: {} sin documento primario -> draft', focus?.name) }; if (!hasAffiliation) { log.info('Bloque F lifecycle gate: {} sin afiliacion valida -> draft', focus?.name) }; return 'draft' }
+def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''; def hasPersonalNumber = (pn != ''); def hasPrimaryDoc = false; try { def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'primary')); def docs = identityDocuments; if (docs != null) { def docList = (docs instanceof List) ? docs : [docs]; hasPrimaryDoc = docList.any { doc -> def primProp = doc?.findProperty(primPath); primProp != null &amp;&amp; 'true' == primProp?.realValue?.toString() } } } catch (Exception e) { log.warn('Bloque F: error leyendo identityDocuments en {}: {}', focus?.name, e.message) }; if (!hasPrimaryDoc &amp;&amp; taxId != null) { def txStr = basic.stringify(taxId)?.trim(); if (txStr?.startsWith('urn:schac:personalUniqueID:')) hasPrimaryDoc = true }; def validAffiliations = ['student','faculty','staff','alum','affiliate']; def hasAffiliation = primaryAffiliation != null &amp;&amp; validAffiliations.contains(basic.stringify(primaryAffiliation).trim().toLowerCase()); if (hasPersonalNumber &amp;&amp; hasPrimaryDoc &amp;&amp; hasAffiliation) { return 'active' } else { if (!hasPersonalNumber) { log.info('Bloque F lifecycle gate: {} sin personalNumber -> draft', focus?.name) }; if (!hasPrimaryDoc) { log.info('Bloque F lifecycle gate: {} sin documento primario -> draft', focus?.name) }; if (!hasAffiliation) { log.info('Bloque F lifecycle gate: {} sin afiliacion valida -> draft', focus?.name) }; return 'draft' }
                 </code>
             </script>
         </expression>
@@ -1092,7 +1093,7 @@ try {
         </target>
         <condition>
             <script>
-                <code>def v = lambPositionId != null ? basic.stringify(lambPositionId).trim() : ''; def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toUpperCase() : ''; v != '' &amp;&amp; (affil == 'FACULTY' || affil == 'STAFF')</code>
+                <code>def v = lambPositionId != null ? basic.stringify(lambPositionId).trim() : ''; def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; v != '' &amp;&amp; (affil == 'faculty' || affil == 'staff')</code>
             </script>
         </condition>
     </mapping>
@@ -1395,6 +1396,161 @@ return roleName</code>
 
 
     <!-- ============================================================
+         BLOQUE J3 — CALCULA primaryAffiliation DESDE affiliations MULTI-VALOR
+         Reemplaza la escritura directa de primaryAffiliation desde cada resource.
+         Los resources ahora escriben en affiliations (multi-valor); este bloque
+         calcula primaryAffiliation por prioridad canónica eduPerson 202208:
+           faculty(1) > staff(2) > student(3) > alum(4) > affiliate(5)
+
+         strength: normal — el Bloque K (strong) puede hacer override para jubilados.
+         source: sciback:affiliations (multi-valor, agregado desde todos los resources LAMB).
+
+         Casos:
+           - Trabajador puro:   affiliations=['staff'] → primaryAffiliation='staff'
+           - Docente puro:      affiliations=['faculty'] → primaryAffiliation='faculty'
+           - Egresado puro:     affiliations=['alum'] → primaryAffiliation='alum'
+           - Dual staff+alum:   affiliations=['staff','alum'] → 'staff' (prioridad)
+           - Dual faculty+alum: affiliations=['faculty','alum'] → 'faculty' (prioridad)
+           - Vacío:             affiliations=[] → null (Bloque F rechaza draft)
+
+         IGA canónico: el template calcula; los resources solo aportan datos crudos.
+         Libro Cap.9: focus processing — mappings de derivación son responsabilidad del template.
+         ============================================================ -->
+    <item>
+        <ref>extension/sciback:primaryAffiliation</ref>
+        <mapping>
+            <name>J3-primaryAffiliation-from-affiliations-priority</name>
+            <description>Calcula primaryAffiliation desde affiliations multi-valor por prioridad eduPerson 202208: faculty(1) > staff(2) > student(3) > alum(4) > affiliate(5). strength=normal: el Bloque K (strong) hace override para jubilados. Reemplaza escritura directa desde recursos individuales.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>normal</strength>
+            <source>
+                <path>extension/sciback:affiliations</path>
+            </source>
+            <expression>
+                <script>
+                    <code>def CANONICAL = ['faculty','staff','student','alum','affiliate'];
+def affs = (affiliations ?: []).collect { basic.stringify(it).trim().toLowerCase() }
+    .findAll { it in CANONICAL } as Set;
+if (affs.isEmpty()) { log.debug('J3: affiliations vacío en {} — primaryAffiliation null', focus?.name); return null };
+for (def canon : CANONICAL) {
+    if (canon in affs) { log.debug('J3: primaryAffiliation={} (de affiliations={}) en {}', canon, affs, focus?.name); return canon }
+};
+return null</code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>def raw = affiliations; def lst = (raw instanceof java.util.Collection) ? raw : (raw != null ? [raw] : []); !lst.isEmpty()</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
+         BLOQUE K — OVERRIDE JUBILADOS → alum (Decisión B)
+         Cuando motivoCese=jubilacion, fuerza primaryAffiliation=alum
+         SALVO que haya una afiliación activa de mayor prioridad
+         (faculty/staff/student). En ese caso J3 gana.
+
+         Casos resueltos:
+           - Jubilado puro (sin más affiliations) → alum, formerRole=staff/faculty
+           - Jubilado + estudiante posgrado → student (J3 gana, K devuelve null)
+           - Jubilado + recontratado docente → faculty (J3 gana)
+           - Jubilado + alumni preexistente → alum, formerRole=staff/faculty
+
+         strength: strong — override sobre J3 (normal) solo para jubilados puros.
+         Decisión B documentada en DECISION-eduperson-koha-categorycodes.md.
+         IIA motivoCese: ENOC.PLLA_CESE.ID_MOTIVO_CESE (via Oracle LAMB Trabajadores v3).
+         ============================================================ -->
+    <item>
+        <ref>extension/sciback:primaryAffiliation</ref>
+        <mapping>
+            <name>K-jubilados-force-alum-decision-b</name>
+            <description>Override: jubilados sin afiliación activa de mayor prioridad → alum. Implementa Decisión B. strong: override J3 (normal) para jubilados puros. Si hay faculty/staff/student activo, retorna null y J3 calcula. IIA: ENOC.PLLA_CESE.ID_MOTIVO_CESE.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>motivoCese</name>
+                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:motivoCese</path>
+            </source>
+            <source>
+                <path>extension/sciback:affiliations</path>
+            </source>
+            <expression>
+                <script>
+                    <code>def mc = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : '';
+if (mc != 'jubilacion') return null; // no aplica — J3 calcula normalmente
+
+// Decisión B: si hay afiliación activa de mayor prioridad que alum, J3 gana
+def affs = (affiliations ?: []).collect { basic.stringify(it).trim().toLowerCase() }
+    .findAll { it in ['faculty','staff','student','alum','affiliate'] } as Set;
+def HIGHER_THAN_ALUM = ['faculty','staff','student'] as Set;
+if (affs.any { it in HIGHER_THAN_ALUM }) {
+    log.debug('K-jubilado: afiliación de mayor prioridad encontrada {} — J3 calcula para {}', affs, focus?.name);
+    return null; // J3 ganará
+}
+
+// Jubilado puro o jubilado + affiliate → forzar alum
+log.info('K-jubilado: motivoCese=jubilacion, sin afiliación mayor → alum para {}', focus?.name);
+return 'alum'</code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>motivoCese != null &amp;&amp; basic.stringify(motivoCese).trim().toLowerCase() == 'jubilacion'</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
+         BLOQUE K.2 — formerRole PARA JUBILADOS (mapping side)
+         Cuando Bloque K se activa (jubilado puro → alum), registra el rol
+         anterior (staff|faculty) en upeu:formerRole para auditoría y
+         para que Koha pueda exponer extended_attribute FORMER_ROLE.
+         Solo se escribe cuando no hay afiliación activa de mayor prioridad.
+         strength: normal — es dato complementario al override K.
+         ============================================================ -->
+    <item>
+        <ref xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:formerRole</ref>
+        <mapping>
+            <name>K2-formerRole-for-jubilados</name>
+            <description>Registra el rol anterior (staff|faculty) en upeu:formerRole cuando el jubilado es clasificado como alum (Bloque K, Decisión B). Permite que Koha exponga FORMER_ROLE. Solo actúa cuando no hay afiliación activa de mayor prioridad. normal: dato complementario.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>normal</strength>
+            <source>
+                <name>motivoCese</name>
+                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:motivoCese</path>
+            </source>
+            <source>
+                <path>extension/sciback:affiliations</path>
+            </source>
+            <expression>
+                <script>
+                    <code>def mc = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : '';
+if (mc != 'jubilacion') return null;
+
+def affs = (affiliations ?: []).collect { basic.stringify(it).trim().toLowerCase() }
+    .findAll { it in ['faculty','staff','student','alum','affiliate'] } as Set;
+def HIGHER_THAN_ALUM = ['faculty','staff','student'] as Set;
+if (affs.any { it in HIGHER_THAN_ALUM }) return null; // K no se activó, no tocar formerRole
+
+// Buscar el valor staff o faculty que el jubilado tenía antes
+def WORKER_AFFS = ['faculty','staff'] as Set;
+def former = affs.find { it in WORKER_AFFS };
+if (former) { log.debug('K2: formerRole={} para jubilado {}', former, focus?.name); return former };
+return null</code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>motivoCese != null &amp;&amp; basic.stringify(motivoCese).trim().toLowerCase() == 'jubilacion'</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
          BLOQUE J — MIGRACIÓN lambDocNum → identityDocuments (contenedor canónico)
          Construye el contenedor sciback:identityDocuments a partir de:
            - upeu:lambDocType: código de tipo LAMB (ej: "1", "4", "7")
@@ -1503,41 +1659,20 @@ return roleName</code>
 
     <!-- ============================================================
          BLOQUE R — BIRTHRIGHT JUBILADOS: AR-Koha-Jubilado
-         Asignación automática del rol AR-Koha-Jubilado cuando el empleado
-         se jubila (upeu:motivoCese = 'jubilacion').
-
-         Flujo completo:
-           1. LAMB Trabajadores sync: empleado pasa a ESTADO='I' con
-              PLLA_CESE.ID_MOTIVO_CESE = '05' o '18'.
-           2. El searchScript (v3) incluye al jubilado en el resultset
-              (filtro: ESTADO='I' AND FEC_TERMINO >= SYSDATE-730 — todos los motivos).
-           3. Inbound MOTIVO_CESE_RAW: '05'/'18' → upeu:motivoCese = 'jubilacion'.
-           4. Inbound ESTADO='I' → activation/administrativeStatus = 'disabled'.
-           5. El base template H (leaver policy): cuando terminationDate <= today,
-              el usuario pasa a lifecycleState=archived.
-           6. Este bloque R detecta motivoCese='jubilacion' y asigna AR-Koha-Jubilado.
-           7. AR-Koha-Jubilado override category_id=JUBILADO y expiry_date=null en Koha.
-
-         Nota sobre lifecycleState:
-           El assignment se activa con motivoCese='jubilacion' independientemente
-           del lifecycleState. Esto cubre el período entre el sync (ESTADO='I')
-           y la transición a archived (hasta 180d post-terminationDate por bloque H).
-           MidPoint Book Cap.9: assignments en usuarios archived se evalúan solo si
-           la política de enforcement lo permite — pero el acceso Koha debe mantenerse
-           desde el día del cese, no esperar los 180d.
-
-         Condición de DESACTIVACIÓN:
-           Si motivoCese cambia (corrección de HR en LAMB), el mapping re-evalúa
-           en el próximo recompute y retira la asignación automáticamente.
-
-         IIA: ENOC.PLLA_CESE.ID_MOTIVO_CESE (via Oracle LAMB Trabajadores v3).
-         Patrón reutilizable: cualquier universidad con campo de motivo de cese
-         en su ERP puede usar este bloque con su propio vocabulario normalizado.
+         REMOVIDO en Fase 1 eduPerson 202208 (2026-05-24).
+         Reemplazado por Bloque K: jubilados → primaryAffiliation=alum.
+         El categorycode en Koha se gestiona ahora desde primaryAffiliation=alum
+         (koha-ils.xml: alum → 'alum' en Fase 4).
+         Los 6 jubilados existentes conservan el rol AR-Koha-Jubilado
+         transitoriamente via sus assignments existentes (red de seguridad).
+         El rol AR-Koha-Jubilado se depreciará en Fase 8 (cleanup).
+         Documentado en DECISION-eduperson-koha-categorycodes.md §1.2.
          ============================================================ -->
+    <!-- BLOQUE R COMENTADO — reactivar solo en caso de rollback de Fase 1
     <mapping>
         <name>R-assign-koha-jubilado</name>
-        <description>Birthright AR-Koha-Jubilado para empleados jubilados (motivoCese=jubilacion). Asignacion automatica via assignmentTargetSearch. Se activa cuando Oracle LAMB PLLA_CESE registra motivo 05 o 18 (jubilacion voluntaria o limite 70 anos). IIA: ENOC.PLLA_CESE.</description>
-        <lifecycleState>active</lifecycleState>
+        <description>DEPRECATED Fase 1. Birthright AR-Koha-Jubilado para empleados jubilados. Reemplazado por Bloque K (jubilados→alum).</description>
+        <lifecycleState>deprecated</lifecycleState>
         <strength>strong</strength>
         <source>
             <name>motivoCese</name>
@@ -1564,5 +1699,6 @@ return roleName</code>
             </script>
         </condition>
     </mapping>
+    END BLOQUE R COMENTADO -->
 
 </objectTemplate>

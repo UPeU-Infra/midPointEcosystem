@@ -443,9 +443,18 @@ return 'https://lamb-files.upeu.edu.pe/lamb-academic/' + path
                      PolicyViolationException "multiple structural archetypes" en usuarios
                      con doble afiliación (egresados-trabajadores).
                      MidPoint Book Cap. 8-9: resources aportan datos; templates deciden estructura. -->
+                <!-- Fase 1 eduPerson 202208: archetype-to-primaryAffiliation conservado como
+                     weak para retrocompatibilidad. El Bloque J3 del template (normal) calcula
+                     primaryAffiliation desde affiliations con prioridad. El strong anterior fue
+                     cambiado a weak para no bloquear el override del Bloque K (strong, jubilados→alum).
+                     Con strong aquí, jubilados en el período de 730d post-cese tenían faculty/staff
+                     escrito fuerte desde trabajadores, impidiendo que K los marcara como alum. -->
                 <inbound>
                     <name>archetype-to-primaryAffiliation</name>
-                    <strength>strong</strength>
+                    <!-- Retrocompatibilidad: weak para usuarios sin affiliations aún poblado.
+                         J3 (normal) sobreescribe cuando affiliations tiene valor.
+                         K (strong) sobreescribe para jubilados puros. -->
+                    <strength>weak</strength>
                     <expression>
                         <script>
                             <code>input == 'archetype-user-employee-faculty' ? 'faculty' : 'staff'</code>
@@ -457,6 +466,9 @@ return 'https://lamb-files.upeu.edu.pe/lamb-academic/' + path
                 </inbound>
                 <inbound>
                     <name>archetype-to-affiliations</name>
+                    <!-- Fuente principal para Bloque J3. normal: permite coexistencia con
+                         affiliations de egresados/estudiantes en usuarios dual-affiliation.
+                         Valor: faculty o staff (lowercase eduPerson 202208). -->
                     <strength>normal</strength>
                     <expression>
                         <script>

@@ -76,6 +76,21 @@
                         </xsd:annotation>
                     </xsd:element>
 
+                    <!-- L9 — ROL ANTERIOR POST-JUBILACIÓN -->
+                    <!-- IIA: derivado por Bloque K del UserTemplate-Person-Base cuando
+                         motivoCese='jubilacion' y la persona venía de staff o faculty.
+                         Vocabulario controlado: staff|faculty.
+                         Permite que Koha exponga extended_attribute FORMER_ROLE.
+                         Solo se popula para jubilados puros (sin affiliation activa de mayor prioridad). -->
+                    <xsd:element name="formerRole" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Rol anterior (post-jubilación)</a:displayName>
+                            <a:help>Vocabulario controlado: staff|faculty. Setado por Bloque K cuando motivoCese=jubilacion y la persona venía de staff o faculty. Permite que Koha exponga extended_attribute FORMER_ROLE.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>85</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
                     <!-- L8 — MOTIVO DE CESE LAMB -->
                     <!-- IIA: ENOC.PLLA_CESE.ID_MOTIVO_CESE (enlazado por PLLA_CESE.APS = VW_APS_EMPLEADO.COD_APS).
                          Campo de transporte canónico: el resource Oracle LAMB Trabajadores hace LEFT JOIN

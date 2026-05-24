@@ -294,11 +294,14 @@ return 'https://lamb-files.upeu.edu.pe/lamb-academic/' + path
                     <name>afiliacion-to-primaryAffiliation</name>
                     <!-- weak: cede ante primaryAffiliation que pongan trabajadores (strength=normal).
                          Para pure alumni sin empleo, weak es suficiente (nadie más lo pisa).
-                         Con strong anterior, 'alum' sobreescribía 'faculty'/'staff' en dual-affiliation. -->
+                         Con strong anterior, 'alum' sobreescribía 'faculty'/'staff' en dual-affiliation.
+                         Fase 1: vocabulario canónico eduPerson 202208. EMPLOYEE eliminado (no canónico).
+                         El Bloque J3 del template calcula desde affiliations; este inbound es
+                         retrocompatibilidad para usuarios sin affiliations aún poblado. -->
                     <strength>weak</strength>
                     <expression>
                         <script>
-                            <code>def map = ['ALUMNI':'alum','ALUM':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff','EMPLOYEE':'employee']; def v = input?.toString()?.trim()?.toUpperCase(); v ? (map[v] ?: input.toString().trim().toLowerCase()) : null</code>
+                            <code>def map = ['ALUMNI':'alum','ALUM':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff']; def v = input?.toString()?.trim()?.toUpperCase(); v ? (map[v] ?: input.toString().trim().toLowerCase()) : null</code>
                         </script>
                     </expression>
                     <target>
@@ -307,10 +310,13 @@ return 'https://lamb-files.upeu.edu.pe/lamb-academic/' + path
                 </inbound>
                 <inbound>
                     <name>afiliacion-to-affiliations</name>
+                    <!-- Fase 1: escribe en affiliations (multi-valor) para Bloque J3.
+                         Vocabulario canónico eduPerson 202208. EMPLOYEE eliminado (no canónico).
+                         normal: coexiste con affiliations de trabajadores en usuarios dual-affiliation. -->
                     <strength>normal</strength>
                     <expression>
                         <script>
-                            <code>def map = ['ALUMNI':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff','EMPLOYEE':'employee']; def v = input?.toString()?.trim()?.toUpperCase(); v ? (map[v] ?: input.toString().trim().toLowerCase()) : null</code>
+                            <code>def map = ['ALUMNI':'alum','ALUM':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff']; def v = input?.toString()?.trim()?.toUpperCase(); v ? (map[v] ?: input.toString().trim().toLowerCase()) : null</code>
                         </script>
                     </expression>
                     <target>

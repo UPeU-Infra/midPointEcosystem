@@ -227,13 +227,30 @@
                 <inbound>
                     <name>school-name-to-primaryAffiliation</name>
                     <!-- weak: cede ante primaryAffiliation que pongan trabajadores (strength=normal).
-                         Para pure students sin empleo, weak es suficiente. -->
+                         Para pure students sin empleo, weak es suficiente.
+                         NOTA Fase 1: este inbound permanece para retrocompatibilidad con usuarios
+                         que aún no tienen affiliations poblado. El Bloque J3 del template lo
+                         sobreescribirá cuando affiliations esté disponible. -->
                     <strength>weak</strength>
                     <expression>
                         <value>student</value>
                     </expression>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:primaryAffiliation</path>
+                    </target>
+                </inbound>
+                <inbound>
+                    <name>school-name-to-affiliations</name>
+                    <!-- Fase 1 eduPerson 202208: escribe en affiliations (multi-valor) para que
+                         el Bloque J3 del template calcule primaryAffiliation por prioridad.
+                         normal: puede coexistir con affiliations de otros resources (e.g., trabajadores).
+                         El Bloque J3 calcula: faculty>staff>student>alum>affiliate. -->
+                    <strength>normal</strength>
+                    <expression>
+                        <value>student</value>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:affiliations</path>
                     </target>
                 </inbound>
                 <inbound>
