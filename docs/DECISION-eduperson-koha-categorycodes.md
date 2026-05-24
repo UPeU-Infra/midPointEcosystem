@@ -91,10 +91,15 @@ Lifecycle, affiliation, nivel académico y rol funcional son **cuatro dimensione
 
 ## Casos especiales resueltos
 
-### Jubilados
+### Jubilados (override condicional — Decisión B)
 - **Antes:** categorycode=JUBILADO via rol AR-Koha-Jubilado con strong construction override
-- **Después:** template MidPoint detecta `motivoCese=jubilacion` → cambia `primaryAffiliation` a `alum`. No hay rol especial. Koha simplemente proyecta `alum`.
-- Si biblioteca necesita política diferenciada para jubilados → `extended_attribute FORMER_ROLE=staff|faculty` + circulation rules condicionadas.
+- **Después:** template MidPoint detecta `motivoCese=jubilacion` y override a `alum` **solo si NO hay affiliation activa de mayor prioridad**:
+  - Jubilado puro (sin otras affiliations) → `alum`
+  - Jubilado + estudiante posgrado → `student` (prioridad J3 gana)
+  - Jubilado + recontratado como docente → `faculty` (el nuevo vínculo activo gana)
+  - Jubilado + alumni preexistente → `alum`
+- **Racional**: refleja realidad — si después de jubilarte sigues estudiando o vuelven a contratarte, ese vínculo activo manda. eduPerson dice que la affiliation primary refleja el rol institucional vigente más relevante.
+- Si biblioteca necesita política diferenciada para jubilados → `extension/upeu:formerRole=staff|faculty` (atributo nuevo) → `extended_attribute FORMER_ROLE` en Koha + circulation rules condicionadas.
 
 ### Investigadores (97 DGI)
 - **Antes:** planeado como categorycode=INVESTI con resource CSV

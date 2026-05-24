@@ -10,14 +10,16 @@
 
 ## Resumen ejecutivo
 
+**Orden actualizado 2026-05-23**: Fase 3 (crear categorías Koha) se mueve ANTES de Fase 1 (template MidPoint). Razón: cuando MidPoint cambie a vocabulario lowercase eduPerson, Koha debe ya tener esas categorías creadas o el provisioning falla masivamente.
+
 | Fase | Descripción | Duración | Dependencias |
 |---|---|---|---|
 | 0 | Pre-migración (backup, doc, validaciones) | 3 días | — |
-| 1 | MidPoint — Template jubilados→alum + prioridad multi-aff | 2 días | Fase 0 |
+| **3** | **Koha — Crear categorías nuevas eduPerson en paralelo** | **1 día** | **Fase 0** |
+| 1 | MidPoint — Template jubilados→alum (condicional) + prioridad multi-aff + lowercase rename | 3-4 días | Fase 3 |
 | 2 | MidPoint — Crear rol R-Researcher | 1 día | Fase 1 |
-| 3 | Koha — Crear categorías nuevas paralelo | 1 día | Fase 0 |
-| 4 | MidPoint — Simplificar koha-ils.xml mapping | 1 día | Fases 1, 2, 3 |
-| 5 | Reconciliación Koha — re-stamp 32K IGA-managed | 1-2 días | Fase 4 |
+| 4 | MidPoint — Simplificar koha-ils.xml mapping | 1 día | Fases 1, 2 |
+| 5 | Reconciliación Koha — re-stamp ~38K IGA-managed | 1-2 días | Fase 4 |
 | 6 | Migración batch 22K legacy (ESTUDI/VISITA/STAFF) | 2-3 días | Fase 5 |
 | 7 | Observación + monitoreo | 14 días | Fase 6 |
 | 8 | Cleanup — drop categorías viejas | 1 día | Fase 7 |
@@ -62,40 +64,164 @@
 
 ---
 
-## Fase 1 — MidPoint Template: jubilados→alum + prioridad multi-affiliation
+## Fase 1 — MidPoint Template: jubilados→alum (condicional) + prioridad multi-affiliation + lowercase rename
 
-### Cambios en `canonical/object-templates/UserTemplate-Person-Base.xml`
+**Spec detallada del midpoint-expert** (2026-05-23): seis sub-fases con tag git + pg_dump obligatorios.
 
-1. **Bloque nuevo `J3` (o similar) — Jubilados → alum**
-   - Condición: `motivoCese == 'jubilacion'` Y `lifecycleState != 'archived'`
-   - Acción: setear `extension/sciback:primaryAffiliation = 'alum'` (strength=strong)
-   - Resultado: jubilados pierden `staff`/`faculty` y ganan `alum` automáticamente
+### Anti-pattern detectado en estado actual
 
-2. **Mapping de prioridad explícita para `primaryAffiliation`**
-   - Hoy probablemente depende del orden de inbound de los resources Oracle (anti-pattern)
-   - Nuevo: regla explícita `faculty > staff > student > alum > affiliate`
-   - Implementación: script Groovy en mapping del template que recibe todas las affiliations (multi) y devuelve la primary con prioridad determinística
+El template tiene vocabulario MIXTO uppercase/lowercase:
+- Bloques G, H, F: `STAFF`/`FACULTY`/`STUDENT` (uppercase)
+- Bloques D.5-alum, S: `alum`/`student`/`faculty` (lowercase)
 
-3. **Eliminar `AR-Koha-Jubilado` strong construction**
-   - Ya no necesario: si jubilado tiene `primaryAffiliation=alum`, el mapping trivial de `koha-ils.xml` proyecta `alum` directo
-   - Marcar el rol como deprecated (no eliminar aún, esperar Fase 8)
+Fase 1.1 normaliza TODO a lowercase eduPerson 202208.
 
-### Validación
+### Cambio arquitectónico clave: inbound de resources
 
-- Recompute manual de 1 jubilado existente → verificar `primaryAffiliation=alum`
-- Recompute manual de 1 docente activo → verificar `primaryAffiliation=faculty`
-- Crear user de prueba multi-affiliation (alum + staff sintético) → verificar prioridad
+**Hoy**: cada resource escribe directo a `extension/sciback:primaryAffiliation` (weak) → el último inbound corre gana.
 
-### Despliegue
+**Nuevo**: resources escriben a `extension/sciback:affiliations` (multi-valor, add, weak). El template calcula `primaryAffiliation` por prioridad.
 
-```bash
-git add canonical/object-templates/UserTemplate-Person-Base.xml
-git commit -m "feat(template): jubilados→alum + prioridad multi-affiliation"
-git push
-# En PROD:
-ssh midpoint-prod "cd /home/juansanchez/midPointEcosystem && git pull"
-# REST API PUT del template (sin recompute masivo aún)
+Resources a modificar:
+- `upeu/resources/oracle-lamb/trabajadores.xml`
+- `upeu/resources/oracle-lamb/egresados-v3.xml`
+- `upeu/resources/oracle-lamb/matriculados.xml`
+- `upeu/resources/oracle-lamb/grados.xml`
+- `upeu/resources/oracle-lamb/secretaria-general.xml`
+
+### Sub-fases
+
+#### 1.0 — Schema extension `upeu:formerRole` (riesgo nulo)
+
+Añadir a `upeu/schemas/upeu-local-v1.0.xml`:
+```xml
+<xsd:element name="formerRole" type="xsd:string" minOccurs="0" maxOccurs="1">
+  <xsd:annotation><xsd:appinfo>
+    <a:displayName>Rol anterior (post-jubilación)</a:displayName>
+    <a:help>Vocabulario controlado: staff|faculty|student. Setado por Bloque K cuando motivoCese=jubilacion y la persona venía de staff o faculty. Permite que Koha exponga extended_attribute FORMER_ROLE.</a:help>
+    <a:indexed>true</a:indexed>
+  </xsd:appinfo></xsd:annotation>
+</xsd:element>
 ```
+
+#### 1.1 — Prioridad multi-affiliation + lowercase rename (mayor superficie)
+
+**Bloque J3 nuevo** — calcula `primaryAffiliation` desde `affiliations` multi-valor:
+
+```groovy
+def CANONICAL = ['faculty','staff','student','alum','affiliate']
+def affs = (affiliations ?: []).collect { basic.stringify(it).trim().toLowerCase() }
+    .findAll { it in CANONICAL } as Set
+if (affs.isEmpty()) return null
+for (canon in CANONICAL) {  // orden de prioridad
+    if (canon in affs) return canon
+}
+return null
+```
+
+**Strength**: `normal` (Bloque K strong puede override).
+
+**Limpieza vocabulario** simultánea:
+- Bloques D.1, D.3, D.4, F, G, H, R, S: comparaciones a lowercase
+- `VALID_AFFILIATIONS` de Bloque G: `['faculty','staff','student','alum','affiliate']`
+- `roleMap` Bloque D.1: keys lowercase
+- Eliminar `EMPLOYEE` y `AFFILIATE-CU` del set (no son eduPerson canónicos)
+- Auditar sub-templates: `user-template-employee-staff.xml`, `user-template-employee-faculty.xml`, `user-template-alumni.xml`
+
+**Modificar inbounds de 5 resources Oracle**:
+- Cambiar destino de `extension/sciback:primaryAffiliation` → `extension/sciback:affiliations` (add, weak)
+- Resource Trabajadores: mapear `employee` → `staff` en el inbound (adapter responsibility, no template)
+
+#### 1.2 — Eliminar Bloque R (asignación AR-Koha-Jubilado)
+
+- Comentar el Bloque R en `UserTemplate-Person-Base.xml`
+- Documentar: jubilados nuevos ya no recibirán el rol
+- Los 6 jubilados existentes lo conservan transitoriamente (red de seguridad)
+
+#### 1.3 — Bloque K nuevo: override condicional jubilados (Decisión B)
+
+**Decisión B**: jubilado → `alum` SOLO si no hay affiliation activa de mayor prioridad.
+
+```groovy
+def mc = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : ''
+if (mc != 'jubilacion') return null  // no aplica
+
+// Decisión B: si hay affiliation activa de mayor prioridad que alum, dejar que J3 calcule
+def affs = (affiliations ?: []).collect { basic.stringify(it).trim().toLowerCase() }
+    .findAll { it in ['faculty','staff','student','alum','affiliate'] } as Set
+def HIGHER_THAN_ALUM = ['faculty','staff','student'] as Set
+if (affs.any { it in HIGHER_THAN_ALUM }) return null  // J3 ganará (faculty/staff/student)
+
+// Jubilado puro o jubilado + affiliate → forzar alum
+return 'alum'
+```
+
+**Strength**: `strong`.
+
+**Mapping side `formerRole`** (mismo bloque): si se dispara `alum`, escribe `extension/upeu:formerRole = staff|faculty` (lo que tenía antes en `affiliations`).
+
+**Casos resueltos**:
+- Jubilado puro (sin más affiliations) → `alum`, formerRole=staff/faculty
+- Jubilado + estudiante posgrado → `student` (J3 gana, no toca formerRole)
+- Jubilado + recontratado docente → `faculty` (J3 gana)
+- Jubilado + alumni preexistente → `alum`, formerRole=staff/faculty
+
+#### 1.4 — Recompute masivo (ventana de mantenimiento)
+
+**Pre-requisitos críticos**:
+- ✅ Tag git: `git tag pre-fase1-recompute-masivo`
+- ✅ pg_dump de `m_user` y `m_assignment`
+- ✅ Categorías Koha nuevas YA EXISTEN (Fase 3 completada)
+
+Task: `iterative-recompute` sobre `UserType`, filter `lifecycleState=active`. Estimado 30-45 min sobre 35,450 users.
+
+Validación inmediata post-recompute (queries psql):
+```sql
+SELECT ext->>'78' AS aff, COUNT(*) FROM m_user
+WHERE lifecyclestate='active'
+GROUP BY 1 ORDER BY 2 DESC;
+```
+Esperado: 5 valores canónicos lowercase + null. Si aparece `STAFF`/`FACULTY` uppercase: bug en el rename.
+
+#### 1.5 — Vaciar inducements AR-Koha-Jubilado (~7 días post-1.4)
+
+- Solo ejecutar si Fase 1 estable en PROD
+- Vaciar `<inducement>` del rol (convierte en no-op)
+- NO eliminar el rol todavía — preserva auditoría hasta Fase 8
+
+### Tests de validación (casos PROD reales)
+
+| Caso | OID | Esperado |
+|---|---|---|
+| Jubilado puro (faculty) | `1609b661-04e1-4246-b9ab-6b8d084724b0` (COD_APS 21835727) | `primaryAffiliation=alum`, `formerRole=faculty`, lifecycle activo |
+| Staff activo | cualquiera costCenter=area.97 | `primaryAffiliation=staff` (lowercase) |
+| Docente activo | cualquiera DOCEN | `primaryAffiliation=faculty` |
+| Egresado puro | usuario solo en Egresados v3 | `primaryAffiliation=alum` |
+| Multi-rol staff+alum | egresado contratado | `staff` (prioridad J3) |
+| Estudiante puro | matriculado activo | `student` |
+| Jubilado + estudiante posgrado | (buscar uno) | `student` (J3 gana — Decisión B) |
+| `employee` huérfano | usuarios con `EMPLOYEE` antiguo | filtrado → mapeado a `staff` en inbound |
+
+### Riesgos no obvios (del análisis midpoint-expert)
+
+1. **Sub-templates** con vocabulario uppercase — auditar simultáneamente
+2. **`R-Affiliation-Employee`** y `R-Affiliation-Affiliate-CU` deprecated — migración previa: unassign + reassign
+3. **`assignmentTargetSearch` cache** — reset cache MidPoint post-rename
+4. **Logging volume** — Bloque J3 usar `log.debug` para filtrados, `log.warn` solo si vacío
+5. **Egresados v3 weak**: tras cambio, escribirá en `affiliations`. Verificar que no deje `primaryAffiliation` huérfano en usuarios solo-alum.
+
+### Rollback granular
+
+| Sub-fase | Rollback |
+|---|---|
+| 1.0 schema | Sin rollback (atributo opcional sin uso) |
+| 1.1 prioridad + rename | `git revert` + re-import template + recompute masivo |
+| 1.2 Bloque R eliminado | Restaurar Bloque R desde tag git |
+| 1.3 Bloque K | Eliminar Bloque K + recompute jubilado |
+| 1.4 recompute masivo | `pg_restore` de `m_user`+`m_assignment` |
+| 1.5 inducements vacíos | Restaurar inducements desde tag git |
+
+**Tag obligatorio antes de Fase 1**: `git tag pre-fase1-koha-categorycodes`
 
 ---
 
