@@ -1028,7 +1028,11 @@
                      ============================================================ -->
                 <outbound>
                     <name>category-id-from-primary-affiliation</name>
-                    <strength>strong</strength>
+                    <!-- strength=normal: permite que los roles override (AR-Koha-Investigador,
+                         AR-Koha-Jubilado) con strength=strong ganen en consolidación.
+                         Sin rol override → este mapping aplica normalmente.
+                         Con rol override strength=strong → el rol gana, este cede. -->
+                    <strength>normal</strength>
                     <source>
                         <path>$focus/extension/sb:primaryAffiliation</path>
                     </source>
