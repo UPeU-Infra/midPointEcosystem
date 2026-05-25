@@ -36,7 +36,7 @@
 
     <name>Oracle LAMB RENIEC Cache v1</name>
     <description>Inbound ScriptedSQL desde DAVID.CONSULTA_APIS_LOG. Enriquece givenName y familyName con datos validados por RENIEC, aplicando Title Case español. No crea usuarios nuevos — solo enriquece existentes correlacionados por DNI.</description>
-    <lifecycleState>proposed</lifecycleState>
+    <lifecycleState>active</lifecycleState>
 
     <!-- Mismo conector ScriptedSQL que egresados (OID estable Groovy/Oracle) -->
     <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="c:ConnectorType"/>
