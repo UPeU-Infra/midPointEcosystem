@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
         oid="e800335c-9ca1-4a2d-b4ca-e06f6db42693">
-    <name>SciBack IGA — Schema canónico universitario Perú v1.0</name>
+    <name>SciBack IGA — Schema canónico universitario Perú v1.1</name>
     <description>Schema de extensión canónico para universidades peruanas. Namespace: urn:sciback:midpoint:person. Alineado: eduPerson 202208, SCHAC 1.6.0, SCIM 2.0, ISO 24760, Ley 29733, Ley 30220, SUNEDU CBC. Reutilizable por cualquier universidad licenciada SUNEDU en plataforma SciBack IGA.</description>
     <lifecycleState>active</lifecycleState>
     <definition>
