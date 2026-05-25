@@ -20,5 +20,8 @@
                 </resourceObjects>
             </reconciliation>
         </work>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
     </activity>
 </task>
