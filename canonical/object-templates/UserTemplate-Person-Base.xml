@@ -1121,7 +1121,7 @@ try {
         <mapping>
             <name>I-jpegPhoto-fetch-from-photoUrl</name>
             <description>Fetcha foto JPEG desde URL MinIO LAMB (upeu:photoUrl) y la escribe en jpegPhoto. strength=normal: no sobreescribe si Entra ID (strong) ya puso una foto. Solo actúa si photoUrl tiene valor. Timeout connect 5s / read 10s. try/catch retorna null en error.</description>
-            <lifecycleState>deprecated</lifecycleState><!-- TEMP 2026-05-24: deshabilitado durante Task21 import Koha para evitar timeout HTTP 404 por patrón. Reactivar a 'active' cuando termine el import. El recompute nocturno recupera las fotos. -->
+            <lifecycleState>active</lifecycleState>
             <strength>normal</strength>
             <source>
                 <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:photoUrl</path>
