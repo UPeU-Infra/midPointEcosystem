@@ -232,7 +232,7 @@ try {
                 <!-- unlinked → link + synchronize: ya existe el usuario, lo vinculamos y enriquecemos -->
                 <reaction>
                     <situation>unlinked</situation>
-                    <actions><link/></actions>
+                    <actions><link/><synchronize/></actions>
                 </reaction>
                 <!-- unmatched → (sin acción): no hay usuario en MidPoint con este DNI.
                      RENIEC solo enriquece — no crea usuarios nuevos.
