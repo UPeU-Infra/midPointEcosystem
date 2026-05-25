@@ -234,18 +234,18 @@ try {
                     <situation>unlinked</situation>
                     <actions><link/></actions>
                 </reaction>
-                <!-- unmatched → inactivateShadow: no hay usuario en MidPoint con este DNI.
+                <!-- unmatched → (sin acción): no hay usuario en MidPoint con este DNI.
                      RENIEC solo enriquece — no crea usuarios nuevos.
-                     El shadow queda inactivo hasta que el usuario se cree por otra vía. -->
+                     El shadow no procesado simplemente se ignora. -->
                 <reaction>
                     <situation>unmatched</situation>
-                    <actions><inactivateShadow/></actions>
+                    <actions/>
                 </reaction>
                 <!-- deleted → unlink: si el registro RENIEC desaparece (improbable), desvinculamos.
                      No afecta el usuario de MidPoint (los nombres ya enriquecidos se conservan). -->
                 <reaction>
                     <situation>deleted</situation>
-                    <actions><unlinkFocus/></actions>
+                    <actions><unlink/></actions>
                 </reaction>
             </synchronization>
         </objectType>
