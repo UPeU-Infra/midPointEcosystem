@@ -160,6 +160,34 @@
                     <xsd:element name="admissionPeriod" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>Período de admisión</a:displayName><a:displayOrder>550</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
+                    <!-- graduationYear: año del último egreso/graduación. Fuente IIA: Oracle LAMB
+                         DAVID.VW_PERSONA_EGRESADO.ANIO. Tipado como xsd:int para permitir
+                         aritmética en expresiones (validTo = graduationYear + N años) sin
+                         conversiones en cada mapping (Semancik Cap. 6 §1.4: "use proper
+                         types where arithmetic is required"). Driver de la policy de
+                         deprovisioning temporal canónica (validTo en assignment de
+                         AR-Koha-Patron-Alumni). NULL safe: usuarios sin dato → vigencia
+                         indefinida (fail-open). -->
+                    <xsd:element name="graduationYear" type="xsd:int" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Año de graduación</a:displayName>
+                            <a:help>Año del último egreso/graduación efectiva. Fuente: Oracle LAMB DAVID.VW_PERSONA_EGRESADO.ANIO. Driver del cálculo de vigencia post-graduación (validTo). NULL → vigencia indefinida (fail-open).</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>551</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- graduationSemester: período "YYYY-N" (e.g. "2024-1", "2024-2").
+                         Informativo. Para policy actual usamos solo graduationYear con
+                         cierre el 31-Dic (decisión simplificadora: precisión por semestre
+                         es over-engineering). Se conserva para reporting y futuras
+                         políticas que requieran granularidad semestral. -->
+                    <xsd:element name="graduationSemester" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Semestre de graduación</a:displayName>
+                            <a:help>Período del último egreso en formato "YYYY-N" (e.g. 2024-1, 2024-2). Fuente: Oracle LAMB DAVID.VW_PERSONA_EGRESADO.SEMESTRE. Informativo / reporting.</a:help>
+                            <a:displayOrder>552</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
                     <xsd:element name="academicProgramUri" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
                         <xsd:annotation><xsd:appinfo><a:displayName>URI canónica del programa académico</a:displayName><a:help>Identificador persistente del programa (urn:sciback:program:{institutionId}:{programCode}). Vinculado al OrgType academic-program. Para uso en eduPersonOrgUnitDN y SCHAC.</a:help><a:indexed>true</a:indexed><a:displayOrder>560</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>

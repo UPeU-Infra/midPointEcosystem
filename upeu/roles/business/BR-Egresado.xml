@@ -27,8 +27,19 @@
         <targetRef oid="dd0ea6b7-816f-4bff-b654-67f8650480a8" relation="org:default" type="RoleType"/>
     </inducement>
     -->
-    <!-- AR-Koha-Patron-Alumni: cuenta Koha ILS categoría ALUMNI para egresados -->
+    <!-- AR-Koha-Patron-Alumni: REMOVIDO como inducement estático (FASE A 2026-05-25).
+         Razón canónica (Semancik Cap. 7 — Time-Constrained Roles): el acceso a Koha
+         para alumni debe expirar 2 años post-graduación. Un inducement estático no
+         puede llevar <activation><validTo> por holder (sería el mismo validTo para
+         todos). La asignación se realiza ahora desde UserTemplate-Person-Base
+         (mapping D.5-alum-koha) via assignmentTargetSearch, generando assignment
+         por-usuario con validTo = 31-Dic(graduationYear + 2). Los demás recursos
+         (LDAP, M365, vendors académicos) siguen el ciclo del BR-Egresado completo.
+         OID conservado para audit trail: a1b2c3d4-e5f6-7890-abcd-ef1234567804. -->
+    <!--
     <inducement>
         <targetRef oid="a1b2c3d4-e5f6-7890-abcd-ef1234567804" relation="org:default" type="RoleType"/>
     </inducement>
+    -->
+
 </role>

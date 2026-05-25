@@ -417,6 +417,114 @@ return null // weak: no sobrescribe studentCycle — solo side-effect de log</co
         </condition>
     </mapping>
 
+    <!-- D.5-alum-koha — Auto-asignación AR-Koha-Patron-Alumni con validTo temporal
+         (FASE A canonical deprovisioning, 2026-05-25).
+
+         Referencias canónicas:
+           - Semancik "Practical Identity Management with MidPoint" v2.3
+             Cap. 7 — Time-Constrained Roles / Activation: un assignment puede
+             llevar su propio <activation><validFrom/To>, y el effectiveStatus
+             del assignment determina si la construction se aplica al holder.
+           - Cap. 6 §6.4 — Outbound: la <existence> de la construction es la
+             salvaguarda secundaria (defensa en profundidad) implementada en
+             AR-Koha-Patron-Alumni.
+           - Cap. 9 — Object Template + assignmentTargetSearch como evaluator
+             que genera assignment objects dinámicos por holder.
+
+         Policy UPeU: alumni mantienen acceso a Koha hasta 31-Dic del año
+         (graduationYear + 2). Decisión simplificadora: usar año + cierre
+         calendario, no precisión por semestre (over-engineering innecesario).
+
+         Comportamiento:
+           - graduationYear != null  → validTo = (graduationYear + 2)-12-31T23:59:59
+           - graduationYear == null  → validTo = null (vigencia indefinida, fail-open
+                                       para los ~5K egresados antiguos sin ANIO)
+           - primaryAffiliation != 'alum' → mapping no dispara (condition)
+
+         Cohabitación con re-matriculados (alumni que vuelven como student):
+           - Si primaryAffiliation pasa a 'student', este mapping no dispara
+             y el assignment generado se desasigna (strong semantics del
+             assignmentTargetSearch). El acceso Koha vuelve por el camino
+             student (AR-Koha-Patron-Pregrado/Posgrado via BR-Estudiante).
+           - Si convive student+alum en affiliations (J3 priorización),
+             primaryAffiliation = 'student' gana → este mapping no aplica.
+             No interfiere con assignments de student.
+
+         strength=strong: re-evalúa en cada recompute (refresca validTo si
+         Oracle entrega nuevo ANIO — re-egreso, segunda carrera). -->
+    <mapping>
+        <name>D-autoassign-ar-koha-patron-alumni</name>
+        <description>Auto-asigna AR-Koha-Patron-Alumni a alumni con activation/validTo = 31-Dic(graduationYear+2). Implementa policy UPeU de 2 años de acceso Koha post-graduación. Reemplaza el inducement estático que tenía BR-Egresado (no podía portar validTo per-holder). Semancik Cap. 7 — Time-Constrained Roles.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <source>
+            <path>extension/sciback:graduationYear</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>RoleType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <q:value>AR-Koha-Patron-Alumni</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+                <!-- assignmentProperties: define el contenido del AssignmentType
+                     a generar. Aquí inyectamos <activation><validTo> calculado
+                     desde graduationYear. Patrón canónico Cap. 7 + Cap. 9. -->
+                <populate>
+                    <populateItem>
+                        <expression>
+                            <script>
+                                <code><![CDATA[
+def gy = graduationYear;
+// Normalizar — puede llegar como Integer, String, o Collection (multi-source)
+if (gy instanceof java.util.Collection) {
+    gy = gy.isEmpty() ? null : gy.iterator().next();
+}
+if (gy == null) return null;  // fail-open: vigencia indefinida
+def yearInt;
+try {
+    yearInt = (gy instanceof Number) ? gy.intValue() : Integer.parseInt(gy.toString().trim());
+} catch (Exception e) {
+    log.warn('D-autoassign-ar-koha-patron-alumni: graduationYear no parseable: {}', gy);
+    return null;
+}
+// validTo = 31-Diciembre-(graduationYear + 2) 23:59:59 hora Lima (UTC-5)
+def expiryYear = yearInt + 2;
+def cal = javax.xml.datatype.DatatypeFactory.newInstance().newXMLGregorianCalendar();
+cal.setYear(expiryYear);
+cal.setMonth(12);
+cal.setDay(31);
+cal.setHour(23);
+cal.setMinute(59);
+cal.setSecond(59);
+cal.setTimezone(-300);  // -05:00 Lima
+return cal;
+]]></code>
+                            </script>
+                        </expression>
+                        <target>
+                            <path>activation/validTo</path>
+                        </target>
+                    </populateItem>
+                </populate>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'alum'</code>
+            </script>
+        </condition>
+    </mapping>
+
     <!-- D.5-base — Auto-asignación BR-Personal-General (piso mínimo para todo trabajador)
          Actúa cuando primaryAffiliation == STAFF o FACULTY.
          MidPoint suma, nunca resta: los trabajadores que ya tienen BR-Admin-Area

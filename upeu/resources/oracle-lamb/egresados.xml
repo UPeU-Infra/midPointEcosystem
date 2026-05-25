@@ -244,8 +244,25 @@
                 </inbound>
             </attribute>
             <attribute>
+                <!-- ANIO → extension/sb:graduationYear
+                     IIA: DAVID.VW_PERSONA_EGRESADO.ANIO (Oracle NUMBER → String en searchScript).
+                     Driver de la policy de deprovisioning temporal canónica para alumni
+                     (Semancik Cap. 7 — Time-Constrained Roles): el assignment de
+                     AR-Koha-Patron-Alumni se genera con <activation><validTo>=31-Dic(graduationYear+2)
+                     en el UserTemplate. strong: refleja siempre el último egreso visible en Oracle. -->
                 <ref>ri:ANIO</ref>
-                <!-- sin inbound propio: SEMESTRE ya contiene el período completo "ANIO-N" -->
+                <inbound>
+                    <name>anio-to-graduationYear</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def s = (input ?: '').toString().trim(); if (s == '') return null; try { return Integer.parseInt(s) } catch (Exception e) { log.warn('anio-to-graduationYear: valor no numérico {} en egresado', s); return null }</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:graduationYear</path>
+                    </target>
+                </inbound>
             </attribute>
             <attribute>
                 <ref>ri:SEMESTRE</ref>
@@ -259,6 +276,22 @@
                     </expression>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:admissionPeriod</path>
+                    </target>
+                </inbound>
+                <!-- semestre-to-graduationSemester: informativo / reporting. Mismo valor
+                     que admissionPeriod en el contexto egresados (LAMB no distingue
+                     admission vs graduation period en esta vista — el "semestre" es el
+                     del último registro). strong: refleja Oracle. -->
+                <inbound>
+                    <name>semestre-to-graduationSemester</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>(input ?: '').toString().trim() ?: null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:graduationSemester</path>
                     </target>
                 </inbound>
             </attribute>
