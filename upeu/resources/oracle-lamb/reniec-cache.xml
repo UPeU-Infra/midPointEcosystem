@@ -158,7 +158,7 @@ def titleCase = { String s ->
 try {
     def json = new JsonSlurper().parseText(input.toString())
     def nombres = json?.nombres?.toString()?.trim()
-    return (nombres && nombres.length() > 0) ? titleCase(nombres) : null
+    return (nombres &amp;&amp; nombres.length() &gt; 0) ? titleCase(nombres) : null
 } catch (Exception e) {
     log.warn("reniec-cache: error parseando JSON para givenName — {}", e.getMessage())
     return null
