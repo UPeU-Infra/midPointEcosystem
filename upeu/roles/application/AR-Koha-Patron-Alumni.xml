@@ -24,7 +24,7 @@
             <expression>
                 <script>
                     <code>
-                        def ls = midpoint.focusObject?.lifecycleState
+                        def ls = midpoint.focusObjectAny?.lifecycleState
                         return ls != 'archived' &amp;&amp; ls != 'failed'
                     </code>
                 </script>
