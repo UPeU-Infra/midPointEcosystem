@@ -11,6 +11,25 @@
         <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
     </assignment>
     <inducement>
+        <!-- FASE A deprovisioning canónico (Semancik Cap. 7 — Conditions on Inducements):
+             no provisionar la cuenta Koha si el user está archived o failed.
+             Defensa secundaria: la causa primaria de expiración es
+             <activation><validTo> en el assignment generado por el template
+             (Cap. 7 — Time-Constrained Roles via assignmentTargetSearch + populate).
+             Esta condición protege contra rutas de archivado que no pasen por validTo
+             (e.g. Bloque H del template: terminationDate > 180d para empleados
+             que también fueron alumni). lifecycleState archived ⇒ inducement no activo
+             ⇒ Koha account DELETE (conector v1.3.3 maneja re-create con fallback POST/GET). -->
+        <condition>
+            <expression>
+                <script>
+                    <code>
+                        def ls = midpoint.focusObject?.lifecycleState
+                        return ls != 'archived' &amp;&amp; ls != 'failed'
+                    </code>
+                </script>
+            </expression>
+        </condition>
         <construction>
             <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
             <kind>account</kind>
@@ -18,23 +37,6 @@
             <!-- R5 (FASE 4): override category_id eliminado.
                  category_id lo resuelve el resource koha-ils desde
                  extension/sciback:primaryAffiliation (mapping unico, deterministico). -->
-            <!-- FASE A deprovisioning canónico (Semancik Cap. 6 §6.4 — Existence and
-                 Condition): no provisionar la cuenta Koha si el user está archived.
-                 Defensa secundaria: la causa primaria de expiración es
-                 <activation><validTo> en el assignment que genera el template
-                 (Cap. 7 — Time-Constrained Roles). Esta cláusula <existence> protege
-                 contra cualquier ruta de archivado del focus que no pase por validTo
-                 (e.g. Bloque H del template: terminationDate > 180d para empleados
-                 que también fueron alumni). lifecycleState archived ⇒ DELETE en
-                 Koha (el conector v1.3.3 maneja correctamente el ciclo DELETE → 404
-                 → re-create con fallback POST/GET cardnumber para 409). -->
-            <existence>
-                <expression>
-                    <script>
-                        <code>def ls = midpoint.focusObject?.lifecycleState; ls != 'archived' &amp;&amp; ls != 'failed'</code>
-                    </script>
-                </expression>
-            </existence>
         </construction>
     </inducement>
 </role>
