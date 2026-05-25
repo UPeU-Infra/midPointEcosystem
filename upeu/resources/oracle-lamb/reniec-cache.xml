@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================================
+     Resource: Oracle LAMB RENIEC Cache
+     OID: c4d5e6f7-a8b9-0123-cdef-123456789abc
+
+     Fuente: DAVID.CONSULTA_APIS_LOG (cache de llamadas a API RENIEC)
+     Propósito: Enriquecer givenName y familyName de usuarios existentes
+                con datos jurídicamente validados por RENIEC, aplicando
+                conversión de MAYÚSCULAS a Title Case (español).
+
+     Arquitectura:
+       - ScriptedSQL connector (mismo OID que egresados)
+       - __UID__ = NRO_DOCUMENTO (DNI del ciudadano)
+       - SQL devuelve NRO_DOCUMENTO + CONTENT (JSON raw de RENIEC)
+       - Groovy inbound parsea el JSON con JsonSlurper
+       - Title Case en Groovy (preposiciones/artículos en minúscula)
+       - Correlación por extension/sb:taxId (URN canónico)
+       - Reacción unmatched: inactivateShadow (no crea usuarios nuevos)
+
+     Notas de diseño:
+       - JSON_VALUE no disponible en esta versión Oracle → parseo en Groovy
+       - CONTENT siempre en MAYÚSCULAS desde RENIEC → Title Case obligatorio
+       - La dedup toma la entrada MÁS RECIENTE por DNI (ORDER BY FECHA_REGISTRO DESC)
+       - Cobertura actual: ~151.245 DNIs únicos validados (mayo 2026)
+       - Fortaleza strong: RENIEC es fuente jurídica > datos admin LAMB
+     ============================================================ -->
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+    xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+    xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    oid="c4d5e6f7-a8b9-0123-cdef-123456789abc">
+
+    <name>Oracle LAMB RENIEC Cache v1</name>
+    <description>Inbound ScriptedSQL desde DAVID.CONSULTA_APIS_LOG. Enriquece givenName y familyName con datos validados por RENIEC, aplicando Title Case español. No crea usuarios nuevos — solo enriquece existentes correlacionados por DNI.</description>
+    <lifecycleState>proposed</lifecycleState>
+
+    <!-- Mismo conector ScriptedSQL que egresados (OID estable Groovy/Oracle) -->
+    <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="c:ConnectorType"/>
+
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:resultsHandlerConfiguration>
+            <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
+            <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
+            <icfc:filteredResultsHandlerInValidationMode>true</icfc:filteredResultsHandlerInValidationMode>
+            <icfc:enableAttributesToGetSearchResultsHandler>false</icfc:enableAttributesToGetSearchResultsHandler>
+        </icfc:resultsHandlerConfiguration>
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">
+            <cfg:host>192.168.13.9</cfg:host>
+            <cfg:port>1521</cfg:port>
+            <cfg:user>JUANSANCHEZ</cfg:user>
+            <cfg:password>
+                <t:encryptedData>
+                    <t:encryptionMethod>
+                        <t:algorithm>http://www.w3.org/2001/04/xmlenc#aes256-cbc</t:algorithm>
+                    </t:encryptionMethod>
+                    <t:keyInfo>
+                        <t:keyName>nkZ4VieDLlRmwD8hdryrmjz8IxQ=</t:keyName>
+                    </t:keyInfo>
+                    <t:cipherData>
+                        <t:cipherValue>cbS0z8iJBH65IpXN1rHu7W+A4kDoVjubqe3LR3iXW/GlGCOKqSJT4lDv6GSwUeQl</t:cipherValue>
+                    </t:cipherData>
+                </t:encryptedData>
+            </cfg:password>
+            <cfg:database>UPEU</cfg:database>
+            <cfg:jdbcDriver>oracle.jdbc.OracleDriver</cfg:jdbcDriver>
+            <cfg:jdbcUrlTemplate>jdbc:oracle:thin:@%h:%p/%d</cfg:jdbcUrlTemplate>
+            <cfg:rethrowAllSQLExceptions>true</cfg:rethrowAllSQLExceptions>
+            <cfg:nativeTimestamps>true</cfg:nativeTimestamps>
+            <cfg:allNative>false</cfg:allNative>
+            <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
+            <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
+
+            <!-- searchScript: dedup por DNI → la llamada más reciente exitosa por persona.
+                 NRO_DOCUMENTO es el DNI crudo (8 dígitos).
+                 CONTENT es el JSON devuelto por la API RENIEC (VARCHAR2 4000, siempre presente en STATUS='S').
+                 No se usa JSON_VALUE (no disponible en esta versión Oracle) — parseo en Groovy. -->
+            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def dedupCte = 'SELECT NRO_DOCUMENTO, CONTENT FROM ( SELECT NRO_DOCUMENTO, CONTENT, ROW_NUMBER() OVER (PARTITION BY NRO_DOCUMENTO ORDER BY FECHA_REGISTRO DESC) AS RN FROM DAVID.CONSULTA_APIS_LOG WHERE STATUS = \'S\' AND TIPO = \'DNI\' AND CONTENT IS NOT NULL AND NRO_DOCUMENTO IS NOT NULL AND LENGTH(TRIM(NRO_DOCUMENTO)) BETWEEN 7 AND 8 ) WHERE RN = 1'; def finalQuery; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { finalQuery = "SELECT NRO_DOCUMENTO, CONTENT FROM (${dedupCte}) WHERE NRO_DOCUMENTO = ?".toString(); params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('reniec-cache searchScript solo soporta EqualsFilter en __NAME__/__UID__; recibido: ' + query); } } else { finalQuery = dedupCte; }; sql.eachRow(finalQuery, params) { row -> result &lt;&lt; ['__UID__': row.NRO_DOCUMENTO as String, '__NAME__': row.NRO_DOCUMENTO as String, 'NRO_DOCUMENTO': row.NRO_DOCUMENTO as String, 'CONTENT': row.CONTENT as String] }; return result</cfg:searchScript>
+
+            <cfg:syncScript>return null</cfg:syncScript>
+
+            <!-- schemaScript: atributos mínimos — UID/NAME + CONTENT raw -->
+            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -> def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("NRO_DOCUMENTO", true)); ocib.addAttributeInfo(ro("CONTENT", true)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
+
+            <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); def row = sql.firstRow("SELECT COUNT(*) AS CNT FROM DAVID.CONSULTA_APIS_LOG WHERE STATUS='S' AND TIPO='DNI' AND ROWNUM=1"); return "OK — RENIEC cache accesible"</cfg:testScript>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+
+    <schemaHandling>
+        <objectType>
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>RENIEC Cache — DNI validado</displayName>
+            <default>true</default>
+            <delineation>
+                <objectClass>ri:AccountObjectClass</objectClass>
+            </delineation>
+            <focus>
+                <type>UserType</type>
+                <!-- No archetypeRef — RENIEC no define el tipo de usuario.
+                     Solo enriquece datos de nombres en usuarios ya existentes. -->
+            </focus>
+
+            <!-- NRO_DOCUMENTO → taxId URN (beforeCorrelation + clockwork)
+                 El correlator busca usuarios cuyo sb:taxId coincida con la URN derivada del DNI.
+                 Mismo esquema URN que egresados.xml para consistencia cross-resource. -->
+            <attribute>
+                <ref>ri:NRO_DOCUMENTO</ref>
+                <inbound>
+                    <name>reniec-dni-to-taxId-urn</name>
+                    <strength>normal</strength>
+                    <expression>
+                        <script>
+                            <code>def d = (input ?: '').toString().trim(); d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</path>
+                    </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
+                </inbound>
+            </attribute>
+
+            <!-- CONTENT → givenName (Title Case español)
+                 Parsea el campo "nombres" del JSON RENIEC con JsonSlurper.
+                 Title Case: capitaliza cada palabra excepto preposiciones/artículos
+                 de 1-3 letras en posición no inicial (de, del, la, las, los, y, e, a).
+                 Ejemplo: "JUAN CARLOS DE LA TORRE" → "Juan Carlos de la Torre"
+                 strength strong: RENIEC es fuente jurídicamente validada.
+                          Prevalece sobre mappings weak/normal de otros resources. -->
+            <attribute>
+                <ref>ri:CONTENT</ref>
+                <inbound>
+                    <name>reniec-content-to-givenName</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+import groovy.json.JsonSlurper
+
+if (input == null || input.toString().trim().isEmpty()) return null
+
+def preposiciones = ['de','del','la','las','los','los','y','e','a','al','en','con','o'] as Set
+
+def titleCase = { String s ->
+    if (!s) return null
+    s.toLowerCase().split(' ').toList().withIndex().collect { word, i ->
+        (i == 0 || !(word in preposiciones)) ? word.capitalize() : word
+    }.join(' ')
+}
+
+try {
+    def json = new JsonSlurper().parseText(input.toString())
+    def nombres = json?.nombres?.toString()?.trim()
+    return (nombres && nombres.length() > 0) ? titleCase(nombres) : null
+} catch (Exception e) {
+    log.warn("reniec-cache: error parseando JSON para givenName — {}", e.getMessage())
+    return null
+}
+                            </code>
+                        </script>
+                    </expression>
+                    <target><path>givenName</path></target>
+                </inbound>
+
+                <!-- CONTENT → familyName (ap_paterno + ap_materno, Title Case)
+                     Construye el apellido completo concatenando ambos campos RENIEC.
+                     Se omite ap_materno si está vacío (ciudadanos con un solo apellido). -->
+                <inbound>
+                    <name>reniec-content-to-familyName</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+import groovy.json.JsonSlurper
+
+if (input == null || input.toString().trim().isEmpty()) return null
+
+def preposiciones = ['de','del','la','las','los','y','e','a','al','en','con','o'] as Set
+
+def titleCase = { String s ->
+    if (!s) return null
+    s.toLowerCase().split(' ').toList().withIndex().collect { word, i ->
+        (i == 0 || !(word in preposiciones)) ? word.capitalize() : word
+    }.join(' ')
+}
+
+try {
+    def json = new JsonSlurper().parseText(input.toString())
+    def pat = json?.ap_paterno?.toString()?.trim() ?: ''
+    def mat = json?.ap_materno?.toString()?.trim() ?: ''
+    def full = (pat + (mat ? ' ' + mat : '')).trim()
+    return full ? titleCase(full) : null
+} catch (Exception e) {
+    log.warn("reniec-cache: error parseando JSON para familyName — {}", e.getMessage())
+    return null
+}
+                            </code>
+                        </script>
+                    </expression>
+                    <target><path>familyName</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- Correlación por taxId (DNI URN)
+                 El inbound reniec-dni-to-taxId-urn (beforeCorrelation) prepara la URN
+                 antes de que este correlator evalúe.
+                 Solo encuentra usuarios existentes — no crea usuarios nuevos (ver unmatched abajo). -->
+            <correlation>
+                <correlators>
+                    <items>
+                        <name>correlate-by-taxId</name>
+                        <item>
+                            <ref xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</ref>
+                        </item>
+                    </items>
+                </correlators>
+            </correlation>
+
+            <synchronization>
+                <!-- linked → synchronize: actualiza givenName/familyName con datos RENIEC -->
+                <reaction>
+                    <situation>linked</situation>
+                    <actions><synchronize/></actions>
+                </reaction>
+                <!-- unlinked → link + synchronize: ya existe el usuario, lo vinculamos y enriquecemos -->
+                <reaction>
+                    <situation>unlinked</situation>
+                    <actions><link/></actions>
+                </reaction>
+                <!-- unmatched → inactivateShadow: no hay usuario en MidPoint con este DNI.
+                     RENIEC solo enriquece — no crea usuarios nuevos.
+                     El shadow queda inactivo hasta que el usuario se cree por otra vía. -->
+                <reaction>
+                    <situation>unmatched</situation>
+                    <actions><inactivateShadow/></actions>
+                </reaction>
+                <!-- deleted → unlink: si el registro RENIEC desaparece (improbable), desvinculamos.
+                     No afecta el usuario de MidPoint (los nombres ya enriquecidos se conservan). -->
+                <reaction>
+                    <situation>deleted</situation>
+                    <actions><unlinkFocus/></actions>
+                </reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>
+
+    <!-- Read-only: RENIEC cache es fuente inbound, no se escriben datos de vuelta -->
+    <capabilities>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:create>
+                <cap:enabled>false</cap:enabled>
+            </cap:create>
+            <cap:update>
+                <cap:enabled>false</cap:enabled>
+            </cap:update>
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
+        </configured>
+    </capabilities>
+
+    <projection>
+        <assignmentPolicyEnforcement>relative</assignmentPolicyEnforcement>
+    </projection>
+</resource>
