@@ -141,7 +141,7 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>if (input == null || input.toString().trim().isEmpty()) return null; def preposiciones = ['de','del','la','las','los','los','y','e','a','al','en','con','o'] as Set; def titleCase = { String s -> if (!s) return null; s.toLowerCase().split(' ').toList().withIndex().collect { word, i -> (i == 0 || !(word in preposiciones)) ? word.capitalize() : word }.join(' ') }; try { def json = new groovy.json.JsonSlurper().parseText(input.toString()); def nombres = json?.nombres?.toString()?.trim(); return (nombres &amp;&amp; nombres.length() &gt; 0) ? titleCase(nombres) : null } catch (Exception e) { log.warn('reniec-cache: givenName parse error — {}', e.getMessage()); return null }</code>
+                            <code>def preposiciones = ['de','del','la','las','los','los','y','e','a','al','en','con','o'] as Set; def titleCase = { String s -> s ? s.toLowerCase().split(' ').toList().withIndex().collect { word, i -> (i == 0 || !(word in preposiciones)) ? word.capitalize() : word }.join(' ') : null }; if (input == null || input.toString().trim().isEmpty()) return null; try { def json = new groovy.json.JsonSlurper().parseText(input.toString()); def nombres = json?.nombres?.toString()?.trim(); return (nombres &amp;&amp; nombres.length() &gt; 0) ? titleCase(nombres) : null } catch (Exception e) { log.warn('reniec-cache: givenName parse error', e.getMessage()); return null }</code>
                         </script>
                     </expression>
                     <target><path>givenName</path></target>
@@ -155,7 +155,7 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>if (input == null || input.toString().trim().isEmpty()) return null; def preposiciones = ['de','del','la','las','los','y','e','a','al','en','con','o'] as Set; def titleCase = { String s -> if (!s) return null; s.toLowerCase().split(' ').toList().withIndex().collect { word, i -> (i == 0 || !(word in preposiciones)) ? word.capitalize() : word }.join(' ') }; try { def json = new groovy.json.JsonSlurper().parseText(input.toString()); def pat = json?.ap_paterno?.toString()?.trim() ?: ''; def mat = json?.ap_materno?.toString()?.trim() ?: ''; def full = (pat + (mat ? ' ' + mat : '')).trim(); return full ? titleCase(full) : null } catch (Exception e) { log.warn('reniec-cache: familyName parse error — {}', e.getMessage()); return null }</code>
+                            <code>def preposiciones = ['de','del','la','las','los','y','e','a','al','en','con','o'] as Set; def titleCase = { String s -> s ? s.toLowerCase().split(' ').toList().withIndex().collect { word, i -> (i == 0 || !(word in preposiciones)) ? word.capitalize() : word }.join(' ') : null }; if (input == null || input.toString().trim().isEmpty()) return null; try { def json = new groovy.json.JsonSlurper().parseText(input.toString()); def pat = json?.ap_paterno?.toString()?.trim() ?: ''; def mat = json?.ap_materno?.toString()?.trim() ?: ''; def full = (pat + (mat ? ' ' + mat : '')).trim(); return full ? titleCase(full) : null } catch (Exception e) { log.warn('reniec-cache: familyName parse error', e.getMessage()); return null }</code>
                         </script>
                     </expression>
                     <target><path>familyName</path></target>
