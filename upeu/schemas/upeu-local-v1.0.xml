@@ -178,6 +178,61 @@
                 </xsd:sequence>
             </xsd:complexType>
 
+            <!-- OrgExtensionType — extensiones para OrgType (áreas organizacionales LAMB)
+                 Namespace: urn:upeu:midpoint:local
+                 Aplicable: OrgType (árbol de áreas sincronizado desde ELISEO.ORG_AREA)
+                 Ola 2: resource oracle-lamb-org.xml (2026-05-26) -->
+            <xsd:complexType name="OrgExtensionType">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:OrgType"/>
+                        <a:displayName>Datos locales UPeU — Área LAMB</a:displayName>
+                        <a:help>Extensión local para OrgType: áreas organizacionales sincronizadas desde Oracle LAMB (ELISEO.ORG_AREA). No reutilizable directamente entre universidades (IDs LAMB son internos).</a:help>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+
+                    <!-- O1 — ID_AREA (inmutable, no reutilizable entre releases LAMB) -->
+                    <xsd:element name="areaId" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>ID Área LAMB</a:displayName>
+                            <a:help>ELISEO.ORG_AREA.ID_AREA. Identificador numérico inmutable del área en el ERP LAMB. Mismo valor que OrgType.identifier. Indexed para assignmentTargetSearch en parentOrgRef y costCenter lookups.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>10</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- O2 — ID_DEPTO (código contable 8 dígitos, puede ser null) -->
+                    <xsd:element name="orgDepto" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Código contable (ID_DEPTO)</a:displayName>
+                            <a:help>ELISEO.ORG_SEDE_AREA.ID_DEPTO. Código de departamento 8 dígitos para integración contable. Solo presente si el área tiene entrada en ORG_SEDE_AREA. Formato: XXXXXXXX (8 dígitos, ej: 20010002).</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>20</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- O3 — TIPO_AREA (categoría del área para futuro mapeo a archetypes) -->
+                    <xsd:element name="tipoArea" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Tipo de área LAMB</a:displayName>
+                            <a:help>ELISEO.ORG_AREA.TIPO_AREA. Categoría interna LAMB del área. Ola 3: usada para mapeo dinámico a archetypes específicos (faculty/campus/vicerrectorado/etc.).</a:help>
+                            <a:displayOrder>30</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- O4 — ID_SEDE (para filtros por campus Lima/Juliaca/Tarapoto) -->
+                    <xsd:element name="sedeId" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>ID Sede LAMB</a:displayName>
+                            <a:help>ELISEO.ORG_SEDE.ID_SEDE referenciado via ORG_SEDE_AREA. Identifica la sede principal del área. Solo presente si el área tiene entrada en ORG_SEDE_AREA. Pilot Lima first.</a:help>
+                            <a:displayOrder>40</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                </xsd:sequence>
+            </xsd:complexType>
+
         </xsd:schema>
     </definition>
 </schema>

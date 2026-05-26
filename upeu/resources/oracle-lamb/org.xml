@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Resource: LAMB-Oracle-Org v1.0
+  OID: 9e2f4c7a-1b5d-4e8c-a3f6-c2d9e4b7a1f3
+
+  Pilar — Estructura organizacional UPeU (árbol de áreas LAMB)
+  Fuente: ELISEO.ORG_AREA + ELISEO.ORG_SEDE_AREA (nested set 8,026 nodos)
+  Libro Cap.10.6 Semančík: generic synchronization para OrgType.
+
+  Arquitectura:
+    kind=generic, intent=orgunit → sincroniza como OrgType
+    Identifier (UID): ID_AREA (inmutable, numérico, permanente en LAMB)
+    NAME: AREA-{ID_AREA} (formato controlado, único, legible en logs)
+    Jerarquía: inbound de ID_PARENT → assignmentTargetSearch → assignment→OrgType padre
+    Cada ELISEO.ORG_AREA row = 1 OrgType en MidPoint
+    Jerarquía completa en 1-2 pasadas de reconciliación (createOnDemand=false)
+
+  IIA-MATRIX Patrón B:
+    Este resource focus=OrgType, NO declara inbounds de datos personales (UserType).
+    La relación user↔org se mantiene via costCenter en trabajadores.xml.
+    Doctrina: Semančík cap.9 + IIA-MATRIX.md §3.3 "Recursos nuevos NO declaran
+    inbounds para atributos cuyo IIA ya está asignado".
+
+  Filtro fuente:
+    Todos los nodos activos en ELISEO.ORG_AREA (WHERE ID_AREA IS NOT NULL).
+    El nested set (IZQUIERDA/DERECHA) no se usa aquí; jerarquía via ID_PARENT.
+    ID_SEDE/ID_DEPTO opcionales via scalar subquery en ORG_SEDE_AREA.
+
+  Solo inbound. LAMB Oracle es solo-lectura absoluta.
+  Capabilities: create=false, update=false, delete=false.
+
+  Archetype:
+    Ola 2: no archetype en <focus> — se asigna en Ola 3 vía mapeo TIPO_AREA.
+    Razón: 8,026 áreas con múltiples tipos (VR/DIR/FAC/EAP/CRAI/etc.);
+    asignar archetype-org-department genérico sería incorrecto semánticamente.
+    El mapeo dinámico TIPO_AREA → archetype es tarea de Ola 3.
+
+  Synchronization reactions:
+    unmatched → addFocus (crea OrgType nuevo)
+    unlinked  → link
+    linked    → synchronize (actualiza displayName, tipoArea, etc.)
+    deleted   → inactivateFocus (área dada de baja en LAMB → archived)
+
+  Relacionado con:
+    - oracle-lamb/trabajadores.xml (costCenter = area.{ID_SEDEAREA} — resolución futura a OrgRef)
+    - IIA-MATRIX.md §2.3 (atributos de afiliación y rol)
+    - MOF-ORG-STRUCTURE-DISCOVERY.md (hallazgos estructura ELISEO)
+    - upeu-local-v1.0.xml OrgExtensionType (areaId, orgDepto, tipoArea, sedeId)
+    - m365.xml (futuro): outbound M365 Groups/Teams desde OrgType
+
+  Historial:
+    v1.0 2026-05-26 — Ola 2 M365 prep. lifecycleState=proposed.
+-->
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+    xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+    xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:upeu="urn:upeu:midpoint:local"
+    oid="9e2f4c7a-1b5d-4e8c-a3f6-c2d9e4b7a1f3">
+
+    <name>LAMB-Oracle-Org</name>
+    <description>Inbound ScriptedSQL desde ELISEO.ORG_AREA + ELISEO.ORG_SEDE_AREA. Sincroniza el árbol completo de 8,026 áreas organizacionales UPeU como OrgType MidPoint. Jerarquía via ID_PARENT → assignmentTargetSearch. IIA Patrón B: focus=OrgType, NO toca UserType. Ola 2 M365 prep. (2026-05-26)</description>
+    <lifecycleState>proposed</lifecycleState>
+
+    <!-- Mismo connector ScriptedSQL Tirasa que los otros LAMB resources -->
+    <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="c:ConnectorType"/>
+
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:resultsHandlerConfiguration>
+            <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
+            <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
+            <icfc:filteredResultsHandlerInValidationMode>true</icfc:filteredResultsHandlerInValidationMode>
+            <icfc:enableAttributesToGetSearchResultsHandler>false</icfc:enableAttributesToGetSearchResultsHandler>
+        </icfc:resultsHandlerConfiguration>
+
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">
+            <cfg:host>192.168.13.9</cfg:host>
+            <cfg:port>1521</cfg:port>
+            <cfg:user>JUANSANCHEZ</cfg:user>
+            <!-- Password cifrado igual que en los otros LAMB resources (misma instancia Oracle) -->
+            <cfg:password>
+                <t:encryptedData>
+                    <t:encryptionMethod>
+                        <t:algorithm>http://www.w3.org/2001/04/xmlenc#aes256-cbc</t:algorithm>
+                    </t:encryptionMethod>
+                    <t:keyInfo>
+                        <t:keyName>nkZ4VieDLlRmwD8hdryrmjz8IxQ=</t:keyName>
+                    </t:keyInfo>
+                    <t:cipherData>
+                        <t:cipherValue>5PiBLf405M3U4ulm9p6WfqMMVVwtOcVl5PuL6/CqPRMTmbA5Aoa/axj4ks8onfI2</t:cipherValue>
+                    </t:cipherData>
+                </t:encryptedData>
+            </cfg:password>
+            <cfg:database>UPEU</cfg:database>
+            <cfg:jdbcDriver>oracle.jdbc.OracleDriver</cfg:jdbcDriver>
+            <cfg:jdbcUrlTemplate>jdbc:oracle:thin:@%h:%p/%d</cfg:jdbcUrlTemplate>
+            <cfg:rethrowAllSQLExceptions>true</cfg:rethrowAllSQLExceptions>
+            <cfg:nativeTimestamps>true</cfg:nativeTimestamps>
+            <cfg:allNative>false</cfg:allNative>
+            <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
+            <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
+
+            <!--
+              searchScript — Árbol de áreas organizacionales UPeU
+              Fuente principal: ELISEO.ORG_AREA (8,026 nodos, nested set)
+              Enriquecimiento opcional: ELISEO.ORG_SEDE_AREA via scalar subquery (ID_SEDE, ID_DEPTO)
+              UID = ID_AREA (string, inmutable, único en LAMB)
+              NAME = 'AREA-' || ID_AREA (convenio de naming claro)
+              ID_PARENT puede ser null para nodos raíz (Rectorado, Asamblea Universitaria)
+              NOTA: script en una sola línea lógica (sin saltos reales).
+            -->
+            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = 'SELECT a.ID_AREA, a.NOMBRE_AREA, a.TIPO_AREA, a.ID_PARENT, (SELECT MIN(sa.ID_SEDE) FROM ELISEO.ORG_SEDE_AREA sa WHERE sa.ID_AREA = a.ID_AREA) AS ID_SEDE, (SELECT MIN(sa2.ID_DEPTO) FROM ELISEO.ORG_SEDE_AREA sa2 WHERE sa2.ID_AREA = a.ID_AREA) AS ID_DEPTO FROM ELISEO.ORG_AREA a WHERE a.ID_AREA IS NOT NULL'; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { def val = (query.right as String).trim(); if (val.startsWith('AREA-')) { val = val.substring(5) }; whereClause = ' AND a.ID_AREA = ?'; try { params &lt;&lt; Long.parseLong(val) } catch (NumberFormatException e) { params &lt;&lt; val } } else { throw new UnsupportedOperationException('Org searchScript solo soporta EqualsFilter en __NAME__/__UID__; recibido: ' + query) } }; def finalQuery = (baseQuery + whereClause).toString(); sql.eachRow(finalQuery, params) { row -&gt; def idArea = row.ID_AREA?.toString(); result &lt;&lt; ['__UID__': idArea, '__NAME__': 'AREA-' + idArea, 'ID_AREA': idArea, 'NOMBRE_AREA': (row.NOMBRE_AREA?.toString() ?: ''), 'TIPO_AREA': (row.TIPO_AREA?.toString() ?: ''), 'ID_PARENT': row.ID_PARENT?.toString(), 'ID_SEDE': row.ID_SEDE?.toString(), 'ID_DEPTO': row.ID_DEPTO?.toString()] }; return result</cfg:searchScript>
+
+            <cfg:syncScript>return null</cfg:syncScript>
+
+            <!--
+              schemaScript — define los atributos del objeto OrgArea
+              ObjectClass: __ACCOUNT__ (convención ScriptedSQL, aunque es generic OrgType en MidPoint)
+              Todos read-only (createable=false, updateable=false).
+            -->
+            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro('ID_AREA', true)); ocib.addAttributeInfo(ro('NOMBRE_AREA', true)); ocib.addAttributeInfo(ro('TIPO_AREA', false)); ocib.addAttributeInfo(ro('ID_PARENT', false)); ocib.addAttributeInfo(ro('ID_SEDE', false)); ocib.addAttributeInfo(ro('ID_DEPTO', false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
+
+            <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); def row = sql.firstRow('SELECT COUNT(*) AS TOTAL FROM ELISEO.ORG_AREA WHERE ID_AREA IS NOT NULL'); return 'OK - Areas LAMB: ' + row.TOTAL</cfg:testScript>
+
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+
+    <schemaHandling>
+        <objectType>
+            <!--
+              kind=generic + intent=orgunit → OrgType
+              Semančík cap.10.6 "Synchronization of org structure" — patrón canónico.
+              Cada ELISEO.ORG_AREA row = 1 OrgType en MidPoint.
+              focus=OrgType (NO UserType — IIA Patrón B).
+
+              Archetype: omitido en Ola 2. Ola 3 mapeará TIPO_AREA a archetypes específicos:
+                TIPO_AREA 'FAC'  → archetype-org-faculty    (87f84549-d101-4ae4-8036-42fb6abdfeec)
+                TIPO_AREA 'EAP'  → archetype-org-department (73795c10-2417-4323-b6fa-b88449a8bba4)
+                TIPO_AREA 'CRAI' → archetype-org-academic-unit (04c304d1-9205-4097-9c1d-6dce6ba98c7f)
+                TIPO_AREA otros  → archetype-org-department (default)
+            -->
+            <kind>generic</kind>
+            <intent>orgunit</intent>
+            <displayName>Área organizacional UPeU (LAMB)</displayName>
+            <default>true</default>
+            <delineation>
+                <objectClass>ri:AccountObjectClass</objectClass>
+            </delineation>
+            <focus>
+                <type>OrgType</type>
+                <!-- TODO Ola 3: añadir archetypeRef dinámico por TIPO_AREA via object template -->
+            </focus>
+
+            <!-- UID = ID_AREA → identifier (correlator + inbound)
+                 ID_AREA es el identificador primario inmutable en LAMB.
+                 El <correlator/> activa correlación: MidPoint busca OrgType donde identifier = ID_AREA.
+                 Pattern idéntico a posiciones.xml (ServiceType) — consistente en todos los LAMB generics. -->
+            <attribute>
+                <ref>icfs:uid</ref>
+                <correlator/>
+                <inbound>
+                    <name>uid-to-identifier</name>
+                    <strength>strong</strength>
+                    <target><path>identifier</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- NAME = 'AREA-{ID_AREA}' → OrgType.name (único, estable, indexado)
+                 Convención: prefijo AREA- para namespace claro en UI y filtros de búsqueda. -->
+            <attribute>
+                <ref>icfs:name</ref>
+                <inbound>
+                    <name>name-to-name</name>
+                    <strength>strong</strength>
+                    <target><path>name</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- NOMBRE_AREA → displayName (nombre legible del área, se muestra en UI) -->
+            <attribute>
+                <ref>ri:NOMBRE_AREA</ref>
+                <inbound>
+                    <name>nombre-area-to-displayName</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim(); v ?: null</code>
+                        </script>
+                    </expression>
+                    <target><path>displayName</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- ID_AREA → extension/upeu:areaId (redundante con identifier pero indexed en ext schema
+                 para consultas desde plantillas y desde costCenter resolution futura).
+                 IIA: ELISEO.ORG_AREA.ID_AREA. Nunca cambia en LAMB. -->
+            <attribute>
+                <ref>ri:ID_AREA</ref>
+                <inbound>
+                    <name>id-area-to-areaId</name>
+                    <strength>strong</strength>
+                    <target><path>extension/upeu:areaId</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- TIPO_AREA → extension/upeu:tipoArea
+                 Ola 3: usar para mapeo dinámico a archetype específico.
+                 Valores conocidos en LAMB: VR, DIR, FAC, EAP, CRAI, etc. (pendiente enumeración exacta). -->
+            <attribute>
+                <ref>ri:TIPO_AREA</ref>
+                <inbound>
+                    <name>tipo-area-to-tipoArea</name>
+                    <strength>normal</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim(); v ?: null</code>
+                        </script>
+                    </expression>
+                    <target><path>extension/upeu:tipoArea</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- ID_SEDE → extension/upeu:sedeId
+                 Puede ser null si el área no tiene entrada en ORG_SEDE_AREA (áreas transversales).
+                 Valores: 1=Lima, 2=Juliaca(?), 3=Tarapoto(?) — confirmar contra ELISEO.ORG_SEDE. -->
+            <attribute>
+                <ref>ri:ID_SEDE</ref>
+                <inbound>
+                    <name>id-sede-to-sedeId</name>
+                    <strength>normal</strength>
+                    <target><path>extension/upeu:sedeId</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- ID_DEPTO → extension/upeu:orgDepto (código contable 8 dígitos)
+                 Puede ser null para áreas sin asignación contable en ORG_SEDE_AREA.
+                 Futuro: resolver a OrgType.costCenter para integración financiera. -->
+            <attribute>
+                <ref>ri:ID_DEPTO</ref>
+                <inbound>
+                    <name>id-depto-to-orgDepto</name>
+                    <strength>normal</strength>
+                    <target><path>extension/upeu:orgDepto</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- ID_PARENT → assignment → OrgType padre (jerarquía organizacional)
+                 Semančík cap.10.6: la jerarquía de orgs se construye via assignments al padre.
+                 assignmentTargetSearch busca el OrgType donde identifier = ID_PARENT.
+                 createOnDemand=false: si el padre no existe aún en MidPoint (aún no procesado),
+                 el assignment se omite en esta pasada; se completará en la siguiente reconciliación.
+                 La jerarquía completa se construye en 1-2 pasadas (convergencia garantizada).
+                 Condición: ID_PARENT null → nodo raíz (Rectorado, Asamblea, etc.) → sin parent. -->
+            <attribute>
+                <ref>ri:ID_PARENT</ref>
+                <inbound>
+                    <name>id-parent-to-parentOrg</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <assignmentTargetSearch>
+                            <targetType>OrgType</targetType>
+                            <filter>
+                                <q:equal>
+                                    <q:path>identifier</q:path>
+                                    <q:value>
+                                        <expression>
+                                            <path>$shadow/attributes/ri:ID_PARENT</path>
+                                        </expression>
+                                    </q:value>
+                                </q:equal>
+                            </filter>
+                            <createOnDemand>false</createOnDemand>
+                        </assignmentTargetSearch>
+                    </expression>
+                    <target><path>assignment</path></target>
+                    <condition>
+                        <!-- Solo crear assignment si ID_PARENT no es null (no es nodo raíz) -->
+                        <script>
+                            <code>input != null &amp;&amp; !input.toString().trim().isEmpty()</code>
+                        </script>
+                    </condition>
+                </inbound>
+            </attribute>
+
+            <!--
+              Synchronization reactions para OrgType/generic/orgunit
+              linked     → synchronize (actualiza displayName, tipoArea, sedeId si cambió en LAMB)
+              unlinked   → link (reconcilia huérfanos)
+              unmatched  → addFocus (crea nuevo OrgType para área nueva en LAMB)
+              deleted    → inactivateFocus (área eliminada de LAMB → OrgType archived/disabled)
+                          NOTA: no se usa deleteFocus porque eliminar OrgType es destructivo
+                          (cascada a user assignments). inactivateFocus es más seguro.
+            -->
+            <synchronization>
+                <reaction>
+                    <situation>linked</situation>
+                    <actions><synchronize/></actions>
+                </reaction>
+                <reaction>
+                    <situation>unlinked</situation>
+                    <actions><link/></actions>
+                </reaction>
+                <reaction>
+                    <situation>unmatched</situation>
+                    <actions><addFocus/></actions>
+                </reaction>
+                <reaction>
+                    <!-- Área eliminada en LAMB → archivar OrgType (no borrar por cascada) -->
+                    <situation>deleted</situation>
+                    <actions><inactivateFocus/></actions>
+                </reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>
+
+    <!-- Solo inbound. LAMB Oracle es solo-lectura absoluta. Política de no-escritura estricta. -->
+    <capabilities>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:create>
+                <cap:enabled>false</cap:enabled>
+            </cap:create>
+            <cap:update>
+                <cap:enabled>false</cap:enabled>
+            </cap:update>
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
+        </configured>
+    </capabilities>
+
+    <projection>
+        <assignmentPolicyEnforcement>relative</assignmentPolicyEnforcement>
+    </projection>
+
+</resource>
