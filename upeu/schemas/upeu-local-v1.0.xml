@@ -76,6 +76,19 @@
                         </xsd:annotation>
                     </xsd:element>
 
+                    <!-- L10 — CATEGORÍA DOCENTE LAMB (específico UPeU) -->
+                    <!-- IIA: ENOC.CAT_DOCENTE.ID_CATEGORIA_DOCENTE.
+                         Valores numéricos internos del sistema docente LAMB (1-5).
+                         Solo presente para usuarios con primaryAffiliation=faculty.
+                         Campo informativo; no determina accesos. -->
+                    <xsd:element name="lambCategoriaDocente" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Categoría docente LAMB</a:displayName>
+                            <a:help>Categoría docente interna UPeU (1-5) desde ENOC.CAT_DOCENTE.ID_CATEGORIA_DOCENTE. Solo para faculty.</a:help>
+                            <a:displayOrder>90</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
                     <!-- L9 — ROL ANTERIOR POST-JUBILACIÓN -->
                     <!-- IIA: derivado por Bloque K del UserTemplate-Person-Base cuando
                          motivoCese='jubilacion' y la persona venía de staff o faculty.
