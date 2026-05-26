@@ -132,7 +132,12 @@
             </attribute>
             <attribute>
                 <ref>ri:NUM_DOCUMENTO</ref>
-                <correlator/>
+                <!-- Ola 1 fix 7.1 (2026-05-26): correlator shorthand <correlator/> dentro
+                     de <attribute> está roto en MidPoint 4.10 cuando hay inbounds con
+                     beforeCorrelation. Reemplazado por correlator explícito a nivel
+                     objectType abajo, mismo patrón que egresados.xml/grados.xml.
+                     El inbound dni-to-taxId-urn (beforeCorrelation) sigue normalizando
+                     NUM_DOCUMENTO a URN SCHAC en extension/sb:taxId. -->
                 <inbound>
                     <name>dni-to-taxId-urn</name>
                     <strength>strong</strength>
@@ -368,6 +373,22 @@
                     </target>
                 </inbound>
             </attribute>
+            <correlation>
+                <!-- Ola 1 fix 7.1 (2026-05-26): correlator explícito a nivel objectType.
+                     Reemplaza el <correlator/> shorthand dentro de <attribute>ri:NUM_DOCUMENTO</attribute>
+                     que estaba roto en MidPoint 4.10 cuando hay inbounds con beforeCorrelation.
+                     Mismo patrón usado en egresados.xml/grados.xml. El inbound dni-to-taxId-urn
+                     normaliza NUM_DOCUMENTO a URN SCHAC en extension/sb:taxId antes de
+                     que este correlator evalúe. -->
+                <correlators>
+                    <items>
+                        <name>correlate-by-taxId</name>
+                        <item>
+                            <ref xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</ref>
+                        </item>
+                    </items>
+                </correlators>
+            </correlation>
             <synchronization>
                 <reaction>
                     <situation>linked</situation>
