@@ -1062,7 +1062,11 @@
                                 def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
                                 if (aff == '') return null;
                                 if (aff == 'faculty') return 'DOCEN';
-                                if (aff == 'researcher') return 'INVESTI';
+                                // 'researcher' eliminado Ola 1 fix 9.1 (2026-05-26):
+                                //   no es vocabulario eduPerson 202208. Investigadores son
+                                //   primaryAffiliation=faculty con AR-Koha-Investigador
+                                //   override (guard ya manejado en línea 1060-1061 vía
+                                //   roleMembershipRef). Rama muerta eliminada.
                                 if (aff == 'staff' || aff == 'employee') return 'ADMINIST';
                                 if (aff == 'alum') return 'ALUMNI';
                                 if (aff == 'affiliate') return 'VISITA';
@@ -1233,8 +1237,9 @@
                      base64Binary, poblada por el Bloque I del UserTemplate).
                      strength=weak: NO-OP cuando jpegPhoto es null — nunca
                      borrar una foto ya existente en Koha (MidPoint suma,
-                     nunca resta). El guard explícito devuelve null para
-                     que el mapping no produzca delta cuando no hay foto.
+                     nunca resta). Passthrough sin expression (el
+                     <expression>jpegPhoto == null ? null : jpegPhoto</expression>
+                     previo era no-op — Ola 1 fix 8.1, 2026-05-26).
                      ============================================================ -->
                 <outbound>
                     <name>photo-outbound</name>
@@ -1242,11 +1247,6 @@
                     <source>
                         <path>$focus/jpegPhoto</path>
                     </source>
-                    <expression>
-                        <script>
-                            <code>jpegPhoto == null ? null : jpegPhoto</code>
-                        </script>
-                    </expression>
                 </outbound>
             </attribute>
             <attribute>
