@@ -55,7 +55,7 @@
     <name>CSV DGI Investigadores RENACYT v1</name>
     <description>Fuente parcial de enriquecimiento. Lee CSV anual DGI (Charmín Wilter) con DNIs de 97 investigadores RENACYT UPeU (Lima/Juliaca/Tarapoto). Asigna AR-Koha-Investigador a usuarios ya existentes correlacionados por taxId (DNI). NO crea usuarios. Flujo anual: Excel DGI → CSV → git push → docker cp → reconcile.</description>
     <lifecycleState>proposed</lifecycleState>
-    <connectorRef oid="28bbe21c-8fa9-4b8e-b784-4633b96f83c9" relation="org:default" type="c:ConnectorType"/>
+    <connectorRef oid="3517c9ef-d062-4d06-84da-b96e1dc05e8d" relation="org:default" type="c:ConnectorType"/><!-- CSV connector v2.9 (bundled con MidPoint 4.10) -->
     <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
         <icfc:resultsHandlerConfiguration>
             <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
@@ -68,7 +68,9 @@
             <!-- DNI es el identificador único de cada fila -->
             <cfg:uniqueAttribute>DNI</cfg:uniqueAttribute>
             <!-- El CSV tiene header en la primera fila -->
-            <!-- encoding UTF-8, separador coma por defecto -->
+            <!-- encoding UTF-8, separador coma explícito -->
+            <cfg:fieldDelimiter>,</cfg:fieldDelimiter>
+            <cfg:encoding>utf-8</cfg:encoding>
         </icfc:configurationProperties>
     </connectorConfiguration>
     <schemaHandling>
