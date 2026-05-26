@@ -18,9 +18,11 @@
              (comportamiento por defecto de MidPoint). Cuando el estado pase de active a
              otro valor, MidPoint deprovisionará la cuenta LDAP en el próximo recompute. -->
         <condition>
-            <script>
-                <code>focus?.lifecycleState == 'active' || focus?.lifecycleState == null</code>
-            </script>
+            <expression>
+                <script>
+                    <code>focus?.lifecycleState == 'active' || focus?.lifecycleState == null</code>
+                </script>
+            </expression>
         </condition>
     </inducement>
 </role>
