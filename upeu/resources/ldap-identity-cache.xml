@@ -13985,7 +13985,6 @@
             <auxiliaryObjectClass>ri:schacPersonalCharacteristics</auxiliaryObjectClass>
             <auxiliaryObjectClass>ri:schacEntryMetadata</auxiliaryObjectClass>
             <auxiliaryObjectClass>ri:midPointPerson</auxiliaryObjectClass>
-            <auxiliaryObjectClass>ri:upeuPerson</auxiliaryObjectClass>
             <attribute>
                 <ref>ri:dn</ref>
                 <displayName>Distinguished Name (DN)</displayName>
@@ -14270,42 +14269,6 @@
                     </source>
                 </outbound>
             </attribute>
-
-            <!-- ── CALIDAD DE DATOS / VALIDACIÓN RENIEC (upeuPerson) ──────────── -->
-            <attribute>
-                <ref>ri:upeuDataQualityStatus</ref>
-                <displayName>Data Quality Status (RENIEC)</displayName>
-                <outbound>
-                    <strength>strong</strength>
-                    <source>
-                        <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:dataQualityStatus</path>
-                    </source>
-                </outbound>
-            </attribute>
-
-            <attribute>
-                <ref>ri:upeuReniecValidationDate</ref>
-                <displayName>RENIEC Validation Date</displayName>
-                <outbound>
-                    <strength>strong</strength>
-                    <source>
-                        <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:reniecValidationDate</path>
-                    </source>
-                    <expression>
-                        <script>
-                            <code>
-if (input == null) return null
-def cal = (input instanceof javax.xml.datatype.XMLGregorianCalendar) ? input : null
-if (!cal) return null
-String.format('%04d%02d%02d%02d%02d%02dZ',
-    cal.year, cal.month, cal.day,
-    cal.hour, cal.minute, cal.second)
-                            </code>
-                        </script>
-                    </expression>
-                </outbound>
-            </attribute>
-
         </objectType>
     </schemaHandling>
     <capabilities>
