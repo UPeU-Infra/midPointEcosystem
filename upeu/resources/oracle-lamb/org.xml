@@ -291,14 +291,13 @@
                             <filter>
                                 <q:equal>
                                     <q:path>identifier</q:path>
-                                    <q:value>
-                                        <expression>
-                                            <!-- Usar $input (valor ya resuelto) en lugar de
-                                                 $shadow/attributes/ri:ID_PARENT que pierde namespace
-                                                 en el contexto del evaluador de filtro. -->
-                                            <path>$input</path>
-                                        </expression>
-                                    </q:value>
+                                    <!-- Expresión va directamente en q:equal, NO dentro de q:value.
+                                         q:value es para literales; para expresiones se omite el wrapper. -->
+                                    <expression>
+                                        <script>
+                                            <code>input</code>
+                                        </script>
+                                    </expression>
                                 </q:equal>
                             </filter>
                             <createOnDemand>false</createOnDemand>
