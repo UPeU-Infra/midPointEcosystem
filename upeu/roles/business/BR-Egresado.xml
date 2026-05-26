@@ -12,10 +12,13 @@
     <!-- R-Affiliation-Alumni eliminado (I2 2026-05-17):
          UserTemplate-Person-Base lo auto-asigna via assignmentTargetSearch desde primaryAffiliation.
          Duplicarlo en BRs viola "no duplicar politica" (Semancik cap. 9). -->
-    <!-- AR-LDAP-Person: cuenta en OpenLDAP Identity Cache -->
-    <inducement>
-        <targetRef oid="7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d" relation="org:default" type="RoleType"/>
-    </inducement>
+    <!-- AR-LDAP-Person: REMOVIDO (2026-05-26).
+         Egresados/alumni NO deben tener cuenta LDAP activa. Principio de least privilege:
+         el LDAP es Identity Cache para autenticación activa (WiFi 802.1X, Keycloak).
+         Un egresado no tiene contrato ni matrícula vigente. Si un egresado vuelve como
+         trabajador o estudiante, su lifecycleState pasa a active y otro BR (BR-Docente-TC,
+         BR-Estudiante-Pregrado, etc.) proveerá LDAP automáticamente.
+         OID conservado para audit trail: 7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d -->
     <!-- AR-Vendor-Academic-Access: acceso limitado a bases de datos académicas -->
     <inducement>
         <targetRef oid="9cc94538-d576-4735-a16c-e70562cd98b9" relation="org:default" type="RoleType"/>

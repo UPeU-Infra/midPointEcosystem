@@ -14191,6 +14191,21 @@
                     </source>
                 </outbound>
             </attribute>
+            <!-- l (localityName): campus UPeU para Dynamic VLAN en FreeRADIUS 802.1X.
+                 FreeRADIUS lee este atributo y selecciona la VLAN correcta por sede.
+                 Valores esperados: LIMA | JULIACA | TARAPOTO.
+                 Fuente autoritativa: Oracle LAMB SEDE_NOMBRE → $focus/locality (inbound strong).
+                 Ref: smart-wifi/docs/01-arquitectura.md §3.2 Dynamic VLAN RFC 3580. -->
+            <attribute id="93">
+                <ref>ri:l</ref>
+                <displayName>Locality / Campus (Dynamic VLAN 802.1X)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/locality</path>
+                    </source>
+                </outbound>
+            </attribute>
             <attribute id="85">
                 <ref>ri:title</ref>
                 <displayName>Title (cargo)</displayName>

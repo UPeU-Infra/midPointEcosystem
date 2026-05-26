@@ -12,5 +12,15 @@
             <kind>account</kind>
             <intent>default</intent>
         </construction>
+        <!-- Guard IGA: solo provisionar LDAP cuando el usuario tiene lifecycleState=active.
+             Jubilados (archived), ex-trabajadores (suspended/archived) y cualquier otro
+             estado inactivo quedan excluidos. Si lifecycleState es null se trata como active
+             (comportamiento por defecto de MidPoint). Cuando el estado pase de active a
+             otro valor, MidPoint deprovisionará la cuenta LDAP en el próximo recompute. -->
+        <condition>
+            <script>
+                <code>focus?.lifecycleState == 'active' || focus?.lifecycleState == null</code>
+            </script>
+        </condition>
     </inducement>
 </role>
