@@ -293,7 +293,10 @@
                                     <q:path>identifier</q:path>
                                     <q:value>
                                         <expression>
-                                            <path>$shadow/attributes/ri:ID_PARENT</path>
+                                            <!-- Usar $input (valor ya resuelto) en lugar de
+                                                 $shadow/attributes/ri:ID_PARENT que pierde namespace
+                                                 en el contexto del evaluador de filtro. -->
+                                            <path>$input</path>
                                         </expression>
                                     </q:value>
                                 </q:equal>
