@@ -103,18 +103,7 @@
                     <source><path>$shadow/attributes/ri:CONDICION</path></source>
                     <expression>
                         <script>
-                            <code>
-def n = (NOMBRE ?: '').toString().trim().toUpperCase()
-def c = (CONDICION ?: '').toString().trim().toUpperCase()
-if (!n) return null
-// Mapeo a vocabulario canónico sciback:conferredDegree
-if (n == 'TITULADO' || c == 'T') return 'TITULO_PROFESIONAL'
-if (n.contains('BACHILLER')) return 'BACHILLER'
-if (n.contains('MAESTR') || n.contains('MAGISTER')) return 'MAESTRIA'
-if (n.contains('POSDOCTORADO') || n.contains('POST-DOCTORADO') || n.contains('POSTDOCTORADO')) return 'POSDOCTORADO'
-if (n.contains('DOCTOR')) return 'DOCTORADO'
-return null
-                            </code>
+                            <code>def n = (NOMBRE ?: '').toString().trim().toUpperCase(); def c = (CONDICION ?: '').toString().trim().toUpperCase(); if (!n) return null; if (n == 'TITULADO' || c == 'T') return 'TITULO_PROFESIONAL'; if (n.contains('BACHILLER')) return 'BACHILLER'; if (n.contains('MAESTR') || n.contains('MAGISTER')) return 'MAESTRIA'; if (n.contains('POSDOCTORADO') || n.contains('POST-DOCTORADO') || n.contains('POSTDOCTORADO')) return 'POSDOCTORADO'; if (n.contains('DOCTOR')) return 'DOCTORADO'; return null</code>
                         </script>
                     </expression>
                     <target>
