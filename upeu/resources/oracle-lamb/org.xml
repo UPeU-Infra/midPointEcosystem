@@ -49,7 +49,7 @@
     - m365.xml (futuro): outbound M365 Groups/Teams desde OrgType
 
   Historial:
-    v1.0 2026-05-26 — Ola 2 M365 prep. lifecycleState=proposed.
+    v1.0 2026-05-26 — Ola 2 M365 prep. lifecycleState=active (promoted from proposed).
 -->
 <resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
@@ -63,7 +63,7 @@
 
     <name>LAMB-Oracle-Org</name>
     <description>Inbound ScriptedSQL desde ELISEO.ORG_AREA + ELISEO.ORG_SEDE_AREA. Sincroniza el árbol completo de 8,026 áreas organizacionales UPeU como OrgType MidPoint. Jerarquía via ID_PARENT → assignmentTargetSearch. IIA Patrón B: focus=OrgType, NO toca UserType. Ola 2 M365 prep. (2026-05-26)</description>
-    <lifecycleState>proposed</lifecycleState>
+    <lifecycleState>active</lifecycleState>
 
     <!-- Mismo connector ScriptedSQL Tirasa que los otros LAMB resources -->
     <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="c:ConnectorType"/>
