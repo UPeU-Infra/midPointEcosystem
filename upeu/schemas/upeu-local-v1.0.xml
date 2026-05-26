@@ -104,6 +104,25 @@
                         </xsd:appinfo></xsd:annotation>
                     </xsd:element>
 
+                    <!-- L11 — ARCHETYPE HINT LAMB (campo de transporte DC-001) -->
+                    <!-- IIA: ELISEO.VW_APS_EMPLEADO JOIN ENOC.CAT_DOCENTE → UPEU_ARCHETYPE_NAME.
+                         Valores: archetype-user-employee-faculty | archetype-user-employee-staff.
+                         Propósito: fallback en Bloque D7 de UserTemplate-Person-Base cuando
+                         sb:affiliations está vacío (caso jubilados nuevos sin historia previa).
+                         El inbound en trabajadores.xml lo setea con strength=weak (sin condición
+                         sobre ESTADO), garantizando que incluso jubilados (ESTADO='I') lo tengan.
+                         El archetype-to-affiliations sigue retornando null para ESTADO='I';
+                         este campo es solo el fallback de último recurso para D7.
+                         Ticket: DC-001 (Fix Decision C — jubilados nuevos sin archetype). -->
+                    <xsd:element name="lambArchetypeHint" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Archetype hint LAMB (transporte)</a:displayName>
+                            <a:help>Nombre interno del archetype estructural según Oracle LAMB (archetype-user-employee-faculty | archetype-user-employee-staff). Campo de transporte para D7 del UserTemplate: fallback cuando sb:affiliations está vacío (jubilados nuevos sin historia previa en MidPoint). Setado por inbound en trabajadores.xml con strength=weak. No usar directamente en UI.</a:help>
+                            <a:indexed>false</a:indexed>
+                            <a:displayOrder>95</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
                     <!-- L8 — MOTIVO DE CESE LAMB -->
                     <!-- IIA: ENOC.PLLA_CESE.ID_MOTIVO_CESE (enlazado por PLLA_CESE.APS = VW_APS_EMPLEADO.COD_APS).
                          Campo de transporte canónico: el resource Oracle LAMB Trabajadores hace LEFT JOIN

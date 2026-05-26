@@ -461,6 +461,23 @@
                     </target>
                 </inbound>
                 <inbound>
+                    <!-- DC-001: almacena UPEU_ARCHETYPE_NAME en upeu:lambArchetypeHint (weak).
+                         Usado por Bloque D7 de UserTemplate-Person-Base como fallback cuando
+                         sb:affiliations está vacío (jubilados nuevos sin historia previa en MidPoint).
+                         Sin condición sobre ESTADO: se popula incluso para jubilados (ESTADO='I').
+                         Strength=weak: no sobrescribe si el campo ya tiene valor por otra fuente. -->
+                    <name>archetype-name-to-lambArchetypeHint</name>
+                    <strength>weak</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim(); v ?: null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambArchetypeHint</path>
+                    </target>
+                </inbound>
+                <inbound>
                     <name>archetype-to-affiliations</name>
                     <!-- Fuente principal para Bloque J3. normal: permite coexistencia con
                          affiliations de egresados/estudiantes en usuarios dual-affiliation.

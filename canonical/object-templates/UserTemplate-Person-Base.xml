@@ -1478,6 +1478,12 @@ return roleName</code>
         <source>
             <path>extension/sciback:affiliations</path>
         </source>
+        <source>
+            <!-- DC-001: fallback para jubilados nuevos sin affiliations. IIA: upeu:lambArchetypeHint
+                 (seteado por inbound archetype-name-to-lambArchetypeHint en trabajadores.xml, weak).
+                 Valores: archetype-user-employee-faculty | archetype-user-employee-staff. -->
+            <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambArchetypeHint</path>
+        </source>
         <expression>
             <assignmentTargetSearch>
                 <targetType>ArchetypeType</targetType>
@@ -1486,7 +1492,7 @@ return roleName</code>
                         <q:path>name</q:path>
                         <expression>
                             <script>
-                                <code>def raw = affiliations; def afils = (raw instanceof java.util.Collection) ? raw.collect { it?.toString()?.trim()?.toLowerCase() }.findAll { it != null &amp;&amp; it != '' } : (raw != null ? [raw.toString().trim().toLowerCase()].findAll { it != null &amp;&amp; it != '' } : []); def prio = ['faculty': 1, 'staff': 2, 'student': 3, 'alum': 4]; def sorted = afils.findAll { prio.containsKey(it) }.sort { prio[it] }; def nameMap = ['faculty': 'archetype-user-employee-faculty', 'staff': 'archetype-user-employee-staff', 'student': 'archetype-user-student', 'alum': 'archetype-user-alumni']; sorted.isEmpty() ? null : nameMap[sorted.first()]</code>
+                                <code>def raw = affiliations; def afils = (raw instanceof java.util.Collection) ? raw.collect { it?.toString()?.trim()?.toLowerCase() }.findAll { it != null &amp;&amp; it != '' } : (raw != null ? [raw.toString().trim().toLowerCase()].findAll { it != null &amp;&amp; it != '' } : []); if (afils.isEmpty() &amp;&amp; lambArchetypeHint != null) { def hint = lambArchetypeHint.toString().trim(); if (hint == 'archetype-user-employee-faculty') afils = ['faculty']; else if (hint == 'archetype-user-employee-staff') afils = ['staff'] }; def prio = ['faculty': 1, 'staff': 2, 'student': 3, 'alum': 4]; def sorted = afils.findAll { prio.containsKey(it) }.sort { prio[it] }; def nameMap = ['faculty': 'archetype-user-employee-faculty', 'staff': 'archetype-user-employee-staff', 'student': 'archetype-user-student', 'alum': 'archetype-user-alumni']; sorted.isEmpty() ? null : nameMap[sorted.first()]</code>
                             </script>
                         </expression>
                     </q:equal>
@@ -1499,7 +1505,9 @@ return roleName</code>
         </target>
         <condition>
             <script>
-                <code>def raw = affiliations; def lst = (raw instanceof java.util.Collection) ? raw.collect { it?.toString()?.trim()?.toLowerCase() }.findAll { it != null &amp;&amp; it != '' } : (raw != null ? [raw.toString().trim().toLowerCase()].findAll { it != null &amp;&amp; it != '' } : []); def valid = ['faculty','staff','student','alum'] as Set; lst.any { valid.contains(it) }</code>
+                <!-- DC-001: condición TRUE si hay affiliations válidas O si affiliations está vacío
+                     pero lambArchetypeHint tiene valor (jubilados nuevos sin historia previa). -->
+                <code>def raw = affiliations; def lst = (raw instanceof java.util.Collection) ? raw.collect { it?.toString()?.trim()?.toLowerCase() }.findAll { it != null &amp;&amp; it != '' } : (raw != null ? [raw.toString().trim().toLowerCase()].findAll { it != null &amp;&amp; it != '' } : []); def valid = ['faculty','staff','student','alum'] as Set; lst.any { valid.contains(it) } || (lst.isEmpty() &amp;&amp; lambArchetypeHint != null &amp;&amp; lambArchetypeHint.toString().trim() != '')</code>
             </script>
         </condition>
     </mapping>
