@@ -38,7 +38,7 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="251f52db-af86-435d-9307-cc18ee0c3fa8">
     <name>AR-Koha-Investigador</name>
-    <description>Application Role: cuenta patron investigador RENACYT/DGI en Koha ILS. Override de category_id=INVESTI. Los investigadores son docentes (faculty) cuya condición de investigador se acredita por lista anual DGI. Asignado desde Resource CSV DGI (pendiente) o manualmente. Prevalece sobre el mapping category-id-from-primary-affiliation del resource koha-ils.</description>
+    <description>Application Role: cuenta patron investigador RENACYT/DGI en Koha ILS. Override de category_id=INVESTI. Los investigadores son docentes (faculty) cuya condición de investigador se acredita por lista anual DGI. Asignado desde Resource CSV DGI (pendiente) o manualmente. Prevalece sobre el mapping category-id-from-primary-affiliation del resource koha-ils. Excepción: si motivoCese=jubilacion, retorna null para que AR-Koha-Jubilado imponga JUBILADO sin conflicto de strong mappings.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
@@ -53,14 +53,22 @@
                  Prevalece sobre el mapping category-id-from-primary-affiliation del resource
                  (que asignaría DOCEN para los docentes-investigadores).
                  Un docente que es investigador DGI debe tener INVESTI en Koha,
-                 no DOCEN, para acceder a los servicios diferenciados de investigación. -->
+                 no DOCEN, para acceder a los servicios diferenciados de investigación.
+                 Excepción: si el usuario es jubilado (motivoCese=jubilacion), retorna null
+                 para que el inducement de AR-Koha-Jubilado sea el único valor strong
+                 y JUBILADO prevalezca (jubilado-investigador → JUBILADO, no INVESTI). -->
             <attribute>
                 <ref>ri:category_id</ref>
                 <outbound>
                     <name>investigador-category-override</name>
                     <strength>strong</strength>
+                    <source>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:motivoCese</path>
+                    </source>
                     <expression>
-                        <value>INVESTI</value>
+                        <script>
+                            <code>def motive = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : ''; if (motive == 'jubilacion') return null; return 'INVESTI'</code>
+                        </script>
                     </expression>
                 </outbound>
             </attribute>
