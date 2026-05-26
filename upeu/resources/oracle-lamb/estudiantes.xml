@@ -84,11 +84,18 @@
                     </target>
                 </inbound>
             </attribute>
+            <!-- Patrón B (docs/IIA-MATRIX.md §2.1, §3.1, 2026-05-26 Ola 1):
+                 givenName/familyName/birthDate/telephoneNumber bajan a weak.
+                 IIA principal = trabajadores (strong). Override jurídico = reniec-cache (strong).
+                 estudiantes solo sirve como fallback para student-only sin RENIEC.
+                 emailAddress: inbound ELIMINADO — trabajadores es IIA único de email institucional.
+                 (Antes de Ola 1: estos 4 inbounds eran strength=strong y competían con trabajadores/reniec).
+            -->
             <attribute>
                 <ref>ri:NOMBRE</ref>
                 <inbound>
                     <name>nombre-to-givenName</name>
-                    <strength>strong</strength>
+                    <strength>weak</strength>
                     <target><path>givenName</path></target>
                 </inbound>
             </attribute>
@@ -96,7 +103,7 @@
                 <ref>ri:PATERNO</ref>
                 <inbound>
                     <name>paterno-materno-to-familyName</name>
-                    <strength>strong</strength>
+                    <strength>weak</strength>
                     <source><path>$shadow/attributes/ri:PATERNO</path></source>
                     <source><path>$shadow/attributes/ri:MATERNO</path></source>
                     <expression>
@@ -109,22 +116,17 @@
             </attribute>
             <attribute>
                 <ref>ri:CORREO_UPEU</ref>
-                <inbound>
-                    <name>correo-upeu-to-emailAddress</name>
-                    <strength>strong</strength>
-                    <expression>
-                        <script>
-                            <code>(input ?: '').toString().trim().toLowerCase() ?: null</code>
-                        </script>
-                    </expression>
-                    <target><path>emailAddress</path></target>
-                </inbound>
+                <!-- Inbound emailAddress ELIMINADO Ola 1 (Patrón B). El email institucional
+                     viene exclusivamente de trabajadores.xml (CORREO_INST). Para estudiantes
+                     que NUNCA fueron trabajador, el email se construye en el template
+                     UserTemplate-Person-Base.xml (personalNumber + '@upeu.edu.pe', weak).
+                     CORREO_UPEU se sigue fetcheando para correlación / data quality. -->
             </attribute>
             <attribute>
                 <ref>ri:CELULAR</ref>
                 <inbound>
                     <name>celular-to-telephoneNumber</name>
-                    <strength>strong</strength>
+                    <strength>weak</strength>
                     <target><path>telephoneNumber</path></target>
                 </inbound>
             </attribute>
@@ -150,9 +152,10 @@
             </attribute>
             <attribute>
                 <ref>ri:FEC_NACIMIENTO</ref>
+                <!-- Patrón B Ola 1: weak (era strong). Autoridad jurídica = reniec-cache (RENIEC). -->
                 <inbound>
                     <name>fec-nacimiento-to-birthDate</name>
-                    <strength>strong</strength>
+                    <strength>weak</strength>
                     <expression>
                         <script>
                             <code>if (input == null) return null; def s = input.toString(); s.length() >= 10 ? s.substring(0, 10) : null</code>
