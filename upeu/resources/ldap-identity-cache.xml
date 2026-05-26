@@ -13970,6 +13970,46 @@
                         </xsd:element>
                     </xsd:sequence>
                 </xsd:complexType>
+                <!-- upeuPerson — clase auxiliar UPeU para calidad de datos RENIEC.
+                     OID: 1.3.6.1.4.1.47378.2.1. Añadido manualmente al schema embebido
+                     porque el schema fue capturado antes del deploy de esta clase en OpenLDAP.
+                     Coincide exactamente con cn={12}upeu,cn=schema,cn=config en OpenLDAP 2.6.x. -->
+                <xsd:complexType name="upeuPerson">
+                    <xsd:annotation>
+                        <xsd:appinfo>
+                            <a:container>true</a:container>
+                            <ra:resourceObject>true</ra:resourceObject>
+                            <ra:nativeObjectClass>upeuPerson</ra:nativeObjectClass>
+                            <ra:default>false</ra:default>
+                            <ra:auxiliary>true</ra:auxiliary>
+                            <ra:embedded>false</ra:embedded>
+                            <ra:namingAttribute>ri:dn</ra:namingAttribute>
+                            <ra:displayNameAttribute>ri:dn</ra:displayNameAttribute>
+                            <ra:identifier>ri:entryUUID</ra:identifier>
+                            <ra:secondaryIdentifier>ri:dn</ra:secondaryIdentifier>
+                        </xsd:appinfo>
+                    </xsd:annotation>
+                    <xsd:sequence>
+                        <xsd:element minOccurs="0" maxOccurs="1" name="upeuDataQualityStatus" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <ra:nativeAttributeName>upeuDataQualityStatus</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>upeuDataQualityStatus</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" maxOccurs="1" name="upeuReniecValidationDate" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <ra:nativeAttributeName>upeuReniecValidationDate</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>upeuReniecValidationDate</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                    </xsd:sequence>
+                </xsd:complexType>
             </xsd:schema>
         </definition>
     </schema>
@@ -13985,6 +14025,7 @@
             <auxiliaryObjectClass>ri:schacPersonalCharacteristics</auxiliaryObjectClass>
             <auxiliaryObjectClass>ri:schacEntryMetadata</auxiliaryObjectClass>
             <auxiliaryObjectClass>ri:midPointPerson</auxiliaryObjectClass>
+            <auxiliaryObjectClass>ri:upeuPerson</auxiliaryObjectClass>
             <attribute>
                 <ref>ri:dn</ref>
                 <displayName>Distinguished Name (DN)</displayName>
@@ -14269,6 +14310,42 @@
                     </source>
                 </outbound>
             </attribute>
+
+            <!-- ── CALIDAD DE DATOS / VALIDACIÓN RENIEC (upeuPerson) ──────────── -->
+            <attribute>
+                <ref>ri:upeuDataQualityStatus</ref>
+                <displayName>Data Quality Status (RENIEC)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:dataQualityStatus</path>
+                    </source>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:upeuReniecValidationDate</ref>
+                <displayName>RENIEC Validation Date (generalizedTime)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:reniecValidationDate</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+if (input == null) return null
+def cal = (input instanceof javax.xml.datatype.XMLGregorianCalendar) ? input : null
+if (!cal) return null
+String.format('%04d%02d%02d%02d%02d%02dZ',
+    cal.year, cal.month, cal.day,
+    cal.hour, cal.minute, cal.second)
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+
         </objectType>
     </schemaHandling>
     <capabilities>
