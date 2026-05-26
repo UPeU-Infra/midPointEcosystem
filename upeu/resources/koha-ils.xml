@@ -1114,7 +1114,7 @@
                      mecánica de tenancy de valores. Sin outbound a propósito.
                      ============================================================ -->
                 <tolerant>true</tolerant>
-                <intolerantValuePattern>.*"type"\s*:\s*"(AREA|CRAI_TIER)".*</intolerantValuePattern>
+                <intolerantValuePattern>.*"type"\s*:\s*"(AREA|CRAI_TIER|RESEARCHER)".*</intolerantValuePattern>
             </attribute>
             <attribute>
                 <ref>ri:library_id</ref>
