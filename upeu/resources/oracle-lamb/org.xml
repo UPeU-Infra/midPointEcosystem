@@ -112,7 +112,15 @@
               ID_PARENT puede ser null para nodos raíz (Rectorado, Asamblea Universitaria)
               NOTA: script en una sola línea lógica (sin saltos reales).
             -->
-            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = 'SELECT a.ID_AREA, a.NOMBRE_AREA, a.TIPO_AREA, a.ID_PARENT, (SELECT MIN(sa.ID_SEDE) FROM ELISEO.ORG_SEDE_AREA sa WHERE sa.ID_AREA = a.ID_AREA) AS ID_SEDE, (SELECT MIN(sa2.ID_DEPTO) FROM ELISEO.ORG_SEDE_AREA sa2 WHERE sa2.ID_AREA = a.ID_AREA) AS ID_DEPTO FROM ELISEO.ORG_AREA a WHERE a.ID_AREA IS NOT NULL'; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { def val = (query.right as String).trim(); if (val.startsWith('AREA-')) { val = val.substring(5) }; whereClause = ' AND a.ID_AREA = ?'; try { params &lt;&lt; Long.parseLong(val) } catch (NumberFormatException e) { params &lt;&lt; val } } else { throw new UnsupportedOperationException('Org searchScript solo soporta EqualsFilter en __NAME__/__UID__; recibido: ' + query) } }; def finalQuery = (baseQuery + whereClause).toString(); sql.eachRow(finalQuery, params) { row -&gt; def idArea = row.ID_AREA?.toString(); result &lt;&lt; ['__UID__': idArea, '__NAME__': 'AREA-' + idArea, 'ID_AREA': idArea, 'NOMBRE_AREA': (row.NOMBRE_AREA?.toString() ?: ''), 'TIPO_AREA': (row.TIPO_AREA?.toString() ?: ''), 'ID_PARENT': row.ID_PARENT?.toString(), 'ID_SEDE': row.ID_SEDE?.toString(), 'ID_DEPTO': row.ID_DEPTO?.toString()] }; return result</cfg:searchScript>
+            <!--
+              Fuente: ELISEO.VW_AREA (columnas verificadas 2026-05-26 via ALL_TAB_COLUMNS)
+              Columnas reales: ID_AREA, NOMBRE (no NOMBRE_AREA!), TIPO_AREA, ID_PARENT,
+                               ID_TIPOAREA, ESTADO, CODIGO, NIVEL, TIENEHIJO, etc.
+              VW_AREA_DEPTO tiene: ID_AREA, AREA (nombre), ID_DEPTO, ID_PARENT — útil para enriquecimiento.
+              ORG_AREA (tabla base) = VW_AREA sin TIPO_AREA (calculado).
+              Se usa VW_AREA que tiene TIPO_AREA + NOMBRE directamente.
+            -->
+            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = 'SELECT a.ID_AREA, a.NOMBRE, a.TIPO_AREA, a.ID_PARENT, a.ESTADO, a.CODIGO, (SELECT MIN(sa.ID_SEDE) FROM ELISEO.ORG_SEDE_AREA sa WHERE sa.ID_AREA = a.ID_AREA) AS ID_SEDE, (SELECT MIN(sa2.ID_DEPTO) FROM ELISEO.ORG_SEDE_AREA sa2 WHERE sa2.ID_AREA = a.ID_AREA) AS ID_DEPTO FROM ELISEO.VW_AREA a WHERE a.ID_AREA IS NOT NULL'; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { def val = (query.right as String).trim(); if (val.startsWith('AREA-')) { val = val.substring(5) }; whereClause = ' AND a.ID_AREA = ?'; try { params &lt;&lt; Long.parseLong(val) } catch (NumberFormatException e) { params &lt;&lt; val } } else { throw new UnsupportedOperationException('Org searchScript solo soporta EqualsFilter en __NAME__/__UID__; recibido: ' + query) } }; def finalQuery = (baseQuery + whereClause).toString(); sql.eachRow(finalQuery, params) { row -&gt; def idArea = row.ID_AREA?.toString(); result &lt;&lt; ['__UID__': idArea, '__NAME__': 'AREA-' + idArea, 'ID_AREA': idArea, 'NOMBRE': (row.NOMBRE?.toString() ?: ''), 'TIPO_AREA': (row.TIPO_AREA?.toString() ?: ''), 'ID_PARENT': row.ID_PARENT?.toString(), 'ESTADO': row.ESTADO?.toString(), 'CODIGO': row.CODIGO?.toString(), 'ID_SEDE': row.ID_SEDE?.toString(), 'ID_DEPTO': row.ID_DEPTO?.toString()] }; return result</cfg:searchScript>
 
             <cfg:syncScript>return null</cfg:syncScript>
 
@@ -121,9 +129,9 @@
               ObjectClass: __ACCOUNT__ (convención ScriptedSQL, aunque es generic OrgType en MidPoint)
               Todos read-only (createable=false, updateable=false).
             -->
-            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro('ID_AREA', true)); ocib.addAttributeInfo(ro('NOMBRE_AREA', true)); ocib.addAttributeInfo(ro('TIPO_AREA', false)); ocib.addAttributeInfo(ro('ID_PARENT', false)); ocib.addAttributeInfo(ro('ID_SEDE', false)); ocib.addAttributeInfo(ro('ID_DEPTO', false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
+            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro('ID_AREA', true)); ocib.addAttributeInfo(ro('NOMBRE', true)); ocib.addAttributeInfo(ro('TIPO_AREA', false)); ocib.addAttributeInfo(ro('ID_PARENT', false)); ocib.addAttributeInfo(ro('ESTADO', false)); ocib.addAttributeInfo(ro('CODIGO', false)); ocib.addAttributeInfo(ro('ID_SEDE', false)); ocib.addAttributeInfo(ro('ID_DEPTO', false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
 
-            <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); def row = sql.firstRow('SELECT COUNT(*) AS TOTAL FROM ELISEO.ORG_AREA WHERE ID_AREA IS NOT NULL'); return 'OK - Areas LAMB: ' + row.TOTAL</cfg:testScript>
+            <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); def row = sql.firstRow('SELECT COUNT(*) AS TOTAL FROM ELISEO.VW_AREA WHERE ID_AREA IS NOT NULL'); return 'OK - Areas LAMB (VW_AREA): ' + row.TOTAL</cfg:testScript>
 
         </icfc:configurationProperties>
     </connectorConfiguration>
@@ -179,11 +187,11 @@
                 </inbound>
             </attribute>
 
-            <!-- NOMBRE_AREA → displayName (nombre legible del área, se muestra en UI) -->
+            <!-- NOMBRE → displayName (nombre legible del área, columna real en VW_AREA es NOMBRE no NOMBRE_AREA) -->
             <attribute>
-                <ref>ri:NOMBRE_AREA</ref>
+                <ref>ri:NOMBRE</ref>
                 <inbound>
-                    <name>nombre-area-to-displayName</name>
+                    <name>nombre-to-displayName</name>
                     <strength>strong</strength>
                     <expression>
                         <script>
@@ -232,6 +240,24 @@
                     <name>id-sede-to-sedeId</name>
                     <strength>normal</strength>
                     <target><path>extension/upeu:sedeId</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- ESTADO → lifecycleState filter helper (A=activo, I=inactivo)
+                 Las áreas inactivas (ESTADO='I') aún existen en VW_AREA.
+                 Se guarda en subtype para filtros futuros. No afecta lifecycle del OrgType
+                 en esta ola — la inactivación se maneja via synchronization/deleted. -->
+            <attribute>
+                <ref>ri:ESTADO</ref>
+                <inbound>
+                    <name>estado-to-subtype</name>
+                    <strength>normal</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim(); v ? 'estado.' + v.toLowerCase() : null</code>
+                        </script>
+                    </expression>
+                    <target><path>subtype</path></target>
                 </inbound>
             </attribute>
 
