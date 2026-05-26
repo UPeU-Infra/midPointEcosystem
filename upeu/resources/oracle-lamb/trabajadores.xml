@@ -474,11 +474,7 @@
                     <strength>normal</strength>
                     <expression>
                         <script>
-                            <code>
-def estado = basic.getAttributeValue(shadow, 'ESTADO')
-if (estado == 'I') return null
-input == 'archetype-user-employee-faculty' ? 'faculty' : 'staff'
-                            </code>
+                            <code>def estado = basic.getAttributeValue(shadow, 'ESTADO'); if (estado == 'I') return null; input == 'archetype-user-employee-faculty' ? 'faculty' : 'staff'</code>
                         </script>
                     </expression>
                     <target>
