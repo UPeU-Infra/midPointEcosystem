@@ -151,6 +151,30 @@
                         </xsd:annotation>
                     </xsd:element>
 
+                    <!-- L12 — CALIDAD DE DATOS / VALIDACIÓN RENIEC -->
+                    <!-- IIA primaria: Oracle LAMB RENIEC Cache v1 (DAVID.CONSULTA_APIS_LOG).
+                         IIA secundaria: apiperu.dev (100 consultas/mes, tarea programada mensual).
+                         El resource reniec-cache.xml setea dataQualityStatus y reniecValidationDate
+                         como inbound durante reconciliación. manual_override nunca es sobreescrito
+                         por proceso automático.
+                         Se replica a OpenLDAP vía atributos auxiliares upeuPerson (objectClass). -->
+                    <xsd:element name="dataQualityStatus" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Estado calidad datos (RENIEC)</a:displayName>
+                            <a:help>Estado de validación de datos personales contra RENIEC. Vocabulario controlado: reniec_validated (CONTENT parseado OK, nombres coinciden o fueron actualizados) | mismatch (CONTENT parseado OK pero nombres difieren significativamente) | pending (sin consulta RENIEC aún) | manual_override (seteado por admin, no sobreescribir automáticamente). IIA: reniec-cache.xml inbound + apiperu.dev task mensual.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>200</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <xsd:element name="reniecValidationDate" type="xsd:dateTime" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Fecha validación RENIEC</a:displayName>
+                            <a:help>Fecha y hora de la última consulta exitosa a RENIEC para este usuario. IIA: DAVID.CONSULTA_APIS_LOG.FECHA_REGISTRO (Oracle LAMB cache) o timestamp de llamada a apiperu.dev. Permite detectar validaciones obsoletas (ej: > 1 año) para re-validar con cuota mensual apiperu.dev.</a:help>
+                            <a:displayOrder>201</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
                 </xsd:sequence>
             </xsd:complexType>
 

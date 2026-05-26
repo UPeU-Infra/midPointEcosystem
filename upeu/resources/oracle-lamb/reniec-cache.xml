@@ -78,12 +78,12 @@
                  NRO_DOCUMENTO es el DNI crudo (8 dígitos).
                  CONTENT es el JSON devuelto por la API RENIEC (VARCHAR2 4000, siempre presente en STATUS='S').
                  No se usa JSON_VALUE (no disponible en esta versión Oracle) — parseo en Groovy. -->
-            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def dedupCte = 'SELECT NRO_DOCUMENTO, CONTENT FROM ( SELECT NRO_DOCUMENTO, CONTENT, ROW_NUMBER() OVER (PARTITION BY NRO_DOCUMENTO ORDER BY FECHA_REGISTRO DESC) AS RN FROM DAVID.CONSULTA_APIS_LOG WHERE STATUS = \'S\' AND TIPO = \'DNI\' AND CONTENT IS NOT NULL AND NRO_DOCUMENTO IS NOT NULL AND LENGTH(TRIM(NRO_DOCUMENTO)) BETWEEN 7 AND 8 ) WHERE RN = 1'; def finalQuery; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { finalQuery = "SELECT NRO_DOCUMENTO, CONTENT FROM (${dedupCte}) WHERE NRO_DOCUMENTO = ?".toString(); params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('reniec-cache searchScript solo soporta EqualsFilter en __NAME__/__UID__; recibido: ' + query); } } else { finalQuery = dedupCte; }; sql.eachRow(finalQuery, params) { row -> result &lt;&lt; ['__UID__': row.NRO_DOCUMENTO as String, '__NAME__': row.NRO_DOCUMENTO as String, 'NRO_DOCUMENTO': row.NRO_DOCUMENTO as String, 'CONTENT': row.CONTENT as String] }; return result</cfg:searchScript>
+            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def dedupCte = 'SELECT NRO_DOCUMENTO, CONTENT, FECHA_REGISTRO FROM ( SELECT NRO_DOCUMENTO, CONTENT, FECHA_REGISTRO, ROW_NUMBER() OVER (PARTITION BY NRO_DOCUMENTO ORDER BY FECHA_REGISTRO DESC) AS RN FROM DAVID.CONSULTA_APIS_LOG WHERE STATUS = \'S\' AND TIPO = \'DNI\' AND CONTENT IS NOT NULL AND NRO_DOCUMENTO IS NOT NULL AND LENGTH(TRIM(NRO_DOCUMENTO)) BETWEEN 7 AND 8 ) WHERE RN = 1'; def finalQuery; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { finalQuery = "SELECT NRO_DOCUMENTO, CONTENT FROM (${dedupCte}) WHERE NRO_DOCUMENTO = ?".toString(); params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('reniec-cache searchScript solo soporta EqualsFilter en __NAME__/__UID__; recibido: ' + query); } } else { finalQuery = dedupCte; }; sql.eachRow(finalQuery, params) { row -> result &lt;&lt; ['__UID__': row.NRO_DOCUMENTO as String, '__NAME__': row.NRO_DOCUMENTO as String, 'NRO_DOCUMENTO': row.NRO_DOCUMENTO as String, 'CONTENT': row.CONTENT as String, 'FECHA_REGISTRO': row.FECHA_REGISTRO?.toString()] }; return result</cfg:searchScript>
 
             <cfg:syncScript>return null</cfg:syncScript>
 
             <!-- schemaScript: atributos mínimos — UID/NAME + CONTENT raw -->
-            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -> def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("NRO_DOCUMENTO", true)); ocib.addAttributeInfo(ro("CONTENT", true)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
+            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -> def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("NRO_DOCUMENTO", true)); ocib.addAttributeInfo(ro("CONTENT", true)); ocib.addAttributeInfo(ro("FECHA_REGISTRO", false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
 
             <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); def row = sql.firstRow("SELECT COUNT(*) AS CNT FROM DAVID.CONSULTA_APIS_LOG WHERE STATUS='S' AND TIPO='DNI' AND ROWNUM=1"); return "OK — RENIEC cache accesible"</cfg:testScript>
         </icfc:configurationProperties>
@@ -159,6 +159,99 @@
                         </script>
                     </expression>
                     <target><path>familyName</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- CONTENT → dataQualityStatus
+                 reniec_validated: CONTENT parseable y se extrajeron nombres.
+                 mismatch: CONTENT parseable pero nombres RENIEC difieren >30% de los actuales.
+                 No sobreescribe manual_override.
+                 strength=strong: RENIEC es fuente jurídica de mayor confianza. -->
+            <attribute>
+                <ref>ri:CONTENT</ref>
+                <inbound>
+                    <name>reniec-content-to-dataQualityStatus</name>
+                    <strength>strong</strength>
+                    <condition>
+                        <script>
+                            <code>
+import javax.xml.namespace.QName
+def NS = 'urn:upeu:midpoint:local'
+def currentStatus = focus?.extension?.findItem(new QName(NS,'dataQualityStatus'))?.getRealValue()?.toString()
+return currentStatus != 'manual_override'
+                            </code>
+                        </script>
+                    </condition>
+                    <expression>
+                        <script>
+                            <code>
+if (input == null || input.toString().trim().isEmpty()) return null
+try {
+    def json = new groovy.json.JsonSlurper().parseText(input.toString())
+    def nombres = json?.nombres?.toString()?.trim()
+    def pat = json?.ap_paterno?.toString()?.trim()
+    if (!nombres &amp;&amp; !pat) return null
+    // Detectar mismatch: si el foco ya tiene nombres y difieren significativamente
+    def focusGiven = focus?.givenName?.toString()?.trim()?.toUpperCase() ?: ''
+    def focusFamily = focus?.familyName?.toString()?.trim()?.toUpperCase() ?: ''
+    def reniecNombres = (nombres ?: '').toUpperCase()
+    def reniecApellidos = ((json?.ap_paterno?.toString()?.trim() ?: '') + ' ' + (json?.ap_materno?.toString()?.trim() ?: '')).trim().toUpperCase()
+    if (focusGiven &amp;&amp; focusFamily) {
+        def givenMatch = focusGiven.contains(reniecNombres) || reniecNombres.contains(focusGiven)
+        def familyMatch = focusFamily.contains(reniecApellidos) || reniecApellidos.contains(focusFamily)
+        if (!givenMatch &amp;&amp; !familyMatch) return 'mismatch'
+    }
+    return 'reniec_validated'
+} catch (Exception e) {
+    log.warn('reniec-cache: dataQualityStatus error: ' + e.getMessage())
+    return null
+}
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:dataQualityStatus</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <!-- FECHA_REGISTRO → reniecValidationDate
+                 Timestamp de la consulta RENIEC más reciente en el cache Oracle.
+                 No sobreescribe manual_override. -->
+            <attribute>
+                <ref>ri:FECHA_REGISTRO</ref>
+                <inbound>
+                    <name>reniec-fecha-to-validationDate</name>
+                    <strength>strong</strength>
+                    <condition>
+                        <script>
+                            <code>
+import javax.xml.namespace.QName
+def NS = 'urn:upeu:midpoint:local'
+def currentStatus = focus?.extension?.findItem(new QName(NS,'dataQualityStatus'))?.getRealValue()?.toString()
+return currentStatus != 'manual_override' &amp;&amp; input != null
+                            </code>
+                        </script>
+                    </condition>
+                    <expression>
+                        <script>
+                            <code>
+if (input == null) return null
+try {
+    def ts = java.sql.Timestamp.valueOf(input.toString())
+    def gc = new java.util.GregorianCalendar()
+    gc.setTimeInMillis(ts.getTime())
+    return javax.xml.datatype.DatatypeFactory.newInstance().newXMLGregorianCalendar(gc)
+} catch (Exception e) {
+    log.warn('reniec-cache: reniecValidationDate parse error: ' + e.getMessage())
+    return null
+}
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:reniecValidationDate</path>
+                    </target>
                 </inbound>
             </attribute>
 
