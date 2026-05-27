@@ -342,11 +342,13 @@
                 <!-- NIVEL_ENSENANZA → sb:studyLevel
                      IIA: DAVID.TIPO_NIVEL_ENSENANZA.NOMBRE via JOIN en subquery ag.
                      Valores relevantes IGA: Pregrado, Posgrado, Técnica, Idiomas, CEPRE, etc.
-                     strong: el nivel de estudios del semestre activo es la fuente autoritativa. -->
+                     normal: permite multi-programa simultáneo (ej. Pregrado+Posgrado en mismo semestre).
+                     Con strong MidPoint lanza fatal_error si dos shadows tienen NIVEL_ENSENANZA distinto.
+                     El último shadow procesado prevalece; sin impacto práctico (mismo semestre activo). -->
                 <ref>ri:NIVEL_ENSENANZA</ref>
                 <inbound>
                     <name>nivel-ensenanza-to-studyLevel</name>
-                    <strength>strong</strength>
+                    <strength>normal</strength>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:studyLevel</path>
                     </target>
