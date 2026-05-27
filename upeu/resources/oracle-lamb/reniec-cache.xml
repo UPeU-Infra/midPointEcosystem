@@ -160,15 +160,13 @@
                     </expression>
                     <target><path>familyName</path></target>
                 </inbound>
-            </attribute>
 
-            <!-- CONTENT → dataQualityStatus
-                 reniec_validated: CONTENT parseable y se extrajeron nombres.
-                 mismatch: CONTENT parseable pero nombres RENIEC difieren >30% de los actuales.
-                 No sobreescribe manual_override.
-                 strength=strong: RENIEC es fuente jurídica de mayor confianza. -->
-            <attribute>
-                <ref>ri:CONTENT</ref>
+                <!-- CONTENT → dataQualityStatus
+                     reniec_validated: CONTENT parseable y se extrajeron nombres.
+                     mismatch: CONTENT parseable pero nombres RENIEC difieren >30% de los actuales.
+                     No sobreescribe manual_override.
+                     strength=strong: RENIEC es fuente jurídica de mayor confianza.
+                     Fix 2026-05-27: consolidado en el bloque ri:CONTENT único (evita ORA Duplicate definition). -->
                 <inbound>
                     <name>reniec-content-to-dataQualityStatus</name>
                     <strength>strong</strength>
