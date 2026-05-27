@@ -21,8 +21,9 @@
     Doctrina: Semančík cap.9 + IIA-MATRIX.md §3.3 "Recursos nuevos NO declaran
     inbounds para atributos cuyo IIA ya está asignado".
 
-  Filtro fuente:
-    Todos los nodos activos en ELISEO.ORG_AREA (WHERE ID_AREA IS NOT NULL).
+  Filtro fuente (v1.1 2026-05-27):
+    Solo orgs reales y vigentes: ESTADO='1' AND (TIENEHIJO='1' OR tiene_trabajadores_activos).
+    Resultado esperado: ~374 nodos (vs 8,026 totales). Orgs vacías sin hijos eliminadas.
     El nested set (IZQUIERDA/DERECHA) no se usa aquí; jerarquía via ID_PARENT.
     ID_SEDE/ID_DEPTO opcionales via scalar subquery en ORG_SEDE_AREA.
 
@@ -120,7 +121,7 @@
               ORG_AREA (tabla base) = VW_AREA sin TIPO_AREA (calculado).
               Se usa VW_AREA que tiene TIPO_AREA + NOMBRE directamente.
             -->
-            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = 'SELECT a.ID_AREA, a.NOMBRE, a.TIPO_AREA, a.ID_PARENT, a.ESTADO, a.CODIGO, (SELECT MIN(sa.ID_SEDE) FROM ELISEO.ORG_SEDE_AREA sa WHERE sa.ID_AREA = a.ID_AREA) AS ID_SEDE, (SELECT MIN(sa2.ID_DEPTO) FROM ELISEO.ORG_SEDE_AREA sa2 WHERE sa2.ID_AREA = a.ID_AREA) AS ID_DEPTO FROM ELISEO.VW_AREA a WHERE a.ID_AREA IS NOT NULL'; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { def val = (query.right as String).trim(); if (val.startsWith('AREA-')) { val = val.substring(5) }; whereClause = ' AND a.ID_AREA = ?'; try { params &lt;&lt; Long.parseLong(val) } catch (NumberFormatException e) { params &lt;&lt; val } } else { throw new UnsupportedOperationException('Org searchScript solo soporta EqualsFilter en __NAME__/__UID__; recibido: ' + query) } }; def finalQuery = (baseQuery + whereClause).toString(); sql.eachRow(finalQuery, params) { row -&gt; def idArea = row.ID_AREA?.toString(); result &lt;&lt; ['__UID__': idArea, '__NAME__': 'AREA-' + idArea, 'ID_AREA': idArea, 'NOMBRE': (row.NOMBRE?.toString() ?: ''), 'TIPO_AREA': (row.TIPO_AREA?.toString() ?: ''), 'ID_PARENT': row.ID_PARENT?.toString(), 'ESTADO': row.ESTADO?.toString(), 'CODIGO': row.CODIGO?.toString(), 'ID_SEDE': row.ID_SEDE?.toString(), 'ID_DEPTO': row.ID_DEPTO?.toString()] }; return result</cfg:searchScript>
+            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = 'SELECT a.ID_AREA, a.NOMBRE, a.TIPO_AREA, a.ID_PARENT, a.ESTADO, a.CODIGO, (SELECT MIN(sa.ID_SEDE) FROM ELISEO.ORG_SEDE_AREA sa WHERE sa.ID_AREA = a.ID_AREA) AS ID_SEDE, (SELECT MIN(sa2.ID_DEPTO) FROM ELISEO.ORG_SEDE_AREA sa2 WHERE sa2.ID_AREA = a.ID_AREA) AS ID_DEPTO FROM ELISEO.VW_AREA a WHERE a.ESTADO = \'1\' AND (a.TIENEHIJO = \'1\' OR EXISTS (SELECT 1 FROM ENOC.VW_TRABAJADOR t JOIN ELISEO.ORG_SEDE_AREA osa ON osa.ID_SEDEAREA = t.ID_SEDEAREA WHERE osa.ID_AREA = a.ID_AREA AND t.ESTADO = \'A\'))'; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { def val = (query.right as String).trim(); if (val.startsWith('AREA-')) { val = val.substring(5) }; whereClause = ' AND a.ID_AREA = ?'; try { params &lt;&lt; Long.parseLong(val) } catch (NumberFormatException e) { params &lt;&lt; val } } else { throw new UnsupportedOperationException('Org searchScript solo soporta EqualsFilter en __NAME__/__UID__; recibido: ' + query) } }; def finalQuery = (baseQuery + whereClause).toString(); sql.eachRow(finalQuery, params) { row -&gt; def idArea = row.ID_AREA?.toString(); result &lt;&lt; ['__UID__': idArea, '__NAME__': 'AREA-' + idArea, 'ID_AREA': idArea, 'NOMBRE': (row.NOMBRE?.toString() ?: ''), 'TIPO_AREA': (row.TIPO_AREA?.toString() ?: ''), 'ID_PARENT': row.ID_PARENT?.toString(), 'ESTADO': row.ESTADO?.toString(), 'CODIGO': row.CODIGO?.toString(), 'ID_SEDE': row.ID_SEDE?.toString(), 'ID_DEPTO': row.ID_DEPTO?.toString()] }; return result</cfg:searchScript>
 
             <cfg:syncScript>return null</cfg:syncScript>
 
@@ -131,7 +132,7 @@
             -->
             <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro('ID_AREA', true)); ocib.addAttributeInfo(ro('NOMBRE', true)); ocib.addAttributeInfo(ro('TIPO_AREA', false)); ocib.addAttributeInfo(ro('ID_PARENT', false)); ocib.addAttributeInfo(ro('ESTADO', false)); ocib.addAttributeInfo(ro('CODIGO', false)); ocib.addAttributeInfo(ro('ID_SEDE', false)); ocib.addAttributeInfo(ro('ID_DEPTO', false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
 
-            <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); def row = sql.firstRow('SELECT COUNT(*) AS TOTAL FROM ELISEO.VW_AREA WHERE ID_AREA IS NOT NULL'); return 'OK - Areas LAMB (VW_AREA): ' + row.TOTAL</cfg:testScript>
+            <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); def row = sql.firstRow('SELECT COUNT(*) AS TOTAL FROM ELISEO.VW_AREA a WHERE a.ESTADO = \'1\' AND (a.TIENEHIJO = \'1\' OR EXISTS (SELECT 1 FROM ENOC.VW_TRABAJADOR t JOIN ELISEO.ORG_SEDE_AREA osa ON osa.ID_SEDEAREA = t.ID_SEDEAREA WHERE osa.ID_AREA = a.ID_AREA AND t.ESTADO = \'A\'))'); return 'OK - Areas LAMB reales (ESTADO=1, con hijos o trabajadores): ' + row.TOTAL</cfg:testScript>
 
         </icfc:configurationProperties>
     </connectorConfiguration>

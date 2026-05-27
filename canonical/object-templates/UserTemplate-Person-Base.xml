@@ -742,11 +742,12 @@ try {
 
     <!-- ============================================================
          BLOQUE E — ASIGNACIÓN A ORG VIA assignmentTargetSearch
-         Activado Fase 5b (2026-05-15):
-         costCenter ← ID_SEDEAREA mapeado en resource-oracle-lamb-trabajadores
-         Formato: "area.{ID_AREA}" (ej: "area.6" → VICERRECTORADO-ADMINISTRATIVO)
-         Busca OrgType por identifier = costCenter.
-         IIA: ENOC.VW_TRABAJADOR.ID_SEDEAREA (via ELISEO.VW_APS_EMPLEADO JOIN)
+         Activado Fase 5b (2026-05-15). Fix formato 2026-05-27.
+         costCenter ← ID_AREA (puro numérico) desde Oracle LAMB Trabajadores v3.
+         Ejemplo: costCenter="488" → OrgType identifier="488" (INFRAESTRUCTURA TI LIMA).
+         IIA: ELISEO.ORG_SEDE_AREA.ID_AREA (via JOIN en trabajadores.xml searchScript).
+         Condición: costCenter.matches('\\d+') — solo dispara para valores numéricos
+         (ID_AREA del árbol org LAMB). Evita falsos positivos con otros costCenters.
          ============================================================ -->
     <mapping>
         <name>E-assign-org-from-costCenter</name>
@@ -777,7 +778,10 @@ try {
         </target>
         <condition>
             <script>
-                <code>costCenter != null &amp;&amp; basic.stringify(costCenter).trim().startsWith('area.')</code>
+                <!-- costCenter puro numérico = ID_AREA de ELISEO.ORG_SEDE_AREA (v2026-05-27).
+                     Antes era 'area.{ID_SEDEAREA}' (formato anterior incorrecto).
+                     OrgType.identifier = ID_AREA (puro numérico) → match directo. -->
+                <code>costCenter != null &amp;&amp; basic.stringify(costCenter).trim().matches('\\d+')</code>
             </script>
         </condition>
     </mapping>
