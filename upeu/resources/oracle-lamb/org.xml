@@ -61,7 +61,7 @@
     xmlns:upeu="urn:upeu:midpoint:local"
     oid="9e2f4c7a-1b5d-4e8c-a3f6-c2d9e4b7a1f3">
 
-    <name>LAMB-Oracle-Org</name>
+    <name>Oracle LAMB Org</name>
     <description>Inbound ScriptedSQL desde ELISEO.ORG_AREA + ELISEO.ORG_SEDE_AREA. Sincroniza el árbol completo de 8,026 áreas organizacionales UPeU como OrgType MidPoint. Jerarquía via ID_PARENT → assignmentTargetSearch. IIA Patrón B: focus=OrgType, NO toca UserType. Ola 2 M365 prep. (2026-05-26)</description>
     <lifecycleState>active</lifecycleState>
 
