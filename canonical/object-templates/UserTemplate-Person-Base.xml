@@ -1492,7 +1492,7 @@ return roleName</code>
                         <q:path>name</q:path>
                         <expression>
                             <script>
-                                <code>def raw = affiliations; def afils = (raw instanceof java.util.Collection) ? raw.collect { it?.toString()?.trim()?.toLowerCase() }.findAll { it != null &amp;&amp; it != '' } : (raw != null ? [raw.toString().trim().toLowerCase()].findAll { it != null &amp;&amp; it != '' } : []); if (afils.isEmpty() &amp;&amp; lambArchetypeHint != null) { def hint = lambArchetypeHint.toString().trim(); if (hint == 'archetype-user-employee-faculty') afils = ['faculty']; else if (hint == 'archetype-user-employee-staff') afils = ['staff'] }; def prio = ['faculty': 1, 'staff': 2, 'student': 3, 'alum': 4]; def sorted = afils.findAll { prio.containsKey(it) }.sort { prio[it] }; def nameMap = ['faculty': 'archetype-user-employee-faculty', 'staff': 'archetype-user-employee-staff', 'student': 'archetype-user-student', 'alum': 'archetype-user-alumni']; sorted.isEmpty() ? null : nameMap[sorted.first()]</code>
+                                <code>def raw = affiliations; def afils = (raw instanceof java.util.Collection) ? raw.collect { it?.toString()?.trim()?.toLowerCase() }.findAll { it != null &amp;&amp; it != '' } : (raw != null ? [raw.toString().trim().toLowerCase()].findAll { it != null &amp;&amp; it != '' } : []); if (afils.isEmpty() &amp;&amp; lambArchetypeHint != null) { def hint = lambArchetypeHint.toString().trim(); if (hint == 'archetype-user-employee-faculty') afils = ['faculty']; else if (hint == 'archetype-user-employee-staff') afils = ['staff'] }; def prio = ['faculty': 1, 'staff': 2, 'student': 3, 'alum': 4]; def sorted = afils.findAll { prio.containsKey(it) }.sort { prio[it] }; def nameMap = ['faculty': 'archetype-user-employee-faculty', 'staff': 'archetype-user-employee-staff', 'student': 'archetype-user-student']; sorted.isEmpty() ? null : nameMap[sorted.first()]</code>
                             </script>
                         </expression>
                     </q:equal>
@@ -1508,6 +1508,45 @@ return roleName</code>
                 <!-- DC-001: condición TRUE si hay affiliations válidas O si affiliations está vacío
                      pero lambArchetypeHint tiene valor (jubilados nuevos sin historia previa). -->
                 <code>def raw = affiliations; def lst = (raw instanceof java.util.Collection) ? raw.collect { it?.toString()?.trim()?.toLowerCase() }.findAll { it != null &amp;&amp; it != '' } : (raw != null ? [raw.toString().trim().toLowerCase()].findAll { it != null &amp;&amp; it != '' } : []); def valid = ['faculty','staff','student','alum'] as Set; lst.any { valid.contains(it) } || (lst.isEmpty() &amp;&amp; lambArchetypeHint != null &amp;&amp; lambArchetypeHint.toString().trim() != '')</code>
+            </script>
+        </condition>
+    </mapping>
+
+    <!-- ================================================================
+         BLOQUE D.7b — ARCHETYPE ALUMNI CONDICIONAL
+         Propietario canónico del archetype alumni en el template.
+         SOLO asigna archetype-user-alumni cuando primaryAffiliation == 'alum'.
+         Cuando primaryAffiliation cambia (re-matriculación → 'student'),
+         condition=false → MidPoint elimina el assignment alumni que ESTE MAPPING creó.
+         Separado de D.7 para enforcement independiente del archetype alumni.
+         MidPoint Book Cap. 9: template es propietario canónico de archetypes.
+         ================================================================ -->
+    <mapping>
+        <name>D7b-alumni-archetype-conditional</name>
+        <description>Asigna archetype-user-alumni SOLO cuando primaryAffiliation='alum'. condition=false cuando primaryAffiliation='student'/'faculty'/'staff' → MidPoint elimina el assignment alumni creado por este mapping. Propietario canónico del archetype alumni. Separado de D7 para enforcement independiente.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>ArchetypeType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <q:value>archetype-user-alumni</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'alum'</code>
             </script>
         </condition>
     </mapping>
