@@ -489,22 +489,20 @@ if (gy instanceof java.util.Collection) {
 if (gy == null) return null;  // fail-open: vigencia indefinida
 def yearInt;
 try {
-    yearInt = (gy instanceof Number) ? gy.intValue() : Integer.parseInt(gy.toString().trim());
+    yearInt = (gy instanceof Number) ? ((Number) gy).intValue() : Integer.parseInt(gy.toString().trim());
 } catch (Exception e) {
     log.warn('D-autoassign-ar-koha-patron-alumni: graduationYear no parseable: {}', gy);
     return null;
 }
-// validTo = 31-Diciembre-(graduationYear + 2) 23:59:59 hora Lima (UTC-5)
-def expiryYear = yearInt + 2;
-def cal = javax.xml.datatype.DatatypeFactory.newInstance().newXMLGregorianCalendar();
-cal.setYear(expiryYear);
-cal.setMonth(12);
-cal.setDay(31);
-cal.setHour(23);
-cal.setMinute(59);
-cal.setSecond(59);
-cal.setTimezone(-300);  // -05:00 Lima
-return cal;
+// validTo = 31-Diciembre-(graduationYear + 2) 23:59:59-05:00 Lima
+try {
+    def expiryYear = yearInt + 2;
+    def dateStr = String.format('%04d-12-31T23:59:59-05:00', expiryYear);
+    return javax.xml.datatype.DatatypeFactory.newInstance().newXMLGregorianCalendar(dateStr);
+} catch (Exception e2) {
+    log.warn('D-autoassign-ar-koha-patron-alumni: error construyendo XMLGregorianCalendar: {}', e2.getMessage());
+    return null;
+}
 ]]></code>
                             </script>
                         </expression>
