@@ -152,7 +152,7 @@
                 TIPO_AREA otros  → archetype-org-department (default)
             -->
             <kind>generic</kind>
-            <intent>orgunit</intent>
+            <intent>default</intent>
             <displayName>Área organizacional UPeU (LAMB)</displayName>
             <default>true</default>
             <delineation>
