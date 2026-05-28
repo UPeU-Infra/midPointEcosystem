@@ -481,8 +481,12 @@ return null // weak: no sobrescribe studentCycle — solo side-effect de log</co
                         <expression>
                             <script>
                                 <code><![CDATA[
+// D-autoassign-ar-koha-patron-alumni: calcula validTo = 31-Dic(graduationYear+2)
+// graduationYear llega como Integer (xsd:int) desde Oracle LAMB.
+// Retornamos String ISO-8601: MidPoint convierte String→XMLGregorianCalendar
+// al asignar al target activation/validTo, evitando ClassCastException en
+// combinatorial evaluation (MidPoint 4.10.x bug con DatatypeFactory en populate).
 def gy = graduationYear;
-// Normalizar — puede llegar como Integer, String, o Collection (multi-source)
 if (gy instanceof java.util.Collection) {
     gy = gy.isEmpty() ? null : gy.iterator().next();
 }
@@ -490,19 +494,12 @@ if (gy == null) return null;  // fail-open: vigencia indefinida
 def yearInt;
 try {
     yearInt = (gy instanceof Number) ? ((Number) gy).intValue() : Integer.parseInt(gy.toString().trim());
-} catch (Exception e) {
+} catch (Exception ignore) {
     log.warn('D-autoassign-ar-koha-patron-alumni: graduationYear no parseable: {}', gy);
     return null;
 }
-// validTo = 31-Diciembre-(graduationYear + 2) 23:59:59-05:00 Lima
-try {
-    def expiryYear = yearInt + 2;
-    def dateStr = String.format('%04d-12-31T23:59:59-05:00', expiryYear);
-    return javax.xml.datatype.DatatypeFactory.newInstance().newXMLGregorianCalendar(dateStr);
-} catch (Exception e2) {
-    log.warn('D-autoassign-ar-koha-patron-alumni: error construyendo XMLGregorianCalendar: {}', e2.getMessage());
-    return null;
-}
+// Retornar como String — MidPoint parsea xsd:dateTime desde String sin ClassCastException
+return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
 ]]></code>
                             </script>
                         </expression>
