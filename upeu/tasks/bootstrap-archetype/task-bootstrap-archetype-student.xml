@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
+      xmlns:sb="urn:sciback:midpoint:person">
+    <name>Bootstrap archetype student 2026-05-28</name>
+    <assignment>
+        <targetRef oid="00000000-0000-0000-0000-000000000528" type="ArchetypeType"/>
+    </assignment>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>suspended</executionState>
+    <activity>
+        <work>
+            <iterativeScripting>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <q:not>
+                                    <q:ref>
+                                        <q:path>archetypeRef</q:path>
+                                        <q:value><type>ArchetypeType</type></q:value>
+                                    </q:ref>
+                                </q:not>
+                                <q:equal>
+                                    <q:path>extension/sb:primaryAffiliation</q:path>
+                                    <q:value>student</q:value>
+                                </q:equal>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+                <scriptExecutionRequest>
+                    <s:action>
+                        <s:type>assign</s:type>
+                        <s:parameter>
+                            <s:name>role</s:name>
+                            <s:value xsi:type="c:ObjectReferenceType"
+                                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                                     oid="3037fbd2-db02-4ffd-8b1a-83fab5e686aa"
+                                     type="c:ArchetypeType"/>
+                        </s:parameter>
+                    </s:action>
+                </scriptExecutionRequest>
+            </iterativeScripting>
+        </work>
+    </activity>
+</task>
