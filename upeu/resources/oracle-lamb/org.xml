@@ -219,6 +219,29 @@
                     <strength>strong</strength>
                     <target><path>extension/upeu:areaId</path></target>
                 </inbound>
+                <!-- Archetype dinámico department (solo si NO tiene archetype org-* aún).
+                     Los 41 OrgType canónicos (governance/faculty/academic-unit/partner-institution)
+                     YA tienen su archetypeRef asignado a mano (Fase 1) → la condición los excluye.
+                     Los departamentos puros legacy (DIRECCION/COORDINACION/JEFATURA/OFICINA admin sin
+                     contraparte canónica) reciben archetype-org-department por defecto.
+                     Patrón canónico SciBack: object-template-driven archetype para árbol ERP. -->
+                <inbound>
+                    <name>default-department-archetype</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>
+                            <assignment xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
+                                <targetRef oid="73795c10-2417-4323-b6fa-b88449a8bba4" type="ArchetypeType"/>
+                            </assignment>
+                        </value>
+                    </expression>
+                    <target><path>assignment</path></target>
+                    <condition>
+                        <script>
+                            <code>def refs = focus?.archetypeRef; refs == null || refs.size() == 0</code>
+                        </script>
+                    </condition>
+                </inbound>
             </attribute>
 
             <!-- TIPO_AREA → extension/upeu:tipoArea
@@ -315,35 +338,6 @@
                         <!-- Solo crear assignment si ID_PARENT no es null (no es nodo raíz) -->
                         <script>
                             <code>input != null &amp;&amp; !input.toString().trim().isEmpty()</code>
-                        </script>
-                    </condition>
-                </inbound>
-            </attribute>
-
-            <!-- ID_AREA → archetype dinámico department (solo si NO tiene archetype org-* aún).
-                 Los 41 OrgType canónicos (governance/faculty/academic-unit/partner-institution)
-                 YA tienen su archetypeRef asignado a mano (Fase 1) → la condición los excluye.
-                 Los departamentos puros legacy (DIRECCION/COORDINACION/JEFATURA/OFICINA admin sin
-                 contraparte canónica) reciben archetype-org-department por defecto.
-                 Patrón canónico SciBack: object-template-driven archetype para árbol ERP. -->
-            <attribute>
-                <ref>ri:ID_AREA</ref>
-                <inbound>
-                    <name>default-department-archetype</name>
-                    <strength>strong</strength>
-                    <expression>
-                        <value>
-                            <assignment xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
-                                <targetRef oid="73795c10-2417-4323-b6fa-b88449a8bba4" type="ArchetypeType"/>
-                            </assignment>
-                        </value>
-                    </expression>
-                    <target><path>assignment</path></target>
-                    <condition>
-                        <!-- Aplica solo si el OrgType aún no tiene ningún archetype asignado.
-                             Evita pisar los 41 canónicos (governance/faculty/partner-institution). -->
-                        <script>
-                            <code>def refs = focus?.archetypeRef; refs == null || refs.size() == 0</code>
                         </script>
                     </condition>
                 </inbound>
