@@ -176,7 +176,7 @@
                     <strength>strong</strength>
                     <condition>
                         <script>
-                            <code>def currentStatus = focus?.extension?.findItem(new javax.xml.namespace.QName('urn:upeu:midpoint:local','dataQualityStatus'))?.getRealValue()?.toString(); return currentStatus != 'manual_override'</code>
+                            <code>def currentStatus = focus?.asObjectable()?.extension?.findPropertyValue(new com.evolveum.midpoint.prism.path.ItemName('urn:upeu:midpoint:local','dataQualityStatus'))?.value?.toString(); return currentStatus != 'manual_override'</code>
                         </script>
                     </condition>
                     <expression>
@@ -222,7 +222,7 @@ try {
                     <strength>strong</strength>
                     <condition>
                         <script>
-                            <code>def currentStatus = focus?.extension?.findItem(new javax.xml.namespace.QName('urn:upeu:midpoint:local','dataQualityStatus'))?.getRealValue()?.toString(); return currentStatus != 'manual_override' &amp;&amp; input != null</code>
+                            <code>def currentStatus = focus?.asObjectable()?.extension?.findPropertyValue(new com.evolveum.midpoint.prism.path.ItemName('urn:upeu:midpoint:local','dataQualityStatus'))?.value?.toString(); return currentStatus != 'manual_override' &amp;&amp; input != null</code>
                         </script>
                     </condition>
                     <expression>
