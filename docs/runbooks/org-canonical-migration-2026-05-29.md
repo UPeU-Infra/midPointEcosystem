@@ -642,3 +642,65 @@ abortaba `recompute` (no el assign puntual).
 > orgs sincronizadas desde ERP, usar **direct assignment** (task `iterativeScripting` acción `assign`, o
 > PATCH add assignment). El object template de OrgType sirve para mappings de atributos (displayName,
 > costCenter, etc.), NO para asignar el archetype estructural.
+
+---
+
+## Fase 3 — Verificación denominacionales (READ-ONLY) ✅ ⚠️ HALLAZGO BLOQUEANTE: premisa falsa
+
+### La premisa "~303 denominacionales sin empleo" resultó FALSA
+La Fase 3 partía del supuesto (runbook §3) de que bajo las raíces denominacionales había ~303 usuarios,
+algunos sin empleo UPeU real, candidatos a archivar. La verificación READ-ONLY lo refuta:
+
+**Descomposición de usuarios bajo orgs NO in-scope (26,904 total inicialmente alarmante):**
+| Conjunto | Usuarios | Naturaleza | Acción |
+|---|---|---|---|
+| Estudiantes en orgs `EP-*` (academic-program canónicas) | 26,162 | árbol canónico de estudiantes (D6) — legítimo | ninguna (falso positivo de mi filtro inicial, que solo listaba las 133 admin) |
+| Trabajadores en orgs legacy `AREA-N` con costCenter in-scope | 0 | — | (no hay; todos los in-scope ya migrados) |
+| **Trabajadores en orgs legacy `AREA-N` con costCenter FUERA-scope** | **742** | **empleados UPeU activos reales** | **NO archivar — ver hallazgo** |
+
+### Cruce de empleo (READ-ONLY) — sin Oracle directo
+Oracle 11g R2 NO soporta python-oracledb thin mode (`DPY-3010`); PROD no tiene Instant Client. Cruce
+alternativo equivalente: shadow vivo en el resource **Oracle LAMB Trabajadores v3**
+(`6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21`, 16,326 shadows) = empleo reconocido por RR.HH.
+
+**Resultado: 742/742 tienen shadow VIVO en Trabajadores v3 → TODOS son trabajadores UPeU activos
+reales. CERO denominacionales puros a archivar.** (DNI = `name` del user, 8 dígitos.)
+
+### HALLAZGO BLOQUEANTE — el scope de 133 áreas es INCOMPLETO
+Los 742 trabajadores activos están en **178 áreas legacy** (su `costCenter`=ID_AREA) que NO están entre
+las 133 in-scope del filtro CONNECT BY (addendum A.1), y cuyo shadow en el resource Org quedó `dead`
+(0/178 con shadow Org vivo) tras el cambio de filtro de Fase 2. Es decir:
+
+- El **recompute de Bloque E NO los reubicará** al árbol canónico (su costCenter no matchea ninguna de
+  las 133 orgs in-scope con archetype).
+- **NO son denominacionales** (tienen empleo activo) → NO se pueden archivar (regla del runbook:
+  "Si una purga/saneo va a tocar usuarios activos, DETENTE").
+- Las 178 áreas NO se pueden purgar (Fase 4) sin dejar 742 trabajadores activos huérfanos.
+
+**Top costCenters afectados:** 7790(44), 7823(35), 7804(32), 7795(26), 4438(21), 7997(17), 4542(14),
+4583(14), 787(10), 8007(9), 4520(9), 7799(9)... (178 áreas, todas `AREA-N` legacy sin archetype).
+
+### DETENCIÓN — decisión requerida de Alberto (Fases 3/4 NO proceden con la premisa actual)
+El filtro de scope (133 áreas, addendum A.1) excluye 178 áreas con 742 empleados activos. Antes de
+archivar/purgar nada se requiere decidir:
+
+1. **¿Son ent=7124 (UPeU) las 178 áreas?** Si SÍ → el filtro CONNECT BY debe AMPLIARSE para incluir
+   áreas ent=7124 con trabajadores activos aunque no tengan `TIENEHIJO=1` (la condición EXISTS de
+   trabajadores del filtro A.1 no las capturó — probable causa: el JOIN `ORG_SEDE_AREA` por
+   `ID_SEDEAREA` no resuelve para estas áreas, o son áreas hoja sin la condición de hijo). Requiere
+   re-consulta a Oracle LAMB (CONNECT BY + EXISTS revisado) — **solo ejecutable desde la LAN con un
+   cliente Oracle thick (Instant Client) o sqlcl**, que PROD hoy NO tiene.
+2. **Si son denominacionales pero con empleados UPeU "prestados"** → definir política (cuarentena
+   `suspended` vs mantener bajo área especial "afines/denominacional con empleo UPeU").
+3. **Ampliar las 133 → ~311 áreas** (133 + 178) y re-clasificar las nuevas con direct assignment
+   (mismo mecanismo de Fase 2quater, ya validado).
+
+**Recomendación:** ampliar el scope para incluir las 178 áreas (probable ent=7124 con trabajadores),
+re-clasificarlas por direct assignment, y SOLO ENTONCES evaluar purga de lo que quede sin empleo. NO
+archivar ningún trabajador activo. La parte de modelado (clasificación + saneo de stales de las 133)
+está COMPLETA y es correcta; lo pendiente es una **decisión de scope de datos**.
+
+### Estado de PROD tras Fase 3 (READ-ONLY, sin cambios)
+- 0 cambios destructivos en Fase 3. 133/133 in-scope con archetype + árbol conexo (de Fase 2quater).
+- Fase 4 (purga + recompute trabajadores) **NO ejecutada** — bloqueada por scope incompleto.
+- Backups Fase 0 + 2 incrementales intactos.
