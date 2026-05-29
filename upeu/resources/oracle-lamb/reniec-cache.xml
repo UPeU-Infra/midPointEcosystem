@@ -176,12 +176,7 @@
                     <strength>strong</strength>
                     <condition>
                         <script>
-                            <code>
-import javax.xml.namespace.QName
-def NS = 'urn:upeu:midpoint:local'
-def currentStatus = focus?.extension?.findItem(new QName(NS,'dataQualityStatus'))?.getRealValue()?.toString()
-return currentStatus != 'manual_override'
-                            </code>
+                            <code>def currentStatus = focus?.extension?.findItem(new javax.xml.namespace.QName('urn:upeu:midpoint:local','dataQualityStatus'))?.getRealValue()?.toString(); return currentStatus != 'manual_override'</code>
                         </script>
                     </condition>
                     <expression>
@@ -227,12 +222,7 @@ try {
                     <strength>strong</strength>
                     <condition>
                         <script>
-                            <code>
-import javax.xml.namespace.QName
-def NS = 'urn:upeu:midpoint:local'
-def currentStatus = focus?.extension?.findItem(new QName(NS,'dataQualityStatus'))?.getRealValue()?.toString()
-return currentStatus != 'manual_override' &amp;&amp; input != null
-                            </code>
+                            <code>def currentStatus = focus?.extension?.findItem(new javax.xml.namespace.QName('urn:upeu:midpoint:local','dataQualityStatus'))?.getRealValue()?.toString(); return currentStatus != 'manual_override' &amp;&amp; input != null</code>
                         </script>
                     </condition>
                     <expression>
