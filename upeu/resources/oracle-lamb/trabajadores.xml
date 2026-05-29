@@ -646,9 +646,25 @@
                     <situation>unmatched</situation>
                     <actions><addFocus/></actions>
                 </reaction>
+                <!-- GOBERNANZA 2026-05-29 (opción 1b aprobada): el reaction deleted NO desactiva
+                     el focus de forma incondicional. Solo DESPROYECTA la cuenta de Trabajador (unlink
+                     del shadow); el object template UserTemplate-Person-Base gobierna el lifecycleState
+                     final por afiliación recalculada:
+                       - Bloque J3 recalcula primaryAffiliation desde sb:affiliations. Al desaparecer
+                         la cuenta Trabajador, el inbound archetype-to-affiliations (normal) deja de
+                         aportar staff/faculty; si el usuario conserva otra afiliación viva (alum vía
+                         Egresados, student vía Estudiantes) primaryAffiliation queda en esa afiliación.
+                       - Ex-trabajador denominacional que ES egresado UPeU (alum) → primaryAffiliation=alum
+                         → permanece ACTIVE como alumni (Bloque F: tiene afiliación válida).
+                       - Trabajador puro denominacional sin vínculo académico → affiliations queda sin
+                         valor laboral → Bloque F lo lleva a draft y Bloque H2 (pérdida total de empleo)
+                         lo archiva de forma durable.
+                     Reality-vs-Policy: el shadow (realidad) se va; la policy del focus la decide el
+                     template por su IIA académica restante. NO se usa inactivateFocus (incondicional).
+                     best-practices §1.2: el lifecycle se sincroniza desde la IIA, no por reaction fijo. -->
                 <reaction>
                     <situation>deleted</situation>
-                    <actions><inactivateFocus/></actions>
+                    <actions><unlink/></actions>
                 </reaction>
             </synchronization>
         </objectType>

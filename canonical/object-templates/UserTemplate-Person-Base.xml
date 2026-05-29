@@ -960,6 +960,16 @@ if (['staff', 'faculty'].contains(aff2) &amp;&amp; termStr2 != '' &amp;&amp; mc2
         log.warn('Bloque F archive-guard: terminationDate no parseable {} en {}: {}', termStr2, focus?.name, e.message)
     }
 }
+// GUARD H2 (2026-05-29, opción 1b): ex-trabajador que PERDIÓ toda afiliación (affiliations vacío tras
+// desproyectar la cuenta Trabajador) pero TUVO empleo (terminationDate presente). F no debe devolver
+// 'draft' — es un leaver, no un alta incompleta. Cede a Bloque H2 que lo archiva durablemente.
+// Solo cede si no hay afiliación válida: si conserva alum/student, F sigue gobernando (active).
+def validAff_g = ['student','faculty','staff','alum','affiliate'];
+def hasAff_g = aff2 != '' &amp;&amp; validAff_g.contains(aff2);
+if (!hasAff_g &amp;&amp; termStr2 != '') {
+    log.info('Bloque F guard-H2: {} sin afiliacion + con terminationDate -> cede a H2 (archive)', focus?.name);
+    return null;
+}
 def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''; def hasPersonalNumber = (pn != ''); def hasPrimaryDoc = false; try { def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'primary')); def docs = identityDocuments; if (docs != null) { def docList = (docs instanceof List) ? docs : [docs]; hasPrimaryDoc = docList.any { doc -> def primProp = doc?.findProperty(primPath); primProp != null &amp;&amp; 'true' == primProp?.realValue?.toString() } } } catch (Exception e) { log.warn('Bloque F: error leyendo identityDocuments en {}: {}', focus?.name, e.message) }; if (!hasPrimaryDoc &amp;&amp; taxId != null) { def txStr = basic.stringify(taxId)?.trim(); if (txStr?.startsWith('urn:schac:personalUniqueID:')) hasPrimaryDoc = true }; def validAffiliations = ['student','faculty','staff','alum','affiliate']; def hasAffiliation = primaryAffiliation != null &amp;&amp; validAffiliations.contains(basic.stringify(primaryAffiliation).trim().toLowerCase()); if (hasPersonalNumber &amp;&amp; hasPrimaryDoc &amp;&amp; hasAffiliation) { return 'active' } else { if (!hasPersonalNumber) { log.info('Bloque F lifecycle gate: {} sin personalNumber -> draft', focus?.name) }; if (!hasPrimaryDoc) { log.info('Bloque F lifecycle gate: {} sin documento primario -> draft', focus?.name) }; if (!hasAffiliation) { log.info('Bloque F lifecycle gate: {} sin afiliacion valida -> draft', focus?.name) }; return 'draft' }
                 </code>
             </script>
@@ -980,14 +990,35 @@ def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''; d
         <ref>activation/administrativeStatus</ref>
         <mapping>
             <name>leaver-disable-on-terminationdate</name>
+            <!-- GOBERNANZA 2026-05-29 (opción 1b): el DISABLE por terminationDate SOLO aplica a quien
+                 SIGUE siendo trabajador (primaryAffiliation staff|faculty). Un ex-trabajador que
+                 conserva afiliación académica viva (alum/student) NO debe quedar DISABLED — su
+                 identidad persiste por otra IIA. Antes, este strong desactivaba a TODO usuario con
+                 terminationDate pasada (incluidos 104 alumni/jubilados egresados) → bug reparado.
+                 Al añadir primaryAffiliation como source y exigir staff|faculty, el mapping retira el
+                 DISABLED en el recompute cuando el usuario pasa a alum/student (relatividad: source
+                 cambia, el strong recomputa null → ENABLED por effectiveStatus). -->
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
             <source>
                 <path>extension/sciback:terminationDate</path>
             </source>
+            <source>
+                <name>primaryAffiliation</name>
+                <path>extension/sciback:primaryAffiliation</path>
+            </source>
             <expression>
                 <script>
-                    <code>import java.time.LocalDate; import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType; if (terminationDate == null) return null; def v = basic.stringify(terminationDate); if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) return null; try { def td = LocalDate.parse(v); if (!td.isAfter(LocalDate.now())) { return ActivationStatusType.DISABLED } } catch (Exception e) { log.warn("UPeU template leaver: terminationDate no parseable '{}' en {}: {}", v, focus?.name, e.message) }; return null</code>
+                    <code>import java.time.LocalDate; import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType;
+def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+// Solo desactivar a trabajadores vigentes. Si la afiliación dominante ya no es laboral
+// (ex-trabajador que es alumni/estudiante), NO desactivar.
+if (!['staff','faculty'].contains(aff)) return null;
+if (terminationDate == null) return null;
+def v = basic.stringify(terminationDate);
+if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) return null;
+try { def td = LocalDate.parse(v); if (!td.isAfter(LocalDate.now())) { return ActivationStatusType.DISABLED } } catch (Exception e) { log.warn("UPeU template leaver: terminationDate no parseable '{}' en {}: {}", v, focus?.name, e.message) };
+return null</code>
                 </script>
             </expression>
             <condition>
@@ -1060,6 +1091,63 @@ try {
     log.warn('BloqueH: terminationDate no parseable {} en {}: {}', termStr, focus?.name, e.message);
     return false;
 }</code>
+                </script>
+            </condition>
+            <expression>
+                <value>archived</value>
+            </expression>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
+         BLOQUE H2 — BAJA DEFINITIVA POR PÉRDIDA TOTAL DE AFILIACIÓN
+         (GOBERNANZA 2026-05-29, opción 1b aprobada)
+
+         Archiva durablemente al ex-trabajador que perdió TODA afiliación viva
+         (affiliations vacío → primaryAffiliation null) pero TUVO empleo
+         (terminationDate presente). Caso: trabajador denominacional sin contrato
+         UPeU (ent≠7124) cuyo shadow Trabajador se desproyectó (reaction deleted→unlink)
+         y que NO es egresado/estudiante UPeU.
+
+         Distinción con Bloque H (auto-archive-after-termination-grace-period):
+           - H archiva staff/faculty VIGENTES tras grace period (leaver normal, con afiliación).
+           - H2 archiva al que YA NO tiene NINGUNA afiliación (perdió la fuente laboral y no
+             tiene otra IIA). Sin afiliación, H nunca dispara (exige staff/faculty).
+
+         Salvaguarda académica (BLOQUEANTE): si el usuario conserva alum/student/affiliate,
+         primaryAffiliation tiene ese valor → la condición es false → NO se archiva (queda active
+         por Bloque F). El ex-trabajador denominacional que es egresado UPeU permanece como alumni.
+
+         NO archiva drafts puros (altas incompletas sin historia laboral): exige terminationDate
+         presente, que solo lo tienen quienes tuvieron contrato.
+
+         strong + sin source lifecycleState (lee focus?.lifecycleState en condición) para evitar
+         dependencia circular — mismo patrón que Bloque H (FIX DT-4).
+         ISO 24760 §6.3: active/suspended → archived (baja definitiva, datos retenidos).
+         ============================================================ -->
+    <item>
+        <ref>lifecycleState</ref>
+        <mapping>
+            <name>H2-archive-on-total-affiliation-loss</name>
+            <description>Archiva al ex-trabajador sin ninguna afiliación viva pero con terminationDate (perdió empleo y no tiene otra IIA). Salvaguarda: si conserva alum/student/affiliate NO archiva. opción 1b 2026-05-29.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>extension/sciback:primaryAffiliation</path>
+            </source>
+            <source>
+                <path>extension/sciback:terminationDate</path>
+            </source>
+            <condition>
+                <script>
+                    <code>def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+def termStr = terminationDate != null ? basic.stringify(terminationDate).trim() : '';
+def curState = focus?.lifecycleState != null ? focus.lifecycleState.toString().trim() : '';
+def validAff = ['student','faculty','staff','alum','affiliate'];
+// Salvaguarda BLOQUEANTE: con cualquier afiliación válida NO se archiva.
+if (validAff.contains(aff)) return false;
+// Solo archivar a quien tuvo empleo (terminationDate) y ya no está archivado.
+return termStr != '' &amp;&amp; curState != 'archived';</code>
                 </script>
             </condition>
             <expression>
