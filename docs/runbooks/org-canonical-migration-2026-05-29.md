@@ -774,3 +774,90 @@ afiliación activa NO laboral (alumni/estudiante/investigador) que justifique ma
 - 0 cambios destructivos. Backup final `/home/juansanchez/backup_org_final_20260529_1126.sql` intacto.
 - Pasos 3 (recompute trabajadores), 4 (purga), 5 (verif), 6 (template) **NO ejecutados** — bloqueados
   por la decisión de fuente autoritativa anterior.
+
+---
+
+# SESIÓN PM5 (2026-05-29) — PASO A diagnóstico + PASO B salvaguarda → DETENCIÓN en PASO C
+
+> Esta sesión NO ejecutó ningún cambio destructivo. Todo fue READ-ONLY (Oracle thick vía contenedor
+> `gvenzl/oracle-free:slim` con `--entrypoint .../sqlplus`, y consultas psql en MidPoint).
+
+## PASO A — Diagnóstico del gap del recon ✅
+
+- **Resource Trabajadores v3 en DB (v230) SÍ tiene el filtro** `RN = 1 AND ID_ENTIDAD = 7124`
+  (verificado en `m_resource.fullobject`). El reaction `deleted → inactivateFocus` está presente.
+- **Universo real (Oracle, filtro exacto del searchScript):**
+  - 16,329 COD_APS totales con contrato vigente.
+  - **7,850 SOBREVIVEN** (`RN=1 AND ID_ENTIDAD=7124` — contrato UPeU es la fila ganadora del dedup).
+  - **8,479 quedan FUERA** (fila ganadora de otra entidad denominacional).
+- **Estado shadows Trabajadores v3 en MidPoint:** 14,625 LINKED + 1,348 DELETED(dead) + 353 UNLINKED + 1 DISPUTED.
+- **Cruce LINKED vs supervivientes:** 7,496 LINKED matchean supervivientes; **7,129 LINKED quedarían FUERA**
+  en un re-recon (pasarían a `deleted` → `inactivateFocus`).
+- **Conclusión A:** el recon previo (17:00-18:00) NO completó el barrido — solo marcó 1,348 DELETED,
+  dejando **7,129 LINKED de más** que el filtro debería expulsar. El gap (esperado ~4,329) era una
+  subestimación; el universo real fuera es mayor.
+
+## PASO B — Salvaguarda (BLOQUEANTE) ✅
+
+Cruce de los 7,129 LINKED-fuera contra **afiliación académica vigente en Oracle** (fuente autoritativa:
+`DAVID.VW_PERSONA_EGRESADO` ∪ `DAVID.VW_PERSONA_ALUMNO` = 97,085 DNIs):
+
+| Conjunto | Usuarios | Acción |
+|---|---|---|
+| **Fuera CON afiliación académica vigente** (egresado/alumno en Oracle) | **3,524** | **NO ARCHIVAR — su IIA es académica** |
+| Fuera SOLO laboral (sin afiliación académica) | **3,605** | candidatos legítimos a archivado |
+
+- La salvaguarda por **archetype structural** de MidPoint solo veía 6 alumni (desactualizado);
+  la salvaguarda por **fuente autoritativa Oracle** captura **3,524**. Crítico hacerlo por Oracle.
+- Cruce contra shadows académicos vivos en MidPoint dio 0 (los resources Estudiantes/Egresados/Grados/
+  Investigadores tienen shadows pero su link `m_ref_projection` a estos users está incompleto/roto) —
+  **otra razón para usar Oracle como fuente de verdad de la salvaguarda, no los shadows MidPoint.**
+
+## PASO C — DETENIDO (anomalía bloqueante confirmada empíricamente)
+
+**Evidencia del daño ya causado por el recon previo:** de los 1,348 shadows DELETED, los users con owner
+vivo quedaron **48 active/DISABLED + 2 archived/DISABLED**. De esos, **38 tienen afiliación académica
+vigente** y archetype `archetype-user-alumni` — quedaron `administrativeStatus=DISABLED` **a pesar de
+ser egresados activos**. Ejemplos: DNI 06288037, 42046651, 10268184, 44360114 (todos alumni en Oracle).
+
+**Causa raíz de diseño:** el reaction `deleted → inactivateFocus` del resource Trabajadores v3 es
+**INCONDICIONAL**. No distingue entre:
+- un leaver puro (solo laboral) → desactivar es correcto, y
+- un trabajador que ADEMÁS es alumni/student → su identidad persiste por otra IIA → NO debe desactivarse.
+
+Re-correr el PASO C tal como está diseñado **desactivaría/archivaría a los 3,524 con afiliación
+académica vigente** (mismo daño que sufrieron los 38, escalado ×90). Esto viola la salvaguarda
+BLOQUEANTE del runbook ("nadie con afiliación académica activa se archiva") → **DETENGO y reporto, no
+fuerzo** (regla operacional).
+
+### Decisiones requeridas de Alberto antes de PASO C (opciones canónicas)
+
+1. **Hacer condicional el `inactivateFocus`** del resource Trabajadores v3: el reaction `deleted` debe
+   ejecutar `inactivateFocus` SOLO cuando el focus NO tiene otra afiliación activa (alum/student/
+   researcher). Opciones de implementación:
+   - (a) Reaction con `<condition>` que evalúe `affiliations`/`roleMembershipRef` del focus y se
+     abstenga si hay afiliación no laboral. (Reality-vs-Policy: la fila Trabajadores desaparece, pero
+     la policy del focus se mantiene por su otra afiliación.)
+   - (b) En vez de `inactivateFocus`, usar reaction que solo **desproyecte la cuenta Trabajadores**
+     (unlink/delete shadow) y deje que el object template (J3 + Bloque H) decida el `lifecycleState`
+     final por `primaryAffiliation` recalculada. Bloque H solo archiva staff/faculty; alum/student
+     quedarían `active`. **PREFERIDA** — delega la decisión de lifecycle al template canónico (mecanismo
+     IGA correcto), en línea con best-practices §1.2 ("lifecycle se sincroniza desde la IIA").
+2. **Reparar los 38 ya dañados:** recompute (no-raw) de esos 38 users tras aplicar el fix (1) — el
+   template re-derivaría `primaryAffiliation=alum` → administrativeStatus correcto. NO usar PATCH raw.
+3. **Confirmar el set de archivado real:** tras el fix, solo los **3,605 solo-laborales** deben
+   desactivarse/archivarse vía el mecanismo IGA (shadow deleted → template decide). Verificar que ninguno
+   de los 3,605 adquiera afiliación académica entre ahora y la ejecución (re-cruce inmediato pre-recon).
+
+**Recomendación:** opción 1(b) — desacoplar la baja de la cuenta Trabajadores de la baja de la identidad,
+dejando que el object template (J3/Bloque H) gobierne el `lifecycleState` por afiliación. Es el patrón
+canónico SciBack (un leaver de empleo NO es un leaver de identidad si tiene otra afiliación activa) y
+evita re-cablear lógica de afiliación en cada resource.
+
+### Estado de PROD tras sesión PM5
+- **0 cambios destructivos.** Solo lecturas (Oracle + psql). Tablas temporales `tmp_survive`, `tmp_fuera`,
+  `tmp_fuera_dni`, `tmp_acad` creadas en DB para el análisis (no afectan datos de negocio; se pueden
+  dropear). Backups Fase 0 + incrementales intactos.
+- 14,625 LINKED / 1,348 DELETED sin cambio. 38 users con afiliación académica siguen `DISABLED`
+  (daño pre-existente del recon previo, pendiente de reparar en PASO C corregido).
+- PASOS C/D/E/F **NO ejecutados** — bloqueados por la decisión de diseño del reaction `inactivateFocus`.
