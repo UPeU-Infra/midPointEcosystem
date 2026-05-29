@@ -1,0 +1,48 @@
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3">
+  <name>Cleanup dual-archetype — unassign employee-staff de jubilados 2026-05-29</name>
+  <assignment>
+    <targetRef oid="00000000-0000-0000-0000-000000000528" type="ArchetypeType"/>
+  </assignment>
+  <schedule>
+    <recurrence>single</recurrence>
+    <misfireAction>executeImmediately</misfireAction>
+  </schedule>
+  <activity>
+    <work>
+      <iterativeScripting>
+        <objects>
+          <type>UserType</type>
+          <query>
+            <q:filter>
+              <q:and>
+                <q:ref>
+                  <q:path>archetypeRef</q:path>
+                  <q:value><oid>87552943-9600-493b-88ca-74b7d3ba93e4</oid><type>ArchetypeType</type></q:value>
+                </q:ref>
+                <q:ref>
+                  <q:path>archetypeRef</q:path>
+                  <q:value><oid>6460facf-3abf-4851-966e-0c95aa1a6c46</oid><type>ArchetypeType</type></q:value>
+                </q:ref>
+              </q:and>
+            </q:filter>
+          </query>
+        </objects>
+        <scriptExecutionRequest>
+          <s:action>
+            <s:type>unassign</s:type>
+            <s:parameter>
+              <s:name>role</s:name>
+              <s:value xsi:type="c:ObjectReferenceType"
+                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                       oid="6460facf-3abf-4851-966e-0c95aa1a6c46"
+                       type="c:ArchetypeType"/>
+            </s:parameter>
+          </s:action>
+        </scriptExecutionRequest>
+      </iterativeScripting>
+    </work>
+  </activity>
+</task>
