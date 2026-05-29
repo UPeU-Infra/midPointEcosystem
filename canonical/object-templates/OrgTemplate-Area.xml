@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  OrgTemplate-Area — Object template canónico para clasificación de OrgType
+  OID: 47252981-08ed-4309-8349-f652a1fb9cef
+  Versión: 1.0 (2026-05-29)
+  Aplica a: TODOS los OrgType, vía defaultObjectPolicyConfiguration en systemConfiguration.
+  Libro Cap.9 (Focus Processing / Object Templates): el template se evalúa en CADA
+  create/modify/recompute del focus object — a diferencia de un inbound de assignment
+  anidado en un atributo del resource (que NO produce el assignment de archetype durante
+  recon/import de OrgType con atributo-input estable; ver runbook §Fase 2bis "Causa raíz").
+
+  ── Por qué object template y NO inbound del resource ─────────────────────────────
+  El inbound `default-department-archetype` del resource org.xml (assignmentTargetSearch
+  con target=assignment, anidado en <attribute>ri:ID_AREA) NO generaba el assignment ni en
+  orgs nuevas ni en linked: un inbound de assignment cuyo input es un atributo estable
+  (ID_AREA, sin delta) e ignorado por la expresión no dispara la auto-asignación durante
+  import/recon. La clasificación de archetype de OrgType debe vivir en un object template
+  (best-practices §4.1: "applied every time an object is created, changed or explicitly
+  recomputed"), idempotente bajo recompute. SKILL midpoint-best-practices §4.3:
+  "Object template + assignmentTargetSearch" = camino recomendado para auto-asignación.
+
+  ── Patrón canónico SciBack (reutilizable) ───────────────────────────────────────
+  En IGA universitario, el archetype de cada OrgType sincronizada desde el HR/ERP se
+  asigna por un object template de OrgType (NO en el inbound del resource):
+    - Las orgs estructurales curadas (institution/campus/faculty/governance/
+      partner-institution/academic-unit/academic-program) ya llevan su archetype
+      asignado a mano/por overlay → la condición las excluye (archetypeRef no vacío).
+    - El resto (áreas administrativas: DIRECCION/COORDINACION/JEFATURA/OFICINA) recibe
+      el default `org-department`.
+  Overlay UPeU: fuente = ELISEO.ORG_AREA (133 áreas in-scope ent=7124). Las 36 in-scope
+  ya clasificadas en Fase 1 (faculty 8-12, colegios 97/695/8208, ISTAT 760, governance)
+  NO se tocan. Las 97 in-scope sin archetype → org-department.
+
+  ── Regla de exclusión (anti "MidPoint resta") ───────────────────────────────────
+  El mapping SOLO actúa cuando archetypeRef está VACÍO. Las orgs que ya tienen archetype
+  (institution/campus/faculty/academic-program/governance/partner-institution/academic-unit)
+  NO reciben department. La condición relativista de MidPoint garantiza que, una vez
+  asignado, el strong no lo re-evalúa contra orgs ya clasificadas.
+
+  Mapeo a estándares: iga-canonical-standards §10.2 (OrgType archetypes).
+-->
+<objectTemplate xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+                xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+                oid="47252981-08ed-4309-8349-f652a1fb9cef">
+    <name>OrgTemplate-Area</name>
+    <description>Template canónico de clasificación de OrgType: asigna archetype-org-department
+        a las áreas administrativas (sincronizadas desde ELISEO.ORG_AREA) que aún no tienen
+        un archetype org-* estructural. Excluye las orgs ya clasificadas (institution/campus/
+        faculty/academic-program/governance/partner-institution/academic-unit).</description>
+
+    <!-- ============================================================
+         DEFAULT-DEPARTMENT-ARCHETYPE
+         Asigna archetype-org-department (73795c10-2417-4323-b6fa-b88449a8bba4)
+         SOLO cuando la org NO tiene ya un archetypeRef estructural.
+         strong → se reevalúa en cada recompute (idempotente).
+         No source declarado (no depende de ningún atributo de entrada): el
+         valor del assignment es constante; lo que decide es la condición.
+         ============================================================ -->
+    <mapping>
+        <name>default-department-archetype</name>
+        <description>archetype-org-department por defecto para área administrativa sin
+            clasificación previa (archetypeRef vacío). Las orgs canónicas curadas
+            (Fase 1) se excluyen por la condición.</description>
+        <strength>strong</strength>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>ArchetypeType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <q:value>archetype-org-department</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code>
+                    // Solo asignar department si la org NO tiene ningún archetype estructural aún.
+                    // focus = el OrgType en proceso. getArchetypeRef() refleja el estado vigente
+                    // (ya incluye lo asignado a mano en Fase 1 sobre las orgs canónicas curadas).
+                    def o = focus
+                    if (o == null) return true
+                    def ot = (o instanceof com.evolveum.midpoint.prism.PrismObject) ? o.asObjectable() : o
+                    def refs = ot.getArchetypeRef()
+                    return refs == null || refs.isEmpty()
+                </code>
+            </script>
+        </condition>
+    </mapping>
+</objectTemplate>

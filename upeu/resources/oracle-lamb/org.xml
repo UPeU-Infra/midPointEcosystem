@@ -219,41 +219,17 @@
                     <strength>strong</strength>
                     <target><path>extension/upeu:areaId</path></target>
                 </inbound>
-                <!-- Archetype dinámico department (solo si NO tiene archetype org-* aún).
-                     Los 41 OrgType canónicos (governance/faculty/academic-unit/partner-institution)
-                     YA tienen su archetypeRef asignado a mano (Fase 1) → la condición los excluye.
-                     Los departamentos puros legacy (DIRECCION/COORDINACION/JEFATURA/OFICINA admin sin
-                     contraparte canónica) reciben archetype-org-department por defecto.
-                     Patrón canónico SciBack: object-template-driven archetype para árbol ERP. -->
-                <inbound>
-                    <name>default-department-archetype</name>
-                    <strength>strong</strength>
-                    <expression>
-                        <assignmentTargetSearch>
-                            <targetType>ArchetypeType</targetType>
-                            <filter>
-                                <q:equal>
-                                    <q:path>name</q:path>
-                                    <q:value>archetype-org-department</q:value>
-                                </q:equal>
-                            </filter>
-                            <createOnDemand>false</createOnDemand>
-                        </assignmentTargetSearch>
-                    </expression>
-                    <target><path>assignment</path></target>
-                    <condition>
-                        <script>
-                            <code>
-                                import com.evolveum.midpoint.xml.ns._public.common.common_3.OrgType
-                                def o = focus
-                                if (o == null) return true
-                                def ot = (o instanceof com.evolveum.midpoint.prism.PrismObject) ? o.asObjectable() : o
-                                def refs = ot.getArchetypeRef()
-                                return refs == null || refs.isEmpty()
-                            </code>
-                        </script>
-                    </condition>
-                </inbound>
+                <!-- NEUTRALIZADO 2026-05-29 (runbook Fase 2bis): la clasificación de archetype
+                     de OrgType MIGRÓ al object template canónico OrgTemplate-Area
+                     (OID 47252981-08ed-4309-8349-f652a1fb9cef), vinculado vía
+                     defaultObjectPolicyConfiguration para OrgType en systemConfiguration.
+                     Causa: un inbound de assignmentTargetSearch→assignment anidado en este
+                     <attribute> con input estable (ID_AREA, sin delta) NO produce el assignment
+                     de archetype durante import/recon (verificado: 97 in-scope quedaron sin
+                     archetype tras recon SUCCESS + import SUCCESS). El object template se evalúa
+                     en cada recompute/create/change → idempotente y fiable (best-practices §4.1).
+                     NO reintroducir aquí. -->
+
             </attribute>
 
             <!-- TIPO_AREA → extension/upeu:tipoArea
