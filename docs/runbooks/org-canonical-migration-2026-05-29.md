@@ -704,3 +704,73 @@ está COMPLETA y es correcta; lo pendiente es una **decisión de scope de datos*
 - 0 cambios destructivos en Fase 3. 133/133 in-scope con archetype + árbol conexo (de Fase 2quater).
 - Fase 4 (purga + recompute trabajadores) **NO ejecutada** — bloqueada por scope incompleto.
 - Backups Fase 0 + 2 incrementales intactos.
+
+---
+
+# SECUENCIA FINAL (2026-05-29, sesión PM4) — criterio de gobernanza del usuario
+
+Criterio: **contrato RR.HH. de UPeU (VW_APS_EMPLEADO.ID_ENTIDAD=7124 ACTIVO) = incluir; sin contrato UPeU = fuera.**
+
+## PASO 1 — Dedup trabajadores.xml: contrato UPeU gana ✅
+- `ROW_NUMBER() OVER (PARTITION BY e.COD_APS ORDER BY ...)`: añadido como **primer** criterio
+  `CASE WHEN e.ID_ENTIDAD = 7124 THEN 0 ELSE 1 END ASC`. Commit `9434e1e`, push, git pull PROD,
+  PUT resource HTTP 201, **test connection 15/15 success**.
+- Verificación Oracle (sqlplus thick vía `gvenzl/oracle-free:slim --network host`) sobre los 742 DNIs:
+  - 170 con *alguna* fila de contrato ID_ENTIDAD=7124 (mayoría histórica/inactiva).
+  - **5 con contrato ID_ENTIDAD=7124 ACTIVO (ESTADO='A')** → recuperar. DNIs:
+    **76575561, 41970870, 75240132, 72783226, 48636923.** Áreas 7124 de su contrato activo:
+    58, 4342, 7997, 8232/7997, 102. (Dedup arreglada hace que su fila ganadora sea la 7124.)
+  - 0 con contratos SOLO en 7124 (todos tienen además contratos denominacionales — por eso hoy caen
+    en áreas denominacionales).
+  - **737 = 742 − 5** sin contrato UPeU activo. Cuadre exacto con el brief.
+
+## PASO 2 — Archivar los 737 ❌ BLOQUEADO: lifecycleState=archived NO es durable
+- Mapeo 737 DNIs → 737 USER en MidPoint (`m_user.nameorig`=DNI), 1:1, 0 faltantes, los 737 `active`.
+  5-keep confirmados active y 0 overlap con los 737.
+- **PATCH `lifecycleState=archived` (no-raw, vía clockwork): HTTP 204 limpio en los 737, PERO la DB
+  NO cambia — sigue `active`.** Diagnóstico canary:
+  - PATCH no-raw → HTTP 204 → DB `active` (revertido por el template).
+  - PATCH `?options=raw` → HTTP 204 → DB `archived` (persiste, salta el clockwork).
+  - PATCH no-raw posterior sobre el ya-archived → HTTP 204 → **DB vuelve a `active`** (el clockwork
+    re-deriva el estado).
+- **Causa raíz:** `lifecycleState` es una propiedad **derivada por el object template**
+  (UserTemplate-Person-Base, Bloque H `auto-archive-after-termination-grace-period`, strong). Bloque H
+  solo archiva si `primaryAffiliation ∈ {staff,faculty}` **Y** hay `terminationDate` **Y** pasó el
+  grace period. Los 737 **no tienen terminationDate** (tienen contrato denominacional vigente) → el
+  template re-deriva `active` en cada recompute/recon. Además **los 737/737 tienen un shadow VIVO en
+  el resource "Oracle LAMB Trabajadores v3"** (`6a91f7e1...`): MidPoint los reconoce como empleados
+  activos y SIEMPRE los recomputará active mientras ese shadow exista.
+- **Por qué NO se forzó con `raw`:** un `raw` archived sería un cambio **silenciosamente reversible**
+  — el próximo recon/recompute de trabajadores (Fase 3 del orden canónico, o cualquier recompute-all)
+  lo revertiría a active sin aviso. Anti-patrón. Regla del runbook: anomalía bloqueante → DETENER.
+
+### DECISIÓN REQUERIDA DE ALBERTO antes de continuar (Pasos 3-6 NO proceden)
+El "archivado" de los 737 no se logra con `lifecycleState` mientras tengan shadow vivo en Trabajadores
+v3. El problema es de **fuente autoritativa**: el contrato denominacional vigente los mantiene en el
+resultset del searchScript de Trabajadores v3 (que hoy NO filtra por ID_ENTIDAD). Opciones canónicas:
+
+1. **Filtrar el searchScript de Trabajadores v3 por contrato UPeU** (`AND e.ID_ENTIDAD = 7124` en el
+   baseQuery, o exigir que la fila ganadora del dedup sea 7124). Efecto: los 737 dejan de tener fila
+   en LAMB-Trabajadores → su shadow pasa a `deleted` → reaction `inactivateFocus` → el usuario se
+   desactiva/archiva **de forma durable y por el mecanismo IGA correcto** (no por PATCH manual).
+   Los 5 con contrato UPeU activo permanecen (tienen fila 7124). **PREFERIDA** — alinea fuente
+   autoritativa con el criterio de gobernanza; es reusable SciBack (el IGA solo gobierna empleo de la
+   entidad tenant). Requiere: ¿deben además existir en MidPoint si tienen *otros* roles (alumni,
+   investigador)? Si un DNI de los 737 es también alumni/estudiante activo, NO debe archivarse —
+   su archetype/affiliation vendría de otra fuente. **Verificar antes.**
+2. **Bloque H ampliado**: archivar también cuando el usuario pierde toda afiliación de empleo UPeU
+   (no solo por terminationDate). Más invasivo en el template core; afecta a todos los leavers.
+3. **Sacar del scope del IGA** vía exclusión por entidad en TODOS los resources de empleo (no solo
+   org). Equivalente a (1) generalizado.
+
+**Recomendación:** opción 1. Es coherente con Reality-vs-Policy (el shadow es la realidad; al quitar
+la fila autoritativa, la realidad y la policy convergen en archived) y con el criterio del usuario
+(sin contrato UPeU = fuera del IGA). Antes de aplicarla, verificar que ninguno de los 737 tenga una
+afiliación activa NO laboral (alumni/estudiante/investigador) que justifique mantenerlo.
+
+### Estado de PROD tras SECUENCIA FINAL Paso 2 (sin cambios durables)
+- Dedup trabajadores.xml corregida + desplegada (commit `9434e1e`, PUT 201, test 15/15).
+- 5-keep `active` (intactos). 737 `active` (NO archivados — PATCH no persiste). 467 orgs.
+- 0 cambios destructivos. Backup final `/home/juansanchez/backup_org_final_20260529_1126.sql` intacto.
+- Pasos 3 (recompute trabajadores), 4 (purga), 5 (verif), 6 (template) **NO ejecutados** — bloqueados
+  por la decisión de fuente autoritativa anterior.
