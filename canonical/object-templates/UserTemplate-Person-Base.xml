@@ -1011,14 +1011,20 @@ def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''; d
                 <script>
                     <code>import java.time.LocalDate; import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType;
 def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
-// Solo desactivar a trabajadores vigentes. Si la afiliación dominante ya no es laboral
-// (ex-trabajador que es alumni/estudiante), NO desactivar.
-if (!['staff','faculty'].contains(aff)) return null;
+// Este mapping (strong) GOBIERNA administrativeStatus para usuarios con terminationDate.
+// Retorna ENABLED (no null) cuando NO corresponde desactivar, para sobrescribir cualquier
+// DISABLED huérfano dejado por reactions previos (inactivateFocus). Caso clave: ex-trabajador
+// que ahora es alumni/student → debe quedar ENABLED aunque tenga terminationDate.
 if (terminationDate == null) return null;
 def v = basic.stringify(terminationDate);
-if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) return null;
-try { def td = LocalDate.parse(v); if (!td.isAfter(LocalDate.now())) { return ActivationStatusType.DISABLED } } catch (Exception e) { log.warn("UPeU template leaver: terminationDate no parseable '{}' en {}: {}", v, focus?.name, e.message) };
-return null</code>
+if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) return ActivationStatusType.ENABLED;
+// Solo desactivar a trabajador VIGENTE (staff/faculty) con fecha de cese ya cumplida.
+if (['staff','faculty'].contains(aff)) {
+    try { def td = LocalDate.parse(v); if (!td.isAfter(LocalDate.now())) { return ActivationStatusType.DISABLED } } catch (Exception e) { log.warn("UPeU template leaver: terminationDate no parseable '{}' en {}: {}", v, focus?.name, e.message); return ActivationStatusType.ENABLED }
+    return ActivationStatusType.ENABLED
+}
+// Afiliación no laboral (alum/student/affiliate/null) con terminationDate: recuperar ENABLED.
+return ActivationStatusType.ENABLED</code>
                 </script>
             </expression>
             <condition>
