@@ -1,8 +1,13 @@
-# Runbook — Migración a Org tree canónico único (DISEÑO, no ejecutar)
+# Runbook — Migración a Org tree canónico único
 
 Fecha: 2026-05-29
 Autor: midpoint-expert
-Estado: **SOLO DISEÑO — aprobación pendiente antes de ejecutar fases destructivas**
+Estado: **EJECUCIÓN EN CURSO — ver ADDENDUM DE EJECUCIÓN al final (estrategia revisada por hallazgos en PROD).**
+
+> **IMPORTANTE:** El cuerpo del runbook (§0-§8) es el DISEÑO original. Durante la ejecución
+> (2026-05-29) la inspección de PROD reveló una realidad distinta de la asumida, que CAMBIA la
+> estrategia. La estrategia ejecutada está en el **ADDENDUM DE EJECUCIÓN** (final del documento).
+> El cuerpo original se conserva para trazabilidad.
 Servidor: PROD `192.168.15.166` (MidPoint 4.10.2)
 Resource org: `upeu/resources/oracle-lamb/org.xml` (OID `9e2f4c7a-1b5d-4e8c-a3f6-c2d9e4b7a1f3`)
 Template base: `canonical/object-templates/UserTemplate-Person-Base.xml`
@@ -312,3 +317,99 @@ Bloque canónico SciBack: el patrón identifier=ERP-area-id + object-template-dr
 4. **Ventana de ejecución:** ¿coordinamos para después de que termine el recompute bootstrap pendiente (`3e8b389e`) y con PROD estable post-OOM? (R4/R7.)
 
 5. **Scope recompute (R7):** ¿OK limitar el recompute de migración a trabajadores (faculty/staff ~13K) en lugar de los 54,804, para evitar OOM? Los estudiantes no cambian de org por este rediseño.
+
+---
+
+# ADDENDUM DE EJECUCIÓN (2026-05-29) — Estrategia revisada por hallazgos en PROD
+
+## A.0 Hallazgos que cambian la estrategia
+
+La inspección de PROD reveló que existen **TRES** formatos de `OrgType.identifier`, no dos:
+
+| Formato | Ejemplo | Quién lo usa | Usuarios que llegan |
+|---|---|---|---|
+| `area.N` (prefijo `area.`) | `area.5` | **Árbol canónico ADMIN** ya modelado (32 orgs: governance/department/academic-unit) colgando de `UPeU → GOBIERNO-UNIVERSITARIO → ...` | **0** |
+| `N` puro numérico | `5` | Árbol **legacy** `AREA-N` (370 orgs, sin archetype) creado por el resource org.xml | **4,605** (trabajadores, vía Bloque E) |
+| Semántico | `EP-SIS`, `FE`, `SEDE-LIMA` | EPs (23), facultades (5), campus (3) canónicas | **26,162** (estudiantes, vía D6) |
+
+**Causa raíz real:** El árbol canónico administrativo (`area.N`) YA EXISTE, está bien modelado
+(archetypes correctos, displayNames limpios, jerarquía conectada a `UPeU`), PERO el **Bloque E**
+del template busca `OrgType.identifier = costCenter` con `costCenter` puro numérico (`5`, `85`).
+El prefijo `area.` impide el match. Por eso 0 trabajadores llegan al árbol canónico admin y caen
+en las legacy `AREA-N` (identifier numérico puro), un árbol paralelo SIN archetype.
+
+Esto difiere del diseño original (que asumía que las legacy debían recibir archetype vía resource).
+La realidad: **el destino canónico ya está construido**; solo falta conectar los trabajadores
+quitando el prefijo `area.` de los identifiers.
+
+### Decisión #1 del usuario — ya satisfecha por el modelo existente
+`UPeU` (archetype-org-institution, identifier `upeu.edu.pe`) ES la raíz. `Asamblea Universitaria`
+(canónica `ASAMBLEA-UNIVERSITARIA`, identifier `area.1`) cuelga bajo `GOBIERNO-UNIVERSITARIO` bajo
+`UPeU`. NO se usa AREA-1 legacy como raíz. **Ya implementado correctamente.**
+
+## A.1 Filtro de scope corregido (resource org.xml)
+
+El filtro actual (`ESTADO=1 AND (TIENEHIJO=1 OR trabajadores activos)`) **sin filtro de entidad**
+sincroniza **370 áreas, de las cuales solo 129 son ent=7124** (241 son denominacionales que entran
+por tener trabajadores). Además **excluye padres estructurales** (ej. AREA-22, padre de Secretaría
+General) → árbol inconexo.
+
+**Filtro nuevo (verificado en Oracle):** subárbol conexo desde AREA-1, vía `CONNECT BY PRIOR
+ID_PARENT = ID_AREA` a partir de las áreas ent=7124 con trabajadores/hijos, MINUS subárbol AGTU (8196):
+
+```sql
+SELECT ID_AREA FROM (
+  SELECT DISTINCT ID_AREA FROM ELISEO.VW_AREA
+  START WITH ID_AREA IN (
+    SELECT a.ID_AREA FROM ELISEO.VW_AREA a
+    WHERE a.ID_ENTIDAD=7124 AND a.ESTADO='1'
+      AND (a.TIENEHIJO='1' OR EXISTS (SELECT 1 FROM ELISEO.VW_APS_EMPLEADO e
+        JOIN ENOC.VW_TRABAJADOR t ON t.ID_PERSONA=e.ID_PERSONA
+        JOIN ELISEO.ORG_SEDE_AREA osa ON osa.ID_SEDEAREA=t.ID_SEDEAREA
+        WHERE osa.ID_AREA=a.ID_AREA AND e.ESTADO='A')))
+  CONNECT BY PRIOR ID_PARENT = ID_AREA)
+MINUS
+SELECT ID_AREA FROM ELISEO.VW_AREA START WITH ID_AREA=8196 CONNECT BY PRIOR ID_AREA=ID_PARENT
+```
+
+**Resultado: 133 áreas, todas ent=7124, raíz única AREA-1, sin AGTU, sin denominacionales.**
+Incluye las 5 facultades (8,9,10,11,12), 3 colegios (97,695,8208) e ISTAT (760).
+
+## A.2 Facultades — ID_AREA deducidos y VERIFICADOS (decisión #5)
+
+Cruce `ELISEO.VW_AREA.NOMBRE` (UPPER LIKE '%FACULTAD%', ent=7124, activas) vs displayName de las
+5 orgs `org-faculty` canónicas. **Match exacto 5/5, sin ambigüedad:**
+
+| Facultad canónica (OID) | identifier actual | **ID_AREA Oracle** | NOMBRE Oracle | ID_PARENT |
+|---|---|---|---|---|
+| Facultad de Ciencias Humanas y Educación (`141cd2b3`) | FE | **8** | Facultad de Ciencias Humanas y Educación | 5 |
+| Facultad de Ingeniería y Arquitectura (`86968a5a`) | FIA | **9** | Facultad de Ingeniería y Arquitectura | 5 |
+| Facultad de Ciencias de la Salud (`a72bbde6`) | FCS | **10** | Facultad de Ciencias de la Salud | 5 |
+| Facultad de Teología (`23e944c6`) | FT | **11** | Facultad de Teología | 5 |
+| Facultad de Ciencias Empresariales (`2899369e`) | FCCA | **12** | Facultad de Ciencias Empresariales | 5 |
+
+**Ruido descartado:** AREA-673 "Facultad de prueba" (tipo 6 bajo VR Académico) — excluida; por eso
+faculty se asigna por **lista curada** {8,9,10,11,12}, NO por TIPO_AREA.
+
+## A.3 Tabla puente ORG_ESCUELA_PROFESIONAL — descartada
+Solo 10 filas / 2 EPs (Admin, Contabilidad), con áreas espurias (Ecuador, Tesis). NO sirve como
+flag `isEP`. Las EPs reales se modelan a mano en el árbol canónico de estudiantes. **Regla §1.4 #2
+del diseño original descartada.** Las 133 áreas in-scope son administrativas/governance; no hay EPs
+académicas con trabajadores entre ellas.
+
+## A.4 Estrategia ejecutada (mínimo riesgo)
+
+1. **Patch identifier de las 32 orgs canónicas `area.N` → `N` puro** (mantener name/displayName/OID/
+   parent/archetype). Hace que Bloque E las matchee. Colisiona con la legacy `N` → purgar legacy ANTES.
+2. **Patch facultades canónicas** FE→8, FIA→9, FCS→10, FT→11, FCCA→12 (mantener name; D6 usa name, no
+   se afecta). **Patch colegios** canónicos → 97/695/8208.
+3. **Purga de las 370 legacy `AREA-N`** (paralelas, sin archetype) tras vaciarlas.
+4. **Resource org.xml corregido** (filtro 133 + archetype dinámico in-place) para las áreas que SÍ
+   tienen trabajadores pero NO contraparte canónica `area.N` (departamentos puros) → archetype
+   `department` + parent vía ID_PARENT (ahora numérico).
+5. **Recompute trabajadores (~13K, decisión #4)** → Bloque E reasigna los 4,605 al árbol canónico.
+
+**Colisión de identifier (R1):** las 25 áreas con par (canónica `area.N` + legacy `N` poblada).
+Orden seguro por par: purgar legacy `N` → patch canónica `area.N`→`N`. Ventana breve sin org;
+aceptable (Koha/LDAP en `proposed`).
+
