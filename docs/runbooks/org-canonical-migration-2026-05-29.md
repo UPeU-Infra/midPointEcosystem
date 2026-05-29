@@ -450,3 +450,24 @@ Acciones:
 Estado tras Fase 1: 467 orgs. 41 orgs con identifier numérico puro + archetype (32 area + 5 faculty
 + 4 partner-institution), todas con displayName legible. 0 `area.N`. 0 identifiers duplicados.
 345 legacy `N` puro sin archetype pendientes (departamentos puros → Fase 2/3).
+
+## Fase 2 — Resource org.xml: filtro 133 conexo + archetype dinámico ✅ (config) / ⏳ (recon)
+
+Cambios en `upeu/resources/oracle-lamb/org.xml` (commits `<fase2>`):
+- **baseQuery**: reemplazado el WHERE plano por subárbol CONNECT BY conexo desde AREA-1
+  (ent=7124, ESTADO=1, con hijos o trabajadores activos), MINUS subárbol AGTU (8196). Verificado
+  133 áreas in-scope (incluye facultades 8-12, colegios 97/695/8208, ISTAT 760).
+- **testScript**: mismo filtro → reporta count in-scope.
+- **name-to-name** y **nombre-to-displayName** → `strong`→`weak`: protege los 41 OrgType canónicos
+  (identifier=ID_AREA matchea UID del shadow; sin weak, el recon sobrescribiría sus nombres con
+  'AREA-N'). Best-practices §5.2 (name técnico estable separado de displayName).
+- **default-department-archetype** (nuevo inbound dentro del attribute ID_AREA existente, NO un
+  segundo `<attribute>` — eso causó "Duplicate definition of attribute ID_AREA"): asigna
+  `archetype-org-department` solo si `focus.archetypeRef` está vacío. Excluye los 41 canónicos.
+
+PUT resource HTTP 201. **Test connection 15/15 success.**
+
+Recon stage-2 reconcilia TODOS los shadows existentes (no solo los 133 del searchScript). Los ~336
+shadows denominacionales fuera del nuevo filtro → situación `deleted` → reaction `inactivateFocus`
+→ archived (alimenta Fase 4). Errores ObjectNotFoundException por parentOrgRef stale en orgs
+denominacionales: NO fatales (esas orgs se purgan en Fase 4). Task recon `a3ab390f`.
