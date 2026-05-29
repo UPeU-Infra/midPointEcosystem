@@ -583,3 +583,62 @@ template canónico (sin `<source>` de prueba) re-PUT desde repo.
 - 467 orgs. 97 in-scope siguen sin archetype (bloqueadas por parent colgante). 36 in-scope curadas OK.
 - OrgTemplate-Area desplegado + vinculado (systemConfiguration OrgType). Inbound del resource neutralizado.
 - 0 cambios destructivos. Backups Fase 0 + incremental intactos.
+
+---
+
+## Fase 2quater — DESBLOQUEO REAL: clasificación por direct assignment + saneo de stales (2026-05-29, sesión PM3) ✅
+
+### Hallazgo que invalida la hipótesis de Fase 2ter
+La causa raíz de Fase 2ter ("el parent colgante aborta el recompute") era **parcialmente correcta**, pero
+el verdadero bloqueo era OTRO: **el OrgTemplate-Area NO asigna el archetype**, ni siquiera en orgs SIN
+parent colgante. Diagnóstico decisivo (canary controlado):
+
+| Org canary | parent colgante | acción | archetype materializado |
+|---|---|---|---|
+| AREA-22 | NO (parent RECTORADO válido) | PATCH no-op (dispara object template) | **NO** ❌ |
+| AREA-22 | NO | PATCH add assignment(archetype) **directo** | **SÍ** ✅ |
+| AREA-7 | SÍ (`d9e76344` purgada) | PATCH add assignment **directo** | **SÍ** ✅ (HTTP 240 warning del stale, pero persiste) |
+
+**Conclusión:** asignar archetype vía object template mapping (`assignmentTargetSearch` → `target=assignment`)
+es un **anti-patrón en 4.10**: el motor no materializa el archetype assignment desde un template mapping
+ordinario sin source delta. El camino fiable es **direct assignment** (PATCH add `assignment/targetRef`
+type=ArchetypeType), consistente con la lección de bootstrap de usuarios (MEMORY: "task iterativeScripting
+con acción assign directo"). El OrgTemplate-Area queda desplegado pero **inerte** (no daña; su condición
+solo actuaría sobre orgs sin archetype y aun así no materializa). Documentado como anti-patrón.
+
+**Segundo hallazgo (favorable):** el parent colgante NO impide el direct assignment (solo genera HTTP 240
+warning). Las **69 in-scope con colgante TAMBIÉN tienen un parent VÁLIDO** (dual-parent residuo de Fase 1):
+el árbol YA era conexo vía el parent válido; el colgante era un assignment STALE de policy que solo
+abortaba `recompute` (no el assign puntual).
+
+### PASO 2 (clasificación) — ✅ 97/97
+- Direct assignment `archetype-org-department` (`73795c10`) a las 97 in-scope sin archetype, vía PATCH
+  add assignment en bucle (1 sesión SSH; sshpass es flaky en reconexiones). Resultado: **0 errores**
+  (4×HTTP 204 limpio + 93×HTTP 240 parcial-pero-persiste por warning de stale).
+- **Verificación: 133/133 in-scope con archetype, 0 sin archetype.** Distribución global orgs:
+  department 135, academic-unit 37, academic-program 23, governance 13, faculty 5, partner-institution 5,
+  campus 3, institution 1.
+
+### PASO 1 (saneo de parents colgantes stale) — ✅ acotado a in-scope
+- Backup incremental: `/home/juansanchez/backup_org_stale_clean_20260529_1029.sql` (792 MB; m_assignment +
+  m_ref_object_parent_org + m_ref_archetype + m_org).
+- **Verificación pre-borrado:** las 69 in-scope con colgante conservan TODAS un parent válido tras quitar
+  el stale (0 quedarían huérfanas). A nivel GLOBAL hay 57 orgs solo-colgantes, pero **ninguna es in-scope**
+  (todas AREA-N legacy/AGTU/denominacionales → se purgan enteras en Fase 4; no se tocan ahora).
+- **DELETE acotado a in-scope:** 69 assignments stale de `m_assignment` borrados (1 por org). 0 refs
+  colgantes en `m_ref_object_parent_org` (el ref operacional ya apuntaba al parent válido — confirma
+  Reality vs Policy: el stale era solo el assignment de policy).
+- **Verificación post:** 0 in-scope con parent colgante, 0 in-scope huérfanas. Canary AREA-7 ahora
+  recomputa **limpio (HTTP 204, ya no 240)**, conserva archetype, 1 parent assignment válido.
+
+### Estado de PROD tras Fase 2quater
+- **133/133 in-scope con archetype canónico. 0 sin archetype. 0 parents colgantes in-scope. 0 huérfanas.**
+- Árbol in-scope conexo y limpio; recomputa sin ObjectNotFoundException.
+- Pendiente: Fase 3 (denominacionales READ-ONLY) + Fase 4 (purga legacy/denominacional + recompute
+  trabajadores). Los 57 solo-colgantes fuera-de-scope + legacy AREA-N se resuelven en Fase 4.
+
+> **Anti-patrón documentado (bloque SciBack):** NO asignar archetype a OrgType vía object template
+> `assignmentTargetSearch`/`target=assignment` — no se materializa en 4.10. Para clasificación masiva de
+> orgs sincronizadas desde ERP, usar **direct assignment** (task `iterativeScripting` acción `assign`, o
+> PATCH add assignment). El object template de OrgType sirve para mappings de atributos (displayName,
+> costCenter, etc.), NO para asignar el archetype estructural.
