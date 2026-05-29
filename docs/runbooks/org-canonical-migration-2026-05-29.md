@@ -861,3 +861,102 @@ evita re-cablear lógica de afiliación en cada resource.
 - 14,625 LINKED / 1,348 DELETED sin cambio. 38 users con afiliación académica siguen `DISABLED`
   (daño pre-existente del recon previo, pendiente de reparar en PASO C corregido).
 - PASOS C/D/E/F **NO ejecutados** — bloqueados por la decisión de diseño del reaction `inactivateFocus`.
+
+---
+
+# SESIÓN PM6 (2026-05-29) — Opción 1b IMPLEMENTADA (PASO 1 ✅ + PASO 2 ✅) → DETENCIÓN en PASO 3
+
+> Skills consultadas: `midpoint-best-practices` §1.2 (lifecycle desde IIA), §4.2 (mappings relativos
+> por provenance), Cap.9 focus processing; `iga-canonical-standards` (ISO 24760 lifecycle). Opción 1b
+> aprobada por Alberto.
+
+## PASO 1 — Reaction condicional + template gobierna lifecycle ✅ (desplegado en PROD)
+
+Tres ediciones canónicas (commits `[ver git log]`):
+
+1. **`upeu/resources/oracle-lamb/trabajadores.xml`** — reaction `deleted`: `inactivateFocus` →
+   **`unlink`**. Solo desproyecta la cuenta Trabajador; NO desactiva el focus. El object template
+   gobierna el `lifecycleState` final por afiliación recalculada (Reality-vs-Policy).
+   PUT REST 201 + Test connection 10/10 success.
+
+2. **`UserTemplate-Person-Base.xml` `leaver-disable-on-terminationdate`** — ahora **condicional a
+   `primaryAffiliation ∈ {staff,faculty}`** y retorna **ENABLED explícito** (no null) cuando NO
+   corresponde desactivar, para sobrescribir el `administrativeStatus=DISABLED` huérfano dejado por
+   `inactivateFocus` previo. Ex-trabajador que es alumni/student → ENABLED.
+
+3. **`UserTemplate-Person-Base.xml` Bloque H2 (nuevo)** — `H2-archive-on-total-affiliation-loss`:
+   archiva durablemente al ex-trabajador que perdió TODA afiliación (terminationDate presente, sin
+   alum/student/affiliate). **Salvaguarda BLOQUEANTE codificada en la condición**: con cualquier
+   afiliación válida → `return false` (NO archiva). Bloque F: guard cede a H2 (en vez de draft)
+   cuando hay terminationDate y sin afiliación.
+
+**Cómo gobierna el template el lifecycle (validado):** Caso `06288037` (jubilado, alum, term=2025-07-31)
+recompute no-raw → **active / ENABLED / ENABLED** ✓. El template repara correctamente al ex-trabajador
+que es alumni.
+
+## PASO 2 — Reparación de los alumni dañados ✅
+
+- El daño real eran **104** alumni `active/DISABLED` (no 38) — causados por `inactivateFocus` previo +
+  `leaver-disable-on-terminationdate` incondicional.
+- 103/104 reparados → `active` + `ENABLED` (51 vía recompute por el template, 52 vía PATCH
+  `administrativeStatus=enabled` para los egresados PUROS sin terminationDate que el mapping condicional
+  no cubre).
+- **1 caso NO reparable por PATCH** (`21835727`, OID `1609b661-...`): tiene **dual structural archetype**
+  (alumni + employee-faculty) preexistente → cualquier modify lanza PolicyViolation "only a single
+  structural archetype supported". Jubilado (motivo=jubilacion, term=2024-12-31, primAff=alum). Es un
+  caso de saneo dual-archetype histórico (ver MEMORY), NO causado por esta sesión. Pendiente de
+  reparación específica (remover assignment/archetypeRef faculty residual).
+- Estado alumni final: 26,403 active(null) + 3,455 active/ENABLED + 692 draft + 2 archived + 1 DISABLED.
+  Los 692 draft son egresados sin personalNumber/documento válido (Bloque F gate), no daño de sesión.
+
+## PASO 3 — DETENIDO: salvaguarda académica BLOQUEANTE inviable con el estado actual de proyecciones
+
+**Hallazgo bloqueante (datos duros, READ-ONLY):**
+
+- Premisa de opción 1b: al desproyectar Trabajador, el template ve `affiliations` SIN `staff/faculty`
+  pero CON `alum/student` para los egresados → los protege (H2 no archiva). Esto requiere que el
+  egresado tenga su afiliación académica poblada en el FOCUS.
+- **Realidad en PROD:** los **3,524 trabajadores-fuera que son egresados en Oracle** (set a PROTEGER,
+  cruce `tmp_fuera_dni ∩ tmp_acad`):
+  - 3,524/3,524 existen en MidPoint.
+  - **0/3,524 tienen shadow Egresado** (resource `6a91f7e1-...e23`).
+  - Su archetype actual: 3,465 employee-staff + 4 faculty + 2 alumni → su `affiliations` contiene
+    SOLO `staff/faculty`, **NO `alum`**.
+- **Las poblaciones shadow Trabajador-vivo (14,625) y Egresado-vivo (30,651) son DISJUNTAS: 0 overlap.**
+  El recon Egresados nunca proyectó/correlacionó a estos trabajadores-egresados.
+
+**Consecuencia:** si se re-corre PASO 3 ahora, los ~7,129 trabajadores-fuera pasan a deleted→unlink;
+los 3,524 egresados pierden su única afiliación (`staff/faculty`) → `affiliations` vacío → Bloque H2
+los ARCHIVA. **Se archivarían 3,469 egresados que deben permanecer active como alumni → violación de
+la salvaguarda BLOQUEANTE.** Regla operacional: anomalía bloqueante → DETENGO y reporto, NO fuerzo.
+
+### Decisión requerida de Alberto antes de PASO 3 (orden canónico de poblamiento)
+
+La salvaguarda del template (Bloque H2) es correcta, pero solo protege a quien tiene `alum/student` en
+su focus. ANTES del re-recon Trabajadores hay que POBLAR la afiliación académica de los 3,524. Opciones:
+
+1. **Investigar por qué el recon Egresados no correlacionó a los 3,524 y corregirlo**, luego re-correr
+   Egresados (y/o Estudiantes) para que adquieran shadow Egresado + `affiliations=alum`. Recién entonces
+   re-correr Trabajadores. **PREFERIDA** — alinea con el orden canónico (MEMORY: "inputs → recompute →
+   recons adicionales → RECIÉN baja"). Reusable SciBack.
+   - Hipótesis a verificar: ¿la `VW_PERSONA_EGRESADO` los devuelve? ¿el correlator por DNI choca con
+     el shadow Trabajador? ¿el reaction `unlinked→link` no añadió la 2ª proyección?
+2. **Poblar `affiliations=alum` directamente desde Oracle** (cruce DNI) sin esperar shadow Egresado,
+   como dato puente, y luego re-correr Trabajadores. Más rápido pero deja la realidad (shadow) desfasada
+   de la policy (affiliation) — anti Reality-vs-Policy. NO preferida.
+3. **Salvaguarda dura adicional en H2 por lista Oracle** (no archivar si DNI ∈ tmp_acad). Tactical
+   patch, no canónico (acopla el template a una tabla temporal). NO preferida.
+
+**Recomendación:** opción 1. El re-recon Trabajadores NO procede hasta que los egresados-trabajadores
+tengan su afiliación `alum` poblada en MidPoint (vía su mecanismo IIA correcto = recon Egresados).
+
+## Estado de PROD tras PM6
+- **Cambios desplegados (durables, canónicos):** trabajadores.xml reaction `unlink` (PUT 201) +
+  UserTemplate-Person-Base con leaver condicional + Bloque H2 (PUT 201). Test connection 10/10.
+- **Cambios de datos:** 103 alumni reparados a active/ENABLED. 0 archivados de más. 0 destructivo.
+- Backups: `bkp_focus_20260529_1557.dump` (738M, m_user/m_shadow/m_assignment/refs) +
+  `backup_org_final_20260529_1126.sql` (completo) en `/home/juansanchez/`.
+- **Disco PROD estaba al 100%** — liberado a ~83% (borrados backups intermedios prerecon/stale + copias
+  en container `/tmp`). Vigilar: 57G total es ajustado para esta DB (17G) + backups.
+- PASOS 3-6 **NO ejecutados** — bloqueados por la salvaguarda académica (3,524 egresados sin afiliación
+  `alum` poblada). Tablas tmp_* de PM5 conservadas (necesarias para el análisis/poblamiento).
