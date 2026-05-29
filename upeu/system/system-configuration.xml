@@ -108,6 +108,12 @@
     <iteration>0</iteration>
     <iterationToken/>
     <globalSecurityPolicyRef oid="00000000-0000-0000-0000-000000000120" relation="org:default" type="c:SecurityPolicyType"/>
+    <!-- Object template global por tipo OrgType: clasificación de archetype (OrgTemplate-Area).
+         Aplicado en PROD vía PATCH 2026-05-29 (runbook Fase 2bis). best-practices §4.1. -->
+    <defaultObjectPolicyConfiguration>
+        <objectTemplateRef oid="47252981-08ed-4309-8349-f652a1fb9cef" type="c:ObjectTemplateType"/>
+        <type>c:OrgType</type>
+    </defaultObjectPolicyConfiguration>
     <logging>
         <classLogger id="1">
             <level>OFF</level>

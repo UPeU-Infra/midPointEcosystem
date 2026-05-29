@@ -525,3 +525,61 @@ object template global de OrgType = artefacto core, requiere confirmación por r
 - 133 shadows LINKED (in-scope) + 242 DELETED (fuera scope, listos para archivar en Fase 4).
 - **NO se ejecutaron Fase 3 (denominacionales) ni Fase 4 (purga)** — bloqueado a la espera de
   resolver la asignación de archetype, para no purgar/archivar con el árbol a medio clasificar.
+
+---
+
+## Fase 2ter — OrgTemplate-Area creado y vinculado (2026-05-29, sesión PM2) ⚠️ NUEVA CAUSA RAÍZ HALLADA
+
+### PASO A — Object template canónico ✅ (implementado y vinculado)
+- **Creado** `canonical/object-templates/OrgTemplate-Area.xml` (OID `47252981-08ed-4309-8349-f652a1fb9cef`):
+  mapping `default-department-archetype` (strong, `assignmentTargetSearch`→ArchetypeType
+  `archetype-org-department`, target=`assignment`) con condición Groovy `getArchetypeRef().isEmpty()`
+  → solo clasifica orgs SIN archetype estructural. Las 36 in-scope ya curadas en Fase 1 se excluyen.
+- **Neutralizado** el inbound `default-department-archetype` defectuoso de `org.xml` (reemplazado por
+  comentario; la clasificación vive ahora en el template). Commit `<fase2ter>`.
+- **Vinculado** vía `defaultObjectPolicyConfiguration` para `OrgType` en systemConfiguration
+  (PATCH REST add, HTTP 204; verificado en DB: `objectTemplateRef → 47252981...`, `type=c:OrgType`).
+  Mecanismo canónico correcto: NO se usa `archetypePolicy/objectTemplateRef` del archetype (sería
+  circular — la org aún no tiene archetype), sino el template global por tipo (best-practices §4.1).
+- `system-configuration.xml` del repo sincronizado con el bloque (GitOps).
+
+### PASO B — Recompute de las 97 in-scope ❌ 0 clasificadas — BLOQUEADO POR CAUSA RAÍZ DISTINTA
+- Recompute acotado a las 97 OIDs (task `iterativeScripting` + `<s:recompute/>`, inOid filter) →
+  **CLOSED/SUCCESS** pero **0/97 recibieron `archetype-org-department`**.
+- Canary AREA-7 con template aislado (incluso añadiendo `<source>identifier</source>`) → tampoco.
+
+### Causa raíz REAL (distinta del inbound — es integridad de datos)
+El template SÍ se evalúa, pero el recompute **aborta la fase de evaluación de assignments** por un
+**parent-org assignment colgante**: AREA-7 (y 68 de las 97) tienen un assignment a un OrgType padre
+**inexistente** (ej. AREA-7 → `d9e76344-31be-4e02-9d8a-2f00cb5b597e`, org legacy purgada en Fase 1).
+Log: `TargetsEvaluation ... Referenced object not found in assignment target reference in
+org:...(AREA-7), reason: Object of type 'OrgType' with OID 'd9e76344...' was not found
+(ObjectNotFoundException)`. La excepción descarta TODO el cómputo focal del recompute (incluido el
+assignment de archetype nuevo del template) → el archetype nunca se persiste, aunque el MODIFY de
+repo cierre en SUCCESS.
+
+**Alcance del problema:** 69/97 in-scope con parent colgante; **912/467 orgs en total** tienen al
+menos un assignment a OrgType inexistente (residuo de la purga Fase 1 que dejó refs stale en los
+hijos). Es un problema de **integridad referencial pre-existente**, NO un defecto del object template
+ni del diseño canónico. El template es correcto y queda desplegado.
+
+### DECISIÓN PENDIENTE (DETENIDO por regla del runbook — anomalía bloqueante; no se fuerza)
+Antes de re-recomputar las 97 hay que **sanear los parent-org assignments colgantes**. Opciones:
+1. **Recon org primero** (re-ejecutar el resource org.xml): reconstruye el assignment de parent vía
+   `assignmentTargetSearch(identifier=ID_PARENT)` apuntando al padre canónico vigente → reemplaza el
+   ref colgante. Luego recompute → el template clasifica. (Preferida: usa el mecanismo del resource,
+   no toca DB.) **Verificar que el recon NO recree los assignments colgantes** (depende de que el
+   padre exista en el árbol in-scope; algunos padres pueden ser orgs purgadas legítimamente).
+2. **Purga quirúrgica de assignments colgantes** (DELETE de `m_assignment` donde
+   `targetreftargettype='ORG'` y target inexistente) — destructivo en DB, requiere backup + confirmación.
+3. **Saneamiento masivo previo** de los 912 antes de continuar (más amplio, alineado con Fase 4 purga).
+
+**Recomendación:** opción 1 (recon org) acotada a las 133 in-scope, verificando que cada padre
+exista; los huérfanos cuyo padre fue purgado se re-cuelgan de la institución o su campus. Requiere
+confirmar con Alberto. NO se ejecutaron Fase 3 ni Fase 4. PROD limpio: tasks diagnósticos borrados,
+template canónico (sin `<source>` de prueba) re-PUT desde repo.
+
+### Estado de PROD tras Fase 2ter
+- 467 orgs. 97 in-scope siguen sin archetype (bloqueadas por parent colgante). 36 in-scope curadas OK.
+- OrgTemplate-Area desplegado + vinculado (systemConfiguration OrgType). Inbound del resource neutralizado.
+- 0 cambios destructivos. Backups Fase 0 + incremental intactos.
