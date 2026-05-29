@@ -243,7 +243,14 @@
                     <target><path>assignment</path></target>
                     <condition>
                         <script>
-                            <code>def refs = focus?.archetypeRef; refs == null || refs.size() == 0</code>
+                            <code>
+                                import com.evolveum.midpoint.xml.ns._public.common.common_3.OrgType
+                                def o = focus
+                                if (o == null) return true
+                                def ot = (o instanceof com.evolveum.midpoint.prism.PrismObject) ? o.asObjectable() : o
+                                def refs = ot.getArchetypeRef()
+                                return refs == null || refs.isEmpty()
+                            </code>
                         </script>
                     </condition>
                 </inbound>
