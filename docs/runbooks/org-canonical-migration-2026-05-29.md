@@ -960,3 +960,112 @@ tengan su afiliación `alum` poblada en MidPoint (vía su mecanismo IIA correcto
   en container `/tmp`). Vigilar: 57G total es ajustado para esta DB (17G) + backups.
 - PASOS 3-6 **NO ejecutados** — bloqueados por la salvaguarda académica (3,524 egresados sin afiliación
   `alum` poblada). Tablas tmp_* de PM5 conservadas (necesarias para el análisis/poblamiento).
+
+---
+
+# SESIÓN PM7 (2026-05-29) — Causa raíz del bloqueo PM6 hallada: IDENTIDAD DUPLICADA, no solo correlación → DETENCIÓN
+
+> Skills consultadas: `midpoint-best-practices` §2.1 (Reality vs Policy), §4.4-4.5 (correlación/focus
+> processing), §8 (correlator); `iga-canonical-standards` §1.3 (IIA — un identificador de correlación
+> por persona). Orden canónico del brief: recon Egresados ANTES de Trabajadores. **Solo PASO 0 + PASO 1
+> ejecutados; PASO 1 reveló una anomalía bloqueante estructural → DETENGO antes de PASO 2.**
+
+## PASO 0 — Disco ✅
+84% (9.0G libres), bajo el umbral del runbook. Liberado a **76% (14G libres)**: `docker image prune`
+(0B, capas compartidas) + backup fresco `bkp_pre_correlation_recon_20260529_1622.dump` (745M, custom
+format: m_user/m_shadow/m_assignment/m_ref_projection/archetype/role_membership/parent_org/m_org) +
+retiro de 2 SQL planos superados (`backup_org_canonical_0811` + `backup_org_final_1126`, 5.4G). Backups
+de seguridad vigentes: `bkp_pre_correlation_recon_20260529_1622.dump` + `bkp_focus_20260529_1557.dump`.
+
+## PASO 1 — Diagnóstico de por qué los 3,524 no tienen `alum` + fix de correlación
+
+### Hallazgo 1 — descomposición fina del set a proteger (READ-ONLY Oracle thick + psql)
+Los **3,524** ex-trabajadores con afiliación académica (PM5 `tmp_fuera_dni ∩ tmp_acad`) se descomponen
+por afiliación **vigente**:
+| Subconjunto | N | Afiliación vigente | Resource que lo cubre |
+|---|---|---|---|
+| Egresados (`VW_PERSONA_EGRESADO`) | **1,996** | `alum` (permanente) | Egresados v3 |
+| Alumnos matriculados vigentes (resultset estricto Estudiantes, sem 279/267) | **121** | `student` | Estudiantes v3 |
+| Ex-alumnos sin matrícula vigente ni egreso (solo en `VW_PERSONA_ALUMNO`) | **1,407** | **ninguna vigente** | **NINGUNO** |
+
+`VW_PERSONA_ALUMNO` es catálogo demográfico de personas-alumno, NO prueba de matrícula vigente.
+
+### Hallazgo 2 — desajuste de correlador entre resources (causa parcial)
+- **Trabajadores v3** correlaciona/identifica por `extension/upeu:lambDocNum` (NUM_DOCUMENTO crudo). Su
+  `dni-to-taxId-urn` está **deprecado/archived** → NO puebla `sb:taxId`.
+- **Egresados v3 / Estudiantes v3** correlacionan SOLO por `extension/sb:taxId` (URN).
+- Los 1,996/3,524 tienen `taxId` VACÍO pero `lambDocNum` poblado → el correlador académico por taxId
+  NO los enlaza al user-trabajador.
+
+**Fix desplegado (commit `[ver git log]`, durable, canónico, reusable SciBack):** en `egresados.xml` y
+`estudiantes.xml` se añadió (a) inbound `num-documento-to-lambDocNum` (beforeCorrelation, strong,
+idéntico a trabajadores.xml) y (b) correlador adicional `correlate-by-lambDocNum`. PUT 201 ambos,
+**test connection 15/15** ambos. `lambDocNum` único en los 1,996 (0 duplicados → sin DISPUTED).
+
+### Hallazgo 3 (BLOQUEANTE) — la causa raíz real es IDENTIDAD DUPLICADA, no el correlador
+Al correr el recon Egresados (PASO 1), el shadow CODIGO `8510323` (DNI `00074909`) quedó **LINKED**,
+pero a un user **`8510323`** (name=CODIGO, archetype `archetype-user-alumni`, `affiliations=["alum"]`,
+`taxId=urn:...:00074909`) — **NO** al user-trabajador `00074909` (name=DNI, archetype
+`employee-staff`, sin alum). **Existen DOS users para la misma persona.**
+
+Causa: el recon Egresados histórico, al no encontrar al trabajador por taxId, ejecutó
+`unmatched → addFocus` y **creó un user nuevo** con name=CODIGO. Mi fix por lambDocNum no lo resuelve
+porque el user-duplicado-egresado **no tiene lambDocNum poblado** (solo taxId), de modo que el recon
+re-enlaza el shadow a su gemelo duplicado preexistente, no al trabajador.
+
+**Magnitud (psql):**
+- Total m_user: 54,805 → **40,821 con name=CODIGO** (numérico largo) + 13,979 name=DNI(8).
+- 30,651 shadows Egresado tienen owner; **4,847 de esos owners son DUPLICADOS confirmados** (existe
+  otro user con name=DNI para el mismo DNI del taxId).
+- **Los 1,996 del set a proteger: 1,996/1,996 tienen un user-duplicado egresado** (name=CODIGO, alum).
+
+### Consecuencia y DETENCIÓN
+Re-correr Trabajadores (PASO 2) ahora archivaría a los 1,996 trabajadores (siguen sin `alum`; su gemelo
+alumni queda aparte) → **fragmenta la identidad y viola la salvaguarda académica**. El recon Egresados
+fue **SUSPENDIDO** sin daño (0 trabajadores archivados/desactivados por él; 0 users nuevos creados;
+m_user 54,805 estable; shadows-con-owner 30,651 estable). DETENGO en PASO 1 y reporto (regla del runbook).
+
+### Decisión requerida de Alberto antes de PASO 2 — consolidación de identidad duplicada
+El fix de correlación (lambDocNum) es necesario y queda desplegado, pero **insuficiente**: el bloqueo
+real es ~4,847 (potencialmente más entre los 40,821 name=CODIGO) identidades duplicadas
+trabajador↔egresado. Opciones canónicas:
+
+1. **Consolidar (merge) las identidades duplicadas:** para cada par (user-DNI trabajador, user-CODIGO
+   egresado del mismo DNI), fusionar en UNA identidad. MidPoint tiene `mergeObjects` (REST/UI). El user
+   superviviente debería ser el de name=DNI (identificador canónico de persona; el CODIGO es
+   identificador de matrícula, no de persona). Tras merge: el shadow Egresado queda linkeado al user
+   único, los inbounds pueblan `alum`, y el archetype lo resuelve el template (J3: faculty>staff>alum).
+   **PREFERIDA** — alinea con identidad única por persona (iga-canonical §1.3) y resuelve la raíz.
+   Requiere: definir reglas de merge (qué atributo gana), probar en piloto, ejecutar por lotes con
+   backup. Es trabajo de saneo de datos considerable (~5K+ pares).
+2. **Poblar `lambDocNum` en los user-CODIGO-egresado** desde su taxId (extraer DNI del URN) para que el
+   correlador por lambDocNum unifique en futuros recons — NO resuelve la duplicación ya existente (dos
+   users seguirían), solo evita crear más. Insuficiente solo.
+3. **Cambiar la reaction `unmatched` de Egresados/Estudiantes de `addFocus` a sin-acción** (o
+   `createOnDemand` controlado) para NO crear users desde estos resources — Egresados/Estudiantes solo
+   deberían ENRIQUECER identidades existentes, no crearlas (¿es Trabajadores/MOISES la IIA de creación
+   de persona?). Decisión de gobernanza: ¿qué resource es autoritativo para la CREACIÓN del focus
+   persona? Si es uno solo, los demás no deben `addFocus`. Esto previene duplicación futura pero requiere
+   merge (1) para la existente.
+
+**Recomendación:** combinar (1) consolidación de los duplicados existentes + (3) revisar qué resources
+pueden crear focus (definir IIA de creación de persona única) para que no reaparezcan. NO se puede
+proceder al PASO 2 (re-recon Trabajadores) ni a PASO 4 (purga) hasta consolidar — de lo contrario se
+archivarían trabajadores cuya afiliación alum vive en un user gemelo separado.
+
+## Estado de PROD tras PM7
+- **Cambios desplegados (durables, canónicos):** `egresados.xml` + `estudiantes.xml` con correlador
+  adicional por `lambDocNum` + inbound `num-documento-to-lambDocNum` (PUT 201, test 15/15). Commit pusheado.
+- **Cambios de datos:** 0 destructivos. Recon Egresados corrió ~5,365/30,653 items y fue SUSPENDIDO; no
+  creó users ni archivó/desactivó a nadie (re-correlacionó shadows a sus owners ya existentes).
+- Recon Egresados (`86c3766a`) queda SUSPENDED. Tablas tmp_* (PM5/PM6) + `tmp_egr1996` conservadas.
+- Disco 76% (14G libre). RAM 7.5G disp. Backups: `bkp_pre_correlation_recon_20260529_1622.dump` +
+  `bkp_focus_20260529_1557.dump`.
+- PASOS 2-5 **NO ejecutados** — bloqueados por identidad duplicada trabajador↔egresado (~4,847+ pares).
+
+> **Anti-patrón / lección SciBack (PM7):** múltiples resources de persona con reaction `unmatched →
+> addFocus` y correladores por identificadores DISTINTOS (taxId vs lambDocNum) generan identidades
+> duplicadas cuando una persona aparece en >1 fuente y no comparten el identificador de correlación.
+> Canónico: (a) UN identificador de correlación de persona unificado entre todos los resources (el
+> documento crudo), (b) definir explícitamente qué resource(s) pueden CREAR el focus persona (IIA de
+> creación) — los enriquecedores no hacen `addFocus`.
