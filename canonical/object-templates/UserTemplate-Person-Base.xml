@@ -263,7 +263,7 @@
                 <script>
                     <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
 if (affil != 'student') return null; // weak: no sobrescribe — solo side-effect
-def sc = focus?.extension?.findExtension(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'studentCycle'))?.getRealValue()
+def sc = focus?.extension?.findPropertyValue(new com.evolveum.midpoint.prism.path.ItemName('urn:sciback:midpoint:person', 'studentCycle'))?.getValue()
 if (sc != null &amp;&amp; (academicProgramCode == null || (academicProgramCode instanceof java.util.Collection ? academicProgramCode.isEmpty() : academicProgramCode.toString().isEmpty()))) {
     log.warn("UPeU Student: cycle={} sin academicProgramCode en user {}", sc, focus?.name)
 }
