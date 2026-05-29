@@ -154,6 +154,27 @@
                         <include>clockwork</include>
                     </evaluationPhases>
                 </inbound>
+                <inbound>
+                    <!-- FIX correlación cruzada (2026-05-29, runbook org-canonical sesión PM7):
+                         igual que egresados.xml. Alumnos que ADEMÁS son trabajadores tienen lambDocNum
+                         poblado (Trabajadores) pero taxId vacío → el correlador por taxId no los enlaza.
+                         Poblamos lambDocNum y añadimos correlador por él. Unifica el identificador de
+                         correlación de persona entre resources. -->
+                    <name>num-documento-to-lambDocNum</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def d = (input ?: '').toString().trim(); d ?: null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</path>
+                    </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
+                </inbound>
             </attribute>
             <attribute>
                 <ref>ri:FEC_NACIMIENTO</ref>
@@ -387,6 +408,14 @@
                         <name>correlate-by-taxId</name>
                         <item>
                             <ref xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</ref>
+                        </item>
+                    </items>
+                    <!-- FIX correlación cruzada (2026-05-29, PM7): correlador adicional por lambDocNum
+                         para alumnos-trabajadores con taxId vacío. Mismo patrón que egresados.xml. -->
+                    <items>
+                        <name>correlate-by-lambDocNum</name>
+                        <item>
+                            <ref xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</ref>
                         </item>
                     </items>
                 </correlators>

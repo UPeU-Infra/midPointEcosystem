@@ -147,6 +147,33 @@
                         <include>clockwork</include>
                     </evaluationPhases>
                 </inbound>
+                <inbound>
+                    <!-- FIX correlación cruzada (2026-05-29, runbook org-canonical sesión PM7):
+                         Trabajadores correlaciona/identifica por extension/upeu:lambDocNum (NUM_DOCUMENTO
+                         crudo), NO por taxId (su mapeo dni-to-taxId-urn está deprecado/archived). Por eso
+                         los egresados que ADEMÁS son trabajadores tienen lambDocNum poblado pero taxId
+                         vacío, y el correlador de Egresados por taxId NO los encuentra → no se proyecta
+                         el shadow Egresado → no se puebla affiliations=alum. Poblamos lambDocNum aquí
+                         (idéntico a trabajadores.xml: num-documento-to-lambDocNum) y añadimos un
+                         correlador por lambDocNum para enlazar a esos usuarios.
+                         Identificador de correlación canónico unificado entre resources de persona
+                         (best-practices §4.4 / iga-canonical-standards §1.3: una sola representación
+                         del documento para correlación). beforeCorrelation: poblado antes de correlar. -->
+                    <name>num-documento-to-lambDocNum</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def d = (input ?: '').toString().trim(); d ?: null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</path>
+                    </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
+                </inbound>
             </attribute>
             <attribute>
                 <ref>ri:FEC_NACIMIENTO</ref>
@@ -374,6 +401,17 @@
                         <name>correlate-by-taxId</name>
                         <item>
                             <ref xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</ref>
+                        </item>
+                    </items>
+                    <!-- FIX correlación cruzada (2026-05-29, PM7): correlador adicional por lambDocNum.
+                         Cubre egresados-trabajadores cuyo taxId está vacío (Trabajadores los identifica
+                         por lambDocNum). MidPoint evalúa todos los correlators; si cualquiera resuelve un
+                         owner único, correlaciona. El inbound num-documento-to-lambDocNum (beforeCorrelation)
+                         puebla lambDocNum del shadow Egresado antes de esta evaluación. -->
+                    <items>
+                        <name>correlate-by-lambDocNum</name>
+                        <item>
+                            <ref xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</ref>
                         </item>
                     </items>
                 </correlators>
