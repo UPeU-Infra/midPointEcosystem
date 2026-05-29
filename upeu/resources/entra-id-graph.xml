@@ -10,20 +10,29 @@
     CREDENCIALES: clientSecret gestionado en keystore cifrado de MidPoint (AES-256-CBC).
     NO reproducir en texto plano. Gestionar via UI Admin o ninja.
 
-    Estado Fase 5:  OUTBOUND PREPARADO — bloqueante:
-                    David Urquizo debe conceder User.ReadWrite.All en Azure Portal:
-                    App registration 94dd7b5b → Graph API → Application permissions
-                    → User.ReadWrite.All → Grant admin consent
+    Estado actual:  INBOUND-ONLY (doctrina UPeU: Entra ID solo-lectura hasta Fase 12).
+                    El objectType lleva <lifecycleState>proposed</lifecycleState>:
+                    MidPoint ejecuta inbound/correlation/sync pero NO ejecuta
+                    outbound mappings ni el existence-outbound → nunca intenta
+                    crear/actualizar cuentas en Entra ID. Los outbound mappings
+                    se conservan en el XML, inertes, listos para Fase 12.
 
-    Activación outbound: descomentar <configured> capabilities + aplicar este XML
-    en PROD via REST PUT cuando el permiso esté concedido.
-    NO aplicar hasta tener confirmación de David Urquizo.
+    Activación outbound (Fase 12): David Urquizo concede User.ReadWrite.All en
+                    Azure Portal (App registration 94dd7b5b → Graph API →
+                    Application permissions → User.ReadWrite.All → admin consent),
+                    luego cambiar el objectType a <lifecycleState>active</lifecycleState>
+                    y poner <cap:create>/<cap:update> enabled=true. Aplicar via REST PUT.
 
     Historial:
     - Fase 1 (2026-04-16): resource creado, solo inbound (readonly Entra ID → MidPoint)
     - Fase 5 (2026-05-17): outbound mappings agregados (UPN, givenName, surname,
                             displayName, accountEnabled). Capabilities write deshabilitadas
                             hasta que User.ReadWrite.All sea concedido.
+    - Fix (2026-05-28):  objectType → lifecycleState=proposed. Las capabilities
+                            create/update disabled no bastaban: el existence-outbound
+                            (=true) forzaba el intento de creación en cada recompute
+                            → 80 ObjectAlreadyExistsException por vuelta. proposed
+                            suprime todo outbound de raíz.
 -->
 <resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
           xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
@@ -66,6 +75,17 @@
             <kind>account</kind>
             <intent>default</intent>
             <default>true</default>
+            <!-- ================================================================
+                 INBOUND-ONLY (doctrina UPeU: Entra ID solo-lectura hasta Fase 12).
+                 lifecycleState=proposed en el objectType: MidPoint ejecuta
+                 inbound / correlation / synchronization pero NO ejecuta los
+                 outbound mappings ni el existence-outbound, por lo que jamás
+                 intenta crear/actualizar cuentas en Entra ID.
+                 Esto elimina los ObjectAlreadyExistsException de cada recompute.
+                 Para reactivar provisioning (Fase 12, tras User.ReadWrite.All):
+                 cambiar a <lifecycleState>active</lifecycleState>.
+                 ================================================================ -->
+            <lifecycleState>proposed</lifecycleState>
             <delineation>
                 <objectClass>ri:AccountObjectClass</objectClass>
             </delineation>
