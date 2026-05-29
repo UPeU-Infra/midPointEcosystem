@@ -471,3 +471,57 @@ Recon stage-2 reconcilia TODOS los shadows existentes (no solo los 133 del searc
 shadows denominacionales fuera del nuevo filtro → situación `deleted` → reaction `inactivateFocus`
 → archived (alimenta Fase 4). Errores ObjectNotFoundException por parentOrgRef stale en orgs
 denominacionales: NO fatales (esas orgs se purgan en Fase 4). Task recon `a3ab390f`.
+
+## Fase 2bis — Re-ejecución con resource arreglado (2026-05-29, sesión PM) ⚠️ BLOQUEADO
+
+### PASO 1 (verificación resource en PROD) ✅
+- **Hallazgo:** el objeto resource en la DB de MidPoint tenía la versión BUGUEADA (sin el fix
+  `f66633f` — `grep getArchetypeRef` = 0 en DB), aunque el archivo en disco SÍ tenía el fix.
+  El recon de las 09:00 (PARTIAL_ERROR) corrió con esa versión vieja.
+- **Fix aplicado:** `git pull` (already up to date) + `PUT` del resource desde disco → HTTP 201 →
+  `getArchetypeRef` = 1 en DB. **Test connection 15/15 success.**
+- **Backup incremental:** `/home/juansanchez/backup_org_prerecon_20260529_0952.sql` (755M, m_org +
+  refs + assignments).
+- **Cruce 334 N-puro-sin-archetype vs 133 in-scope (Oracle, filtro CONNECT BY del addendum A.1):**
+  - 133 in-scope confirmadas: `1..18,20,22..27,44,47..55,58,63,65..70,72,73,77..80,82..86,91..94,97,99..107,112,113,131..133,135..137,139,142,143,145,147,150,161,239,251,292,297,430,433,441,511,676,681,692,695,704,709,710,712,713,717,718,719,760,763,765,766,789,803,7763,7871,7902,7920,7948,7987,8019,8027,8080,8081,8085,8088,8102,8110,8112,8138,8153,8154,8177,8208,8223,8232,8242,8266`.
+  - De los 334 sin archetype: **92 in-scope** (→ debían recibir department), **242 fuera de scope**
+    (→ archived). +5 in-scope sin org en MidPoint (22,433,441,676,763 → recon las crea).
+  - Conteo esperado: **97 departments in-scope** tras re-recon (92 patch + 5 nuevas).
+  - 36 in-scope ya con archetype (canónicas Fase 1) + 7 free canónicas fuera-de-133
+    (19,21,59,126,127,128,130 — academic-unit/department sin trabajadores hoy, legítimas).
+
+### PASO 2 (re-recon) ⚠️ recon SUCCESS pero ARCHETYPE NO SE ASIGNA — BLOQUEADO
+- Re-ejecutado task recon `a3ab390f` → **CLOSED/SUCCESS** (375 items, ya NO PARTIAL_ERROR).
+- Shadows del resource: **133 LINKED + 242 DELETED** (cuadre exacto con scope — el filtro funciona).
+- **PERO `archetype-org-department` NO se asignó a los 97 in-scope.** Solo 2 orgs (99,100) lo tienen,
+  y se verificó que fueron creadas el 2026-05-26 (lo traían de antes), NO por este mapping.
+- **Las 5 orgs creadas HOY por el recon (22,433,441,676,763) NACIERON SIN archetype.** → refuta la
+  hipótesis "solo nuevas reciben el inbound".
+- Probado además un **import task** del recurso (`19e43a44`, fuerza inbounds en shadows linked
+  unchanged) → CLOSED/SUCCESS → **tampoco asignó**. 97 siguen sin archetype.
+
+### Causa raíz (diagnóstico)
+El inbound `default-department-archetype` (assignmentTargetSearch → target=assignment) está
+**anidado dentro del `<attribute><ref>ri:ID_AREA</ref>`** y NO produce el assignment ni en orgs
+nuevas ni en linked. El mapping en DB es correcto sintácticamente (verificado tras PUT). El defecto
+es de **diseño del mapping**: un inbound de assignment cuyo input es un atributo estable (ID_AREA,
+sin delta) y cuya expresión `assignmentTargetSearch` ignora el input no genera el assignment
+esperado durante import/recon de OrgType. Best-practices: la clasificación de archetype de OrgType
+debería vivir en un **object template de OrgType** (se evalúa en cada recompute/create/change —
+SKILL §257) en lugar de como inbound del resource — HOY NO existe object template para OrgType en
+PROD (solo 5 para UserType).
+
+### DECISIÓN PENDIENTE (no se fuerza más; runbook ordena DETENER ante anomalía repetida)
+Opción recomendada: crear `canonical/object-templates/OrgTemplate-Area.xml` con un mapping
+(o `assignmentTargetSearch`) que asigne `archetype-org-department` cuando `archetypeRef` esté vacío,
+y vincularlo vía `<archetypePolicy><objectTemplateRef>` global para OrgType (o como objectTemplateRef
+del resource para kind=generic). Esto desacopla la clasificación del inbound del recurso y la hace
+idempotente en recompute. Tras crearlo, un recompute de las 97 orgs in-scope (scope acotado,
+sin OOM) las clasificaría. **Pendiente de confirmar con Alberto antes de implementar** (cambio de
+object template global de OrgType = artefacto core, requiere confirmación por reglas operacionales).
+
+### Estado de orgs tras PASO 2 (sin avanzar a Fase 3/4)
+- 467 orgs total. 43 N-puro con archetype (sin cambio neto). 339 N-puro sin archetype.
+- 133 shadows LINKED (in-scope) + 242 DELETED (fuera scope, listos para archivar en Fase 4).
+- **NO se ejecutaron Fase 3 (denominacionales) ni Fase 4 (purga)** — bloqueado a la espera de
+  resolver la asignación de archetype, para no purgar/archivar con el árbol a medio clasificar.
