@@ -413,3 +413,40 @@ académicas con trabajadores entre ellas.
 Orden seguro por par: purgar legacy `N` → patch canónica `area.N`→`N`. Ventana breve sin org;
 aceptable (Koha/LDAP en `proposed`).
 
+
+---
+
+# REGISTRO DE EJECUCIÓN (2026-05-29, midpoint-expert)
+
+## Fase 0 — Backup ✅ (previa)
+Tag `backup-pre-org-canonical-migration-2026-05-29` + pg_dump 2.8GB en
+`/home/juansanchez/backup_org_canonical_20260529_0811.sql`.
+
+## Fase 1 — Patch identifiers del árbol canónico ✅
+
+Estado inicial PROD: 492 orgs (32 `area.N` con archetype y 0 users, 370 `N` puro legacy sin
+archetype con 4,898 users, 87 semánticas, 372 sin archetype). 25 colisiones canónica/legacy,
+7 canónicas free (19,21,59,126,127,128,130).
+
+**Mecánica:** PATCH/DELETE REST vía localhost en una sola sesión SSH (sshpass falla en reconexiones
+rápidas; el patrón `ssh bash -s <<REMOTE` con loop interno es el único fiable). El body XML se
+escribe a `/tmp/patch.xml` en PROD y se envía con `--data-binary @file` (las comillas simples se
+corrompen a través de las capas shell→ssh→curl, causando "Open quote is expected").
+
+Acciones:
+- **7 free canónicas** `area.N`→`N` puro (identifier replace). HTTP 204. (Un primer intento puso
+  19→130 por bug de word-split en zsh; corregido a 19.)
+- **25 colisiones**: las legacy `N` ya estaban borradas de un intento previo (DELETE devuelve 500
+  "not found", pero NO hay duplicados → el borrado fue efectivo). PATCH canónica `area.N`→`N`: 204.
+  Nota: DELETE de OrgType con `?options=force` devuelve 500 con OperationResultType aunque el objeto
+  SÍ se borra; verificar siempre por ausencia de duplicados, no por el código HTTP.
+- **5 facultades** FE→8, FIA→9, FCS→10, FT→11, FCCA→12 (legacy 8-12 borradas, canónica patcheada).
+- **4 colegios+ISTAT** (legacy 97/695/8208/760, CON 82/19/7/1 trabajadores): se les asignó
+  `archetype-org-partner-institution` + displayName legible + parent=campus respectivo
+  (97→SEDE-LIMA, 695/760→SEDE-JULIACA, 8208→SEDE-TARAPOTO), y se eliminó el parent legacy AREA-430/
+  area5. Se reusaron las orgs legacy (tienen los trabajadores) en vez de la canónica vacía
+  `COLEGIO-UNION`, que se **archivó** (`lifecycleState=archived`, reversible).
+
+Estado tras Fase 1: 467 orgs. 41 orgs con identifier numérico puro + archetype (32 area + 5 faculty
++ 4 partner-institution), todas con displayName legible. 0 `area.N`. 0 identifiers duplicados.
+345 legacy `N` puro sin archetype pendientes (departamentos puros → Fase 2/3).
