@@ -1069,3 +1069,20 @@ archivarían trabajadores cuya afiliación alum vive en un user gemelo separado.
 > Canónico: (a) UN identificador de correlación de persona unificado entre todos los resources (el
 > documento crudo), (b) definir explícitamente qué resource(s) pueden CREAR el focus persona (IIA de
 > creación) — los enriquecedores no hacen `addFocus`.
+
+---
+
+## VERIFICACIÓN PASO A — Merge masivo (2026-05-29 ~19:35 Lima)
+
+**Estado: MERGE EN CURSO — NO COMPLETO.** Verificación read-only; no se ejecutó nada destructivo.
+
+- Script `/tmp/merge_all.sh` PID `3098258` **vivo**. Sin marker `=== MERGE_ALL COMPLETE ===` en `/tmp/mergeall.log`.
+- Scope: `total groups=5477` (grupos de DNI duplicado en `tmp_merge`), lotes de 200, arrancó en offset=400.
+- Progreso: 9 lotes cerrados (offsets 400-2000, todos `processed=200 ok=200 fail=0`), lote 10 (offset=2200) ejecutándose.
+- Faltan ~16 lotes → ETA ~2.5-3 h (terminaría ~22:00-22:30 Lima) al ritmo de ~10 min/lote.
+- `m_user`: 52,571 y bajando ~200/lote, consistente. Proyección final ≈ 49,328 (objetivo ~49,318). ✓ trayectoria correcta.
+- Disco PROD: **78%** (42G/57G), estable — NO llegó a 90%. DB 17 GB. Disk-guard del script aborta a ≥90% (no disparado).
+- Contenedores: `midpoint_server` healthy (22h), `midpoint-midpoint_data-1` healthy (2d). ✓
+- 0 fallos en todos los lotes ejecutados.
+
+**Decisión:** conforme a la regla "si el merge NO completó → NO continuar". **PASOS B-E NO ejecutados.** Re-verificar cuando aparezca el marker COMPLETE: m_user final, 0 duplicados por DNI, caso `00074909` (un user name=DNI, afiliaciones consolidadas, dueño de shadows, gemelo eliminado), 3,524 ex-trabajadores-egresados con `alum` en el mismo user, luego recompute de survivors (`merged-2026-05-29`).
