@@ -2855,3 +2855,73 @@ Quedan ~24 nodos semánticos VACÍOS sin contraparte numérica ni área LAMB act
 árbol semántico abandonado. TODOS tienen parent (0 islas), 0 miembros. NO se tocaron (la tarea era
 "pares duplicados"). Recomendación futura: archivarlos o poblarlos si reflejan estructura deseada
 no presente en LAMB. LAMB (IIA de orgs) no modela esa granularidad → ningún trabajador los poblará.
+
+---
+
+# ADDENDUM PM19 — Resolución de los nodos semánticos VACÍOS (2026-05-30, midpoint-expert)
+
+Cierre del pendiente del ADDENDUM PM16. Skills consultadas: `midpoint-best-practices` Cap.10
+§5.2/§5.3/§5.6 (org tree design, tipos canónicos, sync desde IIA), `iga-canonical-standards`
+§10.2 (OrgType archetypes). Backup: tag git `backup-pre-empty-semantic-nodes-2026-05-30` +
+pg_dump `~/backup_empty_semantic_nodes_20260530_1616.sql` (13M, m_org+refs+archetype). Disco 86%.
+Oracle SOLO SELECT (cliente thick arm64 Instant Client 23.3 desde Mac; oracledb thin no soporta 11g).
+
+## PASO 1 — Inventario y clasificación X/Y/Z (32 nodos, no ~24)
+
+Conteo preciso = **32** nodos vacíos con identifier semántico (no numérico), lifecycleState=null,
+**0 usuarios directos**, todos con parent (0 islas). Excluidos del conjunto: los 16 `cu-*`
+(estructura deliberada de Colegio Unión bajo AREA-97, HUECO 1) y los 5 SEM ya archivados en PM16.
+
+Cruce de cada nodo vs `ELISEO.ORG_AREA` (ent=7124) + conteo de trabajadores activos
+(`VW_APS_EMPLEADO ESTADO='A' AND ID_ENTIDAD=7124` ∧ `VW_TRABAJADOR` ∧ `ORG_SEDE_AREA`):
+
+| Clase | Definición | Hallazgo |
+|---|---|---|
+| **X** consolidar/materializar (área LAMB real + trabajadores que cuelgan de otro nodo) | — | **0 nodos.** No hay trabajadores escondidos: en LAMB todo trabajador cuelga SIEMPRE de su nodo numérico (=ID_AREA), y TODOS los numéricos poblados YA están materializados en MidPoint. Los pares con numérico poblado (DTI/CRAI/Idiomas/Conservatorio/ISTAT) ya se consolidaron en PM16. |
+| **Y** área LAMB real pero TRAB7124=0 | — | Las áreas LAMB equivalentes vivas existen para varios (Defensoría=8243, Iglesia=21, Fondo Editorial=782, Sostenibilidad=8256, Cepre=670/671/8230), **todas con 0 trabajadores activos**. Doctrina UPeU ya decidida en HUECO 3 (PM17): áreas vivas sin personal NO se materializan (anti-patrón OrgType vacío). |
+| **Z** sin contraparte LAMB / granularidad inexistente / duplica numérico ya materializado | — | El resto: `admin.analitica`, `admin.seg-info`, `admin.prodac`, `*.ti.lima`, `continuidad.servicios.lima`, etc. Verificado: 0 áreas LAMB para PRODAC/Analítica/Seguridad-Información; DTI (AREA-18) NO tiene hijos en LAMB → todo el sub-árbol TI es granularidad interna inexistente en la IIA. |
+
+**Veredicto canónico unánime: los 32 colapsan a clase Z efectiva → archivar.** Razones:
+ninguno tiene shadow del resource org (son manuales; el recon NUNCA los recrea ni los poblará —
+identifier no-numérico no matchea el UID=ID_AREA del feed); LAMB (IIA de orgs, §5.6) no modela
+esa granularidad sub-departamental; los que sí tienen área LAMB equivalente caen bajo la doctrina
+HUECO 3 (no materializar vacíos). Materializarlos/conservarlos = OrgType vacío sin sujetos ni rol
+(anti-patrón explícito de best-practices §5.3 "Role catalog orgs sin people" NO aplica aquí: estos
+no son catálogo de self-service, son residuo de un árbol semántico abandonado).
+
+Lista completa de los 32 (identifier → displayName → archetype → parent):
+`admin.coord-academica, admin.coord-aprendizaje-digital, admin.coord-educ-continua,
+admin.fondo-editorial, admin.subdir-investigacion, CEPRE-LIMA, crai.adq.lima, CRAI-JULIACA,
+crai.proctec.lima, crai.repo.lima, crai.secretaria.lima, crai.servtec.lima, crai.servusuario.lima,
+CRAI-TARAPOTO` (14 academic-unit) + `admin.analitica, admin.asistencia-social, admin.coord-mision,
+admin.coord-residencias, admin.dev-proyectos, admin.dev-ti, admin.dir-bienestar, admin.dir-comercial,
+admin.prodac, admin.seg-info, admin.servicios-generales, continuidad.servicios.lima,
+coord.comunicaciones.lima, iglesia.univ.lima, infraestructura.ti.lima, ops.soporte.ti.lima,
+sostenibilidad.ambiental.lima` (17 department) + `admin.defensoria` (1 governance).
+
+## PASO 2 — Acción: archivado reversible
+
+- **32/32 → `lifecycleState=archived`** vía REST PATCH (ok=32 fail=0). Reversible (datos preservados,
+  evidencia ISO 27001 A.5.18). NO delete. Los 3 hijos vacíos de `admin.dir-bienestar`
+  (asistencia-social/coord-mision/coord-residencias) se archivaron en el mismo lote → ningún hijo
+  vivo queda colgando de un padre archivado. Los `crai.*` colgaban de AREA-93 (vivo, intacto).
+- Clase X: 0 acciones (no existen). Clase Y: no materializadas (doctrina HUECO 3, documentado).
+
+## PASO 3 — Verificación final
+
+- **m_org = 198** (sin cambio; archived no borra). **archived = 37** (5 PM16 + 32 PM19). **vivas = 161**.
+- **empty-semantic-alive-remaining = 0** ← objetivo cumplido. Cada org viva tiene trabajadores,
+  o es nodo de agrupación legítimo (institution/campus/faculty/governance con hijos), o es estructura
+  deliberada cu-* / EP-* académica.
+- **Invariantes intactas:** DTI(18)=99 users; orgs vivas sin archetype=0; dual-archetype=0;
+  dual-parent-default=0; única raíz sin parent=`upeu.edu.pe` (0 islas); 0 hijos vivos bajo archivado.
+- m_user invariante (no se tocó ningún user). Salvaguarda académica intacta.
+
+**Resumen X/Y/Z:** 0 consolidados (X) · 0 mantenidos / 32 archivados (Y colapsan a Z por doctrina
+HUECO 3) · 32 archivados (Z). Total 32 archivados, 0 materializados, 0 daño.
+
+## Bloque SciBack (patrón reutilizable)
+En IGA universitario el árbol de orgs lo gobierna la IIA (HR/ERP) por identificador nativo de área.
+Los nodos semánticos creados a mano que NO corresponden a un área del feed, sin sujetos ni rol, son
+anti-patrón (OrgType vacío) → archivar, no poblar. La granularidad organizativa que la IIA no modela
+no debe inventarse en el IGA. Política de scope = unidad con personal vivo según contrato HR.
