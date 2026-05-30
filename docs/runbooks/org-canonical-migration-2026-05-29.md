@@ -2409,3 +2409,79 @@ en depto `21010108` (Administración Unión PU, área 133) pero `VW_TRABAJADOR` 
 - `48636923` depto `13040722` → 2 áreas (Fac. CC. Humanas / EP Educación). Hoy en AREA-7997.
 - `72783226` depto `14010102` → 3 áreas (Cap. Continua / Posgrado / Marketing). Hoy en AREA-7997.
 Total estimado de residuales ESTADO='A' con depto ambiguo: ~14 (resto cubierto por leaver/grace).
+
+---
+
+## PM16 — Cura del resolutor depto-ambiguo + reubicación de los 3 + purga AREA-7996/7997 (2026-05-30) ✅
+
+Cierra los "casos (b) residuales" anteriores. Skills: midpoint-best-practices §1.3 (IIA por atributo),
+§2.1 (Reality-vs-Policy: org membership = policy derivada de afiliación viva), §5 (org/costCenter).
+
+### PASO 1 — Cura del resolutor `ca` en `upeu/resources/oracle-lamb/trabajadores.xml` (Opción 1, durable)
+
+Problema: cuando `ID_DEPTO` del contrato vivo 7124 mapea a **>1** `ID_AREA` candidata (todas ent=7124),
+el resolutor 1:1 `dm` (`HAVING COUNT(DISTINCT ID_AREA)=1`) se abstiene → fallback a `osa.ID_AREA`
+(área histórica de VW_TRABAJADOR) → nodo denominacional stale (AREA-7996/7997, ent=7115 PNT).
+
+Cura: segundo nivel `dm2` con `COALESCE(dm.ID_AREA, dm2.ID_AREA)`:
+1. `dm2` intersecta las candidatas con el **SET CANÓNICO IN-SCOPE** — exactamente el mismo CONNECT BY
+   del resource `org.xml` (ent=7124 conexo desde raíz, MINUS AGTU subtree 8196). 133 áreas.
+2. Si tras intersectar quedan varias, elige la de **MAX(ID_SEDEAREA)** (surrogate auto-increment →
+   mapeo ORG_SEDE_AREA más reciente = canónico vigente).
+3. `dm` (1:1) tiene prioridad vía COALESCE → **invariante probada en Oracle: 0 cambios en strict path**
+   (los 414 ya resueltos + Flores→133 + DTI→18 idénticos).
+
+**Verificación pre (Oracle SOLO SELECT):**
+- 76575561 depto 61010106 → candidatas {58,62,591,606,789}; in-scope∩={58,789}; MAX(ID_SEDEAREA): 789(5487)>58(877) → **789** ✓
+- 48636923 depto 13040722 → {8,102}; in-scope∩={8,102}; MAX: 102(5852/5857)>8(5851) → **102** ✓
+- 72783226 depto 14010102 → {7,676,8232}; in-scope∩={7,676,8232}; MAX: 8232(5711)>7(1013)>676(737) → **8232** ✓
+- Stats resolutor: total 3744, strict(dm) 2120, newpath(dm2) 1593, unresolved(fallback histórico) 31.
+- Invariante: 0 filas donde dm no-null cambia el resultado final.
+
+Commit `be0a618`. PUT resource OID `6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21` (HTTP 201). Test connection **15/15 success**.
+
+### PASO 2 — Reubicación de los 3 (import shadow → inbound re-deriva ID_AREA→costCenter→Bloque E)
+
+Backup users `/tmp/bkp-user-*-20260530-135613.xml`. Import de los 3 shadows de la trabajadores resource
+(HTTP 200/240). El import por sí solo re-leyó Oracle con el resolutor curado y corrió el clockwork completo
+(inbound + template); no hizo falta recompute extra. Resultado:
+
+| DNI | costCenter | parentOrgRef | lifecycle | structural archetype |
+|---|---|---|---|---|
+| 76575561 | 789 | AREA-789 (Dir. Marketing) | active | archetype-user-employee-staff |
+| 48636923 | 102 | AREA-102 (EP Educación) | active | archetype-user-employee-staff |
+| 72783226 | 8232 | AREA-8232 (Subdir. Marketing y Comunic.) | active | archetype-user-employee-staff |
+
+dual-structural=0 (cada uno: 1 structural + AuxAff-Staff auxiliar = patrón canónico estándar).
+
+### PASO 3 — Purga AREA-7996 / AREA-7997 + ancestros PNT
+
+Pre-purga: AREA-7996 (2 act) y AREA-7997 (12 act) NO quedaron vacíos tras mover los 3 → **hallazgo**:
+14 usuarios académicos (13 alumni + 1 student) con costCenter stale 7996/7997 (ex-trabajadores
+sin contrato 7124 vivo). NO son worker mislocados; son membership stale (policy residual).
+Recompute `PATCH /users/{oid}?options=reconcile` → **Bloque E guard (PM21)** removió la worker-area
+membership (org membership solo con liveAffiliationWorker vivo) conservando archetype/lifecycle académico.
+Canary student 73703505: active, archetype-user-student intacto, ahora cuelga solo de EP-COM. Los 14: **14/14 active**.
+
+Cadena denominacional (Oracle: todos ent=**7115** PNT, 0 active): AREA-7989←7995←7996←7997.
+indestructible=none. Backup orgs `/tmp/bkp-org-*-20260530-140109.xml`.
+DELETE leaf-first con guard "0 active" inmediato antes de cada uno: 7997, 7996, 7995, 7989 → **204×4**.
+m_org 263→259.
+
+### PASO 4 — Cierre
+
+- orgs 7989/7995/7996/7997 restantes: **0**.
+- Los 3: active, employee-staff, parentOrgRef canónico, costCenter correcto, dual=0. ✓
+- **Flores 41970870 → costCenter 133, AREA-133, active** ✓ (intacto).
+- **DTI SANCHEZ CONDOR 10867326 → costCenter 18, org DTI, active** ✓ (intacto).
+- dual-structural=0 en los 17 usuarios tocados. Disco 86%.
+- m_org final: **259**.
+
+### RESIDUAL identificado (fuera de scope PM16 — REQUIERE DECISIÓN)
+
+**AREA-7795 "Pastor distrital" (ent=17611 denominacional)** retiene 26 active: 25 alumni stale (mismo
+patrón costCenter stale, curable con recompute Bloque E) + **1 employee-staff DNI 73970305**.
+Oracle confirma 73970305 SIN contrato 7124 vivo (7124 venció 2020/2021; contratos activos = ent 17611
+"Pastor distrital"). Es un pastor denominacional, NO trabajador UPeU → falso-activo employee-staff
+(shadow stale). Caso de democión de archetype no-UPeU + salvaguarda alumni → pase deliberado aparte,
+NO se actuó unilateralmente en PM16. Para confirmar con usuario.
