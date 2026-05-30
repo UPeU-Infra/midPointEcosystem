@@ -85,7 +85,12 @@
   <org oid="9f30eb08-5ee7-46d3-bda0-f0cc62204d87">
     <name>COORDINACION-TI-LIMA</name>
     <displayName>Coordinación Tecnologías de Información - Lima</displayName>
-    <identifier>DTI</identifier>
+    <!-- identifier = ID_AREA de ELISEO.ORG_AREA (18 = "Dirección de Tecnologías de Información", ent=7124).
+         Regla de oro iga-canonical #10 + Semančík ("always use org unit identifiers"): el identifier debe
+         ser el ID_AREA numérico de LAMB para que Bloque E (costCenter=ID_AREA → OrgType.identifier) vincule
+         a los 72 trabajadores activos de Dirección de TI. Antes era 'DTI' (semántico) → Bloque E nunca matcheaba
+         → 0 trabajadores colgaban. Fix PM19/PASO5 (2026-05-30). -->
+    <identifier>18</identifier>
     <assignment>
       <targetRef oid="73795c10-2417-4323-b6fa-b88449a8bba4" type="ArchetypeType"/>
     </assignment>
