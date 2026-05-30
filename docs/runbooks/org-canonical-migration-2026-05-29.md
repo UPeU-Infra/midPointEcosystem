@@ -1369,3 +1369,98 @@ active (L). Opciones canónicas (a validar con skills + dev antes de PROD):
   `canary-*`/`trace*` **eliminadas** (0 remanentes). Disco 79%. Contenedores healthy.
 - **PASOS 3 (canary verde)–7 NO completados** — bloqueados por el defecto del inbound de afiliación
   (relativo, no asienta affiliations en focos linked). Backups PM8 vigentes.
+
+---
+
+# SESIÓN PM10 (2026-05-30) — Inbounds `*-to-affiliations` ABSOLUTOS implementados; canary SIGUE archived. Causa raíz FINAL aislada (zero-set no materializa). DETENIDO.
+
+> Skills consultadas: `midpoint-best-practices` §4.2 (strength/conditions relativistas), §4.5 (pipeline
+> inbound→focus policy→outbound), §4.6; `iga-canonical-standards` §1.3 (IIA). READ-ONLY + PUTs de config
+> + recompute/recon tasks + 2 classLogger temporales (revertidos). 0 cambios destructivos de datos.
+
+## Decisión de entorno
+DEV (`pruebas-alberto-1`) tiene SOLO 3 resources NO canónicos (Koha, Azure EntraID, Lamb Academic) —
+no posee el schema sciback:person, los templates ni los 3 resources Oracle LAMB canónicos. Reconstruir
+el stack canónico en el sandbox era inviable y contrario a la doctrina ("no construir el IGA en DEV").
+**Decisión:** aplicar en PROD con canary estricto BLOQUEANTE (autorizado por el brief). Cambios de bajo
+riesgo (solo strength + value-set en mappings ya existentes), validados con Test Connection 15/15.
+
+## PASO 1 ✅ (config) — Inbounds `*-to-affiliations` hechos ABSOLUTOS en los 3 recursos
+Patrón aplicado (idéntico a los inbounds de correlación `dni-to-taxId-urn` del mismo recurso):
+- `<strength>normal</strength>` → `<strength>strong</strength>` ("recomputa", best-practices §4.2).
+- `+ <evaluationPhases>beforeCorrelation + clockwork</evaluationPhases>`.
+- `+ <set><predefined>matchingProvenance</predefined></set>` DENTRO de `<target>` (NO `<range>` suelto
+  — `InboundMappingType` no admite `<range>`: HTTP 400 "Item range has no definition"; el value-set va
+  como hijo de `<target>` [VariableBindingDefinitionType]; `matchingProvenance` confirmado en
+  `common-core-3.xsd` enum `ValueSetDefinitionPredefinedType`).
+- Commits `7749c53` (strong+phases ×3) + `<set>` egresados + `<set>` trab/estud. PUT 3 resources → 201.
+  Test Connection 15/15 ×3. Config DURABLE y canónica desplegada.
+
+## PASO 2 ❌ — Canary `48150895` SIGUE `archived`/`staff`/affiliations=∅. Causa raíz FINAL.
+
+### Diagnóstico definitivo (TRACE `...projector.focus.inbounds`=TRACE, log activo = `midpoint.log`)
+Tras desplegar strong+phases+set en los 3 recursos y correr **user recompute+reconcile** sobre el canary:
+- **Los inbounds SÍ se evalúan ahora** (614 líneas inbound; antes 0 — confirma que strong reactivó la
+  evaluación). El mapping produce el valor:
+  `producer: M(afiliacion-to-affiliations: affiliations = PVDeltaSetTriple(zero: [PPV(String:alum, meta: provenance: 4)]; plus: []; minus: []), strong)`
+- **PERO `alum` queda en el ZERO set, nunca en PLUS** → no genera delta real hacia el focus → el focus
+  `affiliations` permanece ∅ → J3 lo lee vacío → `primaryAffiliation` null (no sobrescribe `staff` stale)
+  → Bloque L con liveAff=∅ + terminationDate → `archived`. Cadena consistente.
+
+### Por qué `matchingProvenance` NO materializó el valor (causa raíz FINAL)
+`matchingProvenance` limita la autoridad del mapping a los valores que portan **SU** metadata de
+provenance EN EL FOCUS. El focus del canary tiene `affiliations` VACÍO (sin metadata de provenance) →
+el conjunto "propiedad de este mapping" es ∅ → el consolidador no tiene nada que reconciliar → el valor
+zero-set `alum` (provenance 4) NO se añade. En 4.10, un inbound strong cuyo valor cae en zero-set NO se
+materializa en un item de focus vacío salvo que exista infraestructura de **metadata/provenance grabada
+en el focus** (no configurada en este deployment). `matchingProvenance` presupone esa metadata.
+
+### Mecanismos probados que NO reparan (todos dejan archived/affiliations=∅)
+| Operación | Resultado |
+|---|---|
+| `/shadows/{egresados}/import` (post strong) | success, inbounds NO corren (import short-circuit) → ∅ |
+| user recompute (sin reconcile) | inbounds NO corren → ∅ |
+| user recompute + `reconcile=true` | inbounds SÍ corren, valor en zero-set → ∅ |
+| recon task Egresados por `icfs:name` | filtro NO se push-down (searchScript solo `__NAME__`/`__UID__`) → recon FULL 30k; alcanzó canary, valor en zero-set → ∅ |
+| recon task por `inOid` shadow | 400 "Cannot combine on-resource and off-resource properties" |
+| strong + evaluationPhases (sin set) | valor zero-set → ∅ |
+| strong + evaluationPhases + `<set>matchingProvenance` ×3 | valor zero-set → ∅ |
+
+> Notas REST 4.10 (confirmadas): `POST /users/{oid}/recompute` → 404. `<range>` en inbound → 400. recon
+> filtro `inOid`+resourceRef → 400. Mecanismo fiable de inbound eval = **task recompute con
+> `<reconcile>true</reconcile>`** o recon FULL del recurso. Log ACTIVO = `/opt/midpoint/var/log/midpoint.log`
+> (los `midpoint-YYYY-MM-DD.N.log` están rotados/congelados — NO mirar esos).
+
+## DECISIÓN REQUERIDA antes de continuar (PASO 3-6 BLOQUEADOS) — necesita re-discusión de diseño
+El valor zero-set con provenance NO se materializa en un focus con `affiliations` vacío sin metadata-
+provenance. Tres caminos canónicos (a decidir con el usuario; NINGUNO es un simple tweak de mapping):
+
+1. **Habilitar grabación de metadata/provenance en el focus** (item `affiliations` con
+   `<valueMetadata>`/provenance, o `dataProvenance` en system config) para que `matchingProvenance`
+   tenga un conjunto-propiedad no vacío y materialice el zero-set. Más alineado al modelo multi-source
+   canónico Evolveum, pero introduce infraestructura de provenance en todo el deployment (impacto amplio,
+   requiere prueba dedicada). PREFERIDA a medio plazo.
+2. **Persistir per-source en items DISTINTOS** (`affiliationStudent`/`affiliationWorker`/`affiliationAlum`
+   por recurso, cada uno single-source → el inbound strong materializa sin ambigüedad de provenance) y
+   que el template compute `affiliations` (y J3/L) como UNIÓN de los per-source persistidos. Evita
+   provenance; es el patrón "una IIA por atributo" llevado al límite (§1.3). Redesign de mappings + J3/L.
+3. **Que J3/L lean liveness desde la REALIDAD (proyecciones linked) en vez del transitorio
+   `affiliations`** (best-practices §2.1/§5.8 focus-and-projection): liveAff derivada de qué shadows
+   LAMB están `linked & exists & no-dead`. Elimina la dependencia del item transitorio. Cambio de J3/L,
+   no de inbounds.
+
+**Recomendación:** discutir con el usuario antes de implementar — la opción 1 toca config global de
+metadata; la 2 y 3 son redesigns de template. NO avanzar a PASO 3-6 hasta canary verde (BLOQUEANTE).
+
+## Estado de PROD tras PM10
+- **Config desplegada (durable, canónica, válida):** inbounds `*-to-affiliations` strong +
+  evaluationPhases + `<set>matchingProvenance` en los 3 recursos (egresados/trabajadores/estudiantes).
+  Commits `7749c53` + (set egresados) + (set trab/estud) pusheados + git pull PROD + PUT 3 resources 201
+  + Test Connection 15/15 ×3. NOTA: aunque no resuelve el canary por sí sola, esta config es correcta y
+  necesaria (strong = absoluto; matchingProvenance = no-wipe multi-source) y queda como base para
+  cualquiera de las 3 opciones de arriba.
+- **Datos:** 0 destructivos. Canary `48150895` restaurado a baseline documentado (archived/staff/[alum]
+  vía PATCH raw replace). Loggers temporales TRACE **revertidos** (0 custom loggers). Todas las tasks
+  `canary-*`/`trace*` **eliminadas** (0 remanentes). Disco 74%. Contenedores healthy.
+- **PASOS 3 (canary verde)–6 NO completados** — bloqueados por la no-materialización del zero-set; requiere
+  decisión de diseño (3 opciones). Backups PM8 vigentes.
