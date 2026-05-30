@@ -1824,3 +1824,70 @@ Lista de los 983 = filtrable de `/tmp/saneo_list.tsv` (action=QUARANTINE).
   0 egresados/estudiantes con afiliación viva en archived (los 983 cuarentena NO cuentan, siguen active).
 - PASO 3-5 (re-recon Trabajadores, recompute UPeU + purga, verificación final): tras completar PASO 1+2.
 - Tratar los 983 QUARANTINE (recon Egresados/Estudiantes que los proyecte) — prerequisito para su saneo.
+
+---
+
+# SESIÓN PM15 (2026-05-30 ~03:00 Lima) — El saneo PM14 NUNCA MURIÓ. 5 fails diagnosticados (benignos, calidad de datos). Watchdog robusto instalado. EN CURSO.
+
+> Skills consultadas: `midpoint-best-practices` §2.1 (Reality vs Policy), §4.2 (strength relativista),
+> §1.3 (una IIA por atributo: familyName/givenName con 2 IIAs strong); `iga-canonical-standards` §1.3.
+> READ-ONLY + reproducción de 5 PATCH (idempotentes, no-op por error pre-existente) + instalación de
+> watchdog. 0 cambios destructivos de datos.
+
+## HALLAZGO QUE CORRIGE EL BRIEF — el proceso NO murió
+El brief asumió que el saneo masivo murió en n=1200 (~03:00) por corte de SSH. **FALSO.** Inspección en PROD:
+- **PID 1008990 VIVO**, `PPID=1` (huérfano de init: el `nohup` desacopló bien; sobrevivió al cierre del SSH).
+- AVANZANDO de forma estable: confirmado muestreando el `curl` hijo (de user `3afa3bb5`→`3b4f8910` en 12s) y la
+  línea `PROGRESO n=1400/5925 ok=1159 fail=5 quarantine=235` (03:03), POSTERIOR al n=1200 del brief.
+- **Por qué pareció muerto:** el script solo escribe `PROGRESO` cada 200 iteraciones. La sesión anterior cerró
+  el SSH y no vio la línea n=1400; el proceso siguió corriendo todo el tiempo.
+- **Decisión:** NO relanzar un proceso paralelo (causaría doble concurrencia de PATCH sobre los mismos OIDs →
+  conflictos de optimistic-locking). Se DEJA correr el proceso sano y se le añade robustez externa (watchdog).
+
+## PASO 1 — Diagnóstico de los 5 fails: BENIGNOS (calidad de datos, NO bloqueantes)
+Reproducidos los 5 PATCH `action=alum` con `--max-time`; todos HTTP 500 con el MISMO patrón:
+`Strong mappings provided more than one value for single-valued item familyName|givenName`.
+
+| uoid | dni | item | valores en conflicto |
+|---|---|---|---|
+| 02db91c3 | 42966194 | familyName | `Azan Rodriguez` vs `Azan Rodríguez` |
+| 0d1b0f13 | 71920250 | givenName | `Iván Neftalí` vs `Ivan Neftalí` |
+| 0facebc2 | 02419611 | familyName | `Chanducas Zarate` vs `CHANDUCAS ZÁRATE` |
+| 2d1518ae | 42761734 | givenName | `Jesús Edwar` vs `Jesus Edwar` |
+| 3872afa8 | 72261430 | familyName | `Reategui Perez` vs `Reátegui Perez` |
+
+**Causa raíz:** discrepancia de diacríticos/mayúsculas entre la fuente Trabajadores y la fuente Egresados para
+la MISMA persona. Dos inbounds `strong` (uno por IIA) aportan 2 valores distintos a `familyName`/`givenName`
+(single-valued) → el consolidador no converge → 500. Es la `name-quality` ya anticipada en PM14.
+
+**Veredicto (responde el brief):**
+- **NO es provisioning downstream.** El error es de consolidación del FOCUS (fase clockwork), no de un conector.
+  NINGÚN recurso (Koha/LDAP en `proposed`, Entra ID `proposed`) interviene. El `action=alum` del log es la
+  acción del saneo, no un "recurso alum".
+- **NO es dual-archetype.** El delta atómico nunca llega a aplicarse (falla antes, en familyName/givenName).
+- **Benigno y NO bloqueante.** Los 5 focos quedan INTACTOS (sin sanear, sin daño). Se acumulan para tratamiento
+  aparte: **normalización de diacríticos/case en los inbounds de nombre** (NFC + título) — trabajo SciBack
+  separado (regla "una IIA por atributo": designar una fuente autoritativa de nombre, o normalizar antes de
+  consolidar). El saneo masivo continúa con el resto sin problema.
+- A ritmo actual se esperan ~pocas decenas de fails de este tipo en total (ex-trabajadores-egresados con
+  nombre divergente entre fuentes); todos del mismo patrón, todos diferibles.
+
+## PASO 2 — Robustez sin relanzar: WATCHDOG desacoplado instalado
+El script `saneo_masivo.sh` usa `curl` SIN `--max-time` (debilidad: una llamada colgada congelaría el loop).
+El proceso vivo no se ha colgado, así que NO se reinicia. En su lugar, `/tmp/saneo_watchdog.sh` (lanzado con
+`setsid nohup ... </dev/null`, **PID 1062335, PPID=1**, sobrevive al SSH):
+- Mata cualquier `curl` hijo del saneo colgado >180s (destraba el loop; el script reintenta el siguiente).
+- Si el saneo muere ANTES de `SANEO MASIVO COMPLETE`, **relanza RESUME** desde el último `PROGRESO n=` (tail de
+  la lista a `/tmp/saneo_list_resume.tsv`). Reprocesar el bloque <200 ya hecho es no-op idempotente (delta
+  atómico por DNI). Evita el doble-proceso: solo arranca si el original murió.
+- Disk-guard de respaldo (90%) además del interno del script.
+- Termina solo al detectar `COMPLETE`. Log: `/tmp/saneo_watchdog.log`.
+
+## Estado EN CURSO (PM15)
+- **Saneo** PID 1008990, PPID=1, vivo, **n=1400/5925** (ok=1159, fail=5, quarantine=235), disco 82%.
+- **Watchdog** PID 1062335, PPID=1, vigilando.
+- **Ritmo:** ~50 items/min (~200 cada 4 min). **ETA ≈ 04:35 Lima** (~90 min para los ~4,525 restantes).
+- Contenedores healthy, RAM 15Gi total (4Gi libre), MidPoint responde <10ms. 0 restart. 0 destructivo.
+- **Próxima invocación (al COMPLETE):** verificación post-saneo (0 dual structural; ~1,376→active/alumni,
+  ~363→active/student, ~3,203→archived), re-recon Trabajadores, recompute, purga, recon 983 quarantine, cierre.
+  Los ~decenas de fails name-quality NO bloquean: se listan de `grep FAIL /tmp/saneo_masivo.log` para SciBack.
