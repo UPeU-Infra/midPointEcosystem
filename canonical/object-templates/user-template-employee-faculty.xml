@@ -78,10 +78,10 @@
                  dependencia circular. Se accede via focus directamente. DT-CYCLE-FIX-1 -->
             <expression>
                 <script>
-                    <code>// Acceso directo via Prism sin source dependency (rompe ciclo con validate-hiredate-format)
-import com.evolveum.midpoint.prism.path.ItemName
-def hireDate = focus?.getExtension()?.asPrismContainerValue()?.findProperty(
-    new ItemName("urn:sciback:midpoint:person", "hireDate"))?.getRealValue()
+                    <code>// Acceso directo via API 4.10 (basic.getExtensionPropertyValue) sin source dependency
+// (rompe ciclo con validate-hiredate-format). FIX 2026-05-29: API previa
+// getExtension().asPrismContainerValue().findProperty(ItemName) inexistente/abortaba en 4.10.
+def hireDate = focus != null ? basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName("urn:sciback:midpoint:person", "hireDate")) : null
 def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''
 if (affil == 'faculty' &amp;&amp; (hireDate == null || basic.stringify(hireDate).trim() == '')) {
     log.warn("UPeU Faculty: hireDate ausente en docente {} — leaver policy y evidencia ISO 27001 incompletas", focus?.name)

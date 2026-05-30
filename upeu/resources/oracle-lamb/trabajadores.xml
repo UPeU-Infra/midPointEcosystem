@@ -464,27 +464,13 @@
                      PolicyViolationException "multiple structural archetypes" en usuarios
                      con doble afiliación (egresados-trabajadores).
                      MidPoint Book Cap. 8-9: resources aportan datos; templates deciden estructura. -->
-                <!-- Fase 1 eduPerson 202208: archetype-to-primaryAffiliation conservado como
-                     weak para retrocompatibilidad. El Bloque J3 del template (normal) calcula
-                     primaryAffiliation desde affiliations con prioridad. El strong anterior fue
-                     cambiado a weak para no bloquear el override del Bloque K (strong, jubilados→alum).
-                     Con strong aquí, jubilados en el período de 730d post-cese tenían faculty/staff
-                     escrito fuerte desde trabajadores, impidiendo que K los marcara como alum. -->
-                <inbound>
-                    <name>archetype-to-primaryAffiliation</name>
-                    <!-- Retrocompatibilidad: weak para usuarios sin affiliations aún poblado.
-                         J3 (normal) sobreescribe cuando affiliations tiene valor.
-                         K (strong) sobreescribe para jubilados puros. -->
-                    <strength>weak</strength>
-                    <expression>
-                        <script>
-                            <code>input == 'archetype-user-employee-faculty' ? 'faculty' : 'staff'</code>
-                        </script>
-                    </expression>
-                    <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:primaryAffiliation</path>
-                    </target>
-                </inbound>
+                <!-- ELIMINADO 2026-05-29 (doble-autoridad Reality-vs-Policy §2.1):
+                     inbound archetype-to-primaryAffiliation borrado. primaryAffiliation es un
+                     atributo DERIVADO por el template (Bloque J3, strong, desde affiliations);
+                     NO debe ser target de inbounds de recurso. archetype-to-affiliations (abajo,
+                     normal) sigue alimentando affiliations → J3 deriva primaryAffiliation.
+                     Bloque K (strong, jubilados→alum) sigue conviviendo sobre primaryAffiliation
+                     sin competir con inbounds. Único escritor de policy = template. -->
                 <inbound>
                     <!-- DC-001: almacena UPEU_ARCHETYPE_NAME en upeu:lambArchetypeHint (weak).
                          Usado por Bloque D7 de UserTemplate-Person-Base como fallback cuando

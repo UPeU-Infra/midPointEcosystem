@@ -253,21 +253,11 @@
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramRole</path>
                     </target>
                 </inbound>
-                <inbound>
-                    <name>school-name-to-primaryAffiliation</name>
-                    <!-- weak: cede ante primaryAffiliation que pongan trabajadores (strength=normal).
-                         Para pure students sin empleo, weak es suficiente.
-                         NOTA Fase 1: este inbound permanece para retrocompatibilidad con usuarios
-                         que aún no tienen affiliations poblado. El Bloque J3 del template lo
-                         sobreescribirá cuando affiliations esté disponible. -->
-                    <strength>weak</strength>
-                    <expression>
-                        <value>student</value>
-                    </expression>
-                    <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:primaryAffiliation</path>
-                    </target>
-                </inbound>
+                <!-- ELIMINADO 2026-05-29 (doble-autoridad Reality-vs-Policy §2.1):
+                     inbound school-name-to-primaryAffiliation borrado. primaryAffiliation es un
+                     atributo DERIVADO por el template (Bloque J3, strong, desde affiliations);
+                     NO debe ser target de inbounds de recurso. school-name-to-affiliations (abajo)
+                     alimenta affiliations → J3 deriva primaryAffiliation. Único escritor = template. -->
                 <inbound>
                     <name>school-name-to-affiliations</name>
                     <!-- Fase 1 eduPerson 202208: escribe en affiliations (multi-valor) para que
