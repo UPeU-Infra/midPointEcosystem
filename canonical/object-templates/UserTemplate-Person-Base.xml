@@ -1017,7 +1017,7 @@ if (!liveAff.isEmpty()) {
 def EMPLOYEE_STRUCT = ['6460facf-3abf-4851-966e-0c95aa1a6c46','c93083ca-f4c5-4704-acf4-d53b97c9556e'] as Set;
 def hasEmploymentEvidence = false;
 try {
-    // leer desde la variable `focus` (NO un <source> declarado) → mapping se evalúa UNA vez
+    // leer desde la variable `focus` (NO un source declarado) =&gt; mapping se evalua UNA vez
     hasEmploymentEvidence = focus?.assignment?.any { a ->
         def tr = a?.targetRef;
         tr != null &amp;&amp; (tr.oid in EMPLOYEE_STRUCT)
