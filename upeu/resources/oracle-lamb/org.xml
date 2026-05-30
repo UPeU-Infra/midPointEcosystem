@@ -303,6 +303,24 @@
                 <inbound>
                     <name>id-parent-to-parentOrg</name>
                     <strength>strong</strength>
+                    <!-- OVERLAY PARTNER-INSTITUTION (RESIDUAL 3, 2026-05-30): los colegios afines
+                         (Colegio Union=97, CAT=695, CU-Tarapoto=8208) son partner-institution y deben
+                         colgar SOLO de su CAMPUS, no del padre academico que deriva Oracle (ID_PARENT=5
+                         VR-Academico para 97; 430 para 695/8208). Mapeo canonico iga-canonical 10.2:
+                         partner-institution se ancla al campus (sede), no a la jerarquia academica.
+                         El mapping es strong y AUTORITATIVO sobre el assignment que produce: al redirigir
+                         el filtro a 'SEDE-{X}' (identifier del campus), MidPoint REMUEVE el parent
+                         academico stale y deja el campus como parent UNICO. Para el resto de areas el
+                         comportamiento es identico (identifier = ID_PARENT). Sources extra: ID_AREA
+                         (decide si es partner) e ID_SEDE (resuelve el campus). -->
+                    <source>
+                        <name>idArea</name>
+                        <path>$shadow/attributes/ri:ID_AREA</path>
+                    </source>
+                    <source>
+                        <name>idSede</name>
+                        <path>$shadow/attributes/ri:ID_SEDE</path>
+                    </source>
                     <expression>
                         <assignmentTargetSearch>
                             <targetType>OrgType</targetType>
@@ -313,7 +331,19 @@
                                          q:value es para literales; para expresiones se omite el wrapper. -->
                                     <expression>
                                         <script>
-                                            <code>input</code>
+                                            <code>
+def partnerSede = ['97':'1', '695':'2', '8208':'3']  // ID_AREA -> ID_SEDE canonico
+def sedeCampus  = ['1':'SEDE-LIMA', '2':'SEDE-JULIACA', '3':'SEDE-TARAPOTO']
+def area = idArea != null ? idArea.toString().trim() : ''
+if (partnerSede.containsKey(area)) {
+    // partner-institution: anclar al campus por ID_SEDE (fallback al ID_SEDE canonico del mapa)
+    def sede = (idSede != null &amp;&amp; idSede.toString().trim() != '') ? idSede.toString().trim() : partnerSede[area]
+    def campusId = sedeCampus[sede]
+    if (campusId != null) return campusId
+}
+// resto de areas: jerarquia normal por ID_PARENT
+return input
+                                            </code>
                                         </script>
                                     </expression>
                                 </q:equal>
@@ -323,9 +353,10 @@
                     </expression>
                     <target><path>assignment</path></target>
                     <condition>
-                        <!-- Solo crear assignment si ID_PARENT no es null (no es nodo raíz) -->
+                        <!-- Crear assignment si: hay ID_PARENT (nodo no-raiz) O es partner-institution
+                             (97/695/8208) que SIEMPRE cuelga del campus aunque su ID_PARENT exista. -->
                         <script>
-                            <code>input != null &amp;&amp; !input.toString().trim().isEmpty()</code>
+                            <code>def area = idArea != null ? idArea.toString().trim() : ''; (input != null &amp;&amp; !input.toString().trim().isEmpty()) || (area in ['97','695','8208'])</code>
                         </script>
                     </condition>
                 </inbound>
