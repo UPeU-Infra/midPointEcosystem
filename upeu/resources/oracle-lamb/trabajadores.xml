@@ -498,8 +498,16 @@
                          jubilacion→alum basándose en motivoCese, SIN interferencia de
                          affiliations que J3 priorizaría sobre alum. Si el jubilado también
                          es estudiante activo, affiliations=['student'] → J3 elige student
-                         correctamente (prioridad > alum), y Bloque K lo respeta. -->
-                    <strength>normal</strength>
+                         correctamente (prioridad > alum), y Bloque K lo respeta.
+
+                         FIX PM10 (2026-05-29, runbook §PM10): strength=strong + evaluationPhases.
+                         Igual que afiliacion-to-affiliations de egresados: ABSOLUTO para asentar
+                         staff/faculty en cada recompute de focos `linked` (best-practices §4.2). SIN
+                         <range>: cuando ESTADO='I' retorna null, el mapping no asserta nada y NO
+                         remueve 'alum' (Bloque K) ni 'student' — semántica de jubilado intacta.
+                         Cuando activo, OWNS solo staff/faculty; coexiste con alum/student de otras
+                         fuentes (convergencia dual-affiliation). -->
+                    <strength>strong</strength>
                     <expression>
                         <script>
                             <code>def estado = basic.getAttributeValue(shadow, 'ESTADO'); if (estado == 'I') return null; input == 'archetype-user-employee-faculty' ? 'faculty' : 'staff'</code>
@@ -508,6 +516,10 @@
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:affiliations</path>
                     </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
                 </inbound>
             </attribute>
             <attribute>

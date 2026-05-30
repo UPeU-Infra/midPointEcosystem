@@ -262,15 +262,23 @@
                     <name>school-name-to-affiliations</name>
                     <!-- Fase 1 eduPerson 202208: escribe en affiliations (multi-valor) para que
                          el Bloque J3 del template calcule primaryAffiliation por prioridad.
-                         normal: puede coexistir con affiliations de otros resources (e.g., trabajadores).
-                         El Bloque J3 calcula: faculty>staff>student>alum>affiliate. -->
-                    <strength>normal</strength>
+                         El Bloque J3 calcula: faculty>staff>student>alum>affiliate.
+
+                         FIX PM10 (2026-05-29, runbook §PM10): strength=strong + evaluationPhases.
+                         Igual que egresados/trabajadores: ABSOLUTO para asentar 'student' en cada
+                         recompute de focos `linked` (best-practices §4.2). SIN <range>: OWNS solo
+                         'student'; coexiste con staff/faculty/alum de otras fuentes. -->
+                    <strength>strong</strength>
                     <expression>
                         <value>student</value>
                     </expression>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:affiliations</path>
                     </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
                 </inbound>
                 <inbound>
                     <name>school-name-to-academicProgramCode</name>

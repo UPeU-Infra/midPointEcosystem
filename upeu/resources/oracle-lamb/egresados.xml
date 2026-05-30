@@ -357,8 +357,19 @@
                     <name>afiliacion-to-affiliations</name>
                     <!-- Fase 1: escribe en affiliations (multi-valor) para Bloque J3.
                          Vocabulario canónico eduPerson 202208. EMPLOYEE eliminado (no canónico).
-                         normal: coexiste con affiliations de trabajadores en usuarios dual-affiliation. -->
-                    <strength>normal</strength>
+
+                         FIX PM10 (2026-05-29, runbook §PM10): strength=strong + evaluationPhases.
+                         Antes 'normal' (relativo): en recompute/import de un foco ya `linked` sin
+                         delta en AFILIACION, un mapping relativo normal NO produce delta → no asienta
+                         'alum' → J3 ve affiliations=∅ → Bloque L archiva al egresado (bug del canary
+                         48150895). strong (best-practices §4.2 "recomputa") = ABSOLUTO: re-evalúa y
+                         asienta su valor en CADA evaluación mientras exista la proyección, no solo
+                         ante delta. SIN <range> explícito: mapping multi-source sobre target
+                         multivalor solo OWNS el valor que produce ('alum'); NO remueve valores de
+                         otras fuentes (staff/faculty de Trabajadores, student de Estudiantes) →
+                         convergencia dual-affiliation intacta. evaluationPhases idéntico al patrón
+                         probado de los inbounds de correlación del mismo recurso (dni-to-taxId-urn). -->
+                    <strength>strong</strength>
                     <expression>
                         <script>
                             <code>def map = ['ALUMNI':'alum','ALUM':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff']; def v = input?.toString()?.trim()?.toUpperCase(); v ? (map[v] ?: input.toString().trim().toLowerCase()) : null</code>
@@ -367,6 +378,10 @@
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:affiliations</path>
                     </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
                 </inbound>
                 <inbound>
                     <name>afiliacion-to-academicProgramRole</name>
