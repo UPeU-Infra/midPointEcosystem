@@ -2266,3 +2266,37 @@ Join correcto: VW_APS_EMPLEADO.ID_PERSONA → VW_TRABAJADOR.ID_PERSONA+ID_SEDEAR
 2. 195 orgs sin-arch fuera-scope (275 active users): reparent usuarios (salvaguarda académica) + purga orgs.
 3. 26 con-arch fuera-scope (2 active): revisar.
 4. Cierre: conteos finales, parent residual AREA-97, caso 21835727.
+
+## PASO 4 (PM21) — Bloque E guard + reparent 275 stale + PURGA 201 orgs denominacionales ✅
+
+### FIX Bloque E (template, commit 12c533a): guard reality-vs-policy
+- Añadido `<source>extension/sciback:liveAffiliationWorker</source>` + condición `&amp;&amp; liveAffiliationWorker != null`.
+- Efecto: la membership a área de trabajo (assignmentTargetSearch costCenter→OrgType) SOLO existe con afiliación laboral VIVA.
+  Ex-trabajadores (alumni/student que alguna vez tuvieron contrato) pierden la membership stale; conservan archetype/lifecycle académico.
+- Importado a PROD (PUT overwrite, HTTP 201). Base template OID `855caaca-68c4-4f7f-8ff8-b4e35dd7d390`.
+- **Canary 76869766 (alum, cc=4385):** parent 4385→∅, sigue active. ✅
+- **Canary SANCHEZ CONDOR (staff, cc=18, liveWorker✓):** sigue en DTI/18, active. ✅ (worker vivo conserva org)
+
+### Reparent masivo: 274 stale-parent users recomputados (reconcile)
+- 0 active users bajo orgs fuera-scope (antes 275/277). Todos siguen active. **Salvaguarda: acad_vivos_active=39,337 invariante, acad_archived=0.**
+
+### Scope de árbol REAL = 189 áreas (161 con contrato 7124 + 28 ancestros estructurales por ID_PARENT)
+- Calculado de Oracle ELISEO.ORG_AREA (ID_PARENT chains). Ancestros: 3 UPeU genuinos (ent=7124: áreas 1 Asamblea, 2 Consejo,
+  22 Areas Rectorado) + ~25 denominacionales necesarios para conectar áreas con worker UPeU dentro de asociaciones educativas/IE.
+- **Decisión canónica:** conservar el set 189-needed (in-scope + ancestros) para NO romper el árbol ni hacer scope-call contestable.
+  Purga = numéricas NOT IN 189-needed.
+
+### PURGA: 201 orgs numéricas denominacionales (REST DELETE bottom-up)
+- 0 usuarios (cualquier lifecycle) bajo ellas, 0 orgs-needed colgando → purga limpia sin romper árbol.
+- Backup pre-purga: `/tmp/bkp_pre_purga_orgs_1211.dump.gz` (23M, m_org+refs+assignment).
+- 201/201 eliminadas vía REST DELETE iterativo (round 1: 185 + cascada hijos). m_org 467→266.
+- **Post-purga:** 266 orgs (181 numéricas [161 in-scope + 20 ancestros] + 85 semánticas). 164 numéricas con archetype.
+  17 numéricas sin archetype = ancestros-contenedor (1/2/22 governance UPeU + denominacionales estructurales).
+- Salvaguarda académica PERFECTA mantenida: active 41,341 / acad_vivos_active 39,337 / acad_archived 0.
+
+### PENDIENTE cola final:
+1. Archetipar ancestros UPeU governance (1=Asamblea→governance, 2=Consejo→governance, 22=Areas Rectorado→governance/dept).
+2. Purgar 85 semánticas vacías (COORDINACION-TI-LIMA, INFRAESTRUCTURA-TI-LIMA, CRAI-* vacíos, CU-* Colegio Unión vacíos,
+   coordinaciones admin vacías, demo Projects/Teams/World). CONSERVAR: EP-* (academic-program con miles), OU-CAMPUS-*,
+   UPeU institution, GOBIERNO-UNIVERSITARIO, colegios partner, DTI semántica? (revisar si purgar o mantener).
+3. Cierre: conteos finales, parent residual AREA-97, OrgTemplate-Area decisión, caso 21835727.
