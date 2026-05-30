@@ -1,0 +1,174 @@
+<org xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="9f30eb08-5ee7-46d3-bda0-f0cc62204d87" version="6">
+    <_metadata id="2">
+        <storage>
+            <createTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2025-11-12T17:08:45.560Z</createTimestamp>
+            <creatorRef>
+                <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+            </creatorRef>
+            <createChannel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#user</createChannel>
+            <modifyTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-05-14T20:50:36.559Z</modifyTimestamp>
+            <modifierRef>
+                <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+            </modifierRef>
+            <modifyChannel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</modifyChannel>
+        </storage>
+        <process>
+            <requestTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2025-11-12T17:08:45.515Z</requestTimestamp>
+            <requestorRef>
+                <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+            </requestorRef>
+        </process>
+    </_metadata>
+    <name>COORDINACION-TI-LIMA</name>
+    <description>Responsable de coordinar las operaciones tecnológicas, infraestructura y soporte TI del Campus Lima.</description>
+    <documentation>Reporta a la Dirección de Tecnologías de la Información (DTI). Supervisa a los equipos técnicos de infraestructura y soporte de la sede Lima.</documentation>
+    <parentOrgRef oid="ec37f248-9276-4886-86ff-c84fb0754ab8" relation="org:default" type="c:OrgType"/>
+    <operationExecution incomplete="true"/>
+    <assignment id="32">
+        <_metadata id="33">
+            <storage>
+                <createTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-05-12T02:12:15.106Z</createTimestamp>
+                <creatorRef>
+                    <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                    <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                    <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+                </creatorRef>
+                <createChannel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</createChannel>
+            </storage>
+            <process>
+                <requestTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-05-12T02:12:15.073Z</requestTimestamp>
+                <requestorRef>
+                    <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                    <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                    <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+                </requestorRef>
+            </process>
+            <provenance>
+                <acquisition id="34">
+                    <actorRef>
+                        <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                        <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                        <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+                    </actorRef>
+                    <channel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</channel>
+                    <timestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-05-12T02:12:15.073Z</timestamp>
+                </acquisition>
+            </provenance>
+        </_metadata>
+        <targetRef oid="73795c10-2417-4323-b6fa-b88449a8bba4" relation="org:default" type="c:ArchetypeType"/>
+        <activation>
+            <effectiveStatus>enabled</effectiveStatus>
+        </activation>
+    </assignment>
+    <assignment id="40">
+        <_metadata id="41">
+            <storage>
+                <createTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-05-14T20:41:19.754Z</createTimestamp>
+                <creatorRef>
+                    <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                    <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                    <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+                </creatorRef>
+                <createChannel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</createChannel>
+            </storage>
+            <process>
+                <requestTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-05-14T20:41:19.658Z</requestTimestamp>
+                <requestorRef>
+                    <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                    <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                    <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+                </requestorRef>
+            </process>
+            <provenance>
+                <acquisition id="42">
+                    <actorRef>
+                        <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                        <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                        <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+                    </actorRef>
+                    <channel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</channel>
+                    <timestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-05-14T20:41:19.658Z</timestamp>
+                </acquisition>
+            </provenance>
+        </_metadata>
+        <targetRef oid="ec37f248-9276-4886-86ff-c84fb0754ab8" relation="org:default" type="c:OrgType"/>
+        <activation>
+            <effectiveStatus>enabled</effectiveStatus>
+        </activation>
+    </assignment>
+    <iteration>0</iteration>
+    <iterationToken/>
+    <archetypeRef oid="73795c10-2417-4323-b6fa-b88449a8bba4" relation="org:default" type="c:ArchetypeType"/>
+    <roleMembershipRef oid="73795c10-2417-4323-b6fa-b88449a8bba4" relation="org:default" type="c:ArchetypeType">
+        <_metadata id="43">
+            <storage>
+                <createTimestamp>2026-05-12T02:12:15.093Z</createTimestamp>
+            </storage>
+            <provenance>
+                <assignmentPath>
+                    <sourceRef oid="9f30eb08-5ee7-46d3-bda0-f0cc62204d87" relation="org:default" type="c:OrgType"/>
+                    <segment id="44">
+                        <segmentOrder>1</segmentOrder>
+                        <assignmentId>32</assignmentId>
+                        <targetRef oid="73795c10-2417-4323-b6fa-b88449a8bba4" relation="org:default" type="c:ArchetypeType"/>
+                        <matchingOrder>true</matchingOrder>
+                    </segment>
+                </assignmentPath>
+            </provenance>
+        </_metadata>
+    </roleMembershipRef>
+    <roleMembershipRef oid="ec37f248-9276-4886-86ff-c84fb0754ab8" relation="org:default" type="c:OrgType">
+        <_metadata id="45">
+            <storage>
+                <createTimestamp>2026-05-14T20:41:19.723Z</createTimestamp>
+            </storage>
+            <provenance>
+                <assignmentPath>
+                    <sourceRef oid="9f30eb08-5ee7-46d3-bda0-f0cc62204d87" relation="org:default" type="c:OrgType"/>
+                    <segment id="46">
+                        <segmentOrder>1</segmentOrder>
+                        <assignmentId>40</assignmentId>
+                        <targetRef oid="ec37f248-9276-4886-86ff-c84fb0754ab8" relation="org:default" type="c:OrgType"/>
+                        <matchingOrder>true</matchingOrder>
+                    </segment>
+                </assignmentPath>
+            </provenance>
+        </_metadata>
+    </roleMembershipRef>
+    <activation>
+        <effectiveStatus>enabled</effectiveStatus>
+        <enableTimestamp>2025-11-12T17:08:45.521Z</enableTimestamp>
+    </activation>
+    <locality>Lima</locality>
+    <preferredLanguage>es</preferredLanguage>
+    <locale>es</locale>
+    <timezone>America/Lima</timezone>
+    <emailAddress>dti.lim@upeu.edu.pe</emailAddress>
+    <telephoneNumber>+51 997 573 446</telephoneNumber>
+    <displayName>Coordinación Tecnologías de Información - Lima</displayName>
+    <identifier>DTI</identifier>
+    <tenant>false</tenant>
+    <mailDomain>
+        <_value>upeu.edu.pe</_value>
+        <_metadata id="5">
+            <provenance>
+                <acquisition id="6">
+                    <actorRef>
+                        <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                        <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                        <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+                    </actorRef>
+                    <channel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#user</channel>
+                    <timestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2025-11-12T17:08:45.509Z</timestamp>
+                </acquisition>
+            </provenance>
+        </_metadata>
+    </mailDomain>
+    <displayOrder>1</displayOrder>
+</org>

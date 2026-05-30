@@ -2807,3 +2807,51 @@ ELISEO.ORG_AREA (ID_PARENT autoritativo) vía ojdbc11 single-file launcher en co
 - ADD: `<value><c:targetRef oid="..." type="OrgType"/></value>` (targetRef DIRECTO en value; type SIN prefijo).
 - DELETE por cid: `<value id="N"/>` (id como atributo del value, NO `<c:id>` hijo).
 - Namespace raíz: api-types-3 default; path `c:assignment`. Otros patrones dan 500 SchemaException.
+
+---
+
+# ADDENDUM PM16 — Consolidación de PARES DUPLICADOS numérico/semántico (2026-05-30, midpoint-expert)
+
+## Problema reportado (Alberto)
+En el Org tree, su área (DTI) y otras se veían SIN trabajadores: el usuario miraba el nodo
+semántico nombrado (`DTI`/COORDINACION-TI-LIMA, 0 miembros) mientras los 99 trabajadores colgaban
+del nodo numérico paralelo (`18`, identifier=ID_AREA, recon-mantenido). Pares duplicados:
+un nodo numérico poblado + un nodo semántico vacío representando la MISMA área.
+
+## Inventario (PASO 1) — 5 pares duplicados verdaderos
+Cruce displayName MidPoint + Oracle `ELISEO.ORG_AREA` (solo lectura, cliente thick arm64).
+Survivor = nodo NUM (identifier=ID_AREA, con shadow del resource, con trabajadores):
+
+| SEM duplicado (vacío, archivado) | OID SEM | NUM survivor | ID_AREA | workers | hijos SEM reparentados |
+|---|---|---|---|---|---|
+| DTI / COORDINACION-TI-LIMA | 9f30eb08 | Dirección de Tecnologías de Información | 18 | 99 | 3 (infra/ops/continuidad TI) |
+| ENGLISH-LIMA / Centro de Idiomas | 8a818f68 | Centro de Idiomas | 72 | 79 | 0 |
+| conserv.music.lima / Conservatorio | a51563c1 | Conservatorio de Música | 73 | 30 | 0 |
+| CRAI-LIMA / Dirección del CRAI | 00000000-...-248019316830 | Centro de Recursos del Aprendizaje e Investigación | 93 | 32 | 6 (crai.* sub-unidades) |
+| dir.inst.superior.lima / Dir Instituto Superior | bd564abd | ISTAT (partner-institution) | 760 | 3 | 0 |
+
+Verificado: los 5 SEM tienen **0 shadows del resource** (manuales, recon NUNCA los recrea — identifier no-numérico). Los 5 NUM tienen 1 shadow cada uno (recon-mantenidos). Ningún SEM ni sus hijos tenían usuarios (consolidación lossless para users).
+
+## Acción (PASO 2)
+1. **Reparent de 9 hijos** del nodo SEM → al NUM survivor, vía **full-object PUT** (GET XML + `sed` swap del OID padre SEM→NUM + PUT). El PATCH-delta de assignment daba 500 (intento targetRef inmutable); PUT completo HTTP 201. DTI-18 quedó con 6 hijos (3 recon + 3 TI), CRAI-93 con 6 hijos.
+2. **Archivado** de los 5 SEM heads (`lifecycleState=archived`, reversible) vía PATCH replace. HTTP 204.
+
+## Verificación (PASO 3)
+- **DTI**: nodo `18` "Dirección de Tecnologías de Información", 99 trabajadores, **DNI 10867326 (Juan Alberto Sanchez Condor, costCenter=18) presente** bajo un único nodo con nombre legible. SEM duplicado archivado.
+- Otros 4 pares: cada survivor con nombre legible + workers visibles (72:79, 73:30, 93:32, 760:3).
+- **0 nodos semánticos duplicados activos.** 5 archivados.
+- **0 dual-parent. 0 islas** (única raíz sin parent: upeu.edu.pe). Grafo arborescente intacto.
+- m_org: 198 (177 active-null + 16 cu-* active + 5 archived). m_user invariante.
+
+## Backup
+- Tag git `backup-pre-org-pair-consolidation-2026-05-30`.
+- pg_dump `/home/juansanchez/backup_org_pair_consolidation_20260530_1604.sql` (m_org + refs).
+- Snapshots XML de los 5 SEM en `archive/snapshots/org-pair-consolidation-2026-05-30/`.
+
+## Pendiente / recomendación (FUERA de este alcance — NO son pares)
+Quedan ~24 nodos semánticos VACÍOS sin contraparte numérica ni área LAMB activa (cluster
+`admin.*`, `crai.*` sub-unidades, `CEPRE-LIMA`, `iglesia.univ.lima`, `CRAI-JULIACA/TARAPOTO`,
+`coord.comunicaciones.lima`, `sostenibilidad.ambiental.lima`). Son placeholders de un intento de
+árbol semántico abandonado. TODOS tienen parent (0 islas), 0 miembros. NO se tocaron (la tarea era
+"pares duplicados"). Recomendación futura: archivarlos o poblarlos si reflejan estructura deseada
+no presente en LAMB. LAMB (IIA de orgs) no modela esa granularidad → ningún trabajador los poblará.
