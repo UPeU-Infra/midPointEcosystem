@@ -85,7 +85,20 @@ Live-fetch de shadows trabajadores a través de MidPoint+Oracle (la inbound corr
 - Shadow `72738765` (Community Manager, antes falso-faculty del padrón): `UPEU_ARCHETYPE_NAME=archetype-user-employee-staff` ✓ (corregido).
 Ningún caso conocido salió mal → canary aprobado.
 
-## 8. Recompute — DIFERIDO (decisión operativa)
+## 7bis. Fundamento normativo en notas del XML (TAREA 1, 2026-05-30 PM)
+Commit posterior a `a283fa3` (solo comentarios/`description`, sin cambio de lógica; PUT resource HTTP 201, Test Connection 15/15):
+- `upeu/resources/oracle-lamb/trabajadores.xml`: bloque `FUNDAMENTO NORMATIVO` (comentario XML) adyacente a `<cfg:searchScript>` que cita Ley 30220 Art.79/81, Ley 29944, eduPerson 202208 §3.2 / iga-canonical §3.2, Reality-vs-Policy §2.1; documenta fuente de verdad elegida (`VW_CARGA_DOCENTE` ∪ `PLLA_PUESTO` vivo) y descartadas (`VW_PERSONA_DOCENTE` padrón histórico, `CAT_DOCENTE` estricto, `ES_DOCENTE` no confiable).
+- Inbound `archetype-to-liveAffiliationWorker`: `<description>` con el mismo fundamento.
+- `upeu/roles/affiliation/R-Affiliation-Faculty.xml`: `<description>` ampliada (PATCH HTTP 204 en PROD).
+
+## 8. Recompute — EJECUTADO 2026-05-30 PM (antes: DIFERIDO)
+**Mecanismo elegido:** loop REST secuencial `POST /shadows/{oid}/import` acotado a los 10.896 shadows linked a archetype faculty|staff (lista `/home/juansanchez/backups/changer_candidate_shadows.txt`). Más quirúrgico que el recon completo del resource (16.327 shadows + reactions `deleted`/`unmatched` masivas) en PROD delicado (migración PM16). `import` = re-fetch del shadow (trae el nuevo `UPEU_ARCHETYPE_NAME`) + sync (inbound→liveAffiliationWorker→template D7 reemplaza structural).
+
+**Hallazgo — código HTTP 240:** `POST /shadows/{oid}/import` devuelve `240` (no 200) en MidPoint 4.10 para import con resultado handled/partial. NO es fallo: el import+sync se aplica correctamente (verificado: faculty bajó 1815→1793 en los primeros ~250). El watchdog trata 200 y 240 como éxito.
+
+**Watchdog** (`/home/juansanchez/backups/recompute_changers.sh`, background `setsid nohup`): checkpoint cada 200 con guardas BLOQUEANTES — `dual-structural>0` → abort 11; `acad_archived > baseline+5` → abort 12; `disk>=90%` → abort 13. Baselines pre: dual=0, acad_archived=0, m_user=49321, faculty=1815/staff=9078. Snapshot reversible: `/home/juansanchez/backups/pre_recompute_archetypes_*.csv` (10.893 oid+archetype). Latencia ~2s/import → ETA ~6h.
+
+
 El cambio de archetype estructural es **seguro** respecto a dual-structural: el Bloque D7 es range-authoritative (fix PM16, OIDs `c93083ca`/`6460facf`/`3037fbd2`/`87552943` en `<set>`), REEMPLAZA el structural en vez de acumular.
 
 NO se lanzó recompute masivo de los ~1477 changers en esta sesión porque:
