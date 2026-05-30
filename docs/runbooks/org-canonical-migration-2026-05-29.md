@@ -1172,3 +1172,78 @@ visibilizó al consolidar 1,749 egresados que estaban archived en su gemelo labo
   (746M), `bkp_pre_correlation_recon_20260529_1622.dump` (745M), `bkp_focus_20260529_1557.dump` (738M).
 - Lista de OIDs survivors en PROD `/tmp/survivor_oids.txt` (4,737) conservada para PASO B futuro.
 - PASOS B (recompute)–F **NO ejecutados** — bloqueados por el defecto de reversión archived→active.
+
+---
+
+# ADDENDUM — Bloque L (derivación canónica de lifecycleState) + J3 strong (2026-05-29, sesión lifecycle)
+
+Tarea distinta del árbol org: implementar el veredicto canónico aprobado (mapping de
+derivación de lifecycleState, NO el parche de reversión) y arreglar J3 para multi-afiliación.
+
+## PASO 1 — Implementado y desplegado (commits 76e9820, +fix H/H2)
+- **J3** (`primaryAffiliation` desde `affiliations`): strength `normal`→`strong`. Objetivo:
+  limpiar el `staff`/`faculty` stale cuando el empleo muere pero persiste lo académico (§3.2).
+- **Bloque L** (NUEVO, `<item><ref>lifecycleState`): state machine única, strong, sin guard
+  anti-circular. liveAff = `affiliations` ∩ vocabulario canónico. liveAff≠∅ → active (draft si
+  perfil incompleto); liveAff=∅ con terminationDate → archived; liveAff=∅ sin termDate → draft.
+- **Bloques H y H2 ELIMINADOS** (primero deprecated, luego borrados del XML): su lógica la
+  absorbe L. Backup del objeto previo: PROD `/home/juansanchez/backups/templates/
+  UserTemplate-Person-Base.pre-bloqueL.20260529_2301.xml` (74KB, con F+H+H2). PUT del nuevo: HTTP 201.
+
+## PASO 2 — CANARY FALLA. BLOQUEO por anomalía de motor (DETENIDO según regla del runbook).
+
+Canary egresado-archived `48150895` (OID `6e8d69bf-3862-48a0-bac0-1c4fb0c4e84d`):
+estado real: lifecycleState=`archived`, primaryAffiliation=`staff` (STALE), affiliations=`["alum"]`,
+terminationDate=2024-07-31, motivoCese=termino_contrato, graduationYear=2017. Dos shadows LINKED
+vivos: Trabajadores v3 (ESTADO='I', NO aporta token a affiliations) + Egresados v3 (aporta `alum`).
+Debe volver a `active` como alumni. **No lo hace tras desplegar L+J3.**
+
+### Diagnóstico (probado en PROD, raw PATCH + modify aislados, sin reconcile)
+1. `includeRef` del per-archetype template `UserTemplate-EmployeeStaff` (OID `59b1e325`) → base
+   `855caaca` **SÍ funciona**: prueba decisiva — corrompí `eppn` a `CORRUPTED@bad.test` (raw) y un
+   `modify` plano lo corrigió a `48150895@upeu.edu.pe` vía **Bloque C** (base, strong). Las
+   mappings base SÍ se aplican.
+2. **PERO J3 (base, strong) NO sobrescribe `primaryAffiliation`.** Test: puse primaryAffiliation=
+   `SENTINEL` (raw), affiliations=`["alum"]` (raw, garantizado en repo), lifecycleState=`active`
+   (raw), luego `modify` plano (sin reconcile, sin re-lectura de recursos): **primaryAffiliation
+   quedó en `SENTINEL`** (J3 no produjo valor) y lifecycleState pasó a `archived` (un archivador
+   externo a L, porque L con affs=['alum'] retorna active).
+3. **Contradicción central:** Bloque C (base, strong, source=personalNumber) corrige su target;
+   Bloque J3 (base, strong, source=affiliations, +condition) NO corrige el suyo — MISMO usuario,
+   MISMO template, MISMO modify. La diferencia: `primaryAffiliation` tiene inbounds de recurso
+   competidores (trabajadores `archetype-to-primaryAffiliation` weak→staff; egresados
+   `afiliacion-to-primaryAffiliation` weak→alum) y/o J3 con `<source>` sin delta en el wave no
+   produce valor; `eppn` no tiene competidores.
+4. Eliminar H/H2 NO cambió el resultado (el `archived` persiste de otra fuente aún no localizada
+   —posiblemente inbound/reaction de Egresados o cadena per-archetype—; L no es quien archiva).
+
+### Causa raíz (hipótesis a confirmar con DEBUG, NO ejecutado en PROD post-OOM sin confirmación)
+J3 (mapping de template strong cuyo target `primaryAffiliation` también tiene inbounds de recurso)
+no impone su valor en un `modify` sin delta de su source `affiliations`. El patrón canónico para
+un atributo DERIVADO por el template debe evitar que ese mismo atributo sea también target de
+inbounds de recurso (Reality-vs-Policy: o lo gobierna el template, o lo gobierna el recurso, no
+ambos). Hoy `primaryAffiliation` tiene 3 escritores (J3 strong + K strong + 2 inbounds weak) → el
+combinatorial evaluation no converge al valor de J3 de forma fiable en recompute sin delta.
+
+### Estado tras la sesión
+- Template en PROD = versión nueva (L + J3 strong, sin H/H2). HTTP 201. Backup previo intacto.
+- Canary `48150895` RESTAURADO a estado original (archived/staff/['alum']) vía raw PATCH.
+- **NO** se ejecutó recompute masivo (PASO 3), ni re-recon Trabajadores (PASO 4), ni purga (PASO 5).
+- 0 cambios destructivos en datos. Tasks diagnósticos: ninguno dejado corriendo. Disco 79%.
+
+### Decisión pendiente (para Alberto antes de continuar)
+La derivación canónica de lifecycleState (Bloque L) está bien diseñada, pero **depende de que J3
+fije primaryAffiliation/affiliations de forma fiable** — y eso hoy NO ocurre por la competencia de
+escritores sobre `primaryAffiliation`. Opciones:
+  A. Quitar los inbounds de recurso a `primaryAffiliation` (trabajadores+egresados): que SOLO J3
+     (template) lo gobierne desde `affiliations`. Reality-vs-Policy limpio. Requiere verificar que
+     ningún usuario dependa del inbound directo (retrocompat para usuarios sin affiliations poblado).
+  B. Hacer que L lea `affiliations` directamente (ya lo hace) e ignore primaryAffiliation —
+     entonces L funcionaría aunque primaryAffiliation siga stale. PERO el archivador externo que
+     sigue poniendo `archived` debe localizarse y neutralizarse primero (Egresados inbound/reaction
+     o cadena per-archetype). L lee affiliations=['alum'] → active, pero otro mapping gana.
+  C. DEBUG controlado (subir log de `MappingEvaluator`/`Projector` a TRACE para 1 usuario) en
+     ventana coordinada para ver exactamente qué pone `archived` y por qué J3 no produce valor.
+
+Recomendación: localizar PRIMERO el archivador externo (opción C acotada a 1 usuario) antes de
+tocar inbounds (opción A). No avanzar a masivo hasta que el canary 48150895 cierre en active.
