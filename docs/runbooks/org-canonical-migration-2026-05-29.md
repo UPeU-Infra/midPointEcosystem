@@ -2089,3 +2089,65 @@ en toda la población (983 quarantine + 90/36 wave-ordering) ANTES del re-recon 
 2. re-recon Trabajadores → recompute árbol canónico (salvaguarda académica BLOQUEANTE: 0 académicos archived).
 3. purga denominacionales/legacy/demo. 4. VALIDACIÓN DTI-Lima (trabajadores de "Coordinación Tecnologías de
    Información - Lima" con parentOrgRef a su org canónica + archetype correcto). 5. cierre.
+
+# SESIÓN PM19 (2026-05-30 ~09:00 Lima) — Ambos recons académicos CERRADOS. PASO 1 verificado (dual=0 sostenido, salvaguarda académica intacta). Diagnóstico wave-ordering 92 NULL. PASO 3 (re-recon Trabajadores) lanzado tras restart limpio + saneo scheduling.
+
+> Skills: midpoint-best-practices (§3.3 single-structural, §4.5/§4.6 wave-ordering, mapping strength/sources),
+> iga-canonical-standards (§1.2 lifecycle ISO 24760, §1.3 IIA por atributo). Oracle SOLO LECTURA. Autonomía delegada.
+> Backup focus-only pre-PASO3: `/tmp/bkp_focus_pre_paso3_0917.dump` (673M, host + container).
+
+## PASO 1 ✅ — Verificación post-recons (read-only)
+
+**Recons cerrados:** Egresados `86c3766a` CLOSED (SINGLE, PARTIAL_ERROR=warnings benignos), Estudiantes
+`94b627b4` suspendido tras completar su run (RECURRING; suspendido para que no re-dispare). Monitores/orquestador
+PM18 terminados.
+
+**liveAffiliation materializado (ext jsonb keys 215/216/217):**
+- alum(215)=30,650 | student(217)=10,936 | worker(216)=1,400 (pre-PASO3).
+
+**dual-structural = 0** (m_ref_archetype, 4 OIDs structural-user). Fix D7 PM17 AGUANTA tras ambos recons. ✅
+Distribución structural: alumni 28,716 / student 10,834 / staff 8,807 / faculty 864.
+
+**lifecycleState:** active 44,198 / archived 4,331 / draft 694 / NULL 99. (vs PM17: active +93, archived -93 —
+los recons rescataron ~93 a active).
+
+**SALVAGUARDA ACADÉMICA (BLOQUEANTE) VERIFICADA: 0 usuarios archived con afiliación viva** (alum/student → 0;
+cualquier liveAff → 0). Ningún egresado/estudiante vivo está archivado. ✅
+
+**Hallazgos de calidad (NO bloqueantes, se resuelven en PASO 3/4):**
+- **694 draft** = TODOS egresados (archetype-alumni) con liveAffiliationAlum pero SIN `sciback:taxId` (DNI).
+  Bloque L los mantiene en draft por política de completitud (§1.2 perfil incompleto → draft; requiere
+  personalNumber + doc primario). Tienen personalNumber pero LAMB Egresados no trae DNI. **Decisión: NO forzar
+  a active** (violaría proofing). Gap de calidad en la fuente, no fallo de migración. 28,022 egresados con taxId
+  ya están active.
+- **92 NULL-lifecycle con liveAffiliation** = wave-ordering deadlock. 91/92 tienen shadows linkeados a resources
+  LAMB (Trabajadores/Estudiantes/Egresados/Grados/Koha). Causa raíz confirmada: la cadena J3→D7 (primaryAffiliation
+  → archetype) NO se re-evalúa en recompute IDEMPOTENTE (PATCH reconcile ni recompute-task) cuando los `liveAff`
+  items no tienen DELTA de source — los mappings strong con `<source>` solo re-disparan ante cambio de source.
+  Sólo un delta genuino (poner `lifecycleState=active` la 1ª vez, o un inbound `replace` del recon) dispara J3→D7→L.
+  **Por eso el re-recon Trabajadores (PASO 3) los resolverá**: escribe liveAffiliationWorker con delta → cadena
+  completa en el clockwork del recon. NO resolver con PATCH manual (caso borde de bajo volumen, 0.19%).
+- **3,938 active con archetype staff SIN liveAffiliationWorker** = trabajadores cuyo item liveWorker aún no se
+  materializó; población-objetivo del re-recon Trabajadores. Tras PASO 3: con contrato ent=7124 vivo → liveWorker=staff
+  → active; sin contrato vivo y sin liveAff académico → Bloque L archiva (parte de los ~3,605 solo-denominacionales).
+
+## PASO 2 ✅ (implícito) — dual=0 sostenido tras recons
+El "recompute control" del brief queda validado: tras ambos recons masivos (30K egresados + 10K estudiantes) el
+fix D7 mantiene dual-structural=0. Canaries individuales (draft-alum, NULL+liveAff) confirman 0 dual en cada recompute.
+
+## PASO 3 — Re-recon Trabajadores v3 (LANZADO, EN CURSO)
+
+- **Baseline salvaguarda (pre-recon):** active-con-afiliación-académica-viva (alum/student) = **39,337**.
+  El monitor SUSPENDE el recon si este número cae >100 (salvaguarda bloqueante). archived baseline=4,331.
+- **Task:** `e8d054ba-fd9a-4f8d-b04c-347359e49054` "Recon Oracle LAMB Trabajadores 2026-05-28", resource v3
+  `...e21` (16,327 shadows). Lee Oracle (SOLO SELECT).
+- **Incidente de scheduling (resuelto):** 1er `/resume` reanudó un checkpoint viejo parcial que cerró en
+  progress=2,482 con CPU idle (0.29%) y 0 MODIFY. Diagnóstico: corrida vieja terminó; además 7 users con >1
+  shadow Trabajadores producen `Projection already exists in lens context` (calidad de datos: doble código de
+  empleado en Oracle — ej. user 43611157 con cuentas '43611157'+'80435499'). NO masivo (solo 7), no bloquea.
+  **Fix:** suspend → `UPDATE m_task SET executionstate='RUNNABLE',schedulingstate='READY'` → restart container
+  midpoint_server (libera mem 6.9/10GB, recarga Quartz) → `/resume` → arrancó NUEVA corrida desde progress=19,
+  running, 18 MODIFY/30s. Monitor v2 (REST progress + salvaguarda académica + guards disco90/dual50/stall16min)
+  relanzado.
+- **PENDIENTE:** al completar → verificar ~3,605 solo-denominacionales→archived, salvaguarda (0 académicos archived),
+  92 NULL resueltos, dual=0. Luego PASO 4 (recompute árbol canónico + purga), PASO 5 (VALIDACIÓN DTI-Lima), PASO 6 (cierre).
