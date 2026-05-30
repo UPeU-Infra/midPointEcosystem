@@ -1708,3 +1708,58 @@ faculty>staff>student>alum>researcher>visitor>contractor>partner-institution (se
 - Resources: Trabajadores v3 `...e21`, Estudiantes v3 `...e22`, Egresados v3 `...e23`.
 
 ## SIGUIENTE — validar task saneo en lote pequeño (5 latentes) antes del masivo de 4,733.
+
+## PASO 3 (validación previa) — Mecanismo atómico VALIDADO en 5 latentes. DETENIDO para confirmar mecanismo del masivo.
+
+### Validación del delta atómico (5 usuarios latentes reales)
+| User | worker shadow | ESTADO | alum shadow | correcto | resultado | dual |
+|---|---|---|---|---|---|---|
+| 42142175 (002eea55) | dead | — | alive | alum | **active/alumni** | 0 |
+| 73781834 (0042922d) | dead | — | alive | alum | **active/alumni** | 0 |
+| 74406267 (0014ebb1) | dead | — | alive | alum | **active/alumni** | 0 |
+| 72736507 (000afab7) | **alive** | **I** | alive | alum | **active/alumni** | 0 |
+| 75231975 (0019c234) | alive | A | alive | staff (worker gana) | **active/employee-staff** | 0 |
+
+- **Delta atómico** `{delete employee-staff @id + add alumni}` con `?options=reconcile` vía REST PATCH JSON
+  → **HTTP 240** (240 = partial-success por una ref TaskType stale benigna, no afecta el user; cambio
+  del user OK). **0 PolicyViolation** (nunca hay 2 structural a la vez). active/alumni materializado.
+- **HALLAZGO CRÍTICO (refina H4):** la liveness del worker NO se decide por el flag `dead` del shadow
+  sino por **ESTADO != 'I'**. Caso 72736507: worker shadow `dead=None` (vivo) pero `ESTADO='I'` (cesado
+  en grace 730d) → NO es afiliación laboral viva → correcto = alum. El task script YA chequea
+  `basic.getAttributeValue(sh,'ESTADO') != 'I'` (réplica exacta de `archetype-to-liveAffiliationWorker`);
+  un atajo por `dead` solo lo habría clasificado mal. **El task es la fuente correcta, no el flag dead.**
+- **Confirma H1/H2:** no hace falta materializar `liveAffiliation*` antes (race H2 evitada): el task
+  computa la afiliación viva desde la REALIDAD (shadows linked + ESTADO), aplica el delta atómico que
+  deja 1 structural, y el reconcile dispara J3/L/D7 sobre el objeto ya con structural único → converge
+  en 1 pasada. Idempotente.
+
+### BLOQUEO de scheduling (no de lógica): el task iterativeScripting no ejecuta vía REST
+- `PUT /tasks` 202 + `POST /tasks/{oid}/run` 204, pero el task queda SUSPENDED en Quartz in-memory
+  (DB executionstate NULL) → script NO corre (0 líneas SANEO en log, 0 cambios). Patrón conocido
+  (MEMORY.md "Scheduling de tasks vía REST"): requiere
+  `UPDATE m_task SET executionstate='RUNNABLE', schedulingstate='READY'` + **restart del container**
+  midpoint_server para que Quartz cargue el trigger y `executeImmediately` dispare.
+- El **restart de PROD es operación crítica** → requiere confirmación de Alberto (reglas operacionales).
+
+### DECISIÓN REQUERIDA para el masivo de 4,733 (elegir mecanismo de ejecución)
+La LÓGICA está validada (delta atómico correcto, ESTADO-aware, 0 dual, egresados→active/alum,
+denominacionales→archived vía H3). Falta solo CÓMO ejecutarla sobre 4,733 por lotes:
+
+1. **Task iterativeScripting** (ya desplegado, OID `d1a2b3c4-...`): cambiar query a `inOid` por lote
+   (o `<q:or>` archetypeRef structural-user), DB-kick `executionstate=RUNNABLE` + **restart container**.
+   Procesa server-side, robusto, con progress. Requiere 1 restart de PROD (confirmar).
+2. **Loop REST PATCH** (driver bash desde mi lado): por cada user, leer reality (worker dead+ESTADO,
+   student, alum) → computar correcto → PATCH JSON delta atómico `?options=reconcile`. Sin restart,
+   pero ~4,733 llamadas REST (más lento, sin progress nativo, pero 100% probado: es justo lo que
+   validé en los 5). Por lotes de ~500 con monitoreo disco/memoria.
+
+**Recomendación:** opción 1 (task) si Alberto autoriza el restart de PROD (más limpio y rápido);
+si no, opción 2 (loop REST por lotes, sin restart). Ambas usan el MISMO delta atómico validado.
+NO se ejecutó el masivo ni PASO 4-6 — esperando elección de mecanismo + autorización.
+
+### Estado PROD tras PM13
+- **Config durable:** template base (Bloque L rama H3, `focus.assignment` no-multivalor) PUT 201;
+  task saneo desplegado (PUT 202, OID `d1a2b3c4-5e6f-4a8b-9c0d-1e2f3a4b5c6d`). Commits `5100ce4`→`80826bc`.
+- **Datos:** 4 canaries PASO2 + 5 validación PASO3 = 9 usuarios saneados (todos single structural correcto).
+  0 destructivos no intencionados. 0 dual-structural en los 9. Disco 77%, contenedores healthy.
+- Backups PM12 (`bkp_pre_paso1_struct_20260530_0154.sql` 674M) + PM8/PM11 vigentes.
