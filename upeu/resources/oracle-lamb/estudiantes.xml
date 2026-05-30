@@ -258,28 +258,27 @@
                      atributo DERIVADO por el template (Bloque J3, strong, desde affiliations);
                      NO debe ser target de inbounds de recurso. school-name-to-affiliations (abajo)
                      alimenta affiliations → J3 deriva primaryAffiliation. Único escritor = template. -->
+                <!-- NEUTRALIZADO 2026-05-30 (OPCIÓN 2, runbook PM10): el inbound
+                     `school-name-to-affiliations` (multivalor multi-source) se elimina por la misma
+                     causa raíz (zero-set no materializa). Sustituido por: (1)
+                     `school-name-to-liveAffiliationStudent` (abajo, item per-IIA single-source) + (2)
+                     Bloque J3b del template que deriva `affiliations` como unión. Autoridad única de
+                     `affiliations` = template (Reality-vs-Policy §2.1). -->
                 <inbound>
-                    <name>school-name-to-affiliations</name>
-                    <!-- Fase 1 eduPerson 202208: escribe en affiliations (multi-valor) para que
-                         el Bloque J3 del template calcule primaryAffiliation por prioridad.
-                         El Bloque J3 calcula: faculty>staff>student>alum>affiliate.
-
-                         FIX PM10 (2026-05-29, runbook §PM10): strength=strong + evaluationPhases.
-                         Igual que egresados/trabajadores: ABSOLUTO para asentar 'student' en cada
-                         recompute de focos `linked` (best-practices §4.2). SIN <range>: OWNS solo
-                         'student'; coexiste con staff/faculty/alum de otras fuentes. -->
+                    <name>school-name-to-liveAffiliationStudent</name>
+                    <!-- OPCIÓN 2 (runbook PM10): item per-IIA SINGLE-SOURCE para la afiliación de
+                         estudiante. single-valor, único escritor → strong materializa de forma fiable
+                         (sin zero-set multi-source). Presente SOLO mientras hay matrícula vigente: el
+                         searchScript de Estudiantes v4 ya restringe a semestres 279/267, por lo que la
+                         existencia del shadow ⇔ matrícula vigente. Al perder matrícula, el shadow se
+                         desproyecta → el item se vacía → 'student' deja de ser afiliación viva.
+                         IIA única: Estudiantes (iga-canonical §1.3). -->
                     <strength>strong</strength>
                     <expression>
                         <value>student</value>
                     </expression>
                     <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:affiliations</path>
-                        <!-- FIX PM10b (2026-05-30): set=matchingProvenance. Igual que egresados/
-                             trabajadores: gobierna SOLO 'student' (provenance Estudiantes), sin
-                             tocar staff/faculty/alum de otros recursos. -->
-                        <set>
-                            <predefined>matchingProvenance</predefined>
-                        </set>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveAffiliationStudent</path>
                     </target>
                     <evaluationPhases>
                         <include>beforeCorrelation</include>

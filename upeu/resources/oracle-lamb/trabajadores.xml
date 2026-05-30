@@ -488,25 +488,23 @@
                         <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambArchetypeHint</path>
                     </target>
                 </inbound>
+                <!-- NEUTRALIZADO 2026-05-30 (OPCIÓN 2, runbook PM10): el inbound
+                     `archetype-to-affiliations` (multivalor multi-source) se elimina por la misma
+                     causa raíz (zero-set no materializa). Sustituido por: (1)
+                     `archetype-to-liveAffiliationWorker` (abajo, item per-IIA single-source) + (2)
+                     Bloque J3b del template que deriva `affiliations` como unión. Autoridad única de
+                     `affiliations` = template (Reality-vs-Policy §2.1). La semántica de jubilado
+                     (ESTADO='I' → sin afiliación laboral viva) se preserva en el item per-IIA. -->
                 <inbound>
-                    <name>archetype-to-affiliations</name>
-                    <!-- Fuente principal para Bloque J3. normal: permite coexistencia con
-                         affiliations de egresados/estudiantes en usuarios dual-affiliation.
-                         Valor: faculty o staff (lowercase eduPerson 202208).
-                         ESTADO='I' (jubilados en período 730d): retorna null — NO escribir
-                         affiliation activa. Bloque K en el template maneja el override
-                         jubilacion→alum basándose en motivoCese, SIN interferencia de
-                         affiliations que J3 priorizaría sobre alum. Si el jubilado también
-                         es estudiante activo, affiliations=['student'] → J3 elige student
-                         correctamente (prioridad > alum), y Bloque K lo respeta.
-
-                         FIX PM10 (2026-05-29, runbook §PM10): strength=strong + evaluationPhases.
-                         Igual que afiliacion-to-affiliations de egresados: ABSOLUTO para asentar
-                         staff/faculty en cada recompute de focos `linked` (best-practices §4.2). SIN
-                         <range>: cuando ESTADO='I' retorna null, el mapping no asserta nada y NO
-                         remueve 'alum' (Bloque K) ni 'student' — semántica de jubilado intacta.
-                         Cuando activo, OWNS solo staff/faculty; coexiste con alum/student de otras
-                         fuentes (convergencia dual-affiliation). -->
+                    <name>archetype-to-liveAffiliationWorker</name>
+                    <!-- OPCIÓN 2 (runbook PM10): item per-IIA SINGLE-SOURCE para la afiliación laboral.
+                         A diferencia de archetype-to-affiliations (multivalor multi-source, zero-set),
+                         liveAffiliationWorker es single-valor con UN solo escritor → strong materializa
+                         de forma fiable. Vigencia laboral: ESTADO='I' (jubilado/cesado en período 730d)
+                         → retorna null → item vacío → NO cuenta como afiliación laboral viva (el período
+                         de gracia 730d ya no mantiene staff/faculty como afiliación VIVA para lifecycle;
+                         el grace lo gobierna ahora el Bloque K jubilados→alum + terminationDate en L).
+                         Valor: faculty|staff (eduPerson 202208). IIA única: Trabajadores. -->
                     <strength>strong</strength>
                     <expression>
                         <script>
@@ -514,16 +512,7 @@
                         </script>
                     </expression>
                     <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:affiliations</path>
-                        <!-- FIX PM10b (2026-05-30): set=matchingProvenance. CRÍTICO: sin esto, este
-                             mapping strong era autoritativo sobre TODO affiliations; al retornar null
-                             (ESTADO='I', jubilado) BORRABA el 'alum' aportado por Egresados (causa
-                             real del canary 48150895 archived). Con matchingProvenance solo gobierna
-                             los valores con SU provenance (Trabajadores) → staff/faculty entran/salen
-                             con la cuenta laboral, sin tocar alum/student de otros recursos. -->
-                        <set>
-                            <predefined>matchingProvenance</predefined>
-                        </set>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveAffiliationWorker</path>
                     </target>
                     <evaluationPhases>
                         <include>beforeCorrelation</include>

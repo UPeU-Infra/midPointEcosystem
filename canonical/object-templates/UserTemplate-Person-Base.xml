@@ -937,11 +937,20 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
         <ref>lifecycleState</ref>
         <mapping>
             <name>L-derive-lifecycleState-from-live-affiliations</name>
-            <description>Derivación canónica única de lifecycleState (reemplaza F+H+H2). strong, idempotente, sin guard anti-circular (NO lee lifecycleState). liveAff = sciback:affiliations ∩ vocabulario canónico. liveAff≠∅ → active (o draft si perfil incompleto); liveAff=∅ con terminationDate → archived (leaver); liveAff=∅ sin terminationDate → draft (alta incompleta). Salvaguarda académica: con alum/student en affiliations SIEMPRE active. iga-canonical §1.2/§3.2 + best-practices §1.2/§4.5.</description>
+            <description>Derivación canónica única de lifecycleState (reemplaza F+H+H2). strong, idempotente, sin guard anti-circular (NO lee lifecycleState). FIX OPCIÓN 2 (runbook PM10, 2026-05-30): liveAff = unión de los ITEMS PERSISTIDOS POR IIA (liveAffiliationWorker/Student/Alum), NO del transitorio `affiliations` (que caía en zero-set y dejaba liveAff=∅ → archivaba egresados vivos: canary 48150895). liveAff≠∅ → active (o draft si perfil incompleto); liveAff=∅ con terminationDate → archived (leaver); liveAff=∅ sin terminationDate → draft (alta incompleta). Salvaguarda académica: con liveAffiliationAlum/Student SIEMPRE active. iga-canonical §1.2/§1.3/§3.2 + best-practices §1.2/§4.5.</description>
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
             <source>
-                <path>extension/sciback:affiliations</path>
+                <name>worker</name>
+                <path>extension/sciback:liveAffiliationWorker</path>
+            </source>
+            <source>
+                <name>student</name>
+                <path>extension/sciback:liveAffiliationStudent</path>
+            </source>
+            <source>
+                <name>alum</name>
+                <path>extension/sciback:liveAffiliationAlum</path>
             </source>
             <source>
                 <path>personalNumber</path>
@@ -965,7 +974,8 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
 // (sin dependencia circular). NO usa grace periods en el template: la temporalidad post-cese
 // vive en la IIA (searchScript del worker mantiene el token durante el período de gracia).
 def CANONICAL = ['faculty','staff','student','alum','affiliate'] as Set;
-def liveAff = (affiliations ?: []).collect { basic.stringify(it).trim().toLowerCase() }
+// FIX OPCIÓN 2: liveAff = unión de los items persistidos por IIA (single-source, materializados).
+def liveAff = [worker, student, alum].collect { it != null ? basic.stringify(it).trim().toLowerCase() : '' }
     .findAll { it in CANONICAL } as Set;
 def termStr = terminationDate != null ? basic.stringify(terminationDate).trim() : '';
 
@@ -1539,34 +1549,79 @@ return roleName</code>
          IGA canónico: el template calcula; los resources solo aportan datos crudos.
          Libro Cap.9: focus processing — mappings de derivación son responsabilidad del template.
          ============================================================ -->
+
+    <!-- ============================================================
+         BLOQUE J3b — affiliations (eduPerson, downstream) DERIVADO de los items por IIA
+         FIX OPCIÓN 2 (runbook PM10, 2026-05-30): `affiliations` (multivalor eduPerson, consumido
+         por Koha/LDAP/Keycloak) deja de depender de los inbounds de recurso (que caían en zero-set
+         multi-source y no materializaban). Ahora se DERIVA en el template como unión de los items
+         persistidos por IIA (liveAffiliationWorker/Student/Alum), que SÍ se materializan (single-source).
+         strong: reconstruye el multivalor en cada recompute. Es la fuente única y fiable de affiliations
+         downstream. Mantiene Reality-vs-Policy: la realidad (shadows linked) materializa los items
+         per-IIA; el template los consolida en el atributo eduPerson de salida.
+         ============================================================ -->
     <item>
-        <ref>extension/sciback:primaryAffiliation</ref>
+        <ref>extension/sciback:affiliations</ref>
         <mapping>
-            <name>J3-primaryAffiliation-from-affiliations-priority</name>
-            <description>Calcula primaryAffiliation desde affiliations multi-valor por prioridad eduPerson 202208: faculty(1) > staff(2) > student(3) > alum(4) > affiliate(5).
-              FIX 2026-05-29 (multi-afiliación §3.2): strength normal→STRONG. Causa raíz del limbo: con normal, un recompute sin delta NO sobrescribía un primaryAffiliation stale (ej. 'staff' de un ex-trabajador cuya cuenta Trabajador fue desproyectada y cuyo affiliations ya es ['alum']). strong fuerza recálculo desde el affiliations VIVO en cada recompute → al morir el empleo pero persistir lo académico, primaryAffiliation pasa de 'staff' a 'alum' correctamente (pérdida de faculty/employee NO elimina alum/student). Bloque K (strong) sigue conviviendo: para jubilado puro K='alum' (J3 retorna null porque affiliations vacío de worker) → K gana; para no-jubilado K retorna null → J3 gana. Nunca ambos producen valor a la vez para el mismo foco.</description>
+            <name>J3b-affiliations-from-live-items</name>
+            <description>Deriva el multivalor eduPerson `affiliations` como unión de los items persistidos por IIA. strong. Reemplaza la materialización por inbounds de recurso (que caían en zero-set). Downstream (Koha/LDAP) lee esto.</description>
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
             <source>
-                <path>extension/sciback:affiliations</path>
+                <name>worker</name>
+                <path>extension/sciback:liveAffiliationWorker</path>
+            </source>
+            <source>
+                <name>student</name>
+                <path>extension/sciback:liveAffiliationStudent</path>
+            </source>
+            <source>
+                <name>alum</name>
+                <path>extension/sciback:liveAffiliationAlum</path>
+            </source>
+            <expression>
+                <script>
+                    <code>def CANONICAL = ['faculty','staff','student','alum','affiliate'] as Set;
+def live = [] as Set;
+[worker, student, alum].each { def v = it != null ? basic.stringify(it).trim().toLowerCase() : ''; if (v in CANONICAL) live &lt;&lt; v };
+return new ArrayList(live)</code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+
+    <item>
+        <ref>extension/sciback:primaryAffiliation</ref>
+        <mapping>
+            <name>J3-primaryAffiliation-from-live-affiliations-priority</name>
+            <description>Calcula primaryAffiliation por prioridad eduPerson 202208 (faculty>staff>student>alum>affiliate) a partir de los ITEMS PERSISTIDOS POR IIA (liveAffiliationWorker/Student/Alum), NO del transitorio `affiliations`.
+              FIX OPCIÓN 2 (runbook PM10, 2026-05-30): la causa raíz del limbo era que `affiliations` (multivalor multi-source) caía en zero-set y nunca se materializaba en el focus → J3 leía vacío. Ahora cada IIA persiste su afiliación viva en un item single-source (materializado por inbound strong, fiable). liveAff = unión de los items persistidos. strong: recálculo en cada recompute. Bloque K (strong, jubilados→alum) sigue conviviendo: para jubilado puro liveAffiliationWorker=∅ (ESTADO='I') → J3 retorna alum si hay liveAffiliationAlum, o null si tampoco hay académico → K fuerza alum. Único cómputo de policy = template.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>worker</name>
+                <path>extension/sciback:liveAffiliationWorker</path>
+            </source>
+            <source>
+                <name>student</name>
+                <path>extension/sciback:liveAffiliationStudent</path>
+            </source>
+            <source>
+                <name>alum</name>
+                <path>extension/sciback:liveAffiliationAlum</path>
             </source>
             <expression>
                 <script>
                     <code>def CANONICAL = ['faculty','staff','student','alum','affiliate'];
-def affs = (affiliations ?: []).collect { basic.stringify(it).trim().toLowerCase() }
-    .findAll { it in CANONICAL } as Set;
-if (affs.isEmpty()) { log.debug('J3: affiliations vacío en {} — primaryAffiliation null', focus?.name); return null };
+def live = [] as Set;
+[worker, student, alum].each { def v = it != null ? basic.stringify(it).trim().toLowerCase() : ''; if (v in CANONICAL) live &lt;&lt; v };
+if (live.isEmpty()) { log.debug('J3: sin afiliación viva en {} — primaryAffiliation null', focus?.name); return null };
 for (def canon : CANONICAL) {
-    if (canon in affs) { log.debug('J3: primaryAffiliation={} (de affiliations={}) en {}', canon, affs, focus?.name); return canon }
+    if (canon in live) { log.debug('J3: primaryAffiliation={} (de liveAff={}) en {}', canon, live, focus?.name); return canon }
 };
 return null</code>
                 </script>
             </expression>
-            <condition>
-                <script>
-                    <code>def raw = affiliations; def lst = (raw instanceof java.util.Collection) ? raw : (raw != null ? [raw] : []); !lst.isEmpty()</code>
-                </script>
-            </condition>
         </mapping>
     </item>
 
@@ -1598,15 +1653,25 @@ return null</code>
                 <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:motivoCese</path>
             </source>
             <source>
-                <path>extension/sciback:affiliations</path>
+                <name>worker</name>
+                <path>extension/sciback:liveAffiliationWorker</path>
+            </source>
+            <source>
+                <name>student</name>
+                <path>extension/sciback:liveAffiliationStudent</path>
+            </source>
+            <source>
+                <name>alum</name>
+                <path>extension/sciback:liveAffiliationAlum</path>
             </source>
             <expression>
                 <script>
                     <code>def mc = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : '';
 if (mc != 'jubilacion') return null; // no aplica — J3 calcula normalmente
 
-// Decisión B: si hay afiliación activa de mayor prioridad que alum, J3 gana
-def affs = (affiliations ?: []).collect { basic.stringify(it).trim().toLowerCase() }
+// Decisión B: si hay afiliación viva de mayor prioridad que alum, J3 gana
+// FIX OPCIÓN 2 (2026-05-30): lee items persistidos por IIA, no el transitorio affiliations.
+def affs = [worker, student, alum].collect { it != null ? basic.stringify(it).trim().toLowerCase() : '' }
     .findAll { it in ['faculty','staff','student','alum','affiliate'] } as Set;
 def HIGHER_THAN_ALUM = ['faculty','staff','student'] as Set;
 if (affs.any { it in HIGHER_THAN_ALUM }) {

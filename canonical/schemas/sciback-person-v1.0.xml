@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
         oid="e800335c-9ca1-4a2d-b4ca-e06f6db42693">
-    <name>SciBack IGA — Schema canónico universitario Perú v1.1</name>
+    <name>SciBack IGA — Schema canónico universitario Perú v1.2</name>
     <description>Schema de extensión canónico para universidades peruanas. Namespace: urn:sciback:midpoint:person. Alineado: eduPerson 202208, SCHAC 1.6.0, SCIM 2.0, ISO 24760, Ley 29733, Ley 30220, SUNEDU CBC. Reutilizable por cualquier universidad licenciada SUNEDU en plataforma SciBack IGA.</description>
     <lifecycleState>active</lifecycleState>
     <definition>
@@ -124,6 +124,24 @@
                     </xsd:element>
                     <xsd:element name="scopedAffiliations" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
                         <xsd:annotation><xsd:appinfo><a:displayName>Afiliaciones con ámbito</a:displayName><a:displayOrder>420</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- S4b — AFILIACIONES VIVAS POR IIA (PERSISTIDAS, single-source).
+                         Opción 2 (runbook org-canonical-migration-2026-05-29, PM10): cada item es
+                         alimentado por UN SOLO inbound strong desde su IIA (una IIA por atributo,
+                         iga-canonical §1.3). Al ser single-source, el inbound strong MATERIALIZA el
+                         valor en el focus sin caer en el zero-set multi-source que bloqueaba el
+                         multivalor `affiliations` (no requiere metadata-provenance). El template
+                         deriva liveAff = unión de estos items persistidos; J3 deriva primaryAffiliation
+                         y Bloque L deriva lifecycleState a partir de ellos (NO del transitorio
+                         `affiliations`, que se conserva solo como atributo eduPerson downstream). -->
+                    <xsd:element name="liveAffiliationWorker" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Afiliación viva — empleo (IIA Trabajadores)</a:displayName><a:help>Token eduPerson (faculty|staff) presente SOLO mientras el contrato UPeU está vigente (ESTADO≠'I' en Oracle LAMB Trabajadores v3). IIA única: resource Trabajadores. Single-source: el inbound strong lo materializa/retira con la cuenta laboral. Ausente = sin empleo vigente. NO confundir con `affiliations` (multivalor eduPerson downstream).</a:help><a:indexed>true</a:indexed><a:displayOrder>421</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="liveAffiliationAlum" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Afiliación viva — egresado (IIA Egresados)</a:displayName><a:help>Token eduPerson (alum) presente mientras el shadow Egresados v3 está linked con AFILIACION=alum. IIA única: resource Egresados. Single-source: el inbound strong lo materializa/retira con la proyección Egresado. La condición de egresado es permanente (alum no caduca). Ausente = no es egresado.</a:help><a:indexed>true</a:indexed><a:displayOrder>422</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="liveAffiliationStudent" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Afiliación viva — estudiante (IIA Estudiantes)</a:displayName><a:help>Token eduPerson (student) presente SOLO mientras hay matrícula vigente (semestres 279/267 en Oracle LAMB Estudiantes v4). IIA única: resource Estudiantes. Single-source: el inbound strong lo materializa/retira con la proyección Estudiante. Ausente = sin matrícula vigente.</a:help><a:indexed>true</a:indexed><a:displayOrder>423</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
                     <xsd:element name="entitlements" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
                         <xsd:annotation><xsd:appinfo><a:displayName>Derechos (entitlements)</a:displayName><a:displayOrder>430</a:displayOrder></xsd:appinfo></xsd:annotation>

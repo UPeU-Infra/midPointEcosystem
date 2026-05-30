@@ -353,46 +353,33 @@
                      NO debe ser target de inbounds de recurso. Solo afiliacion-to-affiliations
                      (abajo) alimenta J3. Mantener un único escritor evita la no-convergencia del
                      combinatorial evaluation en recompute sin delta (limbo PM8). -->
+                <!-- NEUTRALIZADO 2026-05-30 (OPCIÓN 2, runbook PM10): el inbound
+                     `afiliacion-to-affiliations` (que escribía el multivalor multi-source `affiliations`)
+                     se elimina. Causa raíz PM10: el valor caía en zero-set y NO se materializaba sin
+                     metadata-provenance. Sustituido por: (1) `afiliacion-to-liveAffiliationAlum` (abajo,
+                     item per-IIA single-source que SÍ materializa) + (2) Bloque J3b del template, que
+                     deriva `affiliations` eduPerson downstream como unión de los items per-IIA. Esto
+                     restaura la autoridad única (Reality-vs-Policy §2.1): un solo escritor de
+                     `affiliations` = el template. -->
                 <inbound>
-                    <name>afiliacion-to-affiliations</name>
-                    <!-- Fase 1: escribe en affiliations (multi-valor) para Bloque J3.
-                         Vocabulario canónico eduPerson 202208. EMPLOYEE eliminado (no canónico).
-
-                         FIX PM10 (2026-05-29, runbook §PM10): strength=strong + evaluationPhases.
-                         Antes 'normal' (relativo): en recompute/import de un foco ya `linked` sin
-                         delta en AFILIACION, un mapping relativo normal NO produce delta → no asienta
-                         'alum' → J3 ve affiliations=∅ → Bloque L archiva al egresado (bug del canary
-                         48150895). strong (best-practices §4.2 "recomputa") = ABSOLUTO: re-evalúa y
-                         asienta su valor en CADA evaluación mientras exista la proyección, no solo
-                         ante delta. SIN <range> explícito: mapping multi-source sobre target
-                         multivalor solo OWNS el valor que produce ('alum'); NO remueve valores de
-                         otras fuentes (staff/faculty de Trabajadores, student de Estudiantes) →
-                         convergencia dual-affiliation intacta. evaluationPhases idéntico al patrón
-                         probado de los inbounds de correlación del mismo recurso (dni-to-taxId-urn). -->
+                    <name>afiliacion-to-liveAffiliationAlum</name>
+                    <!-- OPCIÓN 2 (runbook PM10): item per-IIA SINGLE-SOURCE.
+                         A diferencia de afiliacion-to-affiliations (multivalor multi-source que cae
+                         en zero-set y NO materializa sin metadata-provenance), liveAffiliationAlum es
+                         single-valor y su ÚNICO escritor es este inbound. strong materializa el valor
+                         en el focus de forma fiable en cada recompute/recon mientras el shadow
+                         Egresados exista (AFILIACION=alum). Al desproyectarse la cuenta Egresado, el
+                         inbound deja de aportar valor → relativista → el item se vacía. El template
+                         (J3/Bloque L) lee este item persistido, NO el transitorio affiliations.
+                         IIA única: Egresados (iga-canonical §1.3). -->
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>def map = ['ALUMNI':'alum','ALUM':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff']; def v = input?.toString()?.trim()?.toUpperCase(); v ? (map[v] ?: input.toString().trim().toLowerCase()) : null</code>
+                            <code>def v = input?.toString()?.trim()?.toLowerCase(); (v == 'alum' || v == 'alumni') ? 'alum' : null</code>
                         </script>
                     </expression>
                     <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:affiliations</path>
-                        <!-- FIX PM10b (2026-05-30): target value set = matchingProvenance.
-                             El trace PM10 reveló que strong solo ponía 'alum' en el ZERO set
-                             (valor "presente, sin cambio") → no generaba delta real hacia el focus
-                             → J3/L leían affiliations=∅ y archivaban. Con <set>, este mapping es
-                             AUTORITATIVO sobre los valores que él aporta: MidPoint compara su salida
-                             contra el valor actual del focus y genera el PLUS delta faltante ('alum'
-                             entra al focus, J3 lo ve) y el MINUS de tokens que ya no aporta.
-                             predefined=matchingProvenance: la autoridad se limita a los valores
-                             marcados con la provenance de ESTE recurso (Egresados) → NO remueve
-                             staff/faculty (Trabajadores) ni student (Estudiantes). Mecanismo canónico
-                             Evolveum de consolidación multi-source de atributos multivalor.
-                             (El <set> es hijo de <target> [VariableBindingDefinitionType], NO un
-                             elemento <range> suelto — InboundMappingType no admite <range>.) -->
-                        <set>
-                            <predefined>matchingProvenance</predefined>
-                        </set>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveAffiliationAlum</path>
                     </target>
                     <evaluationPhases>
                         <include>beforeCorrelation</include>
