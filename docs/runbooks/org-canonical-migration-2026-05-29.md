@@ -2037,3 +2037,24 @@ Pendiente desde PM11/PM12; PM16 lo confirma como el bloqueo crítico. Opciones c
 
 ## PRÓXIMO — PASO 2: recons académicos COMPLETOS (Egresados+Estudiantes) para materializar liveAffiliation
 en toda la población (983 quarantine + 90/36 wave-ordering) ANTES del re-recon Trabajadores (PASO 4).
+
+## PASO 2 — Recons académicos COMPLETOS (Egresados → Estudiantes) — EN CURSO
+
+### Backup pre-paso
+- **Issue:** dumps full crecían a ~1.5GB (m_user=1.2GB con ext/photos + audit 9.3GB). `--exclude-table-data`
+  con globs no-qualified no excluía audit. Solución: **dump focus-only** de las 6 tablas clave para rollback:
+  `/tmp/bkp_focus_0651.dump` (702MB, íntegro vía pg_restore -l): m_user, m_assignment, m_ref_archetype,
+  m_ref_role_membership, m_ref_projection, m_archetype. Suficiente para revertir cambios de focus de los recons.
+
+### Lanzamiento Egresados (OID `86c3766a`, resource `...e23`)
+- **HALLAZGO scheduling:** `/run` → 204 pero queda SUSPENDED (Quartz in-memory, como MEMORY). `/resume` → 202
+  y SÍ arranca (task PREEXISTENTE, no recién creado vía REST). Estado: RUNNING/READY/DefaultNode. SIN restart container.
+- **Validación del fix D7 bajo recon real:** dual-structural se mantiene en **0** mientras el recon corre
+  (verificado a progress 432/513/1474). El fix aguanta. ✅
+- **Ritmo:** ~324 items/min (5.4/s). Población egresados ~30K shadows → **ETA ≈ 90 min**. liveAffiliationAlum
+  sube lento (8420→8501, la mayoría ya tienen alum; el recon enriquece/materializa el resto).
+- **Monitor desacoplado** `/tmp/recon_monitor.sh` (setsid, PID 1493989, log `/tmp/recon_monitor.log`): cada 5min
+  loguea progress/a215/dual/disk; **disk-guard 90%** (suspende recons) + **dual-guard >50** (suspende EGR si el
+  fix fallara). Auto-termina cuando EGR deja de RUNNING.
+- **PENDIENTE en este paso:** al terminar Egresados → lanzar Estudiantes (OID `94b627b4`, resource `...e22`) →
+  verificar 983 quarantine → active, 90/36 wave-ordering materializados, 0 egresados/estudiantes vivos sin liveAffiliation.
