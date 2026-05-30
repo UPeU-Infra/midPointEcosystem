@@ -514,7 +514,36 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>def estado = basic.getAttributeValue(shadow, 'ESTADO'); if (estado == 'I') return null; input == 'archetype-user-employee-faculty' ? 'faculty' : 'staff'</code>
+                            <code>
+// IIA por atributo (iga-canonical 1.3) + Reality-vs-Policy (bp 2.1): liveAffiliationWorker
+// representa la AFILIACION LABORAL VIVA; su vigencia es semantica del atributo y se decide aqui
+// (unico escritor, single-source). Dos condiciones de no-vigencia:
+//  (1) ESTADO igual a 'I' (cesado/jubilado en gracia 730d): la gracia NO mantiene staff/faculty
+//      como afiliacion VIVA; el grace lo gobierna Bloque K (jubilado a alum) y terminationDate en L.
+//  (2) RESIDUAL 1 (2026-05-30, caso DNI 73970305): fila 7124 con flag ESTADO igual a 'A' pero
+//      FEC_TERMINO VENCIDO (contrato terminado, flag nunca volteado a 'I'). El WHERE de poblacion
+//      del searchScript ('A' no chequea FEC_TERMINO) la deja pasar como falso-activo. Endurecemos
+//      aqui: si la fila ganadora 7124 tiene FEC_TERMINO no-nulo y anterior a hoy, contrato NO vivo,
+//      retorna null. Coherente con el resolutor de area 'ca' (exige FEC_TERMINO NULL o no vencido).
+//      Predicado en el inbound (NO en el WHERE de poblacion) para preservar: jubilados grace 730d
+//      intactos, demograficos/area/datos siguen leyendose, y NO disparar deleted->inactivateFocus.
+def estado = basic.getAttributeValue(shadow, 'ESTADO')
+if (estado == 'I') return null
+def ft = basic.getAttributeValue(shadow, 'FEC_TERMINO')
+if (ft != null &amp;&amp; ft.toString().trim() != '') {
+    try {
+        // FEC_TERMINO llega como String (searchScript usa FEC_TERMINO?.toString()).
+        // Formato Oracle DATE: 'YYYY-MM-DD HH:MM:SS'. Tomamos los primeros 10 chars.
+        def s = ft.toString().trim()
+        def datePart = (s.length() &gt;= 10) ? s.substring(0, 10) : s
+        def fecTerm = java.time.LocalDate.parse(datePart)
+        if (fecTerm.isBefore(java.time.LocalDate.now())) return null
+    } catch (Exception ex) {
+        // formato inesperado: no degradar; se trata como vivo (comportamiento previo conservador).
+    }
+}
+input == 'archetype-user-employee-faculty' ? 'faculty' : 'staff'
+</code>
                         </script>
                     </expression>
                     <target>
