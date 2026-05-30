@@ -332,14 +332,15 @@
                                     <expression>
                                         <script>
                                             <code>
-def partnerSede = ['97':'1', '695':'2', '8208':'3']  // ID_AREA -> ID_SEDE canonico
-def sedeCampus  = ['1':'SEDE-LIMA', '2':'SEDE-JULIACA', '3':'SEDE-TARAPOTO']
+// partner-institution -> campus canonico (ID_AREA -> campus identifier directo).
+// 760 (ISTAT) tiene ID_SEDE=4 (sede propia sin OrgType campus) pero geograficamente
+// pertenece a Juliaca/Titicaca (igual que CAT=695) -> se ancla a SEDE-JULIACA.
+// Anclaje DIRECTO por ID_AREA (no por ID_SEDE) para evitar dependencia del ID_SEDE
+// del resultset, que para 760 apunta a sede 4 sin campus.
+def partnerCampus = ['97':'SEDE-LIMA', '695':'SEDE-JULIACA', '8208':'SEDE-TARAPOTO', '760':'SEDE-JULIACA']
 def area = idArea != null ? idArea.toString().trim() : ''
-if (partnerSede.containsKey(area)) {
-    // partner-institution: anclar al campus por ID_SEDE (fallback al ID_SEDE canonico del mapa)
-    def sede = (idSede != null &amp;&amp; idSede.toString().trim() != '') ? idSede.toString().trim() : partnerSede[area]
-    def campusId = sedeCampus[sede]
-    if (campusId != null) return campusId
+if (partnerCampus.containsKey(area)) {
+    return partnerCampus[area]   // partner-institution: campus es parent UNICO
 }
 // resto de areas: jerarquia normal por ID_PARENT
 return input
@@ -354,9 +355,9 @@ return input
                     <target><path>assignment</path></target>
                     <condition>
                         <!-- Crear assignment si: hay ID_PARENT (nodo no-raiz) O es partner-institution
-                             (97/695/8208) que SIEMPRE cuelga del campus aunque su ID_PARENT exista. -->
+                             (97/695/8208/760) que SIEMPRE cuelga del campus aunque su ID_PARENT exista. -->
                         <script>
-                            <code>def area = idArea != null ? idArea.toString().trim() : ''; (input != null &amp;&amp; !input.toString().trim().isEmpty()) || (area in ['97','695','8208'])</code>
+                            <code>def area = idArea != null ? idArea.toString().trim() : ''; (input != null &amp;&amp; !input.toString().trim().isEmpty()) || (area in ['97','695','8208','760'])</code>
                         </script>
                     </condition>
                 </inbound>

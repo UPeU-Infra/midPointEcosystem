@@ -2711,3 +2711,99 @@ student gana prioridad). **dup_active_dni_groups global = 0.**
    (default UserType template o bootstrap auto-assign) pendiente de decisión del usuario.
 3. liveAffiliationWorker transitoriamente None en el survivor 62377660 (shadow worker attrs vacíos
    post-merge) — auto-sanable en próxima recon Trabajadores.
+
+---
+
+## PM17 — Completar jerarquía Org: 4 huecos de auditoría (2026-05-30)
+
+Estado previo: m_org=199, todas con archetype/scope OK pero 4 defectos estructurales.
+Backup: tag git `pre-org-hierarchy-completion-20260530` (commit 5a46da3) + pg_dump
+`~/backups/org_structure_20260530_154243.sql` (m_org + m_ref_object_parent_org).
+Disco 86% (bajo guard 90%). Salvaguarda académica intacta (no se tocó ningún user).
+
+### Fuente de verdad consultada (Oracle LAMB, solo lectura)
+ELISEO.ORG_AREA (ID_PARENT autoritativo) vía ojdbc11 single-file launcher en container
+(`java -cp ojdbc11 OraQ.java`; oracledb thin no soporta Oracle 11g → DPY-3010).
+
+| ID_AREA | ID_PARENT | Nombre |
+|---|---|---|
+| 1 | null | Asamblea Universitaria (raíz gobierno) |
+| 2 | 1 | Consejo Universitario |
+| 3 | 2 | Rectorado |
+| 4/5/6 | 3 | VR Bienestar / VR Académico / VR Administrativo |
+| 22 | 3 | Areas Rectorado (HUECO 4: legítimo, NO artefacto) |
+| 8/9/10/11/12 | 5 | Facultades (Educación/Ingeniería/Salud/Teología/Empresariales) |
+| 23/24/58/65/66 | 22 | SecretaríaGral/Planificación/Imagen/AsesoríaLegal/Auditoría |
+| 15 | 6 | Logística-Activos |
+| 67 | 58 | Dir-Marketing |
+| 49 | 47 | Finanzas-Alumnos (Caja Central → Tesorería) |
+| 68 | 3 | Dir-Educación-Distancia |
+| 97/695/8208/760 | 5/430/430/430 | partner-institution (reanclados a campus por diseño) |
+
+### HUECO 1 — Colegio Unión consolidado (17 orgs alcanzables)
+- Decisión canónica (§5.2 + "always use org unit identifiers"): nodo superviviente = **AREA-97**
+  (identifier=97, recon-mantenido, partner-institution, anclado a OU-CAMPUS-LIMA). El slug
+  `COLEGIO-UNION` (huérfano, archived, sin identifier Oracle) era duplicado.
+- Oracle: AREA-99/100/101 = Niveles Inicial/Primaria/Secundaria (representación oficial del colegio).
+  El subárbol CU-* (16 nodos slug: Dirección, niveles, Biblioteca/Psic/TOE, admin) es estructura
+  de detalle manual que NO existe en Oracle → se preserva colgándola de AREA-97.
+- Acción: reparentados 4 hijos raíz de COLEGIO-UNION (CU-ADMIN/CU-APOYO-PED/CU-DIR/CU-ESTUDIANTES)
+  → AREA-97 (add targetRef + delete assignment al slug). Eliminado nodo COLEGIO-UNION (0 refs).
+- Resultado: AREA-97 + 16 CU-* = 17 orgs alcanzables vía Campus Lima.
+
+### HUECO 2 — 20 dual-parent resueltos → grafo arborescente
+- Diagnóstico: cada org dual-parent tenía EXACTAMENTE 1 assignment RECON (cadena Oracle ID_PARENT,
+  con `originMappingName=id-parent-to-parentOrg`) + 1 MANUAL (parent slug añadido en migración previa).
+  El recon Org produce 1 solo parent default por org (inbound strong) → eliminar el MANUAL NO se
+  regenera.
+- Decisión canónica (§5.4 jerarquía por assignment, UN parent default; §5.5; "acyclic directed graph"):
+  el árbol autoritativo es la **cadena Oracle ID_PARENT**. Eliminados los 20 assignments MANUAL:
+  - VR-Académico/Administrativo/Bienestar, Consejo, Rectorado: removido parent GOBIERNO-UNIVERSITARIO
+    (queda cadena Oracle Asamblea→Consejo→Rectorado→VRs; GOBIERNO-UNIVERSITARIO mantiene a Asamblea).
+  - 5 Facultades: removido OU-CAMPUS-LIMA (queda VR-Académico, ID_PARENT=5).
+  - SecretaríaGral/AsesoríaLegal/Auditoría/Imagen/Planificación: removido RECTORADO (queda AREA-22,
+    que es su ID_PARENT Oracle real = 22).
+  - Logística-Activos: removido DIR-OPERACIONES-CAMPUS (queda VR-Administrativo, ID_PARENT=6).
+  - Dir-Marketing: removido VR-Administrativo (queda DIR-IMAGEN, ID_PARENT=58).
+  - Finanzas-Alumnos: removido DIR-FINANCIERA (queda TESORERIA-GENERAL, ID_PARENT=47).
+  - Dir-Educación-Distancia: removido VR-Académico (queda RECTORADO, ID_PARENT=3).
+- **EXCEPCIÓN AREA-760 (ISTAT, partner-institution):** patrón invertido. Eliminado el RECON (AREA-430),
+  conservado OU-CAMPUS-JULIACA. Causa: el overlay `partnerSede` solo mapeaba 97/695/8208 → el recon
+  ancló 760 a su ID_PARENT Oracle (430). **Fix overlay** `upeu/resources/oracle-lamb/org.xml`:
+  añadido `'760':'SEDE-JULIACA'` al map (ahora `partnerCampus`, anclaje DIRECTO por ID_AREA, no por
+  ID_SEDE — 760 tiene ID_SEDE=4 sin OrgType campus; geográficamente Juliaca/Titicaca como CAT=695) +
+  condición de assignment extendida a 760. Tras reimport del resource, el recon producirá
+  OU-CAMPUS-JULIACA y no reintroducirá AREA-430.
+- Resultado: 0 dual-parent en relation=default.
+
+### HUECO 3 — 16 áreas Oracle EXCLUIDAS explícitamente (no materializar)
+- Áreas: 25,63,150,239,292,297,433,441,511,676,681,763,765,766,803,7763.
+- Verificación Oracle: las 16 tienen **0 trabajadores activos con contrato UPeU 7124**
+  (TRAB7124=0 en todas). 433 y 441 además ESTADO=0 (inactivas). Sus 37+ descendientes Oracle
+  (cursos/talleres/eventos/oficinas filial Juliaca FJ) tampoco tienen empleo vivo (0 existen en
+  MidPoint → el CONNECT BY ascendente del recon nunca las sembró).
+- Decisión: el filtro del recon (`ID_ENTIDAD=7124 + ESTADO='1' + (TIENEHIJO o trabajador activo)`)
+  las excluye CORRECTAMENTE por diseño. Materializarlas crearía OrgTypes vacíos sin sujetos ni rol
+  (anti-patrón). Política scope IGA = contrato RR.HH. UPeU vivo. **No se materializan.**
+- No hay ramas verdaderamente truncadas: ninguna org in-scope cuelga de un ancestro inexistente.
+
+### HUECO 4 — AREA-22 "Areas Rectorado": nivel intermedio LEGÍTIMO
+- Oracle: ID_AREA=22, ID_PARENT=3 (Rectorado), nombre "Areas Rectorado". Existe con padre real
+  → NO es artefacto. Se mantiene con 1 parent (RECTORADO) y sus 5 hijos con 1 parent (AREA-22),
+  resuelto en Hueco 2. No se colapsa.
+
+### Verificación final
+- m_org: 199 → **198** (-1 COLEGIO-UNION).
+- Alcanzables desde UPeU: **198/198** (0 no-alcanzables). Única raíz sin parent: UPeU (correcto).
+- **0 dual-parent** en relation=default (grafo arborescente, acíclico).
+- **0 ramas truncadas** (16 áreas excluidas explícitamente, 0 descendientes in-scope).
+- Estructura por archetype: institution 1, campus 3, faculty 5, partner-institution 4,
+  governance 13, academic-unit 33, academic-program 23, department 116.
+- 0 orgs con multi-archetype. m_user invariante (49321, no se tocó ningún user). Flores área 133=35.
+  DTI(18)→VR-Admin, FACULTAD-EDUCACION(8)→VR-Académico, AREA-97→Campus-Lima, AREA-760→Campus-Juliaca,
+  AREA-22→Rectorado: todos parent único.
+
+### Sintaxis REST PATCH validada (assignment add/delete por cid)
+- ADD: `<value><c:targetRef oid="..." type="OrgType"/></value>` (targetRef DIRECTO en value; type SIN prefijo).
+- DELETE por cid: `<value id="N"/>` (id como atributo del value, NO `<c:id>` hijo).
+- Namespace raíz: api-types-3 default; path `c:assignment`. Otros patrones dan 500 SchemaException.
