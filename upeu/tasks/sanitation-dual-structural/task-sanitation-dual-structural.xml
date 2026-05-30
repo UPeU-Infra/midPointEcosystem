@@ -1,7 +1,8 @@
 <task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
       xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      oid="d1a2b3c4-5e6f-4a8b-9c0d-1e2f3a4b5c6d">
   <name>Saneo dual-structural — delta atómico add-correcto+delete-stale (H1/H2/H4, 2026-05-30)</name>
   <description>
     PASO 3 del runbook org-canonical-migration. Por cada usuario con >1 structural archetype
@@ -33,14 +34,16 @@
                Filtro base: usuarios con al menos un structural employee O alumni O student
                (los que pueden tener dual/stale). Se acota por lote en ejecución. -->
           <query>
+            <!-- VALIDACIÓN PM13: scope a 5 latentes. Para el masivo, reemplazar por filtro inOid de lote
+                 (o el <q:or> de archetypeRef structural-user comentado abajo). -->
             <q:filter>
-              <q:or>
-                <q:ref><q:path>archetypeRef</q:path><q:value><oid>6460facf-3abf-4851-966e-0c95aa1a6c46</oid><type>ArchetypeType</type></q:value></q:ref>
-                <q:ref><q:path>archetypeRef</q:path><q:value><oid>c93083ca-f4c5-4704-acf4-d53b97c9556e</oid><type>ArchetypeType</type></q:value></q:ref>
-                <q:ref><q:path>archetypeRef</q:path><q:value><oid>87552943-9600-493b-88ca-74b7d3ba93e4</oid><type>ArchetypeType</type></q:value></q:ref>
-                <q:ref><q:path>archetypeRef</q:path><q:value><oid>3037fbd2-db02-4ffd-8b1a-83fab5e686aa</oid><type>ArchetypeType</type></q:value></q:ref>
-                <q:ref><q:path>archetypeRef</q:path><q:value><oid>ce162f6b-f6fb-4dc4-b395-a942ee5b491b</oid><type>ArchetypeType</type></q:value></q:ref>
-              </q:or>
+              <q:inOid>
+                <q:value>000afab7-3b98-4c60-ba13-54274ef9b2ec</q:value>
+                <q:value>0014ebb1-bba1-44b9-a65f-be91d828700d</q:value>
+                <q:value>002eea55-9f11-4420-8222-3ae7f9e8d3f8</q:value>
+                <q:value>0042922d-9c64-498e-9c2f-b507f3037351</q:value>
+                <q:value>0019c234-99cc-40b4-bd33-6d3b44176f88</q:value>
+              </q:inOid>
             </q:filter>
           </query>
         </objects>
@@ -74,23 +77,43 @@ def OTHER_STRUCT = ['ce162f6b-f6fb-4dc4-b395-a942ee5b491b', // researcher
                     '05ceed56-9a60-4531-903f-c7748b36de8a'] as Set; // service-account
 def ALL_STRUCT = ([OID_FACULTY, OID_STAFF, OID_STUDENT, OID_ALUM] + (OTHER_STRUCT as List)) as Set;
 
-// 1) leer items liveAffiliation persistidos (IIA)
-def ext = user.getExtension();
-def readExt = { localName ->
-    if (ext == null) return '';
-    def p = ext.findProperty(new com.evolveum.midpoint.prism.path.ItemName(SCIBACK_NS, localName));
-    return p?.getRealValue() != null ? p.getRealValue().toString().trim().toLowerCase() : '';
-};
-def liveWorker  = readExt('liveAffiliationWorker');   // faculty | staff
-def liveStudent = readExt('liveAffiliationStudent');  // student
-def liveAlum    = readExt('liveAffiliationAlum');     // alum
+// 1) Calcular afiliación VIVA desde la REALIDAD (shadows linked) — NO desde los items persistidos
+//    (que pueden estar sin materializar antes del reconcile → race H2). Reality-vs-Policy §2.1:
+//    la realidad son las proyecciones LAMB; el item es derivado. Aquí leemos la realidad directa.
+//    IIA resources: Trabajadores ...e21 / Estudiantes ...e22 / Egresados ...e23.
+def RES_WORKER  = '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21';
+def RES_STUDENT = '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22';
+def RES_ALUM    = '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23';
+
+def workerLive = false; def workerFaculty = false; def studentLive = false; def alumLive = false;
+try {
+    user.getLinkRef().each { lr ->
+        def soid = lr.getOid();
+        if (soid == null) return;
+        def sh = midpoint.getObject(com.evolveum.midpoint.xml.ns._public.common.common_3.ShadowType.class, soid);
+        if (sh == null) return;
+        if (Boolean.TRUE.equals(sh.isDead())) return;  // proyección muerta NO cuenta
+        def rOid = sh.getResourceRef()?.getOid();
+        if (rOid == RES_ALUM) { alumLive = true; }
+        else if (rOid == RES_STUDENT) { studentLive = true; }
+        else if (rOid == RES_WORKER) {
+            // worker vivo solo si ESTADO != 'I' (replica archetype-to-liveAffiliationWorker)
+            def estado = null;
+            try { estado = basic.getAttributeValue(sh, 'ESTADO'); } catch (Exception ee) {}
+            if (!('I' == estado)) {
+                workerLive = true;
+                // faculty vs staff: por el archetype structural employee-faculty ya asignado
+                workerFaculty = user.getAssignment().any { a -> a.getTargetRef()?.getOid() == OID_FACULTY };
+            }
+        }
+    }
+} catch (Exception e) { log.warn('SANEO: error leyendo shadows de {}: {}', uname, e.message) }
 
 // 2) structural correcto por afiliación viva (prioridad faculty>staff>student>alum)
 def correctOid = null;
-if (liveWorker == 'faculty') correctOid = OID_FACULTY;
-else if (liveWorker == 'staff') correctOid = OID_STAFF;
-else if (liveStudent == 'student') correctOid = OID_STUDENT;
-else if (liveAlum == 'alum') correctOid = OID_ALUM;
+if (workerLive) correctOid = workerFaculty ? OID_FACULTY : OID_STAFF;
+else if (studentLive) correctOid = OID_STUDENT;
+else if (alumLive) correctOid = OID_ALUM;
 
 // 3) structural archetype assignments actuales (container-id + oid)
 def structAssigns = [];  // [ [id:Long, oid:String], ... ]
@@ -132,18 +155,13 @@ if (hasCorrect && staleAssigns.isEmpty()) {
 }
 
 // 6) construir DELTA ATÓMICO: add correcto (si falta) + delete cada stale por container-id
-def deltas = [];
-def assignDef = midpoint.prismContext.getSchemaRegistry()
-    .findObjectDefinitionByCompileTimeClass(UserType.class)
-    .findContainerDefinition(UserType.F_ASSIGNMENT);
-
 def deltaBuilder = midpoint.prismContext.deltaFor(UserType.class);
 
-// delete stale (por id)
+// delete stale (por container-id)
 staleAssigns.each { sa ->
     def av = new AssignmentType();
     av.setId(sa.id);
-    deltaBuilder.item(UserType.F_ASSIGNMENT).delete(av.asPrismContainerValue());
+    deltaBuilder.item(UserType.F_ASSIGNMENT).delete(av);
 };
 // add correcto si falta
 if (!hasCorrect) {
@@ -152,14 +170,13 @@ if (!hasCorrect) {
     ref.setOid(correctOid);
     ref.setType(ArchetypeType.COMPLEX_TYPE);
     add.setTargetRef(ref);
-    deltaBuilder.item(UserType.F_ASSIGNMENT).add(add.asPrismContainerValue());
+    deltaBuilder.item(UserType.F_ASSIGNMENT).add(add);
 }
 
 def delta = deltaBuilder.asObjectDelta(uoid);
 
-// 7) aplicar atómico + reconcile (dispara clockwork → J3/L/D7)
-def opts = midpoint.getDefaultModelExecuteOptions();
-opts.reconcile(true);
+// 7) aplicar atómico + reconcile (dispara clockwork → J3/L/D7 sobre objeto con 1 structural)
+def opts = com.evolveum.midpoint.schema.ModelExecuteOptions.create().reconcile();
 midpoint.executeChanges([delta] as java.util.Collection, opts);
 
 log.info('SANEO OK: {} ({}) -> structural unico {} (stale removidos: {})',
