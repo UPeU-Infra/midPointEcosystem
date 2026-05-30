@@ -96,7 +96,17 @@ Commit posterior a `a283fa3` (solo comentarios/`description`, sin cambio de lóg
 
 **Hallazgo — código HTTP 240:** `POST /shadows/{oid}/import` devuelve `240` (no 200) en MidPoint 4.10 para import con resultado handled/partial. NO es fallo: el import+sync se aplica correctamente (verificado: faculty bajó 1815→1793 en los primeros ~250). El watchdog trata 200 y 240 como éxito.
 
-**Watchdog** (`/home/juansanchez/backups/recompute_changers.sh`, background `setsid nohup`): checkpoint cada 200 con guardas BLOQUEANTES — `dual-structural>0` → abort 11; `acad_archived > baseline+5` → abort 12; `disk>=90%` → abort 13. Baselines pre: dual=0, acad_archived=0, m_user=49321, faculty=1815/staff=9078. Snapshot reversible: `/home/juansanchez/backups/pre_recompute_archetypes_*.csv` (10.893 oid+archetype). Latencia ~2s/import → ETA ~6h.
+**Baselines pre:** dual=0, acad_archived=0, m_user=49321, faculty=1815/staff=9078. Snapshot reversible: `/home/juansanchez/backups/pre_recompute_archetypes_*.csv` (10.893 oid+archetype).
+
+### 8.1 Recon completo del resource — DESCARTADO (crea shadows duplicados por padding COD_APS)
+Se intentó el mecanismo nativo paralelo (task recon `23b9fde4...`, workerThreads=4). Arrancó correctamente (patrón de activación: UPDATE m_task executionstate=RUNNABLE/READY → `docker compose restart midpoint_server` → tras Quartz vivo `POST /tasks/{oid}/resume` → RUNNING; el `/run` directo da "not in RUNNABLE nor CLOSED, State is SUSPENDED" porque Quartz lo ve suspended hasta el resume). **Pero falla con `PolicyViolationException: Projection already exists in lens context`** en masa: el searchScript devuelve COD_APS con DISTINTO padding de ceros a la izquierda que el `__NAME__` del shadow existente (ej. existing `020047701` vs new `02004770`; existing `01914732` vs new `001914732`), por lo que recon crea un shadow NUEVO que colisiona con la proyección existente del mismo focus (correlado por lambDocNum). Es un bug PREEXISTENTE de normalización de COD_APS, NO del cambio faculty/staff; solo el recon lo destapa porque re-deriva `__NAME__`.
+**Daño = CERO:** la PolicyViolation aborta la transacción antes del commit → 0 shadows nuevos persistidos (verificado: shadows trabajador siguen 16327, m_user 49321, dual=0, acad_archived=0). MidPoint suma/no-resta + rollback. Task SUSPENDED de inmediato al detectar el patrón.
+**Pendiente (fuera de scope de esta tarea):** normalizar COD_APS en el searchScript (TRIM/LPAD consistente) antes de poder usar recon como sync nocturno. Mientras tanto el sync nocturno por recon arrastraría estos errores benignos.
+
+### 8.2 Mecanismo final: loop import por shadow, PARALELO (seguro)
+`POST /shadows/{oid}/import` opera sobre el shadow EXISTENTE por su OID — re-fetchea sus atributos (trae el nuevo `UPEU_ARCHETYPE_NAME`) y dispara sync SIN re-derivar `__NAME__` → NO colisiona (a diferencia del recon). Es el único mecanismo seguro disponible sin tocar el padding.
+- `/home/juansanchez/backups/import_parallel.sh` (background `setsid nohup`): xargs -P5 sobre los 10.896 OIDs candidatos; idempotente (skip vía `import_done.txt`, reanudable); 200/240 = éxito. Monitor integrado cada 60s con guardas BLOQUEANTES (dual>0 | acad>baseline+5 | disk>=90% → `pkill` imports).
+- Validación end-to-end del mecanismo (canary dirigido antes del masivo): Zonia 01119359 faculty→**staff** ✓, Community Manager 72738765 faculty→**staff** ✓ (D7 reemplaza structural, dual sigue 0).
 
 
 El cambio de archetype estructural es **seguro** respecto a dual-structural: el Bloque D7 es range-authoritative (fix PM16, OIDs `c93083ca`/`6460facf`/`3037fbd2`/`87552943` en `<set>`), REEMPLAZA el structural en vez de acumular.
