@@ -2574,3 +2574,140 @@ purgable aún**.
 3. **AREA-97 (Colegio Unión) dual-parent** [VICERRECTORADO-ACADEMICO(Oracle ID_PARENT=5) + OU-CAMPUS-LIMA].
    Cosmético, no afecta scope de usuarios. Quitar el parent académico sería revertido por org-recon
    (deriva de ID_PARENT). Requiere overlay de modelado partner-institution en org.xml (item de diseño).
+
+---
+
+## PM18 — CIERRE: los 3 residuales finales (2026-05-30) ✅
+
+Cierra los 3 residuales de PM17. Skills: midpoint-best-practices §1.3 (IIA por atributo),
+§2.1 (Reality-vs-Policy), §3.3 (max 1 structural), §4.5 (pipeline focal: object template tras
+inbounds). iga-canonical-standards §1.3 (IIA por atributo, no por evento), §10.2 (partner-institution
+ancla al campus). Oracle SOLO SELECT. Salvaguarda académica BLOQUEANTE verificada en cada paso.
+
+### RESIDUAL 1 — endurecimiento de vigencia de liveAffiliationWorker (sistémico)
+
+**Causa raíz:** el inbound `archetype-to-liveAffiliationWorker` (trabajadores.xml) solo neutralizaba
+`ESTADO='I'`. Filas 7124 con flag `ESTADO='A'` pero `FEC_TERMINO` vencido (contrato terminado, flag
+nunca volteado a 'I') pasaban el WHERE de población (la condición 'A' no chequea FEC_TERMINO) →
+liveAffiliationWorker=staff/faculty → Bloque L mantenía `active`. Caso testigo DNI 73970305 (7124
+venció 2020-06-27; contratos vivos solo ent=17611 Pastor distrital, denominacional).
+
+**Decisión canónica de ubicación del predicado:** en el INBOUND (único escritor single-source de
+`liveAffiliationWorker`), NO en el WHERE de población. Razones: (a) la vigencia de la afiliación
+laboral es semántica del atributo (IIA por atributo, iga-canonical §1.3); (b) preserva intactos los
+jubilados grace 730d (`ESTADO='I'` ya retorna null aquí); (c) demográficos/área siguen leyéndose;
+(d) NO dispara `deleted→inactivateFocus`. Coherente con el resolutor de área 'ca' (que ya exige
+`FEC_TERMINO IS NULL OR >= SYSDATE`). Commit del fix: inbound retorna null si la fila ganadora 7124
+tiene FEC_TERMINO no-nulo y anterior a hoy (parse robusto `substring(0,10)` del formato
+'YYYY-MM-DD HH:MM:SS.f').
+
+**Verificación Oracle (SOLO SELECT):** 170 DNIs ganadores RN=1 ent=7124 con `ESTADO='A'` + FEC_TERMINO
+vencido (sin otra fila 7124 viva) = falsos-activos. De ellos 69 con afiliación académica
+(egresado/alumno → salvaguardados) + 101 sin académico.
+
+**Despliegue:** commit+push+pull PROD+PUT (HTTP 201)+test connection (success). Backup resource
+`/tmp/bkp_trabajadores_pre_residual1_*.xml` + users `bkp_residual1_users_*.psv.gz` (166).
+
+**Materialización:** import single-shadow sincrónico de los 171 shadows Trabajadores ganadores
+(mecanismo: re-corre inbound leyendo FEC_TERMINO cacheado). **171/171 OK, 0 fails.** Resultado:
+- **128 falsos-activos no-académicos → archived** (Bloque L deriva lifecycle sin afiliación viva).
+- **38 con afiliación académica → siguen active** como alum/student (los 38 verificados: 38/38 con
+  archetype académico, 0 sin académico → discriminación perfecta).
+- Canaries validados: 73970305 (W staff→None, archived, clase C), 10151219 + 18022697 (W staff/
+  faculty→None pero A=alum → active alum, sin dual-structural: structural alumni + aux AuxAff-Alum).
+- **SALVAGUARDA BLOQUEANTE:** archived + archetype académico = **0** (global). Confirmado también:
+  archived con liveAffiliationAlum/Student = **0**.
+
+**Pastor 73970305 + AREA-7795:** el pastor quedó archived durable (su único contrato vivo es
+denominacional ent=17611, fuera de scope). AREA-7795 "Pastor distrital" (ent=17611, denominacional)
+quedó con 0 active y 0 hijos → backup `bkp_area7795_*.b64` + DELETE con guard "0 active" → 204.
+**m_org 200→199.** Última denominacional con active eliminada.
+
+### RESIDUAL 2 — usuario 70092820 (rosa.benita.cardenas): active sin structural archetype
+
+**Diagnóstico:** el user tenía `liveAffiliationWorker=staff` + `liveAffiliationAlum=alum` +
+`liveAffiliationStudent=student` + `primaryAffiliation=staff` pero **0 assignments y 0 archetypeRef**,
+active. Recompute (PATCH reconcile) NO materializaba archetype.
+
+**Causa raíz (sistémica, clase bootstrap-deadlock):** `system-configuration.xml` solo declara
+`defaultObjectPolicyConfiguration` para `c:OrgType`. NO hay object template default para `c:UserType`
+sin archetype — los templates UserType se enlazan PER-ARCHETYPE vía `<archetypePolicy>
+<objectTemplateRef>` de cada archetype. Por tanto un UserType SIN structural archetype no recibe
+NINGÚN object template → J3/D7/L nunca corren → deadlock (no archetype → no template → D7 no asigna
+archetype). Mismo patrón documentado en MEMORY.md (campaña bootstrap previa).
+
+**Resolución canónica:** bootstrap-assign del structural archetype directo (NO hand-patch de datos):
+PATCH add assignment archetype-user-student (`3037fbd2`, dentro del range de D7) → el template
+per-archetype se engancha → J3 recalcula primaryAffiliation desde live items (staff→**student**, el
+worker estaba vencido y mi fix lo había nulificado) → D7 toma autoridad → **archetypeRef=[student
+structural + AuxAff-Student], 4 assignments (student + aux + 2 birthright roles), active.** RESUELTO.
+
+**Barrido de la clase:** active sin archetype tras los fixes = **0** (70092820 era el único). archived
+sin archetype = 130 (esperado: leavers con structural removido). NULL lifecycle = 98 (residuos
+técnicos sin fuente Oracle, preexistentes).
+
+**Recomendación (NO aplicada — requiere decisión):** para prevenir recurrencia del deadlock se podría
+añadir un `defaultObjectPolicyConfiguration` para `c:UserType` apuntando al base template, o un
+mecanismo bootstrap auto-assign. NO se aplicó: blast radius 49K users y riesgo de doble-aplicación
+de mappings base (el binding per-archetype es el patrón canónico Evolveum). La población del hoyo
+es 0; queda como item de diseño.
+
+### RESIDUAL 3 — AREA-97/695/8208 (partner-institutions) dual-parent
+
+**Diagnóstico:** AREA-97 (Colegio Unión) colgaba de [VICERRECTORADO-ACADEMICO (Oracle ID_PARENT=5,
+prov `id-parent-to-parentOrg`) + OU-CAMPUS-LIMA (manual, sin prov)]. Canónicamente (iga-canonical
+§10.2) un partner-institution se ancla al CAMPUS, no a la jerarquía académica. Igual 695 (CAT,
+ID_PARENT=430) y 8208 (CU-Tarapoto, ID_PARENT=430).
+
+**Overlay en org.xml:** el inbound `id-parent-to-parentOrg` (strong) se amplió con sources extra
+`ID_AREA`+`ID_SEDE`. Para ID_AREA in {97,695,8208} el filtro busca el campus por ID_SEDE
+(SEDE-LIMA/JULIACA/TARAPOTO, identifier del campus) en vez de `identifier=ID_PARENT`. Resto de áreas:
+comportamiento idéntico. Condición ampliada para que partner cuelgue del campus aunque tenga
+ID_PARENT. 97→SEDE-LIMA(1), 695→SEDE-JULIACA(2), 8208→SEDE-TARAPOTO(3).
+
+**Despliegue:** commit+push+pull+PUT (201)+test (success). Backup `bkp_org_pre_residual3_*.xml`.
+
+**Materialización:** re-import de los 3 shadows org añadió el campus pero el inbound
+`assignmentTargetSearch` NO es autoritativo sobre su range (a diferencia del D7 del template, que sí
+tiene `<target><set><condition>`) → el parent académico stale persistía. Corrección one-time: DELETE
+quirúrgico de los assignments stale (AREA-97 cid 21=VR-Académico; AREA-695/8208 cid 27=AREA-430) vía
+PATCH (204×3). Re-import de confirmación: el overlay HOLDS (no re-añade el académico). Resultado:
+**AREA-97→OU-CAMPUS-LIMA, AREA-695→OU-CAMPUS-JULIACA, AREA-8208→OU-CAMPUS-TARAPOTO — 1 parent c/u.**
+
+### EXTRA — duplicado active residual (data-quality Oracle): DNI 62377660
+
+El cierre exigía 0 duplicados active. Hallado 1 grupo: DNI 62377660 con dos focos active —
+`202320143` (student) + `623777660` (worker). Causa: Oracle tiene COD_APS=623777660 con DOS filas
+VW_APS_EMPLEADO, una con NUM_DOCUMENTO típica '623777660' (typo, = COD_APS) y otra con la correcta
+'62377660'; el shadow worker se creó como foco aparte antes de correlación robusta por lambDocNum.
+Persona dual student+staff que debe ser UN foco. Resolución: backup `bkp_dup_62377660_*.b64` → DELETE
+del foco worker duplicado → re-import del shadow worker → correlación por lambDocNum (ambos 62377660)
+lo enlaza al foco student survivor (5 shadows: worker+student+LDAP+Koha). primaryAffiliation=student,
+active, 0 duplicados. (liveAffiliationWorker quedó transitoriamente None por shadow worker con attrs
+vacíos post-merge; auto-sanable en próxima recon Trabajadores; no afecta lifecycle ni structural —
+student gana prioridad). **dup_active_dni_groups global = 0.**
+
+### CIERRE TOTAL — invariantes (todas verdes)
+
+- SALVAGUARDA archived+archetype académico = **0**; archived con liveAffiliationAlum/Student = **0**.
+- active sin archetype (in-scope) = **0**. dual-structural = **0**. duplicados active = **0**.
+- AREA-* fuera del set canónico (133 in-scope) = **0**. active en orgs no-in-scope = **0**.
+  (AREA-8266 fue falso-positivo por truncamiento de LISTAGG 4000c; es ent=7124 in-scope real.)
+- **m_org 199** (1 institution + 3 campus + 5 faculty + 5 partner-institution + 13 governance +
+  33 academic-unit + 116 department + 23 Academic-Program; 0 sin archetype).
+- **m_user 49321**: active 41213, archived 7312, draft 698, NULL 98.
+- Matriz structural: alumni 27033 active + 698 draft (0 archived); student 10467 active (0 archived);
+  staff 1910 active / 7168 archived; faculty 1801 active / 14 archived.
+- Validaciones INTACTAS: Flores 41970870→AREA-133 active; DTI 10867326→DTI active; reubicados
+  76575561→AREA-789, 48636923→AREA-102, 72783226→AREA-8232 (3/3 active).
+- Partner-institutions con parent=campus único (97/695/8208). AREA-7795 purgada.
+- Disco 86% (bajo guard 90%). 0 daño, todo commiteado.
+
+### IRREDUCIBLES (no bloqueantes, documentados)
+1. 98 users lifecycleState=NULL sin archetype: residuos técnicos sin fuente Oracle (system users),
+   preexistentes. No in-scope académico/laboral.
+2. Bootstrap-deadlock estructural (no hay object template default para c:UserType): población del
+   hoyo = 0 hoy, pero un user que pierda todo archetype quedaría en limbo. Recomendación de diseño
+   (default UserType template o bootstrap auto-assign) pendiente de decisión del usuario.
+3. liveAffiliationWorker transitoriamente None en el survivor 62377660 (shadow worker attrs vacíos
+   post-merge) — auto-sanable en próxima recon Trabajadores.
