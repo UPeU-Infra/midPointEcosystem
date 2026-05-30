@@ -1989,3 +1989,51 @@ Pendiente desde PM11/PM12; PM16 lo confirma como el bloqueo crítico. Opciones c
    solo-denominacionales → archived; académicos → active.
 4. **Recompute trabajadores in-scope + purga orgs** (Paso C). 5. **Cierre + verificación** (Paso E).
 6. **28 DNIs diacríticos** (Paso F): normalización NFC+título de nombres → reintento (SciBack #56).
+
+---
+
+# SESIÓN PM17 (2026-05-30 ~06:20 Lima) — FIX TEMPLATE D7 (target/set range autoritativo) APLICADO Y VALIDADO. RAÍZ del dual-structural RESUELTA. Canary real-flow 3/3 + reproducción del escenario recon: 0 dual reintroducido.
+
+> Skills: best-practices §3.3 (max 1 structural), §3.4 (archetype direct assignment), §4.2 (strength),
+> §4.5/§4.6 (template tras inbounds, wave ordering); docs.evolveum mapping range ("the mapping is
+> authoritative for all values in its range"). Oracle SOLO LECTURA. Backup template `bkp_template_D7_pre_20260530_0614.xml`.
+
+## PASO 1 — FIX D7 autoritativo (REEMPLAZA, no acumula) — COMPLETO
+
+### Diseño del fix (commit `<este commit>`)
+- **Causa raíz confirmada:** `assignmentTargetSearch` solo gestiona (add/remove) los assignments con SU
+  provenance. Un structural stale de otra fuente (J3 cambia primAff alum→staff en recon → alumni queda
+  persistido de la operación previa) NO se removía → dual en cada recompute masivo.
+- **Solución canónica:** `<target><set><condition>` en D7 que declara el mapping AUTORITATIVO sobre los 4
+  OIDs archetype-user structural derivables de afiliación (faculty `c93083ca`, staff `6460facf`,
+  student `3037fbd2`, alum `87552943`). Binding del valor evaluado = `input` (docs.evolveum). Con el set,
+  D7 produce 1 (el correcto) y MidPoint REMUEVE cualquier otro structural-user del conjunto que esté
+  presente y D7 no produzca. researcher/visitor/contractor/partner/service-account FUERA del set (intactos).
+- Embebe en el template la lógica del delta-atómico del task de saneo PM14/15 → recon ya no crea dual.
+
+### Despliegue
+- xmllint OK (escapado `<range>` literal del comentario que rompía el parse). Commit+push+git pull PROD.
+- PUT template OID `855caaca-68c4-4f7f-8ff8-b4e35dd7d390` `?options=overwrite` → HTTP 201.
+
+### CANARY BLOQUEANTE — 3 naturales + test del flujo REAL
+- Mecanismo de recompute por REST: `PATCH /users/{oid}?options=reconcile` (dispara clockwork completo).
+  `/recompute` y `rpc/executeScript` daban 404/400 en 4.10 — descartados.
+- **3 canarios naturales** (egresado `201920223`, trabajador `01794074`, cesado `02547610`): tras recompute,
+  exactamente **1 structural correcto c/u**, lifecycle coherente (alumni-active / staff-active / staff-archived).
+- **HALLAZGO clave (límite del range):** inyectar dual YA PERSISTIDO (alumni+staff via raw) y recomputar →
+  **HTTP 500 PolicyViolation "only a single structural archetype supported"**. La guardia de consistencia
+  single-structural de 4.10 corre ANTES del object template → aborta antes de que D7 aplique el delete del set.
+  ⇒ **el range NO sanea un dual preexistente persistido.**
+- **PERO el flujo REAL del recon NUNCA persiste dual** — lo crea-y-barre en el MISMO clockwork. Test fiel:
+  canary A (alumni persistido) + inyección `liveAffiliationWorker=staff` (raw, simula inbound del recon) +
+  recompute reconcile → J3 deriva primAff=staff → D7 produce staff Y el set barre alumni **atómicamente** →
+  **resultado 1 structural staff, active, 0 dual.** Ida-y-vuelta (staff→alum al limpiar el item) también 1.
+- **CONCLUSIÓN:** el recon Trabajadores/Estudiantes/Egresados (que cambia afiliación → J3 → D7 en un clockwork)
+  ya NO reintroduce dual. Canary real-flow VERDE. ✅ Fix robusto para los Pasos 2-5.
+
+### Estado global tras PASO 1 (sin cambios de datos masivos)
+- **0 dual-structural.** lifecycle: active 44,105 / archived 4,424 / draft 694 / NULL 95. Disco 81%. Healthy.
+- Canary A restaurado a su estado real (active/alumni). Backup del template pre-fix conservado en PROD.
+
+## PRÓXIMO — PASO 2: recons académicos COMPLETOS (Egresados+Estudiantes) para materializar liveAffiliation
+en toda la población (983 quarantine + 90/36 wave-ordering) ANTES del re-recon Trabajadores (PASO 4).
