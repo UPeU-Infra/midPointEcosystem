@@ -1063,133 +1063,14 @@ return ActivationStatusType.ENABLED</code>
     </item>
 
     <!-- ============================================================
-         BLOQUE H — BAJA DEFINITIVA: active → archived (ISO 24760 §6.3)
-         Archiva identidades de staff/faculty 180 días post-terminación.
-         Implementa el ciclo completo ISO 24760: draft→active→suspended→archived.
-         Cuando lifecycleState=archived: todos los inducements se desactivan
-         y las cuentas downstream se eliminan en el siguiente recompute.
-         Semančík cap.14: archived = baja definitiva, datos retenidos para auditoría.
-         IIA del terminationDate: ELISEO.VW_APS_EMPLEADO (inbound LAMB Trabajadores).
-         primaryAffiliation evaluado: staff | faculty (minúsculas, como viene de LAMB).
+         BLOQUES H y H2 — ELIMINADOS 2026-05-29.
+         Su logica de archivado (active->archived por cese / por perdida total
+         de afiliacion) fue absorbida por el Bloque L (derivacion canonica unica
+         de lifecycleState). Mantener H/H2 aqui, aun como deprecated, hacia que el
+         motor 4.10 los siguiera evaluando y compitiera con L sobre lifecycleState
+         (re-archivaba egresados con alum vivo). Version previa con H/H2 conservada
+         en backup pre-bloqueL y en historia git. Rollback = restaurar ese objeto.
          ============================================================ -->
-    <item>
-        <ref>lifecycleState</ref>
-        <mapping>
-            <name>auto-archive-after-termination-grace-period</name>
-            <description>NEUTRALIZADO 2026-05-29 (lifecycleState=deprecated → MidPoint NO lo evalúa).
-Su lógica de archive staff/faculty tras grace period fue absorbida por el Bloque L
-(derivación canónica única). Se conserva el cuerpo para trazabilidad/rollback. El grace
-period ya NO vive en el template: la temporalidad post-cese la gobierna el token en
-sciback:affiliations (searchScript del worker, FEC_TERMINO>=SYSDATE-730).
-[original] Transición active→archived para staff/faculty con grace period diferenciado por motivoCese.</description>
-            <lifecycleState>deprecated</lifecycleState>
-            <strength>strong</strength>
-            <source>
-                <path>extension/sciback:primaryAffiliation</path>
-            </source>
-            <source>
-                <path>extension/sciback:terminationDate</path>
-            </source>
-            <source>
-                <name>motivoCese</name>
-                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:motivoCese</path>
-            </source>
-            <condition>
-                <script>
-                    <code>import java.time.LocalDate; import java.time.temporal.ChronoUnit;
-def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
-def termStr = terminationDate != null ? basic.stringify(terminationDate).trim() : '';
-def curState = focus?.lifecycleState != null ? focus.lifecycleState.toString().trim() : '';
-def mc = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : '';
-
-// jubilados: nunca archivar via H (acceso Koha JUBILADO permanente via Bloque R)
-if (mc == 'jubilacion') return false;
-
-def eligible = ['staff', 'faculty'].contains(aff) &amp;&amp; termStr != '' &amp;&amp; curState != 'archived';
-if (!eligible) return false;
-
-def graceDays;
-switch (mc) {
-    case 'fallecimiento':    graceDays = 0;  break;
-    case 'despido':          graceDays = 7;  break;
-    case 'termino_contrato': graceDays = 0;  break;
-    case 'renuncia':         graceDays = 30; break;
-    case 'mutuo_disenso':    graceDays = 30; break;
-    default:                 graceDays = 30; break; // null/otro: conservador
-}
-try {
-    return ChronoUnit.DAYS.between(LocalDate.parse(termStr.substring(0, 10)), LocalDate.now()) > graceDays;
-} catch (Exception e) {
-    log.warn('BloqueH: terminationDate no parseable {} en {}: {}', termStr, focus?.name, e.message);
-    return false;
-}</code>
-                </script>
-            </condition>
-            <expression>
-                <value>archived</value>
-            </expression>
-        </mapping>
-    </item>
-
-    <!-- ============================================================
-         BLOQUE H2 — BAJA DEFINITIVA POR PÉRDIDA TOTAL DE AFILIACIÓN
-         (GOBERNANZA 2026-05-29, opción 1b aprobada)
-
-         Archiva durablemente al ex-trabajador que perdió TODA afiliación viva
-         (affiliations vacío → primaryAffiliation null) pero TUVO empleo
-         (terminationDate presente). Caso: trabajador denominacional sin contrato
-         UPeU (ent≠7124) cuyo shadow Trabajador se desproyectó (reaction deleted→unlink)
-         y que NO es egresado/estudiante UPeU.
-
-         Distinción con Bloque H (auto-archive-after-termination-grace-period):
-           - H archiva staff/faculty VIGENTES tras grace period (leaver normal, con afiliación).
-           - H2 archiva al que YA NO tiene NINGUNA afiliación (perdió la fuente laboral y no
-             tiene otra IIA). Sin afiliación, H nunca dispara (exige staff/faculty).
-
-         Salvaguarda académica (BLOQUEANTE): si el usuario conserva alum/student/affiliate,
-         primaryAffiliation tiene ese valor → la condición es false → NO se archiva (queda active
-         por Bloque F). El ex-trabajador denominacional que es egresado UPeU permanece como alumni.
-
-         NO archiva drafts puros (altas incompletas sin historia laboral): exige terminationDate
-         presente, que solo lo tienen quienes tuvieron contrato.
-
-         strong + sin source lifecycleState (lee focus?.lifecycleState en condición) para evitar
-         dependencia circular — mismo patrón que Bloque H (FIX DT-4).
-         ISO 24760 §6.3: active/suspended → archived (baja definitiva, datos retenidos).
-         ============================================================ -->
-    <item>
-        <ref>lifecycleState</ref>
-        <mapping>
-            <name>H2-archive-on-total-affiliation-loss</name>
-            <description>NEUTRALIZADO 2026-05-29 (lifecycleState=deprecated → MidPoint NO lo evalúa).
-Su caso (ex-trabajador sin ninguna afiliación viva pero con terminationDate → archived) está
-ahora cubierto por el Bloque L rama (2). Se conserva para trazabilidad/rollback.
-[original] Archiva al ex-trabajador sin ninguna afiliación viva pero con terminationDate.</description>
-            <lifecycleState>deprecated</lifecycleState>
-            <strength>strong</strength>
-            <source>
-                <path>extension/sciback:primaryAffiliation</path>
-            </source>
-            <source>
-                <path>extension/sciback:terminationDate</path>
-            </source>
-            <condition>
-                <script>
-                    <code>def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
-def termStr = terminationDate != null ? basic.stringify(terminationDate).trim() : '';
-def curState = focus?.lifecycleState != null ? focus.lifecycleState.toString().trim() : '';
-def validAff = ['student','faculty','staff','alum','affiliate'];
-// Salvaguarda BLOQUEANTE: con cualquier afiliación válida NO se archiva.
-if (validAff.contains(aff)) return false;
-// Solo archivar a quien tuvo empleo (terminationDate) y ya no está archivado.
-return termStr != '' &amp;&amp; curState != 'archived';</code>
-                </script>
-            </condition>
-            <expression>
-                <value>archived</value>
-            </expression>
-        </mapping>
-    </item>
 
     <!-- ============================================================
          VALIDACIONES DE FORMATO (strength: weak / log-warn)
