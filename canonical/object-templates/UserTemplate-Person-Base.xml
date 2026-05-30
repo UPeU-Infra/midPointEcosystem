@@ -918,8 +918,11 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
               (§1.2 archived≠destroyed: un afiliado vivo JAMÁS se archiva)
            2) liveAff = ∅ y terminationDate presente (tuvo empleo) → 'archived'
               (leaver real: ex-trabajador denominacional/solo-laboral sin otra IIA)
-           3) liveAff = ∅ y sin terminationDate (alta incompleta, sin historia) → 'draft'
-              (no archivar drafts puros — aún no son leavers)
+           H3) liveAff = ∅, sin terminationDate, PERO con structural employee/faculty asignado
+               (evidencia laboral previa, p.ej. denominacional fuera-de-scope) → 'archived'
+               (§1.2 ISO 24760: tuvo identidad laboral establecida → archived, no draft)
+           3) liveAff = ∅, sin terminationDate y sin evidencia laboral (alta nunca-activada) → 'draft'
+              (solo perfiles genuinamente incompletos — aún no son leavers)
 
          SALVAGUARDA ACADÉMICA (BLOQUEANTE): un egresado/estudiante con affiliations
          conteniendo alum/student SIEMPRE cae en (1) → active. Un solo-denominacional
@@ -966,10 +969,14 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
                 <name>terminationDate</name>
                 <path>extension/sciback:terminationDate</path>
             </source>
+            <source>
+                <name>assignmentSrc</name>
+                <path>assignment</path>
+            </source>
             <expression>
                 <script>
                     <code>
-// BLOQUE L — state machine canónica de lifecycleState (2026-05-29).
+// BLOQUE L — state machine canónica de lifecycleState (2026-05-29; rama archived H3 2026-05-30).
 // Señal de afiliación VIVA = affiliations (multi-valor, post-inbound). NO lee lifecycleState
 // (sin dependencia circular). NO usa grace periods en el template: la temporalidad post-cese
 // vive en la IIA (searchScript del worker mantiene el token durante el período de gracia).
@@ -1001,14 +1008,43 @@ if (!liveAff.isEmpty()) {
     return 'draft'
 }
 
+// === Sin afiliación viva ===
+// Detectar EVIDENCIA LABORAL PREVIA: structural archetype employee-staff/faculty asignado
+// (señal persistente de que la persona tuvo/tiene vínculo laboral, aunque LAMB no traiga
+//  terminationDate — caso típico de denominacional fuera de scope o ex-empleado sin fecha de cese).
+// OIDs structural employee: staff=6460facf-3abf-4851-966e-0c95aa1a6c46 ; faculty=c93083ca-f4c5-4704-acf4-d53b97c9556e
+def EMPLOYEE_STRUCT = ['6460facf-3abf-4851-966e-0c95aa1a6c46','c93083ca-f4c5-4704-acf4-d53b97c9556e'] as Set;
+def hasEmploymentEvidence = false;
+try {
+    def asgs = assignmentSrc;
+    if (asgs != null) {
+        def asgList = (asgs instanceof List) ? asgs : [asgs];
+        hasEmploymentEvidence = asgList.any { a ->
+            def tr = a?.targetRef;
+            tr != null &amp;&amp; (tr.oid in EMPLOYEE_STRUCT)
+        }
+    }
+} catch (Exception e) { log.warn('Bloque L: error leyendo assignment en {}: {}', focus?.name, e.message) }
+
 // (2) Sin afiliación viva, pero tuvo empleo (terminationDate) → leaver real → archived.
 if (termStr != '') {
     log.info('Bloque L: {} sin afiliacion viva + con terminationDate {} -> archived (leaver)', focus?.name, termStr);
     return 'archived'
 }
 
-// (3) Sin afiliación viva y sin historia laboral → alta incompleta → draft (no archivar).
-log.info('Bloque L: {} sin afiliacion viva y sin terminationDate -> draft (alta incompleta)', focus?.name);
+// (H3, 2026-05-30) Sin afiliación viva, sin terminationDate, PERO con structural employee/faculty
+// (evidencia laboral previa) → ex-empleado denominacional/fuera-de-scope → archived.
+// §1.2 ISO 24760: tuvo identidad laboral establecida; al perder toda afiliación viva pasa a archived,
+// NO a draft (draft = alta nunca-activada). Salvaguarda académica intacta: egresados/estudiantes
+// tienen liveAffiliationAlum/Student y caen en (1), nunca llegan aquí.
+if (hasEmploymentEvidence) {
+    log.info('Bloque L: {} sin afiliacion viva + sin terminationDate + structural employee/faculty (evidencia laboral) -> archived (H3)', focus?.name);
+    return 'archived'
+}
+
+// (3) Sin afiliación viva, sin historia laboral, sin evidencia de empleo → perfil genuinamente
+// incompleto/nunca-activo → draft (no archivar).
+log.info('Bloque L: {} sin afiliacion viva, sin terminationDate, sin evidencia laboral -> draft (alta incompleta)', focus?.name);
 return 'draft'
                     </code>
                 </script>
