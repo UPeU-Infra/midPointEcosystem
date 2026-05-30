@@ -2485,3 +2485,92 @@ Oracle confirma 73970305 SIN contrato 7124 vivo (7124 venció 2020/2021; contrat
 "Pastor distrital"). Es un pastor denominacional, NO trabajador UPeU → falso-activo employee-staff
 (shadow stale). Caso de democión de archetype no-UPeU + salvaguarda alumni → pase deliberado aparte,
 NO se actuó unilateralmente en PM16. Para confirmar con usuario.
+
+---
+
+## PM17 — Barrido COMPLETO áreas denominacionales (TODAS, no solo 7795) + purga (2026-05-30) ✅
+
+Cierra el fleco "barrer TODAS las denominacionales con active". Skills: midpoint-best-practices
+§1.3 (IIA por atributo), §2.1 (Reality-vs-Policy: org membership = policy derivada de afiliación
+viva), §4.4/§4.5 (correlación/lifecycle). iga-canonical-standards §9/§10.1 (ISO 24760 leaver;
+"leaver de empleo ≠ leaver de identidad").
+
+### Identificación canónica del conjunto denominacional
+Set in-scope autoritativo = el MISMO CONNECT BY del resource `org.xml` (ent=7124 conexo desde raíz,
+MINUS AGTU subtree 8196) ejecutado en Oracle (SOLO SELECT): **133 áreas**. Toda org `AREA-{ID}` en
+MidPoint cuyo `identifier` NO está en ese set = denominacional/residuo.
+- m_org=259 → AREA-* orgs=147 (87 in-scope canónicas + **60 denominacionales**) + 112 named (todas
+  archetipadas/curadas, in-scope).
+
+### PASO 1 — Clasificación A/B/C de los active colgando de las 60 denominacionales
+258 usuarios active enlazados (parentOrgRef OR costCenter stale) a denom orgs. Clasificados vía Oracle:
+- **Clase A (contrato 7124 vivo `ESTADO='A' AND (FEC_TERMINO IS NULL OR FEC_TERMINO>=SYSDATE)`): 0.**
+  Ninguno tiene empleo UPeU vivo.
+- **Clase B (sin 7124 vivo, CON afiliación académica viva alum/student): 257.** 252 egresados +
+  resto students (shadow Egresados/Estudiantes presente, archetype académico materializado).
+- **Clase C (sin 7124 vivo, SIN afiliación académica): 1** = DNI **73970305** (pastor distrital ent
+  17611; 7124 venció 2020; único con SOLO shadow Trabajadores, sin shadow/archetype académico).
+
+Distribución por archetype de los 258: 242 alumni + 15 student + 1 employee-staff. Por área: ver
+conteos (mayores: 7790=42, 7804=35, 7795=26[25B+1C], 4438=23, 4584=10, 787=8, 4583/4535=7).
+
+### PASO 2 — Materialización (recompute acotado `PATCH ?options=reconcile`)
+Backup `/home/juansanchez/bkp_denom_users_20260530_144622.sql.gz` (258 fullobject).
+Mecanismo (PM21 Bloque E guard): `PATCH /users/{oid}?options=reconcile` con replace `description` →
+clockwork completo → Bloque E remueve worker-area membership cuando `liveAffiliationWorker` ausente,
+**conservando archetype/lifecycle académico**.
+- Canary 48377810 (AREA-7790): antes parentOrgRef={EP-TEO,AREA-7790} → después {EP-TEO}; active;
+  alumni intacto. ✓
+- Batch 256 restantes + canary = **257/257 ok, 0 fails**.
+- **SALVAGUARDA ACADÉMICA (BLOQUEANTE) INTACTA:** 257/257 clase B siguen **active**; 0 archivados;
+  **0 academicos archived** (verificación global: archived con archetype alum/student = **0**).
+- Clase B colgando de denom tras batch: **0** (cae a 1 = solo 73970305 clase C).
+
+### Clase C — DNI 73970305 (residual de DECISIÓN, no resuelto unilateralmente)
+- PATCH `lifecycleState=archived` → **revertido por Bloque L** (template deriva lifecycle desde
+  `liveAffiliationWorker`, autoritativo). No durable por PATCH directo.
+- Causa raíz: la fila Oracle ent=7124 `ESTADO='A'` con `FEC_TERMINO=2020-06-27` (terminada hace 6
+  años, nunca volteada a 'I') **SÍ pasa el filtro de inclusión** del resource trabajadores
+  (`ESTADO='A' OR (ESTADO='I' AND FEC_TERMINO>=SYSDATE-730)` — la condición 'A' no chequea
+  FEC_TERMINO). → liveAffiliationWorker se puebla → lifecycle=active.
+- **Población sistémica del patrón:** 363 DNIs "ESTADO='A' + FEC_TERMINO vencido + sin fila 7124
+  viva". En MidPoint: **148 active no-academic (falsos activos como 73970305)** + 17 active con
+  academic (salvaguardados) + 18 ya archived. → **fix sistémico = endurecer la derivación
+  `liveAffiliationWorker` para exigir FEC_TERMINO no vencido (más allá de la gracia 730d de
+  jubilados 'I')**. Blast radius 148 users. NO aplicado: requiere decisión de política de gracia
+  del usuario (no conflar con la limpieza de orgs). Backup user `bkp_user_73970305_*.b64`.
+
+### PASO 3 — Purga de las orgs denominacionales vacías
+Las 60 denom orgs forman subárbol AISLADO (0 padres canónicos, 0 hijos canónicos → 0 riesgo de
+huérfanos). 59 quedaron con 0 active tras PASO 2; **AREA-7795 retiene 1 (73970305 clase C) → NO
+purgable aún**.
+- Backup `/home/juansanchez/bkp_denom_orgs_20260530_145538.sql.gz` (60 orgs).
+- DELETE leaf-first (orden topológico post-order) vía REST con **guard "0 active" inmediato antes de
+  cada DELETE**. 59/59 eliminadas (204). (bug stdin del while+ssh corregido con FD-3.)
+- **m_org 259 → 200.** AREA-7795 es la ÚNICA denom restante (bloqueada por 73970305).
+
+### PASO 4 — Verificación FINAL
+- AREA-* fuera del set canónico restantes: **1** (AREA-7795).
+- **dual-structural archetype global = 0.** Duplicados DNI active = **0.**
+- **Salvaguarda global: archived con archetype académico = 0.**
+- Árbol orgs 100% archetipado (0 sin archetype): 1 institution + 3 campus + 5 faculty + 5
+  partner-institution + 13 governance + 33 academic-unit + 117 department + 23 Academic-Program = **200**.
+- Usuarios intactos: Flores 41970870→AREA-133; DTI 10867326→DTI(18); 3 reubicados PM16
+  76575561→789, 48636923→102, 72783226→8232 — todos active, employee-staff, dual=0. ✓
+- **Caso 21835727 RESUELTO:** active alumni, costCenter 92 = EP Contabilidad (canónica, padre Fac.
+  Empresariales 12). Correctamente ubicado, sin acción.
+- m_user 49322 (sin pérdida). Disco 86% estable.
+
+### RESIDUALES (requieren DECISIÓN del usuario)
+1. **AREA-7795 + DNI 73970305** (clase C). Para purgar la org hace falta archivar durablemente al
+   pastor → requiere el **fix sistémico liveAffiliationWorker (148 users)**. Decisión: ¿endurecer la
+   derivación de empleo vivo para exigir FEC_TERMINO no vencido (respetando gracia 730d solo para
+   ESTADO='I')? Aplica a 148 falsos-activos no-académicos; 17 con academic quedan active (salvaguarda).
+2. **Usuario 70092820** (rosa.benita.cardenas): active SIN archetype pese a tener shadows académicos
+   (Egresados/Estudiantes/Grados) y ext affiliations=[staff,alum,student]. Recompute no materializa
+   archetype → edge de resolución structural de D7 (primaryAffiliation=staff sin contrato 7124 vivo
+   deja el structural sin resolver). 1 user, pre-existente, fuera de scope denom. No hand-patched
+   para no enmascarar el bug del template.
+3. **AREA-97 (Colegio Unión) dual-parent** [VICERRECTORADO-ACADEMICO(Oracle ID_PARENT=5) + OU-CAMPUS-LIMA].
+   Cosmético, no afecta scope de usuarios. Quitar el parent académico sería revertido por org-recon
+   (deriva de ID_PARENT). Requiere overlay de modelado partner-institution en org.xml (item de diseño).
