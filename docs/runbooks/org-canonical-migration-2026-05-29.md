@@ -1464,3 +1464,120 @@ metadata; la 2 y 3 son redesigns de template. NO avanzar a PASO 3-6 hasta canary
   `canary-*`/`trace*` **eliminadas** (0 remanentes). Disco 74%. Contenedores healthy.
 - **PASOS 3 (canary verde)–6 NO completados** — bloqueados por la no-materialización del zero-set; requiere
   decisión de diseño (3 opciones). Backups PM8 vigentes.
+
+---
+
+# SESIÓN PM11 (2026-05-30) — OPCIÓN 2 implementada y VALIDADA (item materializa). PASO 2 canary egresado-archived BLOQUEADO por dual-archetype assignment pre-existente (no por Opción 2). DETENIDO.
+
+> Skills consultadas: `midpoint-best-practices` §1.2 (lifecycle desde IIA), §1.3 (activation), §4.2
+> (strength relativista), §4.5 (pipeline inbound→focus policy: inbounds corren ANTES del template);
+> `iga-canonical-standards` §1.2 (lifecycle ISO 24760), §1.3 (una IIA por atributo). Opción 2 APROBADA
+> por Alberto. READ-ONLY + PUTs de config + 1 recon (suspendido/borrado) + 4 PATCH (3 no-op fallidos +
+> 1 exitoso benigno) + classLogger TRACE (revertido). 0 cambios destructivos de datos.
+
+## PASO 1 ✅ — Items per-IIA single-source implementados, desplegados y VALIDADOS
+
+### Schema v1.2 (OID `e800335c-...`, PUT 201)
+3 items single-valor nuevos en `UserExtensionType` (canonical/schemas/sciback-person-v1.0.xml):
+`liveAffiliationWorker` (faculty|staff), `liveAffiliationAlum` (alum), `liveAffiliationStudent` (student).
+Cada uno = **una IIA, single-source** (§1.3): su ÚNICO escritor es el inbound de su recurso.
+
+### Inbounds strong single-source (PUT 3 resources 201, Test Connection 15/15 ×3)
+- `egresados.xml`: `afiliacion-to-liveAffiliationAlum` (alum).
+- `trabajadores.xml`: `archetype-to-liveAffiliationWorker` (faculty/staff; ESTADO='I'→null).
+- `estudiantes.xml`: `school-name-to-liveAffiliationStudent` (student; vigencia = existencia del shadow,
+  searchScript ya filtra semestres 279/267).
+- **Neutralizados** los 3 inbounds `*-to-affiliations` multi-source (causa del zero-set PM10). La
+  autoridad de `affiliations` (eduPerson downstream) pasa al template (Bloque J3b, abajo).
+
+### Template (OID `855caaca-...`, PUT 201) — J3/K/L repuntados + J3b nuevo
+- **J3** (`primaryAffiliation`): source = los 3 items persistidos (unión por prioridad
+  faculty>staff>student>alum). Quitada la `<condition>` relativista (bloqueaba firing sin delta).
+- **Bloque K** (jubilados→alum): sources repuntados a los 3 items persistidos.
+- **Bloque L** (`lifecycleState`): `liveAff` = unión de los 3 items persistidos (NO el transitorio
+  `affiliations`). Salvaguarda académica intacta.
+- **Bloque J3b (NUEVO)**: deriva el multivalor eduPerson `affiliations` (downstream Koha/LDAP) como
+  unión de los items per-IIA → autoridad única de `affiliations` = template (Reality-vs-Policy §2.1).
+
+### CAUSA RAÍZ FINAL del zero-set RESUELTA: `evaluationPhases`, no el diseño
+- **Primer intento** (commit `2e31782`) copió `<evaluationPhases>beforeCorrelation+clockwork</...>` del
+  patrón PM10 → el TRACE mostró el MISMO zero-set:
+  `M(afiliacion-to-liveAffiliationAlum: liveAffiliationAlum = PVDeltaSetTriple(zero: [PPV(alum)]; plus: []; minus: []), strong)`
+  → item de extension vacío NO se materializaba.
+- **Diagnóstico decisivo:** `nivel-ensenanza-to-studyLevel` (egresados.xml) es ESTRUCTURALMENTE
+  IDÉNTICO (strong, single-source, target extension/sb, script string-or-null) y **SÍ materializó**
+  `studyLevel=Técnica` en el mismo recon. La diferencia: **NO tiene `evaluationPhases`** (default =
+  solo clockwork). `beforeCorrelation` evalúa el mapping en la fase de correlación (donde no hay focus
+  consolidado) → el valor cae en zero-set → no genera plus-delta hacia el item vacío.
+- **Fix** (commit `b790dc0`, PUT 3 resources 201): **quitado `<evaluationPhases>`** de los 3 inbounds
+  per-IIA → default clockwork-only → el inbound corre sobre el focus real → **ADD delta genuino**.
+
+### VALIDACIÓN POSITIVA de la Opción 2 (canary limpio `200920749`)
+- Canary `200920749` (OID `0000ad0a-...`): egresado **active, single structural archetype, solo shadow
+  Egresados vivo**. PATCH no-op `?options=reconcile` → **HTTP 204** → **`liveAffiliationAlum=alum` SE
+  MATERIALIZA** en el focus. J3 derivó `primaryAffiliation=alum`, Bloque L mantuvo `active`.
+- **Conclusión: la Opción 2 FUNCIONA.** El item per-IIA single-source materializa de forma fiable con
+  inbound strong + clockwork-only. El zero-set de PM10 era causado por `evaluationPhases=beforeCorrelation`,
+  no por el modelo multi-source ni por falta de metadata-provenance. (Esto también explica retroactivamente
+  por qué los inbounds de correlación `dni-to-taxId-urn` parecían "funcionar con zero-set": su valor ya
+  estaba persistido del onboarding; nunca dependieron del plus-delta.)
+
+## PASO 2 ❌ — Canary egresado-ARCHIVED (`48150895`) NO pasa a active: BLOQUEADO por dual-archetype assignment pre-existente (independiente de Opción 2)
+
+**Hallazgo bloqueante (datos duros):** cualquier `recompute`/`reconcile` del canary `48150895`
+(y de `201811293`, otro candidato) **aborta con PolicyViolation ANTES de materializar nada**:
+`Found [archetype-user-alumni, archetype-user-employee-staff] structural archetypes; only a single one is supported`.
+
+- En **repo** cada canary tiene UN solo structural archetype (`48150895`=employee-staff;
+  `201811293`=alumni) + su auxiliary `AuxAff-*`. El SEGUNDO structural lo genera el **Bloque D7 del
+  template** (`assignmentTargetSearch`→archetype por `primaryAffiliation`) cuando J3 recalcula
+  `primaryAffiliation`: para `48150895`, repo=staff pero al reconcile J3 ve `liveAffiliationAlum`
+  (egresado) y `liveAffiliationWorker` vacío (ESTADO='I') → primAff pasa a `alum` → D7 intenta asignar
+  `archetype-user-alumni`, que **se acumula** sobre el `employee-staff` de repo (D7 strong solo remueve
+  los assignments que ÉL produjo; el structural histórico no tiene su provenance) → 2 structural → PolicyViolation.
+- Es exactamente el cambio de afiliación DESEADO (staff→alum del ex-trabajador-egresado), pero el motor
+  4.10 **no reemplaza** el structural archetype viejo; los suma. Es un **caso de saneo dual-archetype
+  pre-existente** (mismo problema de PM6 caso `21835727` y de la consolidación de identidad PM7/merge PM8),
+  NO un defecto de la Opción 2.
+- **Magnitud:** en repo (`m_ref_archetype`) solo **1 usuario** tiene 2 structural materializados; pero el
+  conflicto se dispara EN RECOMPUTE para todo ex-trabajador-egresado cuya `primaryAffiliation` cambia de
+  staff/faculty→alum. **CERO** egresados-archived en PROD tienen un único shadow (todos entrelazan
+  Egresados+Trabajadores/Estudiantes) → el recompute masivo de survivors (PASO 3) chocaría en cadena.
+
+**Por la regla BLOQUEANTE del brief** (canary egresado-archived debe pasar a active; si falla → TRACE
+acotado + DETENER), **DETENGO**. La mecánica de Opción 2 está validada; el bloqueo es el saneo
+dual-archetype, que es trabajo aparte.
+
+### Decisión requerida de Alberto antes de PASO 3 (cómo permitir el cambio de structural archetype)
+El template debe poder **reemplazar** el structural archetype cuando `primaryAffiliation` cambia, sin
+acumular. Opciones canónicas (a validar con skills + dev antes de masivo):
+
+1. **D7 con `<set>` de provenance / o remover el structural viejo explícitamente.** Hacer que D7 sea
+   autoritativo sobre TODOS los `archetype-user-*` structural (no solo el que produce), de modo que al
+   cambiar primAff retire el anterior y ponga el nuevo. Requiere que D7 conozca el conjunto de structural
+   archetypes que gobierna. Riesgo: tocar el assignment de archetype es delicado (best-practices: archetype
+   solo por direct assignment).
+2. **Saneo previo de los structural archetypes históricos** (que no tienen provenance D7): recompute/
+   re-stamp para que queden gobernados por D7, o eliminación del structural stale en repo cuando contradice
+   la `primaryAffiliation` derivada. Alinea con la consolidación de identidad PM7/PM8 (un solo archetype
+   por persona según su afiliación viva de mayor prioridad). **PREFERIDA** — es el cierre natural del
+   trabajo de merge: tras consolidar identidad, consolidar archetype estructural.
+3. **policy de archetype: permitir transición** vía `assignmentRelation`/`archetypePolicy` que defina
+   el reemplazo. Más complejo; revisar soporte 4.10.
+
+**Recomendación:** opción 2 (saneo del structural stale) + verificar opción 1 en dev. NO avanzar a PASO 3
+(recompute survivors) ni PASO 4-6 hasta que un egresado-archived recompute LIMPIO a active (canary verde).
+La Opción 2 (items per-IIA) queda desplegada y correcta; es prerequisito cumplido, no el bloqueo.
+
+## Estado de PROD tras PM11
+- **Config desplegada (durable, canónica, VALIDADA):** schema v1.2 (+3 items per-IIA), template
+  (J3/K/L repuntados + J3b), 3 resources (inbounds per-IIA strong clockwork-only + `*-to-affiliations`
+  neutralizados). Commits `2e31782` + `b790dc0` pusheados + git pull PROD + PUT 5 objetos (201) + Test
+  Connection 15/15 ×3.
+- **Datos:** 0 destructivos. 1 cambio benigno: canary `200920749` quedó con `liveAffiliationAlum=alum`
+  + `description=canary3-opcion2` (active→active, es la materialización correcta de la Opción 2). Canaries
+  `48150895`/`201811293` intactos (PATCH abortó por PolicyViolation, sin cambios). TRACE logger revertido
+  (0 custom loggers). Tasks `canary-*` eliminadas (0 remanentes, incl. fantasma en m_task).
+- **Backups:** `bkp_pre_opcion2_20260530_0020.dump` (640M) + PM8/PM7 vigentes. Disco 76%, RAM 7.5G, contenedores healthy.
+- **PASOS 3 (recompute survivors)–6 NO ejecutados** — bloqueados por dual-archetype assignment en recompute
+  de ex-trabajadores-egresados. Requiere decisión de saneo de structural archetype (3 opciones).
