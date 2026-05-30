@@ -1086,3 +1086,89 @@ archivarían trabajadores cuya afiliación alum vive en un user gemelo separado.
 - 0 fallos en todos los lotes ejecutados.
 
 **Decisión:** conforme a la regla "si el merge NO completó → NO continuar". **PASOS B-E NO ejecutados.** Re-verificar cuando aparezca el marker COMPLETE: m_user final, 0 duplicados por DNI, caso `00074909` (un user name=DNI, afiliaciones consolidadas, dueño de shadows, gemelo eliminado), 3,524 ex-trabajadores-egresados con `alum` en el mismo user, luego recompute de survivors (`merged-2026-05-29`).
+
+---
+
+## SESIÓN PM8 (2026-05-29 ~22:50 Lima) — PASO A ✅ COMPLETO + PASO B DETENIDO por defecto de diseño (archived sticky)
+
+> Skills consultadas: `midpoint-best-practices` §1.2 (lifecycle desde IIA, sticky lifecycle), Cap.9 focus
+> processing (mappings strong al mismo target), §2.1 Reality vs Policy; `iga-canonical-standards` §1.2
+> (ISO 24760 lifecycle, archived retiene datos) y §1.3 (IIA). Solo READ-ONLY + 1 PATCH no-op idempotente.
+
+### PASO A — Verificación post-merge ✅ (TODO PASA)
+- **Merge COMPLETO:** marker `=== MERGE_ALL COMPLETE m_user=49318 ===` presente, proceso `3098258` DEAD,
+  todos los lotes `ok=N fail=0`. **m_user = 49,318** (cuadre exacto con el brief).
+- **0 duplicados por taxId** (ext key `72`, URN SCHAC) y **0 por nameorig**. (El único "dup" por
+  lambDocNum es el valor basura `0` en 2 users sin DNI real — no es persona.) Distribución name:
+  13,956 DNI(8) + 34,200 CODIGO_num + 1,158 num_otro + 4 no_num.
+- **Caso `00074909` ✅:** un solo user (OID `a7888b8e-...`), name=DNI, `primaryAffiliation=staff`,
+  `affiliations=["faculty","alum"]` consolidadas, dueño de sus shadows; gemelo eliminado.
+- Contenedores healthy; disco **79%** (12G libres); merge dejó backup `bkp_pre_merge_20260529_1714.dump`.
+- Backup incremental PASO B creado: `/home/juansanchez/bkp_pre_survivor_recompute_20260529_2244.dump` (670M).
+
+### PASO B — DETENIDO: el merge dejó 1,775 usuarios académicos en `archived` y el template NO los revierte
+
+**Hallazgo (datos duros, READ-ONLY):** de los **4,737 survivors** (`description=merged-2026-05-29`):
+| lifecycleState | N | Detalle |
+|---|---|---|
+| active | 2,908 | 2,582 staff + 167 faculty + 138 alum + 20 student + 1 null |
+| **archived** | **1,752** | **1,749 con `alum`/`student` en affiliations** (1,737 primAff=staff + 12 faculty) + 3 solo-laboral |
+| (null) | 77 | sin lifecycle (residuo técnico) |
+
+A nivel **global**: **1,775 usuarios con afiliación académica vigente (alum/student) están `archived`**
+→ **viola la salvaguarda BLOQUEANTE** del brief ("0 usuarios con afiliación académica vigente archivados").
+Los 1,749 son survivors del merge; 26 son preexistentes.
+
+**Causa raíz (defecto de diseño del template, no del merge) — limbo F↔H:**
+- Estos 1,749 son ex-trabajadores (terminationDate pasada, p.ej. `48150895` term=2024-07-31
+  motivo=termino_contrato) que **además son egresados** (`alum` en affiliations). Su shadow Trabajador v3
+  sigue VIVO (1,749/1,749), por lo que **Bloque J3 calcula `primaryAffiliation=staff`** (prioridad
+  faculty>staff>student>alum) — `staff` aún presente en affiliations.
+- Con primAff=staff + terminationDate + motivoCese grace cumplido:
+  - **Bloque F** (`lifecycleState`, línea 945-958) **retorna `null` (CEDE a H)** — guard DT-5.
+  - **Bloque H** (línea 1082) tiene `curState != 'archived'` → con el user YA `archived`, **H retorna
+    false** (no re-archiva). **H2** igual (línea 1156).
+  - Resultado: **ningún mapping escribe `lifecycleState`** → queda el valor de repo `archived`. **archived
+    es terminal/sticky** por diseño (ningún mapping revierte archived→active mientras primAff=staff).
+- Un `recompute` (probado con PATCH no-op no-raw en canary `48150895`, HTTP 204) **NO lo saca de
+  archived** → confirma empíricamente el limbo. (El PATCH no-op fue idempotente: mismo `description`,
+  0 cambio neto.)
+
+**Por qué un recompute masivo de los 4,737 NO repara y por qué PASO C agravaría:**
+- Recompute ahora deja los 1,749 en `archived` (sticky) → no cumple "survivors con afiliaciones correctas".
+- PASO C (re-recon Trabajadores) desproyectaría el shadow staff denominacional → affiliations pierde
+  `staff` → J3 recalcula `primaryAffiliation=alum`. PERO **Bloque H2/F siguen sin revertir archived→active**
+  (sticky) → los 1,749 quedarían `archived` PERMANENTEMENTE siendo alumni activos. Daño durable.
+
+Conforme a la regla operacional ("anomalía/salvaguarda disparada → DETENER y reportar, NO forzar"),
+**NO se ejecutó el recompute masivo de survivors ni PASO C/D/E/F.** 0 cambios destructivos.
+
+### Decisión requerida de Alberto antes de PASO B/C (opciones canónicas)
+El template necesita un camino de **reversión `archived→active` cuando reaparece afiliación académica
+viva**. archived debe dejar de ser terminal para quien recupera/conserva una IIA no laboral. Opciones:
+
+1. **Mapping de reversión en el template** (`lifecycleState`, strong): si `curState=='archived'` Y existe
+   afiliación válida no laboral (`alum`/`student`/`affiliate` en affiliations) Y no hay condición de
+   archivado laboral vigente → emitir `active`. Desacopla "archivado por cese laboral" de "identidad
+   persiste por otra IIA". **PREFERIDA** — canónica (ISO 24760: archived no es destroyed; una identidad
+   con IIA viva debe volver a active), reusable SciBack. Requiere: que J3 deje de hacer `staff` el
+   primaryAffiliation cuando el contrato está terminado (o que la reversión mire `affiliations`, no
+   `primaryAffiliation`). Cuidado con el guard DT-4/DT-5 (dependencia circular: leer `focus.lifecycleState`
+   en condición, no como source).
+2. **Orden de operaciones:** primero PASO C (desproyectar shadows Trabajador denominacionales → affiliations
+   pierde staff → primAff=alum), LUEGO el mapping de reversión (1) los devuelve a active. Pero (1) es
+   prerequisito de (2) — sin reversión, PASO C los deja archived.
+3. **Reparación puntual de los 1,749 ya archived** vía recompute tras desplegar (1) — el template
+   re-derivaría active. NO usar PATCH raw (silenciosamente reversible).
+
+**Recomendación:** implementar (1) — mapping de reversión `archived→active` por afiliación académica viva,
+probarlo en canary `48150895`, desplegar, y RECIÉN ENTONCES recompute de survivors (PASO B) → PASO C.
+El defecto es de diseño del lifecycle (archived terminal), preexistente al merge; el merge solo lo
+visibilizó al consolidar 1,749 egresados que estaban archived en su gemelo laboral.
+
+### Estado de PROD tras PM8
+- **0 cambios destructivos.** Solo lecturas + 1 PATCH no-op idempotente (canary, mismo valor). m_user 49,318.
+- Backups vigentes: `bkp_pre_survivor_recompute_20260529_2244.dump` (670M), `bkp_pre_merge_20260529_1714.dump`
+  (746M), `bkp_pre_correlation_recon_20260529_1622.dump` (745M), `bkp_focus_20260529_1557.dump` (738M).
+- Lista de OIDs survivors en PROD `/tmp/survivor_oids.txt` (4,737) conservada para PASO B futuro.
+- PASOS B (recompute)–F **NO ejecutados** — bloqueados por el defecto de reversión archived→active.
