@@ -1581,3 +1581,81 @@ La Opción 2 (items per-IIA) queda desplegada y correcta; es prerequisito cumpli
 - **Backups:** `bkp_pre_opcion2_20260530_0020.dump` (640M) + PM8/PM7 vigentes. Disco 76%, RAM 7.5G, contenedores healthy.
 - **PASOS 3 (recompute survivors)–6 NO ejecutados** — bloqueados por dual-archetype assignment en recompute
   de ex-trabajadores-egresados. Requiere decisión de saneo de structural archetype (3 opciones).
+
+---
+
+# SESIÓN PM12 (2026-05-30) — PASO 1 (saneo dual-structural) + PASO 2 (3 canaries) VERDE. Hallazgos de diseño antes de PASO 3 masivo. DETENIDO para decisión.
+
+> Skills consultadas: `midpoint-best-practices` §3.3 (max 1 structural archetype), §3.4 (archetype solo
+> por assignment plano NO-condicional, línea 169 SKILL), §3.5 (cambio de archetype = operación
+> destructiva/especial), §4.1-4.3 (object template + assignmentTargetSearch); `iga-canonical-standards`
+> §1.2/§1.3 (lifecycle ISO 24760, una IIA por atributo). READ-ONLY masivo + 7 unassign raw + 4 recompute
+> reconcile + 1 assign alumni. Backup `bkp_pre_paso1_struct_20260530_0154.sql` (674M). 0 destructivos de datos crudos.
+
+## Cuantificación dual-structural (DATOS DUROS)
+- `m_ref_archetype` (archetypeRef PROYECTADO): **0 usuarios** con >1 structural (MidPoint nunca proyecta 2).
+- `m_assignment` (structural ASSIGNMENTS) sobre los 9 structural-user archetypes: **7 usuarios** con 2 structural:
+  - 5× alumni+employee-staff, 1× alumni+employee-faculty, 1× employee-faculty+employee-staff (los "6" del brief)
+  - +1× **researcher+employee-faculty** (NO contemplado en el brief; el conteo inicial solo miró 4 archetypes académicos — hay 9 structural-user).
+- **Población LATENTE** (no materializa dual hoy, pero lo dispara EN RECOMPUTE): structural employee + shadow
+  Egresados linked = **4,734** (3,190 active + 1,542 archived con shadow trabajador vivo; 2 sin). De ellos
+  **4,269 son survivors** (`merged-2026-05-29`). Estos chocarían en cadena en el recompute masivo del PASO 3.
+
+## PASO 1 ✅ — Saneo de los 7 dual-structural materializados (unassign del structural stale)
+- Método: REST PATCH `delete assignment` por container-id, `?options=raw`. **Formato que FUNCIONA en 4.10:
+  JSON** `{"objectModification":{"itemDelta":[{"modificationType":"delete","path":"assignment","value":[{"@id":"N"}]}]}}`.
+  (El equivalente XML con `<value><c:assignment id="N"/></value>` da HTTP 500 "Item assignment has no
+  definition" — usar JSON id-only.)
+- Regla de saneo: conservar el structural que coincide con `primaryAffiliation` (autoridad J3/K); unassign
+  los demás. Resultado: **0 usuarios con >1 structural assignment** (verificado en m_assignment).
+
+## PASO 2 ✅ (con matiz) — 3 canaries, todos structural ÚNICO, 0 abort
+| Canary | Antes | Después | Veredicto |
+|---|---|---|---|
+| `48150895` egresado-archived dual staff+alum | archived/staff/employee-staff | **active/alum/alumni** | ✅ objetivo exacto |
+| `01219011` trabajador activo | active/staff/employee-staff | **active/faculty/employee-faculty** | ✅ (staff→faculty = corrección legítima desde liveAffiliationWorker) |
+| `548644005` denominacional sin afiliación viva (dual researcher+faculty) | active/faculty | **draft/employee-faculty** | ⚠️ draft (no archived) por falta de terminationDate |
+
+## HALLAZGOS DE DISEÑO CRÍTICOS (requieren decisión antes de PASO 3 masivo)
+
+### H1 — El saneo NO puede "quitar employee y dejar que D7 ponga alumni". DEBE ser delta ATÓMICO.
+Causa raíz descubierta: **NO existe `defaultObjectPolicyConfiguration` para UserType** (solo para OrgType,
+OID 47252981). El template base `UserTemplate-Person-Base` (855caaca, contiene J3/K/L) corre SOLO vía
+`includeRef` desde los templates per-archetype, que se activan por `<archetypePolicy><objectTemplateRef>`
+del archetype structural. ⇒ **user sin structural archetype = SIN template = J3/L NO corren** → primAff y
+lifecycle quedan en su valor histórico. Verificado con `48150895`: tras unassign del employee quedó 0
+structural → recompute materializó liveAffiliationAlum pero J3 NO recalculó primAff (seguía staff) ni L
+archivó. Solo al ASSIGN archetype-alumni (1 structural) el template Alumni corrió y dio active/alum.
+**Patrón canónico para PASO 3:** delta único `{add archetype-correcto + delete archetype(s)-stale + delete aux-stale}`
+en una sola operación con reconcile → siempre exactamente 1 structural → template corre → J3/L computan.
+El "correcto" = nameMap[primaryAffiliation-que-derivará-J3] = nameMap[afiliación viva de mayor prioridad].
+
+### H2 — Wave ordering: liveAffiliation* se materializa en la MISMA pasada que J3 lo lee → J3 ve ∅.
+`48150895` necesitó materializar liveAffiliationAlum primero (1ª pasada) y recién con el structural
+correcto asignado (2ª pasada) J3 lo consumió. En el recompute masivo hay que prever **2 pasadas** (o que
+el delta atómico de H1 ya fije el structural por afiliación-viva calculada FUERA del template, p.ej. en el
+propio iterativeScripting leyendo el shadow/ext). Diseño recomendado PASO 3: tarea iterativeScripting que
+(a) lee liveAffiliation por IIA del focus/shadow, (b) computa structural-correcto, (c) aplica delta atómico
+add-correcto+delete-stale, (d) recompute. Idempotente.
+
+### H3 — Bloque L: draft vs archived depende de `terminationDate`. Denominacionales sin terminationDate → draft, no archived.
+`548644005` (sin afiliación viva, sin terminationDate) → rama (3) del Bloque L = **draft** (alta incompleta),
+NO archived. El brief espera "archived" para solo-denominacionales. Discrepancia es de DATOS (denominacionales
+fuera de scope no tienen terminationDate en LAMB), no de lógica. **Decisión requerida:** ¿(a) aceptar draft
+como estado de salida para denominacionales sin terminationDate (canónicamente defendible: sin evidencia de
+leaver no se afirma archived); o (b) tratar "fuera-de-scope sin afiliación viva" como archived explícito
+(añadir rama en L: si tuvo structural employee histórico + 0 afiliación viva → archived aunque no haya
+terminationDate)? La salvaguarda académica NO se ve afectada (egresados/estudiantes tienen liveAffiliation).
+
+### H4 — researcher es structural; ampliar el universo de combinaciones de saneo a los 9 structural-user.
+El conteo del brief asumía 4 archetypes; hay 9. El saneo PASO 3 debe priorizar entre los 9 (afiliación viva
+real). Para researcher sin shadow CSV-DGI vivo → stale (caso 548644005). Prioridad propuesta:
+faculty>staff>student>alum>researcher>visitor>contractor>partner-institution (service-account aparte).
+
+## Estado de PROD tras PM12
+- **Datos:** 7 dual-structural saneados (unassign stale). 3 canaries con structural único:
+  48150895=active/alumni, 01219011=active/employee-faculty, 548644005=draft/employee-faculty.
+  0 usuarios con >1 structural assignment (verificado). description marcadores: canary-paso2-VERDE / canary-c / canary-b.
+- **Config:** sin cambios de template en PM12 (Opción 2 de PM11 sigue desplegada y validada). Disco 77%, contenedores healthy.
+- **PASO 3-6 NO ejecutados** — bloqueados por decisión de diseño (H1-H4). El mecanismo está validado en canary;
+  falta (1) aprobar el patrón delta-atómico de H1/H2 para el masivo, (2) decidir H3 (draft vs archived), (3) confirmar H4 (prioridad 9 structural).
