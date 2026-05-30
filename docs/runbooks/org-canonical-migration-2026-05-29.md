@@ -2058,3 +2058,34 @@ en toda la población (983 quarantine + 90/36 wave-ordering) ANTES del re-recon 
   fix fallara). Auto-termina cuando EGR deja de RUNNING.
 - **PENDIENTE en este paso:** al terminar Egresados → lanzar Estudiantes (OID `94b627b4`, resource `...e22`) →
   verificar 983 quarantine → active, 90/36 wave-ordering materializados, 0 egresados/estudiantes vivos sin liveAffiliation.
+
+# SESIÓN PM18 (2026-05-30 ~07:45 Lima) — DIAGNÓSTICO falsa alarma "monitor murió": NO murió. Egresados VIVO y progresando. Monitor reemplazado por ORQUESTADOR robusto que encadena Estudiantes automáticamente.
+
+> Skills consultadas: midpoint-best-practices (§3.3 single-structural, §4.5/§4.6 wave-ordering),
+> iga-canonical-standards (§1.3 IIA por atributo). Oracle SOLO LECTURA. Autonomía delegada.
+
+## PASO 1 — Estado REAL vía REST/DB (no solo log)
+- **Egresados `86c3766a`: VIVO.** executionState=RUNNING, schedulingState=READY, resultStatus=in_progress,
+  realizationState=inProgressLocal. progress 14464→15197 verificado en vivo. lastRunStart=12:02 UTC (07:02 Lima).
+  Resource input = `6a91f7e1-...e23` (Oracle LAMB Egresados v3, 30,653 shadows). **NO murió.**
+- **Estudiantes `94b627b4`: SUSPENDED** (último run 28-may). Aún no arrancó esta wave. Resource `...e22`.
+- **FALSA ALARMA del monitor:** el log SÍ tenía línea 07:42; la hora del servidor era 07:43. El "dejó de loguear
+  a 07:37 / progress=12438" fue lectura parcial — el monitor (PID 1493989) estaba SANO en su `sleep 300`, no
+  colgado ni zombie. Causa de la percepción: cadencia de 5 min + lectura entre iteraciones.
+- **liveAffiliationAlum (ext key 215): 16,838 (07:37) → 18,849 → 19,424** y subiendo conforme materializa. ✅
+- **dual-structural = 0** sostenido durante todo el recon (fix D7 PM17 aguanta). ✅ disco 83%.
+
+## PASO 2 — Continuación autónoma
+- **Decisión:** NO reiniciar el recon (está vivo y es idempotente). NO matar por colgado (estaba sano).
+- **Monitor viejo (5min, solo fase EGR) reemplazado por ORQUESTADOR robusto** `/tmp/recon_orchestrator.sh`
+  (setsid, PID 1561648, log `/tmp/recon_orchestrator.log`, cadencia 180s):
+  - FASE A: vigila EGR hasta que deje de RUNNING (disk-guard 90% + dual-guard >50, ambos suspenden y abortan).
+  - FASE B: al terminar EGR → lanza Estudiantes `94b627b4` vía `/resume` (retry `/run`+`/resume` si no arranca).
+  - FASE C: vigila EST con los mismos guards, loguea student (ext key 217) + dual.
+- **ETA Egresados:** ~15,2K/30,7K (~50%), ritmo ~360/min → cierre ≈ 08:30 Lima. Estudiantes a continuación.
+
+## PENDIENTE tras ambos recons (cola PM16, orden corregido)
+1. recompute control → confirmar dual=0 y 983 quarantine→active, 90/36 wave-ordering.
+2. re-recon Trabajadores → recompute árbol canónico (salvaguarda académica BLOQUEANTE: 0 académicos archived).
+3. purga denominacionales/legacy/demo. 4. VALIDACIÓN DTI-Lima (trabajadores de "Coordinación Tecnologías de
+   Información - Lima" con parentOrgRef a su org canónica + archetype correcto). 5. cierre.
