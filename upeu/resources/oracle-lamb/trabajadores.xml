@@ -515,6 +515,15 @@
                     </expression>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:affiliations</path>
+                        <!-- FIX PM10b (2026-05-30): set=matchingProvenance. CRÍTICO: sin esto, este
+                             mapping strong era autoritativo sobre TODO affiliations; al retornar null
+                             (ESTADO='I', jubilado) BORRABA el 'alum' aportado por Egresados (causa
+                             real del canary 48150895 archived). Con matchingProvenance solo gobierna
+                             los valores con SU provenance (Trabajadores) → staff/faculty entran/salen
+                             con la cuenta laboral, sin tocar alum/student de otros recursos. -->
+                        <set>
+                            <predefined>matchingProvenance</predefined>
+                        </set>
                     </target>
                     <evaluationPhases>
                         <include>beforeCorrelation</include>
