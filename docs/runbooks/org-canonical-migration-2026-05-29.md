@@ -2300,3 +2300,51 @@ Join correcto: VW_APS_EMPLEADO.ID_PERSONA → VW_TRABAJADOR.ID_PERSONA+ID_SEDEAR
    coordinaciones admin vacías, demo Projects/Teams/World). CONSERVAR: EP-* (academic-program con miles), OU-CAMPUS-*,
    UPeU institution, GOBIERNO-UNIVERSITARIO, colegios partner, DTI semántica? (revisar si purgar o mantener).
 3. Cierre: conteos finales, parent residual AREA-97, OrgTemplate-Area decisión, caso 21835727.
+
+## PASO 4 (cont.) + CIERRE PM21 — purga demo + estado final
+
+### Purga demo orgs (indestructible): Projects/Teams/World ✅
+- Marcadas `indestructible=true` (sample MidPoint). PATCH indestructible=false → DELETE 204. m_org 266→263.
+
+### Archetipado ancestros governance
+- Áreas 1 (ASAMBLEA-UNIVERSITARIA) y 2 (CONSEJO-UNIVERSITARIO): YA tenían archetype-org-governance (curadas). ✅
+- Área 22 (AREA-22 "Areas Rectorado"): archetype-org-department (contenedor Rectorado, aceptable). Sin cambio.
+
+### Semánticas (85, post-purga): CONSERVADAS como blueprint canónico
+- DECISIÓN: las orgs semánticas con 0 usuarios (CRAI-*, CU-*, coordinaciones admin, INFRAESTRUCTURA-TI-LIMA, DTI-semántica
+  COORDINACION-TI-LIMA, EP-*, OU-CAMPUS-*, UPeU, GOBIERNO-UNIVERSITARIO, colegios) son la ESTRUCTURA CANÓNICA DISEÑADA
+  (org-campus-lima-units.xml, repo). NO son basura → se CONSERVAN como blueprint SciBack (se poblarán en Fase 6+).
+  EP-* tienen miles de estudiantes. Solo se purgó demo MidPoint (Projects/Teams/World).
+- NOTA: existe par semántico/numérico para TI: COORDINACION-TI-LIMA(id=DTI, 3 child) + INFRAESTRUCTURA-TI-LIMA(id=infra...)
+  vs funcionales DTI(18)+DIR-INFRAESTRUCTURA(17). Las funcionales numéricas tienen los 102+34 trabajadores. Las semánticas
+  son blueprint vacío. CONVIVEN sin conflicto (identifiers distintos). Decisión futura: unificar nomenclatura cuando se
+  consolide el árbol de gobierno (no bloqueante; los trabajadores ya cuelgan correctamente de las funcionales).
+
+### ESTADO FINAL (verificado)
+| métrica | valor |
+|---|---|
+| m_org | 263 (de 467; -201 denominacional -3 demo) |
+| m_user | 49,322 |
+| active | 41,341 (invariante en TODA la sesión) |
+| archived | 7,185 | draft 698 | NULL 98 |
+| **acad_vivos_active** | **39,337 (INVARIANTE)** |
+| **acad_archived (salvaguarda)** | **0 ✅** |
+| dual-structural | **0 ✅** |
+| orgs numéricas con archetype | 164 |
+
+### VALIDACIÓN DTI-LIMA — CRITERIO DE ÉXITO ✅✅
+- **DTI** (id=18, archetype-org-department, parent=VICERRECTORADO-ADMINISTRATIVO): **102 activos**.
+- **DIR-INFRAESTRUCTURA** (id=17, archetype-org-department, parent=VICERRECTORADO-ADMINISTRATIVO): **34 activos**.
+- **SANCHEZ CONDOR, Juan Alberto (DNI 10867326): active, archetype-user-employee-staff, costCenter=18, org=DTI.** ✅ CONFIRMADO.
+- Listas completas de ambos áreas verificadas (archetypes staff/faculty/alumni/student dual-afiliación correctos).
+
+### PENDIENTE (no bloqueante, design-decision para el usuario):
+- **20 orgs orphan-root denominacionales** (160/535-538/809/811/750-chains etc. = Asoc Educativas, IE, misiones donde
+  trabajan staff UPeU con contrato 7124). Sus ancestros LAMB (815/814/813/812/808/535/750/816) NO existen como org en
+  MidPoint (recon Org solo creó áreas con shadow directo). Forman forest acíclico secundario (Evolveum lo soporta:
+  "as long as it is an acyclic directed graph it will work just fine"). Para árbol único: crear nodos ancestro
+  denominacionales bajo umbrella partner-institution, O reparent a campus. ES SCOPE-POLICY (cómo modela UPeU a sus
+  trabajadores destacados en entidades denominacionales) → requiere decisión del usuario, NO se resuelve autónomamente.
+- OrgTemplate-Area: vinculado global y ACTIVO (no inerte). Funciona vía bulk executeChanges, no vía recompute por
+  wave-ordering — comportamiento conocido. Mantener.
+- Caso 21835727: pendiente revisión individual.
