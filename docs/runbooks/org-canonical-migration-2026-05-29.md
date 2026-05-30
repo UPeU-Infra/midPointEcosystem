@@ -1247,3 +1247,125 @@ escritores sobre `primaryAffiliation`. Opciones:
 
 Recomendación: localizar PRIMERO el archivador externo (opción C acotada a 1 usuario) antes de
 tocar inbounds (opción A). No avanzar a masivo hasta que el canary 48150895 cierre en active.
+
+---
+
+# SESIÓN PM9 (2026-05-29 ~23:50 Lima) — PASO 1 ✅ + PASO 2 ✅ DESPLEGADOS; PASO 3 (canary) ❌ FALLA por defecto NUEVO aislado. DETENIDO.
+
+> Skills consultadas: `midpoint-best-practices` §2.1 (Reality vs Policy), §4.2 (strength), §4.5
+> (pipeline de procesamiento focal: inbound→focus policy→outbound), §5; `iga-canonical-standards`
+> §1.2/§1.3 (IIA, lifecycle ISO 24760). Solo READ-ONLY + PUTs de config + recompute/import + 2
+> classLogger temporales (revertidos). 0 cambios destructivos de datos.
+
+## PASO 1 ✅ — execute-script roto (tarea #52) ARREGLADO y desplegado
+- **Bug localizado** en `user-template-employee-staff.xml` (línea 96-99) y
+  `user-template-employee-faculty.xml` (línea 81-84): el warn de hireDate usaba
+  `focus?.getExtension()?.asPrismContainerValue()?.findProperty(new ItemName(NS,"hireDate"))?.getRealValue()`
+  — API inexistente/abortaba en 4.10 (genera el "partial 240" del brief).
+- **Fix:** reemplazado por `basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName(NS,"hireDate"))`
+  con guarda null (patrón ya usado en `koha-ils.xml` L1284 y RENIEC fix `7259ab6`).
+- **Otros con el mismo antipatrón:** búsqueda `findProperty|getPropertyRealValue|findItem|findExtension`
+  → solo quedan usos VÁLIDOS de `PrismContainerValue.findProperty(ItemPath)` sobre el contenedor
+  multivalor `identityDocuments` (Bloque G L842, Bloque J L1739, Bloque J2 L1775, Bloque L L982).
+  Esos NO son el antipatrón (no leen extension via API rota; leen sub-propiedades de un container value,
+  API legítima 4.10). NO se tocan.
+- Commit `291db8a`. PUT objectTemplates staff/faculty → HTTP 201 ambos.
+
+## PASO 2 ✅ — Doble (triple) autoridad sobre primaryAffiliation RESUELTA y desplegada
+- **Hallazgo:** NO eran 2 sino **3** inbounds weak compitiendo por `extension/sb:primaryAffiliation`:
+  `egresados.xml` (afiliacion-to-primaryAffiliation), `trabajadores.xml` (archetype-to-primaryAffiliation),
+  y `estudiantes.xml` (school-name-to-primaryAffiliation).
+- **Fix (Reality-vs-Policy §2.1):** eliminados los 3. `primaryAffiliation` queda como atributo DERIVADO
+  exclusivamente por el template (Bloque J3, strong, desde `affiliations`). Los inbounds
+  `*-to-affiliations` (que alimentan J3) se CONSERVAN intactos en los 3 recursos.
+- Verificado en PROD (objetos live): 0 menciones de `primaryAffiliation` como target en los 3 recursos;
+  solo `afiliacion-to-affiliations` / `archetype-to-affiliations` / `school-name-to-affiliations`.
+- Commit `291db8a`. PUT 3 resources → HTTP 201. **Test Connection 15/15 success** en los 3.
+
+## PASO 3 ❌ — CANARY `48150895` SIGUE EN `archived`. Causa raíz NUEVA aislada (distinta del limbo PM8).
+
+Estado canary (OID `6e8d69bf-3862-48a0-bac0-1c4fb0c4e84d`): lifecycleState=`archived`,
+primaryAffiliation=`staff` (STALE), affiliations=`[alum]` (en repo), terminationDate=2024-07-31.
+2 proyecciones LINKED vivas (dead=f, exist=t): Trabajadores v3 (`41ec0daf`, ESTADO='I') +
+Egresados v3 (`f68d39b8`, name 201010107, **AFILIACION=alum confirmado en shadow**).
+
+### Diagnóstico definitivo (TRACE acotado a 1 usuario, logger `com.evolveum.midpoint.expression`=TRACE)
+Tras desplegar PASO 1+2, recompute e import del shadow Egresados sobre el canary:
+```
+DEBUG J3: affiliations vacío en 48150895 — primaryAffiliation null
+INFO  Bloque L: 48150895 sin afiliacion viva + con terminationDate 2024-07-31 -> archived (leaver)
+```
+- **J3 y Bloque L SÍ se evalúan** (el template corre correctamente — PASO 1 desbloqueó el cómputo focal;
+  ya no hay "partial 240" que aborte). El defecto NO está en J3/L.
+- **El defecto es upstream:** el inbound `afiliacion-to-affiliations` (Egresados, normal) **NO contribuye
+  `alum` a `extension/sb:affiliations`** durante recompute/import, AUNQUE su propia proyección está cargada
+  (en el mismo trace, Bloque I lee la foto del MISMO shadow Egresados → la proyección sí se procesa).
+- Por eso J3 lee `affiliations` vacío → primaryAffiliation null (no sobrescribe el `staff` stale) →
+  Bloque L con liveAff=∅ + terminationDate → `archived`. Cadena internamente consistente.
+
+### Naturaleza del bug (multi-source multivalued inbound, relativo)
+- `affiliations` NO se persiste en repo (es transitorio; solo existe durante una operación que cargue
+  la proyección y aplique el inbound). En cualquier recompute posterior, affiliations=∅.
+- El inbound `afiliacion-to-affiliations` es `normal` y **relativo**: en un import/recompute de un shadow
+  YA `linked` sin delta en su source (AFILIACION no cambia), un mapping relativo normal produce **ningún
+  delta** → no asienta `alum`. Para un foco con DOS proyecciones (Trabajadores ESTADO='I' que retorna null
+  + Egresados), el valor `alum` no llega a `affiliations` en la ola donde J3 lo lee.
+- **Contraste probado:** un egresado PURO (1 sola proyección Egresados, p.ej. user `0397b9b9` name 201121390)
+  está `active` con primaryAffiliation=`alum` — porque su `alum` SÍ se asentó en el onboarding original
+  (recompute completo de foco nuevo) y, sin competidores tras PASO 2, persiste. El canary tiene
+  primaryAffiliation=`staff` STALE persistido que J3 nunca logra sobrescribir porque nunca ve affiliations≠∅.
+
+### Mecanismos probados que NO reparan el canary (todos dejan archived/staff)
+| Operación | Resultado |
+|---|---|
+| `PATCH ?options=reconcile` (no-op description) | HTTP 204, affiliations=∅, archived |
+| recompute task (sin reconcile) | clear affiliations→∅, archived |
+| recompute task con `reconcile=true` | affiliations=∅, archived |
+| `/shadows/{egresados}/import` | HTTP 200 success, J3 ve ∅, archived |
+| reconciliation task Egresados por `icfs:name=201010107` | CLOSED/SUCCESS, J3 ve ∅, archived |
+| import secuencial Trabajadores→Egresados | archived |
+| set affiliations=[alum] raw + non-raw modify | J3/L NO disparan (sin delta en source) → archived |
+
+> Nota REST 4.10: `POST /users/{oid}/recompute` → 404; `POST /rpc/executeScript` con
+> `<s:executeScript>` → 400 "Wrong input value for ExecuteScriptType: RawType" (binding roto en este
+> deployment). Mecanismo fiable de recompute/recon = **task** (recomputation/reconciliation activity).
+> Filtros de recon Egresados: el searchScript SOLO soporta `EqualsFilter` sobre `__NAME__`/`__UID__`
+> (no `attributes/ri:CODIGO` ni `inOid` combinado con resourceRef).
+
+### Defecto pre-existente, visibilizado por el merge PM8
+El bug existía antes; el merge consolidó 1,749 ex-trabajadores-egresados con primaryAffiliation=`staff`
+stale persistido + affiliations transitorio. Tras PASO 2 (quitar inbounds competidores) el `staff` ya no
+se re-escribe — pero TAMPOCO se corrige a `alum`, porque el inbound `*-to-affiliations` no asienta el
+valor en recompute de focos `linked` existentes.
+
+## DECISIÓN REQUERIDA antes de continuar (PASO 4-7 BLOQUEADOS)
+El inbound de afiliación debe asentar `affiliations` de forma **autoritativa/absoluta** (no relativa),
+de modo que, mientras el shadow Egresados exista y AFILIACION=alum, `affiliations` contenga `alum` tras
+cualquier reconciliación — y entonces un recompute con reconcile derive primaryAffiliation=alum (J3) y
+active (L). Opciones canónicas (a validar con skills + dev antes de PROD):
+
+1. **Inbound `afiliacion-to-affiliations` → asignar `<evaluationPhases>` (beforeCorrelation+clockwork)
+   y/o convertirlo a fuente absoluta** (que asiente el valor por existencia del shadow, no por delta).
+   Patrón: tal como ya hacen los inbounds de correlación taxId/lambDocNum del MISMO recurso (L145-175).
+   PREFERIDA — alinea con best-practices §4.5 (inbounds colectados antes del focus policy) y mantiene
+   `affiliations` como única fuente de J3.
+2. **Persistir `affiliations`** (que el inbound sea `strong` y/o que exista un mapping que lo mantenga)
+   para que recompute sin reconcile lo conserve. Riesgo: que un foco sin reconcile retenga afiliaciones
+   stale de empleos muertos (rompería la semántica "afiliación viva" de Bloque L). Menos canónica.
+3. **Re-recon masiva Egresados (PASO 5) con reconcile que SÍ asiente affiliations** — verificar primero
+   en 1 canary que la recon completa (no import puntual) asienta `alum`. Hoy la recon por `icfs:name`
+   cerró SUCCESS pero NO asentó → la opción 3 SOLA no basta sin la 1.
+
+**Recomendación:** implementar (1) en `egresados.xml` + `estudiantes.xml` + `trabajadores.xml` (inbounds
+`*-to-affiliations` absolutos/con evaluationPhases), probar en dev (`pruebas-alberto-1`), re-probar canary
+`48150895` → debe cerrar en `active`. NO avanzar a PASO 4-7 hasta canary verde (regla BLOQUEANTE del brief).
+
+## Estado de PROD tras PM9
+- **Config desplegada (durable, canónica):** PASO 1 (API 4.10 en staff/faculty) + PASO 2 (autoridad única
+  de primaryAffiliation = template J3). Commit `291db8a` pusheado + git pull PROD + PUT 5 objetos (201) +
+  Test Connection 3 recursos 15/15.
+- **Datos:** 0 destructivos. Canary `48150895` restaurado a estado documentado (archived/staff/[alum]).
+  Loggers temporales (expression TRACE + inbounds DEBUG) **revertidos** (0 custom loggers). Todas las tasks
+  `canary-*`/`trace*` **eliminadas** (0 remanentes). Disco 79%. Contenedores healthy.
+- **PASOS 3 (canary verde)–7 NO completados** — bloqueados por el defecto del inbound de afiliación
+  (relativo, no asienta affiliations en focos linked). Backups PM8 vigentes.
