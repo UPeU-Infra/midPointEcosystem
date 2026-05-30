@@ -893,91 +893,118 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
     </item>
 
     <!-- ============================================================
-         BLOQUE F — LIFECYCLE GATE: draft → active
-         Política estricta UPeU (Pilar 4 — Import estricto):
-         Solo pasa a 'active' si cumple LAS TRES condiciones:
-           1. personalNumber no nulo ni vacío (identificador inmutable institucional)
-           2. Tiene >= 1 identityDocument con primary = "true"
-           3. Tiene afiliación primaria válida en vocabulario canónico
+         BLOQUE L — DERIVACIÓN CANÓNICA DE lifecycleState (state machine única)
+         (GOBERNANZA 2026-05-29 — veredicto canónico aprobado; reemplaza F+H+H2)
 
-         Si no cumple → permanece en 'draft' (cuentas incompletas
-         van a cola de reconciliación, no se propagan a OpenLDAP/Keycloak).
+         REEMPLAZA la lógica dispersa de los antiguos Bloques F (gate draft→active),
+         H (archive staff/faculty tras grace) y H2 (archive por pérdida total de
+         afiliación). Esos tres competían por lifecycleState (multi-value conflict)
+         y dejaban el limbo F↔H. Aquí UN SOLO mapping strong deriva el estado.
 
-         strong: revalúa en cada recompute. Si se pierde la afiliación
-         (leaver), vuelve a draft automáticamente.
+         PRINCIPIO (iga-canonical-standards §1.2 + best-practices Regla #1):
+         lifecycleState se SINCRONIZA desde la IIA (HR/SIS). La señal de "afiliación
+         viva" es sciback:affiliations — multi-valor consolidado por los inbounds de
+         TODOS los resources LAMB (best-practices §4.5 / cita §4.6: el template corre
+         DESPUÉS de los inbounds). Cuando una IIA cesa, su token desaparece de
+         affiliations vía relative-change inbound; cuando persiste otra IIA, su token
+         permanece. Por eso affiliations≠∅ ⇔ ≥1 afiliación viva (§3.2 multi-afiliación:
+         perder faculty/employee NO elimina alum/student).
+
+         FUNCIÓN BOOLEANA (idempotente, SIN guard anti-circular — no lee lifecycleState):
+           liveAff = affiliations ∩ vocabulario-canónico (post-inbound)
+           1) liveAff ≠ ∅:
+                - perfil completo (personalNumber + doc primario) → 'active'
+                - perfil incompleto (alta nueva sin doc/identificador)  → 'draft'
+              (§1.2 archived≠destroyed: un afiliado vivo JAMÁS se archiva)
+           2) liveAff = ∅ y terminationDate presente (tuvo empleo) → 'archived'
+              (leaver real: ex-trabajador denominacional/solo-laboral sin otra IIA)
+           3) liveAff = ∅ y sin terminationDate (alta incompleta, sin historia) → 'draft'
+              (no archivar drafts puros — aún no son leavers)
+
+         SALVAGUARDA ACADÉMICA (BLOQUEANTE): un egresado/estudiante con affiliations
+         conteniendo alum/student SIEMPRE cae en (1) → active. Un solo-denominacional
+         sin ninguna afiliación viva pero con terminationDate cae en (2) → archived.
+
+         strong, sources = afiliaciones vivas + completitud. NO lee su propio target.
+         Reemplaza/integra F, H y H2. Las construcciones downstream se desactivan
+         solas al pasar a archived (effectiveStatus). Grace periods POST-cese se
+         gobiernan ahora SOLO por la presencia/ausencia del token en affiliations
+         (el inbound del worker mantiene 'staff'/'faculty' durante el período de gracia
+         vía su searchScript FEC_TERMINO>=SYSDATE-730; al expirar, el token se retira y
+         L archiva). Esto unifica la temporalidad en la IIA, no en el template.
          ============================================================ -->
-    <mapping>
-        <name>F-lifecycle-gate-draft-to-active</name>
-        <lifecycleState>active</lifecycleState>
-        <strength>strong</strength>
-        <source>
-            <path>personalNumber</path>
-        </source>
-        <source>
-            <path>extension/sciback:primaryAffiliation</path>
-        </source>
-        <source>
-            <path>extension/sciback:identityDocuments</path>
-        </source>
-        <source>
-            <name>taxId</name>
-            <path>extension/sciback:taxId</path>
-        </source>
-        <source>
-            <name>terminationDate</name>
-            <path>extension/sciback:terminationDate</path>
-        </source>
-        <source>
-            <name>motivoCese</name>
-            <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:motivoCese</path>
-        </source>
-        <expression>
-            <script>
-                <code>
-// FIX DT-5 (2026-05-23, actualizado v3.0): evitar conflicto multi-value con Bloque H (auto-archive).
-// Si H va a tomar control (terminationDate superó grace period), F no compite.
-// Grace periods sincronizados con Bloque H: fallecimiento=0d, despido=7d,
-// termino_contrato=0d, renuncia/mutuo_disenso/otro=30d. Jubilados: F no cede (H no archiva jubilados).
-import java.time.LocalDate; import java.time.temporal.ChronoUnit;
-def aff2 = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
-def termStr2 = terminationDate != null ? basic.stringify(terminationDate).trim() : '';
-def mc2 = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : '';
-if (['staff', 'faculty'].contains(aff2) &amp;&amp; termStr2 != '' &amp;&amp; mc2 != 'jubilacion') {
-    def graceDays2;
-    switch (mc2) {
-        case 'fallecimiento':    graceDays2 = 0;  break;
-        case 'despido':          graceDays2 = 7;  break;
-        case 'termino_contrato': graceDays2 = 0;  break;
-        case 'renuncia':         graceDays2 = 30; break;
-        case 'mutuo_disenso':    graceDays2 = 30; break;
-        default:                 graceDays2 = 30; break;
-    }
+    <item>
+        <ref>lifecycleState</ref>
+        <mapping>
+            <name>L-derive-lifecycleState-from-live-affiliations</name>
+            <description>Derivación canónica única de lifecycleState (reemplaza F+H+H2). strong, idempotente, sin guard anti-circular (NO lee lifecycleState). liveAff = sciback:affiliations ∩ vocabulario canónico. liveAff≠∅ → active (o draft si perfil incompleto); liveAff=∅ con terminationDate → archived (leaver); liveAff=∅ sin terminationDate → draft (alta incompleta). Salvaguarda académica: con alum/student en affiliations SIEMPRE active. iga-canonical §1.2/§3.2 + best-practices §1.2/§4.5.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>extension/sciback:affiliations</path>
+            </source>
+            <source>
+                <path>personalNumber</path>
+            </source>
+            <source>
+                <path>extension/sciback:identityDocuments</path>
+            </source>
+            <source>
+                <name>taxId</name>
+                <path>extension/sciback:taxId</path>
+            </source>
+            <source>
+                <name>terminationDate</name>
+                <path>extension/sciback:terminationDate</path>
+            </source>
+            <expression>
+                <script>
+                    <code>
+// BLOQUE L — state machine canónica de lifecycleState (2026-05-29).
+// Señal de afiliación VIVA = affiliations (multi-valor, post-inbound). NO lee lifecycleState
+// (sin dependencia circular). NO usa grace periods en el template: la temporalidad post-cese
+// vive en la IIA (searchScript del worker mantiene el token durante el período de gracia).
+def CANONICAL = ['faculty','staff','student','alum','affiliate'] as Set;
+def liveAff = (affiliations ?: []).collect { basic.stringify(it).trim().toLowerCase() }
+    .findAll { it in CANONICAL } as Set;
+def termStr = terminationDate != null ? basic.stringify(terminationDate).trim() : '';
+
+// (1) Tiene >= 1 afiliación viva → nunca archivar (§1.2 archived != destroyed).
+if (!liveAff.isEmpty()) {
+    def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : '';
+    def hasPersonalNumber = (pn != '');
+    def hasPrimaryDoc = false;
     try {
-        if (ChronoUnit.DAYS.between(LocalDate.parse(termStr2.length() >= 10 ? termStr2.substring(0,10) : termStr2), LocalDate.now()) > graceDays2) {
-            return null
+        def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'primary'));
+        def docs = identityDocuments;
+        if (docs != null) {
+            def docList = (docs instanceof List) ? docs : [docs];
+            hasPrimaryDoc = docList.any { doc -> def p = doc?.findProperty(primPath); p != null &amp;&amp; 'true' == p?.realValue?.toString() }
         }
-    } catch (Exception e) {
-        log.warn('Bloque F archive-guard: terminationDate no parseable {} en {}: {}', termStr2, focus?.name, e.message)
+    } catch (Exception e) { log.warn('Bloque L: error leyendo identityDocuments en {}: {}', focus?.name, e.message) }
+    if (!hasPrimaryDoc &amp;&amp; taxId != null) {
+        def txStr = basic.stringify(taxId)?.trim();
+        if (txStr?.startsWith('urn:schac:personalUniqueID:')) hasPrimaryDoc = true
     }
+    if (hasPersonalNumber &amp;&amp; hasPrimaryDoc) { return 'active' }
+    log.info('Bloque L: {} con afiliacion viva {} pero perfil incompleto (pn={}, doc={}) -> draft', focus?.name, liveAff, hasPersonalNumber, hasPrimaryDoc);
+    return 'draft'
 }
-// GUARD H2 (2026-05-29, opción 1b): ex-trabajador que PERDIÓ toda afiliación (affiliations vacío tras
-// desproyectar la cuenta Trabajador) pero TUVO empleo (terminationDate presente). F no debe devolver
-// 'draft' — es un leaver, no un alta incompleta. Cede a Bloque H2 que lo archiva durablemente.
-// Solo cede si no hay afiliación válida: si conserva alum/student, F sigue gobernando (active).
-def validAff_g = ['student','faculty','staff','alum','affiliate'];
-def hasAff_g = aff2 != '' &amp;&amp; validAff_g.contains(aff2);
-if (!hasAff_g &amp;&amp; termStr2 != '') {
-    log.info('Bloque F guard-H2: {} sin afiliacion + con terminationDate -> cede a H2 (archive)', focus?.name);
-    return null;
+
+// (2) Sin afiliación viva, pero tuvo empleo (terminationDate) → leaver real → archived.
+if (termStr != '') {
+    log.info('Bloque L: {} sin afiliacion viva + con terminationDate {} -> archived (leaver)', focus?.name, termStr);
+    return 'archived'
 }
-def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''; def hasPersonalNumber = (pn != ''); def hasPrimaryDoc = false; try { def primPath = com.evolveum.midpoint.prism.path.ItemPath.create(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'primary')); def docs = identityDocuments; if (docs != null) { def docList = (docs instanceof List) ? docs : [docs]; hasPrimaryDoc = docList.any { doc -> def primProp = doc?.findProperty(primPath); primProp != null &amp;&amp; 'true' == primProp?.realValue?.toString() } } } catch (Exception e) { log.warn('Bloque F: error leyendo identityDocuments en {}: {}', focus?.name, e.message) }; if (!hasPrimaryDoc &amp;&amp; taxId != null) { def txStr = basic.stringify(taxId)?.trim(); if (txStr?.startsWith('urn:schac:personalUniqueID:')) hasPrimaryDoc = true }; def validAffiliations = ['student','faculty','staff','alum','affiliate']; def hasAffiliation = primaryAffiliation != null &amp;&amp; validAffiliations.contains(basic.stringify(primaryAffiliation).trim().toLowerCase()); if (hasPersonalNumber &amp;&amp; hasPrimaryDoc &amp;&amp; hasAffiliation) { return 'active' } else { if (!hasPersonalNumber) { log.info('Bloque F lifecycle gate: {} sin personalNumber -> draft', focus?.name) }; if (!hasPrimaryDoc) { log.info('Bloque F lifecycle gate: {} sin documento primario -> draft', focus?.name) }; if (!hasAffiliation) { log.info('Bloque F lifecycle gate: {} sin afiliacion valida -> draft', focus?.name) }; return 'draft' }
-                </code>
-            </script>
-        </expression>
-        <target>
-            <path>lifecycleState</path>
-        </target>
-    </mapping>
+
+// (3) Sin afiliación viva y sin historia laboral → alta incompleta → draft (no archivar).
+log.info('Bloque L: {} sin afiliacion viva y sin terminationDate -> draft (alta incompleta)', focus?.name);
+return 'draft'
+                    </code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
 
     <!-- ============================================================
          LEAVER POLICY — DISABLE EN TERMINATIONDATE
@@ -1049,14 +1076,13 @@ return ActivationStatusType.ENABLED</code>
         <ref>lifecycleState</ref>
         <mapping>
             <name>auto-archive-after-termination-grace-period</name>
-            <description>Transición active→archived para staff/faculty con grace period diferenciado por motivoCese.
-Grace periods: fallecimiento=0d, despido=7d, termino_contrato=0d, renuncia/mutuo_disenso/otro=30d.
-Jubilados: NUNCA archivados via H (acceso Koha JUBILADO permanente via Bloque R).
-Implementa el ciclo completo ISO 24760 §6.3. v3.0 (2026-05-23).
-FIX DT-4 (2026-05-20): eliminada source lifecycleState para romper dependencia circular
-detectada en reconcile. lifecycleState se lee via focus?.lifecycleState en condición
-(snapshot del repositorio, no valor computado en el mismo ciclo de evaluación).</description>
-            <lifecycleState>active</lifecycleState>
+            <description>NEUTRALIZADO 2026-05-29 (lifecycleState=deprecated → MidPoint NO lo evalúa).
+Su lógica de archive staff/faculty tras grace period fue absorbida por el Bloque L
+(derivación canónica única). Se conserva el cuerpo para trazabilidad/rollback. El grace
+period ya NO vive en el template: la temporalidad post-cese la gobierna el token en
+sciback:affiliations (searchScript del worker, FEC_TERMINO>=SYSDATE-730).
+[original] Transición active→archived para staff/faculty con grace period diferenciado por motivoCese.</description>
+            <lifecycleState>deprecated</lifecycleState>
             <strength>strong</strength>
             <source>
                 <path>extension/sciback:primaryAffiliation</path>
@@ -1135,8 +1161,11 @@ try {
         <ref>lifecycleState</ref>
         <mapping>
             <name>H2-archive-on-total-affiliation-loss</name>
-            <description>Archiva al ex-trabajador sin ninguna afiliación viva pero con terminationDate (perdió empleo y no tiene otra IIA). Salvaguarda: si conserva alum/student/affiliate NO archiva. opción 1b 2026-05-29.</description>
-            <lifecycleState>active</lifecycleState>
+            <description>NEUTRALIZADO 2026-05-29 (lifecycleState=deprecated → MidPoint NO lo evalúa).
+Su caso (ex-trabajador sin ninguna afiliación viva pero con terminationDate → archived) está
+ahora cubierto por el Bloque L rama (2). Se conserva para trazabilidad/rollback.
+[original] Archiva al ex-trabajador sin ninguna afiliación viva pero con terminationDate.</description>
+            <lifecycleState>deprecated</lifecycleState>
             <strength>strong</strength>
             <source>
                 <path>extension/sciback:primaryAffiliation</path>
@@ -1633,9 +1662,10 @@ return roleName</code>
         <ref>extension/sciback:primaryAffiliation</ref>
         <mapping>
             <name>J3-primaryAffiliation-from-affiliations-priority</name>
-            <description>Calcula primaryAffiliation desde affiliations multi-valor por prioridad eduPerson 202208: faculty(1) > staff(2) > student(3) > alum(4) > affiliate(5). strength=normal: el Bloque K (strong) hace override para jubilados. Reemplaza escritura directa desde recursos individuales.</description>
+            <description>Calcula primaryAffiliation desde affiliations multi-valor por prioridad eduPerson 202208: faculty(1) > staff(2) > student(3) > alum(4) > affiliate(5).
+              FIX 2026-05-29 (multi-afiliación §3.2): strength normal→STRONG. Causa raíz del limbo: con normal, un recompute sin delta NO sobrescribía un primaryAffiliation stale (ej. 'staff' de un ex-trabajador cuya cuenta Trabajador fue desproyectada y cuyo affiliations ya es ['alum']). strong fuerza recálculo desde el affiliations VIVO en cada recompute → al morir el empleo pero persistir lo académico, primaryAffiliation pasa de 'staff' a 'alum' correctamente (pérdida de faculty/employee NO elimina alum/student). Bloque K (strong) sigue conviviendo: para jubilado puro K='alum' (J3 retorna null porque affiliations vacío de worker) → K gana; para no-jubilado K retorna null → J3 gana. Nunca ambos producen valor a la vez para el mismo foco.</description>
             <lifecycleState>active</lifecycleState>
-            <strength>normal</strength>
+            <strength>strong</strength>
             <source>
                 <path>extension/sciback:affiliations</path>
             </source>
