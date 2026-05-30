@@ -969,10 +969,11 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
                 <name>terminationDate</name>
                 <path>extension/sciback:terminationDate</path>
             </source>
-            <source>
-                <name>assignmentSrc</name>
-                <path>assignment</path>
-            </source>
+            <!-- NO declarar `assignment` como <source>: es multivalor y haría que el mapping se evalúe
+                 una vez por valor (mismo antipatrón que forzó D7 de affiliations→primaryAffiliation,
+                 L1489) → produce [draft, archived] simultáneos → "single-valued item lifecycleState"
+                 error. La evidencia laboral se lee vía la variable `focus` dentro del script (igual que
+                 Bloque G lee focus.assignment), de modo que el mapping corre UNA sola vez. -->
             <expression>
                 <script>
                     <code>
@@ -1016,15 +1017,12 @@ if (!liveAff.isEmpty()) {
 def EMPLOYEE_STRUCT = ['6460facf-3abf-4851-966e-0c95aa1a6c46','c93083ca-f4c5-4704-acf4-d53b97c9556e'] as Set;
 def hasEmploymentEvidence = false;
 try {
-    def asgs = assignmentSrc;
-    if (asgs != null) {
-        def asgList = (asgs instanceof List) ? asgs : [asgs];
-        hasEmploymentEvidence = asgList.any { a ->
-            def tr = a?.targetRef;
-            tr != null &amp;&amp; (tr.oid in EMPLOYEE_STRUCT)
-        }
-    }
-} catch (Exception e) { log.warn('Bloque L: error leyendo assignment en {}: {}', focus?.name, e.message) }
+    // leer desde la variable `focus` (NO un <source> declarado) → mapping se evalúa UNA vez
+    hasEmploymentEvidence = focus?.assignment?.any { a ->
+        def tr = a?.targetRef;
+        tr != null &amp;&amp; (tr.oid in EMPLOYEE_STRUCT)
+    } ?: false
+} catch (Exception e) { log.warn('Bloque L: error leyendo focus.assignment en {}: {}', focus?.name, e.message) }
 
 // (2) Sin afiliación viva, pero tuvo empleo (terminationDate) → leaver real → archived.
 if (termStr != '') {
