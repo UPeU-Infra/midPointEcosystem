@@ -1763,3 +1763,64 @@ NO se ejecutó el masivo ni PASO 4-6 — esperando elección de mecanismo + auto
 - **Datos:** 4 canaries PASO2 + 5 validación PASO3 = 9 usuarios saneados (todos single structural correcto).
   0 destructivos no intencionados. 0 dual-structural en los 9. Disco 77%, contenedores healthy.
 - Backups PM12 (`bkp_pre_paso1_struct_20260530_0154.sql` 674M) + PM8/PM11 vigentes.
+
+---
+
+# SESIÓN PM14 (2026-05-30) — PASO 1 MASIVO LANZADO (opción 2, loop REST sin restart). EN CURSO en background.
+
+> Skills consultadas: `midpoint-best-practices` línea 169 (archetype solo por direct assignment plano),
+> línea 183 (max 1 structural), línea 398 (cambio de archetype = destructivo/especial), §4.1-4.3;
+> `iga-canonical-standards` §1.2 (lifecycle ISO 24760), §1.3 (una IIA por atributo). Opción 2 (loop REST
+> sin restart) APROBADA por Alberto. Mecanismo idéntico al delta atómico validado en PM12/PM13 (9 users).
+
+## Cuantificación REAL de la población latente (criterio ESTADO='I', no flag `dead`)
+El conteo correcto NO usa `m_shadow.dead` sino **ESTADO != 'I'** (attr JSONB clave `"29"` del shadow
+Trabajadores v3) — replica `archetype-to-liveAffiliationWorker` (PM13 hallazgo crítico). Worker con
+shadow no-dead pero ESTADO='I' (cesado en grace) NO es afiliación laboral viva.
+
+| Conjunto (employee structural, sin laboral vivo) | N | Acción | Seguridad |
+|---|---|---|---|
+| + shadow alum vivo (e23) | **1,376** | → alum (delta atómico) | ✅ seguro |
+| + shadow student vivo (e22) | **363** | → student (delta atómico) | ✅ seguro |
+| 0 académica viva en MidPoint, SIN DNI en Oracle académico | **3,203** | → archived (Bloque L H3, conserva employee) | ✅ seguro |
+| **0 académica viva en MidPoint PERO CON DNI académico en Oracle (tmp_acad)** | **983** | **QUARANTINE — NO tocar** | ⚠️ salvaguarda |
+| **TOTAL latente** | **5,925** | (4,942 procesar + 983 cuarentena) | |
+
+## HALLAZGO BLOQUEANTE menor — 983 en cuarentena (NO archivar)
+Los 983 son ex-trabajadores con afiliación académica vigente en Oracle (egresado/alumno) pero **SIN
+NINGÚN shadow Egresado/Estudiante** (ni vivo ni muerto) en MidPoint → su `alum`/`student` nunca se
+proyectó (residuo del recon Egresados SUSPENDED en PM7). Archivarlos violaría la salvaguarda académica.
+**Decisión conforme al runbook:** EXCLUIRLOS del saneo (acción `QUARANTINE`, skip) → quedan como están
+(employee/active) hasta que un recon Egresados/Estudiantes complete los proyecte. NO se detiene el resto.
+Lista de los 983 = filtrable de `/tmp/saneo_list.tsv` (action=QUARANTINE).
+
+## Mecanismo (validado en canary 15 users antes del masivo)
+- Backup incremental fresco: `/home/juansanchez/bkp_pre_paso1_masivo_20260530_0232.sql` (2.4G; m_assignment
+  + m_ref_archetype + m_user + m_ref_object_parent_org).
+- Script `/tmp/saneo_masivo.sh` (loop REST PATCH JSON, lee `/tmp/saneo_list.tsv`):
+  - **alum/student:** delta atómico `{add archetype-correcto + delete employee stale @cid}` con
+    `?options=reconcile` → siempre 1 structural → template (J3/L/D7) corre → active/alum|student.
+  - **archived:** PATCH no-op (`replace description=saneo-masivo-2026-05-30`) `?options=reconcile` →
+    conserva employee → Bloque L rama H3 → archived (H1: nunca 0 structural).
+  - Disk-guard 90% (abort), progreso cada 200, acepta HTTP 204/240/200.
+- **Canary 15 (5 alum + 5 student + 5 archived): 15/15 OK.** Verificado: alum→active/alumni,
+  student→active/student, archived→archived/employee-staff. **0 dual structural** (nstruct=2 = structural
+  + auxiliary AuxAff, NO dos structural).
+
+## Estado EN CURSO (lanzado en background, nohup)
+- Proceso `saneo_masivo.sh` PID 1008989 VIVO, log `/tmp/saneo_masivo.log`.
+- Progreso n=200/5925: ok=162, fail=1, quarantine=36, disco=82%. Ritmo ~200/4.5min → **ETA ~04:50 Lima**.
+- **0 dual structural GLOBAL** durante la corrida (delta atómico nunca crea 2). Contenedores healthy.
+
+## FAILs (datos sucios pre-existentes, NO del mecanismo)
+- 1 FAIL (dni 42966194): HTTP 500 `Strong mappings provided more than one value for single-valued item
+  familyName: [Azan Rodriguez, Azan Rodríguez]`. Causa: **discrepancia de tildes** entre fuente worker y
+  egresado para el mismo apellido → 2 valores strong colisionan en familyName. NO es dual-archetype ni
+  defecto del saneo; es calidad de datos. El user queda intacto (sin saneo). Se acumulan en el log para
+  tratamiento aparte (normalización de tildes en inbounds de nombre — trabajo separado SciBack).
+
+## PENDIENTE al completar el masivo (PASO 2 verificación + PASOS 3-5)
+- PASO 2: 0 usuarios >1 structural; 1,376 ex-trab→active/alumni; 363→active/student; 3,203→archived;
+  0 egresados/estudiantes con afiliación viva en archived (los 983 cuarentena NO cuentan, siguen active).
+- PASO 3-5 (re-recon Trabajadores, recompute UPeU + purga, verificación final): tras completar PASO 1+2.
+- Tratar los 983 QUARANTINE (recon Egresados/Estudiantes que los proyecte) — prerequisito para su saneo.
