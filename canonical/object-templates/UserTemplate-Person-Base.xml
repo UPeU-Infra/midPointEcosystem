@@ -1519,11 +1519,24 @@ return roleName</code>
          ================================================================ -->
     <mapping>
         <name>D7-structural-archetype-priority</name>
-        <description>Archetype estructural único según primaryAffiliation (single-valor, ya priorizado por J3/K).
+        <description>Archetype estructural ÚNICO según primaryAffiliation (single-valor, ya priorizado por J3/K).
           FIX 2026-05-27: source cambiado de affiliations (multi-valor) a primaryAffiliation (single-valor)
           para evitar que MidPoint evalúe el mapping una vez por valor y cree doble archetype assignment.
           J3 calcula primaryAffiliation desde affiliations (faculty>staff>student>alum>affiliate).
           Bloque K override jubilados→alum (strong). D7 corre en wave posterior, leyendo valor final.
+
+          FIX 2026-05-30 (PM16, RAÍZ del dual-structural): D7 se vuelve AUTORITATIVO sobre el conjunto
+          de los 4 archetype-user STRUCTURAL derivables de afiliación (faculty/staff/student/alum) mediante
+          un target/set explícito (best-practices §3.3 max 1 structural; docs.evolveum mapping range:
+          "the mapping is authoritative for all values in its range"). Sin range, assignmentTargetSearch
+          solo gestiona los assignments con SU provenance → un structural stale de otra fuente (focus
+          archetypeRef histórico, merge, recon previo) NO se removía → dual-structural en cada recompute.
+          Con el range, D7 produce exactamente 1 (el correcto) y MidPoint REMUEVE cualquier otro
+          archetype-user structural del conjunto que esté presente y D7 no produzca. Embebe en el template
+          la lógica del delta-atómico que vivía en el task externo de saneo (PM14/15) → recompute masivo
+          (recon Trabajadores/Estudiantes/Egresados) ya NO reintroduce dual.
+          NOTA: el range NO incluye researcher/visitor/contractor/partner/service-account (structural NO
+          derivables de afiliación) — esos no se barren aquí; quien los gestione es su propio mecanismo.
           MidPoint Book Cap. 8-9: archetype assignment centralizado en template.</description>
         <lifecycleState>active</lifecycleState>
         <strength>strong</strength>
@@ -1552,6 +1565,17 @@ return roleName</code>
         </expression>
         <target>
             <path>assignment</path>
+            <!-- RANGE AUTORITATIVO: D7 gobierna SOLO los 4 archetype-user structural derivables de
+                 afiliación. 'assignment' es el binding del valor evaluado (AssignmentType). Si el
+                 targetRef apunta a uno de los 4 OIDs structural y D7 no lo produjo → MidPoint lo remueve.
+                 Cualquier otro assignment (roles, orgs, OTHER structural) queda FUERA del range → intacto. -->
+            <set>
+                <condition>
+                    <script>
+                        <code>input?.targetRef?.oid in ['c93083ca-f4c5-4704-acf4-d53b97c9556e','6460facf-3abf-4851-966e-0c95aa1a6c46','3037fbd2-db02-4ffd-8b1a-83fab5e686aa','87552943-9600-493b-88ca-74b7d3ba93e4']</code>
+                    </script>
+                </condition>
+            </set>
         </target>
         <condition>
             <script>
