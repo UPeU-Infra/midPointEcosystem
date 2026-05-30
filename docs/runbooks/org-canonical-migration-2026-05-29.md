@@ -1659,3 +1659,52 @@ faculty>staff>student>alum>researcher>visitor>contractor>partner-institution (se
 - **Config:** sin cambios de template en PM12 (Opción 2 de PM11 sigue desplegada y validada). Disco 77%, contenedores healthy.
 - **PASO 3-6 NO ejecutados** — bloqueados por decisión de diseño (H1-H4). El mecanismo está validado en canary;
   falta (1) aprobar el patrón delta-atómico de H1/H2 para el masivo, (2) decidir H3 (draft vs archived), (3) confirmar H4 (prioridad 9 structural).
+
+---
+
+# SESIÓN PM13 (2026-05-30) — Decisiones H1-H4 APROBADAS. PASO 1 (rama H3 + task saneo) ✅ + PASO 2 (4 canaries) VERDE. Validando task antes de masivo.
+
+> Skills consultadas: `midpoint-best-practices` §1.2 (lifecycle ISO 24760 sync desde IIA), §3.3/§3.4
+> (max 1 structural; archetype solo por assignment plano directo, línea 169), §4.2 (strength); `iga-canonical-standards`
+> §1.2/§1.3. READ-ONLY masivo + PUTs de template + 4 PATCH reconcile (canaries). 0 destructivos de datos.
+
+## PASO 1 ✅ — Rama archived H3 (Bloque L) + task saneo dual-structural (H1/H2/H4)
+- **Bloque L, rama H3** (commit `5100ce4`+`5fc...`): usuario con 0 afiliación viva, sin terminationDate,
+  PERO con structural employee/faculty asignado (evidencia laboral) → `archived` (no draft). `draft` queda
+  solo para perfiles genuinamente nunca-activados. §1.2 ISO 24760 (identidad laboral establecida → archived).
+- **Bug encontrado y corregido (2 iteraciones):**
+  1. `<source><path>assignment</path></source>` MULTIVALOR → Bloque L se evaluaba una vez por valor de
+     assignment → producía `[draft, archived]` simultáneos → HTTP 500 "Strong mappings provided more than
+     one value for single-valued item lifecycleState". **Mismo antipatrón que forzó D7 affiliations→primaryAffiliation.**
+     FIX: leer `focus.assignment` dentro del script (patrón Bloque G), SIN declararlo `<source>` → mapping
+     corre UNA vez.
+  2. Comentario inline `// ... <source> ...` con `<` crudo en `<code>` NO-CDATA → XML parse error
+     ("element type source must be terminated"). FIX: escapar a `source`/`=&gt;`.
+- **Task saneo** `upeu/tasks/sanitation-dual-structural/task-sanitation-dual-structural.xml`:
+  `iterativeScripting` + `execute-script` Groovy que aplica DELTA ATÓMICO
+  `{add structural-correcto + delete TODOS los structural-stale}` por usuario en una sola
+  `midpoint.executeChanges(reconcile=true)`. Prioridad H4: faculty>staff>student>alum desde items
+  liveAffiliation; si 0 afiliación viva → conserva employee existente (→ Bloque L H3 lo archiva); nunca
+  deja 0 structural (H1). Cubre los 9 structural-user (researcher/visitor/contractor/partner/service
+  como OTHER_STRUCT, conservados solo si únicos). Idempotente.
+- Template base PUT HTTP 201, `focus.assignment` verificado en DB.
+
+## PASO 2 ✅ VERDE — 4 canaries, todos 204, 0 PolicyViolation, structural ÚNICO
+| Canary | Antes | Después | Esperado | Veredicto |
+|---|---|---|---|---|
+| `48150895` egresado dual ex-staff | active/alumni | **active / alumni** (único) | active/alum único | ✅ |
+| `548644005` denominacional 0-afiliación-viva | **draft**/employee-faculty | **archived / employee-faculty** (único) | **archived** (H3) | ✅ |
+| `01219011` trabajador activo | active/employee-faculty | **active / employee-faculty** | active/faculty | ✅ |
+| `200920749` egresado puro (control) | active/alumni | **active / alumni** | active/alum | ✅ |
+
+- **researcher+faculty:** PM12 ya saneó el único dual (0 quedan en m_assignment). La prioridad del task
+  (faculty gana; researcher no es liveAffiliation) lo cubre; no hay dual vivo que probar como canary.
+- Mecanismo de recompute por canary: PATCH no-op `?options=reconcile` HTTP 204.
+
+## Estado dual-structural PRE-PASO-3 (datos duros)
+- `m_assignment` con >1 structural-user: **0** (saneados en PM12).
+- **Población LATENTE: 4,733** (structural employee + shadow Egresados v3 linked vivo) → dispararían
+  dual-archetype EN RECOMPUTE masivo. ESTE es el target del PASO 3.
+- Resources: Trabajadores v3 `...e21`, Estudiantes v3 `...e22`, Egresados v3 `...e23`.
+
+## SIGUIENTE — validar task saneo en lote pequeño (5 latentes) antes del masivo de 4,733.
