@@ -2925,3 +2925,65 @@ En IGA universitario el árbol de orgs lo gobierna la IIA (HR/ERP) por identific
 Los nodos semánticos creados a mano que NO corresponden a un área del feed, sin sujetos ni rol, son
 anti-patrón (OrgType vacío) → archivar, no poblar. La granularidad organizativa que la IIA no modela
 no debe inventarse en el IGA. Política de scope = unidad con personal vivo según contrato HR.
+
+---
+
+## ADDENDUM PM16 — Saneo de raíces/pestañas en vista Org tree (2026-05-30)
+
+### Síntoma reportado
+La vista **Organization tree** de MidPoint mostraba un desorden de pestañas: ~37 orgs
+aparecían como RAÍCES top-level (DIR-CRAI x3, Analítica Avanzada, Defensoría, PRODAC,
+Fondo Editorial, Iglesia Universitaria, Infraestructura TI - Lima, etc.), además de la
+raíz legítima UPeU.
+
+### Causa raíz (diagnóstico)
+Las 37 orgs eran exactamente los **nodos semánticos placeholder archivados** (`lifecycleState=archived`)
+de PM-anteriores. Cada una tenía 1 assignment a su parent OrgType (existían en repo), PERO:
+- **MidPoint no materializa `parentOrgRef` operacional para objetos con lifecycle inactivo.**
+  La vista Org tree se construye leyendo `parentOrgRef` (referencia indexada que respeta validity,
+  best-practices §5.1/§5.2), NO los assignments crudos. Sin `parentOrgRef` → la org flota como raíz.
+- Por eso "0 islas" (los assignments existían) coexistía con "37 pestañas" (parentOrgRef no materializado).
+- 4 de ellas (Bienestar + 3 hijos: Coord-Residencias, Asistencia-Social, Coord-Misión) colgaban
+  entre sí (padre archived → hijos archived también flotan).
+
+### "Duplicados" CRAI x3
+DIR-CRAI-LIMA / -JULIACA / -TARAPOTO comparten displayName "Dirección del CRAI" pero eran 3 placeholders
+semánticos por sede. **No existe contraparte numérica viva (`AREA-NN`) con ese nombre**; la función
+biblioteca/CRAI real vive como org viva (ej. `CU-BIB` = "Biblioteca"). Los 3 eran placeholders → eliminados.
+
+### Verificación pre-DELETE (todas las 37)
+- 0 usuarios (ni parentRef ni assignment), 0 hijos org vivos, 0 objetos vivos referenciándolas.
+- Las únicas 3 referencias entrantes eran internas entre las propias archived (Bienestar ← sus 3 hijos archived).
+- → DELETE seguro, sin reparentación necesaria, sin duplicado numérico que conservar.
+
+### Acción ejecutada
+- Backup: tag git `pre-org-roots-cleanup-20260530` + `pg_dump` selectivo
+  `/tmp/bkp_org_roots_20260530.sql` (m_org + m_ref_object_parent_org, 3.3M).
+- **DELETE definitivo de las 37 vía REST** (`DELETE /ws/rest/orgs/{oid}`, 37× HTTP 204).
+  REST en vez de SQL directo → consistencia de repo + audit log ISO 27001.
+- **0 reparentaciones** (ningún hijo vivo). **0 duplicados con contraparte numérica** (ninguna AREA-NN homónima).
+
+### Verificación post (árbol limpio)
+| Métrica | Valor |
+|---|---|
+| m_org total | **161** (antes 198) |
+| archived restantes | **0** |
+| RAÍCES (sin parentOrgRef) | **1 → solo `UPeU`** |
+| orgs vivas con archetype | 161/161 (100%) |
+| referencias colgantes NUEVAS por el DELETE | **0** (las 37 estaban vacías) |
+| m_user | 49,321 (sin cambio — 0 usuarios tocados) |
+| DTI ("Dirección de Tecnologías de Información") | viva, 99 trabajadores ✓ |
+| salvaguarda académica (archived users) | 7,312 (sin cambio) ✓ |
+
+**La vista Org tree ahora muestra UNA sola pestaña (UPeU).** Todas las orgs vivas cuelgan de UPeU.
+
+### Nota: residuo preexistente NO relacionado
+Existen 951 assignments hacia 164 OrgType inexistentes — residuo de la purga denominacional
+(commit `584899d`), NO de este saneo (0 de mis 37 OIDs aparecen ahí). Se limpian con el recompute
+de usuarios ya en COLA DE RETOMA. Fuera del alcance de PM16.
+
+### Bloque SciBack (patrón reutilizable)
+Archivar un OrgType (`lifecycleState=archived`) lo saca del árbol visual pero lo deja como pestaña-raíz
+huérfana, porque el `parentOrgRef` operacional no se materializa para lifecycle inactivo. Para placeholders
+semánticos vacíos confirmados (0 sujetos, 0 hijos vivos, 0 refs entrantes vivas) el cierre canónico es
+**DELETE definitivo vía REST**, no archived. Archived se reserva para orgs con historia/datos a preservar.
