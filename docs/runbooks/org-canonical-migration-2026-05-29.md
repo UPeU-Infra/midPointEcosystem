@@ -2151,3 +2151,63 @@ fix D7 mantiene dual-structural=0. Canaries individuales (draft-alum, NULL+liveA
   relanzado.
 - **PENDIENTE:** al completar → verificar ~3,605 solo-denominacionales→archived, salvaguarda (0 académicos archived),
   92 NULL resueltos, dual=0. Luego PASO 4 (recompute árbol canónico + purga), PASO 5 (VALIDACIÓN DTI-Lima), PASO 6 (cierre).
+
+# SESIÓN PM20 (2026-05-30 ~10:00-15:00 Lima) — PASO 3 re-recon Trabajadores EN CURSO (lento por refs rotas). Salvaguarda académica PERFECTA (acad=39337 constante). DTI-Lima identifier fix preparado. Diagnóstico wave-ordering 92 NULL + 694 draft.
+
+> Skills: midpoint-best-practices (§3.3, §4.5/§4.6 wave-ordering, §5 org/costCenter, mapping range PM17),
+> iga-canonical-standards (§1.2 lifecycle, §10 identifiers inmutables, regla oro #10). Oracle SOLO LECTURA.
+> Backup focus-only pre-PASO3: /tmp/bkp_focus_pre_paso3_0917.dump (673M, host+container).
+
+## PASO 3 — Re-recon Trabajadores v3 (EN CURSO, ~65% a las 15:00 Lima)
+
+- **Task** `e8d054ba-...` resource v3 `...e21` (16,327 shadows). Lee Oracle (SOLO SELECT).
+- **Scheduling resuelto** (incidente PM19): 1er resume reanudó checkpoint viejo parcial (cerró en prog=2482).
+  Fix: suspend → UPDATE m_task RUNNABLE/READY → restart container (mem 6.9→4.8GB, Quartz recargado) → /resume
+  → nueva corrida desde prog=19. **Patrón confiable: restart + /resume tras checkpoint corrupto.**
+- **Progreso verificado:** prog 19→2698→5495→7359→9780→10668. liveWrk 1400→3900. **arch 4331→5210 (+879
+  solo-denominacionales archivados correctamente).** acad=39337 CONSTANTE (salvaguarda perfecta). dual=0 sostenido.
+- **CAUSA DE LENTITUD (no bloqueante):** errores `Referenced object not found in assignment target reference`
+  — orgs denominacionales (ej. AREA-4520 → OrgType OID inexistente b4b2220e) con parents purgados en migraciones
+  previas. Ralentizan cada item afectado (MODIFY baja a ~70/min). **Estas refs colgantes son target de PASO 4
+  (purga).** El recon converge igual; ETA total ~varias horas por la densidad de errores en la cola del scan.
+- **7 users con doble shadow Trabajadores** (doble código empleado en Oracle, ej. 43611157) → `Projection already
+  exists in lens context`. <0.1%, benigno, no bloquea. Saneo opcional (unlink shadow redundante) en limpieza.
+- **Monitores frágiles:** los monitores bash en background mueren tras 1-2 iteraciones (SIGHUP pese a setsid, o
+  docker exec colgado). Mitigado con timeouts; en la práctica la verificación directa por checkpoint (yo) fue
+  más confiable. Salvaguarda académica verificada manualmente en CADA checkpoint: acad=39337 invariante.
+
+## PASO 5 (preparado, NO aplicado a PROD aún) — VALIDACIÓN DTI-Lima: causa raíz + fix de identifier
+
+**HALLAZGO CRÍTICO (causa raíz de "0 trabajadores en DTI-Lima"):** las orgs canónicas DTI usan identifiers
+SEMÁNTICOS (`DTI`, `infraestructura.ti.lima`, `continuidad.servicios.lima`, `ops.soporte.ti.lima`), NO el ID_AREA
+numérico de LAMB. El **Bloque E** del template (línea 743) asigna trabajadores buscando `OrgType.identifier =
+costCenter (=ID_AREA)`. Como las orgs DTI no tienen ID_AREA como identifier, **Bloque E nunca matchea → 0 cuelgan.**
+
+**Verdad de Oracle (vía camino EXACTO del resource: VW_APS_EMPLEADO → VW_TRABAJADOR.ID_SEDEAREA →
+ORG_SEDE_AREA.ID_AREA → ORG_AREA):**
+- **ID_AREA=18 "Dirección de Tecnologías de Información": 72 trabajadores activos** (ent=7124, ESTADO='A')
+- **ID_AREA=17 "Dirección de Infraestructura": 21 trabajadores activos**
+- Total 93 trabajadores TI. **SANCHEZ CONDOR, Juan Alberto (DNI 10867326) está en ID_AREA=18** (usuario del proyecto).
+- NOTA: VW_APS_EMPLEADO.ID_DEPTO ≠ ID_AREA (codificaciones distintas; el costCenter sale de ORG_SEDE_AREA.ID_AREA).
+
+**Fix aplicado al repo (commit pushed):** `COORDINACION-TI-LIMA` identifier `DTI`→`18`
+(upeu/orgs/campus/org-campus-lima-units.xml). **PENDIENTE de aplicar a PROD:** PUT del org + cambiar identifier de
+`INFRAESTRUCTURA-TI-LIMA` (OID ea05eb7a) `infraestructura.ti.lima`→`17` vía REST. Las sub-orgs CONTINUIDAD/OPERACIONES
+no tienen contraparte Oracle activa → quedan vacías (uso futuro). Tras el fix + recompute de los 93 → Bloque E los
+vincula a DTI-Lima/Infraestructura. ESA es la validación de éxito del usuario.
+
+## PASO 1/2 (recordatorio, ya verificados en PM19)
+- liveAffiliation materializado: alum 30,650 / student 10,936 / worker 1,400→3,900 (subiendo en recon).
+- **SALVAGUARDA: 0 archived con afiliación viva.** dual=0. lifecycle pre-recon: active 44,198 / archived 4,331.
+- **694 draft = egresados sin sciback:taxId** (gap calidad fuente; Bloque L los mantiene draft por política
+  completitud §1.2 — NO forzar). **92 NULL = wave-ordering** (J3→D7 no re-evalúa en recompute idempotente sin
+  delta de source; 91/92 tienen shadow LAMB → el re-recon los resuelve con delta real).
+
+## COLA DE RETOMA (tras completar PASO 3 recon)
+1. Suspender recon Trabajadores (es RECURRING). Verificar arch final (~baseline+3,605 esperado), salvaguarda
+   (acad≥39,337), dual=0, NULL resueltos.
+2. PASO 4: recompute trabajadores in-scope (Bloque E → árbol canónico). Purga orgs denominacionales (244 sin
+   archetype, verificar 0 active c/u antes de DELETE) + limpieza refs colgantes (AREA-4520 etc.).
+3. PASO 5: aplicar identifier fix DTI a PROD (COORDINACION-TI-LIMA→18, INFRAESTRUCTURA-TI-LIMA→17) + recompute
+   los 93 trabajadores TI → VERIFICAR cuelgan de DTI-Lima con archetype correcto. Listar (incl. DNI 10867326).
+4. PASO 6: cierre — árbol único, conteos finales por lifecycle/archetype, OrgTemplate-Area inerte, caso 21835727.
