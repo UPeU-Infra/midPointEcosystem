@@ -48,12 +48,9 @@
           </query>
         </objects>
         <scriptExecutionRequest>
-          <s:action>
-            <s:type>execute-script</s:type>
-            <s:parameter>
-              <s:name>script</s:name>
-              <s:value xsi:type="s:ScriptExpressionEvaluatorType">
-                <code><![CDATA[
+          <s:execute>
+            <s:script xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
+              <c:code><![CDATA[
 import com.evolveum.midpoint.xml.ns._public.common.common_3.*;
 import com.evolveum.midpoint.prism.delta.*;
 import com.evolveum.midpoint.schema.constants.SchemaConstants;
@@ -181,10 +178,9 @@ midpoint.executeChanges([delta] as java.util.Collection, opts);
 
 log.info('SANEO OK: {} ({}) -> structural unico {} (stale removidos: {})',
     uname, uoid, correctOid, staleAssigns.collect{it.oid});
-]]></code>
-              </s:value>
-            </s:parameter>
-          </s:action>
+]]></c:code>
+            </s:script>
+          </s:execute>
         </scriptExecutionRequest>
       </iterativeScripting>
     </work>
