@@ -2,7 +2,12 @@
 <role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3">
     <name>R-Affiliation-Faculty</name>
-    <description>Afiliacion birthright — docente activo en UPeU (tiempo completo o tiempo parcial)</description>
+    <description>Afiliacion birthright — docente activo en UPeU (tiempo completo o tiempo parcial).
+Fundamento: faculty = relación contractual VIVA de instrucción (eduPerson 202208 §3.2 /
+iga-canonical §3.2; Ley Universitaria 30220 Art. 79 enseñanza/supervisión, Art. 81 jefes de
+práctica/ayudantes = carrera docente). NO incluye Auxiliar de Educación (Ley 29944 lo distingue
+del Profesor). La afiliación viva la determina el resource Trabajadores v3 vía carga docente
+vigente o puesto docente del contrato 7124; aquí solo se cablea el birthright del rol.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <targetRef oid="a1c40fd6-24e0-4bb0-b809-080edff6f9b0" type="ArchetypeType" relation="org:default"/>

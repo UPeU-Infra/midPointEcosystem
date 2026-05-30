@@ -43,6 +43,54 @@
             <cfg:allNative>false</cfg:allNative>
             <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
             <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
+            <!-- ============================================================================
+                 FUNDAMENTO NORMATIVO — CASE de UPEU_ARCHETYPE_NAME (faculty vs staff)
+                 (deployed commit a283fa3; runbook docs/runbooks/faculty-staff-classification-2026-05-30.md)
+                 ============================================================================
+                 El CASE clasifica faculty SOLO con afiliación docente VIVA, no con padrón histórico:
+                   faculty = (A) carga docente vigente  cvf = SELECT DISTINCT ID_PERSONA
+                                 FROM ENOC.VW_CARGA_DOCENTE WHERE ID_SEMESTRE IN (267,279,283)
+                                 (semestres 2026-1/2026-0/2026-2) — captura a quien DICTA este ciclo
+                                 (incl. autoridades académicas y staff que enseña un curso).
+                             UNION
+                             (B) puesto docente en contrato vivo 7124 (ENOC.PLLA_PUESTO.NOMBRE):
+                                 - Docente* / Profesor*  EXCLUYENDO  %AUXILIAR%
+                                 - Jefe de Práctica(s)  (LIKE 'JEFE DE PR_CTICA%')
+                                 - Tutor de Internado*, Supervisor de Internado*,
+                                   Supervisor de Práctica (exacto), Asesor de Tesis (exacto)
+                   staff = el resto (ELSE).
+
+                 FUNDAMENTO (por qué faculty = enseñanza/supervisión académica viva):
+                 - Ley Universitaria 30220, Art. 79: la ENSEÑANZA y la SUPERVISIÓN académica son
+                   funciones DOCENTES. => quien tiene carga lectiva o supervisa internado/prácticas
+                   ejerce función docente => faculty.
+                 - Ley Universitaria 30220, Art. 81: los JEFES DE PRÁCTICA y AYUDANTES de cátedra son
+                   "etapa inicial de la carrera docente" => son docentes => faculty
+                   (de ahí 'JEFE DE PR_CTICA%', tutor/supervisor de internado y de práctica).
+                 - Ley de Reforma Magisterial 29944: distingue el PROFESOR (instructor responsable)
+                   del AUXILIAR DE EDUCACIÓN (apoya al docente, NO es el instructor responsable).
+                   Categorías legalmente distintas => 'Auxiliar Docente'/'Auxiliar de Educación'
+                   = staff. Implementado con NOT LIKE '%AUXILIAR%' sobre Docente/Profesor.
+                 - eduPerson 202208 §3.2 / iga-canonical-standards §3.2: faculty = "academic/teaching
+                   staff with a contractual relationship for instruction". El padrón histórico no es
+                   relación de instrucción VIVA; la carga vigente sí. Practicante/aprendiz NO es
+                   instructor => staff.
+                 - Reality-vs-Policy (midpoint-best-practices §2.1): la afiliación refleja el ROL
+                   PRESENTE, no la historia. Ex-docente hoy administrativo, sin carga ni puesto
+                   docente vivo => staff (si recupera carga, (A) lo reclasifica a faculty solo).
+
+                 FUENTE DE VERDAD elegida: VW_CARGA_DOCENTE (carga vigente, universidad)
+                   ∪ PLLA_PUESTO docente activo del contrato 7124 (colegio + autoridades).
+                 FUENTES DESCARTADAS y por qué:
+                   - DAVID.VW_PERSONA_DOCENTE: padrón HISTÓRICO contaminado (7.080 docs, sin filtro
+                     de vigencia ni tipo de personal). Generaba falsos faculty (Zonia 01119359
+                     Aux. circulación, Community Manager, Secretarias = +178) y PERDÍA docentes reales
+                     no listados (~1.400, incl. todo el colegio). Era la regla VIEJA — ELIMINADA.
+                   - ENOC.CAT_DOCENTE (ID_ESTADO_DOCENTE='02'): proceso interno demasiado ESTRICTO
+                     (deja fuera docentes con carga real). Se conserva solo para metadatos
+                     (jornada/condición/categoría), NO para clasificar.
+                   - ELISEO.ES_DOCENTE / flags equivalentes: no confiables (no reflejan vigencia).
+                 ============================================================================ -->
             <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT * FROM ( SELECT * FROM ( SELECT e.COD_APS, e.ID_ENTIDAD, e.ID_PERSONA, e.NOMBRE, e.PATERNO, e.MATERNO, e.NUM_DOCUMENTO, e.ID_TIPODOCUMENTO, e.SEXO, e.FEC_NACIMIENTO, e.FEC_INICIO, e.FEC_TERMINO, e.ESTADO, e.ID_CATEGORIAOCUPACIONAL, t.CELULAR, t.CORREO_INST, t.ID_TIPOESTADOCIVIL, t.ID_SEDEAREA, COALESCE(ca.CONTRACT_AREA, osa.ID_AREA) AS ID_AREA, t.ID_PUESTO, p.NOMBRE AS NOMBRE_PUESTO, t.FOTO, pnm.CORREO AS CORREO_PERSONAL, os.NOMBRE AS SEDE_NOMBRE, CASE WHEN cvf.ID_PERSONA IS NOT NULL OR ( (UPPER(p.NOMBRE) LIKE 'DOCENTE%' OR UPPER(p.NOMBRE) LIKE 'PROFESOR%') AND UPPER(p.NOMBRE) NOT LIKE '%AUXILIAR%' ) OR UPPER(p.NOMBRE) LIKE 'JEFE DE PR_CTICA%' OR UPPER(p.NOMBRE) LIKE 'TUTOR DE INTERNADO%' OR UPPER(p.NOMBRE) LIKE 'SUPERVISOR DE INTERNADO%' OR UPPER(p.NOMBRE) = 'SUPERVISOR DE PRÁCTICA' OR UPPER(p.NOMBRE) = 'ASESOR DE TESIS' THEN 'archetype-user-employee-faculty' ELSE 'archetype-user-employee-staff' END AS UPEU_ARCHETYPE_NAME, pc.ID_MOTIVO_CESE AS MOTIVO_CESE_RAW, CASE cd.ID_TIPO_TIEMPO_TRABAJO WHEN 1 THEN 'full-time' WHEN 2 THEN 'half-time' WHEN 3 THEN 'hourly' END AS DOCENTE_JORNADA, CASE cd.ID_CONDICION_LABORAL WHEN 'E' THEN 'permanent' WHEN 'M' THEN 'missionary' WHEN 'C' THEN 'contracted' END AS DOCENTE_CONDICION, cd.ID_CATEGORIA_DOCENTE AS DOCENTE_CATEGORIA, ROW_NUMBER() OVER (PARTITION BY e.COD_APS ORDER BY CASE WHEN e.ID_ENTIDAD = 7124 THEN 0 ELSE 1 END ASC, CASE e.ID_EMPRESA WHEN 201 THEN 0 ELSE 1 END ASC, CASE e.ID_TIPODOCUMENTO WHEN 1 THEN 1 WHEN 4 THEN 2 WHEN 7 THEN 3 WHEN 22 THEN 4 WHEN 24 THEN 5 WHEN 31 THEN 6 WHEN 23 THEN 7 WHEN 9 THEN 8 WHEN 6 THEN 9 WHEN 0 THEN 10 WHEN 97 THEN 11 WHEN 98 THEN 12 WHEN 99 THEN 13 ELSE 14 END ASC, e.FEC_INICIO DESC NULLS LAST) AS RN FROM ELISEO.VW_APS_EMPLEADO e LEFT JOIN ENOC.CAT_DOCENTE cd ON cd.ID_PERSONA = e.ID_PERSONA AND cd.ID_ESTADO_DOCENTE = '02' LEFT JOIN (SELECT DISTINCT ID_PERSONA FROM ENOC.VW_CARGA_DOCENTE WHERE ID_SEMESTRE IN (267,279,283)) cvf ON cvf.ID_PERSONA = e.ID_PERSONA LEFT JOIN ENOC.VW_TRABAJADOR t ON t.ID_PERSONA = e.ID_PERSONA LEFT JOIN ENOC.PLLA_PUESTO p ON p.ID_PUESTO = t.ID_PUESTO LEFT JOIN MOISES.PERSONA_NATURAL pnm ON pnm.ID_PERSONA = e.ID_PERSONA LEFT JOIN ELISEO.ORG_SEDE_AREA osa ON osa.ID_SEDEAREA = t.ID_SEDEAREA LEFT JOIN ELISEO.ORG_SEDE os ON os.ID_SEDE = osa.ID_SEDE LEFT JOIN ( SELECT cc.COD_APS, COALESCE(dm.ID_AREA, dm2.ID_AREA) AS CONTRACT_AREA FROM ( SELECT COD_APS, ID_DEPTO FROM ( SELECT COD_APS, ID_DEPTO, ROW_NUMBER() OVER (PARTITION BY COD_APS ORDER BY FEC_INICIO DESC NULLS LAST) crn FROM ELISEO.VW_APS_EMPLEADO WHERE ID_ENTIDAD = 7124 AND ESTADO = 'A' AND (FEC_TERMINO IS NULL OR FEC_TERMINO >= SYSDATE) AND ID_DEPTO IS NOT NULL ) WHERE crn = 1 ) cc LEFT JOIN ( SELECT osa3.ID_DEPTO, MIN(osa3.ID_AREA) AS ID_AREA FROM ELISEO.ORG_SEDE_AREA osa3 JOIN ELISEO.ORG_AREA a3 ON a3.ID_AREA = osa3.ID_AREA AND a3.ESTADO = '1' WHERE osa3.ESTADO = '1' GROUP BY osa3.ID_DEPTO HAVING COUNT(DISTINCT osa3.ID_AREA) = 1 ) dm ON dm.ID_DEPTO = cc.ID_DEPTO LEFT JOIN ( SELECT ID_DEPTO, ID_AREA FROM ( SELECT osa4.ID_DEPTO, osa4.ID_AREA, ROW_NUMBER() OVER (PARTITION BY osa4.ID_DEPTO ORDER BY osa4.ID_SEDEAREA DESC) rn4 FROM ELISEO.ORG_SEDE_AREA osa4 JOIN ELISEO.ORG_AREA a4 ON a4.ID_AREA = osa4.ID_AREA AND a4.ESTADO = '1' WHERE osa4.ESTADO = '1' AND osa4.ID_AREA IN ( SELECT DISTINCT ID_AREA FROM ELISEO.VW_AREA START WITH ID_AREA IN (SELECT b.ID_AREA FROM ELISEO.VW_AREA b WHERE b.ID_ENTIDAD=7124 AND b.ESTADO='1' AND (b.TIENEHIJO='1' OR EXISTS (SELECT 1 FROM ELISEO.VW_APS_EMPLEADO e2 JOIN ENOC.VW_TRABAJADOR t2 ON t2.ID_PERSONA = e2.ID_PERSONA JOIN ELISEO.ORG_SEDE_AREA osa5 ON osa5.ID_SEDEAREA = t2.ID_SEDEAREA WHERE osa5.ID_AREA = b.ID_AREA AND e2.ESTADO = 'A'))) CONNECT BY PRIOR ID_PARENT = ID_AREA MINUS SELECT ID_AREA FROM ELISEO.VW_AREA START WITH ID_AREA=8196 CONNECT BY PRIOR ID_AREA=ID_PARENT ) ) WHERE rn4 = 1 ) dm2 ON dm2.ID_DEPTO = cc.ID_DEPTO ) ca ON ca.COD_APS = e.COD_APS LEFT JOIN (SELECT ID_CONTRATO, ID_MOTIVO_CESE FROM ENOC.PLLA_CESE WHERE FECHA_CESE = (SELECT MAX(pc2.FECHA_CESE) FROM ENOC.PLLA_CESE pc2 WHERE pc2.ID_CONTRATO = ENOC.PLLA_CESE.ID_CONTRATO)) pc ON pc.ID_CONTRATO = e.ID_CONTRATO WHERE e.COD_APS IS NOT NULL AND TRIM(e.COD_APS) IS NOT NULL AND NOT REGEXP_LIKE(TRIM(e.COD_APS), '^0+$') AND (e.ESTADO = 'A' OR (e.ESTADO = 'I' AND e.FEC_TERMINO >= SYSDATE - 730)) ) WHERE RN = 1 AND ID_ENTIDAD = 7124 )'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE COD_APS = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Trabajadores-v3 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { row -&gt; result &lt;&lt; ['__UID__': row.COD_APS as String, '__NAME__': row.COD_APS as String, 'COD_APS': row.COD_APS as String, 'ID_PERSONA': row.ID_PERSONA?.toString(), 'NOMBRE': row.NOMBRE as String, 'PATERNO': row.PATERNO as String, 'MATERNO': row.MATERNO as String, 'NUM_DOCUMENTO': row.NUM_DOCUMENTO as String, 'ID_TIPODOCUMENTO': row.ID_TIPODOCUMENTO?.toString(), 'SEXO': row.SEXO as String, 'FEC_NACIMIENTO': row.FEC_NACIMIENTO?.toString(), 'FEC_INICIO': row.FEC_INICIO?.toString(), 'FEC_TERMINO': row.FEC_TERMINO?.toString(), 'ESTADO': row.ESTADO as String, 'ID_CATEGORIAOCUPACIONAL': row.ID_CATEGORIAOCUPACIONAL?.toString(), 'CELULAR': row.CELULAR as String, 'CORREO_INST': row.CORREO_INST as String, 'ID_TIPOESTADOCIVIL': row.ID_TIPOESTADOCIVIL?.toString(), 'ID_SEDEAREA': row.ID_SEDEAREA?.toString(), 'ID_AREA': row.ID_AREA?.toString(), 'ID_PUESTO': row.ID_PUESTO?.toString(), 'NOMBRE_PUESTO': row.NOMBRE_PUESTO as String, 'FOTO': row.FOTO as String, 'CORREO_PERSONAL': row.CORREO_PERSONAL as String, 'SEDE_NOMBRE': row.SEDE_NOMBRE as String, 'UPEU_ARCHETYPE_NAME': row.UPEU_ARCHETYPE_NAME as String, 'MOTIVO_CESE_RAW': row.MOTIVO_CESE_RAW?.toString(), 'DOCENTE_JORNADA': row.DOCENTE_JORNADA as String, 'DOCENTE_CONDICION': row.DOCENTE_CONDICION as String, 'DOCENTE_CATEGORIA': row.DOCENTE_CATEGORIA?.toString()] }; return result</cfg:searchScript>
             <cfg:syncScript>return null</cfg:syncScript>
             <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("COD_APS", true)); ocib.addAttributeInfo(ro("ID_PERSONA", false)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("PATERNO", true)); ocib.addAttributeInfo(ro("MATERNO", false)); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false)); ocib.addAttributeInfo(ro("ID_TIPODOCUMENTO", false)); ocib.addAttributeInfo(ro("SEXO", false)); ocib.addAttributeInfo(ro("FEC_NACIMIENTO", false)); ocib.addAttributeInfo(ro("FEC_INICIO", false)); ocib.addAttributeInfo(ro("FEC_TERMINO", false)); ocib.addAttributeInfo(ro("ESTADO", true)); ocib.addAttributeInfo(ro("ID_CATEGORIAOCUPACIONAL", false)); ocib.addAttributeInfo(ro("CELULAR", false)); ocib.addAttributeInfo(ro("CORREO_INST", false)); ocib.addAttributeInfo(ro("ID_TIPOESTADOCIVIL", false)); ocib.addAttributeInfo(ro("ID_SEDEAREA", false)); ocib.addAttributeInfo(ro("ID_AREA", false)); ocib.addAttributeInfo(ro("ID_PUESTO", false)); ocib.addAttributeInfo(ro("NOMBRE_PUESTO", false)); ocib.addAttributeInfo(ro("FOTO", false)); ocib.addAttributeInfo(ro("CORREO_PERSONAL", false)); ocib.addAttributeInfo(ro("SEDE_NOMBRE", false)); ocib.addAttributeInfo(ro("UPEU_ARCHETYPE_NAME", true)); ocib.addAttributeInfo(ro("MOTIVO_CESE_RAW", false)); ocib.addAttributeInfo(ro("DOCENTE_JORNADA", false)); ocib.addAttributeInfo(ro("DOCENTE_CONDICION", false)); ocib.addAttributeInfo(ro("DOCENTE_CATEGORIA", false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
@@ -503,6 +551,16 @@
                      (ESTADO='I' → sin afiliación laboral viva) se preserva en el item per-IIA. -->
                 <inbound>
                     <name>archetype-to-liveAffiliationWorker</name>
+                    <description>Mapea UPEU_ARCHETYPE_NAME (faculty|staff) a sb:liveAffiliationWorker.
+La distinción faculty/staff la fija el CASE del searchScript (ver bloque FUNDAMENTO NORMATIVO
+adyacente a cfg:searchScript). Fundamento canónico de este mapping:
+faculty (eduPerson 202208 §3.2 / iga-canonical §3.2) = relación contractual VIVA de instrucción
+=> sólo carga docente vigente (Ley 30220 Art. 79 enseñanza/supervisión) o puesto docente activo
+incluyendo jefes de práctica y ayudantes (Ley 30220 Art. 81 = etapa de carrera docente);
+staff = personal de soporte no docente, incluido el AUXILIAR DE EDUCACIÓN que la Ley de Reforma
+Magisterial 29944 distingue del PROFESOR (no es instructor responsable). Reality-vs-Policy
+(midpoint-best-practices §2.1): liveAffiliationWorker es la afiliación laboral del ROL PRESENTE;
+ESTADO='I' o contrato 7124 vencido => null (no hay afiliación laboral viva).</description>
                     <!-- OPCIÓN 2 (runbook PM10): item per-IIA SINGLE-SOURCE para la afiliación laboral.
                          A diferencia de archetype-to-affiliations (multivalor multi-source, zero-set),
                          liveAffiliationWorker es single-valor con UN solo escritor → strong materializa
