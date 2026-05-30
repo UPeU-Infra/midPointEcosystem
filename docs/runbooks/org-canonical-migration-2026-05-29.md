@@ -2211,3 +2211,58 @@ vincula a DTI-Lima/Infraestructura. ESA es la validación de éxito del usuario.
 3. PASO 5: aplicar identifier fix DTI a PROD (COORDINACION-TI-LIMA→18, INFRAESTRUCTURA-TI-LIMA→17) + recompute
    los 93 trabajadores TI → VERIFICAR cuelgan de DTI-Lima con archetype correcto. Listar (incl. DNI 10867326).
 4. PASO 6: cierre — árbol único, conteos finales por lifecycle/archetype, OrgTemplate-Area inerte, caso 21835727.
+
+# SESIÓN PM21 (2026-05-30 ~11:30-?? Lima) — PASO 1✅ cierre recon Trabajadores + PASO 3 VALIDACIÓN DTI-LIMA ✅
+
+> Skills: midpoint-best-practices (regla oro #10 identifiers inmutables, §5 org tree, cita Evolveum "always use org unit identifiers"),
+> iga-canonical-standards (§10 identifiers persistentes = ID_AREA LAMB). Oracle SOLO LECTURA (thick client Instant Client 23.3 ARM64).
+> Backup focus-only pre-PASO2: /tmp/bkp_pre_paso2_1152.dump.gz (653M). Backups viejos comprimidos a .gz.
+
+## PASO 1 ✅ — Recon Trabajadores COMPLETÓ y SUSPENDIDO
+- Task `e8d054ba` progress=16686 (≥16,327 shadows), CPU idle (0.25%), progress estático → barrido completo. SUSPENDIDO (era RECURRING).
+- lifecycle: active 41,341 / archived 7,185 (+2,854 denominacionales vs baseline 4,331) / draft 698 / NULL 98.
+- **SALVAGUARDA ACADÉMICA PERFECTA: 0 archived con afiliación viva (alum/student). 39,337 académicos vivos active (invariante).**
+- **dual-structural=0** (query corregida: filtrar SOLO los 6 archetypes structural-user; mi query inicial contaba aux como dual = falso positivo).
+- liveWorker(216) materializado en 3,900. 698 draft = egresados sin taxId (gap fuente, NO forzar). 91/98 NULL = wave-ordering.
+
+## SCOPE REAL DE ÁREAS (Oracle thick query) = 161 áreas con contrato UPeU activo (ent=7124, ESTADO='A'), 3,858 personas
+Join correcto: VW_APS_EMPLEADO.ID_PERSONA → VW_TRABAJADOR.ID_PERSONA+ID_SEDEAREA → ORG_SEDE_AREA.ID_SEDEAREA→ID_AREA.
+(VW_APS_EMPLEADO NO tiene ID_TRABAJADOR ni ID_SEDEAREA; el join va por ID_PERSONA.)
+
+## CUADRANTE orgs numéricas MidPoint (382) × scope Oracle (161):
+| | count | active users | acción |
+|---|---|---|---|
+| con-arch & in-scope | 114 | — | OK (canónicas) |
+| **SIN-arch & in-scope** | **47** | 282 | **archetype-org-department asignado ✅** |
+| con-arch & fuera-scope | 26 | 2 | revisar |
+| SIN-arch & fuera-scope | 195 | 275 | denominacional → purga + reparent |
+114+47=161 = exacta coincidencia con Oracle. 0 áreas in-scope sin org en MidPoint.
+
+## FIX: 47 orgs in-scope → archetype-org-department ✅
+- OrgTemplate-Area (OID 47252981) ESTÁ vinculado global (OrgType) y NO inerte. PERO recompute (REST /recompute=404;
+  executeScript recompute con/sin reconcile) NO materializó el archetype: el mapping strong `assignmentTargetSearch`→assignment
+  no se aplica por **wave-ordering** (mismo patrón deadlock bootstrapping del template). Search OK, condition OK (archetypeRefCount=0),
+  archetype encontrado (73795c10) — pero assignment nunca se persiste.
+- **Bulk `assign` action REST falló silencioso** (success pero sin assignment). **Bulk `execute-script` Groovy con
+  `midpoint.deltaFor(OrgType).item(F_ASSIGNMENT).add(AssignmentType{targetRef=archetype}).executeChanges()` SÍ funcionó → 47/47 con-arch.**
+  LECCIÓN reconfirmada (API 4.10): para asignar archetype confiablemente, ObjectDelta ADD explícito, NO template ni bulk assign.
+- handled_error "TaskType ... not found" en cada recompute = refs colgantes en metadata (create/modifyTaskRef de tasks borradas). Benigno.
+
+## PASO 3 — VALIDACIÓN DTI-LIMA ✅ (criterio de éxito del usuario)
+**El "bug DTI" YA estaba resuelto en la realidad.** Las orgs FUNCIONALES son las numéricas auto-recon (NO las semánticas):
+- `DTI` (identifier=**18**, OID `...953119566392`, archetype-org-department, displayName "DTI") → **102 activos** cuelgan aquí, todos costCenter=18.
+- `DIR-INFRAESTRUCTURA` (identifier=**17**, OID `...586421525057`, archetype-org-department) → 34 activos.
+- Orgs semánticas vacías (`COORDINACION-TI-LIMA` id=DTI 3m, `INFRAESTRUCTURA-TI-LIMA` id=infraestructura.ti.lima 0m,
+  CONTINUIDAD/OPERACIONES 0m) = diseño manual que el flujo de datos NO usa → PURGA (PASO 4).
+- **REVISIÓN del plan PM20:** NO cambiar identifier de canónicas-semánticas a numérico (chocaría con org 18 ya existente).
+  La verdad: el correlador del resource org.xml YA correlaciona por identifier=ID_AREA → no duplica numéricas. Las numéricas
+  con nombre legible + archetype SON las canónicas. Decisión canónica (regla oro #10): conservar identifier inmutable=ID_AREA LAMB.
+- **SANCHEZ CONDOR, Juan Alberto (DNI 10867326): active, archetype-user-employee-staff, parent=DTI, costCenter=18. ✅ CONFIRMADO.**
+- Discrepancia 102(MP) vs 72(Oracle): MP cuenta por archetype structural; los 29 alum+2 student+21 faculty trabajan en área 18
+  pero su identidad structural es académica/faculty. 50 staff+21 faculty=71≈72 Oracle empleados puros. Canónicamente correcto (dual-afiliación).
+
+## PENDIENTE (cola PASO 4):
+1. Purga orgs semánticas vacías (COORDINACION-TI-LIMA, INFRAESTRUCTURA-TI-LIMA, CRAI-*, CU-*, coordinaciones vacías, demo Projects/Teams/World).
+2. 195 orgs sin-arch fuera-scope (275 active users): reparent usuarios (salvaguarda académica) + purga orgs.
+3. 26 con-arch fuera-scope (2 active): revisar.
+4. Cierre: conteos finales, parent residual AREA-97, caso 21835727.
