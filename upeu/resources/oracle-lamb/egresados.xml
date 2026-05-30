@@ -378,6 +378,22 @@
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:affiliations</path>
                     </target>
+                    <!-- FIX PM10b (2026-05-30): range matchingProvenance.
+                         El trace PM10 reveló que strong solo ponía 'alum' en el ZERO set
+                         (valor "presente, sin cambio") → no generaba delta real hacia el focus
+                         → J3/L leían affiliations=∅ y archivaban. Con <range>, este mapping es
+                         AUTORITATIVO sobre los valores que él aporta: MidPoint compara su salida
+                         contra el valor actual del focus y genera el PLUS delta faltante ('alum'
+                         entra al focus, J3 lo ve) y el MINUS de tokens que ya no aporta. set/
+                         predefined=matchingProvenance: la autoridad se limita a los valores
+                         marcados con la provenance de ESTE recurso (Egresados) → NO remueve
+                         staff/faculty (Trabajadores) ni student (Estudiantes). Mecanismo canónico
+                         Evolveum de consolidación multi-source de atributos multivalor. -->
+                    <range>
+                        <set>
+                            <predefined>matchingProvenance</predefined>
+                        </set>
+                    </range>
                     <evaluationPhases>
                         <include>beforeCorrelation</include>
                         <include>clockwork</include>
