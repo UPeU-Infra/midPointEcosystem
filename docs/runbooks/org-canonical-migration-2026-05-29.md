@@ -1891,3 +1891,101 @@ El proceso vivo no se ha colgado, así que NO se reinicia. En su lugar, `/tmp/sa
 - **Próxima invocación (al COMPLETE):** verificación post-saneo (0 dual structural; ~1,376→active/alumni,
   ~363→active/student, ~3,203→archived), re-recon Trabajadores, recompute, purga, recon 983 quarantine, cierre.
   Los ~decenas de fails name-quality NO bloquean: se listan de `grep FAIL /tmp/saneo_masivo.log` para SciBack.
+
+---
+
+# SESIÓN PM16 (2026-05-30 ~05:00 Lima) — Saneo masivo COMPLETO verificado. PASO B (recon Trabajadores) ABORTADO: reintroduce dual-structural + archiva académicos sin liveAffiliation. RAÍZ = template D7 acumulativo no resuelto. PROD restaurado limpio. BLOQUEADO esperando fix de template.
+
+> Skills consultadas: `midpoint-best-practices` §3.3 (max 1 structural archetype), §3.4 (archetype solo por
+> direct assignment plano, línea 169), §4.5/§4.6 (template corre DESPUÉS de inbounds; wave ordering),
+> §2.1 (Reality vs Policy), §1.2 (lifecycle ISO 24760 desde IIA); `iga-canonical-standards` §1.2/§1.3.
+> READ-ONLY masivo + 2 recons monitoreados+suspendidos + saneo dual delta-atómico (451+7). Oracle SOLO LECTURA.
+> Backups: `bkp_pre_pasoB_20260530_0504.sql.gz` (649M) + `bkp_pre_saneo451_20260530_0543.dump` (641M).
+
+## Verificación de cierre del saneo masivo PM14/PM15 (PASO 1)
+- `SANEO MASIVO COMPLETE n=5925 ok=4914 fail=28 quarantine=983` (04:31 Lima). Confirmado.
+- **0 dual-structural** en m_assignment (9 structural-user archetypes). Confirmado.
+- lifecycle baseline pre-Paso-B: active 44,062 / archived 4,467 / draft 694 / NULL 95.
+- distribución structural: alumni 27,138 / employee-staff 12,369 / student 9,414 / employee-faculty 300.
+- **28 DNIs FAIL diacríticos** extraídos (PASO F): `00326909 02419611 04430503 07193644 09728940 41119182
+  42516817 42761734 42966194 44164612 44187598 44850035 44901960 47707366 70482165 71252394 71920250
+  72213587 72261430 72461965 72790254 74254503 75717462 75733382 76362189 76478851 76820058 77667478`.
+  Causa: discrepancia tildes/case entre fuente Trabajadores y Egresados para familyName/givenName
+  (single-valued, 2 inbounds strong). Diferible — normalización NFC+título en inbounds de nombre (SciBack #56).
+
+## Salvaguarda baseline pre-Paso-B (caracterización de los 98 archived c/ shadow académico vivo)
+NO eran académicos puros mal archivados. Desglose: **27 = los FAILs diacríticos** (saneo no pudo
+convertirlos a alum/student → quedaron employee archived); **71 = trabajadores ESTADO='A' (laboral VIVO)
+mal archivados PRE-EXISTENTES** (un recompute los rescata a active). Métrica bloqueante estricta:
+**alumni_arch=1, student_arch=0** (structural alumni/student que estén archived).
+
+## PASO B (recon Trabajadores v3) — LANZADO, MONITOREADO, ABORTADO a los ~6 min por DOBLE anomalía bloqueante
+Task `e8d054ba` (→ Trabajadores v3 `...e21`, filtro ID_ENTIDAD=7124, reaction deleted→unlink condicional).
+Lanzado vía REST `/run` (HTTP 204). Monitoreado cada 2-6 min. **Suspendido** (REST `/suspend` 204) al detectar:
+
+### Anomalía 1 (salvaguarda académica violada) — egresados/estudiantes VIVOS archivados
+- `alumni_arch` creció 1→2→5→6 de forma sostenida; `student_arch` con regresión análoga.
+- Diagnóstico (datos duros): **90 archived con shadow Egresado VIVO pero `liveAffiliationAlum`(clave JSONB 215)
+  VACÍO**; **36 archived con shadow Estudiante VIVO pero `liveAffiliationStudent`(217) VACÍO**.
+  De los 90: **72 son survivors del merge** (`merged-2026-05-29`).
+- **Causa raíz (wave ordering, §4.5/§4.6):** estos focos tienen shadow académico vivo pero su `liveAffiliation*`
+  NUNCA se materializó (el recon Egresados/Estudiantes que lo poblaría estuvo SUSPENDED desde PM7). El recon
+  Trabajadores hace unlink+recompute → Bloque L (Opción 2) lee `liveAffiliation*`(215/217)=∅ → con structural
+  employee → rama H3 → **archived**. **Verificado: 0 focos con 215 materializado siguen archived** (la Opción 2
+  es correcta — cuando el item existe, L da active). El defecto es de ORQUESTACIÓN: Paso B corre ANTES de poblar
+  liveAffiliation académico. ⇒ **Paso D (recons académicos) DEBE preceder a Paso B.**
+
+### Anomalía 2 (template D7 acumulativo reintroduce dual-structural) — MÁS GRAVE, raíz de fondo
+- **dual-structural pasó de 0 a 451** en los ~6 min de recon. Combos: 229 faculty+staff, 181 alumni+staff,
+  22 alumni+faculty, 19 alumni+student.
+- **Causa raíz (best-practices §3.4, línea 169 + H1/PM12):** el Bloque D7 del template (`assignmentTargetSearch`
+  → archetype por `primaryAffiliation`) ASIGNA el structural nuevo SIN REMOVER el stale (D7 strong solo retira
+  los assignments que ÉL produjo; el structural histórico no tiene su provenance). El saneo masivo PM14/15
+  resolvió esto en DATOS (delta atómico externo), pero **el TEMPLATE nunca se corrigió**. ⇒ CUALQUIER recompute
+  masivo (Paso B o Paso C) reintroduce el dual-structural. **Este es el bloqueo de fondo, pendiente desde PM11/PM12.**
+
+## Restauración de PROD a estado limpio (revertir el daño del recon)
+- **Saneo de los 451 dual** vía delta-atómico loop-REST (mismo mecanismo PM14/15). Canary 3/3 verde
+  (faculty/staff/student → single structural correcto, active).
+- **Round 1** (lista con criterio `ESTADO='A'` literal): ok=295, fail=156. Los 156 fallaron porque marqué
+  `correcto=staff/faculty` para ex-trabajadores cesados, pero D7 (correctamente) derivaba alum/student → pelea.
+- **HALLAZGO (refina PM13):** la liveness laboral es `ESTADO != 'I'`, NO `dead`. Re-generada lista de 156 con
+  criterio canónico: **141 alum + 8 student + 7 faculty** (la mayoría son ex-trabajadores cesados cuya afiliación
+  viva REAL es académica — D7 tenía razón). **Round 2:** ok=149, fail=7.
+- **7 residuales** (worker ESTADO='A' real, correcto=faculty, pero D7 pone académico por falta de
+  `liveAffiliationWorker` materializado): saneados con **`?options=raw`** (sin reconcile → D7 no corre → structural
+  correcto persiste). HTTP 204 ×7.
+- **dual-structural FINAL = 0.** ✅
+
+## Estado de PROD tras PM16 (LIMPIO Y ESTABLE)
+- **0 dual-structural** (m_assignment). lifecycle: active 44,105 / archived 4,424 / draft 694 / NULL 95.
+- structural: alumni 27,399 / employee-staff 11,456 / student 9,420 / employee-faculty 946.
+- **Ganancia durable:** **8,230 `liveAffiliationAlum`(215) materializados** por el recon Egresados parcial
+  (era ~2,791 al inicio) → +43 active netos. Beneficio que reduce la población de regresión futura.
+- alumni_arch=5 (vs 1 baseline): egresados archived con 215 aún vacío — recuperables al completar recon Egresados.
+- Los **3 recons SUSPENDED** (Trabajadores/Egresados/Estudiantes). 0 procesos saneo vivos. Contenedores healthy.
+  Disco 82%. 0 escritura a Oracle (política absoluta respetada).
+
+## DECISIÓN REQUERIDA DE ALBERTO (bloqueante de fondo — Pasos B/C/D/E NO pueden ejecutarse sin esto)
+**El template D7 debe REEMPLAZAR (no acumular) el structural archetype al cambiar `primaryAffiliation`.**
+Pendiente desde PM11/PM12; PM16 lo confirma como el bloqueo crítico. Opciones canónicas (validar en dev):
+1. **D7 autoritativo sobre los 9 structural-user** (PREFERIDA): que D7, además de añadir el correcto, REMUEVA
+   cualquier otro `archetype-user-*` structural presente. Requiere que D7 conozca el conjunto structural que
+   gobierna y que su mapping retire los que no correspondan a la afiliación viva. Riesgo: archetype solo por
+   direct assignment plano (§3.4) — el remove debe ser cuidadoso. Esto **embebe en el template** la lógica del
+   delta-atómico que hoy vive en el task externo de saneo → el recon Trabajadores dejaría de crear dual.
+2. **Mantener el saneo como post-paso** de cada recon masivo (operacionalmente frágil; NO canónico — el template
+   debe ser autosuficiente). Rechazada como solución permanente.
+- **Prerequisito adicional de orquestación:** ejecutar Paso D (recons Egresados+Estudiantes COMPLETOS) ANTES de
+  Paso B, para que `liveAffiliation*` esté materializado y la salvaguarda de Bloque L no archive académicos vivos.
+  Orden correcto revisado: **D (académicos) → fix template D7 → B (Trabajadores) → C (recompute+purga) → E (cierre).**
+
+## COLA DE RETOMA (orden corregido por PM16)
+1. **Fix template D7-reemplaza-structural** (opción 1) + validar en dev `pruebas-alberto-1`. PREREQUISITO de todo.
+2. **Recons Egresados + Estudiantes COMPLETOS** (Paso D adelantado): materializan liveAffiliation en TODA la
+   población académica viva (incl. los 90+36 regresión + 983 quarantine + survivors). Monitorear que NO creen
+   dual (dependerá del fix #1). Recuperan los alumni_arch a active.
+3. **Re-recon Trabajadores** (Paso B): con #1 ya no crea dual; con #2 ya no archiva académicos. ~3,605
+   solo-denominacionales → archived; académicos → active.
+4. **Recompute trabajadores in-scope + purga orgs** (Paso C). 5. **Cierre + verificación** (Paso E).
+6. **28 DNIs diacríticos** (Paso F): normalización NFC+título de nombres → reintento (SciBack #56).
