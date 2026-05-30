@@ -381,10 +381,11 @@
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveAffiliationAlum</path>
                     </target>
-                    <evaluationPhases>
-                        <include>beforeCorrelation</include>
-                        <include>clockwork</include>
-                    </evaluationPhases>
+                    <!-- SIN <evaluationPhases>: usa el default (solo clockwork), igual que
+                         nivel-ensenanza-to-studyLevel (que SÍ materializa su item). El canary PM2
+                         demostró que beforeCorrelation empuja el valor al ZERO-SET en la fase de
+                         correlación (donde no hay focus consolidado) → no genera plus-delta. Default
+                         clockwork = el mapping corre tras la correlación, sobre el focus real → ADD. -->
                 </inbound>
                 <inbound>
                     <name>afiliacion-to-academicProgramRole</name>

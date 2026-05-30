@@ -514,10 +514,9 @@
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveAffiliationWorker</path>
                     </target>
-                    <evaluationPhases>
-                        <include>beforeCorrelation</include>
-                        <include>clockwork</include>
-                    </evaluationPhases>
+                    <!-- SIN <evaluationPhases>: default (solo clockwork). Ver nota en
+                         egresados.xml (afiliacion-to-liveAffiliationAlum): beforeCorrelation empuja
+                         el valor al zero-set y no materializa el item vacío. -->
                 </inbound>
             </attribute>
             <attribute>
