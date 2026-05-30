@@ -2348,3 +2348,64 @@ Join correcto: VW_APS_EMPLEADO.ID_PERSONA → VW_TRABAJADOR.ID_PERSONA+ID_SEDEAR
 - OrgTemplate-Area: vinculado global y ACTIVO (no inerte). Funciona vía bulk executeChanges, no vía recompute por
   wave-ordering — comportamiento conocido. Mantener.
 - Caso 21835727: pendiente revisión individual.
+
+---
+
+## ADDENDUM PM16 — Fix "área del contrato 7124" (2026-05-30)
+
+### Causa raíz
+UPeU y la Iglesia Adventista comparten una sola planilla APS. El área/costCenter se derivaba de
+`ENOC.VW_TRABAJADOR.ID_SEDEAREA` (nivel persona, STALE hacia la misión de origen) en lugar del
+departamento del **contrato vivo 7124** (`ELISEO.VW_APS_EMPLEADO.ID_DEPTO`). Resultado: trabajadores
+con contrato UPeU activo colgando de áreas denominacionales. Caso Flores (41970870): contrato 7124
+en depto `21010108` (Administración Unión PU, área 133) pero `VW_TRABAJADOR` mostraba área 4342
+(Secretaría-MICOP, denominacional).
+
+### Diseño del fix (`upeu/resources/oracle-lamb/trabajadores.xml`, searchScript)
+- **Resolutor de área-de-contrato** (LEFT JOIN `ca`): toma el `ID_DEPTO` de la fila 7124 VIVA
+  (`ESTADO='A' AND (FEC_TERMINO IS NULL OR FEC_TERMINO >= SYSDATE)`, dedup `ROW_NUMBER` por
+  `FEC_INICIO DESC` para los 4 COD_APS multiviva) y lo resuelve **1:1** a `ID_AREA` vía
+  `ELISEO.ORG_SEDE_AREA` → `ORG_AREA` (solo cuando `COUNT(DISTINCT ID_AREA)=1`).
+- **`COALESCE(ca.CONTRACT_AREA, osa.ID_AREA)`**: prefiere el área del contrato vivo; fallback al área
+  histórica (`VW_TRABAJADOR.ID_SEDEAREA`) cuando el `ID_DEPTO` es jerárquico/ambiguo. Preserva 3894
+  casos correctos y jubilados.
+- **Endurecimiento de vigencia SOLO en el resolutor** (no en el WHERE de inclusión): mata falsos
+  activos (ej. DNI 73970305, fila 7124 'A' vencida 2020) para la derivación de área, sin expulsar a
+  los 20.617 jubilados grace 730d de la población.
+- IIA del área de empleo vivo = contrato 7124 (Reality-vs-Policy §2.1; IIA por atributo §1.3).
+
+### Verificación pre-aplicación (Oracle SOLO SELECT, thick x86_64)
+- Flores → ID_AREA **133** (Administración Unión PU). ✓
+- baseQuery completo ejecuta limpio: 7849 filas, **7469 in-scope UPeU**, 32 out-of-scope, 348 sin área.
+- Cardinalidad: 2120/3744 COD_APS con contrato vivo resuelven área 1:1.
+
+### Despliegue
+- Commit `60f26df` + git pull PROD + PUT (HTTP 201) + Test Connection **14/14 success** (incl. schema fetch).
+- Backup REST del resource previo: `/home/juansanchez/bkp_trabajadores_pre-area-fix_20260530_1310.xml`.
+- Tag git `pre-area-contrato-7124-fix`.
+
+### Canary Flores (c0785b5f) post-deploy
+- costCenter **4342 → 133**; parentOrgRef `df582ee2` → `d9ccf4f2` (AREA-133 "Administración Unión (PU)").
+- lifecycle `active`; structural `archetype-user-employee-staff` + aux `AuxAff-Staff` → dual=0. ✓
+
+### Materialización (import quirúrgico)
+- Identificados **414 COD_APS** cuya área cambia; import shadow-por-shadow (loop REST en background).
+- Resultado: **414/414 ok, 0 fails**, disco estable 86%.
+- Transferidos denominacional→UPeU: 116 en MidPoint, **116/116 con costCenter que matchea OrgType real**
+  (VICERRECTORADO-BIENESTAR, DTI, DIR-IMAGEN-RRPP, áreas in-scope). 110 active, 6 alum.
+
+### Verificación final
+- **Salvaguarda académica intacta**: de 414 reimportados, 18 archived, **0 con archetype académico**
+  (todos employee puros = leaver legítimo).
+- **dual-archetype structural = 0** (global).
+- **499/502** "activos en áreas orphan" son legítimos (su contrato 7124 ES esa área compartida).
+- Total m_user: 49.322.
+
+### Casos (b) residuales — REQUIEREN DECISIÓN MANUAL
+3 trabajadores del changed-set con contrato 7124 vivo cuyo `ID_DEPTO` es jerárquico (mapea a varias
+áreas UPeU, todas entidad 7124) → resolutor 1:1 se abstiene, caen al fallback stale. NO degradados
+(ya estaban así). Decidir a qué sub-área asignar:
+- `76575561` depto `61010106` → 5 áreas candidatas (Comunicaciones/Marketing). Hoy en AREA-7996.
+- `48636923` depto `13040722` → 2 áreas (Fac. CC. Humanas / EP Educación). Hoy en AREA-7997.
+- `72783226` depto `14010102` → 3 áreas (Cap. Continua / Posgrado / Marketing). Hoy en AREA-7997.
+Total estimado de residuales ESTADO='A' con depto ambiguo: ~14 (resto cubierto por leaver/grace).
