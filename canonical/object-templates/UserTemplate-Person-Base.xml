@@ -754,6 +754,9 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
         <source>
             <path>costCenter</path>
         </source>
+        <source>
+            <path>extension/sciback:liveAffiliationWorker</path>
+        </source>
         <expression>
             <assignmentTargetSearch>
                 <targetType>OrgType</targetType>
@@ -776,9 +779,17 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
         <condition>
             <script>
                 <!-- costCenter puro numérico = ID_AREA de ELISEO.ORG_SEDE_AREA (v2026-05-27).
-                     Antes era 'area.{ID_SEDEAREA}' (formato anterior incorrecto).
-                     OrgType.identifier = ID_AREA (puro numérico) → match directo. -->
-                <code>costCenter != null &amp;&amp; basic.stringify(costCenter).trim().matches('\\d+')</code>
+                     OrgType.identifier = ID_AREA (puro numérico) → match directo.
+                     GUARD reality-vs-policy (regla oro #4/#6, PM21 2026-05-30): la membership
+                     a un área de trabajo SOLO existe mientras haya afiliación laboral VIVA
+                     (liveAffiliationWorker presente). Cuando el contrato cesa (liveWorker=∅),
+                     strong+condición-false → zero-set → la membership se RETIRA. Evita que
+                     egresados/estudiantes que alguna vez trabajaron queden colgando de su
+                     antigua área denominacional/no-in-scope (caso 275 stale parents). El
+                     archetype/lifecycle académico se conserva (Bloque J3/L: alum/student sigue active). -->
+                <code>costCenter != null
+                      &amp;&amp; basic.stringify(costCenter).trim().matches('\\d+')
+                      &amp;&amp; liveAffiliationWorker != null</code>
             </script>
         </condition>
     </mapping>
