@@ -49,26 +49,20 @@
             <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
             <kind>account</kind>
             <intent>default</intent>
-            <!-- Override category_id=INVESTI.
-                 Prevalece sobre el mapping category-id-from-primary-affiliation del resource
-                 (que asignaría DOCEN para los docentes-investigadores).
-                 Un docente que es investigador DGI debe tener INVESTI en Koha,
-                 no DOCEN, para acceder a los servicios diferenciados de investigación.
-                 Excepción: si el usuario es jubilado (motivoCese=jubilacion), retorna null
-                 para que el inducement de AR-Koha-Jubilado sea el único valor strong
-                 y JUBILADO prevalezca (jubilado-investigador → JUBILADO, no INVESTI). -->
+            <!-- Diseño B (2026-05-30): la condición de investigador NO es una categoría
+                 Koha (INVESTI no es eduPerson 202208). El investigador conserva su
+                 category_id base (faculty/staff por contrato) y se marca con el par
+                 extended_attribute {"type":"RESEARCHER","value":"Y"}. El resource
+                 koha-ils declara RESEARCHER en intolerantValuePattern → MidPoint
+                 gobierna SOLO ese par sin pisar DNI/SEDE/AREA/STUDY_LEVEL.
+                 Filtrable en Koha por extended_attribute RESEARCHER=Y. -->
             <attribute>
-                <ref>ri:category_id</ref>
+                <ref>ri:extended_attributes</ref>
                 <outbound>
-                    <name>investigador-category-override</name>
+                    <name>investigador-researcher-extended-attribute</name>
                     <strength>strong</strength>
-                    <source>
-                        <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:motivoCese</path>
-                    </source>
                     <expression>
-                        <script>
-                            <code>def motive = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : ''; if (motive == 'jubilacion') return null; return 'INVESTI'</code>
-                        </script>
+                        <value>{"type":"RESEARCHER","value":"Y"}</value>
                     </expression>
                 </outbound>
             </attribute>

@@ -991,47 +991,70 @@
                 <ref>ri:category_id</ref>
                 <displayName>Categoría Patrón Koha</displayName>
                 <!-- ============================================================
-                     GOBIERNO IGA → KOHA — Matriz canónica de categorías
-                     MidPoint es la ÚNICA fuente de verdad para category_id.
-                     Nadie asigna categorías manualmente en Koha.
+                     GOBIERNO IGA → KOHA — Diseño B (eduPerson 202208 literal)
+                     Decisión APROBADA: docs/DECISION-eduperson-koha-categorycodes.md
+                     Implementada 2026-05-30 (reactivación Koha+LDAP).
 
-                     Categorías gestionadas por MidPoint:
-                       primaryAffiliation=faculty      → DOCEN
-                       primaryAffiliation=researcher   → INVESTI
-                       primaryAffiliation=staff/
-                                          employee     → ADMINIST
-                       primaryAffiliation=alum         → ALUMNI
-                       primaryAffiliation=student
-                         + posgrado/maestría/doctorado → POSGRADO
-                         + pregrado / ciclo ≤6         → PREGRADO
-                       role AR-Koha-Librarian          → STAFF (override por rol)
+                     category_id = primaryAffiliation MidPoint, literal lowercase,
+                     vocabulario eduPerson 202208:
+                       faculty | staff | student | alum | affiliate | local
 
-                     Categorías gestionadas por rol (override del mapping):
-                       role AR-Koha-Jubilado → JUBILADO (override por rol, acceso perenne)
+                     MidPoint es la ÚNICA fuente de verdad. Koha es una PROYECCIÓN,
+                     no un eje paralelo de gobernanza. Si MidPoint dice 'faculty',
+                     Koha dice 'faculty'. Las 6 categorías ya existen en Koha
+                     (verificado 2026-05-30: faculty/staff/student/alum/affiliate/local).
 
-                     Categorías NO gestionadas por MidPoint (Koha-only):
-                       ADMIN  — super admin Koha (operacional)
-                       ANON   — usuario anónimo sistema (operacional)
-                       VISITA — visitas / externos (alta manual en Koha)
+                     EJES ORTOGONALES — NO van en category_id:
+                       - Nivel académico (pregrado/posgrado) → extended_attribute STUDY_LEVEL
+                       - Investigador DGI/RENACYT             → extended_attribute RESEARCHER=Y
+                                                                 (rol AR-Koha-Investigador)
+                       - Lifecycle jubilado                   → primaryAffiliation=alum,
+                                                                 derivado por el template (J3)
+                                                                 cuando motivoCese=jubilacion y
+                                                                 no hay afiliación viva mayor.
+                                                                 NO es categoría Koha.
+                       - Área CRAI bibliotecario              → extended_attribute AREA=CRAI
+                                                                 (rol AR-Koha-Librarian)
 
-                     ESTUDI — categoría legacy; se vacía gradualmente a medida
-                     que los patrons son recomputados y migran a PREGRADO/POSGRADO.
-
-                     Desempate posgrado/pregrado (robusto a datos incompletos):
-                       a) extension/sciback:studyLevel  (LAMB inbound)
-                       b) extension/sciback:studentCycle (ciclo ≥7 → posgrado)
-                       c) roleMembershipRef AR-Koha-Patron-Posgrado (fallback)
+                     Mapeo employee→staff: 'employee' no es categoría Koha; eduPerson
+                     trata staff/employee como personal → 'staff'.
 
                      strength=strong: re-evalúa en cada recompute, fuente única.
-                     El override strong de AR-Koha-Patron-Staff (único override
-                     por-rol que sobrevive) sigue ganando para bibliotecarios.
+                     NO hay overrides por-rol de category_id (Diseño B los eliminó:
+                     INVESTI→extended_attribute, JUBILADO→alum vía template).
                      ============================================================ -->
                 <outbound>
                     <name>category-id-from-primary-affiliation</name>
-                    <!-- strength=strong: re-evalúa en cada recompute, fuente única.
-                         Los roles override (AR-Koha-Investigador, AR-Koha-Jubilado) hacen
-                         que el expression retorne null → solo el inducement del rol provee
-                         el valor strong. Sin null de este mapping + strong del rol = conflicto. -->
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/extension/sb:primaryAffiliation</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+                                def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+                                if (aff == '') return null;
+                                if (aff == 'employee') return 'staff';
+                                // vocabulario eduPerson 202208 literal: faculty/staff/student/alum/affiliate
+                                if (aff == 'faculty' || aff == 'staff' || aff == 'student' || aff == 'alum' || aff == 'affiliate') return aff;
+                                // cuentas sistema u otros → local (convención local explícita)
+                                return 'local';
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:extended_attributes</ref>
+                <displayName>Atributo extendido STUDY_LEVEL (nivel académico)</displayName>
+                <!-- Diseño B: el nivel académico (pregrado/posgrado) NO va en category_id;
+                     va aquí como par {"type":"STUDY_LEVEL","value":"pregrado|posgrado"}.
+                     Multivaluado tolerant=true + intolerantValuePattern STUDY_LEVEL
+                     (declarado más abajo) → MidPoint gobierna SOLO el par STUDY_LEVEL,
+                     nunca pisa DNI/SEDE/AREA/RESEARCHER/otros.
+                     Solo se emite para students; null para el resto (no-op weak). -->
+                <outbound>
+                    <name>study-level-extended-attribute</name>
                     <strength>strong</strength>
                     <source>
                         <path>$focus/extension/sb:primaryAffiliation</path>
@@ -1042,44 +1065,19 @@
                     <source>
                         <path>$focus/extension/sb:studentCycle</path>
                     </source>
-                    <source>
-                        <path>$focus/extension/upeu:motivoCese</path>
-                    </source>
                     <expression>
-                        <!-- fix 2026-05-21: script lineal sin bloques { } anidados
-                             de if. Solo if(cond) sentencia-simple; (un statement,
-                             sin llaves). Robusto al colapso de saltos de linea que
-                             MidPoint aplica al persistir el resource.
-                             fix 2026-05-23: jubilados → return null para que el
-                             inducement strong de AR-Koha-Jubilado sea el único
-                             valor strong (evita "more than one value" conflict). -->
                         <script>
                             <code>
-                                def motive = motivoCese != null ? basic.stringify(motivoCese).trim().toLowerCase() : '';
-                                if (motive == 'jubilacion') return null;
-                                def isInvestigador = focus?.roleMembershipRef?.any { it?.oid == '251f52db-af86-435d-9307-cc18ee0c3fa8' };
-                                if (isInvestigador) return null;
                                 def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
-                                if (aff == '') return null;
-                                if (aff == 'faculty') return 'DOCEN';
-                                // 'researcher' eliminado Ola 1 fix 9.1 (2026-05-26):
-                                //   no es vocabulario eduPerson 202208. Investigadores son
-                                //   primaryAffiliation=faculty con AR-Koha-Investigador
-                                //   override (guard ya manejado en línea 1060-1061 vía
-                                //   roleMembershipRef). Rama muerta eliminada.
-                                if (aff == 'staff' || aff == 'employee') return 'ADMINIST';
-                                if (aff == 'alum') return 'ALUMNI';
-                                if (aff == 'affiliate') return 'VISITA';
                                 if (aff != 'student') return null;
                                 def level = studyLevel != null ? basic.stringify(studyLevel).trim().toLowerCase() : '';
-                                if (level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion' || level.contains('posgrado')) return 'POSGRADO';
-                                if (level == 'pregrado') return 'PREGRADO';
+                                if (level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion' || level.contains('posgrado')) return '{"type":"STUDY_LEVEL","value":"posgrado"}';
+                                if (level == 'pregrado') return '{"type":"STUDY_LEVEL","value":"pregrado"}';
                                 def cycles = (studentCycle instanceof Collection) ? studentCycle : (studentCycle != null ? [studentCycle] : []);
                                 def maxCycle = cycles.collect { it?.toString()?.trim()?.isInteger() ? it.toString().trim().toInteger() : -1 }.max();
-                                if (maxCycle != null &amp;&amp; maxCycle >= 7) return 'POSGRADO';
-                                if (!cycles.isEmpty()) return 'PREGRADO';
-                                def hasPosgradoRole = focus?.roleMembershipRef?.any { it?.oid == 'a1b2c3d4-e5f6-7890-abcd-ef1234567802' };
-                                return hasPosgradoRole ? 'POSGRADO' : 'PREGRADO';
+                                if (maxCycle != null &amp;&amp; maxCycle >= 7) return '{"type":"STUDY_LEVEL","value":"posgrado"}';
+                                if (!cycles.isEmpty()) return '{"type":"STUDY_LEVEL","value":"pregrado"}';
+                                return '{"type":"STUDY_LEVEL","value":"pregrado"}';
                             </code>
                         </script>
                     </expression>
@@ -1118,7 +1116,7 @@
                      mecánica de tenancy de valores. Sin outbound a propósito.
                      ============================================================ -->
                 <tolerant>true</tolerant>
-                <intolerantValuePattern>.*"type"\s*:\s*"(AREA|CRAI_TIER|RESEARCHER)".*</intolerantValuePattern>
+                <intolerantValuePattern>.*"type"\s*:\s*"(AREA|CRAI_TIER|RESEARCHER|STUDY_LEVEL)".*</intolerantValuePattern>
             </attribute>
             <attribute>
                 <ref>ri:library_id</ref>
@@ -1269,24 +1267,87 @@
                 </outbound>
             </attribute>
             <activation>
-                <administrativeStatus>
+                <!-- ================================================================
+                     EXISTENCE — gobierno canónico de la existencia del patrón Koha
+                     (Semančík Cap.7, midpoint-best-practices §7 existence mappings).
+                     Reactivación 2026-05-30. Patrón "MidPoint suma, nunca resta".
+
+                     ELEGIBLE_KOHA = afiliación viva worker (contrato UPeU)
+                                   OR matrícula viva student
+                                   OR visita Smart WiFi activa (hook futuro)
+                                   OR bibliotecario (AR-Koha-Librarian)
+
+                     CLAVE (archivar-no-borrar): el mapping retorna TRUE si el shadow
+                     YA EXISTE (reality), aunque la afiliación viva sea null. Así el
+                     leaver NUNCA se borra (preserva transacciones para métricas); se
+                     archiva vía administrativeStatus=disabled (expiry+card_lost).
+                     Solo los focos SIN shadow y SIN elegibilidad no crean patrón.
+                     ================================================================ -->
+                <existence>
                     <outbound>
-                        <name>activation-outbound</name>
+                        <name>koha-account-existence-by-live-affiliation</name>
                         <strength>strong</strength>
-                        <!-- Si el usuario es jubilado (motivoCese=jubilacion), forzar enabled
-                             aunque lifecycleState=archived lleve administrativeStatus=disabled.
-                             Los jubilados tienen acceso perenne a Koha (categoría JUBILADO).
-                             En cualquier otro caso, passthrough normal del focus. -->
+                        <source>
+                            <path>$focus/extension/sb:liveAffiliationWorker</path>
+                        </source>
+                        <source>
+                            <path>$focus/extension/sb:liveAffiliationStudent</path>
+                        </source>
+                        <source>
+                            <path>$focus/extension/upeu:smartwifiGuest</path>
+                        </source>
                         <expression>
                             <script>
-                                <code>
+                                <code><![CDATA[
+def worker  = liveAffiliationWorker
+def student = liveAffiliationStudent
+def guest   = smartwifiGuest
+def hasLib  = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72e-b874b3c48fa6' }
+def eligible = (worker != null) || (student != null) || (guest != null) || hasLib
+// suma-no-resta: si el patrón Koha ya existe (reality), NUNCA borrar.
+// Se archiva vía administrativeStatus=disabled, jamás delete.
+def existing = midpoint.getLinkedShadow(focus, '9b5a7c81-47aa-42ac-9a08-4de8b64935af', 'account', 'default', false)
+return eligible || (existing != null)
+                                ]]></code>
+                            </script>
+                        </expression>
+                    </outbound>
+                </existence>
+                <!-- ================================================================
+                     ADMINISTRATIVE STATUS — archivado canónico del leaver
+                     elegible (worker/student/visita/bibliotecario) → ENABLED
+                     no elegible                                     → DISABLED
+                     El conector v1.3.x traduce DISABLED a:
+                       patron_card_lost=true + expiry_date=ayer
+                     => patrón ARCHIVADO, presente, con historial intacto
+                        (old_issues/statistics preservados). NUNCA delete.
+                     El override perenne jubilado→ENABLED fue ELIMINADO (2026-05-30):
+                     bajo el scope canónico, jubilado = leaver → se archiva.
+                     ================================================================ -->
+                <administrativeStatus>
+                    <outbound>
+                        <name>koha-admin-status-by-live-affiliation</name>
+                        <strength>strong</strength>
+                        <source>
+                            <path>$focus/extension/sb:liveAffiliationWorker</path>
+                        </source>
+                        <source>
+                            <path>$focus/extension/sb:liveAffiliationStudent</path>
+                        </source>
+                        <source>
+                            <path>$focus/extension/upeu:smartwifiGuest</path>
+                        </source>
+                        <expression>
+                            <script>
+                                <code><![CDATA[
 import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
-def motivoCese = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:upeu:midpoint:local', 'motivoCese'))
-if (motivoCese == 'jubilacion') {
-    return ActivationStatusType.ENABLED
-}
-return focus?.activation?.administrativeStatus
-                                </code>
+def worker  = liveAffiliationWorker
+def student = liveAffiliationStudent
+def guest   = smartwifiGuest
+def hasLib  = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72e-b874b3c48fa6' }
+def eligible = (worker != null) || (student != null) || (guest != null) || hasLib
+return eligible ? ActivationStatusType.ENABLED : ActivationStatusType.DISABLED
+                                ]]></code>
                             </script>
                         </expression>
                     </outbound>

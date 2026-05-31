@@ -43,45 +43,13 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="7e973c41-cde4-4d8d-a6da-f8285ccd5b06">
     <name>AR-Koha-Jubilado</name>
-    <description>Application Role: cuenta patron jubilado en Koha ILS. Categoría JUBILADO (category_type=A, acceso perenne). Asignado automáticamente por el object template cuando upeu:motivoCese=jubilacion. Override de category_id y expiry_date para garantizar acceso perenne independientemente de la afiliación histórica del empleado.</description>
-    <lifecycleState>active</lifecycleState>
+    <description>DEPRECATED (2026-05-30, reactivación Koha+LDAP, Diseño B). Bajo el scope canónico, el jubilado = LEAVER → primaryAffiliation=alum (Bloque K del template) → category_id Koha 'alum', y patrón ARCHIVADO (administrativeStatus=disabled) cuando pierde toda afiliación viva. NO existe categoría JUBILADO ni acceso perenne. Este rol queda como NO-OP (sin construction) para no romper los ~5 assignments stragglers preexistentes; se purga en cleanup posterior. Su existencia ya NO inyecta category_id ni expiry_date ni activation.</description>
+    <lifecycleState>deprecated</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
         <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
     </assignment>
-    <inducement>
-        <construction>
-            <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
-            <kind>account</kind>
-            <intent>default</intent>
-            <!-- Override category_id=JUBILADO.
-                 Prevalece sobre el mapping category-id-from-primary-affiliation del resource
-                 (que asignaría DOCEN o ADMINIST según la afiliación histórica del empleado).
-                 Los jubilados deben tener JUBILADO independientemente de si fueron faculty/staff. -->
-            <attribute>
-                <ref>ri:category_id</ref>
-                <outbound>
-                    <name>jubilado-category-override</name>
-                    <strength>strong</strength>
-                    <expression>
-                        <value>JUBILADO</value>
-                    </expression>
-                </outbound>
-            </attribute>
-            <!-- Override expiry_date=null: acceso perenne.
-                 El mapping expiry-date-outbound del resource (strength=normal) enviaría
-                 terminationDate si no se sobreescribe. Para jubilados, el acceso a Koha
-                 es perenne (no expira). Strong para garantizar que null prevalezca. -->
-            <attribute>
-                <ref>ri:expiry_date</ref>
-                <outbound>
-                    <name>jubilado-expiry-date-none</name>
-                    <strength>strong</strength>
-                    <expression>
-                        <value/>
-                    </expression>
-                </outbound>
-            </attribute>
-        </construction>
-    </inducement>
+    <!-- inducement/construction ELIMINADO (2026-05-30): ya no override category_id=JUBILADO
+         ni expiry_date=null. El jubilado es alum archivado, gobernado por template + resource.
+         Rol vacío hasta su purga definitiva. -->
 </role>

@@ -12,15 +12,24 @@
             <kind>account</kind>
             <intent>default</intent>
         </construction>
-        <!-- Guard IGA: solo provisionar LDAP cuando el usuario tiene lifecycleState=active.
-             Jubilados (archived), ex-trabajadores (suspended/archived) y cualquier otro
-             estado inactivo quedan excluidos. Si lifecycleState es null se trata como active
-             (comportamiento por defecto de MidPoint). Cuando el estado pase de active a
-             otro valor, MidPoint deprovisionará la cuenta LDAP en el próximo recompute. -->
+        <!-- Guard IGA endurecido (reactivación 2026-05-30): LDAP Identity Cache solo
+             contiene identidades con SSO académico ACTIVO. Defensa en profundidad:
+             además de lifecycleState active/null, exige AFILIACIÓN VIVA worker o student.
+             Alumni puro (egresado sin contrato ni matrícula) NO entra a LDAP — no
+             necesita SSO académico activo. Al perder toda afiliación viva, la condición
+             pasa a false → inducement inactivo → MidPoint DEPROVISIONA (delete shadow
+             LDAP) en el siguiente recompute. LDAP no preserva historial transaccional;
+             el leaver se borra (a diferencia de Koha, que archiva).
+             midpoint-best-practices §4.2 (conditions/strength), §7 (conditions on inducements). -->
         <condition>
             <expression>
                 <script>
-                    <code>focus?.lifecycleState == 'active' || focus?.lifecycleState == null</code>
+                    <code><![CDATA[
+def ls = focus?.lifecycleState
+def live = (focus?.extension?.liveAffiliationWorker != null) ||
+           (focus?.extension?.liveAffiliationStudent != null)
+return (ls == 'active' || ls == null) && live
+                    ]]></code>
                 </script>
             </expression>
         </condition>

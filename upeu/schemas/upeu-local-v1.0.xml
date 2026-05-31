@@ -89,6 +89,25 @@
                         </xsd:appinfo></xsd:annotation>
                     </xsd:element>
 
+                    <!-- L8b — VISITA SMART WIFI (hook, fuente futura) -->
+                    <!-- IIA futura: producto SciBack "Smart WiFi" (gestión de visitas para
+                         universidades). Poblará este item vía resource inbound strong (mismo
+                         patrón IIA que liveAffiliationWorker/Student). Single string que marca
+                         una visita activa con vigencia (p.ej. token/folio de visita).
+                         Estado hoy: null en todos los focos (no hay fuente todavía). Se incluye
+                         como <source> en los mappings de existence/administrativeStatus de Koha;
+                         al ser siempre null no altera el comportamiento actual. Cuando Smart WiFi
+                         entre, los patrones visita se crearán/archivarán automáticamente sin
+                         tocar Koha manualmente. Categoría Koha asociada: affiliate (Diseño B). -->
+                    <xsd:element name="smartwifiGuest" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Visita Smart WiFi (vigencia)</a:displayName>
+                            <a:help>Marca de visita activa gobernada por el producto SciBack Smart WiFi (fuente futura). Single string con folio/token de visita vigente. Null mientras no exista la fuente. Hace elegible el patrón Koha categoría affiliate. IIA: Smart WiFi (inbound strong, pendiente).</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>82</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
                     <!-- L9 — ROL ANTERIOR POST-JUBILACIÓN -->
                     <!-- IIA: derivado por Bloque K del UserTemplate-Person-Base cuando
                          motivoCese='jubilacion' y la persona venía de staff o faculty.
