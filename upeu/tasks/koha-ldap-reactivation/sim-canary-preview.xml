@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     SIMULATION TASK (preview / dry-run) — Reactivación Koha+LDAP 2026-05-30
+     PASO 1 canary. mode=preview => NO escribe en MidPoint ni en resources.
+     configurationToUse=development => evalúa objectTypes/resources en
+     lifecycleState=proposed (Koha + LDAP) como si estuvieran activos,
+     para predecir los deltas SIN tocar Koha/LDAP reales.
+     Scope: 5 usuarios canary (staff vivo, faculty vivo, student vivo,
+     jubilado leaver, alumni puro).
+     midpoint-best-practices §4.5 (pipeline), §4.2 (conditions/strength).
+     ================================================================ -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="c0a1b2c3-d4e5-46f7-8a9b-0c1d2e3f4a51">
+    <name>SIM Canary Koha+LDAP reactivation (preview)</name>
+    <executionState>runnable</executionState>
+    <activity>
+        <execution>
+            <mode>preview</mode>
+            <configurationToUse>
+                <predefined>development</predefined>
+            </configurationToUse>
+        </execution>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:inOid>
+                                <q:value>1ba69b9a-b45e-4b8e-9562-8c4ad728977d</q:value>
+                                <q:value>1eb5e3d8-e44e-4a78-92cf-ea2322dc6bde</q:value>
+                                <q:value>514da992-3d7a-4c2b-a5ef-8f584d6e9a66</q:value>
+                                <q:value>b0d6bb02-e967-45d3-aea9-7c93a800784c</q:value>
+                                <q:value>57790254-0eb1-45d8-91b6-55ec3466bc7d</q:value>
+                            </q:inOid>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+    </activity>
+</task>

@@ -25,9 +25,13 @@
             <expression>
                 <script>
                     <code><![CDATA[
+// MidPoint 4.10: NO usar focus.extension.<item> (ExtensionType no expone items
+// como propiedades Groovy → MissingPropertyException). API canónica:
+// basic.getExtensionPropertyValue(object, localName).
 def ls = focus?.lifecycleState
-def live = (focus?.extension?.liveAffiliationWorker != null) ||
-           (focus?.extension?.liveAffiliationStudent != null)
+def worker  = basic.getExtensionPropertyValue(focus, 'liveAffiliationWorker')
+def student = basic.getExtensionPropertyValue(focus, 'liveAffiliationStudent')
+def live = (worker != null) || (student != null)
 return (ls == 'active' || ls == null) && live
                     ]]></code>
                 </script>
