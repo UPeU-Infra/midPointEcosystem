@@ -424,3 +424,60 @@ Calculado por elegibilidad en MidPoint DB (read-only), sin escritura:
 
 **Pre-requisito obligatorio antes del masivo:** completar el recompute masivo de `liveAffiliation*` (cola de retoma `org-canonical-migration-2026-05-29.md`) para que worker/student vivos tengan el item poblado → los ~66 falsos leavers desaparecen. Recomendado además: corregir el bug del template `D-assign-affiliation-role`.
 
+
+---
+
+## SESIÓN DIAGNÓSTICA 2026-05-30 PM (materialización liveAffiliation — PRE-REQUISITO)
+
+Objetivo: ejecutar el pre-requisito (fix #52 + materializar `liveAffiliation*` + re-dry-run). Resultado: **diagnóstico que corrige varias premisas + gate sigue ROJO (348 falsos leavers reales)**.
+
+### PASO 1 — Fix template #52: NO ERA EL BUG REAL
+- El mapping `D-assign-affiliation-role-from-primaryAffiliation` **NO usa** `getPropertyRealValue`/`findProperty` roto. Usa `assignmentTargetSearch` + `basic.stringify` (correcto 4.10). Repo y PROD idénticos. Sin cambios necesarios.
+- **El bug Groovy real** estaba en `koha-ils.xml` → `getLinkedShadow(focus, oid, String, String, boolean)` (firma 5-arg inexistente en 4.10). YA corregido a 2-arg en commit `0567a25` (repo + objeto PROD).
+- Los 65–90 `getLinkedShadow` MissingMethodException de las 20:40 venían de **caché Groovy stale** durante el dry-run anterior. **Restart de `midpoint_server` (2026-05-30 ~22:00) flusheó la caché → 0 errores getLinkedShadow desde entonces.** Verificado.
+- Auditoría repo completa: 0 `getPropertyRealValue`; los `findProperty` restantes son sobre `PrismContainerValue` (válido 4.10), no la API rota.
+
+### PASO 2 — Mecanismo de materialización: RECONCILIACIÓN, no recompute
+**Hallazgo canónico (best-practices §4.5):** `liveAffiliationWorker/Student/Alum` los pobla el **inbound `strong`** de los resources LAMB (trabajadores/estudiantes/egresados), que **solo se replay en reconciliación/import del shadow**, NO en recompute de focus.
+- `PATCH /users/{oid}?options=reconcile` **NO replica inbounds**: re-deriva lifecycle desde los items ya presentes (vacíos) → **archiva al usuario** (demostrado con student 202612279). Mecanismo EQUIVOCADO para materializar.
+- `/users/{oid}/recompute` → HTTP 404 en 4.10 (endpoint inexistente).
+- Mecanismo correcto = **reconciliación del resource** (replay inbound). Validado con canary scoped por `attributes/icfs:name` sobre Trabajadores (shadow `fullSyncTimestamp` actualizado, 0 error).
+
+### Estado real de materialización (baseline, m_user.ext JSONB)
+| Item | Materializado |
+|---|---|
+| liveAffiliationWorker (216) | 3.729 |
+| liveAffiliationStudent (217) | 10.936 |
+| liveAffiliationAlum (215) | 30.650 |
+| **liveAny** | **41.954 / 49.322** |
+
+- active=41.202, archived=7.323, draft=698, null=99.
+- **active sin liveAny = 37** (no 66): 25 alum SIN shadow egresado vivo (0/25 en Oracle egresados → leavers/data-gap, no falsos), 1 staff + 9 student con IIA viva (gap real).
+
+### Salvaguarda académica — VERIFICADA (BLOQUEANTE, intacta)
+- **3 archived con liveAffiliationWorker=staff** (`75758850`,`04680920`,`41070902`): Oracle `VW_APS_EMPLEADO ID_ENTIDAD=7124` confirma **contrato UPeU vivo** → eran **falsos leavers** (archivados por error en saneo previo). Corregidos: lifecycleState `archived→proposed` (un-freeze). Quedan `proposed` (no `active`) porque **Bloque L exige `personalNumber && primaryDoc` para `active`**; sin DNI doc materializado → `draft/proposed`. Esto es **correcto canónicamente** (perfil incompleto), NO falso leaver para Koha/LDAP (proposed = sin provisioning).
+- Estudiantes archivados probados (`202612279`,`202220532`): Oracle confirma **NO matriculados en sem 279/267** → **true leavers**, `archived` correcto. 0 académicos vivos archivados.
+- **dual-structural archetype = 0** (verificado por OIDs structural de los 9 user-archetypes).
+
+### PASO 3 — Re-dry-run (proyección desde estado materializado actual)
+| Métrica | Valor |
+|---|---|
+| Koha eligible (liveWorker∨liveStudent) | 14.202 |
+| Alum puro a archivar Koha (archived-not-deleted) | 27.752 |
+| Shadows Koha existentes no-elegibles (a deshabilitar) | 4.899 |
+| **FALSOS leavers reales (no-elegible PERO con shadow IIA VIVO)** | **348** |
+| — de ellos con trabajador vivo | 348 |
+| — con estudiante vivo | 0 |
+| Koha DELETE | 0 (suma-no-resta: disabled vía card_lost+expiry) |
+
+**GATE: ROJO.** 348 falsos leavers (todos worker vivo) — más que el "~66" estimado antes (aquel era pre-recon). Provisionar Koha ahora deshabilitaría 348 trabajadores con contrato UPeU vigente.
+
+**PRE-REQUISITO restante (acotado y resoluble):** una **reconciliación completa del resource Trabajadores** (`6a91f7e1-...e21`, 16.327 shadows, 7.492 LINKED) replica el inbound `strong` → materializa `liveAffiliationWorker` en los 348 → desaparecen como falsos leavers. (Estudiantes/Egresados ya suficientemente materializados para el gate Koha; recon completo recomendable para consistencia pero no bloquea los 348.)
+
+**Mecánica de scheduling (memoria):** tasks REST quedan SUSPENDED en Quartz in-memory. Para ejecutar recon masiva: `UPDATE m_task SET executionstate='RUNNABLE',schedulingstate='READY'` + `docker restart midpoint_server` (Quartz recarga RUNNABLE → dispara). Guardas durante el masivo: dual-structural=0, 0 académicos-vivos archivados, disco<90%.
+
+### Backup
+`/home/juansanchez/bkp_pre_materializa_lean_20260530_2152.dump` (2.7G, pre-materialización). Dump completo previo abortado por bloat de `ma_audit_delta_default` (8.3 GB) que amenazaba el disco; lean dump validado con `pg_restore -l`.
+
+### Recomendación
+**NO listo para provisioning masivo.** Falta UNA acción acotada: recon completa de Trabajadores para materializar los 348. Tras ella, re-correr esta proyección → gate debe dar **0 falsos leavers**, solo ~4.551 alumni/leavers legítimos a archivar (disabled, 0 delete). Recién entonces decidir (usuario) pasar Koha/LDAP a `active`.
