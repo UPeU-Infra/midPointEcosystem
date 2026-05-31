@@ -481,3 +481,34 @@ Objetivo: ejecutar el pre-requisito (fix #52 + materializar `liveAffiliation*` +
 
 ### Recomendación
 **NO listo para provisioning masivo.** Falta UNA acción acotada: recon completa de Trabajadores para materializar los 348. Tras ella, re-correr esta proyección → gate debe dar **0 falsos leavers**, solo ~4.551 alumni/leavers legítimos a archivar (disabled, 0 delete). Recién entonces decidir (usuario) pasar Koha/LDAP a `active`.
+
+---
+
+## EJECUCIÓN 2026-05-30 PM (materialización liveWorker — destrabe falsos leavers)
+
+**Objetivo:** materializar `sb:liveAffiliationWorker` en los 348 trabajadores con contrato 7124 vivo que aparecían como falsos leavers en el re-dry-run Koha+LDAP. Mecanismo: inbound `strong` single-source `archetype-to-liveAffiliationWorker` solo se replay en RECON.
+
+**Backup previo:** `/home/juansanchez/bkp_pre_materializa_lean_20260530_2152.dump` (provisto).
+
+### Baseline pre-recon (verificado en DB PROD)
+- users_total: 49.322
+- liveAffWorker materializado: **3.729**
+- liveAffStudent: 10.936 · liveAffAlum: 30.650
+- dual-structural canónico (USER, archetype-user-*): **0**
+- académicos vivos (217/215) archivados: **0**
+- disco /: 86%
+
+### PASO 1 — Recon Trabajadores v3 (LANZADA)
+- Tarea conservada `e8d054ba-fd9a-4f8d-b04c-347359e49054` ("Recon Oracle LAMB Trabajadores 2026-05-28").
+- Verificado: `<activity><work><reconciliation>` acotada SOLO a resource Trabajadores `6a91f7e1-...` (account/default). NO toca Koha/LDAP. Los resourceRef Koha/LDAP vistos en raw eran de operationStats, no del work.
+- Otras recons (Estudiantes, Org) permanecen SUSPENDED.
+- Scheduling: UPDATE m_task RUNNABLE/READY → restart midpoint_server → trigger no se creó (qrtz=0) → `POST /tasks/{oid}/resume` (HTTP 202) → **RUNNING/READY**, lastrunstart nuevo.
+- Monitor background con guardas BLOQUEANTES: dual>0, académico-vivo-archivado>0, disco>=90% → suspende tarea y aborta. Log: `/tmp/recon_trabajadores_monitor.log`.
+
+### Salvaguardas (BLOQUEANTES, en monitoreo continuo)
+1. dual-structural = 0
+2. 0 académicos con afiliación viva archivados
+3. disco < 90%
+4. m_user sin pérdida (49.322 baseline)
+
+EN CURSO — esperando fin de recon para verificar liveAffWorker (objetivo >= 4.077, cubrir los 348).
