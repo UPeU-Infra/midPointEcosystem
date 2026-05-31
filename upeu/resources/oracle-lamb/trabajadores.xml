@@ -223,21 +223,27 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <!-- FIX RAIZ C (2026-05-31): normalizacion tipo-preservante del documento de
-                                 correlacion. Antes el documento se transportaba crudo (solo trim) => el mismo
-                                 DNI con/sin ceros a la izquierda producia representaciones distintas en cada
-                                 resource (Trabajadores vs Egresados vs Estudiantes) => split de persona
-                                 (falsos-leavers + duplicados). Regla canonica (una sola representacion del
-                                 documento para correlacion, best-practices §4.4 / iga-canonical-standards §1.3):
-                                   - numerico de longitud <=8  => zfill(8)  (DNI peruano canonico = 8 digitos)
-                                   - numerico de longitud  >8  => strip ceros a la izquierda (CE/pasaporte
-                                     numerico largo: se elimina padding espurio, NO se rellena a 8)
-                                   - no-numerico (CE/pasaporte alfanumerico) => intacto (solo trim)
+                            <!-- FIX RAIZ C v2 (2026-05-31): normalizacion tipo-preservante del documento de
+                                 correlacion, ALINEADA AL GATE CANONICO (strip-primero). El v1 media longitud
+                                 sobre el string CRUDO => '001756348' (9 chars) caia en rama '>8' y NO colapsaba
+                                 con '01756348' (el gate SQL, que hace ltrim ANTES de medir, si los colapsa) =>
+                                 splits de 9 chars sin reunificar. Regla canonica IDENTICA al gate
+                                 (best-practices §4.4 / iga-canonical-standards §1.3):
+                                   1) STRIP ceros a la izquierda PRIMERO.
+                                   2) numerico stripped de longitud <=8 => zfill(8) (DNI peruano canonico).
+                                   3) numerico stripped de longitud  >8 => stripped tal cual (CE/pasaporte
+                                      numerico largo SIN ceros lider: NO truncar, NO rellenar).
+                                   4) no-numerico (CE/pasaporte alfanumerico) => intacto (solo trim).
+                                   5) vacio / '0' / '000...0' => null (ruido de correlacion).
+                                 Colapsos garantizados: 001756348->01756348 == 01756348->01756348.
+                                 123456789 (sin ceros lider) -> 123456789 (no se trunca).
                                  Gate previo OBLIGATORIO: 0 colisiones DIFFERENT_PERSON tras normalizar. -->
                             <code>def d = (input ?: '').toString().trim()
 if (!d) return null
 if (d ==~ /\d+/) {
-    return d.length() &lt;= 8 ? d.padLeft(8, '0' as char) : d.replaceFirst(/^0+(?=\d)/, '')
+    def norm = d.replaceFirst(/^0+/, '')
+    if (!norm) return null
+    return norm.length() &lt;= 8 ? norm.padLeft(8, '0' as char) : norm
 }
 return d</code>
                         </script>
