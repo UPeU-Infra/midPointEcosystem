@@ -4,7 +4,7 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="a1b2c3d4-e5f6-7890-abcd-ef1234567803">
     <name>AR-Koha-Patron-Administrativo</name>
-    <description>Application Role: cuenta patron trabajador administrativo no-biblioteca en Koha ILS. La categoría (ADMINIST, código real Koha de 8 chars) la deriva el mapping category-id-from-primary-affiliation del resource koha-ils (R5 FASE 4) cuando primaryAffiliation=staff/employee: ya NO hay override por-rol. AR-Koha-Patron-Staff (override strong) queda reservado para bibliotecarios.</description>
+    <description>Application Role: cuenta patron trabajador administrativo no-biblioteca en Koha ILS. Diseño B (eduPerson, DECISION-eduperson-koha-categorycodes.md) reemplazó al Diseño A: category_id = primaryAffiliation literal eduPerson = 'staff' (ya NO 'ADMINIST'; employee→staff), derivado por el mapping category-id-from-primary-affiliation del resource koha-ils. La categoría 'staff' existe en Koha con circulation_rules equivalentes a ADMINIST (verificado 2026-05-31, G3). El tier bibliotecario (CRAI) se otorga aparte vía AR-Koha-Librarian (birthright costCenter=93), NO por category_id.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->

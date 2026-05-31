@@ -4,7 +4,7 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="3294189e-958f-447d-a07b-83f986a7a1c7">
     <name>AR-Koha-Patron-Faculty</name>
-    <description>Application Role: cuenta patron docente en Koha ILS — bases académicas, préstamos extendidos. La categoría (DOCEN) la deriva el mapping category-id-from-primary-affiliation del resource koha-ils (R5 FASE 4) cuando primaryAffiliation=faculty: ya NO hay override por-rol. ConnId Java conector custom UPeU.</description>
+    <description>Application Role: cuenta patron docente en Koha ILS — bases académicas, préstamos extendidos. Diseño B (eduPerson, DECISION-eduperson-koha-categorycodes.md) reemplazó al Diseño A: category_id = primaryAffiliation literal eduPerson = 'faculty' (ya NO 'DOCEN'), derivado por el mapping category-id-from-primary-affiliation del resource koha-ils. La categoría 'faculty' existe en Koha con circulation_rules equivalentes a DOCEN (verificado 2026-05-31, G3). ConnId Java conector custom UPeU.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->

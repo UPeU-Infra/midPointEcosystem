@@ -27,8 +27,8 @@
     J3 — Calcula primaryAffiliation desde affiliations multi-valor por prioridad (faculty>staff>student>alum>affiliate)
     K — Override jubilados→alum (Decisión B): strong, condicional a motivoCese=jubilacion y sin afiliación mayor
     P — Position assignment (PBAC Pilar 3): ServiceType Position desde upeu:lambPositionId
-    Q4 — Birthright AR-Koha-Librarian para personal CRAI (costCenter=area.97/522/625) [movido de staff template v2.9]
-    Q5 — Birthright AR-Koha-Librarian-{tier} via LookupTable LT-CRAI-Puesto-Tier [movido de staff template v2.9]
+    Q4 — Birthright AR-Koha-Librarian para personal CRAI (costCenter=93, ID_AREA CRAI) [movido de staff template v2.9; FIX 2026-05-31 G1: era area.97/522/625 (erróneo) → 93 numérico puro]
+    Q5 — Birthright AR-Koha-Librarian-{tier} via LookupTable LT-CRAI-Puesto-Tier [movido de staff template v2.9; FIX 2026-05-31 G1: idem costCenter]
     S — schacPersonalTitle DERIVADO desde conferredDegreeAbbrev (Bach./Mg./Dr., strong) [añadido v2.8]
 
   Validaciones de formato (weak/log-warn):
@@ -1381,11 +1381,16 @@ return ActivationStatusType.ENABLED</code>
          también a docentes (faculty) físicamente ubicados en el CRAI.
          Principio ISO 24760 + Semancik Cap.9: el acceso CRAI se otorga por
          atributo (costCenter) no por archetype. Aplica a cualquier afiliación.
-         Auto-asigna AR-Koha-Librarian cuando el trabajador pertenece a:
-           area.97  = CRAI Lima
-           area.522 = CRAI Juliaca
-           area.625 = CRAI Tarapoto
-         Revocación automática si costCenter cambia fuera de esas áreas.
+         Auto-asigna AR-Koha-Librarian cuando el trabajador pertenece al CRAI:
+           ID_AREA 93 = 'Centro de Recursos del Aprendizaje e Investigación' (ELISEO.ORG_AREA, ESTADO='1', ID_ENTIDAD=7124)
+                        Área única del CRAI institucional; el split por campus (BUL/BUJ/BUT/CIA)
+                        se gobierna en Koha vía library_id (locality), NO por áreas LAMB separadas.
+                        Validado vs Oracle 2026-05-31 (G1): 52 trabajadores vivos 7124 resuelven a área 93.
+         FIX 2026-05-31 (G1): los valores previos area.97/522/625 eran ERRÓNEOS
+           (97=Colegio Unión, 522=Agente Seguridad, 625=APCE Suscripciones ent.17114, NINGUNO CRAI)
+           y el formato 'area.NN' quedó obsoleto tras el fix costCenter del 2026-05-27
+           (id-area-to-costCenter → costCenter = ID_AREA numérico puro, ej. '93').
+         Revocación automática si costCenter cambia fuera del área CRAI.
          Birthright canónico via assignmentTargetSearch (Semancik Cap.9 regla 10).
          NOTA: usa forma <mapping> con <target> (consistente con D, D.3, D.4, E, P)
          en lugar de <item><ref>assignment</ref> para garantizar procesamiento
@@ -1416,8 +1421,10 @@ return ActivationStatusType.ENABLED</code>
         </target>
         <condition>
             <script>
-                <code>def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
-['area.97','area.522','area.625'].contains(cc)</code>
+                <code>// FIX 2026-05-31 (G1): costCenter = ID_AREA numérico puro (no 'area.NN').
+// ID_AREA 93 = CRAI institucional (ELISEO.ORG_AREA, validado vs Oracle).
+def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
+['93'].contains(cc)</code>
             </script>
         </condition>
     </mapping>
@@ -1510,8 +1517,10 @@ return roleName</code>
         </target>
         <condition>
             <script>
-                <code>def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
-['area.97','area.522','area.625'].contains(cc)</code>
+                <code>// FIX 2026-05-31 (G1): costCenter = ID_AREA numérico puro (no 'area.NN').
+// ID_AREA 93 = CRAI institucional (ELISEO.ORG_AREA, validado vs Oracle).
+def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
+['93'].contains(cc)</code>
             </script>
         </condition>
     </mapping>

@@ -4,7 +4,7 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="a1b2c3d4-e5f6-7890-abcd-ef1234567801">
     <name>AR-Koha-Patron-Pregrado</name>
-    <description>Application Role: cuenta patron estudiante de pregrado en Koha ILS. La categoría (PREGRADO) la deriva el mapping category-id-from-primary-affiliation del resource koha-ils (R5 FASE 4): ya NO hay override por-rol. Reemplaza AR-Koha-Patron-Student cuando Koha migre ESTUDI→PREGRADO.</description>
+    <description>Application Role: cuenta patron estudiante de pregrado en Koha ILS. Diseño B (eduPerson, DECISION-eduperson-koha-categorycodes.md) reemplazó al Diseño A: category_id = primaryAffiliation literal eduPerson = 'student' (ya NO 'PREGRADO'), derivado por el mapping category-id-from-primary-affiliation del resource koha-ils. El nivel pregrado/posgrado es eje ortogonal → extended_attribute STUDY_LEVEL, NO category_id. La categoría 'student' existe en Koha con circulation_rules equivalentes a ESTUDI/PREGRADO (verificado 2026-05-31, G3).</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->

@@ -4,7 +4,7 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="a1b2c3d4-e5f6-7890-abcd-ef1234567804">
     <name>AR-Koha-Patron-Alumni</name>
-    <description>Application Role: cuenta patron egresado en Koha ILS. La categoría (ALUMNI) la deriva el mapping category-id-from-primary-affiliation del resource koha-ils (R5 FASE 4) cuando primaryAffiliation=alum: ya NO hay override por-rol. Para usuarios con primaryAffiliation=alum.</description>
+    <description>Application Role: cuenta patron egresado en Koha ILS. Diseño B (eduPerson, DECISION-eduperson-koha-categorycodes.md) reemplazó al Diseño A: category_id = primaryAffiliation literal eduPerson = 'alum' (ya NO 'ALUMNI'), derivado por el mapping category-id-from-primary-affiliation del resource koha-ils. La categoría 'alum' existe en Koha con circulation_rules equivalentes a ALUMNI (verificado 2026-05-31, G3). Para usuarios con primaryAffiliation=alum.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->

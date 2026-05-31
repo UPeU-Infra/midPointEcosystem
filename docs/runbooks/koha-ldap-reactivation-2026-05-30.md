@@ -721,3 +721,107 @@ Cruce de **7.309 DNIs archived sin item liveStudent** vs Oracle (matrícula viva
 - **(C)** Normalización `lambDocNum` (padding) en inbound+correlador → cierra 20 de los 32 UNMATCHED Trabajadores. Cambio crítico (50k users) → validar en simulación.
 - **(D)** 160 matriculados activos SIN `CORREO_INST` en MOISES → escalar a RR.AA./SIS (asignación de correo). Mientras tanto quedan `archived`/`draft` sin cuenta; canónicamente deberían ser `draft` (enrolled), no `archived`.
 - **(E)** 19 COD_APS multi-ID_PERSONA con DNI typo/basura → data-quality MOISES irrecuperable; excepción documentada (no archivan a nadie).
+
+---
+
+## ROADMAP ORDENADO COMPLETO — Go-live Koha + LDAP (2026-05-31)
+
+> **PARTE A del encargo.** Análisis de dependencias para go-live, ordenado por fases que MINIMIZAN rework. midpoint-expert + koha-expert. Skills: `iga-canonical-standards` §1.2/§1.3/§3.2/§10; `midpoint-best-practices` §1.2/§2.1/§3/§4.4/§4.5. Read-only salvo G1/G3/G4 (ya ejecutados, ver PARTE B abajo).
+
+### Estado de cierre de gaps (snapshot tras esta sesión)
+
+| Gap | Tema | Estado |
+|---|---|---|
+| **G1** | Birthright CRAI roto (costCenter format + ID_AREA erróneos) | ✅ **HECHO** (esta sesión): `93` numérico puro. 97/522/625 eran basura. |
+| **G2** | Permisos librarian (flags CRAI) requieren connector v1.4.0 | ⏳ DIFERIDO (no bardea go de patrones; ver Fase 5) |
+| **G3** | circulation_rules de las 6 categorías eduPerson | ✅ **HECHO** (esta sesión): faculty/staff/student/alum/affiliate ya estaban; `local` clonado de ADMIN. |
+| **G4** | Descripciones legacy AR-Koha-Patron-* + mapa MEMORY | ✅ **HECHO** (esta sesión). |
+| **C** | Normalización `lambDocNum` padding (50k, correlador) | ⏳ data-quality, validar simulación |
+| **D** | 160 matriculados sin CORREO_INST → draft (no archived) | ⏳ escalar SIS/RR.AA. |
+| **E** | 19 DNIs typo/basura MOISES | ⏳ excepción documentada (irrecuperable) |
+
+### Mapa de dependencias (qué precede a qué)
+
+```
+[FASE 0] Materialización IIA completa (liveAffiliation*)  ── PRE-REQUISITO DURO de todo provisioning
+   │  recon Trabajadores (✅ e8d054ba) + Estudiantes (✅ 100% materializado) + Egresados (✅)
+   │  → liveAffiliationWorker / liveAffiliationStudent / liveAffiliationAlum poblados
+   ▼
+[FASE 1] Data-quality bloqueante mínima
+   │  C (padding lambDocNum)  → opcional para go (cierra 20 falsos leavers; NO bloquea Koha)
+   │  D (160 sin correo → draft)  → NO bloquea (sin shadow no se crea/archiva cuenta)
+   │  E (19 typo)  → excepción (no archiva a nadie)
+   ▼
+[FASE 2] Gaps de provisioning Koha/LDAP   ── G1 ✅, G3 ✅, G4 ✅  (ESTA SESIÓN)
+   │  G1 birthright CRAI → necesario antes de activar Koha para que bibliotecarios tengan AR-Koha-Librarian
+   │  G3 circulation_rules → necesario antes de activar Koha (sin reglas, préstamos sin límites correctos)
+   │  G4 descripciones → cosmético, no bloquea
+   ▼
+[FASE 3] GO PARCIAL Koha = PATRONES  (proposed → active del objectType Koha)
+   │  Habilita: creación/archivado de patrones (faculty/staff/student/alum/affiliate/local)
+   │  category_id eduPerson (Diseño B), existence+admin-status (leaver=disabled), library_id por locality
+   │  NO depende de connector v1.4.0 (los patrones se crean/archivan con v1.3.3)
+   ▼
+[FASE 4] GO LDAP  (proposed → active del objectType LDAP)
+   │  Pre: resolver 3 casos acotados (001261673 doble-afiliación item no materializado vía recon completa; 2 data-gap correo)
+   │  Menor riesgo: deprovisión limpia (delete shadow), 5.836 cuentas
+   ▼
+[FASE 5] DIFERIDO post-go — permisos CRAI (G2)
+   │  connector-koha v1.4.0: flags de permisos librarian (CRAI staff vs circulación)
+   │  Los bibliotecarios ya tienen patrón + AR-Koha-Librarian (G1); v1.4.0 añade los FLAGS de permiso fino.
+   │  NO bloquea el go de patrones: un bibliotecario sin v1.4.0 funciona como patrón staff hasta el upgrade.
+   ▼
+[FASE 6-8] Migración categorycodes legacy  ── POST-GO, asíncrono
+      Reconciliación 13.805 shadows Koha existentes (DISPUTED/UNLINKED/UNMATCHED)
+      22K patrones legacy DOCEN/PREGRADO/ADMINIST/... → categorías eduPerson (vía recompute/recon)
+      Drop categorías legacy (DOCEN/ADMINIST/PREGRADO/POSGRADO/ALUMNI/ESTUDI/VISITA/JUBILADO)
+      SOLO tras confirmar 0 patrones residuales en categorías viejas.
+```
+
+### Orden canónico recomendado (fases, qué permite go-parcial, qué difiere)
+
+| # | Fase | Bloqueante para go | Permite go-parcial | Difiere |
+|---|---|---|---|---|
+| 0 | Materialización IIA (recons completas) | **SÍ** (duro) | — | — |
+| 1 | Data-quality C/D/E | No (acotados, validados vs Oracle) | sí (go con 0 falsos leavers Koha) | C/D/E a ciclo siguiente |
+| 2 | G1/G3/G4 | **SÍ** (G1 birthright, G3 reglas) | — | G4 cosmético |
+| 3 | **GO Koha patrones** (objectType proposed→active) | — | **GO PARCIAL AQUÍ** (patrones ya) | — |
+| 4 | GO LDAP (objectType proposed→active) | resolver 3 casos | go tras recon completa | — |
+| 5 | G2 connector v1.4.0 (permisos CRAI) | No | — | **DIFERIDO post-go** |
+| 6-8 | Migración categorycodes + recon 13.805 + drop legacy | No | — | **POST-GO asíncrono** |
+
+### Reconciliación de los 13.805 shadows Koha existentes — tratamiento canónico
+- **No requiere acción pre-go.** Tras `proposed→active`, la primera recon Koha correlaciona los 13.805 por las 3 capas (cardnumber/lambDocNum/taxId).
+- DISPUTED/UNMATCHED de Koha = `unmatched` sin acción (Koha NO es IIA; MidPoint no resta lo que no creó — patrón ya implementado y VÁLIDO).
+- UNLINKED con owner → `link`. Los legacy en categorías viejas se recategorizan a eduPerson en el siguiente recompute (Fase 6-8), sin pérdida de transacciones (archivado = disabled, nunca delete).
+
+### Veredicto de orden
+**Camino crítico al go de patrones:** FASE 0 (✅ materialización) → FASE 2 (✅ G1/G3/G4 esta sesión) → **FASE 3 (GO Koha patrones) = LISTO para decisión del usuario.** LDAP requiere FASE 4 (3 casos). G2/categorycodes/recon legacy son **post-go** y NO bloquean. Esto evita el rework de descubrir gaps uno por uno: todo lo bloqueante para patrones está cerrado.
+
+---
+
+## PARTE B — EJECUCIÓN G1 + G3 + G4 (2026-05-31)
+
+> Autorizado por usuario. Oracle SOLO SELECT (instantclient thick ARM64). Koha DB: backup previo + INSERT idempotente. MidPoint: commit→push→pull→PUT. Resources Koha/LDAP siguen `proposed` (sin provisioning). Skills consultadas: ambas.
+
+### G1 — Birthright CRAI (ID_AREA reales encontrados)
+**Validación vs Oracle (`ELISEO.ORG_AREA`, SELECT):**
+- `97` = **Colegio Unión** (NO CRAI), `522` = Agente de Seguridad-Turno Día, `625` = APCE SUSCRIPCIONES (ent. 17114). Los tres ERRÓNEOS.
+- CRAI real: **ID_AREA 93** = 'Centro de Recursos del Aprendizaje e Investigación' (ESTADO='1', ID_ENTIDAD=7124, parent=69 Dir. Gral. Investigación). Únicos otros matches (454 'CRAI', 582 'CRAI FT') están INACTIVOS (ESTADO='0').
+- **52 trabajadores vivos 7124 resuelven a área 93** (vs 0 a 454/582). En MidPoint hoy: 22 users con `costCenter='93'` (confirma formato numérico puro). El split por campus (BUL/BUJ/BUT/CIA) NO son áreas separadas: se gobierna en Koha vía `library_id`/locality.
+- **2º bug confirmado:** el fix costCenter del 2026-05-27 (`id-area-to-costCenter`) cambió costCenter a ID_AREA numérico puro; la condición `['area.97',...]` quedó doblemente rota (valor + formato `area.NN`).
+
+**Corrección aplicada** en `canonical/object-templates/UserTemplate-Person-Base.xml`:
+- Condiciones Q4 y Q5: `['area.97','area.522','area.625']` → `['93']` (numérico puro). Comentarios L30-31 y bloque Q4 (L1385+) corregidos con la validación Oracle.
+
+### G3 — circulation_rules (Koha DB, koha_bul, branch BUL único)
+**Verificación (SELECT):** faculty(34)/staff(34)/student(33)/alum(33)/affiliate(3) YA tenían reglas equivalentes a sus predecesores DOCEN(34)/ADMINIST(34)/ESTUDI(33)/ALUMNI(33)/VISITA(3). **Gap único: `local` con 0 reglas.**
+**Acción:** backup `circulation_rules` (`/tmp/circulation_rules_bkp_20260531_0802.sql`) + `INSERT...SELECT` idempotente clonando `local` de `ADMIN` (35 reglas, branchcode global NULL — apropiado para cuentas de sistema/kioscos). Resultado: **6/6 categorías eduPerson con reglas equivalentes a su predecesora.**
+
+### G4 — Descripciones legacy
+Actualizadas `<description>` de AR-Koha-Patron-{Faculty,Administrativo,Alumni,Pregrado,Posgrado}: señalan que **Diseño B (eduPerson) reemplazó al Diseño A**, category_id = primaryAffiliation literal (faculty/staff/student/alum), nivel→STUDY_LEVEL ortogonal, CRAI/researcher fuera de category_id. Mapa "categorías Koha↔IGA" en MEMORY.md reescrito a Diseño B con counts de circulation_rules.
+
+### Estado tras G1/G3/G4 — qué falta para go (según roadmap)
+- **GO Koha patrones (FASE 3): LISTO** salvo decisión del usuario de `proposed→active` del objectType Koha. Camino crítico cerrado.
+- **GO LDAP (FASE 4):** resolver 3 casos acotados (recon completa para materializar `001261673`; 2 data-gap correo del SIS).
+- **Diferido (no bloquea):** G2 (connector v1.4.0 permisos CRAI), C/D/E data-quality, migración categorycodes + recon 13.805 + drop legacy (post-go asíncrono).
