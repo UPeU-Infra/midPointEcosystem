@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SIMULATION (preview) — PASO 1 canary LEAVER con proyecciones existentes.
+     Valida el camino "archivar-no-borrar" Koha (DISABLED, NO delete) y la
+     deprovision LDAP (delete) sobre leavers que SI tienen shadow Koha/LDAP.
+     43435688: archived, sin liveAffiliation, con shadow Koha -> Koha DISABLED.
+     60855245: archived, sin liveAffiliation, con shadow Koha+LDAP -> Koha
+               DISABLED + LDAP delete. -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="c0a1b2c3-d4e5-46f7-8a9b-0c1d2e3f4a52">
+    <name>SIM Leaver Koha+LDAP reactivation (preview)</name>
+    <executionState>runnable</executionState>
+    <activity>
+        <execution>
+            <mode>preview</mode>
+            <configurationToUse>
+                <predefined>development</predefined>
+            </configurationToUse>
+        </execution>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:inOid>
+                                <q:value>3549823a-1a65-49fa-afda-4d2b94196620</q:value>
+                                <q:value>159aef63-3fed-4104-8f1c-a397ec406b38</q:value>
+                            </q:inOid>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+    </activity>
+</task>

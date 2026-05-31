@@ -352,3 +352,75 @@ Las visitas se gobernarán desde el proyecto **Smart WiFi** (producto SciBack qu
 - `docs/runbooks/org-canonical-migration-2026-05-29.md` (estado focus / cola de retoma).
 - `connector-koha` v1.3.x — `PatronMapper.applyEnableAttribute` (mecanismo archivado).
 - Estado PROD verificado 2026-05-30: Koha 13.805 shadows, LDAP 5.836 shadows.
+
+---
+
+## 6. EJECUCIÓN — PASO 0/1/2 (dry-run) 2026-05-30 noche
+
+> Ejecutado por `midpoint-expert`. Resources Koha+LDAP en `proposed` todo el tiempo.
+> NINGÚN provisioning masivo real. NINGÚN resource pasó a `active`. Oracle solo lectura.
+
+### PASO 0 — Consistencia config (OK)
+
+- `koha-ils.xml`: único cambio sin commitear era `lifecycleState active→proposed` (válido, gate dry-run). Ya estaba aplicado en PROD. Commit `chore(koha+entraid)`.
+- `entra-id-graph.xml`: la eliminación de outbounds (UPN/givenName/familyName + existence-outbound) NO es accidental — es **defensa en profundidad** inbound-only. Hallazgo previo (2026-05-28): en 4.10 `lifecycleState=proposed` NO suprime el `<existence><outbound>`, que forzaba ADD a Entra ID (ObjectAlreadyExistsException sobre ~29K shadows huérfanos). Se conserva (commiteado), NO se revierte. Entra ID en PROD: resource `active` + objectType `proposed` (inbound-only confirmado).
+- Resource Koha en PROD: `proposed`, schema STUDY_LEVEL merged (sin Duplicate definition), **Test Connection 16/16 success**.
+- LDAP en PROD: `proposed`. `AR-LDAP-Person` con condición endurecida.
+
+### Dos bugs 4.10 detectados y corregidos vía simulación (preview)
+
+1. **`AR-LDAP-Person` condición**: usaba `focus.extension.liveAffiliationWorker` → `MissingPropertyException` (ExtensionType no expone items como propiedades Groovy). Fix: `basic.getExtensionPropertyValue(focus, 'liveAffiliationWorker')`. Commit `fix(AR-LDAP-Person)`.
+2. **`koha-ils.xml` existence mapping**: `getLinkedShadow(focus, oid, 'account','default', false)` → overload inexistente en 4.10. Fix: `getLinkedShadow(focus, resourceOid)`. Commit `fix(koha)`.
+
+> Sin estos fixes, el existence/condición lanzaban excepción en cada recompute → habrían roto el provisioning masivo. La simulación los cazó ANTES de cualquier escritura.
+
+### Mecanismo de dry-run
+
+Simulation task `recomputation` con `<execution><mode>preview</mode><configurationToUse><predefined>development</predefined></configurationToUse>`. `preview` = NO escribe a MidPoint ni a resources; `development` = evalúa los objectTypes `proposed` (Koha+LDAP) como activos para predecir deltas. Deltas leídos de `m_simulation_result_processed_object` (Postgres, read-only). XMLs: `upeu/tasks/koha-ldap-reactivation/sim-canary-preview.xml`, `sim-leaver-preview.xml`.
+
+### PASO 1 — Canary (todos PASAN, resultStatus=success, 0 errores)
+
+| Caso | Usuario | liveAffiliation | Koha (preview) | LDAP (preview) |
+|---|---|---|---|---|
+| Staff activo (Zonia) | 01119359 | Worker=staff | MODIFY → enabled, category_id ADMINIST→**staff** | MODIFY (mantener) |
+| Docente activo | 70477801 (julieta.rafael) | Worker=faculty | MODIFY → enabled, DOCEN→**faculty** | MODIFY (mantener) |
+| Estudiante matriculado | 202110788 | Student | MODIFY → enabled, VISITA→**student** | **ADD** (crear cuenta LDAP eduPerson/SCHAC) |
+| Jubilado (sin shadow Koha) | 00186917 (Chanducas) | — (archived) | sin acción (no patrón previo, no elegible) | sin acción |
+| Alumni puro (sin shadow Koha) | 201220658 | Alum | sin acción (no patrón previo) | sin acción (alum NO va a LDAP) |
+| **Leaver CON patrón Koha** | 60855245 (wilfredo.ramos) | — (archived) | **MODIFY → DISABLED** (disableReason=mapped, category→staff, **NO delete**) | UNMODIFIED* |
+| Leaver YA archivado Koha | 43435688 | — (archived) | UNMODIFIED (ya `disabled` → idempotente) | — |
+
+\* El shadow LDAP del leaver 60855245 quedó UNMODIFIED porque el user archived **no tiene assignments/roleMembership** (perdió AR-LDAP-Person). MidPoint no resta lo que no gobierna por recompute. **La limpieza de cuentas LDAP huérfanas de leavers requiere RECONCILIACIÓN del resource LDAP (no recompute del user).** Documentado para la fase LDAP.
+
+**Validado:** Diseño B (category eduPerson) se aplica; archivar-no-borra es idempotente y NO genera deletes; estudiante crea cuenta LDAP completa; alumni puro fuera de LDAP.
+
+### PASO 2 — DRY-RUN agregado (conteos proyectados, 49.322 usuarios)
+
+Calculado por elegibilidad en MidPoint DB (read-only), sin escritura:
+
+| KOHA | Conteo |
+|---|---|
+| Elegibles (worker/student vivo) → enabled | 14.202 |
+| → SIN patrón → **CREAR** enabled | 9.124 |
+| → CON patrón → update enabled | 5.078 |
+| Leavers CON patrón → **ARCHIVAR (disabled)** | 4.899 |
+| No-elegibles SIN patrón → sin acción | 30.220 |
+| **DELETE** | **0** ✓ |
+
+| LDAP | Conteo |
+|---|---|
+| Elegibles → crear/mantener | 14.199 |
+| → SIN cuenta → **CREAR** | 9.475 |
+| Leavers CON cuenta → **DEPROVISIONAR** (delete) | 64 |
+
+**Baseline Koha (read-only, a preservar):** `old_issues=21.562`, `issues=199`, `borrowers=30.434`, `statistics=68.995`. Categorías actuales: ESTUDI 17.672, ALUMNI 6.008, ADMINIST 2.641, VISITA 1.753, PREGRADO 1.538, DOCEN 590, INVESTI 127, POSGRADO 91, JUBILADO 7. Categorías eduPerson Diseño B (faculty/staff/student/alum/affiliate/local) YA creadas en Koha.
+
+### GATE — veredicto: NO listo para provisioning masivo todavía
+
+- ✅ **0 deletes Koha**, ✅ 0 disabled sobre vivos (los 14.202 elegibles → enabled).
+- ✅ Archivado idempotente (leavers ya disabled = UNMODIFIED).
+- ⚠️ **BLOQUEANTE: liveAffiliation aún no propagado a toda la población.** Solo 14.202 usuarios tienen `liveAffiliationWorker/Student` poblado (vs 30.434 borrowers Koha). De los 4.899 leavers-a-archivar: **4.794 son alumni puros legítimos**, pero **~66 son staff/faculty/student con afiliación viva real cuyo inbound `strong` de liveAffiliation aún NO corrió** (recompute Opción 2 pendiente). Archivarlos ahora sería un **falso leaver**.
+- ⚠️ Bug preexistente (NO de este trabajo): mapping `D-assign-affiliation-role-from-primaryAffiliation` del object-template lanza Groovy error (`ExtensionType.findProperty/getPropertyRealValue` no existe en 4.10) en cada recompute. No bloquea Koha/LDAP pero el assignment de roles de afiliación puede estar fallando. **Requiere fix del template (mismo patrón: usar `basic.getExtensionPropertyValue`).**
+
+**Pre-requisito obligatorio antes del masivo:** completar el recompute masivo de `liveAffiliation*` (cola de retoma `org-canonical-migration-2026-05-29.md`) para que worker/student vivos tengan el item poblado → los ~66 falsos leavers desaparecen. Recomendado además: corregir el bug del template `D-assign-affiliation-role`.
+
