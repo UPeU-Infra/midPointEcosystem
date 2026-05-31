@@ -243,7 +243,7 @@ if (!d) return null
 if (d ==~ /\d+/) {
     def norm = d.replaceFirst(/^0+/, '')
     if (!norm) return null
-    return norm.length() &lt;= 8 ? norm.padLeft(8, '0' as char) : norm
+    return norm.length() &lt;= 8 ? norm.padLeft(8, '0') : norm
 }
 return d</code>
                         </script>
