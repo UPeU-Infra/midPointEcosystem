@@ -512,3 +512,94 @@ Objetivo: ejecutar el pre-requisito (fix #52 + materializar `liveAffiliation*` +
 4. m_user sin pérdida (49.322 baseline)
 
 EN CURSO — esperando fin de recon para verificar liveAffWorker (objetivo >= 4.077, cubrir los 348).
+
+---
+
+## EJECUCIÓN 2026-05-31 (verificación post-recon + RE-DRY-RUN final) — GATE ROJO, causa raíz identificada
+
+> midpoint-expert. Read-only. NINGÚN provisioning. NINGÚN resource pasó a `active`. Oracle SOLO SELECT (thick x86 Rosetta `/opt/homebrew/lib`). Skills: `midpoint-best-practices` §4.5 (inbound replay en recon), §1.2 lifecycle; `iga-canonical-standards` §1.3 IIA, §1.2 ISO 24760.
+
+### PASO 1 — La recon completó pero liveWorker NO subió (3.729 → 3.727)
+
+Recon `e8d054ba` finalizó (realizationState=complete, 16.685 items procesados, idle, RUNNABLE/READY recurrente). PERO:
+
+| Item | Baseline | Post-recon | Objetivo |
+|---|---|---|---|
+| liveAffWorker (216) | 3.729 | **3.727** ❌ | ≥4.077 |
+| liveAffStudent (217) | 10.936 | 10.936 | — |
+| liveAffAlum (215) | 30.650 | 30.650 | — |
+| **liveAny** | 41.954 | **41.952** ❌ | >41.954 |
+
+**La materialización NO ocurrió. Los 348 falsos leavers NO se destrabaron.**
+
+### CAUSA RAÍZ (definitiva) — doble projection por `name` no normalizado (padding de ceros)
+
+La recon registró **357 FATAL_ERROR** `partial_error`, todos:
+```
+Projection [ACCOUNT/default @6a91f7e1-...] already exists in lens context
+(existing shadow:...(00737626), new shadow:...(000737626))
+```
+
+Hay **358 shadows del resource Trabajadores LIVE + UNLINKED + correlationSituation=EXISTING_OWNER**. Mecanismo del fallo (best-practices §4.5):
+
+1. LAMB emite al **mismo trabajador con dos paddings de DNI distintos** (p.ej. `00737626` de 8 díg. y `000737626` de 9 díg.) → MidPoint crea **dos shadows con `name` distinto** del mismo resource/intent.
+2. El correlador (por DNI normalizado/taxId) resuelve **correctamente** el mismo owner para ambos (`EXISTING_OWNER`).
+3. Al intentar `unlinked → link` el segundo shadow, el user **ya tiene el primero linkeado** → MidPoint detecta **dos projections ACCOUNT/default del mismo resource en el lens context** → **FATAL_ERROR, aborta el clockwork del focus**.
+4. El clockwork abortado **nunca ejecuta el inbound `strong`** que pobla `liveAffiliationWorker` → user queda sin el item → si está archived, **falso leaver**.
+
+> No son shadows duplicados *persistidos* (0 owners con >1 shadow live linkeado): el 2º shadow nunca llega a linkearse. Es un conflicto **en tiempo de clockwork**, repetible en cada recon.
+
+### Validación contra Oracle (SOLO SELECT) — falsos leavers REALES
+
+De los 358 shadows huérfanos, **30 con contrato UPeU (ELISEO.VW_APS_EMPLEADO ID_ENTIDAD=7124, ESTADO='A') VIVO**. Cruzados a su `resultingOwner` en MidPoint:
+- **18** → owner `active` + liveWorker=t (otro shadow ya materializó; OK, no son falsos leavers).
+- **9** → owner `archived` + liveWorker=f → **FALSOS LEAVERS** (contrato vivo, archivados por el conflicto). Patrón confirmado: linked `00737626` ↔ huérfano `000737626`, etc.
+- **3** → owner `active` + liveWorker=f (item no materializado pero no archivados).
+
+### RE-DRY-RUN FINAL Koha + LDAP (read-only, proyección desde estado materializado)
+
+| KOHA | Conteo |
+|---|---|
+| Elegibles (liveWorker∨liveStudent) → enabled | 14.200 |
+| Shadows Koha live existentes | 13.805 |
+| No-elegibles CON shadow Koha live (candidatos a archivar) | 4.900 |
+| — de ellos con liveAlum (215) = **alumni legítimo a archivar** | 4.806 ✓ |
+| — **SIN ninguna afiliación viva (215/216/217)** | **94** ⚠️ |
+| **DELETE Koha** | **0** ✓ |
+
+| LDAP | Conteo |
+|---|---|
+| Shadows LDAP live | 5.836 |
+
+**GATE — análisis de los 94 sospechosos (shadow Koha, 0 afiliación viva):** validados contra Oracle por `cardnumber`/DNI:
+- **37 tienen contrato UPeU 7124 VIVO** → **FALSOS LEAVERS que se ARCHIVARÍAN erróneamente en Koha** (administrativeStatus→disabled sobre trabajador con contrato vigente).
+- 57 restantes: cesados/sin contrato vivo (leavers legítimos o data-gap).
+
+### GATE: **ROJO** ❌
+
+- ✅ 0 deletes Koha (suma-no-resta vía card_lost+expiry intacto).
+- ✅ 4.806 alumni legítimos → archivar correctamente.
+- ❌ **≥37 falsos leavers Koha** (worker 7124 vivo) se archivarían (disabled) indebidamente. **Viola el GATE FINAL "0 disabled sobre usuarios con afiliación viva".**
+- ❌ liveWorker no materializó (recon abortó por doble projection).
+
+> Nota metodológica: la salvaguarda DB "0 académicos vivos archivados" da **0** porque mide el *item materializado*, no la *realidad Oracle*. Los falsos leavers no tienen el item poblado (justamente por eso fallan) → no disparan esa salvaguarda. La verdad bloqueante es Oracle (≥37 con 7124='A'). **La salvaguarda de item es necesaria pero NO suficiente; el gate debe validarse contra Oracle.**
+
+### PRE-REQUISITO BLOQUEANTE antes del masivo (causa raíz, no parche)
+
+La recon **nunca convergerá** mientras existan los 358 shadows con `name` de padding inconsistente: cada corrida vuelve a abortar el clockwork de esos focos. **Hay que eliminar el doble shadow.** Opciones (a decidir con el usuario, NO ejecutadas):
+
+1. **Normalizar el `name` del shadow Trabajadores** (canónico): hacer que el conector/objectType derive el `name` desde el DNI **normalizado** (sin ceros a la izquierda, o con padding fijo) → un único shadow por trabajador. Requiere `<attribute ref="icfs:name">` normalizado + re-import. **Es el fix de raíz y reusable SciBack** (evita el problema en cualquier fuente con padding inconsistente).
+2. **Purga quirúrgica de los 358 shadows huérfanos** (UNLINKED/EXISTING_OWNER) + dejar solo el linkeado, luego recompute de los 9 archived → materializa liveWorker → active. Resuelve el caso actual pero **reaparecerá** en la próxima recon si LAMB re-emite el padding alterno (no es fix de raíz).
+3. **Combinar:** purga (1-vez) + normalización del name (permanente).
+
+**Recomendación:** opción 3. Sin normalización del `name`, el gate volverá a ROJO en cada ciclo de recon.
+
+### Estado / residuos / salvaguardas (2026-05-31)
+
+- **Salvaguardas BLOQUEANTES intactas:** dual-structural USER=0; académicos-vivos(item)-archivados=0; m_user=49.323 (baseline 49.322, sin pérdida); disco / =86% (<90%).
+- **Tasks SUSPENDED (residuos):** `3e8b389e` "Recompute all users" (artefacto histórico — dejar suspended, candidato a borrado tras cerrar el gate), `94b627b4` Recon Estudiantes, `09406c57` Recon Org, `4eacfa96` Cleanup dead shadows Koha. **NO se borró ninguno** (sin instrucción explícita y disco OK). Recompute all users puede archivarse cuando se ejecute el masivo definitivo.
+- **NO se pasó Koha/LDAP a active. NO se ejecutó provisioning. Oracle solo lectura.**
+
+### VEREDICTO
+
+**NO listo para activar Koha/LDAP ni provisioning masivo.** Falta resolver la causa raíz de los shadows con `name` de padding inconsistente (≥37 falsos leavers Koha confirmados contra Oracle). Acción acotada: decidir opción 1/2/3 (recomendado 3), ejecutarla, re-correr recon Trabajadores → verificar liveWorker ≥4.077 + 0 falsos leavers Koha contra Oracle → recién entonces el usuario decide `proposed → active`.
