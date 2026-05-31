@@ -825,3 +825,9 @@ Actualizadas `<description>` de AR-Koha-Patron-{Faculty,Administrativo,Alumni,Pr
 - **GO Koha patrones (FASE 3): LISTO** salvo decisión del usuario de `proposed→active` del objectType Koha. Camino crítico cerrado.
 - **GO LDAP (FASE 4):** resolver 3 casos acotados (recon completa para materializar `001261673`; 2 data-gap correo del SIS).
 - **Diferido (no bloquea):** G2 (connector v1.4.0 permisos CRAI), C/D/E data-quality, migración categorycodes + recon 13.805 + drop legacy (post-go asíncrono).
+
+### G1 — Canary y verificación post-PUT (2026-05-31)
+- PUT a PROD: template `855caaca...` + 5 roles AR-Koha-Patron-* → todos **HTTP 201**.
+- **Canary 1 (`07683776`, costCenter=93):** assignment vía mapping `Q4-birthright-koha-librarian-crai` → **AR-Koha-Librarian** + tier **AR-Koha-Librarian-Circulacion** (fallback). ✅
+- **Canary 2 (`29605891`, costCenter=93):** **AR-Koha-Librarian** + tier **AR-Koha-Librarian-ProcesosTecnicos** (resuelto por ID_PUESTO vía LookupTable). ✅ Confirma que la condición `['93']` matchea y Q5 resuelve tier correcto.
+- **Residuo benigno detectado (NO bloquea):** 10 users costCenter=93 con AR-Koha-Librarian (correcto) **+ 11 users costCenter=69** ('Dirección General de Investigación', parent del CRAI) con la asignación Q4/Q5 STALE (metadata createTimestamp 2026-05-18, pre-fix). El mapping strong la REMOVERÁ en el próximo recompute (condición `['93']` falsa para cc=69). Sin impacto: resource Koha en `proposed` (0 provisioning). Se auto-sanea en el ciclo de recompute/recon masivo previo al go. `POST /users/{oid}/recompute` devuelve 404 en este build 4.10 (quirk REST conocido); el saneo se hará vía task de recompute masivo, no per-user REST.
