@@ -118,24 +118,9 @@
                         <path>$user/emailAddress</path>
                     </target>
                 </inbound>
-                <!-- OUTBOUND: UPN generado desde name del user (personalNumber@upeu.edu.pe)
-                     El template UserTemplate-Person-Base genera name = personalNumber.
-                     Entra ID UPN = name + "@upeu.edu.pe".
-                     strength normal: no sobrescribir cambios manuales en Entra ID. -->
-                <outbound>
-                    <strength>normal</strength>
-                    <expression>
-                        <script>
-                            <code>
-                                def uname = basic.getPropertyValue(focus, 'name')
-                                uname ? uname + '@upeu.edu.pe' : null
-                            </code>
-                        </script>
-                    </expression>
-                    <source>
-                        <path>$user/name</path>
-                    </source>
-                </outbound>
+                <!-- OUTBOUND ELIMINADO (2026-05-28): el outbound UPN provocaba que el
+                     clockwork construyera el shadow Entra ID a crear. Inbound-only hasta Fase 12.
+                     Para reactivar: restaurar el <outbound> UPN desde git history. -->
             </attribute>
 
             <attribute>
@@ -146,12 +131,7 @@
                         <path>$user/givenName</path>
                     </target>
                 </inbound>
-                <outbound>
-                    <strength>normal</strength>
-                    <source>
-                        <path>$user/givenName</path>
-                    </source>
-                </outbound>
+                <!-- OUTBOUND ELIMINADO (2026-05-28): inbound-only hasta Fase 12 -->
             </attribute>
 
             <attribute>
@@ -162,12 +142,7 @@
                         <path>$user/familyName</path>
                     </target>
                 </inbound>
-                <outbound>
-                    <strength>normal</strength>
-                    <source>
-                        <path>$user/familyName</path>
-                    </source>
-                </outbound>
+                <!-- OUTBOUND ELIMINADO (2026-05-28): inbound-only hasta Fase 12 -->
             </attribute>
 
             <attribute>
@@ -178,12 +153,7 @@
                         <path>$user/fullName</path>
                     </target>
                 </inbound>
-                <outbound>
-                    <strength>normal</strength>
-                    <source>
-                        <path>$user/fullName</path>
-                    </source>
-                </outbound>
+                <!-- OUTBOUND ELIMINADO (2026-05-28): inbound-only hasta Fase 12 -->
             </attribute>
 
             <attribute>
@@ -235,14 +205,13 @@
                         <strength>weak</strength>
                     </inbound>
                 </administrativeStatus>
-                <!-- accountEnabled outbound calculado desde effectiveStatus -->
-                <existence>
-                    <outbound>
-                        <expression>
-                            <value>true</value>
-                        </expression>
-                    </outbound>
-                </existence>
+                <!-- EXISTENCE-OUTBOUND ELIMINADO (2026-05-28) — CAUSA RAÍZ.
+                     El <existence><outbound><value>true</value> forzaba al clockwork
+                     a computar que CADA usuario debía tener cuenta Entra ID. Como los
+                     ~29K shadows huérfanos no correlacionan, MidPoint intentaba un ADD
+                     → ObjectAlreadyExistsException (name={dni}@upeu.edu.pe ya existe).
+                     lifecycleState=proposed NO suprime el existence-outbound en 4.10.
+                     Para reactivar provisioning (Fase 12): restaurar desde git history. -->
             </activation>
 
             <!-- ================================================================
@@ -275,9 +244,10 @@
                 <reaction>
                     <situation>unlinked</situation>
                     <actions>
-                        <link>
-                            <synchronize>true</synchronize>
-                        </link>
+                        <!-- link sin synchronize: vincula el shadow al user pero NO dispara
+                             projection/reconcile outbound (que reintroduciría el ADD).
+                             synchronize=true reactivaría el clockwork completo. -->
+                        <link/>
                     </actions>
                 </reaction>
                 <reaction>
@@ -328,6 +298,9 @@
             <cap:update>
                 <cap:enabled>false</cap:enabled>
             </cap:update>
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
             <!-- read y liveSync permanecen habilitados (Fase 1 operativa) -->
             <cap:read>
                 <cap:enabled>true</cap:enabled>

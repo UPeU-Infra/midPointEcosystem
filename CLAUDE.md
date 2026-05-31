@@ -4,13 +4,17 @@
 
 Repositorio único de la configuración MidPoint 4.10.x de la Universidad Peruana Unión (UPeU). Resultado de la consolidación 2026-05-19 que fusionó el repo paralelo `SciBack/midpoint` en esta estructura `canonical/ + upeu/`.
 
-## Agente
+## Agente — POLÍTICA OBLIGATORIA
 
-Para cualquier tarea con MidPoint (XMLs, archetypes, roles, resources, tasks, ninja, REST API, troubleshooting), usar `midpoint-expert`.
+**Para CUALQUIER tarea con MidPoint en este proyecto (XMLs, archetypes, roles, resources, tasks, ninja, REST API, troubleshooting, diagnóstico, operaciones PROD) SIEMPRE usar el sub-agente `midpoint-expert`.** No descubrir empíricamente ni operar MidPoint directamente desde el hilo principal.
+
+El `midpoint-expert` DEBE consultar la skill `midpoint-best-practices` (y `iga-canonical-standards`) antes de cualquier diseño o decisión, para garantizar conformidad con estándares Evolveum y canónicos.
 
 ```
 /agent midpoint-expert <tarea>
 ```
+
+Regla: modelo canónico primero, datos UPeU se adaptan al modelo, NUNCA al revés.
 
 ## Servidores
 
