@@ -1303,7 +1303,10 @@ def hasLib  = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72
 def eligible = (worker != null) || (student != null) || (guest != null) || hasLib
 // suma-no-resta: si el patrón Koha ya existe (reality), NUNCA borrar.
 // Se archiva vía administrativeStatus=disabled, jamás delete.
-def existing = midpoint.getLinkedShadow(focus, '9b5a7c81-47aa-42ac-9a08-4de8b64935af', 'account', 'default', false)
+// MidPoint 4.10: la overload (focus, oid, String, String, boolean) NO existe.
+// getLinkedShadow(focus, resourceOid) devuelve el shadow vinculado de ese
+// resource (account/default) o null. Suficiente para el predicado "ya existe".
+def existing = midpoint.getLinkedShadow(focus, '9b5a7c81-47aa-42ac-9a08-4de8b64935af')
 return eligible || (existing != null)
                                 ]]></code>
                             </script>
