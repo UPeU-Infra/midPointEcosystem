@@ -603,3 +603,50 @@ La recon **nunca convergerá** mientras existan los 358 shadows con `name` de pa
 ### VEREDICTO
 
 **NO listo para activar Koha/LDAP ni provisioning masivo.** Falta resolver la causa raíz de los shadows con `name` de padding inconsistente (≥37 falsos leavers Koha confirmados contra Oracle). Acción acotada: decidir opción 1/2/3 (recomendado 3), ejecutarla, re-correr recon Trabajadores → verificar liveWorker ≥4.077 + 0 falsos leavers Koha contra Oracle → recién entonces el usuario decide `proposed → active`.
+
+---
+
+## Sesión 2026-05-31 (post-fix `860b245`) — Re-verificación + 2ª anomalía bloqueante
+
+**Skills:** `midpoint-best-practices` (§1.2 lifecycle, §4.4 identificador inmutable/único, §4.5 pipeline, §11.10), `iga-canonical-standards` (§1.2 ISO 24760, §1.3 IIA por atributo).
+**Validación:** SELECT-only vs Oracle LAMB (`instantclient-arm64-basiclite` 23.3, host arm64). PROD REST + Postgres read.
+
+### PASO 1 — Resource + re-recon
+- ✅ Resource Trabajadores (`6a91f7e1-…e21`) con fix `860b245` **vivo en PROD** (marcadores `ID_PERSONA`/`CANON_KEY` presentes). HEAD PROD = `860b245`. Test connection **15/15 success**.
+- ⏳ **Re-recon Trabajadores EN CURSO** (task `e8d054ba`, post-fix, start 2026-05-30 23:55 Lima). Progreso ~6.7k/16.4k (41 %), ritmo ~2.2 it/s, **ETA ~01:40 Lima**. Por eso los shadows **aún no bajan** (16.377; LINKED=7.531 ≈ 7.533 vivas Oracle, DELETED=8.476, UNMATCHED=25, DISPUTED=1).
+- ✅ **0 doble projection / 0 AlreadyExists / 0 PolicyViolation** — el fix mató la doble projection (causa de los 357 falsos leavers). 0 shadows en fatal_error.
+
+### Residuo del fix: 25 UNMATCHED + 1 DISPUTED = colisión de **focus-name** (NO doble projection)
+- Los 26 shadows con `__NAME__` = `COD_APS-ID_PERSONA` (rama CANON_KEY compuesta) producen FATAL_ERROR **"Found conflicting existing object with property name"**: el inbound `cod-aps-to-name` (trabajadores.xml L125-129) mapea **COD_APS crudo → focus `name`**, que colisiona con el user ya existente dueño de ese COD_APS.
+- **Validado vs Oracle:** los 27 COD_APS son **multi-persona en MOISES** (mismo COD_APS para 2 `ID_PERSONA`/DNI distintos — dato sucio MDM). `717218523`/`0012345` = 1 persona con **7 DNIs basura**.
+- **Impacto:** **12 de 27 son personas con contrato 7124 VIVO** que NO obtienen cuenta (onboarding fallido). NO son falsos leavers (no existen aún como focus) y NO archivan a nadie.
+- **Fix de raíz (pendiente, §4.4 identificador único):** el fix `860b245` dio unicidad al *shadow* (`__NAME__`=CANON_KEY) pero NO la propagó al **focus name**. El inbound `cod-aps-to-name` debe mapear **CANON_KEY** (único garantizado), no `COD_APS`. Reusable SciBack.
+
+### PASO 2 — Materialización liveWorker
+- liveWorker = **3.734** (baseline 3.729; objetivo ~4.077). **+5 solamente** porque el recon AÚN no termina (va por fase LINKED, todavía no reproyectó los archived). Medición real válida solo al cerrar el recon (~01:40).
+- liveStudent=10.936, liveAlum=30.650.
+
+### PASO 3 — GATE FINAL: **ROJO** ❌ (2ª anomalía, distinta del fix)
+
+**Salvaguarda académica validada contra ORACLE (no solo el item):** de 7.315 archived con `lambDocNum`, cruzados vs LAMB:
+- ❌ **172 estudiantes con matrícula VIVA (semestre 267/279/283) están ARCHIVED sin gemelo activo.** (173 brutos; 1 tiene gemelo active.) Distribución de archivado: 91 el 30-may 23:00 UTC, 28 el 28-may, resto disperso.
+- **Causa raíz:** los 172 están **linkados SOLO al resource Trabajadores** (contrato no-7124/cesado → shadow deleted → inactivateFocus → terminationDate), **nunca reconciliados con el resource Estudiantes** → `liveAffiliationStudent` jamás se materializó → Bloque L ve `liveAff=∅ + terminationDate` → **archived**. Son doble-afiliación (trabajador cesado + estudiante vivo); su faceta estudiante nunca se proyectó.
+- **Defecto de fondo:** la salvaguarda académica (Bloque L, UserTemplate-Person-Base L907-1013) depende del **item materializado**, que a su vez exige shadow LINKED al resource Estudiantes. Si la persona entró solo por Trabajadores, su matrícula viva en Oracle **no la protege**. Confirma exactamente la advertencia "validar contra ORACLE, no solo el item".
+- 2 archived con contrato 7124 vivo: `76801120` (falso leaver legítimo, lo rescata el recon en curso) y `0012345` (DNI basura MOISES, no es persona real distinta).
+- **No se ejecutó el dry-run Koha/LDAP**: el GATE ya es ROJO por la salvaguarda académica vs Oracle. Provisioning archivaría/deprovisionaría a 172 estudiantes vivos. **DETENIDO por anomalía (regla).**
+
+### PASO 4 — Limpieza
+- **NO** se borró el residuo `3e8b389e` (Recompute all users, SUSPENDED): se deja intacto el estado para diagnóstico mientras el GATE esté ROJO. Inocuo (suspended).
+
+### Salvaguardas (snapshot 2026-05-31)
+- dual-structural USER = 0 ✓ · m_user = 49.318 (sin pérdida) · disco / = 84 % (<90 %) · containers healthy.
+
+### VEREDICTO: **GATE ROJO — NO activar Koha/LDAP**
+Dos bloqueos abiertos, ambos validados contra Oracle:
+1. **172 estudiantes vivos archived** (doble-afiliación; salvaguarda académica basada-en-item insuficiente). **Bloqueante.**
+2. 12 onboarding fallidos por colisión de focus-name (inbound `cod-aps-to-name` usa COD_APS crudo, no CANON_KEY).
+
+El fix `860b245` cumplió su objetivo (mató la doble projection, 0 fatal de ese tipo) pero **destapó/dejó pendiente** el problema estructural de cobertura de la salvaguarda académica. Acciones de raíz a decidir con el usuario (NO ejecutadas):
+- **(A)** Salvaguarda académica que valide contra **realidad Oracle** (recon Estudiantes que materialice `liveAffiliationStudent` para TODA persona con matrícula viva, **independiente de su faceta laboral**) antes de cualquier inactivateFocus. Correr Recon Estudiantes (`94b627b4`) y verificar que los 172 ganan liveStudent → vuelven a active.
+- **(B)** inbound `cod-aps-to-name` → mapear **CANON_KEY** en vez de COD_APS (cierra los 12 + futuros multi-persona MOISES).
+- Tras A+B + cierre del recon Trabajadores → re-validar liveWorker ≥4.077, 0 estudiantes vivos archived, 0 falsos leavers vs Oracle → recién entonces dry-run Koha/LDAP y decisión `proposed→active`.
