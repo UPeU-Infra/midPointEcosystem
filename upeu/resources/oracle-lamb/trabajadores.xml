@@ -124,11 +124,24 @@
             <attribute>
                 <ref>ri:COD_APS</ref>
                 <inbound>
+                    <!-- FIX B (2026-05-31): el focus `name` debe usar CANON_KEY (identificador
+                         ÚNICO garantizado por el searchScript = __NAME__/__UID__ del shadow),
+                         NO el COD_APS crudo. COD_APS es multi-persona en MOISES (dato sucio MDM):
+                         un mismo COD_APS para 2 ID_PERSONA distintos. Mapear COD_APS crudo a `name`
+                         colisiona con el user que ya posee ese name → FATAL_ERROR
+                         "conflicting existing object with property name" → 25 UNMATCHED + 1 DISPUTED
+                         (12 de ellos personas con contrato 7124 VIVO = onboarding fallido).
+                         CANON_KEY = COD_APS si único, ó COD_APS||'-'||ID_PERSONA si multi-persona.
+                         Fuente: __NAME__ del shadow (ya es CANON_KEY). Reusable SciBack
+                         (§4.4 iga-canonical-standards: identificador inmutable/único para name). -->
                     <name>cod-aps-to-name</name>
                     <strength>strong</strength>
+                    <source><path>$shadow/attributes/icfs:name</path></source>
                     <target><path>name</path></target>
                 </inbound>
                 <inbound>
+                    <!-- personalNumber conserva el COD_APS crudo (es el código de planilla APS,
+                         atributo de negocio; NO necesita unicidad de focus-name). -->
                     <name>cod-aps-to-personalNumber</name>
                     <strength>strong</strength>
                     <target><path>personalNumber</path></target>
