@@ -163,7 +163,19 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>def d = (input ?: '').toString().trim(); d ?: null</code>
+                            <!-- FIX RAIZ C (2026-05-31): normalizacion tipo-preservante del documento de
+                                 correlacion (identica a trabajadores.xml/estudiantes.xml). Evita split de persona
+                                 por ceros a la izquierda. Regla:
+                                   - numerico <=8 => zfill(8) (DNI peruano canonico = 8 digitos)
+                                   - numerico  >8 => strip ceros a la izquierda
+                                   - no-numerico  => intacto (solo trim)
+                                 Gate previo OBLIGATORIO: 0 colisiones DIFFERENT_PERSON. -->
+                            <code>def d = (input ?: '').toString().trim()
+if (!d) return null
+if (d ==~ /\d+/) {
+    return d.length() &lt;= 8 ? d.padLeft(8, '0' as char) : d.replaceFirst(/^0+(?=\d)/, '')
+}
+return d</code>
                         </script>
                     </expression>
                     <target>

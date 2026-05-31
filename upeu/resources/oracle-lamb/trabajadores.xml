@@ -223,7 +223,23 @@
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>def d = (input ?: '').toString().trim(); d ?: null</code>
+                            <!-- FIX RAIZ C (2026-05-31): normalizacion tipo-preservante del documento de
+                                 correlacion. Antes el documento se transportaba crudo (solo trim) => el mismo
+                                 DNI con/sin ceros a la izquierda producia representaciones distintas en cada
+                                 resource (Trabajadores vs Egresados vs Estudiantes) => split de persona
+                                 (falsos-leavers + duplicados). Regla canonica (una sola representacion del
+                                 documento para correlacion, best-practices §4.4 / iga-canonical-standards §1.3):
+                                   - numerico de longitud <=8  => zfill(8)  (DNI peruano canonico = 8 digitos)
+                                   - numerico de longitud  >8  => strip ceros a la izquierda (CE/pasaporte
+                                     numerico largo: se elimina padding espurio, NO se rellena a 8)
+                                   - no-numerico (CE/pasaporte alfanumerico) => intacto (solo trim)
+                                 Gate previo OBLIGATORIO: 0 colisiones DIFFERENT_PERSON tras normalizar. -->
+                            <code>def d = (input ?: '').toString().trim()
+if (!d) return null
+if (d ==~ /\d+/) {
+    return d.length() &lt;= 8 ? d.padLeft(8, '0' as char) : d.replaceFirst(/^0+(?=\d)/, '')
+}
+return d</code>
                         </script>
                     </expression>
                     <target>
