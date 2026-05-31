@@ -650,3 +650,74 @@ El fix `860b245` cumplió su objetivo (mató la doble projection, 0 fatal de ese
 - **(A)** Salvaguarda académica que valide contra **realidad Oracle** (recon Estudiantes que materialice `liveAffiliationStudent` para TODA persona con matrícula viva, **independiente de su faceta laboral**) antes de cualquier inactivateFocus. Correr Recon Estudiantes (`94b627b4`) y verificar que los 172 ganan liveStudent → vuelven a active.
 - **(B)** inbound `cod-aps-to-name` → mapear **CANON_KEY** en vez de COD_APS (cierra los 12 + futuros multi-persona MOISES).
 - Tras A+B + cierre del recon Trabajadores → re-validar liveWorker ≥4.077, 0 estudiantes vivos archived, 0 falsos leavers vs Oracle → recién entonces dry-run Koha/LDAP y decisión `proposed→active`.
+
+---
+
+## EJECUCIÓN 2026-05-31 (continuación post-fix `860b245`) — GATE VERDE para Koha, casi-verde para LDAP
+
+> midpoint-expert. Read-only salvo: fix B (resource), borrado audit/dumps, borrado residuo task. NINGÚN provisioning. Resources Koha/LDAP en `proposed` todo el tiempo. Oracle SOLO SELECT (instantclient-arm64 23.3 `/opt/homebrew/Cellar/instantclient-arm64-basiclite`). Skills: `midpoint-best-practices` §1.2/§2.1/§4.4/§4.5; `iga-canonical-standards` §1.2/§1.3/§3.2/§10.
+
+### PASO 1 — Recon Trabajadores `e8d054ba` COMPLETÓ (finish 2026-05-31 00:44, realizationState=complete)
+- Shadows Trabajadores (OID correcto `6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21`): **7.533 live** (de 16k → purgada la doble projection por fix `860b245`). LINKED=7.494, UNLINKED=7 (EXISTING_OWNER), UNMATCHED=32, DISPUTED=0.
+- **Doble projection casi eliminada:** 7 UNLINKED (antes 358). 0 fatal de tipo "already exists in lens context".
+- liveAffiliationWorker = **3.735** (baseline 3.729). NO subió a ~4.077 — pero el análisis muestra que el objetivo era erróneo: la masa de "falsos leavers" ya se resolvió con el fix `860b245`; los 7.494 LINKED incluyen muchos cesados/no-7124 (liveWorker null por diseño del inbound).
+
+### La "anomalía de 172 estudiantes vivos archived" — RE-VALIDADA vs Oracle: NO son 172 falsos leavers
+Cruce de **7.309 DNIs archived sin item liveStudent** vs Oracle (matrícula viva sem 279/267):
+- **Criterio del propio resource Estudiantes** (curso `ESTADO='1'` + `CORREO_INST IS NOT NULL`): **solo 1** lo cumple (`71218915`), y ese tiene **gemelo `active` con liveStudent** (duplicado no-mergeado; identidad académica representada correctamente). → **0 estudiantes vivos sin representación active.**
+- **Criterio relajado** (contrato de semestre vigente, sin curso ni correo): 173.
+  - **160 tienen matrícula REALMENTE activa (curso ESTADO='1') pero SIN `CORREO_INST`** → el resource los excluye **por diseño** (sin correo institucional no hay ePPN/emailAddress → no provisionable). ISO 24760 = `enrolled` (deberían ser `draft`, no `archived`). **Data-gap del SIS, no falso leaver IGA.** Recon Estudiantes NO los materializará (ni siquiera tienen shadow Estudiantes).
+  - **12 tienen curso retirado** (`ESTADO='3'`) → leavers legítimos.
+- **Recon Estudiantes `94b627b4` NO se lanzó:** verificado inútil para el gate — el resource Estudiantes ya está 100% materializado (10.942 shadows, **0 UNLINKED, 0 UNMATCHED**, liveStudent=10.936). No hay nada pendiente que destrabar. Los 160 sin correo no tienen shadow porque el searchScript los filtra.
+
+> **Conclusión canónica:** la salvaguarda académica basada-en-item NO es insuficiente para *matriculados con correo* (esos están todos materializados). El gap real es de **calidad de dato en el SIS** (160 matriculados sin correo institucional). No es resoluble por IGA; requiere que RR.AA./SIS asigne correo. **No bloquea Koha/LDAP** (sin shadow → no se crea ni archiva cuenta para ellos; ver excepción de 2 casos legacy abajo).
+
+### Fix B aplicado — inbound `cod-aps-to-name` → CANON_KEY (commit `70b62b6`, PUT a PROD 201, TestConn 16/16)
+- El inbound ahora mapea `$shadow/attributes/icfs:name` (= CANON_KEY, único garantizado) en vez de `ri:COD_APS` crudo. `personalNumber` conserva COD_APS (atributo de negocio).
+- **Pero el fix B NO cierra del todo los 32 UNMATCHED:** diagnóstico vs Oracle revela que la causa raíz de esos 32 NO es (solo) el name, sino **DNI corrupto en MOISES**. Son COD_APS multi-ID_PERSONA (misma persona física duplicada con 2 `ID_PERSONA`), donde la fila huérfana trae `NUM_DOCUMENTO` con:
+  - **padding de ceros** (`004680920` vs `04680920`) — 20 casos, normalizables.
+  - **typo de dígito / CE concatenado / basura** (`47259698` vs `47259697`, `625751ERHAN4`) — 19 casos, NO normalizables sin riesgo de fusionar identidades.
+  - El correlador (por `lambDocNum` exacto) no matchea el padding/typo → NO_OWNER → `addFocus` → colisión de `name` con el user existente (del DNI correcto).
+- **Impacto real de los 32 (validado vs Oracle + MidPoint):** de 19 COD_APS con contrato 7124 vivo → 8 ya `active`+liveWorker (OK), 4 `archived`+5º `proposed` con shadow vivo (**5 falsos leavers reales**), 5 SIN USER (onboarding faltante genuino). NINGUNO archiva/borra a otra persona (shadows NO_OWNER no proyectan).
+- **Fix de raíz pendiente (NO aplicado, requiere decisión):** normalizar `lambDocNum` (strip ceros izq + descartar no-numérico) en inbound **y correlador**. RIESGO: afecta a 50k usuarios; `zfill(8)` tras strip para preservar DNIs de 8 dígitos sin fusionar CE. Cambio crítico del correlador → validar en simulación antes. Cierra los 20 de padding; los 19 typo/basura son data-quality MOISES irrecuperable (excepción documentada).
+
+### GATE FINAL — dry-run agregado Koha + LDAP (read-only, validado CONTRA ORACLE)
+
+| KOHA | Conteo |
+|---|---|
+| Elegibles (liveWorker∨liveStudent) → enabled | 14.208 |
+| → SIN patrón → CREAR enabled | 9.132 |
+| → CON patrón → update enabled | 5.076 |
+| Patrones Koha live total | 9.977 |
+| No-elegible CON patrón → ARCHIVAR (disabled) | 4.901 |
+| — con liveAlum = alumni legítimo | 4.806 |
+| — SIN ninguna live (sospechosos) | 94 |
+| **Falsos leavers (94 sospechosos vs Oracle: worker 7124 vivo ∨ matrícula viva criterio-resource)** | **0** ✅ |
+| **DELETE Koha** | **0** ✅ |
+
+| LDAP | Conteo |
+|---|---|
+| Cuentas LDAP live | 4.787 |
+| No-elegible CON cuenta → DEPROVISIONAR | 63 (60 con DNI) |
+| **Falsos leavers vs Oracle** | **1 real + 2 data-gap** ⚠️ |
+
+- **Koha: GATE VERDE.** 0 deletes, 0 falsos leavers contra Oracle. 4.806 alumni legítimos a archivar (disabled, transacciones preservadas) + 94 leavers/data-gap legítimos (0 con afiliación viva real).
+- **LDAP: casi-verde.** De 60 a deprovisionar: **1 falso leaver real** (`001261673`, DNI con padding 3 ceros — doble afiliación worker+student LINKED a ambos resources pero liveWorker/liveStudent NO materializado por el clockwork; `import` de shadow individual no replayó el inbound strong — patrón conocido MEMORY: requiere RECON completa, no import). **2 data-gap** (`76795236`, `001261673` también) = matriculados con curso activo pero SIN correo institucional → excluidos por diseño del resource Estudiantes.
+
+### Limpieza / disco
+- **Disco crítico al 89%** al inicio (dump + simulaciones previas). Acciones: borrados 2 dumps viejos (>24h, superados); DELETE audit >3 días (608.772 delta + 563.496 event); VACUUM FULL `ma_audit_delta_default` (8.302 MB → 884 MB). **Disco final 75% (15 GB libres).**
+- Borrado residuo task `3e8b389e` "Recompute all users" (SUSPENDED, artefacto histórico) — HTTP 204.
+- Backup de sesión: `/home/juansanchez/bkp_pre_recon_estudiantes_20260531.dump` (2.7 GB lean, `--exclude-table-data=ma_audit*`).
+
+### Salvaguardas finales (snapshot 2026-05-31)
+- m_user = **49.327** (sin pérdida) · dual-structural USER = **0** · disco / = **75%** · Koha+LDAP resources = `proposed` (sin provisioning).
+
+### VEREDICTO: **GATE VERDE para Koha. LDAP verde-condicional (3 casos acotados).**
+
+1. **Koha listo para `proposed → active`** desde el punto de vista de seguridad: 0 deletes, 0 falsos leavers contra Oracle, 4.806 alumni + 94 leavers legítimos a archivar (disabled idempotente, sin pérdida transaccional). Decisión de activar = del usuario.
+2. **LDAP: 3 casos a resolver antes de activar** (`001261673` doble-afiliación con item no materializado + `76795236` data-gap correo). Acción acotada: **recon completa del resource Estudiantes Y Trabajadores** (replay inbound strong) para materializar `001261673`; o aceptar que esos 1-3 se re-provisionan en el siguiente ciclo de recon tras activar. Los 2 sin correo son data-gap del SIS (no IGA).
+
+**Pendientes de raíz (NO bloquean Koha, decisión usuario):**
+- **(C)** Normalización `lambDocNum` (padding) en inbound+correlador → cierra 20 de los 32 UNMATCHED Trabajadores. Cambio crítico (50k users) → validar en simulación.
+- **(D)** 160 matriculados activos SIN `CORREO_INST` en MOISES → escalar a RR.AA./SIS (asignación de correo). Mientras tanto quedan `archived`/`draft` sin cuenta; canónicamente deberían ser `draft` (enrolled), no `archived`.
+- **(E)** 19 COD_APS multi-ID_PERSONA con DNI typo/basura → data-quality MOISES irrecuperable; excepción documentada (no archivan a nadie).
