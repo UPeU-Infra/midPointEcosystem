@@ -831,3 +831,60 @@ Actualizadas `<description>` de AR-Koha-Patron-{Faculty,Administrativo,Alumni,Pr
 - **Canary 1 (`07683776`, costCenter=93):** assignment vía mapping `Q4-birthright-koha-librarian-crai` → **AR-Koha-Librarian** + tier **AR-Koha-Librarian-Circulacion** (fallback). ✅
 - **Canary 2 (`29605891`, costCenter=93):** **AR-Koha-Librarian** + tier **AR-Koha-Librarian-ProcesosTecnicos** (resuelto por ID_PUESTO vía LookupTable). ✅ Confirma que la condición `['93']` matchea y Q5 resuelve tier correcto.
 - **Residuo benigno detectado (NO bloquea):** 10 users costCenter=93 con AR-Koha-Librarian (correcto) **+ 11 users costCenter=69** ('Dirección General de Investigación', parent del CRAI) con la asignación Q4/Q5 STALE (metadata createTimestamp 2026-05-18, pre-fix). El mapping strong la REMOVERÁ en el próximo recompute (condición `['93']` falsa para cc=69). Sin impacto: resource Koha en `proposed` (0 provisioning). Se auto-sanea en el ciclo de recompute/recon masivo previo al go. `POST /users/{oid}/recompute` devuelve 404 en este build 4.10 (quirk REST conocido); el saneo se hará vía task de recompute masivo, no per-user REST.
+
+---
+
+## GO/NO-GO FORMAL — Activación provisioning patrones Koha (2026-05-31, sesión de decisión)
+
+> Encargo: activar provisioning real de patrones Koha en PROD **SOLO SI** los expertos Koha y MidPoint dan GO. midpoint-expert. Read-only (SOLO validación). NINGÚN resource pasó a `active`. NINGÚN provisioning. Oracle SOLO SELECT (instantclient ARM64 23.3). Skills consultadas: `midpoint-best-practices` §1.2/§2.1/§4.2/§4.5; `iga-canonical-standards` §1.2/§1.3/§3.2.
+
+### Invariantes pre-go (frescas, PROD 2026-05-31)
+| Invariante | Valor | OK |
+|---|---|---|
+| m_user total | 49.327 | ✅ (sin pérdida) |
+| dual-structural USER (9 archetypes structural) | 0 | ✅ |
+| Disco / | 75% | ✅ (<90%) |
+| Koha resource lifecycleState | `proposed` (a nivel RESOURCE, no objectType) | ✅ (0 provisioning) |
+| liveWorker(216)/liveStudent(217)/liveAlum(215) materializados | 3.735 / 10.936 / 30.650 | — |
+| Salvaguarda académica POR ITEM (217/215 archived) | 0 | ✅ pero **insuficiente** (ver abajo) |
+
+### Dry-run agregado Koha (read-only, join m_ref_projection)
+| Métrica | Valor |
+|---|---|
+| Elegibles (liveWorker∨liveStudent) → enabled | 14.208 |
+| Patrones Koha live | 13.805 (9.977 con owner, 3.828 huérfanos/unmatched) |
+| No-elegible CON patrón → ARCHIVAR (disabled) | 4.901 |
+| — alumni legítimo (liveAlum) | 4.806 |
+| — SIN ninguna afiliación viva (sospechosos) | **95** |
+| DELETE Koha | **0** ✅ |
+| stale librarian (AR-Koha-Librarian cc≠93) | 10 de 20 |
+
+### VALIDACIÓN DE LOS 95 SOSPECHOSOS CONTRA ORACLE (regla metodológica del propio runbook)
+La salvaguarda por item da 0 **precisamente porque** un falso leaver no tiene `liveAffiliationWorker` poblado (por eso aparece como sospechoso). El gate DEBE validarse contra Oracle, no contra el item. Cruce de los 95 vs `ELISEO.VW_APS_EMPLEADO ID_ENTIDAD=7124 ESTADO='A'` **con vigencia `FEC_TERMINO IS NULL OR >= SYSDATE`** (endurecimiento exigido en MEMORY):
+
+- **5 FALSOS LEAVERS ESTRICTOS** (contrato UPeU vigente hasta 2026/2027): `02530108`(→2027-05-31), `04082096`(→2027-12-31), `04680920`(→2026-06-30), `06158248`(→2026-12-31), `71590328`(→2027-05-31). Los 5 tienen **shadow Koha live=1** y están `archived`/`proposed` con `liveWorker=false`. **Activar Koha ahora los marcaría DISABLED (archivados Koha) siendo trabajadores con contrato vigente.**
+- 36 vencidos (`ESTADO='A'` con `FEC_TERMINO` pasado, mayoría 2026-04-30) = leavers legítimos hoy → archivar correcto.
+- 0 sin match (resto = leavers/data-gap legítimos).
+
+**Causa raíz de los 5** (confirmada): cada uno tiene shadow Trabajadores vivo `__NAME__`=CANON_KEY (`02530108-412759`, etc.) + shadow viejo `02530108` ya `dead=true`. 4 de 5 con **padding de ceros** en NUM_DOCUMENTO (`002530108` vs `02530108`). El correlador no normaliza `lambDocNum` → el inbound `strong` que materializa `liveAffiliationWorker` no se replayó sobre el shadow vivo → `liveWorker=false` pese a contrato vigente. Es exactamente el **pendiente C (normalización lambDocNum)** dejado abierto en sesiones previas.
+
+### VEREDICTO MidPoint: **NO-GO** ❌
+- ✅ 0 deletes Koha (suma-no-resta intacto), 4.806 alumni legítimos a archivar.
+- ✅ dual-structural=0, m_user sin pérdida, disco 75%.
+- ❌ **5 falsos leavers reales** (contrato 7124 vigente 2026-2027) se archivarían (disabled) en Koha. **Viola el GATE FINAL "0 disabled sobre usuarios con afiliación viva real" validado contra Oracle.** La conclusión previa de "0 falsos leavers" no aplicó la vigencia `FEC_TERMINO` ni capturó el +1 sospechoso (94→95).
+
+### Veredicto koha-expert (lado Koha — registrado)
+El lado Koha está LISTO (G3 6/6 circulation_rules eduPerson, connector v1.3.3 operativo, archive-not-delete vía `patron_card_lost`+`expiry` sin tocar transacciones, 0 deletes proyectados, categorías eduPerson creadas). **PERO** el riesgo no es del conector ni de Koha: es de **datos de entrada MidPoint** (5 focos sin `liveWorker` materializado). El conector ejecutaría fielmente el `administrativeStatus=DISABLED` que MidPoint le ordene → archivaría a los 5 trabajadores vigentes. Por tanto el lado Koha **no puede dar GO mientras MidPoint envíe estado disabled sobre afiliados vivos**: GO del conector condicionado a GO de MidPoint. Resultado conjunto: **NO-GO**.
+
+### Regla aplicada
+"AMBOS expertos deben dar GO. Si uno duda → NO-GO, detener." MidPoint = NO-GO → **DETENIDO. No se ejecutó activación, backup, recompute ni PATCH.** Resource Koha permanece `proposed`.
+
+### ACCIÓN CORRECTIVA ACOTADA (pre-requisito para re-evaluar GO)
+1. **Materializar `liveAffiliationWorker` en los 5** (y barrer residuo de padding): recon completa del resource Trabajadores (`6a91f7e1-…e21`) que replaye el inbound `strong` sobre los shadows vivos `CANON_KEY`. Verificar liveWorker en los 5 → desaparecen como sospechosos.
+2. **Fix de raíz C (recomendado, no aplicado):** normalizar `lambDocNum` (strip ceros izq + `zfill(8)` para no fusionar CE) en inbound **y correlador** → cierra el padding de forma permanente. Cambio crítico (50k users) → validar en simulación antes de PROD.
+3. Re-correr el dry-run + re-validar los sospechosos vs Oracle CON vigencia `FEC_TERMINO` → gate debe dar **0 falsos leavers estrictos**. Recién entonces re-evaluar GO/NO-GO conjunto.
+
+### Salvaguardas finales (snapshot 2026-05-31)
+m_user=49.327 · dual-structural=0 · disco 75% · Koha+LDAP=`proposed` (sin provisioning) · Oracle 0 escrituras.
+
+**Pendiente:** LDAP (Fase 4) sigue bloqueado por el mismo origen (item no materializado). G2/categorycodes/recon legacy = post-go. La activación de patrones Koha queda **pendiente** hasta materializar los 5.
