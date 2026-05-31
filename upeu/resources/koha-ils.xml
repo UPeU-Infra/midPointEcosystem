@@ -1046,13 +1046,40 @@
             </attribute>
             <attribute>
                 <ref>ri:extended_attributes</ref>
-                <displayName>Atributo extendido STUDY_LEVEL (nivel académico)</displayName>
-                <!-- Diseño B: el nivel académico (pregrado/posgrado) NO va en category_id;
-                     va aquí como par {"type":"STUDY_LEVEL","value":"pregrado|posgrado"}.
-                     Multivaluado tolerant=true + intolerantValuePattern STUDY_LEVEL
-                     (declarado más abajo) → MidPoint gobierna SOLO el par STUDY_LEVEL,
-                     nunca pisa DNI/SEDE/AREA/RESEARCHER/otros.
-                     Solo se emite para students; null para el resto (no-op weak). -->
+                <displayName>Atributos extendidos de patrón (pares JSON)</displayName>
+                <!-- ============================================================
+                     GOBIERNO IGA → KOHA — extended_attributes
+                     Atributo multivaluado. Cada valor es un string JSON
+                     {"type":"CODE","value":"..."} (formato del conector v1.3.0,
+                     PatronMapper.convertExtendedAttributes*).
+
+                     MidPoint NO es dueño del atributo completo: es dueño SOLO de
+                     los pares cuyo "type" aparece en <intolerantValuePattern>.
+
+                     tolerant=true            → los pares NO intolerantes
+                                                (DNI, SEDE, TIPO_VINC, ORCID,
+                                                COD_UPEU, SHOW_BCODE) se preservan
+                                                intactos: MidPoint nunca los borra.
+                     intolerantValuePattern   → los pares "type":"AREA" y
+                                                "type":"CRAI_TIER" SÍ están bajo
+                                                gobierno MidPoint: si ninguna
+                                                construction activa los produce,
+                                                MidPoint emite el delete-value
+                                                granular de ese par (y solo de ese).
+                                                CRAI_TIER añadido 2026-05-22
+                                                (niveles de acceso CRAI, Fase A).
+
+                     El conector declara addRemoveAttributeValues=true → los deltas
+                     se aplican como add/remove-value, nunca como replace total.
+
+                     La construction que PRODUCE el par AREA vive en el Application
+                     Role AR-Koha-Librarian (no aquí). El par RESEARCHER lo produce
+                     AR-Koha-Investigador. El par STUDY_LEVEL lo produce el outbound
+                     de abajo (Diseño B: nivel académico fuera de category_id).
+                     ============================================================ -->
+                <!-- Diseño B (2026-05-30): nivel académico pregrado/posgrado como par
+                     {"type":"STUDY_LEVEL","value":"pregrado|posgrado"}. Solo students;
+                     null para el resto. Gobernado por intolerantValuePattern STUDY_LEVEL. -->
                 <outbound>
                     <name>study-level-extended-attribute</name>
                     <strength>strong</strength>
@@ -1082,39 +1109,6 @@
                         </script>
                     </expression>
                 </outbound>
-            </attribute>
-            <attribute>
-                <ref>ri:extended_attributes</ref>
-                <displayName>Atributos extendidos de patrón (pares JSON)</displayName>
-                <!-- ============================================================
-                     GOBIERNO IGA → KOHA — extended_attributes
-                     Atributo multivaluado. Cada valor es un string JSON
-                     {"type":"CODE","value":"..."} (formato del conector v1.3.0,
-                     PatronMapper.convertExtendedAttributes*).
-
-                     MidPoint NO es dueño del atributo completo: es dueño SOLO de
-                     los pares cuyo "type" aparece en <intolerantValuePattern>.
-
-                     tolerant=true            → los pares NO intolerantes
-                                                (DNI, SEDE, TIPO_VINC, ORCID,
-                                                COD_UPEU, SHOW_BCODE) se preservan
-                                                intactos: MidPoint nunca los borra.
-                     intolerantValuePattern   → los pares "type":"AREA" y
-                                                "type":"CRAI_TIER" SÍ están bajo
-                                                gobierno MidPoint: si ninguna
-                                                construction activa los produce,
-                                                MidPoint emite el delete-value
-                                                granular de ese par (y solo de ese).
-                                                CRAI_TIER añadido 2026-05-22
-                                                (niveles de acceso CRAI, Fase A).
-
-                     El conector declara addRemoveAttributeValues=true → los deltas
-                     se aplican como add/remove-value, nunca como replace total.
-
-                     La construction que PRODUCE el par AREA vive en el Application
-                     Role AR-Koha-Librarian (no aquí). Este bloque solo declara la
-                     mecánica de tenancy de valores. Sin outbound a propósito.
-                     ============================================================ -->
                 <tolerant>true</tolerant>
                 <intolerantValuePattern>.*"type"\s*:\s*"(AREA|CRAI_TIER|RESEARCHER|STUDY_LEVEL)".*</intolerantValuePattern>
             </attribute>
