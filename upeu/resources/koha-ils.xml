@@ -859,15 +859,20 @@
                 <displayName>Número de Carnet</displayName>
                 <outbound>
                     <name>cardnumber-outbound</name>
-                    <strength>strong</strength>
+                    <strength>weak</strength>
                     <source>
                         <path>$focus/name</path>
                     </source>
                 </outbound>
-                <!-- fix 2026-05-21: strength strong -> weak. Koha NO es IIA de
-                     'name'; el IIA es Oracle LAMB. weak = solo rellena name si
-                     estuviera vacio (defensivo). Evita que Koha gobierne el
-                     identificador inmutable del user. -->
+                <!-- fix 2026-06-01: strength strong -> weak. Convencion de carne
+                     confirmada en PROD: trabajadores usan DNI como cardnumber,
+                     estudiantes usan codigo universitario (==name); pero ~283
+                     estudiantes legacy tienen DNI como cardnumber. weak (mbp §4.2:
+                     no sobreescribe) fija el cardnumber SOLO al CREAR el patron;
+                     en updates respeta el carne existente en Koha (reality). Asi
+                     la re-provision empuja expiry_date (normal) sin voltear el
+                     carne de cuentas que difieren, sin re-duplicar. Coherente con
+                     userid-outbound (ya weak). Koha NO es IIA de 'name'. -->
                 <inbound>
                     <name>cardnumber-inbound</name>
                     <strength>weak</strength>
