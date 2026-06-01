@@ -50,12 +50,16 @@
                                     <q:value>LIMA</q:value>
                                 </q:equal>
                                 <q:or>
-                                    <q:exists>
-                                        <q:path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveAffiliationWorker</q:path>
-                                    </q:exists>
-                                    <q:exists>
-                                        <q:path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveAffiliationStudent</q:path>
-                                    </q:exists>
+                                    <q:not>
+                                        <q:equal>
+                                            <q:path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveAffiliationWorker</q:path>
+                                        </q:equal>
+                                    </q:not>
+                                    <q:not>
+                                        <q:equal>
+                                            <q:path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveAffiliationStudent</q:path>
+                                        </q:equal>
+                                    </q:not>
                                 </q:or>
                             </q:and>
                         </q:filter>
