@@ -52,7 +52,7 @@
                     </t:cipherData>
                 </t:encryptedData>
             </ns2:dbPassword>
-            <ns2:dbPoolSize>8</ns2:dbPoolSize>
+            <ns2:dbPoolSize>32</ns2:dbPoolSize>
         </ns1:configurationProperties>
     </connectorConfiguration>
     <schema>
@@ -1367,18 +1367,105 @@ return eligible ? ActivationStatusType.ENABLED : ActivationStatusType.DISABLED
                  correlaciona inequivocamente sin depender de los inbounds.
                  ================================================================ -->
             <correlation>
-                <!-- Correlación en dos capas:
-                     1. correlate-by-cardnumber (primary): cardnumber Koha == user.name (COD_APS).
-                        Cubre TODOS los patrones creados/gestionados por MidPoint.
-                     2. correlate-by-dni (secondary): cardnumber Koha == extension/upeu:lambDocNum (DNI/NUM_DOCUMENTO).
-                        Cubre patrones STAFF/DOCEN legacy importados antes de MidPoint, cuyo
-                        cardnumber en Koha es el DNI en lugar del COD_APS.
-                        Permite que una reconciliación Oracle LAMB encuentre y actualice estas
-                        cuentas legacy en vez de crear duplicados. -->
+                <!-- ================================================================
+                     CORRELACION — rediseño 2026-06-01 (causa raiz DISPUTED).
+                     PROBLEMA ANTERIOR: la capa correlate-by-taxid tenia un
+                     `return null` DENTRO de un <q:equal>. En MidPoint un q:equal
+                     cuya expression retorna null NO significa "no aplica": degenera
+                     en filtro vacio y matchea MASIVAMENTE (~9.887 candidatos por
+                     shadow) -> situation=uncertain -> 2.797 shadows DISPUTED.
+                     (Validado empiricamente en PROD 2026-06-01.)
+
+                     SOLUCION CANONICA: cada capa condicional se envuelve en un
+                     <condition> propio. Si el valor de correlacion es null/blank,
+                     la condition retorna false y MidPoint NO emite el filtro de esa
+                     capa (la capa se desactiva por completo). NUNCA `return null`
+                     dentro de un q:equal. Shadows sin identificador correlacionable
+                     (sin DNI, sin codigo de matricula valido, cuentas de servicio)
+                     caen UNMATCHED de forma DETERMINISTA -> reaction unmatched sin
+                     accion (reality preservada, doctrina suma-nunca-resta).
+
+                     Correlacion por identificador inmutable (DNI / codigo UPeU),
+                     conforme iga-canonical-standards: correlacion por identificador
+                     unico e inmutable, IIA por-atributo (DNI = RENIEC/LAMB).
+
+                     Capas (orden de prioridad):
+                       1. correlate-by-dni-extended  (AUTORITATIVA)
+                          DNI del extended_attribute {"type":"DNI","value":"NNNNNNNN"}
+                          == extension/upeu:lambDocNum. Cubre los patrones
+                          student-code/login cuyo cardnumber NO es el DNI pero que
+                          Koha guarda el DNI en borrower_attributes (code='DNI').
+                       2. correlate-by-cardnumber
+                          cardnumber == name (COD_APS / codigo de matricula UPeU).
+                          Path MidPoint-managed. Guard: cardnumber numerico no-blank.
+                       3. correlate-by-cardnumber-as-dni
+                          cardnumber (cuando ES el DNI de 8 digitos) == lambDocNum.
+                          Cubre patrones STAFF/DOCEN legacy con DNI como cardnumber.
+                     Eliminada la capa correlate-by-taxid (redundante: todo focus con
+                     taxId tiene tambien lambDocNum; ambos derivan del mismo DNI).
+                     ================================================================ -->
                 <correlators>
                     <filter>
+                        <name>correlate-by-dni-extended</name>
+                        <documentation>DNI del extended_attribute Koha (code='DNI', borrower_attributes) == extension/upeu:lambDocNum. Capa autoritativa: correlaciona por identificador legal inmutable. Solo se activa si el shadow trae un par DNI poblado (8 digitos).</documentation>
+                        <condition>
+                            <script>
+                                <code><![CDATA[
+import groovy.json.JsonSlurper
+def vals = basic.getAttributeValues(projection, 'extended_attributes')
+if (vals == null) return false
+def slurper = new JsonSlurper()
+for (v in vals) {
+    if (v == null) continue
+    try {
+        def o = slurper.parseText(v.toString())
+        if (o?.type == 'DNI' && o?.value != null && o.value.toString().trim() ==~ /^\d{8}$/) return true
+    } catch (ignored) {}
+}
+return false
+                                ]]></code>
+                            </script>
+                        </condition>
+                        <ownerFilter>
+                            <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+                                     xmlns:upeu="urn:upeu:midpoint:local">
+                                <q:path>extension/upeu:lambDocNum</q:path>
+                                <expression>
+                                    <script>
+                                        <code><![CDATA[
+import groovy.json.JsonSlurper
+def vals = basic.getAttributeValues(projection, 'extended_attributes')
+def slurper = new JsonSlurper()
+for (v in vals) {
+    if (v == null) continue
+    try {
+        def o = slurper.parseText(v.toString())
+        if (o?.type == 'DNI' && o?.value != null) {
+            def dni = o.value.toString().trim()
+            if (dni ==~ /^\d{8}$/) return dni
+        }
+    } catch (ignored) {}
+}
+return null
+                                        ]]></code>
+                                    </script>
+                                </expression>
+                            </q:equal>
+                        </ownerFilter>
+                    </filter>
+                    <filter>
                         <name>correlate-by-cardnumber</name>
-                        <documentation>cardnumber del patron Koha == name (COD_APS / codigo UPeU) del user.</documentation>
+                        <documentation>cardnumber del patron Koha == name (COD_APS / codigo de matricula UPeU) del user. Path MidPoint-managed. Guard: solo si cardnumber es un codigo numerico no-blank (>=8 digitos); excluye logins, codigos G####### y cuentas de servicio (ADMIN3UPEU$, AUTOPBUL1...).</documentation>
+                        <condition>
+                            <script>
+                                <code><![CDATA[
+def cn = basic.getAttributeValue(projection, 'cardnumber')
+if (cn == null) return false
+cn = cn.toString().trim()
+return cn ==~ /^\d{8,}$/
+                                ]]></code>
+                            </script>
+                        </condition>
                         <ownerFilter>
                             <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
                                 <q:path>name</q:path>
@@ -1389,34 +1476,28 @@ return eligible ? ActivationStatusType.ENABLED : ActivationStatusType.DISABLED
                         </ownerFilter>
                     </filter>
                     <filter>
-                        <name>correlate-by-dni</name>
-                        <documentation>cardnumber del patron Koha == lambDocNum (DNI raw de Oracle LAMB). Para patrones STAFF/DOCEN legacy con DNI como cardnumber.</documentation>
+                        <name>correlate-by-cardnumber-as-dni</name>
+                        <documentation>cardnumber del patron Koha (cuando ES el DNI de 8 digitos) == extension/upeu:lambDocNum. Para patrones STAFF/DOCEN legacy cuyo cardnumber es el DNI en lugar del COD_APS. Guard: cardnumber exactamente 8 digitos.</documentation>
+                        <condition>
+                            <script>
+                                <code><![CDATA[
+def cn = basic.getAttributeValue(projection, 'cardnumber')
+if (cn == null) return false
+return cn.toString().trim() ==~ /^\d{8}$/
+                                ]]></code>
+                            </script>
+                        </condition>
                         <ownerFilter>
                             <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
                                      xmlns:upeu="urn:upeu:midpoint:local">
                                 <q:path>extension/upeu:lambDocNum</q:path>
                                 <expression>
-                                    <path>$projection/attributes/ri:cardnumber</path>
-                                </expression>
-                            </q:equal>
-                        </ownerFilter>
-                    </filter>
-                    <filter>
-                        <name>correlate-by-taxid</name>
-                        <documentation>cardnumber del patron Koha (DNI raw) construido como URI SCHAC == sciback:taxId.
-                             Cubre egresados/alumnos cuyos patrones Koha tienen cardnumber=DNI y MidPoint solo
-                             tiene taxId (no lambDocNum). Construye urn:schac:personalUniqueID:pe:DNI:PE:{cardnumber}
-                             y busca en extension/sciback:taxId.</documentation>
-                        <ownerFilter>
-                            <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
-                                     xmlns:sb="urn:sciback:midpoint:person">
-                                <q:path>extension/sb:taxId</q:path>
-                                <expression>
                                     <script>
                                         <code><![CDATA[
 def cn = basic.getAttributeValue(projection, 'cardnumber')
-if (!cn || !(cn ==~ /^\d{8}$/)) return null
-return "urn:schac:personalUniqueID:pe:DNI:PE:${cn}"
+if (cn == null) return null
+cn = cn.toString().trim()
+return (cn ==~ /^\d{8}$/) ? cn : null
                                         ]]></code>
                                     </script>
                                 </expression>
