@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     RECON SCOPED LIMA = Reactivación Koha+LDAP (PASO 2, tras canary)
+     ================================================================
+     Tipo: RECOMPUTE de UserType (provisioning gobernado por focus).
+       El recompute reevalua el clockwork de cada foco -> dispara las
+       projections (Koha ILS + LDAP) via los inducements/mappings del
+       template y los resources. NO es recon "on resource"; es focus-driven
+       (midpoint-best-practices §4.5 pipeline, §5 reconciliation focus-side).
+     Mode: real (execution). NO preview. configurationToUse=production
+       (default) => respeta lifecycleState real de Koha/LDAP. Liberar SOLO
+       cuando Koha+LDAP objectTypes esten en lifecycleState=active.
+
+     Scope (objectQuery validado en PROD 2026-06-01 => 7,285 focos):
+       locality = 'LIMA'
+       AND ( extension/liveAffiliationWorker poblado
+             OR extension/liveAffiliationStudent poblado )
+       Desglose: 5,168 student-only + 1,899 worker-only + 218 ambos = 7,285.
+       Reality-vs-Policy: solo afiliacion VIVA (worker/student) entra al
+       provisioning Koha+LDAP; alumni-puro/leavers quedan fuera del scope.
+
+     workerThreads = 3 (recomendado).
+       Justificacion (Entregable 1, 2026-06-01): bajo la Recon Trabajadores
+       el heap se mantuvo PLANO en ~48.8% (4.88/10 GiB) con CPU 67% =>
+       heap SANO, ~51% libre. Esta recon es I/O-bound (1 HTTP a Koha por
+       foco), no heap-bound; 3 workers aprovechan el paralelismo de red sin
+       estresar el GC. Si durante la corrida el heap trepa >70%, suspender,
+       bajar a workerThreads=1-2 y/o subir Xmx antes de reanudar.
+
+     executionState=suspended: arranca SUSPENDIDA. El usuario la libera
+       manualmente (resume) tras revisar este XML y confirmar que Koha+LDAP
+       estan en active.
+     ================================================================ -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      oid="c0a1b2c3-d4e5-46f7-8a9b-0c1d2e3f4a52">
+    <name>Recon scoped Lima - Koha+LDAP reactivation (recompute focus, 7285)</name>
+    <executionState>suspended</executionState>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <q:equal>
+                                    <q:path>locality</q:path>
+                                    <q:value>LIMA</q:value>
+                                </q:equal>
+                                <q:or>
+                                    <q:exists>
+                                        <q:path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveAffiliationWorker</q:path>
+                                    </q:exists>
+                                    <q:exists>
+                                        <q:path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveAffiliationStudent</q:path>
+                                    </q:exists>
+                                </q:or>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>3</workerThreads>
+        </distribution>
+    </activity>
+</task>

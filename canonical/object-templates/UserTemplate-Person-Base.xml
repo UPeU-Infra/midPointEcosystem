@@ -1299,7 +1299,12 @@ return ActivationStatusType.ENABLED</code>
             </expression>
             <condition>
                 <script>
-                    <code>photoUrl != null &amp;&amp; basic.stringify(photoUrl)?.trim() != ''</code>
+                    <!-- Idempotente (Vía A, validada en DEV 4.9.5 — semántica wave-processing identica en 4.10.2):
+                         solo fetch si hay URL Y jpegPhoto AUN no esta materializada.
+                         Wave 1: jpegPhoto==null -> condicion true -> fetch puebla jpegPhoto.
+                         Wave 2: jpegPhoto!=null -> condicion false -> NO refetch (mata el 2o fetch HTTP).
+                         Si Entra ID (strong) ya puso foto, jpegPhoto!=null -> no fetch innecesario. -->
+                    <code>def u = photoUrl != null ? basic.stringify(photoUrl)?.trim() : ''; u != '' &amp;&amp; focus?.jpegPhoto == null</code>
                 </script>
             </condition>
         </mapping>
