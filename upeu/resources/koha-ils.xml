@@ -859,20 +859,28 @@
                 <displayName>Número de Carnet</displayName>
                 <outbound>
                     <name>cardnumber-outbound</name>
-                    <strength>weak</strength>
+                    <strength>strong</strength>
                     <source>
                         <path>$focus/name</path>
                     </source>
                 </outbound>
-                <!-- fix 2026-06-01: strength strong -> weak. Convencion de carne
-                     confirmada en PROD: trabajadores usan DNI como cardnumber,
-                     estudiantes usan codigo universitario (==name); pero ~283
-                     estudiantes legacy tienen DNI como cardnumber. weak (mbp §4.2:
-                     no sobreescribe) fija el cardnumber SOLO al CREAR el patron;
-                     en updates respeta el carne existente en Koha (reality). Asi
-                     la re-provision empuja expiry_date (normal) sin voltear el
-                     carne de cuentas que difieren, sin re-duplicar. Coherente con
-                     userid-outbound (ya weak). Koha NO es IIA de 'name'. -->
+                <!-- fix 2026-06-01b: weak -> strong (revertido a strong por DECISION
+                     usuario, enforce del estandar ratificado).
+                     Estandar canonico (docs/DECISION-canonical-identifier.md §4,
+                     commit fbab327): cardnumber == name == codigo institucional
+                     inmutable. Estudiantes/egresados -> codigo universitario (==name);
+                     docentes/trabajadores -> COD_APS (==name, a veces coincide con
+                     DNI por dato historico, NO porque el carne sea el DNI). El DNI
+                     NUNCA es la llave del carne -> va como extended_attribute.
+                     strong (mbp §4.2: recomputa, autoritativo sobre el valor) fuerza
+                     que el carne refleje SIEMPRE el codigo institucional, corrigiendo
+                     el drift legacy (~283 estudiantes con DNI como cardnumber se
+                     voltean a su codigo). MidPoint = unica puerta de entrada; Koha
+                     NO es IIA de 'name' -> el outbound enforce, no respeta reality.
+                     El flip NO duplica: el correlador sentinel (commits 801e4b6/
+                     d3f6cb3) matchea por DNI extended -> garantiza PATCH no CREATE.
+                     SSO Koha matchea por EMAIL -> el flip de carne NO rompe login.
+                     userid-outbound queda weak (login real legacy se preserva). -->
                 <inbound>
                     <name>cardnumber-inbound</name>
                     <strength>weak</strength>
