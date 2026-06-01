@@ -29,7 +29,7 @@ Esta decisión es **doctrinal**, no técnica: todo el código y XML producido pa
 | Object Templates | UserTemplate-Person-Base (base) + 4 por archetype (alumni/student/faculty/staff) |
 | Pipeline | Trigger Scanner 5 min · Validity Scanner 15 min · 3 crons LAMB 02:00 UTC · Koha cron 03:00 UTC |
 | Keycloak federation | Activa: 192.168.12.88 → OpenLDAP 192.168.15.168:389 |
-| Correlación | `personalNumber` (core) para activos; `extension/upeu:lambDocNum` trabajadores; `extension/sb:taxId` egresados |
+| Correlación | DNI/CE normalizado vía `extension/sb:taxId` / `extension/upeu:lambDocNum`. **El DNI NO es `personalNumber`** (= código institucional `== name`); ver `DECISION-canonical-identifier.md` |
 
 ---
 
@@ -269,6 +269,8 @@ Tabla exhaustiva del schema extension v2.3 actual vs canónico:
 ### 2.5 Identity Information Authority (matriz IIA)
 
 Cf. `iga-canonical-standards` §1.3 (cada atributo tiene UNA IIA).
+
+> **Identificador canónico (SSOT `DECISION-canonical-identifier.md`):** `name == personalNumber == institutionalCode` = **código institucional inmutable** (`LAMB.CODIGO`/`COD_APS` normalizado), **NO el DNI**. El DNI/CE es documento legal → vive en `identityDocuments[]`/`schacPersonalUniqueID` (SCHAC) y es **llave de correlación**, nunca login. `cardnumber` (Koha) `== name`.
 
 | Atributo canónico | IIA | Vista/tabla Oracle exacta | Mecanismo MidPoint | Strength |
 |---|---|---|---|---|

@@ -30,8 +30,10 @@ Esto NO viola Patrón B porque las semánticas son distintas: override (legal) p
 
 | Atributo | IIA principal | Override | Fallback (weak) | Justificación |
 |---|---|---|---|---|
-| `name` (login) | `trabajadores` (CODIGO/USUARIO) | — | `estudiantes` (cuando NO trabajador) | Login institucional; trabajadores curan IDs únicos |
-| `personalNumber` (DNI) | `trabajadores` | `reniec-cache` (valida) | — | DNI inmutable; nunca cambia entre fuentes |
+| `name` (login) | `trabajadores` (COD_APS) / `estudiantes` (CODIGO) → CANON_KEY normalizado | — | — | Código institucional inmutable. **NO es el DNI.** Ver `DECISION-canonical-identifier.md` |
+| `personalNumber` (== `name`, código institucional) | computed `= name` en object template | — | — | Réplica del código institucional para compat SCIM (`employeeNumber` RFC 7643 §4.3). **NO es el DNI.** Ver `DECISION-canonical-identifier.md` |
+| `extension/institutionalCode` (== `name`) | computed `= name` en object template | — | — | Alias semántico para visualización. **NO es el DNI** |
+| DNI / CE (documento legal) | `trabajadores` / `estudiantes` (`NUM_DOCUMENTO`) | `reniec-cache` (valida) | — | Va a `identityDocuments[]` → primario exportado como `schacPersonalUniqueID` (URN SCHAC) + `extension/sb:taxId`. **Llave de correlación, NO login.** Inmutable |
 | `givenName` | `trabajadores` (PATERNO+normalizado) | **`reniec-cache` strong** (autoridad jurídica RENIEC) | `estudiantes`, `egresados` (solo si new + no RENIEC) | RENIEC = nombre legal del Estado peruano |
 | `familyName` | `trabajadores` (PATERNO+MATERNO) | **`reniec-cache` strong** | `estudiantes`, `egresados` (fallback) | Ídem |
 | `fullName` | computado en object template | — | — | Derivado de given + family |

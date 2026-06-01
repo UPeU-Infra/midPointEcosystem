@@ -71,7 +71,7 @@ Conteo en Oracle LAMB (referencia, no refleja MidPoint):
 - ~186 — En Proceso de Contratación
 - ~6.080 — Baja (histórico)
 
-**En MidPoint PROD (2026-05-20):** staff 3.144 · faculty 135 (activos con sombra LAMB; la diferencia con Oracle se debe a la política de correlación: solo usuarios con `personalNumber` válido y DNI no-corrupto se correlacionan).
+**En MidPoint PROD (2026-05-20):** staff 3.144 · faculty 135 (activos con sombra LAMB; la diferencia con Oracle se debe a la política de correlación: solo usuarios con código institucional válido (`name`/`personalNumber`) y DNI no-corrupto — llave de correlación vía `taxId` — se correlacionan).
 
 #### Condición Laboral (`MOISES.CONDICION_LABORAL`)
 
@@ -339,9 +339,9 @@ input?.split('\\|')?.toList()
 
 | Recurso | Atributo correlación | Campo MidPoint | Notas |
 |---|---|---|---|
-| LAMB Trabajadores v3 | NUM_DOCUMENTO (DNI/CE) | `personalNumber` (core) | Correlación principal activos |
+| LAMB Trabajadores v3 | NUM_DOCUMENTO (DNI/CE) | `extension/sb:taxId` / `extension/upeu:lambDocNum` | Correlación principal activos. El DNI NO es `personalNumber` (ver `DECISION-canonical-identifier.md`) |
 | LAMB Trabajadores v3 | COD_TRABAJADOR | `extension/upeu:lambDocNum` | Correlación por código LAMB |
-| LAMB Estudiantes v3 | NUM_DOCUMENTO (DNI/CE) | `personalNumber` (core) | |
+| LAMB Estudiantes v3 | NUM_DOCUMENTO (DNI/CE) | `extension/sb:taxId` / `extension/upeu:lambDocNum` | El DNI correlaciona vía `taxId`, NO `personalNumber` (= código institucional) |
 | LAMB Egresados v3 | NUM_DOCUMENTO | `extension/sb:taxId` | Correlación legado egresados |
 | LAMB Posiciones | ID_PUESTO | (ServiceType) | Resource de posiciones |
 | Entra ID | userPrincipalName | `emailAddress` | Solo lectura |
