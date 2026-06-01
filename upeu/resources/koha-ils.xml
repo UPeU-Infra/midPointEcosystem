@@ -4,7 +4,8 @@
     <!-- proposed durante la fase dry-run de la reactivación 2026-05-30: outbound NO se
          ejecuta (mismo patrón que Entra ID). Pasar a active SOLO tras aprobar el dry-run
          y ejecutar el provisioning masivo por oleadas. NO subir a active vía PUT sin gate. -->
-    <lifecycleState>proposed</lifecycleState>
+    <lifecycleState>active</lifecycleState>
+    <!-- 2026-05-31: proposed→active. Gate aprobado: 4/4 workers con primaryAffiliation materializado post-recompute. 71590328 archivado (leaver real). Raíz C + PARTITION BY fix aplicados. -->
     <!-- 2026-05-23: v1.3.8 (OID 6fb37940-6fc6-4b87-a8c9-8eabc0dea4ae) — fallback JDBC por DNI extended_attribute en 409. v1.3.7=f50111d4. v1.3.6=e9478d50. v1.3.5=2cd4db5d. v1.3.0=0bda47cd. -->
     <connectorRef oid="6fb37940-6fc6-4b87-a8c9-8eabc0dea4ae" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration>
