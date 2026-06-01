@@ -158,6 +158,9 @@
                     <xsd:element name="schacExpiryDate" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>Fecha de expiración (SCHAC)</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>470</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
+                    <xsd:element name="terminationDateStudent" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de término — matrícula (IIA Estudiantes)</a:displayName><a:help>YYYY-MM-DD. Expiración derivada de la matrícula vigente (MAX FECHA_FIN del semestre activo en Oracle LAMB Estudiantes, columna DATE_EXPIRY). IIA única: resource Estudiantes. Single-source: inbound strong lo materializa/retira con la proyección Estudiante. NO confundir con `terminationDate` (IIA Trabajadores, FEC_TERMINO del contrato). Ambos atributos por-IIA single-valued single-writer evitan la colisión dual-strong en focos employee+student. El expiry efectivo a Koha/downstream = MAX de las fechas de afiliación viva.</a:help><a:displayOrder>475</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
 
                     <!-- S5 — ACADÉMICO -->
                     <xsd:element name="academicProgram" type="xsd:string" minOccurs="0" maxOccurs="unbounded">

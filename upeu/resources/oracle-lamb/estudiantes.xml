@@ -354,11 +354,26 @@ return d</code>
             </attribute>
             <attribute>
                 <ref>ri:DATE_EXPIRY</ref>
+                <!-- DATE_EXPIRY = MAX(FECHA_FIN) del semestre de matrícula vigente.
+                     IIA única (canónico §1.3): resource Estudiantes. Single-source, single-writer.
+                     Antes escribía weak a extension/sb:terminationDate (target compartido con
+                     Trabajadores/FEC_TERMINO strong) -> el valor stale del semestre anterior (279)
+                     no se refrescaba al vigente (267) y Koha expiraba ~562 student + 168 faculty.
+                     Opción 2 canónica: atributo por-IIA dedicado terminationDateStudent (strong,
+                     single-source), análogo a liveAffiliationStudent. Sin colisión dual-strong en
+                     focos employee+student porque cada IIA escribe SU PROPIO atributo. El expiry
+                     efectivo a Koha se calcula como MAX(terminationDate, terminationDateStudent)
+                     en expiry-date-outbound del resource koha-ils.xml. -->
                 <inbound>
-                    <name>date-expiry-to-terminationDate</name>
-                    <strength>weak</strength>
+                    <name>date-expiry-to-terminationDateStudent</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>if (input == null) return null; def s = input.toString(); s.length() >= 10 ? s.substring(0, 10) : null</code>
+                        </script>
+                    </expression>
                     <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:terminationDate</path>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:terminationDateStudent</path>
                     </target>
                 </inbound>
             </attribute>
