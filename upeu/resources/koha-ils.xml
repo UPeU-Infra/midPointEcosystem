@@ -1376,14 +1376,18 @@ return eligible ? ActivationStatusType.ENABLED : ActivationStatusType.DISABLED
                      shadow) -> situation=uncertain -> 2.797 shadows DISPUTED.
                      (Validado empiricamente en PROD 2026-06-01.)
 
-                     SOLUCION CANONICA: cada capa condicional se envuelve en un
-                     <condition> propio. Si el valor de correlacion es null/blank,
-                     la condition retorna false y MidPoint NO emite el filtro de esa
-                     capa (la capa se desactiva por completo). NUNCA `return null`
-                     dentro de un q:equal. Shadows sin identificador correlacionable
-                     (sin DNI, sin codigo de matricula valido, cuentas de servicio)
-                     caen UNMATCHED de forma DETERMINISTA -> reaction unmatched sin
-                     accion (reality preservada, doctrina suma-nunca-resta).
+                     SOLUCION CANONICA (sentinel zero-match): FilterSubCorrelatorType
+                     de MidPoint 4.10 NO admite <condition>. La forma robusta y
+                     schema-valida de "desactivar" una capa es que la expression del
+                     q:equal devuelva, cuando el valor de correlacion es null/blank,
+                     un VALOR CENTINELA IMPOSIBLE ('__NO_MATCH__') en lugar de null.
+                     Asi el filtro queda SIEMPRE bien formado: o matchea al owner
+                     correcto, o matchea a NADIE (cero candidatos). NUNCA `return null`
+                     dentro de un q:equal (eso degenera en filtro vacio = match masivo).
+                     Shadows sin identificador correlacionable (sin DNI, sin codigo de
+                     matricula valido, cuentas de servicio) caen UNMATCHED de forma
+                     DETERMINISTA -> reaction unmatched sin accion (reality preservada,
+                     doctrina suma-nunca-resta).
 
                      Correlacion por identificador inmutable (DNI / codigo UPeU),
                      conforme iga-canonical-standards: correlacion por identificador
@@ -1397,7 +1401,7 @@ return eligible ? ActivationStatusType.ENABLED : ActivationStatusType.DISABLED
                           Koha guarda el DNI en borrower_attributes (code='DNI').
                        2. correlate-by-cardnumber
                           cardnumber == name (COD_APS / codigo de matricula UPeU).
-                          Path MidPoint-managed. Guard: cardnumber numerico no-blank.
+                          Path MidPoint-managed. Sentinel si cardnumber no-numerico.
                        3. correlate-by-cardnumber-as-dni
                           cardnumber (cuando ES el DNI de 8 digitos) == lambDocNum.
                           Cubre patrones STAFF/DOCEN legacy con DNI como cardnumber.
@@ -1407,25 +1411,7 @@ return eligible ? ActivationStatusType.ENABLED : ActivationStatusType.DISABLED
                 <correlators>
                     <filter>
                         <name>correlate-by-dni-extended</name>
-                        <documentation>DNI del extended_attribute Koha (code='DNI', borrower_attributes) == extension/upeu:lambDocNum. Capa autoritativa: correlaciona por identificador legal inmutable. Solo se activa si el shadow trae un par DNI poblado (8 digitos).</documentation>
-                        <condition>
-                            <script>
-                                <code><![CDATA[
-import groovy.json.JsonSlurper
-def vals = basic.getAttributeValues(projection, 'extended_attributes')
-if (vals == null) return false
-def slurper = new JsonSlurper()
-for (v in vals) {
-    if (v == null) continue
-    try {
-        def o = slurper.parseText(v.toString())
-        if (o?.type == 'DNI' && o?.value != null && o.value.toString().trim() ==~ /^\d{8}$/) return true
-    } catch (ignored) {}
-}
-return false
-                                ]]></code>
-                            </script>
-                        </condition>
+                        <documentation>DNI del extended_attribute Koha (code='DNI', borrower_attributes) == extension/upeu:lambDocNum. Capa autoritativa: correlaciona por identificador legal inmutable. Sentinel zero-match: si el shadow NO trae un par DNI valido (8 digitos), la expression devuelve '__NO_MATCH__' -> 0 candidatos (jamas filtro vacio).</documentation>
                         <ownerFilter>
                             <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
                                      xmlns:upeu="urn:upeu:midpoint:local">
@@ -1435,18 +1421,20 @@ return false
                                         <code><![CDATA[
 import groovy.json.JsonSlurper
 def vals = basic.getAttributeValues(projection, 'extended_attributes')
-def slurper = new JsonSlurper()
-for (v in vals) {
-    if (v == null) continue
-    try {
-        def o = slurper.parseText(v.toString())
-        if (o?.type == 'DNI' && o?.value != null) {
-            def dni = o.value.toString().trim()
-            if (dni ==~ /^\d{8}$/) return dni
-        }
-    } catch (ignored) {}
+if (vals != null) {
+    def slurper = new JsonSlurper()
+    for (v in vals) {
+        if (v == null) continue
+        try {
+            def o = slurper.parseText(v.toString())
+            if (o?.type == 'DNI' && o?.value != null) {
+                def dni = o.value.toString().trim()
+                if (dni ==~ /^\d{8}$/) return dni
+            }
+        } catch (ignored) {}
+    }
 }
-return null
+return '__NO_MATCH__'
                                         ]]></code>
                                     </script>
                                 </expression>
@@ -1455,38 +1443,26 @@ return null
                     </filter>
                     <filter>
                         <name>correlate-by-cardnumber</name>
-                        <documentation>cardnumber del patron Koha == name (COD_APS / codigo de matricula UPeU) del user. Path MidPoint-managed. Guard: solo si cardnumber es un codigo numerico no-blank (>=8 digitos); excluye logins, codigos G####### y cuentas de servicio (ADMIN3UPEU$, AUTOPBUL1...).</documentation>
-                        <condition>
-                            <script>
-                                <code><![CDATA[
-def cn = basic.getAttributeValue(projection, 'cardnumber')
-if (cn == null) return false
-cn = cn.toString().trim()
-return cn ==~ /^\d{8,}$/
-                                ]]></code>
-                            </script>
-                        </condition>
+                        <documentation>cardnumber del patron Koha == name (COD_APS / codigo de matricula UPeU) del user. Path MidPoint-managed. Sentinel zero-match: solo correlaciona si cardnumber es codigo numerico (>=8 digitos); logins, codigos G####### y cuentas de servicio (ADMIN3UPEU$, AUTOPBUL1...) -> '__NO_MATCH__'.</documentation>
                         <ownerFilter>
                             <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
                                 <q:path>name</q:path>
                                 <expression>
-                                    <path>$projection/attributes/ri:cardnumber</path>
+                                    <script>
+                                        <code><![CDATA[
+def cn = basic.getAttributeValue(projection, 'cardnumber')
+if (cn == null) return '__NO_MATCH__'
+cn = cn.toString().trim()
+return (cn ==~ /^\d{8,}$/) ? cn : '__NO_MATCH__'
+                                        ]]></code>
+                                    </script>
                                 </expression>
                             </q:equal>
                         </ownerFilter>
                     </filter>
                     <filter>
                         <name>correlate-by-cardnumber-as-dni</name>
-                        <documentation>cardnumber del patron Koha (cuando ES el DNI de 8 digitos) == extension/upeu:lambDocNum. Para patrones STAFF/DOCEN legacy cuyo cardnumber es el DNI en lugar del COD_APS. Guard: cardnumber exactamente 8 digitos.</documentation>
-                        <condition>
-                            <script>
-                                <code><![CDATA[
-def cn = basic.getAttributeValue(projection, 'cardnumber')
-if (cn == null) return false
-return cn.toString().trim() ==~ /^\d{8}$/
-                                ]]></code>
-                            </script>
-                        </condition>
+                        <documentation>cardnumber del patron Koha (cuando ES el DNI de 8 digitos) == extension/upeu:lambDocNum. Para patrones STAFF/DOCEN legacy cuyo cardnumber es el DNI en lugar del COD_APS. Sentinel zero-match: cardnumber distinto de 8 digitos exactos -> '__NO_MATCH__'.</documentation>
                         <ownerFilter>
                             <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
                                      xmlns:upeu="urn:upeu:midpoint:local">
@@ -1495,9 +1471,9 @@ return cn.toString().trim() ==~ /^\d{8}$/
                                     <script>
                                         <code><![CDATA[
 def cn = basic.getAttributeValue(projection, 'cardnumber')
-if (cn == null) return null
+if (cn == null) return '__NO_MATCH__'
 cn = cn.toString().trim()
-return (cn ==~ /^\d{8}$/) ? cn : null
+return (cn ==~ /^\d{8}$/) ? cn : '__NO_MATCH__'
                                         ]]></code>
                                     </script>
                                 </expression>
