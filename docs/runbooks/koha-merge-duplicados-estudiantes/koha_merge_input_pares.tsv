@@ -1,0 +1,85 @@
+keeper_borrowernumber	loser_borrowernumber	dni	keeper_cardnumber	loser_cardnumber	keeper_name	loser_name	keeper_email	loser_email	category	has_historial	name_variant_review	mp_points_to
+27619	10662	00576382	201711616	00576382	Brown Sarmiento, Joseph Justy	Brown Sarmiento, Joséph Justy	joseph-Brown.jb@hotmail.com		STUDENT_MERGE	0	0	NO_MP_USER
+26240	803	07321340	200620016	07321340	Baldoceda Alania De Ayudante, Gricelda Margarita	Gricelda Margarita Baldoceda Alania, Gricelda Maríarita	gmba.2015@hotmail.com	gmba.2015@hotmail.com	STUDENT_MERGE	0	0	NO_MP_USER
+29321	18142	41267466	201810825	41267466	Flores Carbajal, Hilda	Flores Carbajal, Hilda			STUDENT_MERGE	0	0	KEEPER(codigo)
+27965	383	42689980	200210468	42689980	Laurente Gomez, Betsy Cheyla	Laurente Gomez, Bethsy Sheyla	blaurentegomez@gmail.com		STUDENT_NAME_VARIANT_REVIEW	1	1	NO_MP_USER
+27431	23011	43476931	200711406	43476931	Cano Irene, Claudia	Cano Irene, Claudia Enriqueta	canoclaudia348@gmail.com	NULL	STUDENT_MERGE	1	0	NO_MP_USER
+26031	22752	43731384	201221421	43731384	Requejo Esteves, Robert Alexander	Requejo Esteves, Roberth Alexander	requejorobert39@gmail.com	NULL	STUDENT_NAME_VARIANT_REVIEW	0	1	KEEPER(codigo)
+29710	18051	44160690	202212712	44160690	Paz Perez, Martha Veronika	Martha Verónika Paz Pérez De Arriaga	marthaveronikap@gmail.com	marthaveronikap@gmail.com	STUDENT_MERGE	0	0	NO_MP_USER
+24113	16772	45430300	202118657	45430300	Sanchez Santivañez, Luis Miguel	Luis Miguel Sanchez Santivañez, Luis Miguel	45430300@upeu.edu.pe	ayoros_lms@hotmail.com	STUDENT_MERGE	0	0	NO_MP_USER
+27074	18247	46181027	202220066	46181027	Espinal Santos, Hemsy Ila	Hemsy Ila Espinal Santos	ilaespinalsantos@gmail.com	hemsyespinal@gmail.com	STUDENT_MERGE	0	0	NO_MP_USER
+29679	18055	46497171	202212716	46497171	Buado Garcia, Denissa Fronilda	BUADO GARCIA, Denissa Fronilda	buadodenissa8@gmail.com	buadodenissa8@gmail.com	STUDENT_MERGE	0	0	NO_MP_USER
+27175	3081	46636359	201220753	46636359	Giron Santos, Erika Judith	Giron Santos, Erika Judith			STUDENT_MERGE	0	0	LOSER(dni)
+26017	15998	47493614	202011560	47493614	Pillaca Asparrin, Juan Antonio	Pillaca Asparrin, Juan Atonio	j.pillaca17@gmail.com	juanpillaca@upeu.edu.pe	STUDENT_NAME_VARIANT_REVIEW	0	1	KEEPER(codigo)
+26232	2052	47725794	201120595	47725794	Lingan Mallqui, Elizabeth Damaris	Lingan Mallqui, Elizabeth Damaris	elinganmallqui@gmail.com		STUDENT_MERGE	0	0	NO_MP_USER
+27277	8840	47841350	201611582	47841350	Surichaqui Anco, Angie Sandy	Surichaqui Anco, Angie Sandy	angiesurichaqui@upeu.edu.pe		STUDENT_MERGE	0	0	NO_MP_USER
+26339	12308	47880135	201811043	47880135	Condori Cahuana, Maribel Magnolia	Mariberl Magnolia Condori Cahuana	Maribelcondori@upeu.edu.pe	Maribelcondori@upeu.edu.pe	STUDENT_NAME_VARIANT_REVIEW	0	1	NO_MP_USER
+26225	23068	60116975	202310724	60116975	Vera Ore, David	Vera  Ore, David	davidveraore20@gmail.com	NULL	STUDENT_MERGE	1	0	NO_MP_USER
+24327	23562	60136875	202412852	60136875	GUERRERO ESCOBAR, JOHANN JOSEPH	Guerrero Escobar, Johann Josep	guerreroescobarjohann19@gmail.com	60136875@upeu.edu.pe	STUDENT_NAME_VARIANT_REVIEW	1	1	NO_MP_USER
+28229	16621	60615675	202115513	60615675	Santa Cruz Chinoapaza, Lucero Del Carmen	LUCERO DEL CARMEN SANTA CRUZ CHINOAPAZA	santacruzlucero69@gmail.com	lincolsan@gmail.com	STUDENT_MERGE	0	0	NO_MP_USER
+27713	23370	61326846	202510695	61326846	Moncada Fonseca, Matias Josue	Moncada Fonseca, Matias		matias.moncada@eaportal.org	STUDENT_MERGE	0	0	KEEPER(codigo)
+27071	12439	70034131	201811242	70034131	Umbo Yanayaco, Danitza Paola	Umbo Yanayaco, Danitza Paola	danitzaumbo@upeu.edu.pe		STUDENT_MERGE	0	0	NO_MP_USER
+27141	5115	70259907	201410427	70259907	Muñoz Muñoz, Lener Junior	Muñoz Muñoz, Junior Lener	jlm.29.1992@gmail.com		STUDENT_MERGE	1	0	NO_MP_USER
+26843	12799	70478056	201811726	70478056	Avila Medina, Yeiser Jamber	Yeiser Jamber Avila Medina, Yeiser	yeiseravilamedina48@gmail.com	yeiseravilamedina48@gmail.com	STUDENT_MERGE	0	0	LOSER(dni)
+26260	15518	70560475	202010032	70560475	Burga Guevara, Jeide Lisbeth	Burga Guevara, Jeide Lisbeth	lisbethburgaguevara@gmail.com	lisbethburgaguevara@gmail.com	STUDENT_MERGE	0	0	KEEPER(codigo)
+26222	12769	70637939	201811686	70637939	Espinoza Angulo, Dámaris Génesis	Espinoza Angulo	damarisespinoza@upeu.edu.pe		STUDENT_MERGE	0	0	KEEPER(codigo)
+28106	13593	70745127	201910078	70745127	Soto Ramirez, Jhoel	Jhoel Soto Ramirez, Jhoel	jhoelsotoramirez9@gmail.com	jhoelsotoramirez9@gmail.com	STUDENT_MERGE	0	0	LOSER(dni)
+27226	14433	70940783	201911427	70940783	Lopez Chacon, Joaquin Enrique	Joaquin Enrique Lopez Chacon	joaquinlopez@upeu.edu.pe	joaquinlopez@upeu.edu.pe	STUDENT_MERGE	1	0	NO_MP_USER
+26299	16564	71087689	202110732	71087689	Panduro Huaman, Dorian Joop	Dorian Joop PANDURO HUAMAN, Dorian Joop		pandurohuamandorianjoop@gmail.com	STUDENT_MERGE	0	0	NO_MP_USER
+28085	11116	71239042	201712328	71239042	Cama Clares, Jair Alberto	Cama Clares, Jair Alberto Alberto	jair.cama@upeu.edu.pe		STUDENT_MERGE	1	0	LOSER(dni)
+26040	11767	71242914	201810099	71242914	Cceccaño Alania, Vanessa Elizabeth	Cceccaño Alania, Vanessa Elizabeth	vanessa.alania73@gmail.com		STUDENT_MERGE	0	0	LOSER(dni)
+26257	14310	71252655	201911258	71252655	Sandoval Fernandez, Kiara Estefanny	Sandoval Fernandez, Kiara Estefanny	kiarasandoval@upeu.edu.pe		STUDENT_MERGE	0	0	LOSER(dni)
+26256	22057	71299265	201912291	71299265	Tandaypan Chacon, Kelly Lizbeth	Tandaypan Chacon, Kelly Lizbeth	kellytandaypan@upeu.edu.pe	kellytandaypan@upeu.edu.pe	STUDENT_MERGE	1	0	KEEPER(codigo)
+26224	9712	71314010	201620011	71314010	YANAC HUAROCO, DANIEL HANS	Yanac Huaroco, Daniel Hans	danielyanac@upeu.edu.pe		STUDENT_MERGE	0	0	KEEPER(codigo)
+28195	17786	71415755	202211816	71415755	Apaza Cruz, Owell Jireh	OWELL JIREH APAZA CRUZ, Owell Jireh	owell.apaza@upeu.edu.pe	owelljirehapazacruz@gmail.com	STUDENT_MERGE	0	0	NO_MP_USER
+26208	23026	71426400	202310341	71426400	Gonzales Flores, Amy Alexandra	Gonzalez Flores, Amy Alexandra	amygonzalezzz2004@gmail.com	NULL	STUDENT_NAME_VARIANT_REVIEW	0	1	NO_MP_USER
+28325	13326	71662055	201812437	71662055	Rojas Humpire, Andrea Lizbeth	Andrea Lizbeth Rojas Humpire	andrearojas@upeu.edu.pe	andrearojas@upeu.edu.pe	STUDENT_MERGE	0	0	KEEPER(codigo)
+25993	11710	71736872	201810025	71736872	Cabrera Allca, Miguel Benjamin	Cabrera Allca	Miguelcabrera@upeu.edu.pe		STUDENT_MERGE	0	0	LOSER(dni)
+28059	23064	71778536	202310719	71778536	GAMBOA VARGAS, MARCO ANTONIO	Gamboa  Vargas, Marco	gamboavargasmarco@gmail.com	NULL	STUDENT_MERGE	1	0	NO_MP_USER
+26285	13616	71790092	91369692	71790092	Cobos Arancibia, Romina Lucero	Cobos Arancibia, Romina Lucero	rominacobos@upeu.edu.pe		STUDENT_MERGE	1	0	KEEPER(codigo)
+25501	22058	71926396	201220334	71926396	Soncco Aquino, Nestor	Soncco Aquino, Nestor	nestor.soncco@upeu.edu.pe	nestor.soncco@upeu.edu.pe	STUDENT_MERGE	0	0	KEEPER(codigo)
+13636	23440	72217364	201910138	72217364	Ramos Soncco, Luz Mileydi	Ramos Ssonco, Luz	72217364@upeu.edu.pe	luzramoss@upeu.edu.pe	STUDENT_NAME_VARIANT_REVIEW	0	1	KEEPER(codigo)
+27362	16585	72274467	202110780	72274467	Colquehuanca Arpasi, Alexia Dayna	COLQUEHUANCA ARPASI, Alexia Dayna	alexia.colquehuanca@upeu.edu.pe	alexia.colquehuanca@colegiounion.edu.pe	STUDENT_MERGE	0	0	KEEPER(codigo)
+26250	14018	72624529	201910711	72624529	Rojas Burga, Jefferson Apolinar	Rojas Burga, Jefferson Apolinar	jeffersonrojas@upeu.edu.pe		STUDENT_MERGE	0	0	NO_MP_USER
+28065	4811	72625062	201323039	72625062	Mamani Villa, Gerson Hernan	Mamani Villa, Gerson Hernán	gersonvilla098@gmail.com		STUDENT_MERGE	0	0	KEEPER(codigo)
+26289	9708	72667975	201620001	72667975	Chero Lama, Socorro Jesus	Chero Lama, Socorro Jesús	socorrochero@upeu.edu.pe		STUDENT_MERGE	0	0	NO_MP_USER
+26279	9559	72674673	201612857	72674673	Pizzo Cordova, Paulo Maury Alberto	Pizzo Cordova	paulo.pizzo@upeu.edu.pe		STUDENT_MERGE	1	0	KEEPER(codigo)
+28349	11822	72754988	201810176	72754988	MONDRAGON SUXE, BRENDA FELICITA	Mondragon Suxe			STUDENT_MERGE	0	0	KEEPER(codigo)
+27036	11761	72799656	201810093	72799656	Cajo Vera, Emily Estrella	Cajo Vera, Emily Estrella	emilycajo@upeu.edu.pe		STUDENT_MERGE	0	0	NO_MP_USER
+26281	23087	72806166	202011908	72806166	Polo Espinola, Roberto Joaquin	Polo Espinola, Roberto	polojoaquin49@gmail.com	roberto.polo@upeu.edu.pe	STUDENT_MERGE	1	0	KEEPER(codigo)
+22562	23126	72837473	202310597	72837473	VILCA BAYONA, JOE MIGUEL	Vilca Bayona, Joe	vbjoemiguel@gmail.com	vjoemiguel@gmail.com	STUDENT_MERGE	1	0	KEEPER(codigo)
+25467	22836	72869010	202312304	72869010	TEMOCHE TUME, MERLY MERCEDES	Temoche Tume, Merly	merlytemochetume@gmail.com	NULL	STUDENT_MERGE	0	0	KEEPER(codigo)
+28156	22002	72913993	201710199	72913993	Varillas Berrocal, Luz Andrea	Luz Andrea Varillas Berrocal	luzvarillas@upeu.edu.pe	luzvarillas@upeu.edu.pe	STUDENT_MERGE	0	0	KEEPER(codigo)
+26558	8838	72975223	201611580	72975223	Valdez Navarro, Jonathan Jean Carlo	Valdez Navarro, Jonathan Jeancarlo	jonathanvaldeznavarro@gmail.com		STUDENT_MERGE	0	0	NO_MP_USER
+27000	14423	73376705	201911413	73376705	Sanchez Sanchez, Raquel Abigail	Raquel Abigail Sanchez Sanchez, Raquel Abigail	mavichic2022@gmail.com	abigail3423324@gmail.com	STUDENT_MERGE	0	0	NO_MP_USER
+23553	18258	73517255	202210053	73517255	Solorzano Aguilar, Lix Liseth	Lix Liseth Solórzano Aguilar	lixsolorzano@gmail.com	lixsolorzano@gmail.com	STUDENT_MERGE	1	0	NO_MP_USER
+26196	21867	73517256	202211561	73517256	Solorzano Aguilar, Yonel Edison	Solórzano Aguilar, Yonel Edison	Quisoco.20@gmail.com	Yonel.Solorzano@upeu.edu.pe	STUDENT_MERGE	1	0	KEEPER(codigo)
+27158	16262	73581020	202012275	73581020	Uzategui Vega, Estefani Karen	Uzategui Vega, Estefani Karen	estefaniuzategui22@gmail.com		STUDENT_MERGE	0	0	LOSER(dni)
+26198	15619	73591691	202010266	73591691	Ayala Vasquez, Melany Pamela	Ayala Vásquez, Melany Pamela	a2melany8v@gmail.com		STUDENT_MERGE	0	0	KEEPER(codigo)
+26266	16590	74217488	202110788	74217488	Beltran Saavedra, Manuel David	Beltran Saavedra, Manuel David	manueld09@hotmail.com		STUDENT_MERGE	1	0	LOSER(dni)
+28111	17662	74642459	202211463	74642459	Camacho Garcia, Antony Emmanuel	Camacho Garcia, Antony Emmanuel	jonasmcklopedia@gmail.com		STUDENT_MERGE	0	0	LOSER(dni)
+29673	8814	74884107	201611535	74884107	Gonzales Vargas, Kluivert Abraham	Gonzales Vargas, Kluivert Abraham	3ekenyn@gmail.com		STUDENT_MERGE	0	0	NO_MP_USER
+26499	14393	74907283	201911377	74907283	Cueva Rivera, Giezi Milca	Cueva Rivera, Giezi Milca	giezicueva@upeu.edu.pe		STUDENT_MERGE	0	0	KEEPER(codigo)
+26048	5063	74925924	201410306	74925924	Mamani Madueño, Bryan David	Mamani Madueño, Bryan David	bryanyj1234@gmail.com		STUDENT_MERGE	0	0	KEEPER(codigo)
+27300	13306	75124700	201812412	75124700	Ccasa Callo, Gustavo Fernando	Ccasa Callo, Gustavo Fernando	witherqq@gmail.com		STUDENT_MERGE	0	0	KEEPER(codigo)
+26384	16557	75284673	202110721	75284673	Calle Maldonado, Brillith Salim	CALLE MALDONADO, Brillith Salim	brillithcallemaldonado@upeu.edu.pe	Brillith.calle@colegionunion.edu.pe	STUDENT_MERGE	0	0	LOSER(dni)
+28238	17231	75287766	202210179	75287766	Maravi Chavez, Sofia	Maravi Chávez, Sofia	sofia.maravi@upeu.edu.pe		STUDENT_MERGE	0	0	NO_MP_USER
+26273	21909	75409698	202211622	75409698	Yanapa Arapa, Katherine Mishell	Katherine Mishell Yanapa Arapa	katherine.yanapa@upeu.edu.pe	mishellkatherine.yar@gmail.com	STUDENT_MERGE	0	0	LOSER(dni)
+29080	22039	75476707	202121871	75476707	Palpa Olivares, Zara Fernanda	Palpa Olivares, Zara Fernanda	zaferpo25@gmail.com		STUDENT_MERGE	0	0	KEEPER(codigo)
+26532	15182	75541713	201912869	75541713	Laureano Condori, Stefani	Stefani Laureano Condori, Stefani	stefanilaureanocondori123@gmail.com	75541713@upeu.edu.pe	STUDENT_MERGE	1	0	LOSER(dni)
+24981	23563	75699586	202412840	75699586	APAZA QUISPE, DAVID ANGEL	ApazaQuispe, David Angel	apazadavid654@gmail.com	75699586@upeu.edu.pe	STUDENT_MERGE	1	0	NO_MP_USER
+26253	14049	75702183	201910754	75702183	Soto Acevedo, Junior Daniel	Soto Acevedo, Junior Daniel Daniel	acevedosoto14@gmail.com		STUDENT_MERGE	1	0	KEEPER(codigo)
+27934	12843	75706177	201811776	75706177	Rodriguez Coaquira, Maria Alejandra	Rodriguez Coaquira, Maria	alejandrarodriguez@upeu.edu.pe		STUDENT_MERGE	1	0	LOSER(dni)
+26209	22032	75798786	202012261	75798786	Dominguez Abad, Andres	Dominguez Abad, Andrés	andres.dominguez@upeu.edu.pe	andres.dominguez@upeu.edu.pe	STUDENT_MERGE	1	0	LOSER(dni)
+29366	10011	75913109	717218510	75913109	Gomez Campos, Keyla Yanini	Keyla Yanini Gomez Campos, Keyla Yanini Yanini		Keylagomez@upeu.edu.pe	STUDENT_MERGE	0	0	KEEPER(codigo)
+26288	21948	76078723	202220293	76078723	Apaza Velasquez, Siwar Leon	Apaza  Velasquez, Siwar Leon	siwarapazavelasquez@gmail.com	NULL	STUDENT_MERGE	0	0	NO_MP_USER
+27954	11732	76125303	201810058	76125303	Chaiña Mattos, Angie Melissa	Angie Melissa Chaiña Mattos, Angie Melissa	angiechaina@upeu.edu.pe	angiechaina@upeu.edu.pe	STUDENT_MERGE	1	0	KEEPER(codigo)
+29472	12296	76295082	201811030	76295082	Simangas Ochoa, Rodrigo Antonio	Rodrigo Antonio Simangas Ochoa, Rodrigo Antonio		rodrigosimangas@upeu.edu.pe	STUDENT_MERGE	0	0	LOSER(dni)
+27188	21937	76328360	202212785	76328360	Torres Linares, Jefry Antony	JEFRY ANTONY TORRES LINARES	jefritl18@gmail.com	jefritl18@gmail.com	STUDENT_MERGE	0	0	NO_MP_USER
+26219	17811	76423259	202211907	76423259	Cory Zarate, Korayma Lorenne	Cory Zárate, Korayma Lorenne	corykorayma@gmail.com		STUDENT_MERGE	1	0	NO_MP_USER
+26029	15698	76760179	202010402	76760179	Grados Lazaro, Eymmy Jimena	Grados Lazaro, Emmy Jimena Jimena	meja-12-29@hotmail.com		STUDENT_NAME_VARIANT_REVIEW	0	1	KEEPER(codigo)
+26293	11777	76861009	201810110	76861009	Velazco Condori, Jorge Luis	Velazco Condori, Jorge Luis	velazcojorge2001@gmail.com		STUDENT_MERGE	0	0	NO_MP_USER
+28009	16945	77134820	202121763	77134820	Goycochea Rodrigo, Diana Marisol	Diana Marisol Goycochea Rodrigo, Diana Marisol	dianagoycochearodrigo@gmail.com	dianagoycochearodrigo@gmail.com	STUDENT_MERGE	0	0	KEEPER(codigo)
+27171	15577	77356903	202010197	77356903	Panaifo Orizano, Maria Fernanda	Panaifo Orizano	mariapanaifo@upeu.edu.pe		STUDENT_MERGE	0	0	LOSER(dni)
+27361	10791	78016817	201711854	78016817	Valdez Calderon, Alexandra Liztel	Valdez Calderon, Alexandra Liztel	alexandra.valdez@outlook.com		STUDENT_MERGE	0	0	KEEPER(codigo)
+27199	21995	78378679	202010024	78378679	Rodriguez Miguel, Benjamin Noe	Benjamin Noe Rodriguez Miguel	ben_gi11@hotmail.com	ben_gi11@hotmail.com	STUDENT_MERGE	0	0	KEEPER(codigo)
