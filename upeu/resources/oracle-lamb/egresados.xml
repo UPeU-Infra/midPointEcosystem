@@ -417,22 +417,14 @@ return d</code>
                 </inbound>
             </attribute>
             <correlation>
-                <!-- fix MidPoint 4.10: <correlator/> shorthand dentro de <attribute> roto
-                     cuando hay inbounds con beforeCorrelation. Correlator explícito a nivel objectType.
-                     El inbound dni-to-taxId-urn (beforeCorrelation) normaliza NUM_DOCUMENTO a URN
-                     en extension/sb:taxId antes de que este correlator evalúe. -->
+                <!-- CANON_KEY fix (2026-06-02, validado en lab midpoint-dev):
+                     RETIRADO el tier `correlate-by-taxId` (type-blind). El URN taxId asumia
+                     siempre :DNI: → un CE y un DNI con los mismos digitos generaban el MISMO
+                     URN y FUSIONABAN dos personas distintas. Unico tier autoritativo ahora:
+                     `correlate-by-lambDocNum` (CANON_DOC type-aware, idem trabajadores/estudiantes;
+                     en egresados el padron no trae tipo → rama DNI por defecto). Cross-correlacion
+                     egresado-trabajador se mantiene por lambDocNum. iga-canonical-standards §1.3. -->
                 <correlators>
-                    <items>
-                        <name>correlate-by-taxId</name>
-                        <item>
-                            <ref xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</ref>
-                        </item>
-                    </items>
-                    <!-- FIX correlación cruzada (2026-05-29, PM7): correlador adicional por lambDocNum.
-                         Cubre egresados-trabajadores cuyo taxId está vacío (Trabajadores los identifica
-                         por lambDocNum). MidPoint evalúa todos los correlators; si cualquiera resuelve un
-                         owner único, correlaciona. El inbound num-documento-to-lambDocNum (beforeCorrelation)
-                         puebla lambDocNum del shadow Egresado antes de esta evaluación. -->
                     <items>
                         <name>correlate-by-lambDocNum</name>
                         <item>

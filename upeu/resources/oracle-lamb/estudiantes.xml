@@ -432,21 +432,17 @@ return d</code>
                 </inbound>
             </attribute>
             <correlation>
-                <!-- Ola 1 fix 7.1 (2026-05-26): correlator explícito a nivel objectType.
-                     Reemplaza el <correlator/> shorthand dentro de <attribute>ri:NUM_DOCUMENTO</attribute>
-                     que estaba roto en MidPoint 4.10 cuando hay inbounds con beforeCorrelation.
-                     Mismo patrón usado en egresados.xml/grados.xml. El inbound dni-to-taxId-urn
-                     normaliza NUM_DOCUMENTO a URN SCHAC en extension/sb:taxId antes de
-                     que este correlator evalúe. -->
+                <!-- CANON_KEY fix (2026-06-02, validado en lab midpoint-dev):
+                     RETIRADO el tier `correlate-by-taxId` (type-blind). El URN taxId asumia
+                     siempre :DNI: → un CE 12345678 y un DNI 12345678 producian el MISMO URN y
+                     FUSIONABAN dos personas distintas. Unico tier autoritativo ahora:
+                     `correlate-by-lambDocNum` (normalizado type-aware CANON_DOC: DNI zfill8,
+                     CE/PTP/CPP zfill9 con prefijo 'CE:', passport 'PP:'). En estudiantes el
+                     padron academico no trae columna de tipo → CANON_DOC asume DNI (rama por
+                     defecto), consistente con egresados.xml. Cross-correlacion alumno-trabajador
+                     se mantiene por lambDocNum (mismo numero canonico). iga-canonical-standards
+                     §1.3: una sola representacion del documento para correlacion. -->
                 <correlators>
-                    <items>
-                        <name>correlate-by-taxId</name>
-                        <item>
-                            <ref xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</ref>
-                        </item>
-                    </items>
-                    <!-- FIX correlación cruzada (2026-05-29, PM7): correlador adicional por lambDocNum
-                         para alumnos-trabajadores con taxId vacío. Mismo patrón que egresados.xml. -->
                     <items>
                         <name>correlate-by-lambDocNum</name>
                         <item>
