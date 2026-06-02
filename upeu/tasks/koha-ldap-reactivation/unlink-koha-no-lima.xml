@@ -77,13 +77,10 @@
                             </q:or>
                         </q:filter>
                     </query>
-                    <searchOptions>
-                        <option>
-                            <options>
-                                <noFetch>true</noFetch>
-                            </options>
-                        </option>
-                    </searchOptions>
+<!-- Sin searchOptions especiales: el RPC executeScript (mismo codigo de
+                         resolucion) ve input.linkRef poblado (linkRef es del UserType en repo,
+                         no del recurso). El noFetch previo no era necesario y el binding del
+                         task se comporta como el RPC: input = UserType con linkRef. -->
                 </objects>
                 <scriptExecutionRequest>
                     <s:execute xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting-3">
@@ -116,27 +113,38 @@ if (kohaShadowOids.isEmpty()) {
     return
 }
 
-// UNLINK PURO a nivel REPOSITORIO (raw): se BORRA el shadow Koha del repo de
-// MidPoint con repositoryService.deleteObject. Esto NO toca el recurso Koha
-// (es repo-level, no pasa por provisioning/clockwork) y rompe automaticamente
-// el linkRef user->shadow (la FK del proyection ref desaparece con el shadow).
-// El patron en Koha (cardnumber) queda intacto para que koha-expert lo archive
-// con delete_patrons.pl. Es la forma canonica de "dejar de gestionar" sin
-// deprovisionar (suma-nunca-resta del lado MidPoint).
-// NOTA: no usamos modifyObject(linkRef delete) porque el match por valor exige
-// relation+type exactos; borrar el shadow es deterministico y limpia el ref.
+// UNLINK PURO a nivel REPOSITORIO (raw), dos pasos por shadow Koha:
+//   (1) eliminar el linkRef del user (modifyObject linkRef DELETE) — REQUIERE
+//       la relation exacta org:default, si no NO matchea y deja el ref intacto.
+//   (2) borrar el shadow Koha del repo (deleteObject) para no dejar shadow
+//       huerfano sin owner.
+// Ambas son repo-level: NO pasan por clockwork/provisioning => NO llaman al
+// conector Koha. El patron en Koha (cardnumber) queda intacto para que
+// koha-expert lo archive con delete_patrons.pl. Resultado: MidPoint limpio
+// (sin linkRef colgante ni shadow huerfano), Koha sin tocar (suma-nunca-resta).
 def result = new com.evolveum.midpoint.schema.result.OperationResult('unlinkKoha')
+def pc = midpoint.prismContext
+def REL = new javax.xml.namespace.QName(
+    'http://midpoint.evolveum.com/xml/ns/public/common/org-3', 'default')
 def removed = 0
 kohaShadowOids.each { oid ->
     try {
+        // (1) romper linkRef user->shadow con relation explicita
+        def rv = pc.itemFactory().createReferenceValue(oid, ShadowType.COMPLEX_TYPE)
+        rv.setRelation(REL)
+        def delta = pc.deltaFor(UserType.class)
+            .item(UserType.F_LINK_REF).delete(rv).asObjectDelta(user.oid)
+        midpoint.repositoryService.modifyObject(
+            UserType.class, user.oid, delta.getModifications(), result)
+        // (2) borrar el shadow Koha huerfano del repo
         midpoint.repositoryService.deleteObject(ShadowType.class, oid, result)
         removed++
     } catch (e) {
-        log.error('UNLINK-KOHA delete shadow {} failed: {}', oid, e.message)
+        log.error('UNLINK-KOHA failed user={} shadow={}: {}', user.oid, oid, e.message)
     }
 }
 
-log.info('UNLINK-KOHA user={} ({}) loc={} kohaShadowsDeleted={}',
+log.info('UNLINK-KOHA user={} ({}) loc={} kohaLinksBroken={}',
     user.name, user.oid, user.locality, removed)
                             ]]></code>
                         </s:script>
