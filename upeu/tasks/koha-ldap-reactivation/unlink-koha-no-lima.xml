@@ -92,38 +92,51 @@
 import com.evolveum.midpoint.xml.ns._public.common.common_3.*
 import com.evolveum.midpoint.prism.delta.*
 import com.evolveum.midpoint.prism.path.*
+import com.evolveum.midpoint.prism.PrismReferenceValue
 
 def KOHA_OID = '9b5a7c81-47aa-42ac-9a08-4de8b64935af'
 def user = input
 
-// recolectar los linkRef que apuntan a shadows del resource Koha
-def kohaLinks = (user.linkRef ?: []).findAll { ref ->
-    def sh = null
-    try { sh = midpoint.getObject(ShadowType.class, ref.oid) } catch (ignored) {}
-    sh != null && sh.resourceRef != null && sh.resourceRef.oid == KOHA_OID
+// Resolver los OID de shadow Koha desde linkRef. Con noFetch el shadow vive
+// en repo; resolvemos via repositoryService (no toca el conector Koha).
+def kohaShadowOids = []
+(user.linkRef ?: []).each { ref ->
+    if (ref?.oid == null) return
+    try {
+        def sh = midpoint.repositoryService.getObject(ShadowType.class, ref.oid, null,
+            new com.evolveum.midpoint.schema.result.OperationResult('getShadow'))
+        if (sh != null && sh.asObjectable().resourceRef != null
+                && sh.asObjectable().resourceRef.oid == KOHA_OID) {
+            kohaShadowOids << ref.oid
+        }
+    } catch (ignored) {}
 }
 
-if (kohaLinks.isEmpty()) {
+if (kohaShadowOids.isEmpty()) {
     return
 }
 
-// construir un delta que ELIMINA esos linkRef del foco (unlink puro,
-// no toca el recurso). Importante: replaceModelService / repository.
+// UNLINK PURO a nivel REPOSITORIO (raw): delete del linkRef por OID de shadow.
+// repositoryService.modifyObject NO dispara clockwork ni provisioning => no
+// llama al conector Koha (suma-nunca-resta del lado MidPoint). El shadow Koha
+// persiste; solo se rompe la referencia user->shadow.
 def prismContext = midpoint.prismContext
-def valuesToDelete = kohaLinks.collect { it.asReferenceValue().clone() }
+def refValues = kohaShadowOids.collect { oid ->
+    def rv = prismContext.itemFactory().createReferenceValue(oid, ShadowType.COMPLEX_TYPE)
+    rv
+}
 
 def delta = prismContext.deltaFor(UserType.class)
     .item(UserType.F_LINK_REF)
-    .delete(valuesToDelete as Object[])
+    .delete(refValues as Object[])
     .asObjectDelta(user.oid)
 
-// executeChanges con raw=false aplica el unlink sin propagar al conector
-// (eliminar linkRef NO genera operación de provisioning sobre el shadow).
-midpoint.executeChanges(
-    com.evolveum.midpoint.util.MiscUtil.createCollection(delta), null)
+def result = new com.evolveum.midpoint.schema.result.OperationResult('unlinkKoha')
+midpoint.repositoryService.modifyObject(UserType.class, user.oid,
+    delta.getModifications(), result)
 
-log.info('Unlinked Koha shadow(s) from non-Lima user {} ({}) — links removed: {}',
-    user.name, user.oid, kohaLinks.size())
+log.info('UNLINK-KOHA user={} ({}) loc={} shadowsRemoved={}',
+    user.name, user.oid, user.locality, kohaShadowOids.size())
                             ]]></code>
                         </s:script>
                     </s:execute>
