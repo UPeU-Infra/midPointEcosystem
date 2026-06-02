@@ -1359,33 +1359,36 @@ return (w.compareTo(s) >= 0) ? w : s
                             <script>
                                 <code><![CDATA[
 // ================================================================
-// GATE DE CAMPUS — Koha = SOLO campus LIMA (decisión 2026-06-02).
-// El CRAI/Koha gobernado por MidPoint atiende únicamente Lima
-// (branchcode BUL). Juliaca (BUJ) y Tarapoto (BUT) tienen su propia
-// gestión bibliotecaria fuera del alcance de este IGA. LDAP/Entra/M365
-// SIGUEN siendo multi-campus — este gate aplica SOLO a Koha.
-// Discriminador: $focus/locality ∈ {LIMA|JULIACA|TARAPOTO}
-// (poblado por inbound Oracle LAMB desde Sede). Sin locality => no Lima.
+// GATE DE CAMPUS — Koha excluye SOLO Juliaca + Tarapoto (decisión 2026-06-02).
+// El CRAI/Koha gobernado por MidPoint NO atiende Juliaca (BUJ) ni Tarapoto
+// (BUT): esos campus tienen su propia gestión bibliotecaria fuera del
+// alcance de este IGA. LIMA y locality=NULL SÍ pasan (se preservan): los
+// 4,578 foci con locality=NULL se clasifican aparte y NO se tocan — si un
+// NULL fuese de Lima, deprovisionarlo sería un falso negativo destructivo.
+// LDAP/Entra/M365 SIGUEN siendo multi-campus — este gate aplica SOLO a Koha.
+// Discriminador (suma-nunca-resta): negar Koha SOLO a locality explícitamente
+// ∈ {JULIACA|TARAPOTO}. Todo lo demás (LIMA, NULL, otros) es elegible.
+// (locality poblado por inbound Oracle LAMB desde Sede.)
 // ================================================================
 def loc = (locality ?: '').toString().trim().toUpperCase()
-def isLima = (loc == 'LIMA')
+def isExcludedCampus = (loc == 'JULIACA' || loc == 'TARAPOTO')
 def worker  = liveAffiliationWorker
 def student = liveAffiliationStudent
 def guest   = smartwifiGuest
 def hasLib  = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72e-b874b3c48fa6' }
-def eligible = isLima && ((worker != null) || (student != null) || (guest != null) || hasLib)
-// suma-no-resta para LIMA: si el patrón Koha ya existe (reality), NUNCA borrar.
-// Se archiva vía administrativeStatus=disabled, jamás delete.
+def eligible = !isExcludedCampus && ((worker != null) || (student != null) || (guest != null) || hasLib)
+// suma-no-resta para LIMA/NULL: si el patrón Koha ya existe (reality), NUNCA
+// borrar. Se archiva vía administrativeStatus=disabled, jamás delete.
 // MidPoint 4.10: la overload (focus, oid, String, String, boolean) NO existe.
 // getLinkedShadow(focus, resourceOid) devuelve el shadow vinculado de ese
 // resource (account/default) o null. Suficiente para el predicado "ya existe".
-// CLAVE no-Lima: el guard de preservación SOLO aplica a Lima. Los shadows
-// no-Lima se desvinculan ANTES (bulk unlink, ver runbook) — al no quedar
+// CLAVE Juliaca/Tarapoto: el guard de preservación NO aplica a campus excluido.
+// Esos shadows se desvinculan ANTES (bulk unlink, ver runbook) — al no quedar
 // shadow vinculado, no entran aquí. Si quedara alguno residual, existence
 // retorna false PERO el archivado en Koha lo hace koha-expert (delete_patrons),
-// NO MidPoint: por eso NO confiamos el deprovisioning no-Lima a este mapping.
-// El orden seguro es: (1) bulk unlink no-Lima, (2) este gate, (3) archivado Koha.
-def existing = isLima ? midpoint.getLinkedShadow(focus, '9b5a7c81-47aa-42ac-9a08-4de8b64935af') : null
+// NO MidPoint: por eso NO confiamos el deprovisioning a este mapping.
+// El orden seguro es: (1) bulk unlink Juliaca/Tarapoto, (2) este gate, (3) archivado Koha.
+def existing = !isExcludedCampus ? midpoint.getLinkedShadow(focus, '9b5a7c81-47aa-42ac-9a08-4de8b64935af') : null
 return eligible || (existing != null)
                                 ]]></code>
                             </script>
@@ -1432,16 +1435,19 @@ return eligible ? ActivationStatusType.ENABLED : ActivationStatusType.DISABLED
                                 ]]></code>
                             </script>
                         </expression>
-                        <!-- GATE DE CAMPUS (2026-06-02): este mapping SOLO actúa para LIMA.
-                             En foco no-Lima se abstiene (no produce delta de administrativeStatus)
-                             para NO chocar con el archivado que hace koha-expert (delete_patrons.pl)
-                             en BUJ/BUT. El deprovisioning no-Lima NO se confía a MidPoint: los
-                             shadows no-Lima se desvinculan vía bulk unlink (suma-nunca-resta del
-                             lado MidPoint), y el patrón en Koha lo gestiona koha-expert. -->
+                        <!-- GATE DE CAMPUS (2026-06-02): este mapping se abstiene SOLO en
+                             foco de campus excluido (JULIACA/TARAPOTO) para NO chocar con el
+                             archivado que hace koha-expert (delete_patrons.pl) en BUJ/BUT.
+                             LIMA y locality=NULL SÍ pasan (no se niega Koha a NULL: podría ser
+                             Lima sin sede poblada — clasificados aparte, NO se tocan). El
+                             deprovisioning Juliaca/Tarapoto NO se confía a MidPoint: esos
+                             shadows se desvinculan vía bulk unlink (suma-nunca-resta del lado
+                             MidPoint), y el patrón en Koha lo gestiona koha-expert. -->
                         <condition>
                             <script>
                                 <code><![CDATA[
-(locality ?: '').toString().trim().toUpperCase() == 'LIMA'
+def loc = (locality ?: '').toString().trim().toUpperCase()
+return !(loc == 'JULIACA' || loc == 'TARAPOTO')
                                 ]]></code>
                             </script>
                         </condition>

@@ -7,8 +7,12 @@
   (branchcode BUL). Juliaca (BUJ) y Tarapoto (BUT) salen del alcance.
   LDAP / Entra ID / M365 SIGUEN siendo multi-campus — NO se tocan.
 
+  SCOPE EXACTO: SOLO foci con locality ∈ {JULIACA, TARAPOTO} (confirmados
+  no-Lima). Los 4,578 foci con locality=NULL NO se tocan (se clasifican
+  aparte): un NULL podría ser de Lima y desvincularlo sería destructivo.
+
   Esta tarea ROMPE el linkRef (user -> shadow Koha) de cada foco cuya
-  locality != LIMA. Es UNLINK PURO del lado MidPoint:
+  locality ∈ {JULIACA, TARAPOTO}. Es UNLINK PURO del lado MidPoint:
     - NO borra el patrón en Koha
     - NO desactiva (card_lost/expiry) el patrón en Koha
     - NO produce ninguna llamada al conector Koha
@@ -30,8 +34,8 @@
   (no elegible + sin shadow) => cero pelea con (3).
 
   executionState=suspended: ejecutar manualmente tras revisar el
-  conteo de candidatos (no-Lima con shadow ~ 6.657 con owner + NULL
-  locality 4.578 — confirmar política sobre NULL antes de incluirlos).
+  conteo de candidatos (JULIACA+TARAPOTO con shadow Koha ~ 6.657).
+  Los 4,578 NULL quedan FUERA de scope por decisión 2026-06-02.
 
   Canónico SciBack: patrón "gate de servicio por campus + unlink no
   deprovisionante". Reutilizable para cualquier resource de alcance
@@ -43,8 +47,8 @@
       xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
       xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
       oid="b8d3f1a2-4c5e-46a7-9b81-0c2e7f6a3d99">
-    <name>Unlink Koha patrons — foci NO-LIMA (gate campus)</name>
-    <description>Rompe el linkRef user-&gt;shadow Koha de foci locality != LIMA. Unlink puro: no borra ni desactiva en Koha. Paso 1 del gate "Koha solo Lima". executionState=suspended; ejecutar manualmente tras revisar conteos.</description>
+    <name>Unlink Koha patrons — foci JULIACA+TARAPOTO (gate campus)</name>
+    <description>Rompe el linkRef user-&gt;shadow Koha de foci locality IN (JULIACA,TARAPOTO). NO toca locality=NULL. Unlink puro: no borra ni desactiva en Koha. Paso 1 del gate "Koha solo Lima". executionState=suspended; ejecutar manualmente tras revisar conteos.</description>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
     <executionState>suspended</executionState>
     <activity>
@@ -61,12 +65,20 @@
                                         <!-- cualquier shadow; el script filtra por resource Koha -->
                                     </q:value>
                                 </q:ref>
-                                <q:not>
+                                <!-- SCOPE EXACTO (2026-06-02): SOLO campus confirmados no-Lima.
+                                     locality=NULL NO entra (se clasifica aparte, NO se toca):
+                                     usar IN explícito {JULIACA,TARAPOTO}, NUNCA NOT==LIMA
+                                     (NOT==LIMA arrastraría los 4,578 NULL). -->
+                                <q:or>
                                     <q:equal>
                                         <q:path>locality</q:path>
-                                        <q:value>LIMA</q:value>
+                                        <q:value>JULIACA</q:value>
                                     </q:equal>
-                                </q:not>
+                                    <q:equal>
+                                        <q:path>locality</q:path>
+                                        <q:value>TARAPOTO</q:value>
+                                    </q:equal>
+                                </q:or>
                             </q:and>
                         </q:filter>
                     </query>
