@@ -1,0 +1,93 @@
+clasificacion	email	borrowernumber	cardnumber	categoria	apellido	nombre	attr_dni	uso
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	alex.zela@upeu.edu.pe	85902	202118108	ALUMNI	Zela Mamani	Alex David	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	alex.zela@upeu.edu.pe	70192	76481964	staff	Zela Mamani	Alex David	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	anasucapuca@upeu.edu.pe	84550	201321865	ALUMNI	Sucapuca Ccoa	Ana Prima	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	anasucapuca@upeu.edu.pe	71535	70545652	ADMINIST	Sucapuca Ccoa	Ana Prima	NULL	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	andy.malaver@upeu.edu.pe	25050	202413001	ESTUDI	Malaver Chilon	Jheraldine Sonia	77039294	19
+EMAIL_MATCH_DIFF_NAME_REVIEW	andy.malaver@upeu.edu.pe	88043	202012260	ALUMNI	MALAVER CHILON	Andy Edwar	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	borisgonzales@upeu.edu.pe	85934	202100197	ALUMNI	Gonzales Rivera	Boris Jean Piere	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	borisgonzales@upeu.edu.pe	70084	72748019	staff	Gonzales Rivera	Boris Jean Piere	NULL	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	bryan.tanta@upeu.edu.pe	67568	201910765	ESTUDI	Tanta Cholan	Bryan Ivan	NULL	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	bryan.tanta@upeu.edu.pe	22031	75026335	student	Bryan Ivan Tanta Cholan		NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	carlos.enriquez@upeu.edu.pe	85325	200210846	ALUMNI	Ruiz Garcia	Carlos Enrique	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	carlos.enriquez@upeu.edu.pe	71086	42783156	staff	Ruiz Garcia	Carlos Enrique	NULL	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	cgalvez@upeu.edu.pe	25711	10172109	faculty	Galvez Vivanco	César Augusto	10172109	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	cgalvez@upeu.edu.pe	69348	9410408	DOCEN	DESCONOCIDO	GÁLVEZ VIVANCO CÉSAR AUGUSTO	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	claudiazena@upeu.edu.pe	85814	201912405	ALUMNI	Zeña Orbegoso	Claudia Olenka	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	claudiazena@upeu.edu.pe	70243	74631818	faculty	Zeña Orbegoso	Claudia Olenka	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	contador.infraestructura@upeu.edu.pe	85790	200510066	ALUMNI	Mamani Curazi	Edgar David	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	contador.infraestructura@upeu.edu.pe	70528	43139483	staff	Mamani Curazi	Edgar David	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	damaris.aguilar@upeu.edu.pe	84709	202010824	ALUMNI	Aguilar Cachicatari	Damaris Lisbeth	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	damaris.aguilar@upeu.edu.pe	70051	73515211	staff	Aguilar Cachicatari	Damaris Lisbeth	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	dania.condori@upeu.edu.pe	88747	202118443	ALUMNI	Condori Pino	Dania Daniela	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	dania.condori@upeu.edu.pe	70614	77227922	staff	Condori Pino	Dania Daniela	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	danitsa.mamani@upeu.edu.pe	84890	202012509	ALUMNI	Mamani Carita	Yudith Danitsa	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	danitsa.mamani@upeu.edu.pe	71517	73762233	alum	Mamani Carita	Yudith Danitsa	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	darwin.mamani@upeu.edu.pe	85920	202010802	ALUMNI	Mamani Carta	Darwin Paul	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	darwin.mamani@upeu.edu.pe	71156	74444249	alum	Mamani Carta	Darwin Paul	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	deysi.canaza@upeu.edu.pe	89229	201710703	ALUMNI	Canaza Pariapaza	Deysi Valeria	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	deysi.canaza@upeu.edu.pe	71237	71459617	staff	Canaza Pariapaza	Deysi Valeria	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	evo.larico@upeu.edu.pe	84741	202012661	ALUMNI	Larico Flores	Evo Alejandro Eloy	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	evo.larico@upeu.edu.pe	71456	76701450	staff	Larico Flores	Evo Alejandro Eloy	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	frankruiz@upeu.edu.pe	84676	201410800	ALUMNI	Ruiz Linares	Frank	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	frankruiz@upeu.edu.pe	71234	70109613	staff	Ruiz Linares	Frank	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	genesis.coaquira@upeu.edu.pe	84516	202117825	ALUMNI	Coaquira Chinoapaza	Genesis Niziel	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	genesis.coaquira@upeu.edu.pe	70188	72252771	staff	Coaquira Chinoapaza	Genesis Niziel	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	glenmadrigal@upeu.edu.pe	84654	201322657	INVESTI	Madrigal Perez	Glen Bryan	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	glenmadrigal@upeu.edu.pe	70442	70757713	staff	Madrigal Perez	Glen Bryan	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	henry.sopla@upeu.edu.pe	84838	202116089	ALUMNI	Sopla Medina	Henry Alexander	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	henry.sopla@upeu.edu.pe	70737	60240422	staff	Sopla Medina	Henry Alexander	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	ingridsalazar@upeu.edu.pe	86995	202010140	ALUMNI	Salazar Monja	Ingrid Mayte	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	ingridsalazar@upeu.edu.pe	70292	73486593	staff	Salazar Monja	Ingrid Mayte	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	isabo@upeu.edu.pe	85344	200010139	ALUMNI	Fuentes Herbozo	Ruth Silvia	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	isabo@upeu.edu.pe	71277	41972384	staff	Fuentes Herbozo	Ruth Silvia	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	jamesmendoza@upeu.edu.pe	87477	201820102	ALUMNI	Mendoza Santa Cruz	James Joel	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	jamesmendoza@upeu.edu.pe	71310	70842677	staff	Mendoza Santa Cruz	James Joel	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	jared.bazan@upeu.edu.pe	27588	202100012	student	Bazan Calderon	Jared Gabriel	NULL	1
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	jared.bazan@upeu.edu.pe	16403	73876485	VISITA	Bazan Calderon	Jared Gabriel	73876485	3
+EMAIL_MATCH_DIFF_NAME_REVIEW	javierquispet@upeu.edu.pe	30671	202320873	DOCEN	Quispe Tenorio	Javier René	NULL	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	javierquispet@upeu.edu.pe	22144	46420920	DOCEN	Javier Quipe Tenorio	NULL	NULL	8
+EMAIL_MATCH_DIFF_NAME_REVIEW	jemima.balbin@upeu.edu.pe	70957	717218423	staff	Balbín Arévalo	Rocío Del Milagro	NULL	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	jemima.balbin@upeu.edu.pe	22826	76826954	ESTUDI	Balbín Arévalo	Jemima Rocío Del Milagro	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	jhamil.apaza@upeu.edu.pe	89244	202118095	ALUMNI	Apaza Quispe	Jhamil Noe	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	jhamil.apaza@upeu.edu.pe	69986	75840630	staff	Apaza Quispe	Jhamil Noe	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	jhenrry.rivera@upeu.edu.pe	87764	202116119	ALUMNI	Rivera Moreto	Jhenrry	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	jhenrry.rivera@upeu.edu.pe	70062	72229900	staff	Rivera Moreto	Jhenrry	NULL	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	juan.ruiz@upeu.edu.pe	26571	202411340	ESTUDI	RUIZ CERDA	JUAN MIGUEL	44553440	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	juan.ruiz@upeu.edu.pe	71720	00964236	faculty	Ruiz Soto	Juan Martín	NULL	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	juanfelixq@upeu.edu.pe	91971	21835727	alum	QUISPE GONZALES JUAN FELIX	QUISPE GONZALES JUAN FELIX	NULL	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	juanfelixq@upeu.edu.pe	94192	8510067	INVESTI	Quispe Gonzales	Juan Felix	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	julhino.florian@upeu.edu.pe	89769	201310320	ALUMNI	Florian Huaman	Julhino Jesus	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	julhino.florian@upeu.edu.pe	71591	73464815	staff	Florian Huaman	Julhino Jesus	NULL	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	lauraem@upeu.edu.pe	18306	201320514	alum	Epifania Mejia	Laura Isabel	72128746	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	lauraem@upeu.edu.pe	21911	75862429	VISITA	SAMIRA VALERIA LOPEZ SANTILLAN		NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	lauren.garcia@upeu.edu.pe	86849	202118571	ALUMNI	Garcia Jaime	Lauren Yesmith	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	lauren.garcia@upeu.edu.pe	70096	74377281	staff	Garcia Jaime	Lauren Yesmith	NULL	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	lizethflores@upeu.edu.pe	33250	202212831	ESTUDI	Yanqui Diaz	Evelin Vanessa	NULL	0
+EMAIL_MATCH_DIFF_NAME_REVIEW	lizethflores@upeu.edu.pe	94299	70425435	faculty	Flores Rodrigo	Lizeth	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	lucero.andrade@upeu.edu.pe	84716	202121540	ALUMNI	Andrade Mendoza	Lucero Dinet	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	lucero.andrade@upeu.edu.pe	71459	71454073	ADMINIST	Andrade Mendoza	Lucero Dinet	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	luis.vilca@upeu.edu.pe	85202	202121992	ALUMNI	Vilca Hilasaca	Luis Martin	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	luis.vilca@upeu.edu.pe	71022	75998706	staff	Vilca Hilasaca	Luis Martin	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	maribel.torres.q@upeu.edu.pe	85784	201811382	ALUMNI	Torres Quispe	Maribel	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	maribel.torres.q@upeu.edu.pe	71553	75315338	alum	Torres Quispe	Maribel	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	melany.gomez@upeu.edu.pe	84847	202012396	ALUMNI	Gomez Mamani	Melany Sarai	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	melany.gomez@upeu.edu.pe	71507	74808799	staff	Gomez Mamani	Melany Sarai	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	mileni.hernandez@upeu.edu.pe	87631	202115638	ALUMNI	Hernandez Mendoza	Mileni	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	mileni.hernandez@upeu.edu.pe	71003	61914302	faculty	Hernandez Mendoza	Mileni	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	orfelinaarpasi@upeu.edu.pe	94180	23985475	faculty	Arpasi Quispe	Orfelina	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	orfelinaarpasi@upeu.edu.pe	94179	8410123	INVESTI	Arpasi Quispe	Orfelina	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	paulponce@upeu.edu.pe	88225	201910098	ALUMNI	Ponce Quispe	Paul Alexander	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	paulponce@upeu.edu.pe	70651	74950136	staff	Ponce Quispe	Paul Alexander	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	rafael.pfura@upeu.edu.pe	84575	202120319	ALUMNI	Pfura Achahui	Rafael	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	rafael.pfura@upeu.edu.pe	71502	73692579	staff	Pfura Achahui	Rafael	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	randy.poma@upeu.edu.pe	86935	202012399	ALUMNI	Poma Luque	Randy Sair	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	randy.poma@upeu.edu.pe	70102	60214895	staff	Poma Luque	Randy Sair	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	rubencordova@upeu.edu.pe	84774	201811489	ALUMNI	Cordova Tocto	Ruben Dario	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	rubencordova@upeu.edu.pe	70756	71624412	faculty	Cordova Tocto	Ruben Dario	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	samuel.sobenis@upeu.edu.pe	70792	008098638	faculty	Sobenis Loza	Samuel Agustin	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	samuel.sobenis@upeu.edu.pe	86155	201910552	ALUMNI	Sobenis Loza	Samuel Agustin	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	samuel.vasquez@upeu.edu.pe	84753	202100241	ALUMNI	Vasquez Castillo	Samuel Axel	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	samuel.vasquez@upeu.edu.pe	71435	77476045	staff	Vasquez Castillo	Samuel Axel	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	thayli.loconi@upeu.edu.pe	85517	200920248	ALUMNI	Loconi Ordinola	Thayli Armandina	NULL	0
+EMAIL_MATCH_SAME_NAME_FUSION_CAND	thayli.loconi@upeu.edu.pe	70861	47202452	staff	Loconi Ordinola	Thayli Armandina	NULL	0
