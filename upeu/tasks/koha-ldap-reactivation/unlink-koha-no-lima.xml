@@ -116,27 +116,28 @@ if (kohaShadowOids.isEmpty()) {
     return
 }
 
-// UNLINK PURO a nivel REPOSITORIO (raw): delete del linkRef por OID de shadow.
-// repositoryService.modifyObject NO dispara clockwork ni provisioning => no
-// llama al conector Koha (suma-nunca-resta del lado MidPoint). El shadow Koha
-// persiste; solo se rompe la referencia user->shadow.
-def prismContext = midpoint.prismContext
-def refValues = kohaShadowOids.collect { oid ->
-    def rv = prismContext.itemFactory().createReferenceValue(oid, ShadowType.COMPLEX_TYPE)
-    rv
+// UNLINK PURO a nivel REPOSITORIO (raw): se BORRA el shadow Koha del repo de
+// MidPoint con repositoryService.deleteObject. Esto NO toca el recurso Koha
+// (es repo-level, no pasa por provisioning/clockwork) y rompe automaticamente
+// el linkRef user->shadow (la FK del proyection ref desaparece con el shadow).
+// El patron en Koha (cardnumber) queda intacto para que koha-expert lo archive
+// con delete_patrons.pl. Es la forma canonica de "dejar de gestionar" sin
+// deprovisionar (suma-nunca-resta del lado MidPoint).
+// NOTA: no usamos modifyObject(linkRef delete) porque el match por valor exige
+// relation+type exactos; borrar el shadow es deterministico y limpia el ref.
+def result = new com.evolveum.midpoint.schema.result.OperationResult('unlinkKoha')
+def removed = 0
+kohaShadowOids.each { oid ->
+    try {
+        midpoint.repositoryService.deleteObject(ShadowType.class, oid, result)
+        removed++
+    } catch (e) {
+        log.error('UNLINK-KOHA delete shadow {} failed: {}', oid, e.message)
+    }
 }
 
-def delta = prismContext.deltaFor(UserType.class)
-    .item(UserType.F_LINK_REF)
-    .delete(refValues as Object[])
-    .asObjectDelta(user.oid)
-
-def result = new com.evolveum.midpoint.schema.result.OperationResult('unlinkKoha')
-midpoint.repositoryService.modifyObject(UserType.class, user.oid,
-    delta.getModifications(), result)
-
-log.info('UNLINK-KOHA user={} ({}) loc={} shadowsRemoved={}',
-    user.name, user.oid, user.locality, kohaShadowOids.size())
+log.info('UNLINK-KOHA user={} ({}) loc={} kohaShadowsDeleted={}',
+    user.name, user.oid, user.locality, removed)
                             ]]></code>
                         </s:script>
                     </s:execute>
