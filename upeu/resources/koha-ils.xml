@@ -1352,20 +1352,40 @@ return (w.compareTo(s) >= 0) ? w : s
                         <source>
                             <path>$focus/extension/upeu:smartwifiGuest</path>
                         </source>
+                        <source>
+                            <path>$focus/locality</path>
+                        </source>
                         <expression>
                             <script>
                                 <code><![CDATA[
+// ================================================================
+// GATE DE CAMPUS — Koha = SOLO campus LIMA (decisión 2026-06-02).
+// El CRAI/Koha gobernado por MidPoint atiende únicamente Lima
+// (branchcode BUL). Juliaca (BUJ) y Tarapoto (BUT) tienen su propia
+// gestión bibliotecaria fuera del alcance de este IGA. LDAP/Entra/M365
+// SIGUEN siendo multi-campus — este gate aplica SOLO a Koha.
+// Discriminador: $focus/locality ∈ {LIMA|JULIACA|TARAPOTO}
+// (poblado por inbound Oracle LAMB desde Sede). Sin locality => no Lima.
+// ================================================================
+def loc = (locality ?: '').toString().trim().toUpperCase()
+def isLima = (loc == 'LIMA')
 def worker  = liveAffiliationWorker
 def student = liveAffiliationStudent
 def guest   = smartwifiGuest
 def hasLib  = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72e-b874b3c48fa6' }
-def eligible = (worker != null) || (student != null) || (guest != null) || hasLib
-// suma-no-resta: si el patrón Koha ya existe (reality), NUNCA borrar.
+def eligible = isLima && ((worker != null) || (student != null) || (guest != null) || hasLib)
+// suma-no-resta para LIMA: si el patrón Koha ya existe (reality), NUNCA borrar.
 // Se archiva vía administrativeStatus=disabled, jamás delete.
 // MidPoint 4.10: la overload (focus, oid, String, String, boolean) NO existe.
 // getLinkedShadow(focus, resourceOid) devuelve el shadow vinculado de ese
 // resource (account/default) o null. Suficiente para el predicado "ya existe".
-def existing = midpoint.getLinkedShadow(focus, '9b5a7c81-47aa-42ac-9a08-4de8b64935af')
+// CLAVE no-Lima: el guard de preservación SOLO aplica a Lima. Los shadows
+// no-Lima se desvinculan ANTES (bulk unlink, ver runbook) — al no quedar
+// shadow vinculado, no entran aquí. Si quedara alguno residual, existence
+// retorna false PERO el archivado en Koha lo hace koha-expert (delete_patrons),
+// NO MidPoint: por eso NO confiamos el deprovisioning no-Lima a este mapping.
+// El orden seguro es: (1) bulk unlink no-Lima, (2) este gate, (3) archivado Koha.
+def existing = isLima ? midpoint.getLinkedShadow(focus, '9b5a7c81-47aa-42ac-9a08-4de8b64935af') : null
 return eligible || (existing != null)
                                 ]]></code>
                             </script>
@@ -1396,6 +1416,9 @@ return eligible || (existing != null)
                         <source>
                             <path>$focus/extension/upeu:smartwifiGuest</path>
                         </source>
+                        <source>
+                            <path>$focus/locality</path>
+                        </source>
                         <expression>
                             <script>
                                 <code><![CDATA[
@@ -1409,6 +1432,19 @@ return eligible ? ActivationStatusType.ENABLED : ActivationStatusType.DISABLED
                                 ]]></code>
                             </script>
                         </expression>
+                        <!-- GATE DE CAMPUS (2026-06-02): este mapping SOLO actúa para LIMA.
+                             En foco no-Lima se abstiene (no produce delta de administrativeStatus)
+                             para NO chocar con el archivado que hace koha-expert (delete_patrons.pl)
+                             en BUJ/BUT. El deprovisioning no-Lima NO se confía a MidPoint: los
+                             shadows no-Lima se desvinculan vía bulk unlink (suma-nunca-resta del
+                             lado MidPoint), y el patrón en Koha lo gestiona koha-expert. -->
+                        <condition>
+                            <script>
+                                <code><![CDATA[
+(locality ?: '').toString().trim().toUpperCase() == 'LIMA'
+                                ]]></code>
+                            </script>
+                        </condition>
                     </outbound>
                 </administrativeStatus>
             </activation>

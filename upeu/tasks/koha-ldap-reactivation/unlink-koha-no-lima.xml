@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ================================================================
+  Tarea: UNLINK masivo de patrones Koha de foci NO-LIMA
+  ================================================================
+  Decisión 2026-06-02: Koha gobernado por MidPoint = SOLO campus LIMA
+  (branchcode BUL). Juliaca (BUJ) y Tarapoto (BUT) salen del alcance.
+  LDAP / Entra ID / M365 SIGUEN siendo multi-campus — NO se tocan.
+
+  Esta tarea ROMPE el linkRef (user -> shadow Koha) de cada foco cuya
+  locality != LIMA. Es UNLINK PURO del lado MidPoint:
+    - NO borra el patrón en Koha
+    - NO desactiva (card_lost/expiry) el patrón en Koha
+    - NO produce ninguna llamada al conector Koha
+  => no colisiona con el archivado que ejecuta koha-expert
+     (delete_patrons.pl -> deletedborrowers) en BUJ/BUT.
+
+  Mecanismo: itera sobre UserType con un shadow del resource Koha y
+  locality != LIMA, y aplica un ObjectDelta REPLACE/DELETE del item
+  linkRef que apunta al shadow Koha. Eliminar el linkRef del foco es
+  la forma canónica de "dejar de gestionar" sin deprovisionar
+  (suma-nunca-resta del lado MidPoint).
+
+  ORDEN SEGURO (coordinar con koha-expert):
+    1. EJECUTAR ESTA TAREA (unlink no-Lima).
+    2. Reimport koha-ils.xml con el gate locality=='LIMA' (existence +
+       administrativeStatus condicionados) — ya hecho via GitOps.
+    3. koha-expert archiva/borra los patrones BUJ/BUT en Koha.
+  Tras (1)+(2), un recompute de foco no-Lima NO recrea shadow Koha
+  (no elegible + sin shadow) => cero pelea con (3).
+
+  executionState=suspended: ejecutar manualmente tras revisar el
+  conteo de candidatos (no-Lima con shadow ~ 6.657 con owner + NULL
+  locality 4.578 — confirmar política sobre NULL antes de incluirlos).
+
+  Canónico SciBack: patrón "gate de servicio por campus + unlink no
+  deprovisionante". Reutilizable para cualquier resource de alcance
+  geográfico restringido.
+  ================================================================
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+      oid="b8d3f1a2-4c5e-46a7-9b81-0c2e7f6a3d99">
+    <name>Unlink Koha patrons — foci NO-LIMA (gate campus)</name>
+    <description>Rompe el linkRef user-&gt;shadow Koha de foci locality != LIMA. Unlink puro: no borra ni desactiva en Koha. Paso 1 del gate "Koha solo Lima". executionState=suspended; ejecutar manualmente tras revisar conteos.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>suspended</executionState>
+    <activity>
+        <work>
+            <iterativeScripting>
+                <objects>
+                    <type>c:UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <q:ref>
+                                    <q:path>linkRef</q:path>
+                                    <q:value>
+                                        <!-- cualquier shadow; el script filtra por resource Koha -->
+                                    </q:value>
+                                </q:ref>
+                                <q:not>
+                                    <q:equal>
+                                        <q:path>locality</q:path>
+                                        <q:value>LIMA</q:value>
+                                    </q:equal>
+                                </q:not>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                    <searchOptions>
+                        <option>
+                            <options>
+                                <noFetch>true</noFetch>
+                            </options>
+                        </option>
+                    </searchOptions>
+                </objects>
+                <scriptExecutionRequest>
+                    <s:execute xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting-3">
+                        <s:script>
+                            <code><![CDATA[
+import com.evolveum.midpoint.xml.ns._public.common.common_3.*
+import com.evolveum.midpoint.prism.delta.*
+import com.evolveum.midpoint.prism.path.*
+
+def KOHA_OID = '9b5a7c81-47aa-42ac-9a08-4de8b64935af'
+def user = input
+
+// recolectar los linkRef que apuntan a shadows del resource Koha
+def kohaLinks = (user.linkRef ?: []).findAll { ref ->
+    def sh = null
+    try { sh = midpoint.getObject(ShadowType.class, ref.oid) } catch (ignored) {}
+    sh != null && sh.resourceRef != null && sh.resourceRef.oid == KOHA_OID
+}
+
+if (kohaLinks.isEmpty()) {
+    return
+}
+
+// construir un delta que ELIMINA esos linkRef del foco (unlink puro,
+// no toca el recurso). Importante: replaceModelService / repository.
+def prismContext = midpoint.prismContext
+def valuesToDelete = kohaLinks.collect { it.asReferenceValue().clone() }
+
+def delta = prismContext.deltaFor(UserType.class)
+    .item(UserType.F_LINK_REF)
+    .delete(valuesToDelete as Object[])
+    .asObjectDelta(user.oid)
+
+// executeChanges con raw=false aplica el unlink sin propagar al conector
+// (eliminar linkRef NO genera operación de provisioning sobre el shadow).
+midpoint.executeChanges(
+    com.evolveum.midpoint.util.MiscUtil.createCollection(delta), null)
+
+log.info('Unlinked Koha shadow(s) from non-Lima user {} ({}) — links removed: {}',
+    user.name, user.oid, kohaLinks.size())
+                            ]]></code>
+                        </s:script>
+                    </s:execute>
+                </scriptExecutionRequest>
+            </iterativeScripting>
+        </work>
+        <distribution>
+            <workerThreads>2</workerThreads>
+        </distribution>
+    </activity>
+</task>
