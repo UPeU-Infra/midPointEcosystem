@@ -58,28 +58,23 @@
                     <type>c:UserType</type>
                     <query>
                         <q:filter>
-                            <q:and>
-                                <q:ref>
-                                    <q:path>linkRef</q:path>
-                                    <q:value>
-                                        <!-- cualquier shadow; el script filtra por resource Koha -->
-                                    </q:value>
-                                </q:ref>
-                                <!-- SCOPE EXACTO (2026-06-02): SOLO campus confirmados no-Lima.
-                                     locality=NULL NO entra (se clasifica aparte, NO se toca):
-                                     usar IN explícito {JULIACA,TARAPOTO}, NUNCA NOT==LIMA
-                                     (NOT==LIMA arrastraría los 4,578 NULL). -->
-                                <q:or>
-                                    <q:equal>
-                                        <q:path>locality</q:path>
-                                        <q:value>JULIACA</q:value>
-                                    </q:equal>
-                                    <q:equal>
-                                        <q:path>locality</q:path>
-                                        <q:value>TARAPOTO</q:value>
-                                    </q:equal>
-                                </q:or>
-                            </q:and>
+            <!-- SCOPE EXACTO (2026-06-02): SOLO campus confirmados no-Lima.
+                                 locality=NULL NO entra (se clasifica aparte, NO se toca):
+                                 usar IN explícito {JULIACA,TARAPOTO}, NUNCA NOT==LIMA
+                                 (NOT==LIMA arrastraría los 4,578 NULL).
+                                 NO se filtra por linkRef en el query (un q:ref sin valor es
+                                 inválido: "No values to search specified for item linkRef").
+                                 El script descarta foci sin shadow Koha (kohaLinks.isEmpty). -->
+                            <q:or>
+                                <q:equal>
+                                    <q:path>locality</q:path>
+                                    <q:value>JULIACA</q:value>
+                                </q:equal>
+                                <q:equal>
+                                    <q:path>locality</q:path>
+                                    <q:value>TARAPOTO</q:value>
+                                </q:equal>
+                            </q:or>
                         </q:filter>
                     </query>
                     <searchOptions>
