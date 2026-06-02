@@ -1188,12 +1188,34 @@
                     <expression>
                         <script>
                             <code>
+// Expiry efectivo = MAX de las fechas de término reales por-IIA de las afiliaciones vivas.
 def w = terminationDate?.toString()?.take(10)
 def s = terminationDateStudent?.toString()?.take(10)
-if (w == null &amp;&amp; s == null) return null
-if (w == null) return s
-if (s == null) return w
-return (w.compareTo(s) >= 0) ? w : s
+def realMax = null
+if (w != null &amp;&amp; s != null) { realMax = (w.compareTo(s) >= 0) ? w : s }
+else if (w != null) { realMax = w }
+else if (s != null) { realMax = s }
+
+def today = java.time.LocalDate.now()
+
+// FALLBACK (2026-06-02, tarea expiry): este mapping SOLO corre con afiliación viva
+// (condition liveAffiliationWorker||liveAffiliationStudent). Casos sin fecha real futura:
+//   (a) realMax == null  -> trabajador permanente FEC_TERMINO NULL (77 casos): nunca hubo fecha.
+//   (b) realMax vencido  -> matrícula/contrato con fecha pasada pero afiliación AUN viva.
+// En ambos, una afiliación VIVA no debe expirar la cuenta Koha. Computamos today + P12M.
+// ANCLAJE canónico: liveAffiliation* ya retorna null cuando contrato/matrícula vence (IIA);
+// al cesar, la condition false -> el mapping no participa -> el archivado leaver gana
+// (DISABLED -> expiry=ayer). No sobre-extiende. eduPerson/SCHAC schacExpiryDate deriva del
+// lifecycle desde la IIA (iga-canonical-standards §1.2).
+if (realMax == null) {
+    return today.plusMonths(12).toString()
+}
+def realMaxDate = java.time.LocalDate.parse(realMax)
+if (realMaxDate.isBefore(today)) {
+    return today.plusMonths(12).toString()
+}
+// Fecha real futura: comportamiento existente intacto (no se degrada).
+return realMax
                             </code>
                         </script>
                     </expression>
