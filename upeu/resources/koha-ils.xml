@@ -1144,21 +1144,46 @@
             <attribute>
                 <ref>ri:expiry_date</ref>
                 <displayName>Fecha de Expiración</displayName>
+                <!-- GUARD #1 (null-guard contra blanqueo): tolerant=true.
+                     Con strength=strong, un mapping cuyo output set es VACIO (return null,
+                     ambas termination ausentes) seria autoritativo sobre su rango y BORRARIA
+                     el expiry_date existente. tolerant=true hace que valores fuera del rango
+                     emitido NO se eliminen => si no hay valor calculado, no se toca el expiry
+                     vigente de la cuenta. El script ademas retorna null (no cadena vacia). -->
+                <tolerant>true</tolerant>
                 <outbound>
                     <name>expiry-date-outbound</name>
-                    <strength>normal</strength>
+                    <strength>strong</strength>
                     <!-- Expiry efectivo = MAX de las fechas de término por-IIA de las afiliaciones vivas.
                          terminationDate          = IIA Trabajadores (FEC_TERMINO del contrato UPeU).
                          terminationDateStudent   = IIA Estudiantes  (MAX FECHA_FIN matrícula vigente).
                          Cada uno es single-writer (canónico §1.3) -> sin colisión dual-strong en focos
                          employee+student. Tomamos el mayor: una persona con empleo y matrícula vigentes
                          debe expirar en la cuenta Koha por la afiliación que dure más. Fechas YYYY-MM-DD
-                         comparan lexicográfico == cronológico. null si ninguna afiliación viva. -->
+                         comparan lexicográfico == cronológico. null si ninguna afiliación viva.
+
+                         strong (2026-06-01d): el delta-based 'normal' no empujaba el expiry
+                         vencido cuando el shadow ya tenia un valor stale. strong fuerza recompute
+                         del atributo para imponer la fecha de politica correcta. Aprobado con 2 guards.
+
+                         GUARD #2 (no colisión con archivado leaver): condition exige afiliación
+                         VIVA (worker o student). Para leavers (sin afiliación viva) este mapping
+                         NO participa => el path de archivado gobierna: administrativeStatus=DISABLED
+                         que el conector v1.3.x traduce a expiry_date=ayer + card_lost=true. Asi el
+                         archivado GANA inequivocamente sobre expiry_date y no hay dos writers strong
+                         colisionando sobre el mismo campo Koha. Para cuentas con afiliación viva,
+                         manda el MAX(termination). suma-nunca-resta intacto. -->
                     <source>
                         <path>$focus/extension/sb:terminationDate</path>
                     </source>
                     <source>
                         <path>$focus/extension/sb:terminationDateStudent</path>
+                    </source>
+                    <source>
+                        <path>$focus/extension/sb:liveAffiliationWorker</path>
+                    </source>
+                    <source>
+                        <path>$focus/extension/sb:liveAffiliationStudent</path>
                     </source>
                     <expression>
                         <script>
@@ -1172,6 +1197,13 @@ return (w.compareTo(s) >= 0) ? w : s
                             </code>
                         </script>
                     </expression>
+                    <!-- GUARD #2: solo cuentas con afiliación viva. Leaver (sin afiliación viva)
+                         queda fuera => el archivado (DISABLED -> expiry=ayer) gana sin colisión. -->
+                    <condition>
+                        <script>
+                            <code>liveAffiliationWorker != null || liveAffiliationStudent != null</code>
+                        </script>
+                    </condition>
                 </outbound>
             </attribute>
             <attribute>
