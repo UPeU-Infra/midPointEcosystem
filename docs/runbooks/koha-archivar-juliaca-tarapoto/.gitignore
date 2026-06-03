@@ -1,0 +1,6 @@
+# PII — listas de identificadores de personas, NO commitear
+archive_list_provincia.csv
+archive_cardnumbers.txt
+lima_dni.txt
+*.csv
+*.txt
