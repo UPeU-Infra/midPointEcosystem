@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     GAP B - FASE 2 - CANARY (1 ORPHAN)
+     ================================================================
+     Reconciliacion ON-RESOURCE acotada a UN solo borrower Koha por
+     cardnumber. Flujo canonico (Reality-vs-Policy, skill §2.1):
+       lee borrower #43374 (cardnumber 202414462, ESTUDI)
+       -> shadow UNMATCHED
+       -> correlador C2 (correlate-by-cardnumber: cardnumber==name)
+          matchea foco cfda7e53-e5e9-4b3a-a02d-fb5ff9814d39 (name=202414462)
+       -> situacion UNLINKED
+       -> reaccion <link/> (VINCULA el shadow al foco; NO crea cuenta)
+       -> inbound canoniza categorycode ESTUDI -> student.
+     La reaccion unmatched NO tiene addFocus => 0 riesgo de foco/cuenta
+     duplicada. NO es recompute focus-driven (ese intenta CREATE -> Koha
+     409 AlreadyExists para ORPHANs). Es recon on-resource = lee + linkea.
+
+     Scope: query sobre attributes/cardnumber = '202414462' (un objeto).
+     executionState=suspended: el agente la libera (resume) tras revisar.
+     workerThreads=1 (canary).
+     ================================================================ -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="d1a2b3c4-0001-4abc-9def-000000202414">
+    <name>GapB Canary - Recon Koha link ORPHAN 202414462</name>
+    <description>Canary FASE 2: recon on-resource acotada a cardnumber 202414462 (#43374 ESTUDI). Linkea shadow al foco existente, canoniza ESTUDI->student. NO crea cuenta.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="UserType"/>
+    <executionState>suspended</executionState>
+    <activity>
+        <work>
+            <reconciliation>
+                <resourceObjects>
+                    <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>attributes/ri:cardnumber</q:path>
+                                <q:value>202414462</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </resourceObjects>
+            </reconciliation>
+        </work>
+        <distribution>
+            <workerThreads>1</workerThreads>
+        </distribution>
+    </activity>
+</task>
