@@ -979,18 +979,25 @@
                 <outbound>
                     <name>statistics1-outbound</name>
                     <strength>normal</strength>
-                    <source>
-                        <path>$focus/organizationalUnit</path>
-                    </source>
+                    <!-- Koha statistics_1 es single-valued. Focos multi-facultad
+                         (p.ej. estudiante en 2 EP/facultades) traen >1
+                         organizationalUnit y rompian la creacion del patron
+                         ("Attempt to add 2 values to a single-valued item
+                         attributes/statistics_1"). Un <source>/<script> relativista
+                         se evalua POR-VALOR (skill midpoint-best-practices L219) =>
+                         seguia emitiendo 2 valores. Solucion canonica: NO usar source
+                         relativo; leer el conjunto completo del foco (getFocusObjectNew)
+                         y colapsar a UN solo valor deterministico (primero por orden
+                         alfabetico, estable). 2026-06-02 Gap B. -->
                     <expression>
-                        <!-- Koha statistics_1 es single-valued. Focos multi-facultad
-                             (p.ej. estudiante en 2 EP/facultades) traen >1
-                             organizationalUnit y rompian la creacion del patron
-                             ("Attempt to add 2 values to a single-valued item
-                             attributes/statistics_1"). Mismo guard que statistics2-outbound:
-                             colapsar a un solo valor (el primero). 2026-06-02 Gap B. -->
                         <script>
-                            <code>organizationalUnit instanceof Collection ? organizationalUnit?.find()?.toString() : organizationalUnit?.toString()</code>
+                            <code><![CDATA[
+def f = midpoint.getFocusObjectNew()
+if (f == null) return null
+def ous = f.getOrganizationalUnit()
+if (ous == null || ous.isEmpty()) return null
+return ous.collect { it?.getOrig() ?: it?.toString() }.findAll { it != null }.sort().getAt(0)
+                            ]]></code>
                         </script>
                     </expression>
                 </outbound>
