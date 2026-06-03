@@ -1443,7 +1443,19 @@ def eligible = hasLiveAff && hasLimaAffiliation
 // El deprovisioning de provincia (Juliaca/Tarapoto) se hace por bulk unlink +
 // archivado koha-expert fuera de este mapping; aquí solo gobernamos creación
 // y preservación (no confiamos el delete a este gate).
-def existing = midpoint.getLinkedShadow(focus, '9b5a7c81-47aa-42ac-9a08-4de8b64935af')
+// BLINDAJE getLinkedShadow (tarea #65, caso Tito 43508613): si el foco tiene un
+// shadow huérfano/dangling (link roto, shadow dummy), getLinkedShadow puede lanzar.
+// Sin guard, la excepción aborta el existence mapping y MidPoint cae al fallback
+// (intenta CREAR el patrón) → cuenta indeseada. Con try/catch→false, ante error de
+// resolución NO afirmamos existencia → la decisión queda solo en `eligible` (policy),
+// nunca se crea por un shadow roto. midpoint-best-practices §7 (existence defensivo).
+def existing = null
+try {
+    existing = midpoint.getLinkedShadow(focus, '9b5a7c81-47aa-42ac-9a08-4de8b64935af')
+} catch (Exception e) {
+    log.warn('koha-account-existence: getLinkedShadow falló para {} → existing=null: {}', focus?.name, e.message)
+    existing = null
+}
 return eligible || (existing != null)
                                 ]]></code>
                             </script>

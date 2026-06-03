@@ -27,5 +27,22 @@
                  extension/sciback:primaryAffiliation (mapping unico, deterministico).
                  Construction vacia = no-op: el holder solo conserva el vinculo. -->
         </construction>
+        <!-- GATE CAMPUS MULTI-CAMPUS — ENFORCEMENT EN POLICY (tarea #65, 2026-06-03).
+             Rol deprecated/no-op, pero la construction aún referencia el resource Koha;
+             se gatea por consistencia con los demás AR-Koha-Patron. Solo aplica al holder
+             con vínculo VIVO Lima. FUSIÓN 4 KOHA: eliminar este bloque <condition>. -->
+        <condition>
+            <expression>
+                <script>
+                    <code><![CDATA[
+def cs = (basic.getExtensionPropertyValue(focus, 'campusStudent') ?: '').toString().trim().toUpperCase()
+def cw = (basic.getExtensionPropertyValue(focus, 'campusWorker')  ?: '').toString().trim().toUpperCase()
+def guest = basic.getExtensionPropertyValue(focus, 'smartwifiGuest')
+def hasLib = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72e-b874b3c48fa6' }
+return (cs == 'LIMA') || (cw == 'LIMA') || (guest != null) || hasLib
+                    ]]></code>
+                </script>
+            </expression>
+        </condition>
     </inducement>
 </role>
