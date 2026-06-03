@@ -54,19 +54,50 @@
     <lifecycleState>active</lifecycleState>
 
     <!-- ============================================================
-         BLOQUE A — IDENTIFIER INMUTABLE
-         name ← personalNumber (strong)
-         Libro Cap.9: "best choice is something already unique, immutable
-         and reasonably short". personalNumber es el campo exacto para esto.
-         strong = fuerza valor incluso sobre overrides manuales.
-         Fallback a derivado inicial+apellido solo si personalNumber ausente.
+         BLOQUE A — IDENTIFIER CANÓNICO AUTORITATIVO (CANON_KEY, tarea #67)
+         name = CÓDIGO UNIVERSITARIO si la persona tiene historia académica;
+                ELSE COD_APS normalizado (personalNumber) si es trabajador puro.
+
+         REGLA CANÓNICA (DECISION-canonical-identifier.md §4 + veredicto #67):
+           historia académica  := liveAffiliationStudent != null
+                                  || liveAffiliationAlum != null
+                                  || institutionalCode != null
+           name(académico)     := institutionalCode  (código universitario UPeU)
+           name(trabajador-puro):= personalNumber     (COD_APS normalizado; CANON_KEY)
+           fallback (sin ambos) := inicial+apellido (solo altas incompletas)
+
+         POR QUÉ ESTE BLOQUE ES AUTORITATIVO (best-practices §4.1/§4.5):
+           El object template corre DESPUÉS de todos los inbounds y, siendo
+           strong, GANA sobre cualquier inbound strong de los resources. Antes
+           `cod-aps-to-name` (trabajadores, strong) empujaba COD_APS(=DNI) al
+           name incluso para estudiantes-que-trabajan → name=DNI (drift de los
+           ~10,591 name=8-díg; 1,938 académicos mal-nombrados). Este bloque
+           corrige el name al CÓDIGO para todo foco con historia académica,
+           preservando COD_APS para el trabajador puro.
+           Patrón Opción 2 single-source persistido: lee institutionalCode (item
+           materializado por inbound strong de Estudiantes; weak de Egresados) y
+           liveAffiliation* (single-writer por IIA). NO depende del transitorio
+           `affiliations` (que cae en zero-set).
+
+         iga-canonical §1.3/§4.4 ("identificador inmutable, único y corto").
+         Libro Cap.9: "best choice is something already unique, immutable".
+         strong = fuerza valor incluso sobre overrides manuales e inbounds.
          ============================================================ -->
     <item>
         <ref>name</ref>
         <mapping>
-            <name>A-name-from-personalNumber</name>
+            <name>A-name-canonical-codigo-or-codaps</name>
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
+            <source>
+                <path>extension/sciback:institutionalCode</path>
+            </source>
+            <source>
+                <path>extension/sciback:liveAffiliationStudent</path>
+            </source>
+            <source>
+                <path>extension/sciback:liveAffiliationAlum</path>
+            </source>
             <source>
                 <path>personalNumber</path>
             </source>
@@ -78,7 +109,24 @@
             </source>
             <expression>
                 <script>
-                    <code>if (personalNumber != null &amp;&amp; basic.stringify(personalNumber).trim() != '') { return basic.stringify(personalNumber).trim() }; def gn = givenName != null ? basic.norm(basic.stringify(givenName)) : ''; def fn = familyName != null ? basic.norm(basic.stringify(familyName)) : ''; if (gn == '' &amp;&amp; fn == '') return null; def initial = gn.take(1); def lastname = fn.replaceAll(' ', ''); return (initial + lastname).take(8) + iterationToken</code>
+                    <code>
+def inst = institutionalCode != null ? basic.stringify(institutionalCode).trim() : ''
+def pn   = personalNumber   != null ? basic.stringify(personalNumber).trim()   : ''
+def hasAcademia = (liveAffiliationStudent != null) || (liveAffiliationAlum != null) || (inst != '')
+// (1) Historia académica → CÓDIGO universitario (institutionalCode).
+if (hasAcademia &amp;&amp; inst != '') { return inst }
+// (2) Trabajador puro (sin academia) → COD_APS normalizado (personalNumber, = CANON_KEY).
+if (pn != '') { return pn }
+// (3) Académico sin institutionalCode materializado todavía: conserva personalNumber si existe
+//     (no degradar a fallback humano si hay un identificador). pn ya cubierto en (2).
+// (4) Fallback humano SOLO si no hay ningún identificador (alta incompleta).
+def gn = givenName != null ? basic.norm(basic.stringify(givenName)) : ''
+def fn = familyName != null ? basic.norm(basic.stringify(familyName)) : ''
+if (gn == '' &amp;&amp; fn == '') return null
+def initial = gn.take(1)
+def lastname = fn.replaceAll(' ', '')
+return (initial + lastname).take(8) + iterationToken
+                    </code>
                 </script>
             </expression>
         </mapping>

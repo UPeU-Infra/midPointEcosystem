@@ -134,16 +134,34 @@
                          CANON_KEY = COD_APS si único, ó COD_APS||'-'||ID_PERSONA si multi-persona.
                          Fuente: __NAME__ del shadow (ya es CANON_KEY). Reusable SciBack
                          (§4.4 iga-canonical-standards: identificador inmutable/único para name). -->
+                    <!-- DEGRADADO strong→weak (CANON_KEY tarea #67, 2026-06-03):
+                         el `name` AUTORITATIVO lo fija el OBJECT TEMPLATE (Bloque A,
+                         strong, post-inbound): código universitario si hay historia
+                         académica, ELSE personalNumber(=CANON_KEY). Este inbound, en
+                         strong, dejaba name=CANON_KEY(=DNI/COD_APS) incluso para
+                         estudiantes-que-trabajan, peleando con el template y
+                         produciendo name=DNI en duales académicos (1,938 foci).
+                         Ahora WEAK: solo siembra name en el alta inicial (foco sin
+                         name) para que el shadow correlacione; el template lo
+                         recanoniza al código. best-practices §4.5 (template gana
+                         post-inbound). NO toca el conector. -->
                     <name>cod-aps-to-name</name>
-                    <strength>strong</strength>
+                    <strength>weak</strength>
                     <source><path>$shadow/attributes/icfs:name</path></source>
                     <target><path>name</path></target>
                 </inbound>
                 <inbound>
-                    <!-- personalNumber conserva el COD_APS crudo (es el código de planilla APS,
-                         atributo de negocio; NO necesita unicidad de focus-name). -->
+                    <!-- personalNumber = CANON_KEY (FIX CANON_KEY #67): identificador
+                         de planilla normalizado y ÚNICO (COD_APS si único, COD_APS-
+                         ID_PERSONA si multi-persona MDM). Antes guardaba COD_APS crudo;
+                         se cambia a CANON_KEY para que el name del TRABAJADOR PURO
+                         (template Bloque A → personalNumber) herede la unicidad de
+                         FIX B (sin reintroducir el FATAL_ERROR de COD_APS multi-
+                         persona). El COD_APS crudo de negocio sigue disponible en el
+                         atributo ri:COD_APS del shadow. strong = IIA de planilla. -->
                     <name>cod-aps-to-personalNumber</name>
                     <strength>strong</strength>
+                    <source><path>$shadow/attributes/icfs:name</path></source>
                     <target><path>personalNumber</path></target>
                 </inbound>
             </attribute>
