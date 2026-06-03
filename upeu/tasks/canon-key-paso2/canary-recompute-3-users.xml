@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     CANON_KEY PASO 2 — CANARY (3 usuarios)
+     ================================================================
+     Validar que el recompute corrige name=DNI → name=institutionalCode
+     antes de lanzar el masivo de 602 focos.
+
+     Canary seleccionado 2026-06-03:
+       d0ce4f11-34f9-4cab-b89a-3d556fae2d31  (name=72733698, inst=202212609)
+       b8fab961-83f6-435a-9ed1-f279583f21ae  (name=41903896, inst=200110468)
+       fff7b26e-a5cd-444d-8f5d-48395cae63a8  (name=72898585, inst=201510070)
+
+     Verificación post-ejecución:
+       SELECT namenorm, ext->>'74' FROM m_user
+       WHERE oid IN ('d0ce4f11-...', 'b8fab961-...', 'fff7b26e-...');
+       Esperado: namenorm = institutionalCode (202212609 / 200110468 / 201510070).
+     ================================================================ -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="c7f1a2b3-4d5e-4f6a-7b8c-9d0e1f2a3b4d">
+    <name>CANON_KEY PASO 2 — canary 3 usuarios (2026-06-03)</name>
+    <description>
+        Canary previo al masivo. Recomputa 3 focos con name=DNI e institutionalCode
+        materializado. Verificar que name cambia a institutionalCode antes de
+        importar el masivo recompute-canon-key-name-fix.xml.
+    </description>
+    <executionState>suspended</executionState>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:inOid>
+                                <!-- name=72733698 → esperado 202212609 -->
+                                <q:value>d0ce4f11-34f9-4cab-b89a-3d556fae2d31</q:value>
+                                <!-- name=41903896 → esperado 200110468 -->
+                                <q:value>b8fab961-83f6-435a-9ed1-f279583f21ae</q:value>
+                                <!-- name=72898585 → esperado 201510070 -->
+                                <q:value>fff7b26e-a5cd-444d-8f5d-48395cae63a8</q:value>
+                            </q:inOid>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>1</workerThreads>
+        </distribution>
+    </activity>
+</task>

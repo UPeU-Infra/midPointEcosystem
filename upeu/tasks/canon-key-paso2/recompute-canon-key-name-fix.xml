@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     CANON_KEY PASO 2 — Recompute masivo name canónico
+     ================================================================
+     Tarea: disparar el clockwork sobre los focos activos que tienen
+       institutionalCode materializado pero cuyo name aún no coincide
+       con el código universitario (name=DNI o nombre corto legacy).
+
+     Alcance (validado en PROD 2026-06-03):
+       lifecycleState = active
+       AND extension/sb:institutionalCode IS NOT NULL (ext.74 exists)
+       Total en scope: 602 usuarios (559 con name=DNI, 34 con name=CE,
+       8 con name short-id legacy).
+
+     Por qué recomputation y NO reconcile:
+       - El problema es focus-side: el template Bloque A ya tiene la
+         lógica correcta; solo faltan ejecutarla sobre estos focos.
+       - reconcile on-resource leería Oracle LAMB y actualizaría TODOS
+         los shadows (5,000+ innecesarios) con riesgo de side effects.
+       - recomputation corre el clockwork de cada foco directamente
+         (midpoint-best-practices §4.5/§5): template → Bloque A →
+         name = institutionalCode. Sin tocar Oracle LAMB. Seguro y acotado.
+
+     Por qué el filtro usa institutionalCode (no regex name):
+       - institutionalCode es el dato autoritativo de si la persona tiene
+         historia académica UPeU. Si está presente y name != instCode,
+         el template lo corregirá.
+       - Un filtro regex en name ('^[0-9]{8}$') capturaría también
+         trabajadores puros con COD_APS=DNI, que son correctos (DR §3).
+       - Este filtro es idempotente: re-ejecutar después que el name
+         ya se corrigió → el clockwork corre, name no cambia (strong ya
+         tiene el valor correcto) → 0 efecto colateral.
+
+     Estrategia de ejecución:
+       1. Importar este XML en PROD via ninja (suspendido).
+       2. Canary: PATCH query a inOid de 3 OIDs de prueba → resume →
+          verificar que name cambia a institutionalCode.
+       3. Si canary OK: PATCH query a filtro completo → resume masivo.
+       4. Verificar: SELECT COUNT(DISTINCT ...) con name != instCode debe
+          ser 0 (o solo los casos donde instCode cambió en LAMB, aceptable).
+
+     workerThreads = 2: scope de 602 focos es pequeño. Sin recursos
+       outbound activos en scope masivo (Koha gate activo pero solo Lima-active).
+       2 threads dan paralelismo sin estresar el heap.
+
+     executionState = suspended: SIEMPRE importar suspendida.
+       El usuario valida el canary antes de liberar el masivo.
+     ================================================================ -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:sb="urn:sciback:midpoint:person"
+      oid="c7f1a2b3-4d5e-4f6a-7b8c-9d0e1f2a3b4c">
+    <name>CANON_KEY PASO 2 — recompute name canónico (602 activos con instCode, 2026-06-03)</name>
+    <description>
+        Recompute scoped: focos activos con institutionalCode materializado
+        pero name desincronizado (name=DNI/CE/legacy). Bloque A del template
+        corrige name → institutionalCode. Idempotente. Ver docs/runbooks/
+        canon-key-paso2/ para bitácora de ejecución.
+    </description>
+    <executionState>suspended</executionState>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <!-- Solo activos: archived/draft no urgentes -->
+                                <q:equal>
+                                    <q:path>lifecycleState</q:path>
+                                    <q:value>active</q:value>
+                                </q:equal>
+                                <!-- institutionalCode materializado (ext.74 exists):
+                                     señal de historia académica UPeU, IIA Estudiantes/Egresados -->
+                                <q:not>
+                                    <q:equal>
+                                        <q:path>extension/sb:institutionalCode</q:path>
+                                    </q:equal>
+                                </q:not>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>2</workerThreads>
+        </distribution>
+    </activity>
+</task>
