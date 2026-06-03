@@ -996,7 +996,12 @@
 if (focus == null) return null
 def ous = focus.getOrganizationalUnit()
 if (ous == null || ous.isEmpty()) return null
-return ous.collect { it?.getOrig() ?: it?.toString() }.findAll { it != null }.sort().getAt(0)
+def v = ous.collect { it?.getOrig() ?: it?.toString() }.findAll { it != null }.sort().getAt(0)
+if (v == null) return null
+// Koha statistics_1 (borrower_attribute / authorised value) limita a 80 chars.
+// Algunas facultades exceden 80 y rompian la creacion del patron Gap B.
+// Truncar deterministicamente a 80. 2026-06-02 Gap B PASO 1.
+return v.length() > 80 ? v.substring(0, 80) : v
                             ]]></code>
                         </script>
                     </expression>
