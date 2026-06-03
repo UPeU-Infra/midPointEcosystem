@@ -992,9 +992,9 @@
                     <expression>
                         <script>
                             <code><![CDATA[
-def f = midpoint.getFocusObjectNew()
-if (f == null) return null
-def ous = f.getOrganizationalUnit()
+// 'focus' es el UserType nuevo bindeado en mappings outbound (no relativista).
+if (focus == null) return null
+def ous = focus.getOrganizationalUnit()
 if (ous == null || ous.isEmpty()) return null
 return ous.collect { it?.getOrig() ?: it?.toString() }.findAll { it != null }.sort().getAt(0)
                             ]]></code>
