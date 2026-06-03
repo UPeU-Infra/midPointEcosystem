@@ -982,6 +982,17 @@
                     <source>
                         <path>$focus/organizationalUnit</path>
                     </source>
+                    <expression>
+                        <!-- Koha statistics_1 es single-valued. Focos multi-facultad
+                             (p.ej. estudiante en 2 EP/facultades) traen >1
+                             organizationalUnit y rompian la creacion del patron
+                             ("Attempt to add 2 values to a single-valued item
+                             attributes/statistics_1"). Mismo guard que statistics2-outbound:
+                             colapsar a un solo valor (el primero). 2026-06-02 Gap B. -->
+                        <script>
+                            <code>organizationalUnit instanceof Collection ? organizationalUnit?.find()?.toString() : organizationalUnit?.toString()</code>
+                        </script>
+                    </expression>
                 </outbound>
             </attribute>
             <attribute>
