@@ -161,7 +161,10 @@ return (initial + lastname).take(8) + iterationToken
         <ref>emailAddress</ref>
         <mapping>
             <name>B-email-institutional-from-personalNumber</name>
-            <lifecycleState>active</lifecycleState>
+            <lifecycleState>deprecated</lifecycleState>
+            <!-- DESACTIVADO 2026-06-03: MidPoint no debe construir correos.
+                 El email institucional solo viene de Oracle LAMB (CORREO_INST via trabajadores.xml).
+                 Reactivar cuando el proceso de asignación de correo en Oracle esté operativo. -->
             <strength>weak</strength>
             <source>
                 <path>personalNumber</path>
