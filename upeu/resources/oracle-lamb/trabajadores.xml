@@ -567,6 +567,42 @@ return num</code>
                     </expression>
                     <target><path>locality</path></target>
                 </inbound>
+                <!-- SEDE_NOMBRE → campusWorker (per-IIA single-valued single-writer, OPCIÓN 2)
+                     IIA única: Trabajadores (contrato 7124 VIVO). MISMA fuente/transformación que
+                     sede-nombre-to-locality (sede del contrato vivo, COALESCE(osc,os)), pero strong
+                     a su PROPIO slot → cero colisión con campusStudent (Estudiantes). Vigencia VIVA
+                     idéntica a liveAffiliationWorker: ESTADO='I' o FEC_TERMINO vencido → null (empleo
+                     NO vivo → sin campusWorker). Así el gate Koha multi-campus solo cuenta el vínculo
+                     laboral PRESENTE (campusWorker==LIMA → elegible BUL), nunca un cese histórico.
+                     NO toca locality (lugar físico, lo usan LDAP/Entra/M365). -->
+                <inbound>
+                    <name>sede-nombre-to-campusWorker</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+// Vigencia VIVA del empleo, idéntica a liveAffiliationWorker (IIA por atributo, Reality-vs-Policy).
+// Sin contrato vivo → sin campus de empleo (no entra al gate Koha como vínculo laboral vivo).
+def estado = basic.getAttributeValue(shadow, 'ESTADO')
+if (estado == 'I') return null
+def ft = basic.getAttributeValue(shadow, 'FEC_TERMINO')
+if (ft != null &amp;&amp; ft.toString().trim() != '') {
+    try {
+        def s = ft.toString().trim()
+        def datePart = (s.length() &gt;= 10) ? s.substring(0, 10) : s
+        def fecTerm = java.time.LocalDate.parse(datePart)
+        if (fecTerm.isBefore(java.time.LocalDate.now())) return null
+    } catch (Exception ex) { }
+}
+def v = (input ?: '').toString().trim(); ['Sede Lima':'LIMA','Filial Tarapoto':'TARAPOTO','Filial Juliaca':'JULIACA'].get(v)
+</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:campusWorker</path>
+                    </target>
+                    <!-- SIN <evaluationPhases>: default clockwork-only (igual que liveAffiliationWorker). -->
+                </inbound>
             </attribute>
             <attribute>
                 <ref>ri:UPEU_ARCHETYPE_NAME</ref>

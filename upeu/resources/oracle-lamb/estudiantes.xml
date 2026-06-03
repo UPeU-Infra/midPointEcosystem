@@ -351,6 +351,27 @@ return d</code>
                     </expression>
                     <target><path>locality</path></target>
                 </inbound>
+                <!-- SEDE_NOMBRE → campusStudent (per-IIA single-valued single-writer, OPCIÓN 2)
+                     IIA única: Estudiantes (matrícula vigente). MISMA fuente/transformación que
+                     sede-nombre-to-locality, pero strong single-source a su PROPIO slot → cero
+                     colisión con campusWorker (Trabajadores). Presente SOLO mientras hay matrícula
+                     vigente (searchScript v4 restringe a semestres 279/267 → existencia del shadow
+                     ⇔ matrícula viva). Al desproyectar, el slot se vacía. Usado por el gate Koha
+                     multi-campus como vínculo VIVO de estudiante (campusStudent==LIMA → elegible BUL).
+                     NO toca locality (lugar físico, IIA distinta, lo usan LDAP/Entra/M365). -->
+                <inbound>
+                    <name>sede-nombre-to-campusStudent</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim(); ['Sede Lima':'LIMA','Filial Tarapoto':'TARAPOTO','Filial Juliaca':'JULIACA'].getOrDefault(v, 'LIMA')</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:campusStudent</path>
+                    </target>
+                    <!-- SIN <evaluationPhases>: default clockwork-only (igual que liveAffiliationStudent). -->
+                </inbound>
             </attribute>
             <attribute>
                 <ref>ri:DATE_EXPIRY</ref>

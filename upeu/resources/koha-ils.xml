@@ -1398,42 +1398,52 @@ return realMax
                             <path>$focus/extension/upeu:smartwifiGuest</path>
                         </source>
                         <source>
-                            <path>$focus/locality</path>
+                            <path>$focus/extension/sb:campusStudent</path>
+                        </source>
+                        <source>
+                            <path>$focus/extension/sb:campusWorker</path>
                         </source>
                         <expression>
                             <script>
                                 <code><![CDATA[
 // ================================================================
-// GATE DE CAMPUS — Koha excluye SOLO Juliaca + Tarapoto (decisión 2026-06-02).
-// El CRAI/Koha gobernado por MidPoint NO atiende Juliaca (BUJ) ni Tarapoto
-// (BUT): esos campus tienen su propia gestión bibliotecaria fuera del
-// alcance de este IGA. LIMA y locality=NULL SÍ pasan (se preservan): los
-// 4,578 foci con locality=NULL se clasifican aparte y NO se tocan — si un
-// NULL fuese de Lima, deprovisionarlo sería un falso negativo destructivo.
-// LDAP/Entra/M365 SIGUEN siendo multi-campus — este gate aplica SOLO a Koha.
-// Discriminador (suma-nunca-resta): negar Koha SOLO a locality explícitamente
-// ∈ {JULIACA|TARAPOTO}. Todo lo demás (LIMA, NULL, otros) es elegible.
-// (locality poblado por inbound Oracle LAMB desde Sede.)
+// GATE KOHA MULTI-CAMPUS AFILIACIÓN-AWARE (tarea #65, 2026-06-03).
+// Koha hoy = solo BUL (Lima). Elegible Koha-Lima si la persona tiene
+// un VÍNCULO VIVO con Lima:
+//   - matrícula vigente Lima  (campusStudent == 'LIMA'), O
+//   - contrato 7124 vivo Lima (campusWorker  == 'LIMA').
+// El EGRESO histórico de Lima NO cuenta (sin campusAlum en el gate):
+// un egresado puro de Lima sin matrícula/contrato vivo NO es elegible.
+// Provincia pura (Juliaca/Tarapoto/ISTAT, sin vínculo vivo Lima) → excluido.
+//
+// campusStudent/campusWorker son slots per-IIA single-valued single-writer
+// (Estudiantes/Trabajadores) poblados strong single-source — misma vigencia
+// VIVA que liveAffiliationStudent/Worker. locality NO entra al gate (queda
+// libre para LDAP/Entra/M365, semántica de lugar físico).
+//
+// FUSIÓN 4 KOHA (mitad de año): cuando BUJ/BUT/BU-ISTAT entren a este IGA,
+// quitar la condición `&& hasLimaAffiliation` (1 línea) → vuelve a ser
+// gate puro por afiliación viva multi-campus. Diseñado para ese cambio.
 // ================================================================
-def loc = (locality ?: '').toString().trim().toUpperCase()
-def isExcludedCampus = (loc == 'JULIACA' || loc == 'TARAPOTO')
 def worker  = liveAffiliationWorker
 def student = liveAffiliationStudent
 def guest   = smartwifiGuest
 def hasLib  = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72e-b874b3c48fa6' }
-def eligible = !isExcludedCampus && ((worker != null) || (student != null) || (guest != null) || hasLib)
-// suma-no-resta para LIMA/NULL: si el patrón Koha ya existe (reality), NUNCA
-// borrar. Se archiva vía administrativeStatus=disabled, jamás delete.
-// MidPoint 4.10: la overload (focus, oid, String, String, boolean) NO existe.
-// getLinkedShadow(focus, resourceOid) devuelve el shadow vinculado de ese
-// resource (account/default) o null. Suficiente para el predicado "ya existe".
-// CLAVE Juliaca/Tarapoto: el guard de preservación NO aplica a campus excluido.
-// Esos shadows se desvinculan ANTES (bulk unlink, ver runbook) — al no quedar
-// shadow vinculado, no entran aquí. Si quedara alguno residual, existence
-// retorna false PERO el archivado en Koha lo hace koha-expert (delete_patrons),
-// NO MidPoint: por eso NO confiamos el deprovisioning a este mapping.
-// El orden seguro es: (1) bulk unlink Juliaca/Tarapoto, (2) este gate, (3) archivado Koha.
-def existing = !isExcludedCampus ? midpoint.getLinkedShadow(focus, '9b5a7c81-47aa-42ac-9a08-4de8b64935af') : null
+// hasLiveAff: tiene algún vínculo vivo elegible (worker|student|guest|bibliotecario).
+def hasLiveAff = (worker != null) || (student != null) || (guest != null) || hasLib
+// hasLimaAffiliation: el vínculo VIVO es con Lima (matrícula O contrato Lima).
+// guest (visita Smart WiFi campus Lima) y hasLib (bibliotecario BUL) son
+// vínculos Lima por naturaleza hoy → cuentan como Lima.
+def cs = (campusStudent ?: '').toString().trim().toUpperCase()
+def cw = (campusWorker  ?: '').toString().trim().toUpperCase()
+def hasLimaAffiliation = (cs == 'LIMA') || (cw == 'LIMA') || (guest != null) || hasLib
+def eligible = hasLiveAff && hasLimaAffiliation
+// suma-nunca-resta: si el patrón Koha YA EXISTE (reality), NUNCA borrar.
+// Se archiva vía administrativeStatus=disabled (expiry+card_lost), jamás delete.
+// El deprovisioning de provincia (Juliaca/Tarapoto) se hace por bulk unlink +
+// archivado koha-expert fuera de este mapping; aquí solo gobernamos creación
+// y preservación (no confiamos el delete a este gate).
+def existing = midpoint.getLinkedShadow(focus, '9b5a7c81-47aa-42ac-9a08-4de8b64935af')
 return eligible || (existing != null)
                                 ]]></code>
                             </script>
