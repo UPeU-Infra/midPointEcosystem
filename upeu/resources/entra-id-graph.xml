@@ -160,6 +160,17 @@
                 <ref>ri:mail</ref>
                 <inbound>
                     <strength>weak</strength>
+                    <!-- GUARD anti-contaminación (2026-06-03): Entra NO es IIA de email
+                         institucional (Oracle LAMB lo es). El mail de Entra puede contener
+                         correos personales (gmail) o fantasma (DNI@upeu) mal cargados. Sin
+                         guard, este weak inyectaba gmails a emailAddress para estudiantes
+                         sin email en Oracle. Solo aceptar nombre@upeu.edu.pe REAL como
+                         último recurso; descartar gmail/personales y formato fantasma DNI@. -->
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d{8}/ ? null : v</code>
+                        </script>
+                    </expression>
                     <target>
                         <path>$user/emailAddress</path>
                     </target>
