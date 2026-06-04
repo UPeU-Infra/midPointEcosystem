@@ -95,3 +95,6 @@ secrets/
 *.diff
 
 .claude/scheduled_tasks.lock
+
+# PII: dataset dual-shadow con DNI
+docs/runbooks/ldap-dualshadow-dedup-265/*_dataset_*.csv
