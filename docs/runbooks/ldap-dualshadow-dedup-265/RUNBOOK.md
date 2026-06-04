@@ -1,9 +1,81 @@
-# Saneamiento dual-shadow LDAP — 265 focos (dedup uid=DNI vs uid=código)
+# Saneamiento dual-shadow LDAP — 267 focos (dedup uid=DNI vs uid=código)
 
 Fecha: 2026-06-04
 Resource LDAP (Identity Cache): `7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f` (`upeu/resources/ldap-identity-cache.xml`), base `ou=people,dc=upeu,dc=edu,dc=pe`, DN = `uid=<focus/name>,...`.
 
-## Estado: PARADO tras canary 2/2 PASS — BLOQUEO por concurrencia (NO ejecutar masivo todavía)
+## Estado: ✅ MASIVO EJECUTADO Y CERRADO — 267/267 saneados, dual-shadow = 0
+
+### Resumen ejecutivo del masivo (2026-06-04 PM12)
+- Bloqueo previo (import Estudiantes regenerando dual) RESUELTO: import `c1fe95c6` quedó SUSPENDED (paró en 1071). Universo estabilizado.
+- Re-conteo al iniciar: **267 focos** dual (subió de 265 por el import antes de suspenderlo).
+- Suspendido también, por prudencia, el **Recon recurring** `94b627b4` (interval=86400, misfireAction=executeImmediately) durante la ventana — para que no reintrodujera duales. **Sigue SUSPENDED al cierre (revisar si se reactiva — decisión usuario, ver Pendientes).**
+- Clasificación 267 focos: **267 keepers (uid=código=name) + 267 losers (uid=DNI8) — 0 anomalías, 0 losers no-DNI8.**
+- Masivo serializado en 3 fases. Resultado: **dual-shadow residual = 0**, ningún foco sin shadow keeper.
+
+## Procedimiento ejecutado (3 fases, idempotente)
+1. **Fase A** — DELETE shadow loser `?options=raw` (×266 + 1 canary) → 266/266 ok, 0 fail.
+2. **Fase B** — `ldapdelete uid=<DNI>` dentro del contenedor `openldap` (×266 + 1 canary) → 266/266 ok, 0 fail.
+3. **Fase C** — PATCH `/users/<foid>?options=reconcile` no-op (`replace c:telephoneNumber`) (×266) → 254 ok, 12 OTHER (2× HTTP 240 = partial-handled OK; 10× HTTP 500 = conflicto de datos PREEXISTENTE, NO dual-shadow).
+
+### Sobre los HTTP 500 de Fase C (no bloqueantes)
+Son focos con conflicto de mappings inbound `strong` single-valued PREEXISTENTE (ajeno al dedup):
+`Strong mappings provided more than one value for single-valued item familyName: [Ccaza Huayta, Casas Huayta]` (typos de apellido en fuentes Oracle). El clockwork no commitea el recompute, **pero el dedup ya estaba hecho** (shadow loser borrado en Fase A, DN LDAP borrado en Fase B). Verificado: los 10 focos quedan con **exactamente 1 shadow LDAP keeper** (uid=código). Workstream identifier-canónico (familyName/studyLevel/lambDocNum multi-valor) lo resuelve aparte.
+
+## Invariantes verificadas (cierre)
+| Invariante | PRE | POST |
+|---|---|---|
+| focos dual-shadow LDAP | 267 | **0** ✓ |
+| total shadows LDAP (m_shadow) | 7,619 | 7,351 (−268; −267 del dedup + −1 del caso alumni abajo) ✓ |
+| focos con ≥1 shadow LDAP | 6,660 | 6,659 (−1 = caso alumni 201810714, ver abajo; correcto por política) ✓ |
+| entradas `ou=people` (LDAP físico) | 7,618 | 7,351 (−267 exacto) ✓ |
+| **cardnumbers duplicados Koha BUL** | 0 | **0** ✓ (invariante crítica) |
+| total borrowers Koha BUL | 14,349 | 14,349 (dedup LDAP no crea cuentas; solo updates in-place) |
+
+### Caso especial — foco 201810714 (alumni) quedó sin shadow LDAP: CORRECTO
+1 foco salió del conteo `focos_con_shadow` (6,660→6,659). Diagnóstico: foco multi-afiliación (egresado 201810714 + ex-trabajador DNI 72225462), archetype `archetype-user-alumni`, **sin rol LDAP asignado** (0 AR-LDAP). En LDAP físico existía SOLO `uid=72225462` (DNI, el loser); su "keeper" `uid=201810714` (código) era un **shadow fantasma** apuntando a una entrada LDAP que nunca existió físicamente. Al borrar el loser y reconciliar, MidPoint unlinkó ambos shadows muertos y dejó el foco sin LDAP. **Esto es la política funcionando:** de 27,507 alumni, solo 3 tienen shadow LDAP (residuales) — los alumni puros NO reciben cuenta LDAP. La regla "nadie sin shadow" se cumple: ningún foco que DEBA tener LDAP quedó sin él.
+
+## Backups (PROD)
+- `pg_dump` m_shadow: `/home/juansanchez/backups/dualshadow-265/mp_shadows_20260604_113146.dump` (8.0 MB).
+- LDIF de los 267 losers (regenerado esta sesión — el original no existía): `/home/juansanchez/backups/dualshadow-265/losers_ldap_20260604_115209.ldif` (267/267 entradas, 264 KB) + copia en host LDAP `/tmp/dualdedup/`.
+
+## Change 3 (home library Koha) — bloqueados DESBLOQUEADOS, 14 flips a BUL
+Tras sanear el dual-shadow, se corrió reconcile serializado sobre los **132 focos dedup con cuenta Koha** (script `/tmp/koha_reconcile.sh` en PROD). El error `Projection ACCOUNT already exists in lens context` que bloqueaba los focos LIMA de Change 3 ya no aplica (el dual desapareció).
+
+**Resultado Koha (branchcode de los 132 focos dedup con cuenta):**
+| | PRE dedup | POST reconcile |
+|---|---|---|
+| BUL | 26 | **40** (+14 flips) |
+| BUJ | 9 | 2 |
+| BUT | 7 | 2 |
+
+- **14 flips netos a BUL** (BUJ −7, BUT −5, + correcciones) = focos LIMA antes bloqueados por dual-shadow que ahora pueden commitear el clockwork y derivan branchcode=BUL (cubre los ~30 de Change 3 que tenían eff-campus LIMA materializable).
+- Los 4 que quedan en province (BUJ 2 + BUT 2) son legítimamente no-LIMA o tienen conflicto de datos preexistente (HTTP 500 familyName/studyLevel/lambDocNum multi-valor — NO dual-shadow).
+- Reconcile: 120/132 ok, 12 OTHER (todos HTTP 500 por conflicto de datos preexistente, NO dual). **0 cardnumber duplicados, 0 cuentas creadas (updates in-place).**
+
+## Keycloak — 175 cuentas federadas stale por DNI (READ_ONLY) — AUTO-PURGADAS
+Provider `OpenLDAP Identity Cache UPeU` (`lUyeYTgrSeuojbkJKqOk1A`, editMode=READ_ONLY, importEnabled=true).
+- PRE: 177 `user_entity` federados con username = DNI loser. **0 con offline session.**
+- Tras borrar los DN LDAP (Fase B), Keycloak **purgó automáticamente** los registros importados: el DELETE vía Admin API devolvió 404 ("User not found") y la verificación en DB dio **`aun_en_db = 0`**. La federación READ_ONLY+import resuelve dinámicamente contra LDAP; al desaparecer el DN, el registro cache se limpia solo.
+- Backup pre-limpieza: `/tmp/kc_stale_backup_20260604_121259.psv` en host KC (id|username|email|enabled|created, 175 filas).
+- 138/267 keepers (uid=código) ya estaban federados → conservan login por código. Los demás se federan on-demand al primer login.
+- Restante: 2,208 federados con username DNI8 = workers legítimos (único shadow = uid=DNI, NO eran losers). Correcto, no se tocan.
+
+## Tasks suspendidas durante la ventana (estado al cierre)
+| OID | Task | Estado | Nota |
+|---|---|---|---|
+| `c1fe95c6` | Import Oracle LAMB Estudiantes v3 (regenerador) | SUSPENDED | El que regeneraba dual en tiempo real. NO reanudar (decisión usuario). |
+| `94b627b4` | Recon Oracle LAMB Estudiantes 2026-05-28 (RECURRING, interval=86400, misfire=executeImmediately) | SUSPENDED | Suspendido por prudencia durante la ventana (evitar reintroducir duales). **Decisión usuario reactivarlo — pertenece al sub-workstream Estudiantes.** |
+| `21548de2` | Import Estudiantes v3 | SUSPENDED | preexistente |
+| `921835b3`, `837bce7a` | Import Estudiantes v3 | READY (SINGLE one-shot idle) | No auto-disparan; no se tocaron. |
+
+## Pendientes
+1. **Conflictos de datos preexistentes (12 focos HTTP 500):** `familyName` / `studyLevel` / `lambDocNum` strong single-valued con dos valores (typos de apellido, CE vs DNI, Idiomas+Pregrado). Bloquean el clockwork de esos focos. **Workstream identifier-canónico** (no este dedup). El dedup ya quedó hecho en ellos (1 solo shadow keeper).
+2. **Recon recurring Estudiantes `94b627b4`:** decidir reactivar (sub-workstream Estudiantes). Si se reactiva con el import `c1fe95c6` aún suspendido, el Recon NO regenera duales (el dual venía del import, no del recon). Reactivable sin riesgo de re-dual una vez validado.
+3. **Tito (43508613) y similares:** dependen de materialización `campusStudent` LIMA vía recon Estudiantes (Change 1 vigencia DENSE_RANK LAST). NO se fuerzan aquí — sub-workstream Estudiantes (~13k addFocus).
+
+---
+
+## (Histórico) Estado previo: PARADO tras canary 2/2 PASS — BLOQUEO por concurrencia
 
 ### Resumen ejecutivo
 - Diagnóstico confirmado: **265 focos** con dual-shadow LDAP, patrón **uniforme 0 ambiguos**.
