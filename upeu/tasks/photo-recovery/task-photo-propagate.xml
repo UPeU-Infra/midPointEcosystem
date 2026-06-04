@@ -15,19 +15,26 @@
        iterativeScripting propaga a Koha pero NO a LDAP (contexto de
        proyeccion distinto). Solo el PATCH REST por foco propaga ambos.
 
-     BLOQUEO LDAP (parar y reportar): los 1,612 focos con shadow LDAP NO
-       pueden propagar — bug conocido: al leer el shadow LDAP existente el
-       connector falla con
-         "Error converting attribute 'upeuReniecValidationDate':
-          XMLGregorianCalendar does not conform to xsd:string"
-       (schema LDAP define upeuReniecValidationDate como string pero el valor
-       es date). HTTP 500 en cada PATCH a esos focos. La propagacion masiva
-       se ABORTO tras 8 errores 500. Fix requerido APARTE: corregir el tipo
-       de upeuReniecValidationDate en el schema del resource LDAP (string→date)
-       o el inbound que lo escribe. Hasta entonces solo los 2,062 focos
-       solo-Koha pueden propagar de forma segura.
+     BLOQUEO LDAP — RESUELTO 2026-06-03 (commit ldap dateTime fix):
+       El bug "Error converting attribute 'upeuReniecValidationDate':
+       XMLGregorianCalendar does not conform to xsd:string" se debia a que el
+       schema cacheado del resource LDAP declaraba upeuReniecValidationDate
+       como xsd:string, pero el conector polygon LDAP (timestampPresentation
+       =native, default) presenta el atributo generalizedTime como W3C
+       DateTime (XMLGregorianCalendar). El atributo LDAP es generalizedTime
+       (SYNTAX 1.3.6.1.4.1.1466.115.121.1.24). Fix: schema -> xsd:dateTime +
+       outbound mapeo directo (sin conversion manual a String). El conector
+       serializa XMLGregorianCalendar -> generalizedTime nativamente al
+       escribir. Canary 204 OK, LDAP jpegPhoto + Koha patronimage verificados.
 
-     ESTE TASK QUEDA EN SUSPENDED — no usar hasta resolver el bug LDAP.
+     PROPAGACION EJECUTADA 2026-06-03 via PATCH no-op serializado (no este
+       task — el executeChanges interno no propaga a LDAP). 3,683 focos con
+       foto + proyeccion LDAP/Koha. Residuos benignos: HTTP 240 (handled-
+       warning TaskType ref, foto SI propaga), 409 (focos con shadow LDAP
+       duplicado, issue aparte), 500 ocasional (clockwork >200 clicks / Koha
+       API read-timeout transitorio en 192.168.12.135:8001). 0 errores reniec.
+
+     ESTE TASK QUEDA EN SUSPENDED — propagacion se hizo por PATCH serializado.
 
      Scope: focos active con foto materializada (fotodb) y shadow LDAP o Koha.
        Idempotente: re-proyectar la misma foto es no-op en el connector.
