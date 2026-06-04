@@ -849,6 +849,167 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
     </mapping>
 
     <!-- ============================================================
+         BLOQUE E2 — RETRACCIÓN DE ATRIBUTOS LABORALES HUÉRFANOS
+         (FIX orphan-cleanup 2026-06-03)
+
+         PROBLEMA: ~3.482 usuarios student/alum tienen atributos LABORALES
+         pegados en el foco (emailAddress personal/gmail, title, costCenter)
+         escritos por los inbounds STRONG del resource Trabajadores ANTES de
+         que se estrechara el filtro ID_ENTIDAD=7124. Hoy están fuera de scope
+         del searchScript → el inbound del resource NO corre → el valor NUNCA
+         se retrae y queda pegado SIN fuente viva.
+
+         POR QUÉ EN EL TEMPLATE Y NO EN <range> DEL INBOUND (best-practices §4.1/§4.5):
+         el inbound del resource solo se ejecuta cuando el shadow está en el
+         resultset. Para un fuera-de-scope el inbound NO corre en absoluto →
+         un <range> en el inbound no limpiaría retroactivamente. El OBJECT
+         TEMPLATE, en cambio, "is applied every time an object is created,
+         changed or explicitly recomputed" → SIEMPRE corre. Por eso la
+         retracción autoritativa de estos atributos laborales vive aquí.
+
+         PATRÓN (idéntico al RANGE AUTORITATIVO de D7, líneas ~1645):
+         mapping strong cuyo <expression> devuelve null + <target><set><condition>
+         que delimita QUÉ valor es de su autoría (in-range). Si el valor está
+         en rango y el mapping no lo produce → MidPoint lo REMUEVE
+         ("MidPoint always adds … pero un mapping autoritativo es authoritative
+         for all values in its range"). Fuera de rango → intacto.
+
+         GUARD reality-vs-policy (regla oro #4): solo retrae cuando
+         liveAffiliationWorker == null (no hay empleo UPeU vivo). Para un
+         trabajador 7124 VIVO la <condition> del mapping es false → no aplica →
+         range vacío → lo que puso el inbound strong del resource queda intacto.
+
+         IIA POR ATRIBUTO (iga-canonical §1.3):
+           - title       → IIA única = Trabajadores (ENOC.PLLA_PUESTO). Sin
+                           fuente académica → retracción TOTAL si no hay worker.
+           - costCenter  → IIA única = Trabajadores (ELISEO.ORG_AREA, ID_AREA).
+                           Sin fuente académica → retracción TOTAL si no hay worker.
+                           (Bloque E ya retrae la MEMBERSHIP de org; esto retrae
+                           además el VALOR costCenter pegado en el foco.)
+           - emailAddress→ COMPARTIDO. IIA worker (CORREO_INST, strong, en scope)
+                           y student (CORREO_UPEU, weak). El email institucional
+                           canónico SIEMPRE termina en @upeu.edu.pe. La retracción
+                           solo abarca el valor laboral huérfano = el que NO es
+                           @upeu.edu.pe (gmail/personal). Tras removerlo, el inbound
+                           WEAK de estudiantes repuebla el @upeu.edu.pe real en el
+                           mismo clockwork. NUNCA toca @upeu.edu.pe (ni worker vivo
+                           ni student) → no rompe email institucional de nadie.
+                           MidPoint no inventa correos (Bloque B sigue archived).
+
+         IMPORTANTE — organizationalUnit NO se toca: el diagnóstico inicial lo
+         listaba como "laboral huérfano", pero la evidencia de provenance
+         demuestra que para students proviene de `school-name-to-organizationalUnit`
+         (resource Estudiantes, IIA académica) y que Trabajadores NO mapea
+         organizationalUnit. Es un atributo ACADÉMICO legítimo → fuera de scope
+         de esta retracción.
+         ============================================================ -->
+
+    <!-- E2.a — title: retracción total si no hay afiliación laboral viva -->
+    <item>
+        <ref>title</ref>
+        <mapping>
+            <name>E2-retract-orphan-title</name>
+            <description>Retrae title (cargo laboral, IIA Trabajadores) cuando liveAffiliationWorker==null. El inbound strong del resource NO corre fuera de scope 7124, por eso el template retrae el valor huérfano. Patrón range autoritativo (best-practices §4.1/§4.5, regla oro #4).</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>extension/sciback:liveAffiliationWorker</path>
+            </source>
+            <expression>
+                <!-- No produce valor: la autoridad es retractiva. -->
+                <value/>
+            </expression>
+            <target>
+                <path>title</path>
+                <set>
+                    <!-- Todo valor existente está en rango cuando no hay worker vivo
+                         → al no producir valor, MidPoint lo remueve. -->
+                    <condition>
+                        <script>
+                            <code>input != null</code>
+                        </script>
+                    </condition>
+                </set>
+            </target>
+            <condition>
+                <script>
+                    <code>liveAffiliationWorker == null</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!-- E2.b — costCenter: retracción total del valor numérico laboral si no hay worker vivo.
+         (La membership de org ya la retrae el Bloque E; esto limpia el valor pegado en el foco.) -->
+    <item>
+        <ref>costCenter</ref>
+        <mapping>
+            <name>E2-retract-orphan-costCenter</name>
+            <description>Retrae costCenter (ID_AREA laboral, IIA Trabajadores) cuando liveAffiliationWorker==null. Complementa el guard del Bloque E (que retira la membership de org) limpiando además el valor en el foco. Solo abarca valores numéricos (ID_AREA LAMB).</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>extension/sciback:liveAffiliationWorker</path>
+            </source>
+            <expression>
+                <value/>
+            </expression>
+            <target>
+                <path>costCenter</path>
+                <set>
+                    <condition>
+                        <script>
+                            <!-- Solo el costCenter numérico (ID_AREA LAMB) es de autoría laboral. -->
+                            <code>input != null &amp;&amp; basic.stringify(input).trim().matches('\\d+')</code>
+                        </script>
+                    </condition>
+                </set>
+            </target>
+            <condition>
+                <script>
+                    <code>liveAffiliationWorker == null</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!-- E2.c — emailAddress: retracción SOLO del email laboral huérfano (NO @upeu.edu.pe)
+         si no hay worker vivo. Preserva el institucional @upeu.edu.pe (worker o student).
+         Tras la retracción, el inbound weak de estudiantes repuebla el @upeu.edu.pe real. -->
+    <item>
+        <ref>emailAddress</ref>
+        <mapping>
+            <name>E2-retract-orphan-personal-email</name>
+            <description>Retrae el emailAddress laboral huérfano (correo personal/gmail dejado por el inbound strong de Trabajadores) cuando liveAffiliationWorker==null. El RANGE abarca SOLO valores que NO terminan en @upeu.edu.pe → el institucional (worker vivo o student) nunca entra en rango y queda intacto. MidPoint no inventa correos (Bloque B archived); el inbound weak de estudiantes (correo-upeu-to-emailAddress) repuebla el @upeu.edu.pe real. IIA compartida (iga-canonical §1.3): worker strong / student weak; el template solo limpia lo huérfano no-institucional.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>extension/sciback:liveAffiliationWorker</path>
+            </source>
+            <expression>
+                <value/>
+            </expression>
+            <target>
+                <path>emailAddress</path>
+                <set>
+                    <condition>
+                        <script>
+                            <!-- En rango: cualquier email que NO sea institucional @upeu.edu.pe
+                                 (= el huérfano laboral). El @upeu.edu.pe queda FUERA de rango → intacto. -->
+                            <code>input != null &amp;&amp; !basic.stringify(input).trim().toLowerCase().endsWith('@upeu.edu.pe')</code>
+                        </script>
+                    </condition>
+                </set>
+            </target>
+            <condition>
+                <script>
+                    <code>liveAffiliationWorker == null</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
          BLOQUE G — REJECTION REASONS (trazabilidad de perfiles incompletos)
          Evalua los 8 requisitos canonicos UPeU en cada recompute del foco
          cuando lifecycleState=draft. Escribe en extension/sciback:
