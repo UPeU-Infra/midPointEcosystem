@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FASE 3c — Full import Estudiantes para creacion masiva de focos en LIMBO.
+  Mecanismo de THROUGHPUT del onboarding create-only (15,574). Reemplaza el recon
+  per-codigo (151s/codigo, inviable a escala) por UNA pasada de import sobre todo el
+  feed (24,677 filas sem 267/279/283).
+
+  POR QUE IMPORT (no reconciliation):
+    - import = solo fetch-from-resource + procesa cada objeto una vez. NO tiene la
+      sub-actividad repoShadows (barrido de los ~11k shadows existentes) que hace
+      que cada recon scoped tarde 2-3 min. Mucho mas eficiente en memoria y tiempo.
+    - addFocus (UNMATCHED) crea el foco en LIMBO: sin archetype => sin inducement
+      AR-Koha-Patron => NO provisiona Koha => STORM-FREE por diseno (validado 3b).
+    - linked/unlinked: reconcilia/linkea sin crear cuenta Koha nueva para los ya
+      gobernados. El unico ruido es el set orphan-borrower active-Lima (~18 focos):
+      su provisioning Koha intenta create->409->constraint shadow piv => storm
+      ACOTADO y auto-limitado (MidPoint conflict-detection corta tras pocos reintentos;
+      0 duplicado, 0 cuenta nueva — validado en canary 3c sobre code 201010075).
+
+  Tras este import: bootstrap-archetype-student-live.xml asigna el archetype student
+  a los focos limbo con liveAffiliationStudent=student (escapa el bootstrap-deadlock)
+  y provisiona Koha BUL solo para los Lima (gate #65).
+
+  Worker threads = 2 (conservador por historial OOM). Sin schedule (one-shot).
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      oid="d1a2b3c4-3c00-4abc-9def-000000003c01">
+    <name>phase3c-full-import-estudiantes-limbo</name>
+    <description>FASE 3c: full import Estudiantes -> crea focos create-only en limbo (storm-free). Bulk throughput.</description>
+    <executionState>runnable</executionState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <activity>
+        <work>
+            <import>
+                <resourceObjects>
+                    <resourceRef oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22" type="c:ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
+                </resourceObjects>
+            </import>
+        </work>
+        <distribution>
+            <workerThreads>2</workerThreads>
+        </distribution>
+    </activity>
+</task>

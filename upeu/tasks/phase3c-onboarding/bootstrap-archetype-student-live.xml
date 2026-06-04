@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
+      xmlns:sb="urn:sciback:midpoint:person"
+      oid="d1a2b3c4-3b00-4abc-9def-0000003b00b0">
+    <name>phase3b-bootstrap-archetype-student-live</name>
+    <description>FASE 3b: escapa el bootstrap-deadlock de los focos onboardeados por recon.
+        Asigna el archetype structural student (3037fbd2) a focos con liveAffiliationStudent='student'
+        (señal materializada por el inbound de Estudiantes, PRE-template) que aún NO tienen archetype.
+        Al asignarlo, corre la cadena de templates (base J3b/J3 deriva affiliations+primaryAffiliation;
+        student template asigna business roles; gate Koha provisiona borrower BUL si campusStudent=LIMA).
+        Filtro por liveAffiliationStudent (NO primaryAffiliation, que es DERIVADO por el template => deadlock).
+        Excluye archived (no reactivar leavers). iga-canonical §1.2: lifecycle desde IIA, no override.</description>
+    <executionState>runnable</executionState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <activity>
+        <work>
+            <iterativeScripting>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <q:equal>
+                                    <q:path>extension/sb:liveAffiliationStudent</q:path>
+                                    <q:value>student</q:value>
+                                </q:equal>
+                                <q:not>
+                                    <q:ref>
+                                        <q:path>archetypeRef</q:path>
+                                        <q:value><type>ArchetypeType</type></q:value>
+                                    </q:ref>
+                                </q:not>
+                                <q:not>
+                                    <q:equal>
+                                        <q:path>lifecycleState</q:path>
+                                        <q:value>archived</q:value>
+                                    </q:equal>
+                                </q:not>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+                <scriptExecutionRequest>
+                    <s:action>
+                        <s:type>assign</s:type>
+                        <s:parameter>
+                            <s:name>role</s:name>
+                            <s:value xsi:type="c:ObjectReferenceType"
+                                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                     oid="3037fbd2-db02-4ffd-8b1a-83fab5e686aa"
+                                     type="c:ArchetypeType"/>
+                        </s:parameter>
+                    </s:action>
+                </scriptExecutionRequest>
+            </iterativeScripting>
+        </work>
+        <distribution><workerThreads>2</workerThreads></distribution>
+    </activity>
+</task>
