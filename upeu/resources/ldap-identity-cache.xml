@@ -28,7 +28,9 @@
                  selecciona aleatoriamente entre nodos con el mismo baseContext.
                  Configurado 2026-05-20 tras activar N-Way mirrormode entre 168 y 169. -->
             <cfg:servers>host=192.168.15.169; port=389</cfg:servers>
-            <cfg:connectionSecurity>starttls</cfg:connectionSecurity>
+            <cfg:connectionSecurity>none</cfg:connectionSecurity>
+            <!-- TLS deshabilitado en servidor (LDAP_TLS=false, red interna 192.168.15.x).
+                 Activar starttls en Fase 7 con cert EJBCA. starttls fallaba con Connect error -11. -->
             <cfg:bindDn>cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe</cfg:bindDn>
             <cfg:bindPassword>
                 <t:encryptedData>
@@ -14421,8 +14423,10 @@
             </reaction>
             <reaction>
                 <situation>unmatched</situation>
+                <!-- noReaction: LDAP es proyector outbound puro, nunca fuente de creación de identidades.
+                     addFocus era anti-patrón (iga-canonical-standards §1.3). 2026-06-03. -->
                 <action>
-                    <handlerUri>http://midpoint.evolveum.com/xml/ns/public/model/action-3#addFocus</handlerUri>
+                    <handlerUri>http://midpoint.evolveum.com/xml/ns/public/model/action-3#noReaction</handlerUri>
                 </action>
             </reaction>
         </objectSynchronization>
