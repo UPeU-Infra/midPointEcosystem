@@ -1483,12 +1483,22 @@ def eligible = hasLiveAff && hasLimaAffiliation
 // El deprovisioning de provincia (Juliaca/Tarapoto) se hace por bulk unlink +
 // archivado koha-expert fuera de este mapping; aquí solo gobernamos creación
 // y preservación (no confiamos el delete a este gate).
+//
+// BLINDAJE ANTI-DELETE (Fase 2.5, 2026-06-04).
+// La barrera DURA contra el borrado es la capability `delete` DESHABILITADA
+// (bloque <configured> al final del resource): Koha NUNCA recibe un DELETE de
+// patrón, pase lo que pase con este mapping. Por eso aquí NO replicamos lógica
+// de query frágil (un error de script abortaría el existence en CADA recompute
+// de CADA foco — peor que el problema). Guard simple y defensivo:
 // BLINDAJE getLinkedShadow (tarea #65, caso Tito 43508613): si el foco tiene un
-// shadow huérfano/dangling (link roto, shadow dummy), getLinkedShadow puede lanzar.
-// Sin guard, la excepción aborta el existence mapping y MidPoint cae al fallback
-// (intenta CREAR el patrón) → cuenta indeseada. Con try/catch→false, ante error de
-// resolución NO afirmamos existencia → la decisión queda solo en `eligible` (policy),
-// nunca se crea por un shadow roto. midpoint-best-practices §7 (existence defensivo).
+// shadow huérfano/dangling, getLinkedShadow puede lanzar; con try/catch→null no
+// abortamos el mapping ni afirmamos existencia falsa.
+//
+// Caso 22422 (runbook §4): durante un recon que crea+linkea en el MISMO
+// clockwork, getLinkedShadow aún devuelve null para un foco inelegible → este
+// mapping retorna false. ANTES eso disparaba DELETE; AHORA la capability delete
+// deshabilitada lo intercepta → 0 borrado. El deprovisioning real del leaver lo
+// hace administrativeStatus=DISABLED (expiry+card_lost), archivado graceful.
 def existing = null
 try {
     existing = midpoint.getLinkedShadow(focus, '9b5a7c81-47aa-42ac-9a08-4de8b64935af')
@@ -1496,6 +1506,9 @@ try {
     log.warn('koha-account-existence: getLinkedShadow falló para {} → existing=null: {}', focus?.name, e.message)
     existing = null
 }
+// Decisión final. Aunque retorne false para un inelegible-sin-shadow (caso
+// legítimo: NO crear), el DELETE está bloqueado por capability → 0 riesgo de
+// borrado. midpoint-best-practices §7 (existence defensivo).
 return eligible || (existing != null)
                                 ]]></code>
                             </script>
@@ -1792,5 +1805,45 @@ return (cn ==~ /^\d{8}$/) ? cn : '__NO_MATCH__'
                 </ns7:host>
             </ns7:script>
         </native>
+        <!-- ================================================================
+             CONFIGURED CAPABILITIES — BLINDAJE ANTI-DELETE (Fase 2.5, 2026-06-04)
+             ================================================================
+             DELETE DESHABILITADO permanentemente para el patrón Koha.
+
+             FUNDAMENTO CANÓNICO:
+             - ISO/IEC 24760 lifecycle: un patrón con historial transita a
+               'archived' (disabled, RETIENE datos), NUNCA a 'destroyed'
+               (delete). Sólo una purga explícita (destroyed) borraría, y eso
+               NO se confía a un existence mapping automático.
+             - ISO/IEC 27001:2022 A.5.18 — retención del historial de préstamos/
+               multas/transacciones del patrón es requisito. Borrar el borrower
+               destruye esa evidencia.
+             - Principio "MidPoint suma, nunca resta": el deprovisioning Koha es
+               por activation (administrativeStatus=DISABLED → el connector
+               v1.3.x escribe expiry_date=ayer + patron_card_lost=true), JAMÁS
+               por DELETE de la cuenta.
+
+             INCIDENTE QUE LO MOTIVA (runbook phase2 §4, canary 22422): un recon
+             que crea+linkea el shadow en el MISMO clockwork deja getLinkedShadow
+             retornando null para un foco inelegible → el existence mapping
+             computaba false → MidPoint emitía DELETE del borrower (se borró el
+             22422; se restauró desde deletedborrowers, tenía 0 préstamos — uno
+             con historial habría sido pérdida real e irreversible).
+
+             EFECTO: con delete deshabilitado, aunque cualquier mapping compute
+             "no debe existir", MidPoint NO puede borrar el borrower en Koha. La
+             baja se materializa únicamente vía administrativeStatus=DISABLED
+             (archivado graceful, datos intactos). Esta es la barrera DURA;
+             el existence mapping (abajo) es la barrera blanda complementaria.
+
+             Para purgar un patrón legítimamente (destroyed): re-habilitar delete
+             temporalmente bajo decisión explícita y documentada, NUNCA dejarlo
+             abierto durante recons/onboarding masivos.
+             ================================================================ -->
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
+        </configured>
     </capabilities>
 </resource>
