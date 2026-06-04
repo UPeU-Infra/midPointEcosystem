@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     PHOTO PROPAGATE — proyectar jpegPhoto (ya en repo) a LDAP + Koha
+     ================================================================
+     Contexto: task-photo-recovery materializo jpegPhoto en el repo con
+       executeChanges raw() (sin clockwork → sin proyeccion). Falta empujar
+       la foto a las proyecciones LDAP (jpegPhoto) y Koha (patronimage).
+
+     Mecanismo: PATCH no-op (modify description) via REST → dispara el
+       clockwork normal, que computa el outbound de jpegPhoto a LDAP/Koha.
+       Validado manualmente en Orrego (DNI 42870733) VIA PATCH REST:
+       LDAP jpegPhoto + Koha patronimage 13948 bytes (o=SUCCESS ambos).
+
+     ADVERTENCIA (2026-06-04): executeChanges(delta,null) DENTRO de
+       iterativeScripting propaga a Koha pero NO a LDAP (contexto de
+       proyeccion distinto). Solo el PATCH REST por foco propaga ambos.
+
+     BLOQUEO LDAP (parar y reportar): los 1,612 focos con shadow LDAP NO
+       pueden propagar — bug conocido: al leer el shadow LDAP existente el
+       connector falla con
+         "Error converting attribute 'upeuReniecValidationDate':
+          XMLGregorianCalendar does not conform to xsd:string"
+       (schema LDAP define upeuReniecValidationDate como string pero el valor
+       es date). HTTP 500 en cada PATCH a esos focos. La propagacion masiva
+       se ABORTO tras 8 errores 500. Fix requerido APARTE: corregir el tipo
+       de upeuReniecValidationDate en el schema del resource LDAP (string→date)
+       o el inbound que lo escribe. Hasta entonces solo los 2,062 focos
+       solo-Koha pueden propagar de forma segura.
+
+     ESTE TASK QUEDA EN SUSPENDED — no usar hasta resolver el bug LDAP.
+
+     Scope: focos active con foto materializada (fotodb) y shadow LDAP o Koha.
+       Idempotente: re-proyectar la misma foto es no-op en el connector.
+
+     workerThreads=4. Serializado por lotes si se observa estres (post-OOM).
+     executionState=suspended. Canary lote pequeno antes del masivo.
+     ================================================================ -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
+      xmlns:upeu="urn:upeu:midpoint:local"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      oid="d1f0a0a0-0003-4abc-9def-000000000020">
+  <name>PHOTO PROPAGATE — jpegPhoto repo → LDAP + Koha (PATCH no-op, sin reconcile)</name>
+  <description>
+    Proyecta a LDAP/Koha la foto ya materializada en repo por task-photo-recovery.
+    PATCH no-op (description) dispara outbound jpegPhoto sin reconcile (evita bug Entra).
+    Idempotente. Canary antes del masivo.
+  </description>
+  <executionState>suspended</executionState>
+  <schedule>
+    <recurrence>single</recurrence>
+    <misfireAction>executeImmediately</misfireAction>
+  </schedule>
+  <activity>
+    <work>
+      <iterativeScripting>
+        <objects>
+          <type>UserType</type>
+          <query>
+            <q:filter>
+              <q:and>
+                <q:equal>
+                  <q:path>lifecycleState</q:path>
+                  <q:value>active</q:value>
+                </q:equal>
+                <q:substring>
+                  <q:path>extension/upeu:photoUrl</q:path>
+                  <q:value>/fotodb/</q:value>
+                </q:substring>
+                <q:not>
+                  <q:substring>
+                    <q:path>extension/upeu:photoUrl</q:path>
+                    <q:value>/carnets/</q:value>
+                  </q:substring>
+                </q:not>
+              </q:and>
+            </q:filter>
+          </query>
+        </objects>
+        <scriptExecutionRequest>
+          <s:execute>
+            <s:script xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
+              <c:code><![CDATA[
+import com.evolveum.midpoint.xml.ns._public.common.common_3.UserType;
+
+def user = input;
+def uoid = user.getOid();
+def uname = user.getName()?.getOrig();
+
+// solo si tiene foto en repo (los 404 residuales sin foto no se propagan)
+if (user.getJpegPhoto() == null) { return; }
+
+try {
+    def delta = midpoint.prismContext.deltaFor(UserType.class)
+        .item(UserType.F_DESCRIPTION).replace('photofix-propagate-' + System.currentTimeMillis())
+        .asObjectDelta(uoid);
+    // sin opts → clockwork normal computa outbound jpegPhoto a LDAP/Koha (sin reconcile, evita bug Entra)
+    midpoint.executeChanges([delta] as java.util.Collection, null);
+    log.info('PHOTOPROP OK: {} ({})', uname, uoid);
+} catch (Exception e) {
+    log.warn('PHOTOPROP error {} ({}): {}', uname, uoid, e.message);
+}
+]]></c:code>
+            </s:script>
+          </s:execute>
+        </scriptExecutionRequest>
+      </iterativeScripting>
+    </work>
+    <distribution>
+      <workerThreads>4</workerThreads>
+    </distribution>
+  </activity>
+</task>

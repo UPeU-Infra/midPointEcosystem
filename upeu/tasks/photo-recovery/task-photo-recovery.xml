@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     PHOTO RECOVERY — Causa B: materializar jpegPhoto desde photoUrl (MinIO LAMB)
+     ================================================================
+     Problema: ~4,852 focos active tienen extension/upeu:photoUrl viva en
+       MinIO (patron general-secretay/fotodb/*.jpg → HTTP 200) pero
+       jpegPhoto null en el foco. El Bloque I del object template haria el
+       fetch, PERO no se puede disparar via recompute/reconcile:
+         - /recompute REST → 404 en MidPoint 4.10 (endpoint removido).
+         - recompute task / ?options=reconcile → aborta el foco con
+           "CreateCapabilityType is missing" en resource Entra ID (bug 4.10:
+           el clockwork intenta proyectar al shadow Entra linkado y revienta,
+           aun con resource/objectType en proposed/suspended).
+         - PATCH no-op (replace description) → NO re-evalua el mapping I.
+
+     Solucion canonica (replica la logica del Bloque I FUERA del clockwork):
+       iterativeScripting + executeChanges con ModelExecuteOptions.raw() →
+       escribe jpegPhoto DIRECTO al repo, sin proyectar a Entra/LDAP/Koha.
+       Asi NO toca el bug Entra. La proyeccion a LDAP/Koha de la foto se hace
+       despues por la via normal (PATCH no-op / sync), o el propio raw deja
+       el foco listo para que el proximo clockwork legitimo la propague.
+
+     Idempotente: condicion jpegPhoto==null (igual que el Bloque I). Re-ejecutar
+       no re-fetcha los ya materializados.
+
+     Scope (acotado a Causa B, evita 3,486 fetches 404 de Causa A):
+       lifecycleState=active
+       AND extension/upeu:photoUrl substring '/fotodb/'
+       AND extension/upeu:photoUrl NOT substring '/carnets/'
+     Los 404 residuales dentro de fotodb caen por try/catch → no escriben.
+
+     executionState=suspended: SIEMPRE importar suspendida. Canary primero
+       (inOid Orrego 5eb1bd32), validar, luego query masiva.
+
+     workerThreads=4: fetch HTTP a MinIO LAN (<50ms). 4 threads dan throughput
+       sin saturar heap (recuperacion post-OOM). Subir solo si va lento.
+     ================================================================ -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
+      xmlns:upeu="urn:upeu:midpoint:local"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      oid="d1f0a0a0-0002-4abc-9def-000000000010">
+  <name>PHOTO RECOVERY — Causa B: jpegPhoto desde photoUrl MinIO (raw, sin clockwork)</name>
+  <description>
+    Materializa jpegPhoto en focos active con photoUrl /fotodb/ viva pero foto null.
+    Replica el Bloque I via iterativeScripting + executeChanges raw (no toca Entra/bug 4.10).
+    Idempotente (jpegPhoto==null). Canary inOid Orrego antes del masivo.
+  </description>
+  <executionState>suspended</executionState>
+  <schedule>
+    <recurrence>single</recurrence>
+    <misfireAction>executeImmediately</misfireAction>
+  </schedule>
+  <activity>
+    <work>
+      <iterativeScripting>
+        <objects>
+          <type>UserType</type>
+          <query>
+            <!-- MASIVO Causa B: active + photoUrl /fotodb/ AND NOT /carnets/.
+                 Los 404 residuales dentro de fotodb caen por try/catch (no escriben).
+                 Idempotencia: jpegPhoto==null en el script evita re-fetch. -->
+            <q:filter>
+              <q:and>
+                <q:equal>
+                  <q:path>lifecycleState</q:path>
+                  <q:value>active</q:value>
+                </q:equal>
+                <q:substring>
+                  <q:path>extension/upeu:photoUrl</q:path>
+                  <q:value>/fotodb/</q:value>
+                </q:substring>
+                <q:not>
+                  <q:substring>
+                    <q:path>extension/upeu:photoUrl</q:path>
+                    <q:value>/carnets/</q:value>
+                  </q:substring>
+                </q:not>
+              </q:and>
+            </q:filter>
+          </query>
+        </objects>
+        <scriptExecutionRequest>
+          <s:execute>
+            <s:script xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
+              <c:code><![CDATA[
+import com.evolveum.midpoint.xml.ns._public.common.common_3.UserType;
+import javax.xml.namespace.QName;
+
+def user = input;
+def uoid = user.getOid();
+def uname = user.getName()?.getOrig();
+
+// 1) leer photoUrl (extension/upeu:photoUrl)
+def urlStr = null;
+try {
+    def val = basic.getExtensionPropertyValue(user, new QName('urn:upeu:midpoint:local', 'photoUrl'));
+    if (val != null) urlStr = val.toString();
+} catch (Exception e) { log.warn('PHOTOFIX: error leyendo photoUrl de {}: {}', uname, e.message); return; }
+
+if (urlStr == null || urlStr.trim().isEmpty()) { return; }
+urlStr = urlStr.trim();
+
+// 2) idempotencia: si ya hay foto, skip (igual que Bloque I condicion jpegPhoto==null)
+if (user.getJpegPhoto() != null) { return; }
+
+// 3) fetch HTTP (replica Bloque I; timeouts 800/2500 para MinIO LAN; 404 → skip)
+try {
+    def conn = (java.net.HttpURLConnection) new java.net.URL(urlStr).openConnection();
+    conn.setConnectTimeout(800);
+    conn.setReadTimeout(2500);
+    conn.setRequestMethod('GET');
+    conn.setRequestProperty('User-Agent', 'MidPoint-UPeU-IGA/1.0');
+    def status = conn.getResponseCode();
+    if (status != 200) { log.info('PHOTOFIX: HTTP {} {} ({})', status, uname, uoid); return; }
+    def is = conn.getInputStream();
+    def baos = new java.io.ByteArrayOutputStream();
+    def buf = new byte[8192]; int n;
+    while ((n = is.read(buf)) != -1) baos.write(buf, 0, n);
+    is.close();
+    def bytes = baos.toByteArray();
+    if (bytes.length == 0) { log.info('PHOTOFIX: empty body {} ({})', uname, uoid); return; }
+
+    // 4) escribir jpegPhoto DIRECTO al repo (raw → sin clockwork, sin proyeccion Entra/LDAP/Koha)
+    def delta = midpoint.prismContext.deltaFor(UserType.class)
+        .item(UserType.F_JPEG_PHOTO).replaceRealValues(java.util.Collections.singletonList(bytes)).asObjectDelta(uoid);
+    def meoClass = Class.forName('com.evolveum.midpoint.model.api.ModelExecuteOptions');
+    def opts = meoClass.getMethod('create').invoke(null);
+    opts = opts.getClass().getMethod('raw').invoke(opts);
+    midpoint.executeChanges([delta] as java.util.Collection, opts);
+    log.info('PHOTOFIX OK: {} ({}) <- {} bytes', uname, uoid, bytes.length);
+} catch (Exception e) {
+    log.warn('PHOTOFIX: error fetch {} para {} ({}): {}', urlStr, uname, uoid, e.message);
+}
+]]></c:code>
+            </s:script>
+          </s:execute>
+        </scriptExecutionRequest>
+      </iterativeScripting>
+    </work>
+    <distribution>
+      <workerThreads>4</workerThreads>
+    </distribution>
+  </activity>
+</task>
