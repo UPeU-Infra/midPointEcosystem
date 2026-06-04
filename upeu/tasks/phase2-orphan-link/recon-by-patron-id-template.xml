@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     FASE 2 — RECON KOHA SCOPED POR patron_id (__UID__)
+     ================================================================
+     Plantilla reusable para linkear UN borrower Koha huérfano a su
+     foco MidPoint vía recon on-resource, SIN disparar create→409.
+
+     Flujo: lee borrower por __UID__=patron_id -> shadow UNMATCHED ->
+       correlador 3-capas (cardnumber=name | cardnumber-as-DNI=lambDocNum
+       | DNI-extended=lambDocNum) -> situación UNLINKED -> <link/>.
+     NO crea cuenta. NO addFocus. Correlación 1:1 por identificador.
+
+     SCOPING: el KohaConnector SÍ honra EqualsFilter sobre __UID__
+     (patron_id), a diferencia de cardnumber (que ignora). Por eso se
+     scopea por attributes/ri:patron_id, NO por cardnumber.
+
+     PRECAUCIÓN (hallazgo 2026-06-04): aplicar SOLO a focos ELEGIBLES
+     Koha-Lima (live worker|student + campus LIMA). Un foco no-elegible
+     dispara el existence gate -> DELETE del borrower (reversible vía
+     deletedborrowers, pero indeseado). Filtrar elegibilidad antes.
+
+     Reemplazar {{PATRON_ID}} y el oid antes de importar.
+     ================================================================ -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="REPLACE-WITH-UNIQUE-OID">
+    <name>Koha orphan-link recon patron_id {{PATRON_ID}}</name>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="UserType"/>
+    <executionState>runnable</executionState>
+    <activity>
+        <work>
+            <reconciliation>
+                <resourceObjects>
+                    <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>attributes/ri:patron_id</q:path>
+                                <q:value>{{PATRON_ID}}</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </resourceObjects>
+            </reconciliation>
+        </work>
+        <distribution><workerThreads>1</workerThreads></distribution>
+    </activity>
+</task>
