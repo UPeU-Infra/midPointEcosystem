@@ -161,10 +161,13 @@ return (initial + lastname).take(8) + iterationToken
         <ref>emailAddress</ref>
         <mapping>
             <name>B-email-institutional-from-personalNumber</name>
-            <lifecycleState>deprecated</lifecycleState>
+            <lifecycleState>archived</lifecycleState>
             <!-- DESACTIVADO 2026-06-03: MidPoint no debe construir correos.
-                 El email institucional solo viene de Oracle LAMB (CORREO_INST via trabajadores.xml).
-                 Reactivar cuando el proceso de asignación de correo en Oracle esté operativo. -->
+                 El email institucional solo viene de Oracle LAMB (CORREO_INST via trabajadores.xml
+                 + CORREO_UPEU via estudiantes.xml). Reactivar cuando el proceso de asignación de
+                 correo en Oracle esté operativo.
+                 NOTA: usar 'archived' (NO 'deprecated' — deprecated SIGUE evaluándose en runtime;
+                 archived es el único estado que desactiva el mapping conservando el XML). -->
             <strength>weak</strength>
             <source>
                 <path>personalNumber</path>
