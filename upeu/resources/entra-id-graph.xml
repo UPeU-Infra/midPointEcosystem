@@ -111,9 +111,18 @@
                         <path>$user/name</path>
                     </target>
                 </inbound>
-                <!-- UPN completo como emailAddress institucional -->
+                <!-- UPN completo como emailAddress institucional.
+                     GUARD (2026-06-03): igual que ri:mail. El UPN de Entra puede ser
+                     formato fantasma DNI@upeu; sin guard competía con el correo real de
+                     Oracle (abigail.aguilar@upeu vs 71428768@upeu) → "2 values single-valued".
+                     Solo acepta nombre@upeu.edu.pe REAL; descarta DNI@ y no-upeu. -->
                 <inbound>
                     <strength>weak</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d{8}/ ? null : v</code>
+                        </script>
+                    </expression>
                     <target>
                         <path>$user/emailAddress</path>
                     </target>
