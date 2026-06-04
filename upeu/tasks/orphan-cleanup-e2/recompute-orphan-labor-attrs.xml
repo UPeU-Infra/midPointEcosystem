@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     ORPHAN-CLEANUP E2 — Recompute masivo de atributos laborales huérfanos
+     ================================================================
+     Tarea: disparar el clockwork (template Bloque E2) sobre los focos
+       activos que NO tienen afiliación laboral viva (liveAffiliationWorker
+       ausente) pero conservan datos LABORALES huérfanos (costCenter
+       numérico de ID_AREA, title de cargo, email personal/gmail) pegados
+       por los inbounds strong del resource Trabajadores ANTES de estrechar
+       el filtro ID_ENTIDAD=7124.
+
+     Guard E2 reescrita 2026-06-03 (commit d5464f0):
+       lee liveAffiliationWorker PERSISTIDO (repo committed) + relativo →
+       inmune al zero-set transitorio. Retrae SOLO si AMBOS son null.
+       Validada con canary doble:
+         - Worker VIVO 201420147 (faculty, cc=86): INTACTO ✓ (GATE)
+         - Orphan alum 201421037: cc+gmail retraídos, title→Egresado ✓
+         - Orphan dual 9010360 (con shadow LDAP): cc retraído, email
+           institucional INTACTO, title→Estudiante ✓
+
+     Alcance (validado en PROD 2026-06-03):
+       lifecycleState = active
+       AND extension/sb:liveAffiliationWorker NOT exists
+       AND costCenter exists
+       Total en scope: 1.861 usuarios.
+       (Cubre todos los orphan-costCenter; los E2.b/E2.c range filtran
+        qué valor concreto se retrae — numérico / no-@upeu.edu.pe.)
+
+     Por qué recomputation y NO reconcile:
+       - El problema es focus-side: E2 vive en el object template y corre
+         en cada recompute. reconcile leería resources (LDAP da 500 por
+         bug upeuReniecValidationDate XMLGregorian vs xsd:string) y tocaría
+         shadows innecesariamente. recomputation dispara solo el clockwork
+         del foco → E2 retrae → seguro y acotado (best-practices §4.5/§5).
+
+     Por qué la guard protege a los trabajadores vivos aunque entren al scope:
+       - Un trabajador 7124 vivo tiene liveAffiliationWorker persistido
+         ('faculty'/'staff') → guard FALSE → range vacío → datos intactos.
+       - El scope ya EXCLUYE liveAffiliationWorker exists, pero la guard es
+         la barrera definitiva (regla oro #4, reality-vs-policy).
+
+     workerThreads = 2: scope pequeño (1.861). LDAP da 500 en ~50 focos
+       con shadow (bug de lectura), pero el clockwork del foco persiste
+       igual (recompute task aísla error de proyección por objeto).
+
+     executionState = suspended: SIEMPRE importar suspendida.
+       El usuario libera tras validar el canary doble.
+     ================================================================ -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:sb="urn:sciback:midpoint:person"
+      oid="e2a1b2c3-0001-4abc-9def-000000260603">
+    <name>ORPHAN-CLEANUP E2 — recompute atributos laborales huérfanos (1.861 activos, 2026-06-03)</name>
+    <description>
+        Recompute scoped: focos activos sin liveAffiliationWorker pero con
+        costCenter huérfano. Template Bloque E2 retrae title/costCenter/email
+        laboral huérfano. Idempotente. Guard lee valor persistido (commit d5464f0).
+    </description>
+    <executionState>suspended</executionState>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <q:equal>
+                                    <q:path>lifecycleState</q:path>
+                                    <q:value>active</q:value>
+                                </q:equal>
+                                <!-- Sin afiliación laboral viva (liveAffiliationWorker ausente) -->
+                                <q:not>
+                                    <q:exists>
+                                        <q:path>extension/sb:liveAffiliationWorker</q:path>
+                                    </q:exists>
+                                </q:not>
+                                <!-- Con costCenter pegado (señal de dato laboral huérfano) -->
+                                <q:exists>
+                                    <q:path>costCenter</q:path>
+                                </q:exists>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>2</workerThreads>
+        </distribution>
+    </activity>
+</task>
