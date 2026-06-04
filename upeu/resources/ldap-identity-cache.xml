@@ -14001,7 +14001,7 @@
                                 </xsd:appinfo>
                             </xsd:annotation>
                         </xsd:element>
-                        <xsd:element minOccurs="0" maxOccurs="1" name="upeuReniecValidationDate" type="xsd:string">
+                        <xsd:element minOccurs="0" maxOccurs="1" name="upeuReniecValidationDate" type="xsd:dateTime">
                             <xsd:annotation>
                                 <xsd:appinfo>
                                     <ra:nativeAttributeName>upeuReniecValidationDate</ra:nativeAttributeName>
@@ -14343,16 +14343,17 @@
             <attribute>
                 <ref>ri:upeuReniecValidationDate</ref>
                 <displayName>RENIEC Validation Date (generalizedTime)</displayName>
+                <!-- El atributo LDAP upeuReniecValidationDate es generalizedTime
+                     (SYNTAX 1.3.6.1.4.1.1466.115.121.1.24). El schema del resource lo
+                     declara xsd:dateTime y el conector polygon LDAP serializa
+                     XMLGregorianCalendar -> generalizedTime nativamente. Mapeo directo,
+                     sin conversion a String (causaba HTTP 500: XMLGregorianCalendar
+                     does not conform to xsd:string). Fix 2026-06-03. -->
                 <outbound>
                     <strength>strong</strength>
                     <source>
                         <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:reniecValidationDate</path>
                     </source>
-                    <expression>
-                        <script>
-                            <code>if (reniecValidationDate == null) return null; def cal = (reniecValidationDate instanceof javax.xml.datatype.XMLGregorianCalendar) ? reniecValidationDate : null; if (!cal) return null; String.format('%04d%02d%02d%02d%02d%02dZ', cal.year, cal.month, cal.day, cal.hour, cal.minute, cal.second)</code>
-                        </script>
-                    </expression>
                 </outbound>
             </attribute>
 
