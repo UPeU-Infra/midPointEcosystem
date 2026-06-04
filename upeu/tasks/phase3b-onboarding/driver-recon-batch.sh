@@ -15,7 +15,7 @@ DC="docker exec midpoint_server"
 
 mem_pct(){ docker stats --no-stream --format '{{.MemPerc}}' midpoint_server | tr -d '%' | cut -d. -f1; }
 running_count(){ docker exec midpoint-midpoint_data-1 psql -U midpoint -d midpoint -tA -c \
-  "SELECT count(*) FROM m_task WHERE nameorig LIKE 'p3b-onb-%' AND executionstate IN ('runnable','running');"; }
+  "SELECT count(*) FROM m_task WHERE nameorig LIKE 'p3b-onb-%' AND executionstate IN ('RUNNABLE','RUNNING');"; }
 storm_check(){ docker logs midpoint_server --since 30s 2>&1 | grep -c '409 Conflict' ; }
 
 launch(){
