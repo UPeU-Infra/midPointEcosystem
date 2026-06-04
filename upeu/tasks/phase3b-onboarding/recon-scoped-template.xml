@@ -3,11 +3,12 @@
       xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
       xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
-      oid="d1a2b3c4-3b00-4abc-9def-000000300001">
-    <name>phase3b-import-scoped-single-CANARY</name>
-    <description>FASE 3b canary scoping: import Estudiantes acotado por __NAME__ (CODIGO) a UN solo objeto.
-        Verifica que el connector ScriptedSQL empuja el EqualsFilter sobre icfs:name a Oracle (pna.CODIGO=?).
-        Si scopea, procesa 1 objeto; si ignora el filtro, procesa el feed completo (abortar de inmediato).</description>
+      oid="d1a2b3c4-3b00-4abc-9def-0000003b0001">
+    <name>phase3b-recon-scoped</name>
+    <description>FASE 3b: recon Estudiantes acotado por __UID__=CODIGO (un objeto).
+        addFocus si UNMATCHED, link si UNLINKED. Create-only limpio (sin borrower huerfano).
+        El connector ScriptedSQL honra EqualsFilter sobre __UID__ -> pna.CODIGO=? -> scopea a Oracle.
+        Driver externo reescribe el value y reejecuta por cada CODIGO del lote.</description>
     <executionState>runnable</executionState>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
     <activity>
@@ -21,7 +22,7 @@
                         <q:filter>
                             <q:equal>
                                 <q:path>attributes/icfs:uid</q:path>
-                                <q:value>201220835</q:value>
+                                <q:value>__CODE__</q:value>
                             </q:equal>
                         </q:filter>
                     </query>
