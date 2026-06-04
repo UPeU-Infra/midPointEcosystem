@@ -281,9 +281,9 @@
          User.ReadWrite.All esté pendiente (B3 David Urquizo).
          Cuando B3 se resuelva: eliminar este bloque.
          ================================================================ -->
-    <consistency>
-        <errorCriticality>nonFatal</errorCriticality>
-    </consistency>
+<!-- <consistency><errorCriticality> removido 2026-06-03: elemento no válido en
+         ResourceConsistencyType de MidPoint 4.10 (cambió de ubicación entre versiones).
+         Bloqueaba el PUT por validación de schema. Default basta para resource inbound. -->
 
     <!-- ================================================================
          CAPABILITIES CONFIGURADAS
