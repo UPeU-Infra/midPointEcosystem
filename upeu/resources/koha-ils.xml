@@ -1154,12 +1154,52 @@ return v.length() > 80 ? v.substring(0, 80) : v
                 <outbound>
                     <name>library-id-outbound</name>
                     <strength>strong</strength>
+                    <!-- ================================================================
+                         CHANGE 3 (2026-06-04): branchcode sigue al CAMPUS VIVO, no al
+                         locality crudo. Precedencia canónica:
+                           campusStudent ?: campusWorker ?: locality
+                         (campus vivo del eje académico, luego laboral, luego locality
+                         como fallback). Misma fuente per-IIA que gobierna el GATE de
+                         existence Koha (campusStudent/campusWorker, single-writer, vigencia
+                         VIVA) — así branchcode y elegibilidad son coherentes: si el gate
+                         te dejó entrar por campus vivo Lima, tu branchcode es BUL aunque
+                         tu locality (lugar físico, libre para LDAP/Entra/M365) sea otro.
+                         Resuelve el caso Critsi (estudia Lima, locality Juliaca stale →
+                         antes escribía BUJ; ahora BUL por campusStudent=LIMA).
+
+                         Mapa de campus → branchcode Koha (los 3 branches EXISTEN en
+                         koha_bul: BUL/BUJ/BUT). Hoy el gate de existence solo deja crear
+                         cuenta a vínculo vivo LIMA → en la práctica solo se escribe BUL.
+                         Cuando entren BUJ/BUT al IGA (fusión 4 Koha), este mapping ya
+                         emite el branchcode correcto sin más cambios.
+
+                         FALLBACK SEGURO: si ni campusStudent ni campusWorker están
+                         materializados (p.ej. elegible solo por guest/hasLib), cae a
+                         locality con el mapa previo y default BUL — nunca branchcode vacío
+                         ni inválido. Un código de campus desconocido → BUL (default
+                         conservador: el único branch operativo hoy para creación).
+                         ================================================================ -->
+                    <source>
+                        <path>$focus/extension/sb:campusStudent</path>
+                    </source>
+                    <source>
+                        <path>$focus/extension/sb:campusWorker</path>
+                    </source>
                     <source>
                         <path>$focus/locality</path>
                     </source>
                     <expression>
                         <script>
-                            <code>def loc = locality?.toString()?.trim()?.toUpperCase(); ['LIMA':'BUL','JULIACA':'BUJ','TARAPOTO':'BUT','CIA':'CIA','ICA':'CIA'].getOrDefault(loc ?: '', 'BUL')</code>
+                            <code>
+def campusMap = ['LIMA':'BUL', 'JULIACA':'BUJ', 'TARAPOTO':'BUT']
+def cs = campusStudent?.toString()?.trim()?.toUpperCase()
+def cw = campusWorker?.toString()?.trim()?.toUpperCase()
+def loc = locality?.toString()?.trim()?.toUpperCase()
+// Precedencia: campus vivo académico → campus vivo laboral → locality (fallback).
+def effective = (cs != null &amp;&amp; cs != '') ? cs : ((cw != null &amp;&amp; cw != '') ? cw : (loc ?: ''))
+// Mapa por campus; locality legacy CIA/ICA preservado; default conservador BUL.
+['LIMA':'BUL', 'JULIACA':'BUJ', 'TARAPOTO':'BUT', 'CIA':'CIA', 'ICA':'CIA'].getOrDefault(effective, 'BUL')
+                            </code>
                         </script>
                     </expression>
                 </outbound>
