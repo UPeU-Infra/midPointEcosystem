@@ -12,20 +12,22 @@
     <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
     <activity>
         <work>
-            <import>
+            <reconciliation>
                 <resourceObjects>
                     <resourceRef oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22" type="c:ResourceType"/>
-                    <objectclass>ri:AccountObjectClass</objectclass>
+                    <kind>account</kind>
+                    <intent>default</intent>
                     <query>
                         <q:filter>
                             <q:equal>
-                                <q:path>attributes/icfs:name</q:path>
+                                <q:path>attributes/icfs:uid</q:path>
                                 <q:value>201220835</q:value>
                             </q:equal>
                         </q:filter>
                     </query>
                 </resourceObjects>
-            </import>
+            </reconciliation>
         </work>
+        <distribution><workerThreads>1</workerThreads></distribution>
     </activity>
 </task>
