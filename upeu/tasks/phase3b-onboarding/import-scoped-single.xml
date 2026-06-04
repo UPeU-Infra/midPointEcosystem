@@ -1,0 +1,31 @@
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+      oid="d1a2b3c4-3b00-4abc-9def-000000300001">
+    <name>phase3b-import-scoped-single-CANARY</name>
+    <description>FASE 3b canary scoping: import Estudiantes acotado por __NAME__ (CODIGO) a UN solo objeto.
+        Verifica que el connector ScriptedSQL empuja el EqualsFilter sobre icfs:name a Oracle (pna.CODIGO=?).
+        Si scopea, procesa 1 objeto; si ignora el filtro, procesa el feed completo (abortar de inmediato).</description>
+    <executionState>runnable</executionState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <activity>
+        <work>
+            <import>
+                <resourceObjects>
+                    <resourceRef oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22" type="c:ResourceType"/>
+                    <objectclass>ri:AccountObjectClass</objectclass>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>attributes/icfs:name</q:path>
+                                <q:value>201220835</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </resourceObjects>
+            </import>
+        </work>
+    </activity>
+</task>
