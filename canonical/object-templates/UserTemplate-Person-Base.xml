@@ -880,8 +880,14 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
          range vacío → lo que puso el inbound strong del resource queda intacto.
 
          IIA POR ATRIBUTO (iga-canonical §1.3):
-           - title       → IIA única = Trabajadores (ENOC.PLLA_PUESTO). Sin
-                           fuente académica → retracción TOTAL si no hay worker.
+           - title       → IIA laboral = Trabajadores (ENOC.PLLA_PUESTO), PERO
+                           los templates per-archetype student/alumni ponen un
+                           FALLBACK WEAK académico ("Estudiante"/"Egresado", Bloque
+                           Q1). Por eso el RANGE de E2.a EXCLUYE esos literales
+                           académicos: solo retrae el CARGO LABORAL huérfano
+                           (ej. "Personal Administrativo"), nunca el fallback
+                           académico. Tras la retracción, el weak Q1 repuebla
+                           "Estudiante"/"Egresado".
            - costCenter  → IIA única = Trabajadores (ELISEO.ORG_AREA, ID_AREA).
                            Sin fuente académica → retracción TOTAL si no hay worker.
                            (Bloque E ya retrae la MEMBERSHIP de org; esto retrae
@@ -909,7 +915,7 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
         <ref>title</ref>
         <mapping>
             <name>E2-retract-orphan-title</name>
-            <description>Retrae title (cargo laboral, IIA Trabajadores) cuando liveAffiliationWorker==null. El inbound strong del resource NO corre fuera de scope 7124, por eso el template retrae el valor huérfano. Patrón range autoritativo (best-practices §4.1/§4.5, regla oro #4).</description>
+            <description>Retrae el title de CARGO LABORAL huérfano (IIA Trabajadores) cuando liveAffiliationWorker==null. El inbound strong del resource NO corre fuera de scope 7124, por eso el template retrae el valor huérfano. EXCLUYE del rango los fallbacks académicos "Estudiante"/"Egresado" (Q1 weak de los templates student/alumni) → solo limpia el cargo laboral. Tras la retracción, Q1 weak repuebla el fallback académico. Patrón range autoritativo (best-practices §4.1/§4.5, regla oro #4).</description>
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
             <source>
@@ -922,11 +928,12 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
             <target>
                 <path>title</path>
                 <set>
-                    <!-- Todo valor existente está en rango cuando no hay worker vivo
-                         → al no producir valor, MidPoint lo remueve. -->
+                    <!-- En rango: cualquier title EXCEPTO los fallbacks académicos
+                         (Estudiante/Egresado). El cargo laboral huérfano cae en rango
+                         y se remueve; el fallback académico queda intacto. -->
                     <condition>
                         <script>
-                            <code>input != null</code>
+                            <code>input != null &amp;&amp; !(basic.stringify(input).trim() in ['Estudiante','Egresado'])</code>
                         </script>
                     </condition>
                 </set>
