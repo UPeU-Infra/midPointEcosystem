@@ -116,11 +116,24 @@
             </attribute>
             <attribute>
                 <ref>ri:CORREO_UPEU</ref>
-                <!-- Inbound emailAddress ELIMINADO Ola 1 (Patrón B). El email institucional
-                     viene exclusivamente de trabajadores.xml (CORREO_INST). Para estudiantes
-                     que NUNCA fueron trabajador, el email se construye en el template
-                     UserTemplate-Person-Base.xml (personalNumber + '@upeu.edu.pe', weak).
-                     CORREO_UPEU se sigue fetcheando para correlación / data quality. -->
+                <!-- RE-HABILITADO 2026-06-03: el inbound emailAddress se había eliminado en Ola 1
+                     bajo el supuesto de que el template construiría el correo (personalNumber@upeu).
+                     Ese fallback del template fue DESACTIVADO (MidPoint no debe inventar correos),
+                     dejando a ~172 estudiantes puros (nunca trabajadores) sin email real pese a
+                     tenerlo en Oracle (MOISES.PERSONA_NATURAL.CORREO_INST = CORREO_UPEU).
+                     strength=weak: trabajadores (IIA principal de email) sigue ganando; esto solo
+                     llena el hueco de estudiantes puros. Guard: solo propaga correos institucionales
+                     REALES (nombre@upeu.edu.pe), NUNCA el formato fantasma DNI@upeu ni nulos. -->
+                <inbound>
+                    <name>correo-upeu-to-emailAddress</name>
+                    <strength>weak</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d{8}/ ? null : v</code>
+                        </script>
+                    </expression>
+                    <target><path>emailAddress</path></target>
+                </inbound>
             </attribute>
             <attribute>
                 <ref>ri:CELULAR</ref>
