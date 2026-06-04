@@ -916,14 +916,13 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
         <mapping>
             <name>E2-retract-orphan-title</name>
             <description>Retrae el title de CARGO LABORAL huérfano (IIA Trabajadores) cuando liveAffiliationWorker==null. El inbound strong del resource NO corre fuera de scope 7124, por eso el template retrae el valor huérfano. EXCLUYE del rango los fallbacks académicos "Estudiante"/"Egresado" (Q1 weak de los templates student/alumni) → solo limpia el cargo laboral. Tras la retracción, Q1 weak repuebla el fallback académico. Patrón range autoritativo (best-practices §4.1/§4.5, regla oro #4).</description>
-            <!-- DESACTIVADO 2026-06-03: guard liveAffiliationWorker==null INSEGURO en recompute
-                 focus-driven (zero-set transitorio borra title/cc de trabajadores VIVOS). Pendiente
-                 reescribir guard para leer valor PERSISTIDO. NO reactivar hasta corregir. -->
-            <lifecycleState>archived</lifecycleState>
+            <!-- REACTIVADO 2026-06-03: guard reescrita para leer el valor PERSISTIDO de
+                 liveAffiliationWorker (repo committed) en lugar del <source> relativo, que caía
+                 en zero-set transitorio en recompute focus-driven (borraba title/cc de trabajadores
+                 VIVOS). Sin <source> → el mapping se evalúa UNA vez y la condición consulta el
+                 repositorio. Retrae SOLO si NO hay afiliación laboral viva ni en repo ni en foco. -->
+            <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
-            <source>
-                <path>extension/sciback:liveAffiliationWorker</path>
-            </source>
             <expression>
                 <!-- No produce valor: la autoridad es retractiva. -->
                 <value/>
@@ -943,7 +942,23 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
             </target>
             <condition>
                 <script>
-                    <code>liveAffiliationWorker == null</code>
+                    <code>
+// GUARD persistida (2026-06-03): TRUE (retrae) solo si liveAffiliationWorker es null
+// tanto en el foco relativo (clockwork) como en el repositorio committed → inmune al
+// zero-set transitorio. Para un trabajador 7124 vivo el inbound strong ya persistió
+// 'faculty'/'staff' en repo → livePersisted != null → FALSE → no retrae (title intacto).
+def QN = new javax.xml.namespace.QName('urn:sciback:midpoint:person','liveAffiliationWorker')
+def relP = null
+try { relP = focus?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } catch (Exception e) {}
+def perP = null
+try {
+  if (focus?.oid != null) {
+    def repoUser = midpoint.getObjectByOid(com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class, focus.oid)
+    perP = repoUser?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue
+  }
+} catch (Exception e) {}
+return (relP == null &amp;&amp; perP == null)
+                    </code>
                 </script>
             </condition>
         </mapping>
@@ -956,11 +971,9 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
         <mapping>
             <name>E2-retract-orphan-costCenter</name>
             <description>Retrae costCenter (ID_AREA laboral, IIA Trabajadores) cuando liveAffiliationWorker==null. Complementa el guard del Bloque E (que retira la membership de org) limpiando además el valor en el foco. Solo abarca valores numéricos (ID_AREA LAMB).</description>
-            <lifecycleState>archived</lifecycleState>
+            <!-- REACTIVADO 2026-06-03: guard persistida (ver E2.a). -->
+            <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
-            <source>
-                <path>extension/sciback:liveAffiliationWorker</path>
-            </source>
             <expression>
                 <value/>
             </expression>
@@ -977,7 +990,19 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
             </target>
             <condition>
                 <script>
-                    <code>liveAffiliationWorker == null</code>
+                    <code>
+def QN = new javax.xml.namespace.QName('urn:sciback:midpoint:person','liveAffiliationWorker')
+def relP = null
+try { relP = focus?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } catch (Exception e) {}
+def perP = null
+try {
+  if (focus?.oid != null) {
+    def repoUser = midpoint.getObjectByOid(com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class, focus.oid)
+    perP = repoUser?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue
+  }
+} catch (Exception e) {}
+return (relP == null &amp;&amp; perP == null)
+                    </code>
                 </script>
             </condition>
         </mapping>
@@ -991,13 +1016,9 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
         <mapping>
             <name>E2-retract-orphan-personal-email</name>
             <description>Retrae el emailAddress laboral huérfano (correo personal/gmail dejado por el inbound strong de Trabajadores) cuando liveAffiliationWorker==null. El RANGE abarca SOLO valores que NO terminan en @upeu.edu.pe → el institucional (worker vivo o student) nunca entra en rango y queda intacto. MidPoint no inventa correos (Bloque B archived); el inbound weak de estudiantes (correo-upeu-to-emailAddress) repuebla el @upeu.edu.pe real. IIA compartida (iga-canonical §1.3): worker strong / student weak; el template solo limpia lo huérfano no-institucional.</description>
-            <!-- DESACTIVADO 2026-06-03: guard liveAffiliationWorker==null INSEGURO en recompute
-                 focus-driven (zero-set transitorio). NO reactivar hasta reescribir guard. -->
-            <lifecycleState>archived</lifecycleState>
+            <!-- REACTIVADO 2026-06-03: guard persistida (ver E2.a). -->
+            <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
-            <source>
-                <path>extension/sciback:liveAffiliationWorker</path>
-            </source>
             <expression>
                 <value/>
             </expression>
@@ -1015,7 +1036,19 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
             </target>
             <condition>
                 <script>
-                    <code>liveAffiliationWorker == null</code>
+                    <code>
+def QN = new javax.xml.namespace.QName('urn:sciback:midpoint:person','liveAffiliationWorker')
+def relP = null
+try { relP = focus?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } catch (Exception e) {}
+def perP = null
+try {
+  if (focus?.oid != null) {
+    def repoUser = midpoint.getObjectByOid(com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class, focus.oid)
+    perP = repoUser?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue
+  }
+} catch (Exception e) {}
+return (relP == null &amp;&amp; perP == null)
+                    </code>
                 </script>
             </condition>
         </mapping>
