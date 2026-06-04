@@ -145,3 +145,22 @@ Ver: [`MIGRATION-koha-categorycodes-plan.md`](MIGRATION-koha-categorycodes-plan.
 | Análisis canónico | midpoint-expert | ✅ Analizado |
 | Biblioteca UPeU | — | ⏳ Pendiente socializar antes de Fase 5 |
 | DTI | — | ⏳ Informativo |
+
+---
+
+## PENDIENTE — 7ª categoría para escolares del Colegio Unión (2026-06-04)
+
+**Estado:** ESPERANDO DECISIÓN de David Orrego (Director CRAI).
+
+**Pregunta abierta:** ¿los estudiantes escolares (menores) del Colegio Unión usarán la biblioteca / sacarán libros vía IGA?
+
+**Contexto:**
+- Los **trabajadores** del Colegio Unión ya están cubiertos por las 6 categorías (profesores→`faculty`, auxiliares de educación→`staff`, administrativos→`staff`). No requieren nada nuevo.
+- Los **escolares (niños)** NO están hoy en el alcance del IGA: no existe `studyLevel` "Básica/Escolar" en producción (niveles actuales: Pregrado, Posgrado, Técnica, Idiomas, CEPRE, Diplomatura, Conservatorio, Educación Continua, Tesis). No se provisionan como `student`.
+
+**Si Orrego confirma que SÍ usarán biblioteca:**
+- Es decisión de **scope** (incorporar escolares al IGA) + son **menores de edad**.
+- eduPerson `student` actual es `category_type=A (Adulto)` → NO encaja para niños.
+- Se necesitaría una **7ª categoría** tipo `category_type=C (Child)` con **apoderado (guarantor)** y reglas de circulación propias (ej. `student-minor` o similar). Validar enunciado canónico antes de crear (eduPerson sigue siendo `student` como afiliación; el eje "menor" es category_type/guarantor, no afiliación).
+
+**Si Orrego confirma que NO:** no se hace nada; las 6 categorías quedan firmes.
