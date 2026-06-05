@@ -91,5 +91,16 @@ El connector ScriptedSQL Estudiantes solo soporta EqualsFilter sobre `__NAME__`/
 - Throughput ~56/min con 6 threads (provisioning Koha síncrono por foco Lima domina). ~3.8h estimadas.
 - **PENDIENTE:** completar bootstrap → verificación final (testigos, invariantes) → restaurar tasks residuales suspendidas → memoria.
 
-### NOTA throughput bootstrap (mejora futura SciBack)
-El bootstrap es lento porque cada `assign archetype` dispara el clockwork completo + proyección Koha síncrona. Los no-Lima (5,884) NO provisionan Koha (gate #65) → su bootstrap es rápido; los Lima (7,088) son el cuello. Mejora: bootstrap en 2 olas (no-Lima rápido sin Koha + Lima con guard dup), o provisioning Koha asíncrono.
+### Throughput bootstrap — SPLIT Lima/no-Lima (aplicado, reutilizable SciBack)
+El bootstrap unificado a 2-6 threads era lento/problemático:
+- **2 threads:** ~14/min, 0 timeouts, pero ~15h para todo.
+- **6 threads:** la API Koha (`http://192.168.12.135:8001/api/v1/patrons`) da **`Read timed out`** → reintentos → throughput efectivo peor + focos en IN_PROGRESS. **La API Koha NO soporta 6 POST concurrentes sostenidos.** (host load 5+; connector v1.3.9). 0 duplicados igual (guard dup_card=0).
+
+**SOLUCIÓN aplicada — 2 olas por campus:**
+1. **Ola no-Lima** (Juliaca+Tarapoto, ~5,884): filtro `campusStudent != LIMA`, **8 threads**. NO provisiona Koha (gate #65) → 0 POST, 0 timeout → **~1,900/min, drenó en ~2 min**. CLOSED.
+2. **Ola Lima** (~6,864): filtro `campusStudent == LIMA`, **3 threads** (balance: sin `Read timed out`, más rápido que 2). Provisiona Koha BUL. Guard dup_card externo. ~30/min.
+
+**Lección SciBack:** separar provisioning-pesado (Koha síncrono) de bootstrap-ligero por campus/atributo; dimensionar threads al SLA del recurso destino, no al de MidPoint. La API Koha es el cuello, no MidPoint.
+
+### Guard dup_card — corre desde la Mac (PROD sin sshpass)
+PROD no tiene `sshpass` instalado → el kill-switch server-side no puede consultar Koha. El guard de `dup_cardnumber` (`/tmp/bootstrap_guard_local.sh`) corre desde la Mac (tiene sshpass + acceso a Koha + MidPoint REST): cada ciclo lee `dup_cardnumber` de Koha y suspende el bootstrap si >0. Mejora SciBack: instalar sshpass en PROD o usar un guard SQL nativo sobre el shadow cache.
