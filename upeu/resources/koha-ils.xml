@@ -1117,8 +1117,19 @@ return v.length() > 80 ? v.substring(0, 80) : v
                 <!-- Diseño B (2026-05-30): nivel académico pregrado/posgrado como par
                      {"type":"STUDY_LEVEL","value":"pregrado|posgrado"}. Solo students;
                      null para el resto. Gobernado por intolerantValuePattern STUDY_LEVEL. -->
+                <!-- outbound ÚNICO (single-valued en MidPoint) que produce una LISTA
+                     de pares JSON para este atributo multivalor:
+                       1. {"type":"STUDY_LEVEL","value":"pregrado|posgrado"} (solo students)
+                          — gobernado destructivamente por intolerantValuePattern.
+                       2. {"type":"DNI","value":"<dni>"} desde upeu:lambDocNum (2026-06-05)
+                          — imprescindible para el adopt-by-DNI del conector v1.3.10: ante
+                          un 409 (borrower legacy con cardnumber=DNI != cardnumber canónico
+                          =código), el conector lee este par DNI del payload, resuelve el
+                          borrower legacy por cardnumber=DNI con _match=exact y lo ADOPTA 1:1
+                          (idempotente, sin crear ni fusionar). NO intolerante → tolerado
+                          (MidPoint lo añade pero no lo gobierna destructivamente). -->
                 <outbound>
-                    <name>study-level-extended-attribute</name>
+                    <name>extended-attributes-study-level-and-dni</name>
                     <strength>strong</strength>
                     <source>
                         <path>$focus/extension/sb:primaryAffiliation</path>
@@ -1129,47 +1140,32 @@ return v.length() > 80 ? v.substring(0, 80) : v
                     <source>
                         <path>$focus/extension/sb:studentCycle</path>
                     </source>
-                    <expression>
-                        <script>
-                            <code>
-                                def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
-                                if (aff != 'student') return null;
-                                def level = studyLevel != null ? basic.stringify(studyLevel).trim().toLowerCase() : '';
-                                if (level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion' || level.contains('posgrado')) return '{"type":"STUDY_LEVEL","value":"posgrado"}';
-                                if (level == 'pregrado') return '{"type":"STUDY_LEVEL","value":"pregrado"}';
-                                def cycles = (studentCycle instanceof Collection) ? studentCycle : (studentCycle != null ? [studentCycle] : []);
-                                def maxCycle = cycles.collect { it?.toString()?.trim()?.isInteger() ? it.toString().trim().toInteger() : -1 }.max();
-                                if (maxCycle != null &amp;&amp; maxCycle >= 7) return '{"type":"STUDY_LEVEL","value":"posgrado"}';
-                                if (!cycles.isEmpty()) return '{"type":"STUDY_LEVEL","value":"pregrado"}';
-                                return '{"type":"STUDY_LEVEL","value":"pregrado"}';
-                            </code>
-                        </script>
-                    </expression>
-                </outbound>
-                <!-- DNI extended_attribute (2026-06-05): emite el par
-                     {"type":"DNI","value":"<dni>"} en el payload del CREATE.
-                     Imprescindible para el adopt-by-DNI del conector v1.3.10:
-                     ante un 409 (borrower legacy con cardnumber=DNI distinto al
-                     cardnumber canónico=código), el conector lee este par DNI del
-                     payload, resuelve el borrower legacy por cardnumber=DNI con
-                     _match=exact y lo ADOPTA 1:1 (idempotente, sin crear ni fusionar).
-                     Sin este par, el create no trae DNI → el adopt se omite → 409
-                     irrecuperable (residual onboarding ~9 focos student-LIMA legacy).
-                     Fuente: extension/upeu:lambDocNum (DNI real, IIA Oracle LAMB).
-                     NO intolerante → MidPoint lo añade pero no lo gobierna destructiva-
-                     mente (se preserva el par DNI legacy si ya existe idéntico). -->
-                <outbound>
-                    <name>dni-extended-attribute</name>
-                    <strength>strong</strength>
                     <source>
                         <path>$focus/extension/upeu:lambDocNum</path>
                     </source>
                     <expression>
                         <script>
                             <code>
+                                def out = [];
+                                // par STUDY_LEVEL (solo students)
+                                def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+                                if (aff == 'student') {
+                                    def level = studyLevel != null ? basic.stringify(studyLevel).trim().toLowerCase() : '';
+                                    if (level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion' || level.contains('posgrado')) {
+                                        out &lt;&lt; '{"type":"STUDY_LEVEL","value":"posgrado"}';
+                                    } else if (level == 'pregrado') {
+                                        out &lt;&lt; '{"type":"STUDY_LEVEL","value":"pregrado"}';
+                                    } else {
+                                        def cycles = (studentCycle instanceof Collection) ? studentCycle : (studentCycle != null ? [studentCycle] : []);
+                                        def maxCycle = cycles.collect { it?.toString()?.trim()?.isInteger() ? it.toString().trim().toInteger() : -1 }.max();
+                                        if (maxCycle != null &amp;&amp; maxCycle &gt;= 7) out &lt;&lt; '{"type":"STUDY_LEVEL","value":"posgrado"}';
+                                        else out &lt;&lt; '{"type":"STUDY_LEVEL","value":"pregrado"}';
+                                    }
+                                }
+                                // par DNI (para adopt-by-DNI del conector v1.3.10)
                                 def dni = lambDocNum != null ? basic.stringify(lambDocNum).trim() : '';
-                                if (dni ==~ /^\d{8}$/) return '{"type":"DNI","value":"' + dni + '"}';
-                                return null;
+                                if (dni ==~ /^\d{8}$/) out &lt;&lt; '{"type":"DNI","value":"' + dni + '"}';
+                                return out;
                             </code>
                         </script>
                     </expression>
