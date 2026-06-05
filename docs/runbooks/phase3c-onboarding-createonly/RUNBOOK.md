@@ -102,5 +102,64 @@ El bootstrap unificado a 2-6 threads era lento/problemático:
 
 **Lección SciBack:** separar provisioning-pesado (Koha síncrono) de bootstrap-ligero por campus/atributo; dimensionar threads al SLA del recurso destino, no al de MidPoint. La API Koha es el cuello, no MidPoint.
 
+### Fase B-RELANZADA — server-side (sobrevive desconexion del cliente) — 2026-06-05 02:20Z
+El driver Mac-side (guard `dup_card`) murio al suspenderse la laptop ~01:47Z; la task nativa de
+MidPoint siguio, pero quedo detenida sin completar. **Estado al reanudar:** m_user 62,465; limbo
+total 6,878; **6,579 focos Lima student en limbo** (sin archetype). Ademas **196 stragglers**:
+student-archetyped Lima CON rol AR-Koha-Patron pero SIN borrower (POST interrumpido por el corte;
+**0 pendingOperation -> sin corrupcion**, solo provisioning pendiente). Koha 14,607 / student 5,824 /
+**dup_card=0**. Koha objectType[default]=active, connector v1.3.9. Sin daño del corte.
+
+**Relanzado 100% SERVER-SIDE** (3 artefactos en `upeu/tasks/phase3c-onboarding/`, commit posterior):
+1. **Task A** `phase3c-bootstrap-student-lima-relaunch` (OID `...3c1a3a`, iterativeScripting **assign**
+   archetype student, **workerThreads=3**) — filtro `liveAffiliationStudent=student` + sin archetype +
+   no archived (sin filtro de campus: el gate #65 en la construction del AR-Koha-Patron decide Koha
+   por-foco). Idempotente. Las tasks nativas corren en el task manager de MidPoint -> ya estan
+   desacopladas de cualquier cliente.
+2. **Task B** `phase3c-recompute-straggler-lima-koha` (OID `...3c1b3b`, recomputation, wt=3) — recompute
+   de los stragglers (student Lima active con rol Koha) -> dispara la construction Koha -> materializa
+   el borrower faltante. Idempotente. Corre DESPUES de A.
+3. **Driver+guard** `p3c-lima-guard-driver.sh` bajo `setsid nohup` en PROD (PID 365361, PPID reparenta
+   a 1 -> sobrevive cierre SSH). Secuencia A->B; cada 30s vigila **dup_card** (desde el SHADOW CACHE,
+   `m_shadow.attributes->'128'` = cardnumber, server-side sin mysql) y **mem**. `dup_card>0 -> suspende
+   AMBAS` (kill-switch sagrado). `mem>=88% -> suspende` (OOM guard; reinicio MidPoint autorizado).
+   Log a `~/phase3c-lima-bootstrap.log`.
+
+**Throttle Koha = 3 threads** (confirmado: 4+ POST concurrentes -> `Read timed out`).
+
+**Arranque sano verificado (02:20-02:23Z):** Task A RUNNING; limboStud 6,382->6,334 (~48 en 3 min);
+koha_shadows 12,050->12,095 (+45 borrowers BUL); **dup_card=0 sostenido**; mem 57% estable. Driver
+detached confirmado (sobrevivio al kill del SSH lanzador).
+
+#### Monitoreo (SSH, sin depender del proceso)
+```bash
+source ~/.secrets/midpoint-upeu.env
+# log de progreso
+sshpass -p "$MIDPOINT_PROD_PASS" ssh midpoint-prod "tail -20 ~/phase3c-lima-bootstrap.log"
+# conteos en vivo
+sshpass -p "$MIDPOINT_PROD_PASS" ssh midpoint-prod "docker exec midpoint-midpoint_data-1 psql -U midpoint -d midpoint -tAc \"SELECT (SELECT count(*) FROM m_user u WHERE u.ext->>'217'='student' AND NOT EXISTS (SELECT 1 FROM m_ref_archetype ra WHERE ra.owneroid=u.oid) AND (u.lifecyclestate IS NULL OR u.lifecyclestate<>'archived')) AS limbo_stud, (SELECT count(*) FROM m_shadow WHERE resourcereftargetoid='9b5a7c81-47aa-42ac-9a08-4de8b64935af' AND (dead IS NULL OR dead='false')) AS koha_shadows, (SELECT count(*) FROM (SELECT attributes->'128' c FROM m_shadow WHERE resourcereftargetoid='9b5a7c81-47aa-42ac-9a08-4de8b64935af' AND attributes ? '128' AND (dead IS NULL OR dead='false') GROUP BY attributes->'128' HAVING count(*)>1) x) AS dup_card;\""
+# driver vivo?
+sshpass -p "$MIDPOINT_PROD_PASS" ssh midpoint-prod "ps -o pid,etime,cmd -p 365361 | tail -1"
+```
+dup_card debe ser **0 SIEMPRE**. Cuando `limbo_stud -> ~0` y Task B cierra -> dren completo.
+
+#### Como detener
+```bash
+# 1) matar el driver (deja de secuenciar/vigilar)
+sshpass -p "$MIDPOINT_PROD_PASS" ssh midpoint-prod "kill 365361 2>/dev/null; pkill -f p3c-lima-guard"
+# 2) suspender las tasks nativas en MidPoint (siguen corriendo aunque muera el driver)
+sshpass -p "$MIDPOINT_PROD_PASS" ssh midpoint-prod "curl -s -X POST -u \$MIDPOINT_ADMIN_USER:\$MIDPOINT_ADMIN_PASS http://localhost:8080/midpoint/ws/rest/tasks/d1a2b3c4-3c00-4abc-9def-0000003c1a3a/suspend; curl -s -X POST -u \$MIDPOINT_ADMIN_USER:\$MIDPOINT_ADMIN_PASS http://localhost:8080/midpoint/ws/rest/tasks/d1a2b3c4-3c00-4abc-9def-0000003c1b3b/suspend"
+```
+**Auto-suspension del guard:** si `dup_card>0` el driver suspende AMBAS tasks solo y registra
+`!!!! KILL-SWITCH dup_card=...` en el log. Si `mem>=88%` suspende la task en curso (reinicio MidPoint
+autorizado para recuperar heap, luego re-`resume`).
+
+#### Verificacion final (al drenar)
+- **Testigos:** Critsi (202613369) y Tito (200810869 / DNI 43508613) intactos, active, LIMA, borrower BUL.
+- **Invariantes:** `dup_card=0`; 0 dual-structural; m_user names_distintos == m_user total (correlacion intacta);
+  dual-shadow Estudiantes 0; limbo_stud -> ~0 (solo residuos sin campus materializado, no Lima provisionables).
+- **Conteos ANTES->DESPUES:** Koha total 14,607->~21k (segun cuantos Lima); student 5,824->+(~6,5k);
+  faculty 1,119->+ (prioridad faculty>student); dup_card 0->**0**.
+
 ### Guard dup_card — corre desde la Mac (PROD sin sshpass)
 PROD no tiene `sshpass` instalado → el kill-switch server-side no puede consultar Koha. El guard de `dup_cardnumber` (`/tmp/bootstrap_guard_local.sh`) corre desde la Mac (tiene sshpass + acceso a Koha + MidPoint REST): cada ciclo lee `dup_cardnumber` de Koha y suspende el bootstrap si >0. Mejora SciBack: instalar sshpass en PROD o usar un guard SQL nativo sobre el shadow cache.
