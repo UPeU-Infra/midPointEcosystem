@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FASE 3c — CANARY del bootstrap student (validación-en-pequeño con conexión estable).
+  Idéntico al bootstrap full pero ACOTADO a una lista explícita de OIDs (q:inOid) de
+  ~200-500 focos limbo objetivo. Permite validar el provisioning Koha (storm/dup/fusión)
+  en un lote chico ANTES de soltar el bootstrap completo. Los OIDs se inyectan
+  dinámicamente desde la consulta post-import de focos limbo liveAffiliationStudent=student.
+  Worker threads = 2 (conservador OOM).
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
+      oid="d1a2b3c4-3c00-4abc-9def-0000003cca01">
+    <name>phase3c-bootstrap-student-canary</name>
+    <description>FASE 3c CANARY: bootstrap student acotado por q:inOid (lote chico) para validar Koha.</description>
+    <executionState>runnable</executionState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <activity>
+        <work>
+            <iterativeScripting>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:inOid>
+                                <!-- OIDS_PLACEHOLDER -->
+                            </q:inOid>
+                        </q:filter>
+                    </query>
+                </objects>
+                <scriptExecutionRequest>
+                    <s:action>
+                        <s:type>assign</s:type>
+                        <s:parameter>
+                            <s:name>role</s:name>
+                            <s:value xsi:type="c:ObjectReferenceType"
+                                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                     oid="3037fbd2-db02-4ffd-8b1a-83fab5e686aa"
+                                     type="c:ArchetypeType"/>
+                        </s:parameter>
+                    </s:action>
+                </scriptExecutionRequest>
+            </iterativeScripting>
+        </work>
+        <distribution><workerThreads>2</workerThreads></distribution>
+    </activity>
+</task>
