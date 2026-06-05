@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FASE 3c (RELANZAMIENTO SERVER-SIDE) — Recompute de STRAGGLERS: focos student-archetyped Lima
+  que YA tienen el rol AR-Koha-Patron (via template) pero cuyo POST a Koha NO completo antes de
+  que la task previa se detuviera (driver Mac-side murio). NO hay corrupcion (0 pendingOperation),
+  solo provisioning pendiente -> un recompute focus-driven dispara la construction Koha -> POST ->
+  materializa el borrower BUL (cardnumber=codigo).
+
+  SCOPE: student-archetyped, ext campusStudent(219)=LIMA, con rol Koha-Patron, SIN shadow Koha vivo.
+  No se puede expresar "sin shadow Koha" en q:filter -> se filtra por archetype student + active;
+  recompute es IDEMPOTENTE: los que YA tienen borrower no generan POST nuevo (construction existe ->
+  PATCH no-op), los que faltan lo crean. workerThreads=3 (throttle API Koha, sec.5 RUNBOOK).
+
+  Se ejecuta DESPUES de Task A (bootstrap) — el guard server-side cubre ambas con el mismo
+  kill-switch dup_card. dup_card=0 sagrado.
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:sb="urn:sciback:midpoint:person"
+      oid="d1a2b3c4-3c00-4abc-9def-0000003c1b3b">
+    <name>phase3c-recompute-straggler-lima-koha</name>
+    <description>FASE 3c relanzamiento server-side: recompute de focos student Lima con rol Koha pero sin borrower (provisioning interrumpido por el corte). Dispara la construction Koha. Idempotente. workerThreads=3.</description>
+    <executionState>runnable</executionState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <cleanupAfterCompletion>P2D</cleanupAfterCompletion>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <q:equal>
+                                    <q:path>extension/sb:liveAffiliationStudent</q:path>
+                                    <q:value>student</q:value>
+                                </q:equal>
+                                <q:equal>
+                                    <q:path>extension/sb:campusStudent</q:path>
+                                    <q:value>LIMA</q:value>
+                                </q:equal>
+                                <q:ref>
+                                    <q:path>archetypeRef</q:path>
+                                    <q:value oid="3037fbd2-db02-4ffd-8b1a-83fab5e686aa" type="ArchetypeType"/>
+                                </q:ref>
+                                <q:equal>
+                                    <q:path>lifecycleState</q:path>
+                                    <q:value>active</q:value>
+                                </q:equal>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+        <distribution><workerThreads>3</workerThreads></distribution>
+    </activity>
+</task>

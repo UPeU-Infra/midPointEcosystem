@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FASE 3c (RELANZAMIENTO SERVER-SIDE) — Bootstrap archetype student de los focos LIMBO restantes.
+  Reanuda el bootstrap Lima que quedo incompleto cuando el driver Mac-side murio al suspender la laptop.
+  Esta es una task NATIVA de MidPoint (iterativeScripting): corre dentro del task manager del servidor,
+  100% desacoplada de cualquier sesion SSH/cliente -> SOBREVIVE a desconexiones por diseno.
+
+  SCOPE: todos los focos con liveAffiliationStudent='student' (item materializado por el inbound,
+  PRE-template -> escapa el bootstrap-deadlock) que aun NO tienen archetype y no estan archived.
+  NO se filtra por campus: el gate multi-campus #65 vive en la CONSTRUCTION del AR-Koha-Patron
+  (chokepoint canonico) y decide por-foco si se provisiona Koha BUL. Asi un Lima recibe borrower
+  y un Juliaca/Tarapoto residual no -> idempotente y completo.
+
+  Al asignar el archetype student corre la cadena: base J3b/J3 deriva affiliations+primaryAffiliation;
+  student template asigna business roles; gate Koha provisiona borrower BUL (cardnumber=codigo) solo Lima.
+
+  THROTTLE Koha: workerThreads=3. Limite confirmado de la API Koha (http://192.168.12.135:8001):
+  4+ POST concurrentes -> "Read timed out". 3 es el balance sin timeout (RUNBOOK 3c sec.5).
+
+  GUARD: kill-switch server-side (p3c_lima_guard.sh, nohup setsid en PROD) suspende esta task si
+  aparece CUALQUIER cardnumber duplicado (shadow-cache item 128) o mem>=88%. dup_card=0 es sagrado.
+
+  IDEMPOTENTE/REANUDABLE: el filtro excluye focos YA con archetype -> re-ejecutar solo toca los limbo
+  restantes; assign del mismo archetype es no-op. Nunca fusiona, correlacion por codigo.
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
+      xmlns:sb="urn:sciback:midpoint:person"
+      oid="d1a2b3c4-3c00-4abc-9def-0000003c1a3a">
+    <name>phase3c-bootstrap-student-lima-relaunch</name>
+    <description>FASE 3c relanzamiento server-side: asigna archetype student a focos limbo restantes (liveAffiliationStudent=student, sin archetype, no archived). Gate #65 decide Koha. workerThreads=3 (throttle API Koha). Idempotente.</description>
+    <executionState>runnable</executionState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <cleanupAfterCompletion>P2D</cleanupAfterCompletion>
+    <activity>
+        <work>
+            <iterativeScripting>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <q:equal>
+                                    <q:path>extension/sb:liveAffiliationStudent</q:path>
+                                    <q:value>student</q:value>
+                                </q:equal>
+                                <q:not>
+                                    <q:ref>
+                                        <q:path>archetypeRef</q:path>
+                                        <q:value><type>ArchetypeType</type></q:value>
+                                    </q:ref>
+                                </q:not>
+                                <q:not>
+                                    <q:equal>
+                                        <q:path>lifecycleState</q:path>
+                                        <q:value>archived</q:value>
+                                    </q:equal>
+                                </q:not>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+                <scriptExecutionRequest>
+                    <s:action>
+                        <s:type>assign</s:type>
+                        <s:parameter>
+                            <s:name>role</s:name>
+                            <s:value xsi:type="c:ObjectReferenceType"
+                                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                     oid="3037fbd2-db02-4ffd-8b1a-83fab5e686aa"
+                                     type="c:ArchetypeType"/>
+                        </s:parameter>
+                    </s:action>
+                </scriptExecutionRequest>
+            </iterativeScripting>
+        </work>
+        <distribution><workerThreads>3</workerThreads></distribution>
+    </activity>
+</task>
