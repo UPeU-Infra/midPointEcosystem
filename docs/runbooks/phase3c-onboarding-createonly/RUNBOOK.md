@@ -72,7 +72,24 @@ El connector ScriptedSQL Estudiantes solo soporta EqualsFilter sobre `__NAME__`/
 
 ---
 
-## 5. Estado (actualizar al cierre)
-- ANTES (baseline): m_user 49,503 · Koha 14,398 (student 5,605 / ESTUDI 3,370 / faculty 1,119 / staff 1,422) · dup_card 0 · Est dual-shadow 0 · Koha dual-shadow 13.
-- Import c04 en curso. Koha objectType=proposed.
-- **PENDIENTE:** completar import → restaurar Koha=active → bootstrap → verificación final → restaurar invariantes.
+## 5. Resultados
+
+### Fase A — Full import (creación de focos limbo) — COMPLETA
+- Task `phase3c-full-import-estudiantes-limbo` OID `...3c04`, workerThreads=4, Koha objectType=**proposed** (outbound off).
+- **m_user 49,503 → 62,465 (+12,962 focos limbo creados)**. TODOS sin archetype (limbo), storm-free.
+- limboStud (`ext->>'217'='student'` sin archetype): **12,972** (LIMA 7,088 · JULIACA 4,496 · TARAPOTO 1,388).
+- **0 duplicados:** 0 focos nuevos con lambDocNum pre-existente; m_user == names_distintos (62,465). Correlación íntegra.
+- **El número real (12,962) excede el estimado (10,081)** porque el cruce co_split.json estaba desactualizado (~3h). Son matriculados vigentes legítimos, no duplicados.
+- mem 56-57% estable toda la corrida, 0 POST a Koha. Kill-switch server-side desacoplado (`p3c_killswitch.sh`) detectó CLOSED limpio.
+- **Throughput:** lento al inicio (reconcile de ~14k existentes), ráfagas de ~1000/min en zona addFocus. ~17min wall total.
+
+### Fase B — Bootstrap (archetype student + provisioning Koha) — EN CURSO
+- Restaurado Koha objectType[11045] → **active** (PATCH).
+- **CANARY 30 OIDs LIMA: PASS.** → 30 focos active, archetype student structural + AuxAff-Student (0 dual-structural), Koha +13 borrowers BUL student cardnumber=código, **dup_card=0**. Storm mínimo (gemelos-DNI absorbidos sin crear dup).
+- Bootstrap full `...3b00b6`, workerThreads=6, filtro `liveAffiliationStudent=student` + sin archetype + no archived.
+- **Guard local** (`/tmp/bootstrap_guard_local.sh`, corre desde la Mac porque PROD no tiene sshpass): kill-switch con guard CRÍTICO `dup_cardnumber>0 → suspend` + mem≥88%. Lee Koha directo.
+- Throughput ~56/min con 6 threads (provisioning Koha síncrono por foco Lima domina). ~3.8h estimadas.
+- **PENDIENTE:** completar bootstrap → verificación final (testigos, invariantes) → restaurar tasks residuales suspendidas → memoria.
+
+### NOTA throughput bootstrap (mejora futura SciBack)
+El bootstrap es lento porque cada `assign archetype` dispara el clockwork completo + proyección Koha síncrona. Los no-Lima (5,884) NO provisionan Koha (gate #65) → su bootstrap es rápido; los Lima (7,088) son el cuello. Mejora: bootstrap en 2 olas (no-Lima rápido sin Koha + Lima con guard dup), o provisioning Koha asíncrono.
