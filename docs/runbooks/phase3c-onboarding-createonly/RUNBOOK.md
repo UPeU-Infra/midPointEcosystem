@@ -163,3 +163,65 @@ autorizado para recuperar heap, luego re-`resume`).
 
 ### Guard dup_card — corre desde la Mac (PROD sin sshpass)
 PROD no tiene `sshpass` instalado → el kill-switch server-side no puede consultar Koha. El guard de `dup_cardnumber` (`/tmp/bootstrap_guard_local.sh`) corre desde la Mac (tiene sshpass + acceso a Koha + MidPoint REST): cada ciclo lee `dup_cardnumber` de Koha y suspende el bootstrap si >0. Mejora SciBack: instalar sshpass en PROD o usar un guard SQL nativo sobre el shadow cache.
+
+---
+
+## Addendum 2026-06-04 — FALSO POSITIVO del kill-switch + guard refinado
+
+### Qué pasó
+El primer relanzamiento server-side abortó a las **02:25:08Z** cuando el driver
+`p3c-lima-guard-driver.sh` detectó `dup_card=1` en el shadow-cache
+(`m_shadow.attributes->'128'`). Suspendió ambas tasks (fail-safe correcto).
+
+**Era un FALSO POSITIVO, transitorio del `create-or-adopt` de KohaConnector v1.3.9.**
+Durante el adopt, por un instante coexisten **2 shadows VIVOS** con el mismo
+cardnumber (el nuevo recién creado + el que se va a adoptar) ANTES de que el viejo
+se marque `dead`. El guard viejo —que solo filtraba `dead IS NULL OR dead='false'`—
+los contó como duplicado y abortó.
+
+### Verificación post-mortem (estado limpio confirmado)
+- **Koha: 0 cardnumbers duplicados** (verdad dura).
+- **MidPoint: 0 duplicados REALES vivos.** Los 12 cardnumbers con >1 shadow en cache
+  son pares **tombstone + live**: cada uno tiene exactamente 1 shadow vivo
+  (`dead IS NOT TRUE AND exist=true`) + 1 muerto/pending del adopt.
+  Query de la verdad:
+  ```sql
+  SELECT attributes->>'128', COUNT(*) FROM m_shadow
+   WHERE attributes ? '128' AND dead IS NOT TRUE AND exist=true
+   GROUP BY attributes->>'128' HAVING COUNT(*)>1;   -- vacío = 0 dup reales
+  ```
+- Tasks `relaunch` + `straggler` SUSPENDED, `full-import` CLOSED, driver muerto. 0 daño.
+- Limbo restante: ~6,2-6,3k focos student Lima sin archetype/cuenta Koha.
+
+### Guard refinado (distingue transitorio de real)
+Tres barreras en `run_guarded()`:
+1. **Detector barato (cada ciclo):** dup en shadow-cache contando solo shadows
+   `dead IS NOT TRUE AND exist=true`. Si 0 → OK. Si >0 → NO aborta: pasa a (2).
+2. **Verdad dura de KOHA via REST (`koha_confirm_real`):** por cada cardnumber
+   sospechoso consulta `GET /api/v1/patrons?cardnumber=X` → header `x-total-count`.
+   - algún cardnumber con `x-total-count >= 2` en Koha → **DUP REAL → KILL inmediato**.
+   - todos `<= 1` → transitorio del adopt → **CONTINÚA**.
+   - Koha no responde → `UNKNOWN`, cae a (3).
+3. **Anti-transitorio por persistencia (`STREAK_MAX=2`):** si el MISMO set de
+   cardnumbers dup persiste `>= 2` ciclos consecutivos → KILL (no converge).
+   Defensa en profundidad por si Koha REST fallara.
+
+Se mantienen: **mem-guard (88%)**, kill-switch real (dup persistente/Koha-confirmado
+SÍ suspende ambas tasks), secuencia Task A → Task B.
+
+**Nuevas vars de entorno del driver:** `KOHA_URL`, `KOHA_CID`, `KOHA_SECRET`
+(de `~/.secrets/koha-prod.env`: `KOHA_PROD_URL`, `KOHA_PROD_CLIENT_ID`, `KOHA_PROD_SECRET`).
+El host MidPoint alcanza Koha REST (HTTP 200) directamente — no requiere mysql/sshpass.
+
+### Relanzamiento
+```bash
+source ~/.secrets/midpoint-upeu.env
+source ~/.secrets/koha-prod.env
+sshpass -p "$MIDPOINT_PROD_PASS" ssh midpoint-prod \
+ "cd ~/midPointEcosystem && git pull --ff-only && \
+  cd upeu/tasks/phase3c-onboarding && chmod +x p3c-lima-guard-driver.sh && \
+  MP_AU='$MIDPOINT_ADMIN_USER' MP_AP='$MIDPOINT_ADMIN_PASS' \
+  KOHA_URL='$KOHA_PROD_URL' KOHA_CID='$KOHA_PROD_CLIENT_ID' KOHA_SECRET='$KOHA_PROD_SECRET' \
+  setsid nohup ./p3c-lima-guard-driver.sh >> ~/phase3c-lima-bootstrap.log 2>&1 < /dev/null & \
+  sleep 1; echo launched"
+```
