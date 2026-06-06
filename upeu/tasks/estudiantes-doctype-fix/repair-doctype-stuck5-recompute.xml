@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
+      oid="d1a2b3c4-df00-4abc-9def-0000000df003">
+    <name>repair-doctype-stuck5-recompute</name>
+    <description>FIX doctype: recompute real (accion recompute) de 5 estudiantes pasaporte/CE cuyo lambDocType ya quedo correcto tras fresh-import pero identityDocuments seguia type=DNI. Todos con shadow Koha linkeado (PATCH, sin storm).</description>
+    <executionState>runnable</executionState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <activity><work><iterativeScripting><objects><type>UserType</type><query><q:filter><q:or>
+<q:equal><q:path>name</q:path><q:value>201311041</q:value></q:equal><q:equal><q:path>name</q:path><q:value>201712009</q:value></q:equal><q:equal><q:path>name</q:path><q:value>202313459</q:value></q:equal><q:equal><q:path>name</q:path><q:value>202414495</q:value></q:equal><q:equal><q:path>name</q:path><q:value>202421264</q:value></q:equal></q:or></q:filter></query></objects><scriptExecutionRequest><s:action><s:type>recompute</s:type></s:action></scriptExecutionRequest></iterativeScripting></work></activity>
+</task>
