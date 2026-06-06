@@ -5,38 +5,42 @@
   Objetivo: Limpiar ~31.158 emails numéricos inventados (patrón ^\d+@upeu.edu.pe)
             seteados por el mapping B-emailAddress-fallback-from-name (archivado 2026-06-06).
 
-  Mecanismo: iterativeChangeExecution sobre TODOS los usuarios active.
+  Mecanismo: iterativeScripting sobre usuarios active.
     - El script Groovy filtra internamente: solo actúa si emailAddress ~ ^\d+@upeu.edu.pe$
     - Para cada usuario con email numérico:
         1. DELETE explícito de emailAddress (el mapping archivado no produce zero-set).
-        2. PATCH no-op description con ?options=reconcile → activa template → B-email-review-flag.
-    - Para usuarios sin email numérico: no-op (skip).
+        2. recompute del foco → activa B-email-review-flag del template.
+           Si Entra ID tiene email real → inbound lo re-escribe.
+           Si no → emailAddress=NULL y emailReviewNeeded=true.
+    - Para usuarios sin email numérico: return (no-op).
 
-  Filtro q:matches no soportado en esta versión de MidPoint 4.10 → filtro en Groovy.
+  Por qué iterativeScripting y no iterativeChangeExecution:
+    iterativeChangeExecution no soporta <scripts>; iterativeScripting sí (Semančík Cap.13).
+
+  Filtro q:matches no soportado en esta versión → filtro interno en Groovy.
 
   Canary VALIDADO (2026-06-06): oid=03701518-e1ae-47ef-bae4-eb78ce25c347
-    - email_before=324109193@upeu.edu.pe → email_after=NULL + emailReviewNeeded=true
+    email_before=324109193@upeu.edu.pe → email_after=NULL + emailReviewNeeded=true
 
   OID determinista: b9e11002-f001-4abc-9def-202406060002
   Creado: 2026-06-06
-  Scope: ~49K usuarios active (filtro interno: ~31.158 con email numérico)
 -->
 <task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
       oid="b9e11002-f001-4abc-9def-202406060002">
 
     <name>cleanup-numeric-emails-2026-06-06</name>
-    <description>Limpia emails numéricos inventados (^\d+@upeu.edu.pe) seteados por el mapping fallback archivado. Para cada usuario: DELETE emailAddress numérico + recompute reconcile → emailReviewNeeded=true si Entra ID no tiene email real. Canary PASS 2026-06-06. Scope: ~49K active, actúa en ~31.158 con email numérico.</description>
+    <description>Limpia emails numéricos inventados (^\d+@upeu.edu.pe). Para cada usuario con email numérico: DELETE emailAddress + recompute → emailReviewNeeded=true si Entra ID no provee email real. Canary PASS 2026-06-06. Scope: ~49K active, actúa en ~31.158 con email numérico.</description>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
 
-    <executionState>runnable</executionState>
+    <executionState>suspended</executionState>
     <schedule>
         <recurrence>single</recurrence>
     </schedule>
 
     <activity>
         <work>
-            <iterativeChangeExecution>
+            <iterativeScripting>
                 <objects>
                     <type>UserType</type>
                     <query>
@@ -48,9 +52,10 @@
                         </q:filter>
                     </query>
                 </objects>
-                <scripts>
-                    <script>
-                        <code><![CDATA[
+                <scriptExecutionRequest>
+                    <execute>
+                        <script>
+                            <code><![CDATA[
 import com.evolveum.midpoint.xml.ns._public.common.common_3.UserType
 
 // Filtro interno: solo actúa si el email es numérico (patrón ^\d+@upeu.edu.pe$)
@@ -71,13 +76,12 @@ def delta = prismContext.deltaFactory().object()
 midpoint.modifyObject(delta)
 
 // Paso 2: recompute del foco → activa B-email-review-flag
-// Si Entra ID tiene email real → el inbound del resource lo re-escribe.
-// Si no → emailAddress=NULL y emailReviewNeeded=true.
 midpoint.recompute(object.oid)
-                        ]]></code>
-                    </script>
-                </scripts>
-            </iterativeChangeExecution>
+                            ]]></code>
+                        </script>
+                    </execute>
+                </scriptExecutionRequest>
+            </iterativeScripting>
         </work>
     </activity>
 
