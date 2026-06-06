@@ -2,7 +2,11 @@
 
 > Referencia técnica de los atributos eduPerson estándar que se exponen vía Keycloak SAML a vendors externos (Scopus, WoS, EBSCO, etc.). Este es el "contrato" entre MidPoint UPeU y el mundo externo.
 >
-> **Fuente de atributos (2026-05-20):** MidPoint provisiona atributos a OpenLDAP (192.168.15.168:389); Keycloak User Federation lee de OpenLDAP. Los atributos eduPerson derivados (ePPN, ePSA, eduPersonAffiliation) están pendientes de mapear en el outbound LDAP (F5 del roadmap). Los campos fuente del schema canónico son `urn:sciback:midpoint:person` y overlay `urn:upeu:midpoint:local`.
+> **Estándar base:** eduPerson 202208 v4.4.0 (REFEDS/Internet2). Solo se documentan los atributos que UPeU efectivamente usa o planea usar. No se inventan atributos fuera del estándar.
+>
+> **Fuente de atributos (2026-06-06):** MidPoint 4.10.2 provisiona atributos a OpenLDAP HA (Node1: 192.168.15.168:389, Node2: 192.168.15.169:389); Keycloak User Federation lee de OpenLDAP. Los atributos eduPerson derivados (ePPN, ePSA, eduPersonAffiliation, schacHomeOrganization) están **pendientes de mapear** en el outbound LDAP (Fase 13). Los campos fuente del schema canónico son `urn:sciback:midpoint:person` y overlay `urn:upeu:midpoint:local`.
+>
+> **Modelo de afiliación actual:** la afiliación se deriva del archetype estructural del usuario en MidPoint (no de `primaryAffiliationCode` — atributo deprecado). El mapeo archetype→eduPersonAffiliation se documenta en la sección correspondiente.
 
 ## Atributos núcleo (siempre se emiten)
 
@@ -104,20 +108,25 @@
 - **Cuándo usarlo**: para licenciamiento granular (ej: solo posgrado puede acceder)
 - **Ejemplo**: `urn:upeu:entitlement:postgrado-only`
 
-## Mapeo de valores afiliación (UPeU)
+## Mapeo de valores afiliación (UPeU) — estado 2026-06-06
 
-En el modelo canónico actual, `eduPersonAffiliation` se **deriva del archetype** del usuario MidPoint, no de un atributo string:
+`eduPersonAffiliation` se **deriva del archetype estructural** del usuario MidPoint (archetype único por persona — Semančík §8.3). El atributo `primaryAffiliationCode` fue deprecado; ya no se usa.
 
-| Archetype MidPoint | eduPersonAffiliation | eduPersonScopedAffiliation |
-|---|---|---|
-| `faculty` | `faculty`, `employee`, `member` | `faculty@upeu.edu.pe` |
-| `student` | `student`, `member` | `student@upeu.edu.pe` |
-| `staff` | `staff`, `employee`, `member` | `staff@upeu.edu.pe` |
-| `alumni` | `alum`, `member` | `alum@upeu.edu.pe` |
-| `affiliate-partner-institution` | `affiliate` | `affiliate@upeu.edu.pe` |
-| `contractor` | `affiliate` | `affiliate@upeu.edu.pe` |
+| Archetype MidPoint (OID) | eduPersonAffiliation (multivalor) | eduPersonScopedAffiliation | eduPersonPrimaryAffiliation |
+|---|---|---|---|
+| `archetype-user-employee-faculty` (`c93083ca`) | `faculty`, `employee`, `member` | `faculty@upeu.edu.pe` | `faculty` |
+| `archetype-user-student` (`3037fbd2`) | `student`, `member` | `student@upeu.edu.pe` | `student` |
+| `archetype-user-employee-staff` (`6460facf`) | `staff`, `employee`, `member` | `staff@upeu.edu.pe` | `staff` |
+| `archetype-user-alumni` (`87552943`) | `alum`, `member` | `alum@upeu.edu.pe` | `alum` |
+| `archetype-user-affiliate-partner-institution` | `affiliate` | `affiliate@upeu.edu.pe` | `affiliate` |
+| `archetype-user-contractor` | `affiliate` | `affiliate@upeu.edu.pe` | `affiliate` |
+| `archetype-user-affiliate-researcher` | `affiliate`, `member` | `affiliate@upeu.edu.pe` | `affiliate` |
 
-El atributo `primaryAffiliationCode` de versiones anteriores del schema fue reemplazado por este modelo basado en archetype. El outbound mapping al LDAP cache calculará `eduPersonAffiliation` y `ePSA` desde el archetype del objeto focus.
+**Prelación `eduPersonPrimaryAffiliation`** (cuando una persona tiene múltiples roles): `staff > faculty > student > alum > affiliate`.
+
+**Multi-afiliación:** un docente que estudia posgrado tiene archetype `employee-faculty` (structural) + role de afiliación estudiante (business role). El outbound LDAP debe emitir ambos valores multivalor: `faculty`, `student`, `employee`, `member`.
+
+El outbound mapping al LDAP cache calculará `eduPersonAffiliation`, `ePSA` y `eduPersonPrimaryAffiliation` desde el archetype + roles de afiliación activos del objeto focus. **Estado: pendiente (Fase 13).**
 
 ## Multivalor: cuando un user tiene múltiples roles
 
@@ -132,24 +141,43 @@ eduPersonScopedAffiliation: student@upeu.edu.pe
 
 El vendor recibe ambos valores y aplica reglas según licenciamiento.
 
+## Mappings Oracle LAMB → MidPoint → OpenLDAP (tabla IIA)
+
+| Atributo LDAP (outbound) | Fuente en MidPoint | IIA origen | Estado |
+|---|---|---|---|
+| `uid` | `name` (UserType) | MidPoint (calculado = código institucional) | Activo |
+| `cn` / `displayName` | `fullName` (UserType) | MOISES.PERSONA_NATURAL | Activo |
+| `givenName` / `sn` | `givenName`, `familyName` | MOISES.PERSONA_NATURAL (RENIEC fallback) | Activo |
+| `mail` | `emailAddress` (UserType) | MidPoint (calculado `{code}@upeu.edu.pe`) | Activo |
+| `employeeNumber` | `employeeNumber` (core) | MOISES.TRABAJADOR.cod_trabajador | Activo |
+| `eduPersonPrincipalName` | `{name}@upeu.edu.pe` | MidPoint (object template) | **Pendiente Fase 13** |
+| `eduPersonAffiliation` | derivado de archetype | MidPoint (calculado) | **Pendiente Fase 13** |
+| `eduPersonScopedAffiliation` | derivado de archetype + scope | MidPoint (calculado) | **Pendiente Fase 13** |
+| `eduPersonPrimaryAffiliation` | prelación desde archetype | MidPoint (calculado) | **Pendiente Fase 13** |
+| `schacHomeOrganization` | constante `upeu.edu.pe` | Constante institucional | **Pendiente Fase 13** |
+| `schacPersonalUniqueID` | `identityDocuments[primary].number` URN-encoded | MOISES.PERSONA_NATURAL.DNI | **Pendiente Fase 13** |
+| `ou` (org unit) | `parentOrgRef` → OrgType identifier | ELISEO.ORG_AREA | **Pendiente Fase 13** |
+| `o` (organization) | constante `Universidad Peruana Union` | Constante institucional | **Pendiente Fase 13** |
+
 ## Mínimo viable por vendor (referencia rápida)
 
-| Vendor | Atributos mínimos |
-|---|---|
-| Scopus, ScienceDirect (Elsevier) | ePPN + ePSA + mail |
-| Web of Science (Clarivate) | ePPN + ePSA |
-| EBSCOhost | userId + ePSA + (sede para reportes) |
-| ProQuest | ePPN + ePSA + mail |
-| JSTOR | ePPN o ePTID + ePSA |
-| AccessMedicina (McGraw-Hill) | mail + displayName + ePSA |
-| UpToDate (Wolters Kluwer) | mail + displayName |
-| vLex | mail + displayName + ePSA + DNI |
-| IEEE Xplore | ePPN + ePSA |
+| Vendor | Atributos mínimos | Estado UPeU |
+|---|---|---|
+| Scopus, ScienceDirect (Elsevier) | ePPN + ePSA + mail | Pendiente Fase 13 |
+| Web of Science (Clarivate) | ePPN + ePSA | Pendiente Fase 13 |
+| EBSCOhost | userId + ePSA + sede para reportes | Pendiente Fase 13 |
+| ProQuest | ePPN + ePSA + mail | Pendiente Fase 13 |
+| JSTOR | ePPN o ePTID + ePSA | Pendiente Fase 13 |
+| AccessMedicina (McGraw-Hill) | mail + displayName + ePSA | Pendiente Fase 13 |
+| UpToDate (Wolters Kluwer) | mail + displayName | Pendiente Fase 13 |
+| vLex | mail + displayName + ePSA + DNI | Pendiente Fase 13 |
+| IEEE Xplore | ePPN + ePSA | Pendiente Fase 13 |
 
 ## Ley 29733 (Datos Personales Perú) — minimización
 
 Solo se debe enviar al vendor lo estrictamente necesario:
-- ✅ Identificadores: ePPN o (preferible) ePTID anonimizado
-- ✅ Rol: ePSA
-- ✅ Email institucional: para notificaciones del servicio
-- ❌ NO enviar: DNI (salvo vLex que lo exige), edad, dirección, datos académicos detallados sin necesidad
+- Identificadores: ePPN o (preferible) ePTID anonimizado
+- Rol: ePSA
+- Email institucional: para notificaciones del servicio
+- NO enviar: DNI (salvo vLex que lo exige), edad, dirección, datos académicos detallados sin necesidad
+- `schacPersonalUniqueID` (DNI en URN) solo a vendors que lo requieran explícitamente y con fundamento legal
