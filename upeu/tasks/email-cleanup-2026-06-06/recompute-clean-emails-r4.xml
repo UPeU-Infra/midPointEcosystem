@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: recompute-clean-emails-r4
+  OID: b9e11006-f001-4abc-9def-202406060006
+  Objetivo: Limpiar 38,310 emails numéricos. Continúa tras fix de:
+            1. Bloque A (Groovy multi-line sin ; — commit 86779d0)
+            2. B-email-sanitize-numeric strong mapping (commit 3802f60)
+            3. E2-retract-orphan condition script multi-line sin ; (commit a00ae20)
+
+  Mecanismo:
+    - recomputation con reconcile=true sobre usuarios active.
+    - B-email-sanitize-numeric (strong) retorna null si email local-part es \d+.
+    - Entra ID inbound strong re-evalúa los shadows linked → email real si existe.
+    - Sin shadow Entra ID → emailAddress=null → emailReviewNeeded=true.
+
+  OID determinista: b9e11006-f001-4abc-9def-202406060006
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="b9e11006-f001-4abc-9def-202406060006">
+
+    <name>recompute-clean-emails-r4-20260606</name>
+    <description>
+        R4: recompute+reconcile usuarios active. Fix completo (commits 86779d0+3802f60+a00ae20).
+        Limpia 38K emails numéricos. Entra ID strong → Oracle weak → null+emailReviewNeeded.
+    </description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>runnable</executionState>
+
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>lifecycleState</q:path>
+                                <q:value>active</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </objects>
+                <executionOptions>
+                    <reconcile>true</reconcile>
+                </executionOptions>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
+    </activity>
+
+</task>
