@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
+      xmlns:sb="urn:sciback:midpoint:person"
+      oid="d1a2b3c4-df00-4abc-9def-0000000df001">
+    <name>canary-doctype-fix-bootstrap-dania-202012364</name>
+    <description>CANARY del fix document-type-aware (estudiantes.xml, 2026-06-05).
+        Escapa el bootstrap-deadlock del foco limbo de Dania (202012364, pasaporte G559478),
+        que el fix CANON_DOC desbloquea: con lambDocType=7 + lambDocNum=PP:G559478 el Bloque J
+        construye identityDocuments type=PASSPORT y PR-04 (DNI=8 dig) deja de aplicar.
+        Asigna el archetype structural student (3037fbd2) SOLO a ese foco (filtro por name)
+        -> corre la cadena base J3b/J3 (affiliations+primaryAffiliation) + student template
+        (business roles + gate Koha BUL si campusStudent=LIMA). Mecanismo identico a
+        phase3b-bootstrap-archetype-student-live, scoped a un unico name para canary controlado.</description>
+    <executionState>runnable</executionState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <activity>
+        <work>
+            <iterativeScripting>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <q:equal>
+                                    <q:path>name</q:path>
+                                    <q:value>202012364</q:value>
+                                </q:equal>
+                                <q:not>
+                                    <q:ref>
+                                        <q:path>archetypeRef</q:path>
+                                        <q:value><type>ArchetypeType</type></q:value>
+                                    </q:ref>
+                                </q:not>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+                <scriptExecutionRequest>
+                    <s:action>
+                        <s:type>assign</s:type>
+                        <s:parameter>
+                            <s:name>role</s:name>
+                            <s:value xsi:type="c:ObjectReferenceType"
+                                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                     oid="3037fbd2-db02-4ffd-8b1a-83fab5e686aa"
+                                     type="c:ArchetypeType"/>
+                        </s:parameter>
+                    </s:action>
+                </scriptExecutionRequest>
+            </iterativeScripting>
+        </work>
+    </activity>
+</task>
