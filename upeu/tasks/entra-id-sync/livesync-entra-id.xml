@@ -1,67 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    UPEU-EntraID-LiveSync
+    UPEU-EntraID-Import-Hourly
     OID:        a1e5b2c3-0002-4def-9abc-202406060002
     Resource:   UPEU-EntraID-Graph (2f11c057-7b15-4641-a0eb-00c98a6fa4cb)
-    Schedule:   Cada 3600 segundos (intervalo repetitivo, sin cron fijo)
-    Propósito:  Sincronización incremental via delta query de Microsoft Graph API.
-                Detecta cambios (email actualizado, cuenta habilitada/deshabilitada,
-                UPN cambiado) sin esperar la reconciliación diaria completa.
-                Reduce la ventana de desactualización de ~24h a ~1h.
+    Schedule:   Cada 3600 segundos (intervalo repetitivo)
+    Propósito:  Sincronización horaria de cuentas Entra ID via import.
+                Reduce la ventana de desactualización de emailAddress de ~24h a ~1h.
 
-    MECANISMO DELTA QUERY (Graph API):
-    El conector MSGraph almacena un deltaToken en el shadow de la tarea tras cada
-    livesync exitoso. En la siguiente ejecución emite GET /users/delta?$deltaToken=...
-    que devuelve SOLO los usuarios modificados desde el token anterior. Eficiente:
-    típicamente <50 objetos por hora vs ~18,000 en reconciliación completa.
+    NOTA TÉCNICA — LiveSync no disponible en MSGraph v1.2.0.0:
+    El conector com.evolveum.polygon.connector.msgraphapi.MSGraphConnector v1.2.0.0
+    no implementa SyncOp (ConnId). Microsoft Graph API no ofrece delta streaming
+    compatible con el modelo push de ConnId. Por tanto, liveSynchronization provoca
+    fatal_error inmediato. La alternativa correcta es una task de import iterativo
+    (import activity) que llama GET /users paginado desde Graph API cada hora.
+    Para ventana delta real, esperar upgrade de conector si Evolveum lo implementa.
+
+    COMPORTAMIENTO:
+    - import activity lee TODOS los accounts del resource (GET /users?$select=...)
+    - Para cada shadow encontrado en Graph, MidPoint corre el clockwork:
+        inbound ri:mail → emailAddress (strength=strong) se actualiza si cambió.
+        inbound icfs:name → name (guard \d+) descarta no-numéricos.
+    - La task NO provee SOLOS los deltas, pero con ~18K usuarios y 2 threads
+      cada pasada tarda ~10-15 min, bien dentro de la ventana de 60 min.
+    - La recon diaria (a1e5b2c3-0001) a las 02:00 Lima actúa de backstop.
 
     NOTA ARQUITECTÓNICA (lifecycleState=proposed en objectType):
-    Igual que en la recon diaria: proposed suprime outbounds. Los inbound mappings
-    (icfs:name → name con guard dígitos, ri:mail → emailAddress strength=strong)
-    corren normalmente. Un cambio de email en Entra ID es detectado en el delta,
-    el shadow se actualiza y el focus recibe el nuevo emailAddress vía inbound strong.
-    Si emailAddress queda null (cuenta sin licencia), el object template base activa
-    extension/upeu:emailReviewNeeded=true para revisión manual por DTI.
+    proposed suprime todos los outbound mappings y el existence-outbound.
+    MidPoint NUNCA intenta crear/actualizar cuentas en Entra ID.
+    Los inbound mappings corren normalmente → emailAddress siempre converge
+    hacia Graph API como IIA. Correcto para Fases 1-11.
 
-    LIMITACIÓN CONOCIDA:
-    Si el livesync cae (restart MidPoint, excepción no recuperable), el deltaToken
-    se pierde. La siguiente ejecución emite un full sync implícito del delta endpoint
-    (Graph devuelve todos los usuarios). La recon diaria actúa como backstop garantizado.
-
-    executionState=runnable: la tarea arranca inmediatamente al importar y ejecuta
-    el primer delta en cuanto MidPoint la registra. El intervalo cuenta desde el
-    FIN de cada ejecución (no desde el inicio) para evitar solapamiento.
+    SOLAPAMIENTO CON RECON DIARIA:
+    La recon diaria usa cron (2 AM fijo). Esta tarea usa interval (desde fin de ejecución).
+    Si ambas se solapan, MidPoint serializa automáticamente las tareas por resource
+    (resource throttling interno). Sin colisión real.
 -->
 <task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
       oid="a1e5b2c3-0002-4def-9abc-202406060002">
 
-    <name>livesync-entra-id</name>
-    <description>LiveSync incremental Entra ID (Microsoft Graph delta query) — inbound-only. Intervalo 3600s. Ventana de email: ~1h. Resource lifecycleState=proposed: outbounds inertes, inbounds activos. Backstop: recon-entra-id-daily a las 02:00 Lima.</description>
+    <name>import-entra-id-hourly</name>
+    <description>Import horario Entra ID (Microsoft Graph API) — inbound-only. Intervalo 3600s. Ventana emailAddress: ~1h. Alternativa funcional a liveSync (MSGraph v1.2.0.0 no implementa SyncOp/ConnId). Resource lifecycleState=proposed: outbounds inertes, inbounds activos. Backstop: recon-entra-id-daily 02:00 Lima.</description>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="UserType"/>
 
     <executionState>runnable</executionState>
 
     <schedule>
-        <!-- Intervalo repetitivo: 3600 segundos (1 hora). -->
-        <!-- No usar cron fijo para livesync: el intervalo desde FIN evita solapamiento -->
-        <!-- si un delta tarda más de lo esperado (ej. primer sync sin token = full). -->
+        <!-- Intervalo desde FIN de ejecución anterior: evita solapamiento si una -->
+        <!-- pasada horaria demora más de 60 min (ej. throttling Graph API). -->
         <interval>3600</interval>
         <misfireAction>executeImmediately</misfireAction>
     </schedule>
 
     <activity>
         <work>
-            <liveSynchronization>
+            <import>
                 <resourceObjects>
                     <resourceRef oid="2f11c057-7b15-4641-a0eb-00c98a6fa4cb" type="ResourceType"/>
                     <kind>account</kind>
                     <intent>default</intent>
                 </resourceObjects>
-            </liveSynchronization>
+            </import>
         </work>
-        <!-- LiveSync es inherentemente secuencial (delta token es un cursor único). -->
-        <!-- NO usar workerThreads en livesync: rompería el orden del delta stream. -->
+        <distribution>
+            <!-- 2 hilos: Graph API tiene throttling (10,000 req/10min por tenant). -->
+            <!-- Con 2 hilos y ~18K usuarios: ~10-15 min por pasada. -->
+            <workerThreads>2</workerThreads>
+        </distribution>
     </activity>
 
 </task>
