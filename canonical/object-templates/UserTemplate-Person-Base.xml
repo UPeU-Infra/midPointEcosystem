@@ -111,24 +111,8 @@
             </source>
             <expression>
                 <script>
-                    <code>
-def inst = institutionalCode != null ? basic.stringify(institutionalCode).trim() : ''
-def pn   = personalNumber   != null ? basic.stringify(personalNumber).trim()   : ''
-def hasAcademia = (liveAffiliationStudent != null) || (liveAffiliationAlum != null) || (inst != '')
-// (1) Historia académica → CÓDIGO universitario (institutionalCode).
-if (hasAcademia &amp;&amp; inst != '') { return inst }
-// (2) Trabajador puro (sin academia) → COD_APS normalizado (personalNumber, = CANON_KEY).
-if (pn != '') { return pn }
-// (3) Académico sin institutionalCode materializado todavía: conserva personalNumber si existe
-//     (no degradar a fallback humano si hay un identificador). pn ya cubierto en (2).
-// (4) Fallback humano SOLO si no hay ningún identificador (alta incompleta).
-def gn = givenName != null ? basic.norm(basic.stringify(givenName)) : ''
-def fn = familyName != null ? basic.norm(basic.stringify(familyName)) : ''
-if (gn == '' &amp;&amp; fn == '') return null
-def initial = gn.take(1)
-def lastname = fn.replaceAll(' ', '')
-return (initial + lastname).take(8) + iterationToken
-                    </code>
+                    <!-- Todos los statements con ; — MidPoint aplana el <code> en una sola línea al almacenar -->
+                    <code>def inst = institutionalCode != null ? basic.stringify(institutionalCode).trim() : ''; def pn = personalNumber != null ? basic.stringify(personalNumber).trim() : ''; def hasAcademia = (liveAffiliationStudent != null) || (liveAffiliationAlum != null) || (inst != ''); if (hasAcademia &amp;&amp; inst != '') { return inst }; if (pn != '') { return pn }; def gn = givenName != null ? basic.norm(basic.stringify(givenName)) : ''; def fn = familyName != null ? basic.norm(basic.stringify(familyName)) : ''; if (gn == '' &amp;&amp; fn == '') return null; def initial = gn.take(1); def lastname = fn.replaceAll(' ', ''); return (initial + lastname).take(8) + iterationToken</code>
                 </script>
             </expression>
         </mapping>
