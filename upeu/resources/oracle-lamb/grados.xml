@@ -9,7 +9,7 @@
     oid="3b2d8c4a-6f17-4e90-a1d5-9c0e7b5a4f62">
     <name>Oracle LAMB Grados v1</name>
     <description>Fuente parcial de enriquecimiento. Inbound ScriptedSQL desde DAVID.VW_PERSONA_GRADO (Secretaría General), unida a MOISES.PERSONA_NATURAL por ID_PERSONA para obtener el DNI. Aporta UNICAMENTE el grado/título conferido (sciback:conferredDegree + conferredDegreeAbbrev) a users que YA existen, correlacionados por taxId (DNI). NO crea usuarios, NO toca activation/lifecycleState/affiliation. Fase 5e. Libro MidPoint cap. 9 — partial source / enrichment resource.</description>
-    <lifecycleState>proposed</lifecycleState>
+    <lifecycleState>active</lifecycleState>
     <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
         <icfc:resultsHandlerConfiguration>
@@ -43,9 +43,9 @@
             <cfg:allNative>false</cfg:allNative>
             <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
             <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
-            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT g.ID_PERSONA, pn.NUM_DOCUMENTO, g.NOMBRE, g.NOMBRE_CORTO, g.ABREVIATURA, g.CONDICION, g.VIGENCIA FROM DAVID.VW_PERSONA_GRADO g JOIN MOISES.PERSONA_NATURAL pn ON pn.ID_PERSONA = g.ID_PERSONA WHERE pn.NUM_DOCUMENTO IS NOT NULL'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE NUM_DOCUMENTO = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Grados-v1 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { row -&gt; result &lt;&lt; ['__UID__': row.NUM_DOCUMENTO as String, '__NAME__': row.NUM_DOCUMENTO as String, 'NUM_DOCUMENTO': row.NUM_DOCUMENTO as String, 'ID_PERSONA': row.ID_PERSONA?.toString(), 'NOMBRE': row.NOMBRE as String, 'NOMBRE_CORTO': row.NOMBRE_CORTO as String, 'ABREVIATURA': row.ABREVIATURA as String, 'CONDICION': row.CONDICION as String, 'VIGENCIA': row.VIGENCIA?.toString()] }; return result</cfg:searchScript>
+            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT g.ID_PERSONA, pn.NUM_DOCUMENTO, pn.ID_TIPODOCUMENTO AS TIPO_DOC, g.NOMBRE, g.NOMBRE_CORTO, g.ABREVIATURA, g.CONDICION, g.VIGENCIA FROM DAVID.VW_PERSONA_GRADO g JOIN MOISES.PERSONA_NATURAL pn ON pn.ID_PERSONA = g.ID_PERSONA WHERE pn.NUM_DOCUMENTO IS NOT NULL'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE NUM_DOCUMENTO = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Grados-v1 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { row -&gt; result &lt;&lt; ['__UID__': row.NUM_DOCUMENTO as String, '__NAME__': row.NUM_DOCUMENTO as String, 'NUM_DOCUMENTO': row.NUM_DOCUMENTO as String, 'TIPO_DOC': row.TIPO_DOC?.toString(), 'ID_PERSONA': row.ID_PERSONA?.toString(), 'NOMBRE': row.NOMBRE as String, 'NOMBRE_CORTO': row.NOMBRE_CORTO as String, 'ABREVIATURA': row.ABREVIATURA as String, 'CONDICION': row.CONDICION as String, 'VIGENCIA': row.VIGENCIA?.toString()] }; return result</cfg:searchScript>
             <cfg:syncScript>return null</cfg:syncScript>
-            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", true)); ocib.addAttributeInfo(ro("ID_PERSONA", false)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("NOMBRE_CORTO", false)); ocib.addAttributeInfo(ro("ABREVIATURA", false)); ocib.addAttributeInfo(ro("CONDICION", false)); ocib.addAttributeInfo(ro("VIGENCIA", false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
+            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", true)); ocib.addAttributeInfo(ro("TIPO_DOC", false)); ocib.addAttributeInfo(ro("ID_PERSONA", false)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("NOMBRE_CORTO", false)); ocib.addAttributeInfo(ro("ABREVIATURA", false)); ocib.addAttributeInfo(ro("CONDICION", false)); ocib.addAttributeInfo(ro("VIGENCIA", false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
             <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); sql.firstRow("SELECT 1 AS OK FROM DUAL"); return "OK"</cfg:testScript>
         </icfc:configurationProperties>
     </connectorConfiguration>
@@ -68,16 +68,28 @@
             </focus>
             <attribute>
                 <ref>ri:NUM_DOCUMENTO</ref>
-                <!-- DNI → extension/sb:taxId en forma URN SCHAC, fase beforeCorrelation.
-                     Idéntico patrón a egresados.xml (dni-to-taxId-urn). Normaliza el valor
-                     ANTES de que el correlator evalúe. strength=strong: el DNI normalizado
-                     es identidad legal; coincide con lo que otras fuentes ya escriben. -->
                 <inbound>
+                    <!-- FIX type-aware (2026-06-05): IDENTICO a estudiantes.xml/trabajadores.xml/
+                         egresados.xml. Antes hardcodeaba ':DNI:PE:' para todo documento (type-blind).
+                         Ahora el URN SCHAC refleja el tipo real desde TIPO_DOC
+                         (MOISES.PERSONA_NATURAL.ID_TIPODOCUMENTO). Imprescindible para personas con grado
+                         que TAMBIEN son estudiantes/egresados activos con documento no-DNI (CE/pasaporte):
+                         si grados emitiera taxId type-blind y los otros feeds type-aware, habria conflicto
+                         strong/strong. Tipos: 1/24=DNI, 4/6/31=CE, 22=PTP, 23=CPP, 7/9=passport. -->
                     <name>dni-to-taxId-urn</name>
                     <strength>strong</strength>
+                    <source><path>$shadow/attributes/ri:NUM_DOCUMENTO</path></source>
+                    <source><path>$shadow/attributes/ri:TIPO_DOC</path></source>
                     <expression>
                         <script>
-                            <code>def d = (input ?: '').toString().trim(); d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null</code>
+                            <code>def d = (NUM_DOCUMENTO ?: '').toString().trim(); if (!d) return null
+def t = (TIPO_DOC ?: '').toString().trim()
+def sub = 'DNI'
+if (['4','6','31'].contains(t)) sub = 'CE'
+else if (t == '22') sub = 'PTP'
+else if (t == '23') sub = 'CPP'
+else if (['7','9'].contains(t)) sub = 'passport'
+return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                         </script>
                     </expression>
                     <target>
@@ -87,6 +99,72 @@
                         <include>beforeCorrelation</include>
                         <include>clockwork</include>
                     </evaluationPhases>
+                </inbound>
+                <inbound>
+                    <!-- CANON_DOC type-aware (FIX 2026-06-05). IDENTICA a trabajadores.xml/
+                         estudiantes.xml/egresados.xml. Grados es FUENTE PARCIAL: correlaciona contra
+                         users ya existentes. La clave de correlacion canonica unificada entre TODOS los
+                         resources de persona es extension/upeu:lambDocNum (best-practices §4.4 /
+                         iga-canonical-standards §1.3). Antes grados correlaba por taxId (type-blind) =>
+                         no encontraba a quienes los otros feeds ya identifican por lambDocNum, y su URN
+                         :DNI: fusionaba CE/DNI de mismos digitos. Normalizacion:
+                           DNI (1/24)                       : strip + zfill8.
+                           CE/visa(4/6/31)+PTP(22)/CPP(23)  : strip + zfill9, prefijo 'CE:'.
+                           pasaporte (7/9)                  : 'PP:' + upper.
+                           tipo desconocido/vacio           : rama generica DNI.
+                           vacio/'0'/'000...0'              : null. -->
+                    <name>num-documento-to-lambDocNum</name>
+                    <strength>strong</strength>
+                    <source><path>$shadow/attributes/ri:NUM_DOCUMENTO</path></source>
+                    <source><path>$shadow/attributes/ri:TIPO_DOC</path></source>
+                    <expression>
+                        <script>
+                            <code>def num = (NUM_DOCUMENTO ?: '').toString().trim()
+def type = (TIPO_DOC ?: '').toString().trim()
+if (!num) return null
+def DNI = ['1','24'] as Set
+def CE9 = ['4','6','31','22','23'] as Set
+def PASS = ['7','9'] as Set
+def strip = { it.replaceFirst(/^0+/, '') }
+if (type in DNI) {
+    if (num ==~ /\d+/) { def n = strip(num); if (!n) return null; return n.length() &lt;= 8 ? n.padLeft(8,'0') : n }
+    return num
+}
+if (type in CE9) {
+    if (num ==~ /\d+/) { def n = strip(num); if (!n) return null; def z = n.length() &lt;= 9 ? n.padLeft(9,'0') : n; return 'CE:'+z }
+    return 'CE:'+num
+}
+if (type in PASS) { return 'PP:'+num.toUpperCase() }
+if (num ==~ /\d+/) { def n = strip(num); if (!n) return null; return n.length() &lt;= 8 ? n.padLeft(8,'0') : n }
+return num</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</path>
+                    </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
+                </inbound>
+            </attribute>
+            <attribute>
+                <!-- TIPO_DOC → upeu:lambDocType (FIX 2026-06-05). Alimenta el Bloque J del template
+                     para construir identityDocuments con el type real. Idem estudiantes/trabajadores/
+                     egresados. weak: grados es fuente parcial; las fuentes primarias ya lo proveen y no
+                     debe pisarlas; aporta el tipo si ninguna otra lo hizo. -->
+                <ref>ri:TIPO_DOC</ref>
+                <inbound>
+                    <name>id-tipodocumento-to-lambDocType</name>
+                    <strength>weak</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim(); v ?: null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocType</path>
+                    </target>
                 </inbound>
             </attribute>
             <attribute>
@@ -159,15 +237,20 @@
                      (caso excepcional) se gestiona fuera de scope. -->
             </attribute>
             <correlation>
-                <!-- Correlator explícito a nivel objectType (fix MidPoint 4.10: shorthand
-                     <correlator/> dentro de <attribute> roto cuando hay inbounds con
-                     beforeCorrelation). El inbound dni-to-taxId-urn normaliza NUM_DOCUMENTO
-                     a URN en extension/sb:taxId antes de que este correlator evalúe. -->
+                <!-- CANON_KEY fix (2026-06-05): RETIRADO `correlate-by-taxId` (type-blind). El URN taxId
+                     asumia siempre :DNI: → un CE y un DNI con los mismos digitos generaban el MISMO URN y
+                     FUSIONABAN dos personas distintas (caso real detectado: 002508232/CE vs 02508232/DNI,
+                     ambas con grado, colapsaban en BLIND 02508232). Unico tier autoritativo ahora:
+                     `correlate-by-lambDocNum` (CANON_DOC type-aware, idem trabajadores/estudiantes/
+                     egresados). Unifica la correlacion cross-resource: grados ahora encuentra a quienes
+                     las fuentes primarias ya identifican por lambDocNum. iga-canonical-standards §1.3.
+                     El inbound num-documento-to-lambDocNum (beforeCorrelation) normaliza el valor antes
+                     de que este correlator evalue. -->
                 <correlators>
                     <items>
-                        <name>correlate-by-taxId</name>
+                        <name>correlate-by-lambDocNum</name>
                         <item>
-                            <ref xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</ref>
+                            <ref xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</ref>
                         </item>
                     </items>
                 </correlators>
