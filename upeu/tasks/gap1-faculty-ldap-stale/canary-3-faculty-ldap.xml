@@ -26,7 +26,7 @@
       oid="8ef22f64-731b-a524-804b-b251ec9d8062">
     <name>GAP1-canary-3-faculty-ldap-20260606</name>
     <description>
-        GAP-1 canary: recompute de 3 docentes stale LDAP (fullSync < 2026-05-30).
+        GAP-1 canary: recompute de 3 docentes stale LDAP (fullSync anterior a 2026-05-30).
         OIDs: f5c21b3d, 018e80bb, 01f1d09b. Ver resultado en LDAP:
         eduPersonPrimaryAffiliation=faculty y eduPersonAffiliation correcto.
         Si OK → activar masivo OID bd2dc0ba-f730-a4ce-989e-9f365cbfc884.
