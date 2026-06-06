@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  GAP-1 CANARY — Recompute 3 docentes representativos antes del masivo
+  =====================================================================
+  Usuarios seleccionados: los 3 con fullSynchronizationTimestamp más antiguo
+  en el LDAP (2026-05-28/29 — previos al fix a283fa3 del 2026-05-30).
+
+  01159822 (f5c21b3d) — affiliations=["staff","faculty"] → esperar eduPersonAffiliation
+                        con ambos valores; eduPersonPrimaryAffiliation=faculty ya correcto.
+  43002720 (018e80bb) — affiliations=["faculty"] → esperar LDAP actualizado.
+  71476981 (01f1d09b) — affiliations=["faculty"] → esperar LDAP actualizado.
+
+  Verificación post-canary (en LDAP):
+    ldapsearch uid=01159822 eduPersonPrimaryAffiliation eduPersonAffiliation
+    → eduPersonPrimaryAffiliation: faculty
+    → eduPersonAffiliation: faculty
+    → eduPersonAffiliation: staff  (o solo faculty si el mapping elimina staff)
+
+  Si canary OK → activar tarea masiva bd2dc0ba-f730-a4ce-989e-9f365cbfc884.
+
+  OID determinista: md5("gap1-canary-faculty-ldap-20260606")
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="8ef22f64-731b-a524-804b-b251ec9d8062">
+    <name>GAP1-canary-3-faculty-ldap-20260606</name>
+    <description>
+        GAP-1 canary: recompute de 3 docentes stale LDAP (fullSync < 2026-05-30).
+        OIDs: f5c21b3d, 018e80bb, 01f1d09b. Ver resultado en LDAP:
+        eduPersonPrimaryAffiliation=faculty y eduPersonAffiliation correcto.
+        Si OK → activar masivo OID bd2dc0ba-f730-a4ce-989e-9f365cbfc884.
+    </description>
+    <executionState>runnable</executionState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <cleanupAfterCompletion>P2D</cleanupAfterCompletion>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:inOid>
+                                <q:value>f5c21b3d-d2ea-4109-94c5-0e3aaee97359</q:value>
+                                <q:value>018e80bb-8589-4736-ae16-8fef07c5e9ed</q:value>
+                                <q:value>01f1d09b-a067-4c8b-96b0-fbb6264b7a2a</q:value>
+                            </q:inOid>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>1</workerThreads>
+        </distribution>
+    </activity>
+</task>
