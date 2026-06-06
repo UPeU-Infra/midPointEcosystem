@@ -1132,19 +1132,7 @@ return (relP == null &amp;&amp; perP == null)
             </target>
             <condition>
                 <script>
-                    <code>
-def QN = new javax.xml.namespace.QName('urn:sciback:midpoint:person','liveAffiliationWorker')
-def relP = null
-try { relP = focus?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } catch (Exception e) {}
-def perP = null
-try {
-  if (focus?.oid != null) {
-    def repoUser = midpoint.getObjectByOid(com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class, focus.oid)
-    perP = repoUser?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue
-  }
-} catch (Exception e) {}
-return (relP == null &amp;&amp; perP == null)
-                    </code>
+                    <code>def QN = new javax.xml.namespace.QName('urn:sciback:midpoint:person','liveAffiliationWorker'); def relP = null; try { relP = focus?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } catch (Exception e) {}; def perP = null; try { if (focus?.oid != null) { def repoUser = midpoint.getObjectByOid(com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class, focus.oid); perP = repoUser?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } } catch (Exception e) {}; return (relP == null &amp;&amp; perP == null)</code>
                 </script>
             </condition>
         </mapping>
@@ -1178,19 +1166,7 @@ return (relP == null &amp;&amp; perP == null)
             </target>
             <condition>
                 <script>
-                    <code>
-def QN = new javax.xml.namespace.QName('urn:sciback:midpoint:person','liveAffiliationWorker')
-def relP = null
-try { relP = focus?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } catch (Exception e) {}
-def perP = null
-try {
-  if (focus?.oid != null) {
-    def repoUser = midpoint.getObjectByOid(com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class, focus.oid)
-    perP = repoUser?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue
-  }
-} catch (Exception e) {}
-return (relP == null &amp;&amp; perP == null)
-                    </code>
+                    <code>def QN = new javax.xml.namespace.QName('urn:sciback:midpoint:person','liveAffiliationWorker'); def relP = null; try { relP = focus?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } catch (Exception e) {}; def perP = null; try { if (focus?.oid != null) { def repoUser = midpoint.getObjectByOid(com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class, focus.oid); perP = repoUser?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } } catch (Exception e) {}; return (relP == null &amp;&amp; perP == null)</code>
                 </script>
             </condition>
         </mapping>
