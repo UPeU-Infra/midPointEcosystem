@@ -183,6 +183,39 @@ return (initial + lastname).take(8) + iterationToken
                 </script>
             </condition>
         </mapping>
+        <!-- REACTIVADO 2026-06-06: fallback emailAddress desde name canónico.
+             Cuando Oracle no tiene CORREO_INST/CORREO_UPEU para un estudiante
+             (13.733 casos identificados GAP-2), el inbound del resource no escribe
+             emailAddress → MidPoint queda inconsistente (PR-07 falla en Bloque G).
+             Este mapping weak llena el hueco: name = identificador canónico del Bloque A
+             (código universitario para estudiantes/egresados, COD_APS para trabajador puro).
+             Por qué name y no personalNumber: para un estudiante puro, personalNumber
+             puede estar vacío (lo popula el resource Trabajadores que no cubre a estudiantes
+             puros); name siempre tiene valor tras ejecutar el Bloque A.
+             Por qué weak: cuando Oracle sí tiene correo real (trabajadores.xml strong,
+             estudiantes.xml weak con guard), ese valor ya está en emailAddress y el weak
+             del template NO lo sobrescribe (semántica weak = no escribe si ya hay valor).
+             Por qué aquí (template) y no en el resource: el resource solo corre cuando el
+             shadow está en el resultset; el template corre en CADA recompute del foco,
+             incluyendo recomputes manuales y triggers de lifecycle (iga-canonical §1.3). -->
+        <mapping>
+            <name>B-emailAddress-fallback-from-name</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <source>
+                <path>name</path>
+            </source>
+            <expression>
+                <script>
+                    <code>if (name == null) return null; def n = basic.stringify(name).trim(); if (n == '') return null; return n + '@upeu.edu.pe'</code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>name != null &amp;&amp; basic.stringify(name).trim() != ''</code>
+                </script>
+            </condition>
+        </mapping>
     </item>
 
     <!-- ============================================================
