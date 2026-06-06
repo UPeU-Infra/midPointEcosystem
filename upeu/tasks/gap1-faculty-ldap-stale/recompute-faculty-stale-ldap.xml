@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  GAP-1 — Recompute docentes con eduPersonPrimaryAffiliation stale en LDAP
+  =========================================================================
+  Diagnóstico (2026-06-06):
+    - 363 shadows LDAP live con fullSynchronizationTimestamp < 2026-05-30
+    - 262 de esos pertenecen a usuarios active + archetype faculty
+    - Causa raíz: el fix de clasificación faculty/staff (commit a283fa3,
+      2026-05-30) corrigió primaryAffiliation en el foco MidPoint pero el
+      shadow LDAP no fue sincronizado — fullSynchronizationTimestamp previo
+      al fix implica que eduPersonPrimaryAffiliation=staff está stale en LDAP.
+
+  Mecanismo:
+    - El AR-LDAP-Person tiene construction activa para todos los workers/students
+      con afiliación viva (liveAffiliationWorker != null).
+    - Un recompute sobre el foco corre el clockwork completo: object template
+      (recalcula liveAffiliationWorker, primaryAffiliation) → inducement →
+      construction → delta outbound al LDAP con el valor correcto de
+      eduPersonPrimaryAffiliation=faculty.
+    - El recompute en MidPoint 4.10 propaga deltas outbound sin necesidad de
+      reconcile on-resource (midpoint-best-practices §4.5/§5).
+    - Idempotente: si el foco ya tiene el valor correcto, el delta es vacío
+      y no se genera MODIFY al LDAP. 0 efecto colateral.
+
+  Por qué NO reconcile on-resource LDAP:
+    - El problema es focus-side (el template calcula bien desde 2026-05-30;
+      solo falta empujar el delta outbound a los shadows stale).
+    - Un reconcile on-resource leería TODOS los 8,000+ entries LDAP, correría
+      sincronización inbound, y podría pisar valores no relacionados.
+    - recomputation acotada a los 262 focos faculty active es segura y quirúrgica.
+
+  Scope (validado en PROD 2026-06-06):
+    - archetypeRef = archetype-user-employee-faculty (c93083ca-f4c5-4704-acf4-d53b97c9556e)
+    - lifecycleState = active
+    - Total: 262 usuarios
+
+  workerThreads=2: scope pequeño. Sin riesgo de storm en LDAP outbound.
+
+  executionState=suspended: importar suspendida, hacer canary de 3 usuarios,
+    luego activar el masivo.
+
+  OID determinista: md5("gap1-recompute-faculty-stale-ldap-20260606")
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="bd2dc0ba-f730-a4ce-989e-9f365cbfc884">
+    <name>GAP1-recompute-faculty-stale-ldap-20260606</name>
+    <description>
+        GAP-1: recompute de 262 docentes (archetype faculty, active) cuyos shadows LDAP
+        tienen fullSynchronizationTimestamp anterior al fix de clasificación faculty/staff
+        (commit a283fa3, 2026-05-30). Propaga eduPersonPrimaryAffiliation=faculty al LDAP.
+        Idempotente. workerThreads=2. Ver upeu/tasks/gap1-faculty-ldap-stale/.
+    </description>
+    <executionState>suspended</executionState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <cleanupAfterCompletion>P7D</cleanupAfterCompletion>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <!-- Archetype faculty: IIA trabajadores.xml (ENOC carga docente
+                                     + puesto docente contrato 7124, commit a283fa3 2026-05-30) -->
+                                <q:ref>
+                                    <q:path>archetypeRef</q:path>
+                                    <q:value oid="c93083ca-f4c5-4704-acf4-d53b97c9556e" type="ArchetypeType"/>
+                                </q:ref>
+                                <!-- Solo activos: archived/suspended no tienen LDAP shadow vivo -->
+                                <q:equal>
+                                    <q:path>lifecycleState</q:path>
+                                    <q:value>active</q:value>
+                                </q:equal>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>2</workerThreads>
+        </distribution>
+    </activity>
+</task>
