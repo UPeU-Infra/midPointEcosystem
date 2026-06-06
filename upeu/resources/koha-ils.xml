@@ -946,7 +946,16 @@
                 </outbound>
                 <inbound>
                     <name>email-inbound</name>
+                    <!-- GUARD @upeu.edu.pe (2026-06-06): Koha puede tener emails personales
+                         (gmail/hotmail) en ri:email del borrower (datos heredados). Solo aceptar
+                         @upeu.edu.pe para no proponer gmail como ADD conflictivo con Entra ID strong.
+                         Mismo patrón que Oracle y Entra ID: descarta no-upeu y numéricos. -->
                     <strength>weak</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d+/ ? null : v</code>
+                        </script>
+                    </expression>
                     <target>
                         <path>$user/emailAddress</path>
                     </target>
