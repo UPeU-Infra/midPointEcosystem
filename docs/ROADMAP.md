@@ -86,12 +86,12 @@ Los 4 templates per-archetype (alumni, student, faculty, staff) existen en PROD 
 | Fase 5 — Resources READ | ✅ **ACTIVA** | Oracle LAMB ×4 + Koha + Entra ID activos; todos con lifecycleState `active` |
 | Fase 6 — Resources WRITE → OpenLDAP | ✅ **VALIDADO** | 37.491 sombras LDAP ✅; Keycloak User Federation activa (P7 ✅); Keycloak lee de OpenLDAP correctamente |
 | Fase 7 — RBAC | ✅ **COMPLETA** 2026-06-06 | 4 ARs versionados, 26 lifecycleState corregidos, D.3 split TC/TP/fallback, SoD GOV bidireccional (ISO 27001 A.8.2), role mining LAMB documentado — commits `43e1981`+`394fa73` |
-| Fase 8 — Replanteo docs | ❌ **NO INICIADA** | — |
-| Fase 9 — Validación piloto | ⚠️ **PILOTO PARCIAL** | Tasks: `PILOT-EntraID-UPeU-link-100`, pilots usuario `75824658`; flujo completo no documentado |
-| Fase 10 — Deploy PROD | ✅ **PROD OPERATIVO** | 35.450 usuarios en produccion |
-| Fase 11 — Productización SciBack | ❌ **NO INICIADA** | — |
-| Fase 12 — Gobierno Entra ID | ⚠️ **DIAGNOSTICO LISTO** | `docs/ENTRA-ID-ESTRUCTURA-UPEU.md`; write bloqueado por permisos David Urquizo |
-| Fase 13 — Métricas COUNTER | ❌ **NO INICIADA** | — |
+| Fase 8 — Documentación | ✅ **COMPLETA** 2026-06-06 | ARCHITECTURE.md, eduperson-reference.md, sso-academic-vendors.md actualizados — commit `03e49d9` |
+| Fase 9 — Validación E2E | ✅ **COMPLETA** 2026-06-06 | 3 pilotos validados (faculty/student/staff). 4 GAPs diagnosticados: GAP-1 en ejecución (recompute LDAP 1,945 docentes), GAP-2 calidad datos Oracle (13,733 sin correo, reporte para DTI), GAP-3 diferido Fase 12, GAP-4 no aplica. Pipeline IGA OPERATIVO. — commit `5394adc` |
+| Fase 10 — Deploy PROD | ✅ **PROD OPERATIVO** | 54,499 usuarios activos en produccion (2026-06-06) |
+| Fase 11 — Productización SciBack | ✅ **DOCUMENTADA** 2026-06-06 | Blueprint `docs/sciback-iga-blueprint-plan.md` — commit `03e49d9` |
+| Fase 12 — Gobierno Entra ID | 🔒 **BLOQUEADA** | Requiere permisos write en Entra ID UPeU — ticket DU-001b a David Urquizo |
+| Fase 13 — Métricas COUNTER | 🔒 **BLOQUEADA** | Requiere: (a) credenciales SUSHI de proveedores + (b) Fase 12 completa |
 
 ### Hallazgos del historial de tasks
 
