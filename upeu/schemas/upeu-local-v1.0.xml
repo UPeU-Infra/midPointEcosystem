@@ -209,6 +209,24 @@
                         </xsd:appinfo></xsd:annotation>
                     </xsd:element>
 
+                    <!-- L13 — MARCADOR EMAIL SIN ENTRA ID -->
+                    <!-- IIA: derivado por Bloque B del UserTemplate-Person-Base.
+                         true cuando el usuario no tiene emailAddress proveniente de Entra ID.
+                         Política 2026-06-06: MidPoint no inventa correos — si no hay email
+                         en Entra ID, este flag marca al usuario para revisión manual por DTI.
+                         El mapping B-email-review-flag lo setea normal (no weak) para que
+                         se actualice a false cuando Entra ID finalmente provea el email. -->
+                    <xsd:element name="emailReviewNeeded" type="xsd:boolean" minOccurs="0">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:displayName>Email requiere revisión</a:displayName>
+                                <a:help>true cuando el usuario no tiene email en Entra ID y requiere estudio manual. Seteado por el mapping B-email-review-flag del UserTemplate-Person-Base. Se limpia (false) automáticamente cuando Entra ID provee el email real.</a:help>
+                                <a:indexed>true</a:indexed>
+                                <a:displayOrder>95</a:displayOrder>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+
                 </xsd:sequence>
             </xsd:complexType>
 
