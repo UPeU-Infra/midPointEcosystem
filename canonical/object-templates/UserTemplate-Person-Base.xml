@@ -193,13 +193,14 @@
                 </script>
             </condition>
         </mapping>
-        <!-- B-email-sanitize-numeric: STRONG sanitizador que borra emails numéricos existentes.
+        <!-- B-email-sanitize-numeric: STRONG sanitizador que borra emails numéricos@upeu.edu.pe legacy.
              Problema: inbounds weak de Oracle retornan null para numéricos, pero weak+null
              no limpia un valor ya persistido. Este mapping strong sí lo limpia en cada recompute.
-             Lógica: si emailAddress es numérico (local part solo dígitos) o no es @upeu.edu.pe
-             → retorna null → strong borra el valor existente.
-             Entra ID (inbound strong) ganará si hay shadow linked con email real.
-             Añadido 2026-06-06: fix para 38,310 emails numéricos legacy. -->
+             Lógica: SOLO activa cuando emailAddress es numeric@upeu.edu.pe (condition).
+             Para gmail/outlook/personal emails: mapping INACTIVO (condition=false) → no propone
+             ningún valor → Entra ID strong puede reemplazarlo sin conflicto de 2-valores.
+             Fix 2026-06-06b: condition añadida para evitar colisión STRONG(null) vs STRONG(Entra ID)
+             cuando el usuario tiene email personal en emailAddress. -->
         <mapping>
             <name>B-email-sanitize-numeric</name>
             <lifecycleState>active</lifecycleState>
@@ -209,9 +210,14 @@
             </source>
             <expression>
                 <script>
-                    <code>if (emailAddress == null) return null; def v = emailAddress.toString().trim().toLowerCase(); if (!v.contains('@')) return null; def local = v.substring(0, v.indexOf('@')); def domain = v.substring(v.indexOf('@')); if (domain != '@upeu.edu.pe') return null; return local ==~ /\d+/ ? null : v</code>
+                    <code>null</code>
                 </script>
             </expression>
+            <condition>
+                <script>
+                    <code>def v = emailAddress != null ? emailAddress.toString().trim().toLowerCase() : null; if (v == null || !v.contains('@')) return false; def local = v.substring(0, v.indexOf('@')); def domain = v.substring(v.indexOf('@')); return domain == '@upeu.edu.pe' &amp;&amp; local ==~ /\d+/</code>
+                </script>
+            </condition>
         </mapping>
         <!-- B-email-review-flag: marca usuarios sin email real de Entra ID para revisión manual.
              Política 2026-06-06: MidPoint no inventa correos. Si emailAddress es null o numérico
