@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    UPEU-EntraID-LiveSync
+    OID:        a1e5b2c3-0002-4def-9abc-202406060002
+    Resource:   UPEU-EntraID-Graph (2f11c057-7b15-4641-a0eb-00c98a6fa4cb)
+    Schedule:   Cada 3600 segundos (intervalo repetitivo, sin cron fijo)
+    Propósito:  Sincronización incremental via delta query de Microsoft Graph API.
+                Detecta cambios (email actualizado, cuenta habilitada/deshabilitada,
+                UPN cambiado) sin esperar la reconciliación diaria completa.
+                Reduce la ventana de desactualización de ~24h a ~1h.
+
+    MECANISMO DELTA QUERY (Graph API):
+    El conector MSGraph almacena un deltaToken en el shadow de la tarea tras cada
+    livesync exitoso. En la siguiente ejecución emite GET /users/delta?$deltaToken=...
+    que devuelve SOLO los usuarios modificados desde el token anterior. Eficiente:
+    típicamente <50 objetos por hora vs ~18,000 en reconciliación completa.
+
+    NOTA ARQUITECTÓNICA (lifecycleState=proposed en objectType):
+    Igual que en la recon diaria: proposed suprime outbounds. Los inbound mappings
+    (icfs:name → name con guard dígitos, ri:mail → emailAddress strength=strong)
+    corren normalmente. Un cambio de email en Entra ID es detectado en el delta,
+    el shadow se actualiza y el focus recibe el nuevo emailAddress vía inbound strong.
+    Si emailAddress queda null (cuenta sin licencia), el object template base activa
+    extension/upeu:emailReviewNeeded=true para revisión manual por DTI.
+
+    LIMITACIÓN CONOCIDA:
+    Si el livesync cae (restart MidPoint, excepción no recuperable), el deltaToken
+    se pierde. La siguiente ejecución emite un full sync implícito del delta endpoint
+    (Graph devuelve todos los usuarios). La recon diaria actúa como backstop garantizado.
+
+    executionState=runnable: la tarea arranca inmediatamente al importar y ejecuta
+    el primer delta en cuanto MidPoint la registra. El intervalo cuenta desde el
+    FIN de cada ejecución (no desde el inicio) para evitar solapamiento.
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="a1e5b2c3-0002-4def-9abc-202406060002">
+
+    <name>livesync-entra-id</name>
+    <description>LiveSync incremental Entra ID (Microsoft Graph delta query) — inbound-only. Intervalo 3600s. Ventana de email: ~1h. Resource lifecycleState=proposed: outbounds inertes, inbounds activos. Backstop: recon-entra-id-daily a las 02:00 Lima.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="UserType"/>
+
+    <executionState>runnable</executionState>
+
+    <schedule>
+        <!-- Intervalo repetitivo: 3600 segundos (1 hora). -->
+        <!-- No usar cron fijo para livesync: el intervalo desde FIN evita solapamiento -->
+        <!-- si un delta tarda más de lo esperado (ej. primer sync sin token = full). -->
+        <interval>3600</interval>
+        <misfireAction>executeImmediately</misfireAction>
+    </schedule>
+
+    <activity>
+        <work>
+            <liveSynchronization>
+                <resourceObjects>
+                    <resourceRef oid="2f11c057-7b15-4641-a0eb-00c98a6fa4cb" type="ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
+                </resourceObjects>
+            </liveSynchronization>
+        </work>
+        <!-- LiveSync es inherentemente secuencial (delta token es un cursor único). -->
+        <!-- NO usar workerThreads en livesync: rompería el orden del delta stream. -->
+    </activity>
+
+</task>
