@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: recompute-clean-emails-r6
+  OID: b9e11008-f001-4abc-9def-202406060008
+
+  Fixes acumulados (todos los recursos reimportados en PROD):
+    - Oracle trabajadores + estudiantes: guard !@upeu.edu.pe (commit 402d11e reimportado)
+    - Koha ILS: guard !@upeu.edu.pe en email-inbound (commit 81dfba0 — root cause real)
+    - Template: E2-retract-orphan condition single-line (commit a00ae20)
+    - Template: B-email-sanitize-numeric con condition (commit cd3b5eb)
+    - Entra ID: inbound strong @upeu.edu.pe non-numeric (commit del día)
+
+  Root cause cadena de bugs:
+    1. Oracle sin guard dominio → proponía gmail como ADD (fix: reimportar Oracle)
+    2. Koha email-inbound sin guard → proponía gmail de borrower como ADD (fix: guard Koha)
+    3. Dos ADD simultáneos (gmail + @upeu.edu.pe) en campo single-valued → FATAL_ERROR
+
+  OID determinista: b9e11008-f001-4abc-9def-202406060008
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="b9e11008-f001-4abc-9def-202406060008">
+
+    <name>recompute-clean-emails-r6-20260606</name>
+    <description>
+        R6: fix completo. Todos los recursos con guard @upeu.edu.pe.
+        Koha email-inbound era la causa raíz real (gmail borrower → ADD conflicto).
+        Limpia numeric@upeu.edu.pe (38K) + reemplaza gmail por Entra ID real.
+    </description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>runnable</executionState>
+
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>lifecycleState</q:path>
+                                <q:value>active</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </objects>
+                <executionOptions>
+                    <reconcile>true</reconcile>
+                </executionOptions>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
+    </activity>
+
+</task>
