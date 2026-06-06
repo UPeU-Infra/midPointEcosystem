@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: recompute-clean-emails-r7
+  OID: b9e11009-f001-4abc-9def-202406060009
+
+  Fix final acumulado:
+    - Oracle trabajadores + estudiantes: guard !@upeu.edu.pe
+    - Koha ILS: guard !@upeu.edu.pe en email-inbound (causa raíz 1)
+    - Entra ID: icfs:name→emailAddress STRONG→WEAK (causa raíz 2: UPN≠mail)
+    - Entra ID: ri:mail→emailAddress permanece STRONG (canónico M365)
+    - Template: B-email-sanitize-numeric con condition (numeric@upeu.edu.pe only)
+    - Template: E2-retract-orphan condition script single-line
+
+  Jerarquía de autoridad para emailAddress:
+    1. ri:mail Entra ID (STRONG) — canónico M365
+    2. icfs:name UPN Entra ID (WEAK) — fallback si no hay ri:mail
+    3. Oracle CORREO_INST (WEAK) — fallback si Entra ID sin email
+    4. Koha ri:email (WEAK) — fallback final (solo @upeu.edu.pe)
+    5. null + emailReviewNeeded=true — investigación manual
+
+  OID determinista: b9e11009-f001-4abc-9def-202406060009
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="b9e11009-f001-4abc-9def-202406060009">
+
+    <name>recompute-clean-emails-r7-20260606</name>
+    <description>
+        R7: fix final. Entra ID icfs:name weak + Koha guard + Oracle guard.
+        ri:mail STRONG es el único autoridad; UPN, Oracle, Koha son fallbacks WEAK.
+    </description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>runnable</executionState>
+
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>lifecycleState</q:path>
+                                <q:value>active</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </objects>
+                <executionOptions>
+                    <reconcile>true</reconcile>
+                </executionOptions>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
+    </activity>
+
+</task>
