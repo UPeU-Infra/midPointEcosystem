@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: recompute-clean-emails-r2
+  OID: b9e11004-f001-4abc-9def-202406060004
+  Objetivo: Limpiar 38,310 emails numéricos usando el nuevo mapping
+            B-email-sanitize-numeric (strength=strong) del template.
+
+  Mecanismo:
+    - recomputation con reconcile=true sobre usuarios active.
+    - El mapping B-email-sanitize-numeric (strong) retorna null si el email
+      local-part es solo dígitos → strong+null borra el valor existente.
+    - El inbound strong de Entra ID (ri:mail, icfs:name) re-evalúa los
+      shadows linked y rellena emailAddress con el email real si existe.
+    - Para los sin shadow Entra ID → emailAddress=null → B-email-review-flag
+      setea emailReviewNeeded=true.
+
+  Diferencia con r1 (b9e11003, partial_error):
+    - r1 corría ANTES de que Oracle trabajadores.xml se degradara a weak.
+    - r1 no tenía B-email-sanitize-numeric en el template.
+    - r2 corre CON template actualizado (commit 3802f60) + recursos reimportados.
+
+  Por qué recomputation y no iterativeScripting:
+    - La causa raíz ya está en el template (B-email-sanitize-numeric strong).
+    - recomputation con reconcile=true aplica el template + inbounds de resources.
+    - Más limpio, sin Groovy custom. Idempotente.
+
+  workerThreads=4: scope 54K activos, distribución para terminar en ~2-3h.
+  reconcile=true: necesario para re-evaluar inbounds de resources (Entra ID email).
+
+  OID determinista: b9e11004-f001-4abc-9def-202406060004
+  Creado: 2026-06-06 — fix post-partial_error de r1
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="b9e11004-f001-4abc-9def-202406060004">
+
+    <name>recompute-clean-emails-r2-20260606</name>
+    <description>
+        R2: recompute+reconcile de usuarios active para limpiar 38,310 emails numéricos.
+        Usa B-email-sanitize-numeric (strong, commit 3802f60) + inbound Entra ID strong.
+        Para los sin shadow Entra ID → emailAddress=null + emailReviewNeeded=true.
+    </description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>runnable</executionState>
+
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>lifecycleState</q:path>
+                                <q:value>active</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </objects>
+                <executionOptions>
+                    <reconcile>true</reconcile>
+                </executionOptions>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
+    </activity>
+
+</task>
