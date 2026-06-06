@@ -111,13 +111,15 @@
                         <path>$user/name</path>
                     </target>
                 </inbound>
-                <!-- UPN completo como emailAddress institucional.
-                     STRONG (2026-06-06): Entra ID es fuente de verdad fuerte para email.
-                     GUARD: descarta UPNs solo-numéricos (DNI o código) de cualquier longitud
-                     (\d+ en lugar de \d{8}) y dominios fuera de @upeu.edu.pe.
-                     Si Entra no tiene email real → emailAddress queda null → emailReviewNeeded=true. -->
+                <!-- UPN completo como emailAddress institucional — WEAK fallback.
+                     WEAK (fix 2026-06-06b): algunos usuarios tienen UPN ≠ ri:mail
+                     (ej. jorgemaquera@ vs jorge.maquera@). ri:mail es el campo canónico
+                     M365; UPN es el login que puede diferir. Con STRONG+STRONG conflicto
+                     "2 values". Cambiado a WEAK: ri:mail STRONG gana si existe; si no hay
+                     ri:mail, este WEAK se aplica como fallback.
+                     GUARD idéntico: descarta numéricos y no-upeu. -->
                 <inbound>
-                    <strength>strong</strength>
+                    <strength>weak</strength>
                     <expression>
                         <script>
                             <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d+/ ? null : v</code>
