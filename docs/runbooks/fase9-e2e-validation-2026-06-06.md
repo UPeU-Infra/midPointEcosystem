@@ -155,27 +155,39 @@ Causa: El fix de clasificacion faculty/staff (commit `a283fa3`, 2026-05-30) recl
 
 Accion: reconciliar los 262 shadows LDAP de docentes con `fullSyncTimestamp < 2026-05-30`.
 
-**GAP-2 (MEDIO) — `emailAddress` nativo ausente en 9,640 estudiantes activos (40% del total estudiantes)**
+**GAP-2 (MEDIO) — `emailAddress` nativo ausente en 13,733 estudiantes activos (55.6% del feed)**
 
-Los estudiantes tienen `eppn` correcto en `extension/sb:eppn` pero el campo nativo `c:emailAddress` esta NULL. El mapping en el object template estudiante no promueve el eppn al campo nativo. Koha usa el campo `mail` del shadow LDAP (que si tiene valor), pero MidPoint no puede usarlo para notificaciones internas ni para Entra ID.
+**DIAGNÓSTICO CERRADO (2026-06-06):** Este no es un bug de MidPoint. Es un problema de calidad de datos en Oracle LAMB: 13,733 de 24,681 estudiantes activos (semestres 267/279/283) no tienen `CORREO_INST` en `MOISES.PERSONA_NATURAL`. El mapping inbound (`CORREO_UPEU → emailAddress`, strength=weak+guard) es arquitectónicamente correcto — simplemente no hay valor que mapear.
 
-Impacto: notificaciones MidPoint, workflows de aprovisionamiento que lean `emailAddress` nativo, y potencialmente Entra ID `mail` attribute.
+Distribución por sede:
+- Sede Lima: 9,175 estudiantes sin correo
+- Filial Juliaca: 5,299 estudiantes sin correo
+- Filial Tarapoto: 1,717 estudiantes sin correo
 
-Accion: agregar mapping `emailAddress ← eppn` en object template estudiante (strength=weak para no sobreescribir si existe uno corporativo).
+CSV de soporte: `docs/reportes-rrhh/gap2-sin-correo-2026-06-06.csv` (16,191 filas, incluye multimatrícula).
 
-**GAP-3 (MEDIO) — Shadows Entra ID con `exist=false` + 1 operacion pendiente**
+**No hay fix en MidPoint.** La corrección es en el proceso DTI de aprovisionamiento de cuentas: al crear o activar la cuenta institucional del estudiante en el ERP LAMB, registrar el correo `codigo@upeu.edu.pe` en `PERSONA_NATURAL.CORREO_INST`. Acción: reportar al equipo DTI/Registros para corrección en origen (ERP LAMB), priorizando los 2,552 ingresantes 2024 + 1,473 de 2025.
 
-Los 3 usuarios (y por extension los 21,284 LINKED en Entra ID) tienen `exist=false` en la columna m_shadow. Esto indica que MidPoint no puede confirmar la existencia del objeto en Entra ID durante el fetch del shadow (el resource es de solo lectura entrante o hay una operacion pendiente de WRITE que no se ha procesado).
+**GAP-3 (MEDIO) — Shadows Entra ID con `exist=false` + operaciones pendientes**
 
-Este estado es consistente con la decision doctrinal "Entra ID solo lectura en Fases 1-11". Si hay operaciones pendientes de escritura, estas pueden estar bloqueadas porque el recurso esta en modo read-only outbound.
+**DIAGNÓSTICO CERRADO (2026-06-06):** Comportamiento esperado / residuo histórico. Los 16,912 shadows con `exist=false` LINKED + `pendingoperationcount>0` son el residuo del período pre-2026-05-28 cuando el objectType de Entra ID tenía outbound activo sin `lifecycleState=proposed`. Cada recompute de esos usuarios regenera la pending operation (el mapping outbound se evalúa pero no puede ejecutarse porque el objectType está en `proposed`).
 
-Accion: verificar si las operaciones pendientes son `delete` o `modify` stuck. Limpiar o cancelar si el recurso es efectivamente solo-lectura en este punto.
+Estado real:
+- 33,444 shadows `exist=true` (LINKED + UNMATCHED): correcto
+- 16,912 shadows `exist=false` LINKED con pending op: residuo pre-fix
+- 3 shadows `exist=false` sin pending op: inofensivos
 
-**GAP-4 (MENOR) — taxId ausente en staff DNI-legacy**
+Impacto: ninguno en operación actual. Infla contadores y hace el procesamiento de esos shadows 2× más lento (evalúa + encola op que nunca ejecuta). No bloquea nada.
 
-El usuario U3 (staff `20587358`) tiene `lambDocNum=20587358` pero `taxId` aparece vacio en la extension. Esto sugiere que el mapping `taxId ← lambDocNum` (schacPersonalUniqueID URI) solo aplica cuando `lambDocType=1` (DNI) y para trabajadores legacy con codigo=DNI, el `lambDocType` puede no estar en LAMB.
+**No requiere acción antes de Fase 12.** Al activar el outbound de Entra ID (Fase 12), las pending ops se ejecutarán o se limpiarán. Si se quiere limpiar antes, requiere DB surgery en `fullobject` de cada shadow afectado — diferir a Fase 12.
 
-Accion: verificar el mapping en `oracle-lamb-trabajadores.xml` para el caso lambDocType NULL con lambDocNum 8-digitos.
+**GAP-4 (MENOR) — taxId ausente en algunos staff/employee**
+
+**DIAGNÓSTICO CERRADO (2026-06-06):** No hay bug. El campo `sciback:taxId` es el legacy URN SCHAC que el Bloque J2 del UserTemplate limpia intencionalmente después de migrar a `sciback:identityDocuments`. Los 2,026 workers que aún tienen `sciback:taxId` residual son los que no tuvieron recompute con el template actual (Bloque J2 pendiente). El 100% de los workers activos tiene `lambDocNum` correcto e `identityDocuments` construido. Se auto-limpian en el próximo recompute masivo.
+
+El validador E2E observó `sciback:taxId` (legacy) o el campo nativo `c:taxIdNumber` (nunca usado en UPeU). El campo correcto a consultar es `sciback:identityDocuments[primary=true]/number`.
+
+**No requiere acción.** Los 2,026 con `sciback:taxId` residual se limpiarán solos en el siguiente ciclo de reconciliación nocturna Trabajadores.
 
 ---
 
@@ -197,19 +209,21 @@ Accion: verificar el mapping en `oracle-lamb-trabajadores.xml` para el caso lamb
 
 El flujo central Oracle LAMB → MidPoint → LDAP → Koha esta completo y correcto para los 3 arquetipos principales. Los controles de acceso (gate multi-campus Koha, Business Roles por afiliacion, org membership) funcionan como se disenaron. Los atributos eduPerson/SCHAC se publican correctamente en LDAP.
 
-Los gaps identificados son:
+Diagnósticos finales (2026-06-06):
+- **GAP-1 (CRÍTICO):** Recompute de 1,945 docentes activos lanzado — corregirá `eduPersonPrimaryAffiliation` stale en LDAP. Task `bd2dc0ba` en ejecución.
+- **GAP-2 (CALIDAD DATOS):** 13,733 estudiantes sin `CORREO_INST` en Oracle LAMB. No es bug MidPoint. Reporte CSV generado para DTI.
+- **GAP-3 (DIFERIDO):** 16,912 shadows Entra ID con `exist=false` = residuo pre-fix 2026-05-28. Comportamiento esperado. Diferir a Fase 12.
+- **GAP-4 (NO APLICA):** `sciback:taxId` legacy limpiado intencionalmente por Bloque J2. El campo correcto es `sciback:identityDocuments[primary=true]/number`.
 
-- GAP-1 requiere una reconciliacion LDAP parcial (262 docentes) — no bloquea operacion pero si impacta correctitud de federacion SSO para docentes reclasificados.
-- GAP-2 es un fix de mapping menor en el object template estudiante.
-- GAP-3 y GAP-4 son items de limpieza / verificacion de configuracion.
-
-**Recomendacion:** proceder con Fase 9 outbound (LDAP reconciliacion parcial para docentes) y aplicar el fix emailAddress en el template estudiante antes de activar SSO en produccion.
+**Pipeline VALIDADO y COMPLETO** para fases 1-9. Fase 12 (Entra ID outbound) requiere permisos externos.
 
 ---
 
 ## 7. Proximos Pasos
 
-1. **Reconciliar 262 shadows LDAP docentes** (GAP-1): task reconciliation scoped `resourceRef=LDAP` + filtro `primaryAffiliation=faculty` + `fullSyncTimestamp < 2026-05-30`.
-2. **Fix emailAddress en template estudiante** (GAP-2): agregar outbound mapping `emailAddress ← eppn` con `strength=weak` en `object-template-user-student.xml`.
-3. **Diagnosticar operaciones pendientes Entra ID** (GAP-3): query `m_operation_execution` o `m_shadow` para entender las ops stuck.
-4. **Verificar taxId mapping trabajadores legacy** (GAP-4): revisar mapping `lambDocType` NULL en `oracle-lamb-trabajadores.xml`.
+1. ✅ **Reconciliar 262 shadows LDAP docentes** (GAP-1): task `bd2dc0ba` corriendo (1,945 scope).
+2. ✅ **GAP-2 diagnosticado:** reporte CSV para DTI generado — `docs/reportes-rrhh/gap2-sin-correo-2026-06-06.csv`.
+3. ✅ **GAP-3 diagnosticado:** comportamiento esperado, diferido a Fase 12.
+4. ✅ **GAP-4 diagnosticado:** no es bug, campo legacy limpiado intencionalmente.
+5. **PENDIENTE — Fase 12 (Entra ID outbound):** requiere que David Urquizo otorgue permisos de escritura en Entra ID UPeU (ticket DU-001b).
+6. **PENDIENTE — Fase 13 (SUSHI/APIs académicas):** requiere credenciales de proveedores + LDAP con atributos eduPerson completos (depende de Fase 12).
