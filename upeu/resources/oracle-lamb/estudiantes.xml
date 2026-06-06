@@ -8,7 +8,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22">
     <name>Oracle LAMB Estudiantes v3</name>
-    <description>Inbound ScriptedSQL desde tablas base Oracle (MOISES.PERSONA + DAVID.ACAD_ALUMNO_CONTRATO + ACAD_MODULO_DETALLE + ELISEO.ORG_AREA). Incluye DATE_EXPIRY y CORREO_PERSONAL para Koha. Fase 5a-v5 schema sb:. Import masivo habilitado — A2 2026-05-20. ID_SEMESTRE IN (279 piloto, 267 ciclo anual 2026). Gobernanza: todos los programas con matrícula vigente. 2026-06-04: RETIRADO filtro `WHERE pn.CORREO_INST IS NOT NULL` del searchScript — excluía ~13.7k estudiantes con matrícula vigente sin correo institucional (violaba gobernanza "todo estudiante matriculado debe tener cuenta" + iga-canonical §1.3: el email es UN atributo, NO condición de existencia de la identidad). Correlación por lambDocNum (no email) → quitar el filtro AMPLÍA scope sin dejar huérfanos. El inbound CORREO_UPEU es weak+guard → estudiante sin correo simplemente no recibe email; correlaciona y materializa campusStudent/liveAffiliationStudent igual. Caso testigo: Tito DNI 43508613. 2026-06-04 (DECISION-vigencia-temporal-afiliaciones): agregacion vigencia-aware — SCHOOL_NAME/SEDE_NOMBRE/STUDENT_CYCLE/NIVEL_ENSENANZA ahora derivan de la matricula que TERMINA MAS TARDE (MAX(...) KEEP DENSE_RANK LAST ORDER BY amd.FECHA_FIN), NO de un MAX() ciego columna-a-columna. Antes, para estudiante multi-sede (ej. Critsi 202613369: Lima vigente sem 267 fin 2026-07-03 + CEPRE Juliaca vencida sem 279 fin 2026-03-01), el MAX ciego elegia sede/escuela por orden alfabetico, no por vigencia → arrastraba la sede de una matricula vencida a campusStudent/locality y de ahi a la home library Koha. KEEP LAST hace que TODOS los atributos derivados provengan de la MISMA matricula vigente (la de mayor FECHA_FIN). NO se filtra >= SYSDATE (evita huerfanos, DECISION §2): el estudiante sigue en el feed mientras tenga cualquier matricula en el horizonte de semestres. DATE_EXPIRY = MAX(FECHA_FIN) = expiry de la matricula vigente.</description>
+    <description>Inbound ScriptedSQL desde tablas base Oracle (MOISES.PERSONA + DAVID.ACAD_ALUMNO_CONTRATO + ACAD_MODULO_DETALLE + ELISEO.ORG_AREA). Incluye DATE_EXPIRY y CORREO_PERSONAL para Koha. Fase 5a-v5 schema sb:. Import masivo habilitado — A2 2026-05-20. ID_SEMESTRE IN (279 piloto, 267 ciclo anual 2026). Gobernanza: todos los programas con matrícula vigente. 2026-06-04: RETIRADO filtro `WHERE pn.CORREO_INST IS NOT NULL` del searchScript — excluía ~13.7k estudiantes con matrícula vigente sin correo institucional (violaba gobernanza "todo estudiante matriculado debe tener cuenta" + iga-canonical §1.3: el email es UN atributo, NO condición de existencia de la identidad). Correlación por lambDocNum (no email) → quitar el filtro AMPLÍA scope sin dejar huérfanos. El inbound CORREO_UPEU es weak+guard → estudiante sin correo simplemente no recibe email; correlaciona y materializa campusStudent/liveAffiliationStudent igual. Caso testigo: Tito DNI 43508613. 2026-06-04 (DECISION-vigencia-temporal-afiliaciones): agregacion vigencia-aware — SCHOOL_NAME/SEDE_NOMBRE/STUDENT_CYCLE/NIVEL_ENSENANZA ahora derivan de la matricula que TERMINA MAS TARDE (MAX(...) KEEP DENSE_RANK LAST ORDER BY amd.FECHA_FIN), NO de un MAX() ciego columna-a-columna. Antes, para estudiante multi-sede (ej. Critsi 202613369: Lima vigente sem 267 fin 2026-07-03 + CEPRE Juliaca vencida sem 279 fin 2026-03-01), el MAX ciego elegia sede/escuela por orden alfabetico, no por vigencia → arrastraba la sede de una matricula vencida a campusStudent/locality y de ahi a la home library Koha. KEEP LAST hace que TODOS los atributos derivados provengan de la MISMA matricula vigente (la de mayor FECHA_FIN). NO se filtra >= SYSDATE (evita huerfanos, DECISION §2): el estudiante sigue en el feed mientras tenga cualquier matricula en el horizonte de semestres. DATE_EXPIRY = MAX(FECHA_FIN) = expiry de la matricula vigente. 2026-06-05 (FIX document-type-aware / CANON_DOC): el searchScript ahora SELECT pn.ID_TIPODOCUMENTO AS TIPO_DOC y lo expone; los inbounds num-documento-to-lambDocNum y dni-to-taxId-urn dejan de asumir DNI y aplican la normalizacion CANON_DOC type-aware IDENTICA a trabajadores.xml/egresados (DNI 1/24 zfill8; CE 4/6/31 + PTP 22/CPP 23 prefijo CE: zfill9; pasaporte 7/9 prefijo PP:); nuevo inbound id-tipodocumento-to-lambDocType alimenta el Bloque J del template para construir identityDocuments con el type real. Causa: 228 estudiantes no-DNI (90 pasaporte, 86 CE, 49 DNI-ext, etc.), 204 con doc no-8-digitos, quedaban mal etiquetados :DNI: -> identityDocuments type=DNI y, en alta nueva, fallaban PR-04 -> limbo (caso testigo Dania 202012364 pasaporte G559478). Gate previo: 0 colisiones DIFFERENT_PERSON sobre las 230 claves type-aware (verificado en PROD).</description>
     <lifecycleState>active</lifecycleState>
     <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
@@ -43,9 +43,9 @@
             <cfg:allNative>false</cfg:allNative>
             <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
             <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
-            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseSelect = 'SELECT pna.CODIGO, p.NOMBRE, p.PATERNO, p.MATERNO, pn.CORREO_INST AS CORREO_UPEU, pn.CORREO AS CORREO_PERSONAL, pn.CELULAR, pn.FEC_NACIMIENTO, pn.SEXO AS CODIGO_SEXO, pn.NUM_DOCUMENTO, pn.FOTO, ag.STUDENT_CYCLE, ag.PROGRAM_CODES, ag.SCHOOL_NAME, ag.SEDE_NOMBRE, ag.DATE_EXPIRY, ag.NIVEL_ENSENANZA FROM MOISES.PERSONA p INNER JOIN MOISES.PERSONA_NATURAL pn ON pn.ID_PERSONA = p.ID_PERSONA INNER JOIN MOISES.PERSONA_NATURAL_ALUMNO pna ON pna.ID_PERSONA = p.ID_PERSONA INNER JOIN ( SELECT aac.ID_PERSONA, MAX(apc.CICLO) KEEP (DENSE_RANK LAST ORDER BY amd.FECHA_FIN NULLS FIRST) AS STUDENT_CYCLE, LISTAGG(TO_CHAR(asp.ID_PROGRAMA_ESTUDIO), \',\') WITHIN GROUP (ORDER BY asp.ID_PROGRAMA_ESTUDIO) AS PROGRAM_CODES, MAX(oa.NOMBRE) KEEP (DENSE_RANK LAST ORDER BY amd.FECHA_FIN NULLS FIRST) AS SCHOOL_NAME, MAX(os.NOMBRE) KEEP (DENSE_RANK LAST ORDER BY amd.FECHA_FIN NULLS FIRST) AS SEDE_NOMBRE, TO_CHAR(MAX(amd.FECHA_FIN), \'YYYY-MM-DD\') AS DATE_EXPIRY, MAX(tne.NOMBRE) KEEP (DENSE_RANK LAST ORDER BY amd.FECHA_FIN NULLS FIRST) AS NIVEL_ENSENANZA FROM DAVID.ACAD_ALUMNO_CONTRATO aac INNER JOIN DAVID.ACAD_SEMESTRE_PROGRAMA asp ON asp.ID_SEMESTRE_PROGRAMA = aac.ID_SEMESTRE_PROGRAMA AND asp.ID_SEMESTRE IN (267, 279, 283) INNER JOIN DAVID.ACAD_ALUMNO_CONTRATO_CURSO aacc ON aacc.ID_ALUMNO_CONTRATO = aac.ID_ALUMNO_CONTRATO INNER JOIN DAVID.ACAD_CURSO_ALUMNO aca ON aca.ID_CURSO_ALUMNO = aacc.ID_CURSO_ALUMNO AND aca.ESTADO = \'1\' INNER JOIN DAVID.ACAD_PROGRAMA_ESTUDIO ape ON ape.ID_PROGRAMA_ESTUDIO = asp.ID_PROGRAMA_ESTUDIO INNER JOIN DAVID.TIPO_NIVEL_ENSENANZA tne ON tne.ID_NIVEL_ENSENANZA = ape.ID_NIVEL_ENSENANZA INNER JOIN ELISEO.ORG_SEDE_AREA osa ON osa.ID_SEDEAREA = ape.ID_SEDEAREA INNER JOIN ELISEO.ORG_AREA oa ON oa.ID_AREA = osa.ID_AREA INNER JOIN ELISEO.ORG_SEDE os ON os.ID_SEDE = osa.ID_SEDE LEFT JOIN DAVID.ACAD_PLAN_PROGRAMA app ON app.ID_PLAN_PROGRAMA = aca.ID_PLAN_PROGRAMA LEFT JOIN DAVID.ACAD_PLAN_CURSO apc ON apc.ID_PLAN = app.ID_PLAN AND apc.ID_CURSO_DETALLE = aca.ID_CURSO_DETALLE LEFT JOIN (SELECT ID_SEMESTRE_PROGRAMA, MAX(FECHA_FIN) AS FECHA_FIN FROM DAVID.ACAD_MODULO_DETALLE GROUP BY ID_SEMESTRE_PROGRAMA) amd ON amd.ID_SEMESTRE_PROGRAMA = asp.ID_SEMESTRE_PROGRAMA GROUP BY aac.ID_PERSONA ) ag ON ag.ID_PERSONA = p.ID_PERSONA'; def finalQuery = ''; def params = []; if (query != null &amp;&amp; query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { finalQuery = baseSelect + ' AND pna.CODIGO = ?'; params &lt;&lt; (query.right as String); } else if (query != null) { throw new UnsupportedOperationException('Estudiantes-v4 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } else { finalQuery = baseSelect; }; sql.eachRow(finalQuery, params) { row -&gt; def map = [:]; map['__UID__'] = row.CODIGO as String; map['__NAME__'] = row.CODIGO as String; map['CODIGO'] = row.CODIGO as String; map['NOMBRE'] = row.NOMBRE as String; map['PATERNO'] = row.PATERNO as String; map['MATERNO'] = row.MATERNO as String; map['CORREO_UPEU'] = row.CORREO_UPEU as String; map['CORREO_PERSONAL'] = row.CORREO_PERSONAL as String; map['CELULAR'] = row.CELULAR as String; map['FEC_NACIMIENTO'] = row.FEC_NACIMIENTO?.toString(); map['CODIGO_SEXO'] = row.CODIGO_SEXO as String; map['NUM_DOCUMENTO'] = row.NUM_DOCUMENTO as String; map['FOTO'] = row.FOTO as String; map['STUDENT_CYCLE'] = row.STUDENT_CYCLE?.toString(); if (row.PROGRAM_CODES != null) { def codes = (row.PROGRAM_CODES as String).split(',').collect { it.trim() }.findAll { it }.unique(); if (codes) map['PROGRAM_CODES'] = codes; }; map['SCHOOL_NAME'] = row.SCHOOL_NAME as String; map['SEDE_NOMBRE'] = row.SEDE_NOMBRE as String; map['DATE_EXPIRY'] = row.DATE_EXPIRY as String; map['NIVEL_ENSENANZA'] = row.NIVEL_ENSENANZA as String; result &lt;&lt; map }; return result</cfg:searchScript>
+            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseSelect = 'SELECT pna.CODIGO, p.NOMBRE, p.PATERNO, p.MATERNO, pn.CORREO_INST AS CORREO_UPEU, pn.CORREO AS CORREO_PERSONAL, pn.CELULAR, pn.FEC_NACIMIENTO, pn.SEXO AS CODIGO_SEXO, pn.NUM_DOCUMENTO, pn.ID_TIPODOCUMENTO AS TIPO_DOC, pn.FOTO, ag.STUDENT_CYCLE, ag.PROGRAM_CODES, ag.SCHOOL_NAME, ag.SEDE_NOMBRE, ag.DATE_EXPIRY, ag.NIVEL_ENSENANZA FROM MOISES.PERSONA p INNER JOIN MOISES.PERSONA_NATURAL pn ON pn.ID_PERSONA = p.ID_PERSONA INNER JOIN MOISES.PERSONA_NATURAL_ALUMNO pna ON pna.ID_PERSONA = p.ID_PERSONA INNER JOIN ( SELECT aac.ID_PERSONA, MAX(apc.CICLO) KEEP (DENSE_RANK LAST ORDER BY amd.FECHA_FIN NULLS FIRST) AS STUDENT_CYCLE, LISTAGG(TO_CHAR(asp.ID_PROGRAMA_ESTUDIO), \',\') WITHIN GROUP (ORDER BY asp.ID_PROGRAMA_ESTUDIO) AS PROGRAM_CODES, MAX(oa.NOMBRE) KEEP (DENSE_RANK LAST ORDER BY amd.FECHA_FIN NULLS FIRST) AS SCHOOL_NAME, MAX(os.NOMBRE) KEEP (DENSE_RANK LAST ORDER BY amd.FECHA_FIN NULLS FIRST) AS SEDE_NOMBRE, TO_CHAR(MAX(amd.FECHA_FIN), \'YYYY-MM-DD\') AS DATE_EXPIRY, MAX(tne.NOMBRE) KEEP (DENSE_RANK LAST ORDER BY amd.FECHA_FIN NULLS FIRST) AS NIVEL_ENSENANZA FROM DAVID.ACAD_ALUMNO_CONTRATO aac INNER JOIN DAVID.ACAD_SEMESTRE_PROGRAMA asp ON asp.ID_SEMESTRE_PROGRAMA = aac.ID_SEMESTRE_PROGRAMA AND asp.ID_SEMESTRE IN (267, 279, 283) INNER JOIN DAVID.ACAD_ALUMNO_CONTRATO_CURSO aacc ON aacc.ID_ALUMNO_CONTRATO = aac.ID_ALUMNO_CONTRATO INNER JOIN DAVID.ACAD_CURSO_ALUMNO aca ON aca.ID_CURSO_ALUMNO = aacc.ID_CURSO_ALUMNO AND aca.ESTADO = \'1\' INNER JOIN DAVID.ACAD_PROGRAMA_ESTUDIO ape ON ape.ID_PROGRAMA_ESTUDIO = asp.ID_PROGRAMA_ESTUDIO INNER JOIN DAVID.TIPO_NIVEL_ENSENANZA tne ON tne.ID_NIVEL_ENSENANZA = ape.ID_NIVEL_ENSENANZA INNER JOIN ELISEO.ORG_SEDE_AREA osa ON osa.ID_SEDEAREA = ape.ID_SEDEAREA INNER JOIN ELISEO.ORG_AREA oa ON oa.ID_AREA = osa.ID_AREA INNER JOIN ELISEO.ORG_SEDE os ON os.ID_SEDE = osa.ID_SEDE LEFT JOIN DAVID.ACAD_PLAN_PROGRAMA app ON app.ID_PLAN_PROGRAMA = aca.ID_PLAN_PROGRAMA LEFT JOIN DAVID.ACAD_PLAN_CURSO apc ON apc.ID_PLAN = app.ID_PLAN AND apc.ID_CURSO_DETALLE = aca.ID_CURSO_DETALLE LEFT JOIN (SELECT ID_SEMESTRE_PROGRAMA, MAX(FECHA_FIN) AS FECHA_FIN FROM DAVID.ACAD_MODULO_DETALLE GROUP BY ID_SEMESTRE_PROGRAMA) amd ON amd.ID_SEMESTRE_PROGRAMA = asp.ID_SEMESTRE_PROGRAMA GROUP BY aac.ID_PERSONA ) ag ON ag.ID_PERSONA = p.ID_PERSONA'; def finalQuery = ''; def params = []; if (query != null &amp;&amp; query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { finalQuery = baseSelect + ' AND pna.CODIGO = ?'; params &lt;&lt; (query.right as String); } else if (query != null) { throw new UnsupportedOperationException('Estudiantes-v4 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } else { finalQuery = baseSelect; }; sql.eachRow(finalQuery, params) { row -&gt; def map = [:]; map['__UID__'] = row.CODIGO as String; map['__NAME__'] = row.CODIGO as String; map['CODIGO'] = row.CODIGO as String; map['NOMBRE'] = row.NOMBRE as String; map['PATERNO'] = row.PATERNO as String; map['MATERNO'] = row.MATERNO as String; map['CORREO_UPEU'] = row.CORREO_UPEU as String; map['CORREO_PERSONAL'] = row.CORREO_PERSONAL as String; map['CELULAR'] = row.CELULAR as String; map['FEC_NACIMIENTO'] = row.FEC_NACIMIENTO?.toString(); map['CODIGO_SEXO'] = row.CODIGO_SEXO as String; map['NUM_DOCUMENTO'] = row.NUM_DOCUMENTO as String; map['TIPO_DOC'] = row.TIPO_DOC?.toString(); map['FOTO'] = row.FOTO as String; map['STUDENT_CYCLE'] = row.STUDENT_CYCLE?.toString(); if (row.PROGRAM_CODES != null) { def codes = (row.PROGRAM_CODES as String).split(',').collect { it.trim() }.findAll { it }.unique(); if (codes) map['PROGRAM_CODES'] = codes; }; map['SCHOOL_NAME'] = row.SCHOOL_NAME as String; map['SEDE_NOMBRE'] = row.SEDE_NOMBRE as String; map['DATE_EXPIRY'] = row.DATE_EXPIRY as String; map['NIVEL_ENSENANZA'] = row.NIVEL_ENSENANZA as String; result &lt;&lt; map }; return result</cfg:searchScript>
             <cfg:syncScript>return null</cfg:syncScript>
-            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required, boolean multiValued = false -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.setMultiValued(multiValued); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("CODIGO", true)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("PATERNO", false)); ocib.addAttributeInfo(ro("MATERNO", false)); ocib.addAttributeInfo(ro("CORREO_UPEU", false)); ocib.addAttributeInfo(ro("CELULAR", false)); ocib.addAttributeInfo(ro("FEC_NACIMIENTO", false)); ocib.addAttributeInfo(ro("CODIGO_SEXO", false)); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false)); ocib.addAttributeInfo(ro("FOTO", false)); ocib.addAttributeInfo(ro("STUDENT_CYCLE", false)); ocib.addAttributeInfo(ro("PROGRAM_CODES", false, true)); ocib.addAttributeInfo(ro("SCHOOL_NAME", false)); ocib.addAttributeInfo(ro("SEDE_NOMBRE", false)); ocib.addAttributeInfo(ro("DATE_EXPIRY", false)); ocib.addAttributeInfo(ro("CORREO_PERSONAL", false)); ocib.addAttributeInfo(ro("NIVEL_ENSENANZA", false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
+            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required, boolean multiValued = false -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.setMultiValued(multiValued); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("CODIGO", true)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("PATERNO", false)); ocib.addAttributeInfo(ro("MATERNO", false)); ocib.addAttributeInfo(ro("CORREO_UPEU", false)); ocib.addAttributeInfo(ro("CELULAR", false)); ocib.addAttributeInfo(ro("FEC_NACIMIENTO", false)); ocib.addAttributeInfo(ro("CODIGO_SEXO", false)); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false)); ocib.addAttributeInfo(ro("TIPO_DOC", false)); ocib.addAttributeInfo(ro("FOTO", false)); ocib.addAttributeInfo(ro("STUDENT_CYCLE", false)); ocib.addAttributeInfo(ro("PROGRAM_CODES", false, true)); ocib.addAttributeInfo(ro("SCHOOL_NAME", false)); ocib.addAttributeInfo(ro("SEDE_NOMBRE", false)); ocib.addAttributeInfo(ro("DATE_EXPIRY", false)); ocib.addAttributeInfo(ro("CORREO_PERSONAL", false)); ocib.addAttributeInfo(ro("NIVEL_ENSENANZA", false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
             <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); sql.firstRow("SELECT 1 AS OK FROM DUAL"); return "OK"</cfg:testScript>
         </icfc:configurationProperties>
     </connectorConfiguration>
@@ -152,11 +152,30 @@
                      El inbound dni-to-taxId-urn (beforeCorrelation) sigue normalizando
                      NUM_DOCUMENTO a URN SCHAC en extension/sb:taxId. -->
                 <inbound>
+                    <!-- FIX type-aware (2026-06-05): antes hardcodeaba ':DNI:PE:' para TODO documento,
+                         etiquetando pasaportes/CE/PTP como DNI. Eso rompia la validacion PR-04 (DNI=8
+                         digitos) del Bloque G del template para extranjeros (caso Dania 202012364,
+                         pasaporte G559478 -> limbo). Ahora el URN SCHAC refleja el tipo real desde
+                         TIPO_DOC (MOISES.PERSONA_NATURAL.ID_TIPODOCUMENTO), consistente con el contenedor
+                         canonico identityDocuments que construye el Bloque J. taxId es legacy y el Bloque
+                         J2 del template lo limpia tras migrar a identityDocuments, pero se mantiene
+                         type-aware para no inducir a error a lectores previos a J2 ni a la rama fallback
+                         de PR-04/Bloque L (que asume DNI solo cuando el URN dice :DNI:).
+                         Tipos LAMB: 1/24=DNI, 4/6/31=CE, 22=PTP, 23=CPP, 7/9=PP. Idem trabajadores Bloque J. -->
                     <name>dni-to-taxId-urn</name>
                     <strength>strong</strength>
+                    <source><path>$shadow/attributes/ri:NUM_DOCUMENTO</path></source>
+                    <source><path>$shadow/attributes/ri:TIPO_DOC</path></source>
                     <expression>
                         <script>
-                            <code>def d = (input ?: '').toString().trim(); d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null</code>
+                            <code>def d = (NUM_DOCUMENTO ?: '').toString().trim(); if (!d) return null
+def t = (TIPO_DOC ?: '').toString().trim()
+def sub = 'DNI'
+if (['4','6','31'].contains(t)) sub = 'CE'
+else if (t == '22') sub = 'PTP'
+else if (t == '23') sub = 'CPP'
+else if (['7','9'].contains(t)) sub = 'passport'
+return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                         </script>
                     </expression>
                     <target>
@@ -175,27 +194,41 @@
                          correlación de persona entre resources. -->
                     <name>num-documento-to-lambDocNum</name>
                     <strength>strong</strength>
+                    <source><path>$shadow/attributes/ri:NUM_DOCUMENTO</path></source>
+                    <source><path>$shadow/attributes/ri:TIPO_DOC</path></source>
                     <expression>
                         <script>
-                            <!-- FIX RAIZ C v2 (2026-05-31): normalizacion tipo-preservante del documento de
-                                 correlacion (identica a trabajadores.xml/egresados.xml), ALINEADA AL GATE
-                                 (strip-primero). El v1 media longitud sobre el crudo => '001756348' (9) no
-                                 colapsaba con '01756348'. Regla canonica (== gate SQL):
-                                   1) strip ceros lider PRIMERO.
-                                   2) numerico stripped <=8 => zfill(8) (DNI peruano canonico = 8 digitos).
-                                   3) numerico stripped  >8 => stripped tal cual (no truncar, no rellenar).
-                                   4) no-numerico => intacto (solo trim).
-                                   5) vacio / '0' / '000...0' => null.
-                                 Colapsa 001756348->01756348 == 01756348. 123456789->123456789.
-                                 Gate previo OBLIGATORIO: 0 colisiones DIFFERENT_PERSON. -->
-                            <code>def d = (input ?: '').toString().trim()
-if (!d) return null
-if (d ==~ /\d+/) {
-    def norm = d.replaceFirst(/^0+/, '')
-    if (!norm) return null
-    return norm.length() &lt;= 8 ? norm.padLeft(8, '0') : norm
+                            <!-- CANON_DOC type-aware (FIX 2026-06-05). REEMPLAZA la normalizacion anterior
+                                 type-blind (asumia DNI: strip+zfill8 para TODO numerico) que colapsaba un
+                                 CE 12345678 con un DNI 12345678 (riesgo fusion) y NO marcaba el tipo. Ahora
+                                 es IDENTICA a trabajadores.xml/egresados (num-documento-to-lambDocNum):
+                                   DNI (1/24)             : strip ceros + zfill8 (DNI peruano canonico).
+                                   CE/visa (4/6/31)+PTP(22)/CPP(23) : strip ceros + zfill9, PREFIJO 'CE:'.
+                                   pasaporte (7/9)        : 'PP:' + upper (alfanumerico).
+                                   tipo desconocido/vacio : rama generica DNI (strip + zfill8 si numerico).
+                                   vacio / '0' / '000...0': null.
+                                 Unifica la clave de correlacion type-aware entre Estudiantes/Trabajadores/
+                                 Egresados (iga-canonical-standards §1.3: una sola representacion por doc).
+                                 Antes Estudiantes/Egresados no tenian columna de tipo => rama DNI por
+                                 defecto; ahora Estudiantes SI emite TIPO_DOC (MOISES.PERSONA_NATURAL). -->
+                            <code>def num = (NUM_DOCUMENTO ?: '').toString().trim()
+def type = (TIPO_DOC ?: '').toString().trim()
+if (!num) return null
+def DNI = ['1','24'] as Set
+def CE9 = ['4','6','31','22','23'] as Set
+def PASS = ['7','9'] as Set
+def strip = { it.replaceFirst(/^0+/, '') }
+if (type in DNI) {
+    if (num ==~ /\d+/) { def n = strip(num); if (!n) return null; return n.length() &lt;= 8 ? n.padLeft(8,'0') : n }
+    return num
 }
-return d</code>
+if (type in CE9) {
+    if (num ==~ /\d+/) { def n = strip(num); if (!n) return null; def z = n.length() &lt;= 9 ? n.padLeft(9,'0') : n; return 'CE:'+z }
+    return 'CE:'+num
+}
+if (type in PASS) { return 'PP:'+num.toUpperCase() }
+if (num ==~ /\d+/) { def n = strip(num); if (!n) return null; return n.length() &lt;= 8 ? n.padLeft(8,'0') : n }
+return num</code>
                         </script>
                     </expression>
                     <target>
@@ -205,6 +238,32 @@ return d</code>
                         <include>beforeCorrelation</include>
                         <include>clockwork</include>
                     </evaluationPhases>
+                </inbound>
+            </attribute>
+            <attribute>
+                <!-- TIPO_DOC → upeu:lambDocType (campo de transporte). FIX 2026-06-05.
+                     IIA: MOISES.PERSONA_NATURAL.ID_TIPODOCUMENTO (via searchScript).
+                     El Bloque J del UserTemplate-Person-Base lo combina con upeu:lambDocNum
+                     para construir el contenedor canonico sciback:identityDocuments con el
+                     type correcto (DNI/CE/PTP/CPP/PASSPORT) en vez de asumir siempre DNI.
+                     Sin este inbound, el Bloque J cae a su rama default=DNI -> los extranjeros
+                     reciben identityDocuments type=DNI con numero no-8-digitos -> el numero no
+                     es validado por PR-04 (que solo exige 8 digitos cuando type=DNI), pero el
+                     dato canonico queda mal tipado. Idem trabajadores.xml id-tipodocumento-to-lambDocType.
+                     Valores: 1=DNI, 24=DNI-ext, 4/6/31=CE, 22=PTP, 23=CPP, 7/9=PASSPORT.
+                     Valores ignorados por Bloque J: 0, 97, 98, 99. strong: se sobrescribe en cada sync. -->
+                <ref>ri:TIPO_DOC</ref>
+                <inbound>
+                    <name>id-tipodocumento-to-lambDocType</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim(); v ?: null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocType</path>
+                    </target>
                 </inbound>
             </attribute>
             <attribute>
