@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: recompute-clean-emails-r5
+  OID: b9e11007-f001-4abc-9def-202406060007
+  Objetivo: Limpiar emails numéricos y personales (gmail/hotmail) legados.
+
+  Fixes acumulados vs r4:
+    - Oracle trabajadores + estudiantes reimportados con guard @upeu.edu.pe
+      (evita que Oracle proponga gmail como ADD → colisión 2-valores SECONDARY)
+    - B-email-sanitize-numeric ahora tiene condition: solo activa para numeric@upeu.edu.pe
+      (evita STRONG(null) vs STRONG(Entra ID) para usuarios con personal email)
+
+  Flujo esperado por tipo de usuario:
+    A) numeric@upeu.edu.pe + shadow Entra ID real:  → emailAddress = @upeu.edu.pe, reviewNeeded=false
+    B) numeric@upeu.edu.pe + sin Entra ID:          → emailAddress = null, reviewNeeded=true
+    C) gmail + shadow Entra ID real:                → emailAddress = @upeu.edu.pe (Entra strong gana)
+    D) gmail + sin Entra ID:                        → emailAddress = gmail (Oracle weak no la toca)
+       [los D son candidatos futuros para emailReviewNeeded via investigación manual]
+    E) ya @upeu.edu.pe correcto:                    → sin cambio
+
+  OID determinista: b9e11007-f001-4abc-9def-202406060007
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="b9e11007-f001-4abc-9def-202406060007">
+
+    <name>recompute-clean-emails-r5-20260606</name>
+    <description>
+        R5: fix completo (commits 402d11e+3802f60+a00ae20+cd3b5eb).
+        Oracle domain guard PROD + B-email-sanitize-numeric condition.
+        Limpia numeric@upeu.edu.pe (38K) y reemplaza gmail por email Entra ID real.
+    </description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>runnable</executionState>
+
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>lifecycleState</q:path>
+                                <q:value>active</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </objects>
+                <executionOptions>
+                    <reconcile>true</reconcile>
+                </executionOptions>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
+    </activity>
+
+</task>
