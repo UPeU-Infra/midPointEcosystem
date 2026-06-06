@@ -152,6 +152,55 @@ Si sí: compartir lista (nombres + uso). Si no: en Fase 12 los crearemos según 
 
 ---
 
+### DU-008 — Corrección de tipos de documento en Oracle LAMB (199 personas con CE/Pasaporte mal clasificados como DNI) 🟡
+
+**Para:** Calidad de datos IGA — impacta `taxId` canónico en MidPoint.
+**Sistema:** Oracle LAMB (ERP institucional — fuente de verdad de personas).
+**Contexto:**
+
+Durante el fix de documentos de identidad de extranjeros (2026-06-06) se detectaron **199 personas activas** cuyo tipo de documento en LAMB aparece como **DNI** pero cuyo número de documento es alfanumérico (contiene letras), lo que indica que son CE (Carné de Extranjería) o Pasaporte. MidPoint no puede inferir el tipo correcto sin que la fuente lo diga bien.
+
+Esto afecta el campo `schacPersonalUniqueID` de cada persona en el directorio institucional.
+
+**Acción solicitada (para el equipo que administra Oracle LAMB / el ERP):**
+
+1. Ejecutar la siguiente consulta en Oracle LAMB para identificar los casos:
+   ```sql
+   -- Personas con tipo_doc = 'DNI' pero número alfanumérico (CE/Pasaporte)
+   SELECT ID_PERSONA, NRO_DOCUMENTO, TIPO_DOCUMENTO
+   FROM MOISES.PERSONA_NATURAL
+   WHERE TIPO_DOCUMENTO IN ('1', 'DNI') -- ajustar según el código real de DNI en LAMB
+     AND REGEXP_LIKE(NRO_DOCUMENTO, '[A-Za-z]')
+   ORDER BY NRO_DOCUMENTO;
+   ```
+2. Corregir el `TIPO_DOCUMENTO` al valor correcto (CE, Pasaporte, según corresponda).
+3. Notificar a Alberto cuando esté corregido para lanzar el recompute en MidPoint.
+
+**Justificación:** El identificador `schacPersonalUniqueID` es parte del perfil eduPerson de cada persona y se propaga al LDAP institucional, Keycloak (SSO) y eventualmente al directorio activo. Un tipo de documento incorrecto genera un identificador canónico incorrecto.
+
+**Output esperado:** Confirmación de que los 199 registros fueron corregidos en LAMB, con fecha de corrección.
+
+---
+
+### DU-009 — Revisión de 65 personas con dos números de documento distintos en sus registros 🟡
+
+**Para:** Calidad de datos IGA — detectado durante limpieza 2026-06-06.
+**Sistema:** Oracle LAMB (ERP) + MidPoint.
+**Contexto:**
+
+65 personas activas tienen **dos entradas de documento** en MidPoint con el mismo tipo pero números diferentes. Esto ocurre porque dos mappings distintos (uno legacy, uno nuevo) apuntan a fuentes distintas en LAMB que no coinciden. La causa raíz probable es que el número de documento fue actualizado en una tabla de LAMB pero no en otra.
+
+**Acción solicitada:**
+
+1. Alberto generará un CSV con los 65 casos (OID, código, nombre, número 1, número 2) y lo compartirá.
+2. El equipo de LAMB verifica cuál es el número de documento vigente para cada persona.
+3. Se corrige en la tabla autoritativa.
+4. MidPoint hace recompute automático.
+
+**Output esperado:** CSV revisado con columna "número correcto" marcada.
+
+---
+
 ### DU-007 — Decisión sobre Google Classroom 🟡
 
 **Para:** Decidir alcance (probablemente NO se gobierna).
