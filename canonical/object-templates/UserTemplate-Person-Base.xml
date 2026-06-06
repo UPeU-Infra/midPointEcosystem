@@ -10,6 +10,8 @@
   Bloques implementados:
     A — Identifier inmutable: name ← personalNumber (strong)
     B — Datos derivados: fullName, emailAddress institucional (weak)
+         B-email-sanitize-numeric: strong, limpia emails numéricos legacy (fix 2026-06-06)
+         B-email-review-flag: normal, emailReviewNeeded=true cuando sin email real
     C — eppn (eduPersonPrincipalName): strong, identificador federado
     D — Auto-asignación R-Affiliation-* via assignmentTargetSearch
     D.3 — BR-Docente-TC (primaryAffiliation=faculty)
@@ -207,12 +209,31 @@ return (initial + lastname).take(8) + iterationToken
                 </script>
             </condition>
         </mapping>
-        <!-- B-email-review-flag: marca usuarios sin email de Entra ID para revisión manual.
-             Política 2026-06-06: MidPoint no inventa correos. Si emailAddress es null
-             (Entra ID no proveyó email), se setea upeu:emailReviewNeeded=true.
+        <!-- B-email-sanitize-numeric: STRONG sanitizador que borra emails numéricos existentes.
+             Problema: inbounds weak de Oracle retornan null para numéricos, pero weak+null
+             no limpia un valor ya persistido. Este mapping strong sí lo limpia en cada recompute.
+             Lógica: si emailAddress es numérico (local part solo dígitos) o no es @upeu.edu.pe
+             → retorna null → strong borra el valor existente.
+             Entra ID (inbound strong) ganará si hay shadow linked con email real.
+             Añadido 2026-06-06: fix para 38,310 emails numéricos legacy. -->
+        <mapping>
+            <name>B-email-sanitize-numeric</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>emailAddress</path>
+            </source>
+            <expression>
+                <script>
+                    <code>if (emailAddress == null) return null; def v = emailAddress.toString().trim().toLowerCase(); if (!v.contains('@')) return null; def local = v.substring(0, v.indexOf('@')); def domain = v.substring(v.indexOf('@')); if (domain != '@upeu.edu.pe') return null; return local ==~ /\d+/ ? null : v</code>
+                </script>
+            </expression>
+        </mapping>
+        <!-- B-email-review-flag: marca usuarios sin email real de Entra ID para revisión manual.
+             Política 2026-06-06: MidPoint no inventa correos. Si emailAddress es null o numérico
+             (Entra ID no proveyó email real), se setea upeu:emailReviewNeeded=true.
              strength=normal: se actualiza a false automáticamente cuando Entra ID entrega
-             el email real (normal es authoritative, weak no sobrescribiría false→true si
-             alguien lo setó manualmente). Se evalúa en cada recompute del foco.
+             el email real. Se evalúa en cada recompute del foco.
              IIA: derivado (no tiene fuente Oracle propia). -->
         <mapping>
             <name>B-email-review-flag</name>
@@ -223,7 +244,7 @@ return (initial + lastname).take(8) + iterationToken
             </source>
             <expression>
                 <script>
-                    <code>emailAddress == null || emailAddress.isEmpty()</code>
+                    <code>if (emailAddress == null || emailAddress.isEmpty()) return true; def v = emailAddress.toString().trim().toLowerCase(); if (!v.contains('@')) return true; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d+/</code>
                 </script>
             </expression>
             <target>
