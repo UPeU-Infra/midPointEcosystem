@@ -76,6 +76,21 @@
                         </xsd:annotation>
                     </xsd:element>
 
+                    <!-- L10b — RÉGIMEN DOCENTE LAMB (TC/TP/DE) -->
+                    <!-- IIA: MOISES.PERSONA_ACAD_REGIMEN.REGIMEN.
+                         Valores: TC (Tiempo Completo), TP (Tiempo Parcial), DE (Dedicación Exclusiva).
+                         Solo presente para ~509 docentes con entrada en PERSONA_ACAD_REGIMEN ESTADO='1'.
+                         NULL para staff y para docentes sin entrada en esa tabla (~7,600+).
+                         Informativo; no determina accesos. Inbound weak en trabajadores.xml. -->
+                    <xsd:element name="docenteRegimen" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Régimen docente (TC/TP/DE)</a:displayName>
+                            <a:help>Régimen de dedicación docente desde MOISES.PERSONA_ACAD_REGIMEN.REGIMEN. Vocabulario: TC=Tiempo Completo, TP=Tiempo Parcial, DE=Dedicación Exclusiva. Solo presente para ~509 docentes. IIA: MOISES.PERSONA_ACAD_REGIMEN (ESTADO=1, MAX por persona).</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>92</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
                     <!-- L10 — CATEGORÍA DOCENTE LAMB (específico UPeU) -->
                     <!-- IIA: ENOC.CAT_DOCENTE.ID_CATEGORIA_DOCENTE.
                          Valores numéricos internos del sistema docente LAMB (1-5).
