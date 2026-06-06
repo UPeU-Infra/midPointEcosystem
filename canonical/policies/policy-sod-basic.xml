@@ -1,18 +1,75 @@
-<objects xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
-  <policy oid="00000000-0000-0000-0000-000000pol-sod">
-    <name>UPeU Policy - SoD Payroll</name>
-    <policyRule>
-      <name>Segregación de Deberes Nómina</name>
-      <policyConstraints>
-        <exclusion>
-          <targetRef oid="00000000-0000-0000-0000-000000rol-prepaga" type="RoleType"/>
-          <conflictingTargetRef oid="00000000-0000-0000-0000-000000rol-aprueba" type="RoleType"/>
-        </exclusion>
-      </policyConstraints>
-      <policyActions>
-        <record>true</record>
-        <enforcement>enforce</enforcement>
-      </policyActions>
-    </policyRule>
-  </policy>
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SoD IGA Governance — UPeU
+  ISO 27001 A.8.2 / NIST SP 800-53 AC-5
+  Semančík cap. 8: PolicyType con policyRule en inducement.
+
+  Regla: GOV-APROBADOR-WORKITEMS (aprueba accesos) ⊥ GOV-REVISOR-CERTIFICACION (revisa accesos).
+  Quien otorga acceso no puede ser quien certifica que ese acceso es correcto — separa el ciclo
+  de otorgamiento del ciclo de revisión. Enforcement bidireccional via dos políticas simétricas.
+
+  Asignaciones:
+    policy-sod-aprobador-excluye-revisor → asignada en GOV-APROBADOR-WORKITEMS.xml
+    policy-sod-revisor-excluye-aprobador → asignada en GOV-REVISOR-CERTIFICACION.xml
+-->
+<objects xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+         xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3">
+
+    <!-- Política 1: asignada a GOV-APROBADOR-WORKITEMS.
+         Cuando un usuario tiene el rol Aprobador, se le prohíbe tener Revisor. -->
+    <policy oid="b1a2c3d4-e5f6-7890-abcd-ef0000000001">
+        <name>SoD-Aprobador-excluye-Revisor</name>
+        <description>SoD: portador de GOV-APROBADOR-WORKITEMS no puede tener GOV-REVISOR-CERTIFICACION. ISO 27001 A.8.2.</description>
+        <lifecycleState>active</lifecycleState>
+        <inducement>
+            <policyRule>
+                <name>sod-aprobador-excluye-revisor</name>
+                <documentation>
+                    Un aprobador de work items (quien decide si se otorga acceso) no puede
+                    simultáneamente ser el revisor de certificaciones (quien audita que los
+                    accesos otorgados son apropiados). Separa el ciclo de otorgamiento del
+                    ciclo de revisión. NIST SP 800-53 AC-5 / ISO 27001 A.8.2.
+                </documentation>
+                <policyConstraints>
+                    <exclusion>
+                        <name>excluye-revisor-certificacion</name>
+                        <!-- GOV-REVISOR-CERTIFICACION OID: 00000000-0000-0000-0000-00000000000b -->
+                        <targetRef oid="00000000-0000-0000-0000-00000000000b" type="RoleType"/>
+                    </exclusion>
+                </policyConstraints>
+                <policyActions>
+                    <enforcement/>
+                </policyActions>
+            </policyRule>
+        </inducement>
+    </policy>
+
+    <!-- Política 2: asignada a GOV-REVISOR-CERTIFICACION.
+         Cuando un usuario tiene el rol Revisor, se le prohíbe tener Aprobador. -->
+    <policy oid="b1a2c3d4-e5f6-7890-abcd-ef0000000002">
+        <name>SoD-Revisor-excluye-Aprobador</name>
+        <description>SoD: portador de GOV-REVISOR-CERTIFICACION no puede tener GOV-APROBADOR-WORKITEMS. ISO 27001 A.8.2.</description>
+        <lifecycleState>active</lifecycleState>
+        <inducement>
+            <policyRule>
+                <name>sod-revisor-excluye-aprobador</name>
+                <documentation>
+                    Un revisor de certificaciones no puede simultáneamente aprobar work items.
+                    Enforcement bidireccional complementario a SoD-Aprobador-excluye-Revisor.
+                    NIST SP 800-53 AC-5 / ISO 27001 A.8.2.
+                </documentation>
+                <policyConstraints>
+                    <exclusion>
+                        <name>excluye-aprobador-workitems</name>
+                        <!-- GOV-APROBADOR-WORKITEMS OID: 00000000-0000-0000-0000-00000000000a -->
+                        <targetRef oid="00000000-0000-0000-0000-00000000000a" type="RoleType"/>
+                    </exclusion>
+                </policyConstraints>
+                <policyActions>
+                    <enforcement/>
+                </policyActions>
+            </policyRule>
+        </inducement>
+    </policy>
+
 </objects>

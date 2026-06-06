@@ -6,6 +6,10 @@
         <identifier>archetype</identifier>
         <targetRef oid="00000000-0000-0000-0000-000000000320" relation="org:default" type="c:ArchetypeType"/>
     </assignment>
+    <!-- SoD: no puede coexistir con GOV-APROBADOR-WORKITEMS (ISO 27001 A.8.2) -->
+    <assignment>
+        <targetRef oid="b1a2c3d4-e5f6-7890-abcd-ef0000000002" type="PolicyType"/>
+    </assignment>
     <displayName>Reviewer</displayName>
     <identifier>gov.reviewer</identifier>
     <authorization>

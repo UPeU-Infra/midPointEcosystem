@@ -368,17 +368,22 @@ return null // weak: no sobrescribe studentCycle — solo side-effect de log</co
         </condition>
     </mapping>
 
-    <!-- D.3 — Auto-asignación BR-Docente-TC para docentes activos
-         Solo actúa cuando primaryAffiliation == faculty.
-         Nota: diferenciación TC/TP pendiente de datos LAMB (employeeCategory).
-         Migrado desde UserTemplate-Employee-Faculty (upeu3: → sciback:). -->
+    <!-- D.3-fallback — BR-Docente-TC para faculty cuando LAMB no discrimina TC/TP
+         Cubre el estado actual: todos los docentes tienen employeeCategory=3 (valor sin
+         discriminar). Mientras LAMB no provea valores 'TC'/'TP' reales, este mapping
+         asegura que los 1,959 faculty mantengan BR-Docente-TC sin interrupción.
+         DESACTIVAR (lifecycleState=deprecated) cuando D.3-tc y D.3-tp estén funcionando
+         con datos reales de LAMB. Ver docs/MIGRATION-DECISIONS-PENDING.md. -->
     <mapping>
-        <name>D-autoassign-br-docente-tc</name>
-        <description>Auto-asigna BR-Docente-TC a usuarios con primaryAffiliation=faculty (eduPerson 202208). Diferenciación TC/TP pendiente de Fase 5 LAMB inbound. Opción A: lógica en base template.</description>
+        <name>D-autoassign-br-docente-tc-fallback</name>
+        <description>Fallback TC: asigna BR-Docente-TC a faculty cuando employeeCategory no es 'TC' ni 'TP'. Cubre transitorio LAMB (todos cat=3). Mutuamente excluyente con D.3-tc/D.3-tp por condición complementaria. Deprecar cuando LAMB discrimine.</description>
         <lifecycleState>active</lifecycleState>
         <strength>strong</strength>
         <source>
             <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <source>
+            <path>extension/sciback:employeeCategory</path>
         </source>
         <expression>
             <assignmentTargetSearch>
@@ -397,7 +402,92 @@ return null // weak: no sobrescribe studentCycle — solo side-effect de log</co
         </target>
         <condition>
             <script>
-                <code>primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim().toLowerCase() == 'faculty'</code>
+                <code><![CDATA[
+def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''
+def cat = employeeCategory != null ? basic.stringify(employeeCategory).trim().toUpperCase() : ''
+affil == 'faculty' && cat != 'TC' && cat != 'TP'
+                ]]></code>
+            </script>
+        </condition>
+    </mapping>
+
+    <!-- D.3-tc — BR-Docente-TC para faculty Tiempo Completo
+         Activo cuando LAMB provea employeeCategory='TC'. Actualmente nunca dispara
+         (todos cat=3). Listo para cuando el inbound lo distinga.
+         Mutuamente excluyente con D.3-tp y D.3-fallback por condición. -->
+    <mapping>
+        <name>D-autoassign-br-docente-tc</name>
+        <description>Auto-asigna BR-Docente-TC a faculty con employeeCategory=TC (NIST RBAC §2.1). Mutuamente excluyente con D.3-tp por condición. Activará solo cuando LAMB provea 'TC' en sciback:employeeCategory.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <source>
+            <path>extension/sciback:employeeCategory</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>RoleType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <q:value>BR-Docente-TC</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code><![CDATA[
+def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''
+def cat = employeeCategory != null ? basic.stringify(employeeCategory).trim().toUpperCase() : ''
+affil == 'faculty' && cat == 'TC'
+                ]]></code>
+            </script>
+        </condition>
+    </mapping>
+
+    <!-- D.3-tp — BR-Docente-TP para faculty Tiempo Parcial
+         Activo cuando LAMB provea employeeCategory='TP'. Actualmente nunca dispara.
+         Mutuamente excluyente con D.3-tc y D.3-fallback por condición. -->
+    <mapping>
+        <name>D-autoassign-br-docente-tp</name>
+        <description>Auto-asigna BR-Docente-TP a faculty con employeeCategory=TP (NIST RBAC §2.1). Mutuamente excluyente con D.3-tc por condición. Activará solo cuando LAMB provea 'TP' en sciback:employeeCategory.</description>
+        <lifecycleState>active</lifecycleState>
+        <strength>strong</strength>
+        <source>
+            <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <source>
+            <path>extension/sciback:employeeCategory</path>
+        </source>
+        <expression>
+            <assignmentTargetSearch>
+                <targetType>RoleType</targetType>
+                <filter>
+                    <q:equal>
+                        <q:path>name</q:path>
+                        <q:value>BR-Docente-TP</q:value>
+                    </q:equal>
+                </filter>
+                <createOnDemand>false</createOnDemand>
+            </assignmentTargetSearch>
+        </expression>
+        <target>
+            <path>assignment</path>
+        </target>
+        <condition>
+            <script>
+                <code><![CDATA[
+def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''
+def cat = employeeCategory != null ? basic.stringify(employeeCategory).trim().toUpperCase() : ''
+affil == 'faculty' && cat == 'TP'
+                ]]></code>
             </script>
         </condition>
     </mapping>
