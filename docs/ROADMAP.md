@@ -85,7 +85,7 @@ Los 4 templates per-archetype (alumni, student, faculty, staff) existen en PROD 
 | Fase 4 — OpenLDAP HA | ✅ **COMPLETA** | N-Way mirrormode Node 1 (168) + Node 2 (169) ✅; replicación bidireccional verificada; ulimits 65536 ambos nodos ✅; cn=midpoint password sincronizado ✅; MidPoint cfg:servers failover activo ✅; phpldapadmin en ambos nodos ✅; resource test SUCCESS 2026-05-20 |
 | Fase 5 — Resources READ | ✅ **ACTIVA** | Oracle LAMB ×4 + Koha + Entra ID activos; todos con lifecycleState `active` |
 | Fase 6 — Resources WRITE → OpenLDAP | ✅ **VALIDADO** | 37.491 sombras LDAP ✅; Keycloak User Federation activa (P7 ✅); Keycloak lee de OpenLDAP correctamente |
-| Fase 7 — RBAC | ⚠️ **PARCIAL** | 39 roles activos (AR + BR + affiliation); MOF-*/GOV-*/SYS ahora versionados en repo (commit `19590be`) — lifecycle null pendiente |
+| Fase 7 — RBAC | ✅ **COMPLETA** 2026-06-06 | 4 ARs versionados, 26 lifecycleState corregidos, D.3 split TC/TP/fallback, SoD GOV bidireccional (ISO 27001 A.8.2), role mining LAMB documentado — commits `43e1981`+`394fa73` |
 | Fase 8 — Replanteo docs | ❌ **NO INICIADA** | — |
 | Fase 9 — Validación piloto | ⚠️ **PILOTO PARCIAL** | Tasks: `PILOT-EntraID-UPeU-link-100`, pilots usuario `75824658`; flujo completo no documentado |
 | Fase 10 — Deploy PROD | ✅ **PROD OPERATIVO** | 35.450 usuarios en produccion |
@@ -296,10 +296,14 @@ Fase 6 — Resources write controlled (3-4 dias)  ✅ VALIDADO 2026-05-20
    37.491 sombras LDAP en PROD
    Keycloak User Federation activa contra OpenLDAP (P7)
 
-Fase 7 — RBAC bottom-up (1 semana)             PARCIAL
-   38 roles en repo (6 affiliation + 20 app + 12 business)
-   72 roles en PROD (~25 MOF + 3 GOV sin versionar)
-   Role mining LAMB_ROL: NO hecho
+Fase 7 — RBAC bottom-up (1 semana)             ✅ COMPLETA 2026-06-06
+   4 ARs faltantes versionados (DSpace-Editor, OJS-Author/Reader/Reviewer)
+   26 roles NULL lifecycleState → active (25 MOF + 1 LDAP + 3 GOV)
+   D.3 split TC/TP/fallback en UserTemplate-Person-Base
+   SoD GOV-APROBADOR ⊥ GOV-REVISOR (ISO 27001 A.8.2 / NIST AC-5)
+   Role mining LAMB: 606 roles en UPeU, 100,042 personas — doc ROLE-MINING-LAMB-2026-06-06.md
+   TC/TP real: MOISES.PERSONA_ACAD_REGIMEN (TC=175, TP=247, DE=87) — ticket DU-010 para Fase 8
+   LAMB como resource write: Fase 8 (prerequisito para ARs operacionales)
 
 Fase 8 — Replanteo de documentos (3 dias)       NO INICIADA
 Fase 9 — Validacion end-to-end con piloto        NO INICIADA
