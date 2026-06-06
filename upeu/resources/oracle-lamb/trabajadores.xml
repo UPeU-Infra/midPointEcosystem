@@ -432,10 +432,13 @@ return num</code>
                 <ref>ri:CORREO_INST</ref>
                 <inbound>
                     <name>correo-inst-to-emailAddress</name>
-                    <strength>strong</strength>
+                    <!-- WEAK (2026-06-06): Entra ID es fuente de verdad STRONG para email.
+                         Oracle LAMB queda como fallback weak — aplica solo si Entra ID no proveyó
+                         un email real (@upeu.edu.pe no-numérico). Guard: descarta numéricos y nulos. -->
+                    <strength>weak</strength>
                     <expression>
                         <script>
-                            <code>def v = (input ?: '').toString().trim().toLowerCase(); v ?: null</code>
+                            <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d+/ ? null : v</code>
                         </script>
                     </expression>
                     <target><path>emailAddress</path></target>

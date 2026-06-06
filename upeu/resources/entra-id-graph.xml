@@ -112,15 +112,15 @@
                     </target>
                 </inbound>
                 <!-- UPN completo como emailAddress institucional.
-                     GUARD (2026-06-03): igual que ri:mail. El UPN de Entra puede ser
-                     formato fantasma DNI@upeu; sin guard competía con el correo real de
-                     Oracle (abigail.aguilar@upeu vs 71428768@upeu) → "2 values single-valued".
-                     Solo acepta nombre@upeu.edu.pe REAL; descarta DNI@ y no-upeu. -->
+                     STRONG (2026-06-06): Entra ID es fuente de verdad fuerte para email.
+                     GUARD: descarta UPNs solo-numéricos (DNI o código) de cualquier longitud
+                     (\d+ en lugar de \d{8}) y dominios fuera de @upeu.edu.pe.
+                     Si Entra no tiene email real → emailAddress queda null → emailReviewNeeded=true. -->
                 <inbound>
-                    <strength>weak</strength>
+                    <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d{8}/ ? null : v</code>
+                            <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d+/ ? null : v</code>
                         </script>
                     </expression>
                     <target>
@@ -168,16 +168,14 @@
             <attribute>
                 <ref>ri:mail</ref>
                 <inbound>
-                    <strength>weak</strength>
-                    <!-- GUARD anti-contaminación (2026-06-03): Entra NO es IIA de email
-                         institucional (Oracle LAMB lo es). El mail de Entra puede contener
-                         correos personales (gmail) o fantasma (DNI@upeu) mal cargados. Sin
-                         guard, este weak inyectaba gmails a emailAddress para estudiantes
-                         sin email en Oracle. Solo aceptar nombre@upeu.edu.pe REAL como
-                         último recurso; descartar gmail/personales y formato fantasma DNI@. -->
+                    <strength>strong</strength>
+                    <!-- STRONG (2026-06-06): Entra ID es fuente de verdad fuerte para email.
+                         GUARD: descarta correos no-upeu (gmail, etc.) y UPNs solo-numéricos
+                         de cualquier longitud. ri:mail es el campo canónico de M365;
+                         si está vacío o es fantasma → emailAddress NULL → emailReviewNeeded=true. -->
                     <expression>
                         <script>
-                            <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d{8}/ ? null : v</code>
+                            <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d+/ ? null : v</code>
                         </script>
                     </expression>
                     <target>
