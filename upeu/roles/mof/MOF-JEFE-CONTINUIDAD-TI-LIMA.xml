@@ -1,5 +1,6 @@
 <role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="65daa73f-3ca3-47f4-a3dd-cc212cfb55c9">
     <name>MOF-JEFE-CONTINUIDAD-TI-LIMA</name>
+    <lifecycleState>active</lifecycleState>
     <description>Asegura la continuidad operativa de los servicios tecnológicos de la UPeU en el campus Lima. Responsable de monitoreo, gestión de incidentes críticos, aseguramiento de disponibilidad y seguimiento de SLA internos.</description>
     <assignment>
         <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="c:ArchetypeType"/>

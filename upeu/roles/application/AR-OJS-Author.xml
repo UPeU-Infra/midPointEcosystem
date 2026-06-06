@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="6a4f504d-66d9-4d8e-bc3f-696cc2371c1d">
+    <name>AR-OJS-Author</name>
+    <description>Application Role: autor en OJS (Open Journal Systems). Construction outbound pendiente (Fase 5 OJS resource).</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application Role -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+</role>

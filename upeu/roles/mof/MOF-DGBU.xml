@@ -1,5 +1,6 @@
 <role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="dcf0aa24-2a9e-444d-821f-d56304c95031">
     <name>MOF-DGBU</name>
+    <lifecycleState>active</lifecycleState>
     <description>Responsable de la formación espiritual, desarrollo integral y bienestar estudiantil. Supervisa ministerio estudiantil, tutoría, vida universitaria y acción misionera.</description>
     <assignment>
         <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="c:ArchetypeType"/>

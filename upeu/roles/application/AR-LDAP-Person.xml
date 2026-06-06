@@ -2,6 +2,7 @@
       xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
       oid="7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d">
     <name>AR-LDAP-Person</name>
+    <lifecycleState>active</lifecycleState>
     <description>Application Role que provee cuenta LDAP en OpenLDAP (Identity Cache UPeU). Asignado vía inducement desde BR-* para todos los usuarios activos. Solo se crea shadow cuando lifecycleState=active.</description>
     <assignment>
         <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>

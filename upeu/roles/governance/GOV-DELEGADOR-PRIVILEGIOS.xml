@@ -1,5 +1,6 @@
 <role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="00000000-0000-0000-0000-00000000000c">
     <name>GOV-DELEGADOR-PRIVILEGIOS</name>
+    <lifecycleState>active</lifecycleState>
     <description>Role authorizing users to delegate their own privileges to any other user.</description>
     <assignment>
         <identifier>archetype</identifier>

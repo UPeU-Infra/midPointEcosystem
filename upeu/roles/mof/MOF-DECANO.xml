@@ -1,5 +1,6 @@
 <role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="552441cc-c092-4a6b-a6d6-54a7f99edfce">
     <name>MOF-DECANO</name>
+    <lifecycleState>active</lifecycleState>
     <description>Máxima autoridad académica de la facultad. Responsable del desarrollo curricular, investigación, planificación académica y supervisión de escuelas profesionales.</description>
     <documentation>Debe ser docente ordinario y misionero acreditado según política institucional.</documentation>
     <assignment>

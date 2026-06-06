@@ -1,5 +1,6 @@
 <role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="43cd1270-48ea-481d-8ab9-093ba1531228">
     <name>MOF-VRADM</name>
+    <lifecycleState>active</lifecycleState>
     <description>Dirige la gestión administrativa, financiera, operativa y de soporte institucional. Supervisa talento humano, finanzas, infraestructura, operaciones y marketing.</description>
     <assignment>
         <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="c:ArchetypeType"/>

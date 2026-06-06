@@ -1,5 +1,6 @@
 <role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="55f6d973-76ec-4237-9ad0-1250b084e869">
     <name>MOF-RESP-REPOSITORIO-CRAI</name>
+    <lifecycleState>active</lifecycleState>
     <description>Administra el repositorio institucional (DSpace). Gestiona la carga de tesis, metadatos, preservación digital y atención a usuarios académicos. Garantiza la integridad y disponibilidad de los contenidos.</description>
     <assignment>
         <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="c:ArchetypeType"/>

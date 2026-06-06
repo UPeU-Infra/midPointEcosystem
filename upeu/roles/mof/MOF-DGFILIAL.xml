@@ -1,5 +1,6 @@
 <role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="2323458b-06d6-44fd-8a9c-c034df430172">
     <name>MOF-DGFILIAL</name>
+    <lifecycleState>active</lifecycleState>
     <description>Autoridad máxima en la filial. Gestiona operaciones, académico y bienestar.</description>
     <assignment>
         <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="c:ArchetypeType"/>

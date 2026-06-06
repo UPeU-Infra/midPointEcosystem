@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="187ecca5-1144-4e8a-aecc-b316ac6c88ad">
+    <name>AR-OJS-Reader</name>
+    <description>Application Role: lector/revisor anónimo OJS. Construction outbound pendiente (Fase 5 OJS resource).</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application Role -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+</role>

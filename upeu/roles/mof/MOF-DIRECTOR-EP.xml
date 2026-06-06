@@ -1,5 +1,6 @@
 <role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="c01aba08-3bc8-4263-9e7c-89fa81c1dbea">
     <name>MOF-DIRECTOR-EP</name>
+    <lifecycleState>active</lifecycleState>
     <description>Dirige la gestión académica-operativa de una Escuela Profesional. Supervisa estudiantes, docentes, carga lectiva, prácticas, horarios y procesos formativos.</description>
     <assignment>
         <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="c:ArchetypeType"/>

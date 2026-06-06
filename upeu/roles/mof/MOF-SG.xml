@@ -1,5 +1,6 @@
 <role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="24964ba0-f195-424b-9565-da8403827bfa">
     <name>MOF-SG</name>
+    <lifecycleState>active</lifecycleState>
     <description>Responsable de los procesos normativos, acuerdos institucionales, actas, archivo central y soporte jurídico-administrativo del gobierno universitario.</description>
     <assignment>
         <targetRef oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b" relation="org:default" type="c:ArchetypeType"/>

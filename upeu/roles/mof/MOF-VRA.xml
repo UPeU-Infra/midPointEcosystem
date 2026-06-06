@@ -1,5 +1,6 @@
 <role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="790d4b9c-e063-454a-97fc-b9935965d7af">
     <name>MOF-VRA</name>
+    <lifecycleState>active</lifecycleState>
     <description>Autoridad responsable de la gestión académica institucional: políticas docentes, currículo, investigación, calidad educativa y supervisión de facultades.</description>
     <documentation>Debe ser Docente Ordinario Principal.</documentation>
     <assignment>
