@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: recompute-clean-emails-r8
+  OID: b9e11010-f001-4abc-9def-202406060010
+
+  Fix crítico: B-email-sanitize-numeric tenía <source> pero NO <target>.
+  Sin <target>, el null STRONG se descartaba silenciosamente → los 21,223
+  emails numéricos nunca se limpiaron en r4/r5/r6/r7.
+  Añadido <target><path>emailAddress</path></target> (commit feec4e1).
+
+  Ahora el flujo es correcto:
+    condition=true (numeric@upeu) → expression=null → target=emailAddress
+    → STRONG null → MidPoint borra el valor existente
+
+  OID determinista: b9e11010-f001-4abc-9def-202406060010
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="b9e11010-f001-4abc-9def-202406060010">
+
+    <name>recompute-clean-emails-r8-20260606</name>
+    <description>
+        R8: fix crítico — B-email-sanitize-numeric ahora tiene target correcto.
+        Debería limpiar los 21,223 emails numéricos restantes.
+    </description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>runnable</executionState>
+
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>lifecycleState</q:path>
+                                <q:value>active</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </objects>
+                <executionOptions>
+                    <reconcile>true</reconcile>
+                </executionOptions>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
+    </activity>
+
+</task>
