@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
-      oid="b9e22001-f001-4abc-9def-202406070001">
-    <name>recompute-set-email-review-flag-20260607</name>
+      oid="b9e22001-f001-4abc-9def-202406070003">
+    <name>recompute-set-email-review-flag-r3-20260607</name>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
     <executionState>runnable</executionState>
     <activity>
@@ -12,22 +12,16 @@
                     <type>UserType</type>
                     <query>
                         <q:filter>
-                            <q:and>
-                                <q:equal>
-                                    <q:path>lifecycleState</q:path>
-                                    <q:value>active</q:value>
-                                </q:equal>
-                                <!-- "emailAddress no existe / es null"
-                                     Idiom MidPoint: NOT(equal sin value).
-                                     q:exists falla en escalares (espera container).
-                                     q:value/ vacío matchea string vacío, no NULL.
-                                     NOT(equal-sin-value) → matchea NULL en SqaleRepo. -->
-                                <q:not>
-                                    <q:equal>
-                                        <q:path>emailAddress</q:path>
-                                    </q:equal>
-                                </q:not>
-                            </q:and>
+                            <!-- Scope: solo activos. NO se filtra por emailAddress null porque
+                                 q:equal sin value (IS NULL) da HTTP 400 en 4.10 REST API.
+                                 El mapping B-email-review-flag maneja la lógica:
+                                   emailAddress==null → TRUE  (setea flag)
+                                   emailAddress!=null → null  (no toca, preserva)
+                                 Con strength=normal, null output no sobreescribe existing true. -->
+                            <q:equal>
+                                <q:path>lifecycleState</q:path>
+                                <q:value>active</q:value>
+                            </q:equal>
                         </q:filter>
                     </query>
                 </objects>
