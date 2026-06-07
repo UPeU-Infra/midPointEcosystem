@@ -17,10 +17,15 @@
                                     <q:path>lifecycleState</q:path>
                                     <q:value>active</q:value>
                                 </q:equal>
+                                <!-- "emailAddress no existe / es null"
+                                     Idiom MidPoint: NOT(equal sin value).
+                                     q:exists falla en escalares (espera container).
+                                     q:value/ vacío matchea string vacío, no NULL.
+                                     NOT(equal-sin-value) → matchea NULL en SqaleRepo. -->
                                 <q:not>
-                                    <q:exists>
+                                    <q:equal>
                                         <q:path>emailAddress</q:path>
-                                    </q:exists>
+                                    </q:equal>
                                 </q:not>
                             </q:and>
                         </q:filter>
