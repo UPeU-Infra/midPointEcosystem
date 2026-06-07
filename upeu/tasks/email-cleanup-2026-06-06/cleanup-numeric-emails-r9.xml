@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: cleanup-numeric-emails-r9
+  OID: b9e11009-f001-4abc-9def-202406070009
+
+  Diagnóstico previo:
+    - r1-r7: mapping B-email-sanitize-numeric carecía de <target> → null STRONG
+      descartado silenciosamente. Los 21,223 emails numéricos no se limpiaron.
+    - cleanup-numeric-emails.xml (b9e11002): 54,445 failures. Causa raíz:
+      usó `object` en el script pero la variable en iterativeScripting es `input`.
+      Además `midpoint.modifyObject()` y `midpoint.recompute()` no existen en 4.10.
+    - r8 (b9e11010): recomputation con reconcile=true → cuelga/falla por bug
+      Entra ID CreateCapability en clockwork (mismo bug bloqueante que photo-recovery).
+
+  Solución (patrón photo-recovery validado):
+    - iterativeScripting con `def user = input` (variable correcta)
+    - delta via midpoint.prismContext.deltaFor(UserType.class).item(F_EMAIL_ADDRESS).replace()
+    - ModelExecuteOptions.raw() → escribe directo al repo, NO toca Entra/LDAP/Koha
+    - Filtro en el script: actúa SOLO si email ~ ^\d+@upeu\.edu\.pe$ (idempotente)
+
+  Por qué raw() es correcto aquí:
+    - emailAddress numérico es un dato de baja calidad generado por un mapping
+      defectuoso (fallback from name). Borrar directo al repo es equivalente
+      a lo que haría el template con STRONG null.
+    - El emailAddress real proviene de Entra ID inbound (mapping STRONG en
+      resource). La próxima sync/recon de Entra lo restaurará con el valor real
+      si existe. Si no existe, queda NULL (correcto).
+    - emailReviewNeeded=true será seteado por el mapping B-email-review-flag
+      del template en la próxima ejecución normal del clockwork (inbound sync).
+
+  Scope: active con emailAddress que matchee ^\d+@upeu\.edu\.pe$
+    El filtro API no soporta regex → filtrar en Groovy. Scope del query:
+    lifecycleState=active (reduce a ~41K vs 49K totales).
+
+  Canary: validar con un usuario conocido antes de ejecutar el masivo.
+    Sugerencia: importar con el filter <q:inOid> apuntando a un OID con email
+    numérico verificado, luego cambiar al query masivo.
+
+  executionState=suspended: SIEMPRE importar suspendida. Activar manualmente.
+
+  OID determinista: b9e11009-f001-4abc-9def-202406070009
+  Creado: 2026-06-07
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      oid="b9e11009-f001-4abc-9def-202406070009">
+
+    <name>cleanup-numeric-emails-r9-20260607</name>
+    <description>
+        R9: fix definitivo — iterativeScripting raw (sin clockwork), patrón photo-recovery.
+        Variable correcta `input` (no `object`). DELETE emailAddress numérico directo
+        al repo via ModelExecuteOptions.raw() — no toca Entra/LDAP/Koha.
+        Scope: 21,222 emails numéricos activos (DB count 2026-06-07).
+    </description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+
+    <executionState>suspended</executionState>
+    <schedule>
+        <recurrence>single</recurrence>
+        <misfireAction>executeImmediately</misfireAction>
+    </schedule>
+
+    <activity>
+        <work>
+            <iterativeScripting>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <!-- Acota a active (~41K). El filtro por email numérico
+                             se hace en Groovy (API no soporta regex filter). -->
+                        <q:filter>
+                            <q:equal>
+                                <q:path>lifecycleState</q:path>
+                                <q:value>active</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </objects>
+                <scriptExecutionRequest>
+                    <s:execute>
+                        <s:script xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
+                            <c:code><![CDATA[
+import com.evolveum.midpoint.xml.ns._public.common.common_3.UserType;
+
+// Variable correcta en iterativeScripting: `input` (no `object`)
+def user = input;
+def uoid = user.getOid();
+def uname = user.getName()?.getOrig();
+
+// Filtro: actuar solo si emailAddress ~ ^\d+@upeu\.edu\.pe$
+def email = user.getEmailAddress();
+if (email == null || email.trim().isEmpty()) return;
+def emailStr = email.toString().trim();
+if (!emailStr.matches('^\\d+@upeu\\.edu\\.pe$')) return;
+
+// DELETE emailAddress directo al repo (raw — sin clockwork, sin proyección Entra/LDAP/Koha)
+// Patrón idéntico al task photo-recovery (validado en PROD).
+try {
+    def delta = midpoint.prismContext.deltaFor(UserType.class)
+        .item(UserType.F_EMAIL_ADDRESS).replace()
+        .asObjectDelta(uoid);
+    def meoClass = Class.forName('com.evolveum.midpoint.model.api.ModelExecuteOptions');
+    def opts = meoClass.getMethod('create').invoke(null);
+    opts = opts.getClass().getMethod('raw').invoke(opts);
+    midpoint.executeChanges([delta] as java.util.Collection, opts);
+    log.info('EMAIL-CLEANUP r9 OK: {} ({}) <- was {}', uname, uoid, emailStr);
+} catch (Exception e) {
+    log.warn('EMAIL-CLEANUP r9 ERROR: {} ({}): {}', uname, uoid, e.message);
+}
+                            ]]></c:code>
+                        </s:script>
+                    </s:execute>
+                </scriptExecutionRequest>
+            </iterativeScripting>
+        </work>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
+    </activity>
+
+</task>
