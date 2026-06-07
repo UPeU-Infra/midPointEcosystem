@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: cleanup-numeric-emails-r11
+  OID: b9e11011-f001-4abc-9def-202406071011
+
+  Diagnóstico previo completo:
+    - b9e11002 (cleanup original): variable `object` no existe → 54,445 failures
+    - r8 recomputation: reconcile=true cuelga por bug Entra ID CreateCapability
+    - r9: variable `input` correcta, pero .replace() sin argumento era no-op en raw()
+    - r10: replaceRealValues(emptyList()) correcto, pero el CDATA multilínea se
+      normaliza a una sola línea por MidPoint al deserializar el task →
+      `import UserType def user = input` inválido en Groovy (syntax error)
+    - r11 canary PASS (1/1 success, email borrado en DB, log OK):
+      Script en una sola línea con `;` como separadores. CDATA de una línea
+      sobrevive la normalización de MidPoint. Canary: 7e21d884 (201440023).
+
+  Mecanismo validado (r11):
+    - iterativeScripting, variable `input`
+    - filtro Groovy: emailStr.matches('^\\d+@upeu\\.edu\\.pe$')
+    - delta: .replaceRealValues(java.util.Collections.emptyList())
+    - ModelExecuteOptions.raw() via reflection
+    - Script en UNA sola línea (CDATA inline) — CRÍTICO para sobrevivir normalización
+
+  executionState=suspended: importar suspendido. Verificar canary antes de activar.
+
+  OID determinista: b9e11011-f001-4abc-9def-202406071011
+  Creado: 2026-06-07
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
+      oid="b9e11011-f001-4abc-9def-202406071011">
+
+    <name>cleanup-numeric-emails-r11-20260607</name>
+    <description>
+        R11: fix definitivo — script en una línea (CDATA inline), replaceRealValues(emptyList()), raw().
+        Canary PASS: 7e21d884 (201440023 / 201440023@upeu.edu.pe) borrado exitosamente.
+        Scope: ~21,214 emails numéricos activos restantes.
+    </description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+
+    <executionState>suspended</executionState>
+    <schedule>
+        <recurrence>single</recurrence>
+        <misfireAction>executeImmediately</misfireAction>
+    </schedule>
+
+    <activity>
+        <work>
+            <iterativeScripting>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>lifecycleState</q:path>
+                                <q:value>active</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </objects>
+                <scriptExecutionRequest>
+                    <s:execute>
+                        <s:script xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
+                            <c:code><![CDATA[import com.evolveum.midpoint.xml.ns._public.common.common_3.UserType; def user = input; def uoid = user.getOid(); def uname = user.getName()?.getOrig(); def email = user.getEmailAddress(); if (email == null || email.toString().trim().isEmpty()) { return; }; def emailStr = email.toString().trim(); if (!emailStr.matches('^\\d+@upeu\\.edu\\.pe$')) { return; }; try { def delta = midpoint.prismContext.deltaFor(UserType.class).item(UserType.F_EMAIL_ADDRESS).replaceRealValues(java.util.Collections.emptyList()).asObjectDelta(uoid); def meoClass = Class.forName('com.evolveum.midpoint.model.api.ModelExecuteOptions'); def opts = meoClass.getMethod('create').invoke(null); opts = opts.getClass().getMethod('raw').invoke(opts); midpoint.executeChanges([delta] as java.util.Collection, opts); log.warn('EMAIL-r11 OK: {} ({}) was {}', uname, uoid, emailStr); } catch (Exception e) { log.warn('EMAIL-r11 ERR: {} ({}): {}', uname, uoid, e.message); }]]></c:code>
+                        </s:script>
+                    </s:execute>
+                </scriptExecutionRequest>
+            </iterativeScripting>
+        </work>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
+    </activity>
+
+</task>
