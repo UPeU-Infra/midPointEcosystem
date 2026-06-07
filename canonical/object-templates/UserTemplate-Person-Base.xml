@@ -213,6 +213,9 @@
                     <code>null</code>
                 </script>
             </expression>
+            <target>
+                <path>emailAddress</path>
+            </target>
             <condition>
                 <script>
                     <code>def v = emailAddress != null ? emailAddress.toString().trim().toLowerCase() : null; if (v == null || !v.contains('@')) return false; def local = v.substring(0, v.indexOf('@')); def domain = v.substring(v.indexOf('@')); return domain == '@upeu.edu.pe' &amp;&amp; local ==~ /\d+/</code>
