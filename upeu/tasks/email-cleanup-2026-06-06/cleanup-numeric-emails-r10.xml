@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: cleanup-numeric-emails-r10
+  OID: b9e11010-f001-4abc-9def-202406071010
+
+  Diagnóstico r9:
+    - El script Groovy compiló y ejecutó sin errores (54,404 success).
+    - PERO el conteo de emails numéricos en DB no bajó (21,222 → 21,219 solo -3 del canary previo).
+    - Causa raíz: `.item(F_EMAIL_ADDRESS).replace().asObjectDelta()` con raw() NO borra
+      el valor existente — un replace sin valores en PropertyDelta se descarta silenciosamente
+      (equivale a "replace con lista vacía" pero la API de deltaFor().replace() sin argumento
+      genera un replace vacío que raw() almacena como no-op).
+    - Fix: usar `.replaceRealValues(java.util.Collections.emptyList())` que genera
+      un PropertyDelta REPLACE con lista explícitamente vacía → borra el valor en DB.
+
+  Canary validado: test manual con OID a95c2bfd (9910012 / 40950781@upeu.edu.pe):
+    PATCH REST replace vacío → emailAddress=null en DB ✓ (HTTP 204)
+
+  r10 usa el mismo patrón photo-recovery pero con emptyList() para borrar:
+    .item(F_EMAIL_ADDRESS).replaceRealValues(java.util.Collections.emptyList())
+
+  executionState=suspended: importar suspendido. Canary inOid primero.
+
+  OID determinista: b9e11010-f001-4abc-9def-202406071010
+  Creado: 2026-06-07
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      oid="b9e11010-f001-4abc-9def-202406071010">
+
+    <name>cleanup-numeric-emails-r10-20260607</name>
+    <description>
+        R10: fix delta — replaceRealValues(emptyList()) para borrar emailAddress numérico.
+        R9 usaba .replace() sin argumento que era no-op en raw(). Este usa emptyList() explícito.
+        Patrón: photo-recovery con emptyList() en lugar de singletonList(bytes).
+        Scope: ~21,218 emails numéricos activos restantes (post r9 + canary manual).
+    </description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+
+    <executionState>suspended</executionState>
+    <schedule>
+        <recurrence>single</recurrence>
+        <misfireAction>executeImmediately</misfireAction>
+    </schedule>
+
+    <activity>
+        <work>
+            <iterativeScripting>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>lifecycleState</q:path>
+                                <q:value>active</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </objects>
+                <scriptExecutionRequest>
+                    <s:execute>
+                        <s:script xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
+                            <c:code><![CDATA[
+import com.evolveum.midpoint.xml.ns._public.common.common_3.UserType;
+
+def user = input;
+def uoid = user.getOid();
+def uname = user.getName()?.getOrig();
+
+// Filtro: actuar solo si emailAddress ~ ^\d+@upeu\.edu\.pe$
+def email = user.getEmailAddress();
+if (email == null || email.trim().isEmpty()) return;
+def emailStr = email.toString().trim();
+if (!emailStr.matches('^\\d+@upeu\\.edu\\.pe$')) return;
+
+// DELETE emailAddress: replaceRealValues(emptyList()) genera un REPLACE vacío
+// que sí borra el valor en DB (a diferencia de .replace() sin argumento que es no-op).
+// raw() — sin clockwork, sin proyección Entra/LDAP/Koha.
+try {
+    def delta = midpoint.prismContext.deltaFor(UserType.class)
+        .item(UserType.F_EMAIL_ADDRESS).replaceRealValues(java.util.Collections.emptyList())
+        .asObjectDelta(uoid);
+    def meoClass = Class.forName('com.evolveum.midpoint.model.api.ModelExecuteOptions');
+    def opts = meoClass.getMethod('create').invoke(null);
+    opts = opts.getClass().getMethod('raw').invoke(opts);
+    midpoint.executeChanges([delta] as java.util.Collection, opts);
+    log.info('EMAIL-CLEANUP r10 OK: {} ({}) was {}', uname, uoid, emailStr);
+} catch (Exception e) {
+    log.warn('EMAIL-CLEANUP r10 ERROR: {} ({}): {}', uname, uoid, e.message);
+}
+                            ]]></c:code>
+                        </s:script>
+                    </s:execute>
+                </scriptExecutionRequest>
+            </iterativeScripting>
+        </work>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
+    </activity>
+
+</task>
