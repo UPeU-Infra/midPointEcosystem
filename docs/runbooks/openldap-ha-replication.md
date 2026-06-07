@@ -345,25 +345,50 @@ Ver runbook `keycloak-ldap-federation.md`.
 
 ---
 
-## Estado actual (2026-05-20)
+## Estado actual (2026-06-07) ✅ REPLICACIÓN N-WAY OPERATIVA
 
-- Nodo 1 (168): healthy, recuperación en progreso via MidPoint recompute (10.508/35.450 usuarios)
-  - ServerID: 1, syncprov activo, sin consumer activo (correcto — esperando que nodo 2 complete sync)
-- Nodo 2 (169): healthy, sincronizando desde nodo 1 (10.526 usuarios, lag ~18)
-  - ServerID: 2, syncprov activo, syncrepl consumer activo (rid=001 → nodo 1)
-  - schemachecking=off (temporalmente para evitar errores de schema)
-  - Schemas cargados: core, cosine, nis, inetorgperson, ppolicy, kopano, openssh-lpk, postfix-book, samba, eduPerson, schac, midpointperson
-- Replicación: Consumer-only activa (nodo 2 jala de nodo 1 en tiempo real)
-- mirrormode N-Way: PENDIENTE — activar cuando recuperación esté completa (ver FASE 4)
-- MidPoint → Nodo 1: funcionando (test connection OK, re-provisión activa)
-- Keycloak → Nodo 1: pendiente verificación post-recuperación
+### Estado tras fix completo (2026-06-07)
 
-### Pendiente para completar la HA
+**Incidente:** Replicación rota desde 2026-05-26. Causa raíz: `olcServerID` no configurado en ningún nodo → ambos usaban serverID `000` → CSN conflictivo → syncrepl consumer de nodo 2 se colgó.
 
-1. Esperar que los tasks de recompute completen (~35.450 usuarios en nodo 1)
-2. Verificar que nodo 2 alcanza el mismo count
-3. Activar mirrormode en nodo 2: `olcMirrorMode: TRUE`
-4. Configurar syncrepl en nodo 1 + mirrormode: `rid=002 provider=ldap://192.168.15.169:389 + olcMirrorMode: TRUE`
-5. Actualizar resource LDAP en MidPoint para incluir failover a nodo 2
-6. Actualizar Keycloak User Federation para incluir nodo 2
-7. Activar schemachecking=on en nodo 2 (cambiar el olcSyncRepl)
+**Fix aplicado:**
+1. `olcServerID: 1` en nodo 1 (168) — via `ldapmodify -Y EXTERNAL`
+2. `olcServerID: 2` en nodo 2 (169) — via `ldapmodify -Y EXTERNAL`
+3. Schema `cn={12}upeu` faltaba en nodo 2 → importado con `ldapadd -Y EXTERNAL`
+4. Limpieza de datos de nodo 2 (`data.mdb` + `lock.mdb` del volumen `ldap_ldap_data`) + restart
+5. Full resync automático desde nodo 1 (~10 minutos, ~28K entradas)
+
+**Estado final verificado:**
+- Nodo 1 (168): `olcServerID: 1`, 48,348 people, contextCSN `20260607080739Z#000#000000`
+- Nodo 2 (169): `olcServerID: 2`, 48,348 people, mismo contextCSN ✅
+- Replicación bidireccional activa: rid=001 (169→168) y rid=002 (168→169) ✅
+- Sin errores de replicación en logs ✅
+- MidPoint (192.168.15.166) → Nodo 1:389 ✅
+- Keycloak (192.168.12.88) → Nodo 1:389 ✅
+- Schemas en ambos nodos: core, cosine, nis, inetorgperson, ppolicy, kopano, openssh-lpk, postfix-book, samba, eduPerson, schac, midpointperson, **upeu** ✅
+
+### Lecciones adicionales (L9–L11)
+
+**L9: olcServerID sin URL**
+Usar `olcServerID: 1` (solo número). Con URL (`olcServerID: 1 ldap://...`) slapd falla
+si escucha en wildcard (`ldap:///`). Causa del incidente original 2026-05-20.
+
+**L10: Schema faltante → syncrepl falla silenciosamente**
+Si el nodo consumer no tiene un schema que el provider usa, `syncrepl_message_to_entry`
+falla con "objectClass value #N invalid per syntax". El error PARECE de sintaxis pero es
+de schema desconocido. Fix: importar el schema faltante, luego restart.
+En este caso: `cn=upeu` (OID 1.3.6.1.4.1.47378) fue añadido a nodo 1 post-divergencia
+y nunca replicado a nodo 2.
+
+**L11: Wipe + resync es más limpio que resolver conflictos LDAP_TYPE_OR_VALUE_EXISTS**
+Si el consumer tiene datos conflictivos (writes directos vía failover durante split-brain),
+el resync incremental falla con err=20. La solución: borrar `data.mdb` + `lock.mdb`
+del volumen de datos (NO el config) y hacer full resync. El volumen config preserva
+olcServerID, schemas, syncrepl config y mirrormode — todo lo necesario para el resync.
+
+### Pendiente
+
+- Actualizar Keycloak User Federation para incluir nodo 2 como fallback (actualmente solo nodo 1)
+- Verificar MidPoint failover: la conexión desde 192.168.15.166 a nodo 2 ya no está activa
+  (correcto — failover solo activa si nodo 1 cae). Confirmar comportamiento en próxima
+  ventana de mantenimiento.
