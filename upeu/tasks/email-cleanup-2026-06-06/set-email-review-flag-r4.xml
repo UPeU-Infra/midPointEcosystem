@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: set-email-review-flag-r4
+  OID: b9e22001-f001-4abc-9def-202406080004
+
+  Contexto: recompute r3 procesó 54,404 usuarios pero solo seteó el flag en 879.
+  Causa: bug MidPoint 4.10 CreateCapabilityType missing en MSGraph → clockwork aborta
+  antes de guardar cambios del template en usuarios con shadow Entra ID.
+
+  Solución: iterativeScripting con raw() — mismo patrón que cleanup-numeric-emails-r11.
+  Bypasea el model layer completamente, escribe directo a DB.
+
+  Scope: active SIN emailAddress (33,073 usuarios)
+  Acción: extension/upeu:emailReviewNeeded = true
+
+  Lección L6 (crítica): script DEBE ser una sola línea — MidPoint normaliza CDATA
+  al deserializar via REST API. Multi-línea → Groovy syntax error.
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:s="http://midpoint.evolveum.com/xml/ns/public/model/scripting/3"
+      oid="b9e22001-f001-4abc-9def-202406080004">
+
+    <name>set-email-review-flag-r4-20260608</name>
+    <description>
+        R4: iterativeScripting con raw() — mismo patrón que cleanup-numeric-emails-r11.
+        Bypasea clockwork/Entra ID bug. Setea extension/upeu:emailReviewNeeded=true
+        en active users sin emailAddress (~33,059 usuarios).
+        Script en una sola línea (L6: CDATA inline sobrevive normalización MidPoint).
+    </description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>suspended</executionState>
+    <schedule>
+        <recurrence>single</recurrence>
+        <misfireAction>executeImmediately</misfireAction>
+    </schedule>
+
+    <activity>
+        <work>
+            <iterativeScripting>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>lifecycleState</q:path>
+                                <q:value>active</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </objects>
+                <scriptExecutionRequest>
+                    <s:execute>
+                        <s:script xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
+                            <c:code><![CDATA[import com.evolveum.midpoint.xml.ns._public.common.common_3.UserType; import com.evolveum.midpoint.prism.path.ItemPath; import javax.xml.namespace.QName; def user = input; def uoid = user.getOid(); def uname = user.getName()?.getOrig(); def email = user.getEmailAddress(); if (email != null && !email.toString().trim().isEmpty()) { return; }; try { def flagQN = new QName('urn:upeu:midpoint:local', 'emailReviewNeeded'); def path = ItemPath.create(UserType.F_EXTENSION, flagQN); def delta = midpoint.prismContext.deltaFor(UserType.class).item(path).replace(Boolean.TRUE).asObjectDelta(uoid); def meoClass = Class.forName('com.evolveum.midpoint.model.api.ModelExecuteOptions'); def opts = meoClass.getMethod('create').invoke(null); opts = opts.getClass().getMethod('raw').invoke(opts); midpoint.executeChanges(java.util.Collections.singletonList(delta), opts); log.warn('FLAG-r4 OK: {}', uname); } catch (Exception e) { log.warn('FLAG-r4 ERR: {} ({}): {}', uname, uoid, e.message); }]]></c:code>
+                        </s:script>
+                    </s:execute>
+                </scriptExecutionRequest>
+            </iterativeScripting>
+        </work>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
+    </activity>
+
+</task>
