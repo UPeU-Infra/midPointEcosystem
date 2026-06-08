@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      oid="b9e33001-f001-4abc-9def-202406080003">
+    <name>recompute-staff-2026-06-08</name>
+    <description>Recompute activos archetype employee-staff (1,848). Koha active — gate campus aplica. Arrancar tras faculty.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>suspended</executionState>
+    <schedule>
+        <recurrence>single</recurrence>
+        <misfireAction>executeImmediately</misfireAction>
+    </schedule>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <q:equal>
+                                    <q:path>lifecycleState</q:path>
+                                    <q:value>active</q:value>
+                                </q:equal>
+                                <q:ref>
+                                    <q:path>archetypeRef</q:path>
+                                    <q:value oid="6460facf-3abf-4851-966e-0c95aa1a6c46" type="c:ArchetypeType"/>
+                                </q:ref>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>2</workerThreads>
+        </distribution>
+    </activity>
+</task>

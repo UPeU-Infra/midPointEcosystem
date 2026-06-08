@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      oid="b9e33001-f001-4abc-9def-202406080004">
+    <name>recompute-student-2026-06-08</name>
+    <description>Recompute activos archetype student (24,140). Koha active + gate campus. Arrancar tras staff. Actualiza expiry_date en Koha.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>suspended</executionState>
+    <schedule>
+        <recurrence>single</recurrence>
+        <misfireAction>executeImmediately</misfireAction>
+    </schedule>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <q:equal>
+                                    <q:path>lifecycleState</q:path>
+                                    <q:value>active</q:value>
+                                </q:equal>
+                                <q:ref>
+                                    <q:path>archetypeRef</q:path>
+                                    <q:value oid="3037fbd2-db02-4ffd-8b1a-83fab5e686aa" type="c:ArchetypeType"/>
+                                </q:ref>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
+    </activity>
+</task>
