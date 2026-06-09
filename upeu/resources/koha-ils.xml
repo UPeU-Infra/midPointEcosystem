@@ -1682,10 +1682,7 @@ return eligible ? ActivationStatusType.ENABLED : ActivationStatusType.DISABLED
                              MidPoint), y el patrón en Koha lo gestiona koha-expert. -->
                         <condition>
                             <script>
-                                <code><![CDATA[
-def loc = (locality ?: '').toString().trim().toUpperCase()
-return !(loc == 'JULIACA' || loc == 'TARAPOTO')
-                                ]]></code>
+                                <code>!(['JULIACA', 'TARAPOTO'].contains((locality ?: '').toString().trim().toUpperCase()))</code>
                             </script>
                         </condition>
                     </outbound>
