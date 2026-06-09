@@ -1008,38 +1008,38 @@ if (epCode == null) return null
 def code = epCode.toString().trim()
 
 // Mapa EP-code → Bsort1 (código autorizado Koha).
-// Fuente: tabla analisis-programas-actuales.md + catálogo Koha Bsort1.
-// Carreras nuevas sin Bsort1 asignado aún: EP-SOFT-FIA, EP-CS-FIA, EP-CIBERSEG-FIA, EP-DIGBIZ-FCE
-// quedan en null hasta que DTI registre el código en Koha.
+// EP-codes tomados de upeu/orgs/academic-programs/academic-programs-pregrado.xml (fuente canónica).
+// Validados vs VocBench Tesauro_Institucional_UPeU (2026-06-09).
+// EP sin Bsort1 (EP-IIE, EP-PSI-FCHE, EP-XXX) → null.
 def bsort1Map = [
+    // FCS — Facultad de Ciencias de la Salud
     'EP-PSI-FCS'    : 'FCS',
-    'EP-ENF-FCS'    : 'FCS',
-    'EP-MED-FCS'    : 'FCS',
-    'EP-NUT-FCS'    : 'FCS',
-    'EP-TMELC-FCS'  : 'FCS',
-    'EP-TMETF-FCS'  : 'FCS',
-    'EP-ARQ-FIA'    : 'FIA',
-    'EP-AMB-FIA'    : 'FIA',
-    'EP-CIV-FIA'    : 'FIA',
-    'EP-ALI-FIA'    : 'FIA',
-    'EP-SIS-FIA'    : 'FIA',
-    'EP-IND-FIA'    : 'FIA',
-    'EP-SOFT-FIA'   : 'FIA',
-    'EP-CS-FIA'     : 'FIA',
-    'EP-CIBERSEG-FIA': 'FIA',
-    'EP-ADM-FCE'    : 'FCE',
-    'EP-CON-FCE'    : 'FCE',
-    'EP-MKT-FCE'    : 'FCE',
-    'EP-DIGBIZ-FCE' : 'FCE',
-    'EP-COM-FACH'   : 'FACIHED',
-    'EP-EFI-FACH'   : 'FACIHED',
-    'EP-ING-FACH'   : 'FACIHED',
-    'EP-MUS-FACH'   : 'FACIHED',
-    'EP-INI-FACH'   : 'FACIHED',
-    'EP-PRI-FACH'   : 'FACIHED',
-    'EP-DER-FACH'   : 'FACIHED',
-    'EP-IBI-FACH'   : 'FACIHED',
-    'EP-TEO-FTEO'   : 'FACTEO',
+    'EP-ENF'        : 'FCS',
+    'EP-MED'        : 'FCS',
+    'EP-NUT'        : 'FCS',
+    // FIA — Facultad de Ingeniería y Arquitectura
+    'EP-ARQ'        : 'FIA',
+    'EP-IAMB'       : 'FIA',
+    'EP-ICIV'       : 'FIA',
+    'EP-IIA'        : 'FIA',
+    'EP-SIS'        : 'FIA',
+    'EP-IIE'        : 'FIA',   // sin P-code SUNEDU aún
+    // FCE — Facultad de Ciencias Empresariales
+    'EP-ADM'        : 'FCE',
+    'EP-CON'        : 'FCE',
+    'EP-MKT'        : 'FCE',
+    // FACIHED — Facultad de Ciencias Humanas y Educación
+    'EP-COM'        : 'FACIHED',
+    'EP-EDU-EFI'    : 'FACIHED',
+    'EP-EDU-IES'    : 'FACIHED',
+    'EP-EDU-MUA'    : 'FACIHED',
+    'EP-EDU-INI'    : 'FACIHED',
+    'EP-EDU-PRI'    : 'FACIHED',
+    'EP-EDU-CIN'    : 'FACIHED',
+    'EP-EDU-MAT'    : 'FACIHED',
+    'EP-PSI-FCHE'   : 'FACIHED',  // sin P-code propio aún
+    // FACTEO — Facultad de Teología
+    'EP-TEO'        : 'FACTEO',
 ]
 def result = bsort1Map.get(code)
 if (result == null) {
@@ -1073,33 +1073,38 @@ def epCode = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QNam
 if (epCode == null) return null
 def code = epCode.toString().trim()
 
-// Mapa EP-code → Pcode SUNEDU (Bsort2).
-// Carreras nuevas sin código SUNEDU aún: EP-SOFT-FIA, EP-CS-FIA, EP-CIBERSEG-FIA, EP-DIGBIZ-FCE → null.
+// Mapa EP-code → P-code SUNEDU (Bsort2).
+// EP-codes tomados de upeu/orgs/academic-programs/academic-programs-pregrado.xml.
+// Validados vs VocBench Tesauro_Institucional_UPeU (2026-06-09).
+// EP sin P-code SUNEDU asignado → null (SUNEDU pendiente de asignar).
 def bsort2Map = [
+    // FCS
     'EP-PSI-FCS'    : 'P33',
-    'EP-ENF-FCS'    : 'P22',
-    'EP-MED-FCS'    : 'P30',
-    'EP-NUT-FCS'    : 'P31',
-    'EP-TMELC-FCS'  : 'P153',
-    'EP-TMETF-FCS'  : 'P154',
-    'EP-ARQ-FIA'    : 'P06',
-    'EP-AMB-FIA'    : 'P24',
-    'EP-CIV-FIA'    : 'P25',
-    'EP-ALI-FIA'    : 'P26',
-    'EP-SIS-FIA'    : 'P27',
-    'EP-IND-FIA'    : 'P152',
-    'EP-ADM-FCE'    : 'P04',
-    'EP-CON-FCE'    : 'P08',
-    'EP-MKT-FCE'    : 'P29',
-    'EP-COM-FACH'   : 'P07',
-    'EP-EFI-FACH'   : 'P12',
-    'EP-ING-FACH'   : 'P14',
-    'EP-MUS-FACH'   : 'P17',
-    'EP-INI-FACH'   : 'P19',
-    'EP-PRI-FACH'   : 'P20',
-    'EP-DER-FACH'   : 'P143',
-    'EP-IBI-FACH'   : 'P147',
-    'EP-TEO-FTEO'   : 'P35',
+    'EP-ENF'        : 'P22',
+    'EP-MED'        : 'P30',
+    'EP-NUT'        : 'P31',
+    // FIA
+    'EP-ARQ'        : 'P06',
+    'EP-IAMB'       : 'P24',
+    'EP-ICIV'       : 'P25',
+    'EP-IIA'        : 'P26',
+    'EP-SIS'        : 'P27',
+    // FCE
+    'EP-ADM'        : 'P04',
+    'EP-CON'        : 'P08',
+    'EP-MKT'        : 'P29',
+    // FACIHED
+    'EP-COM'        : 'P07',
+    'EP-EDU-EFI'    : 'P12',
+    'EP-EDU-IES'    : 'P14',
+    'EP-EDU-MUA'    : 'P17',
+    'EP-EDU-INI'    : 'P19',
+    'EP-EDU-PRI'    : 'P20',
+    'EP-EDU-CIN'    : 'P15',
+    'EP-EDU-MAT'    : 'P16',
+    // FACTEO
+    'EP-TEO'        : 'P35',
+    // Sin P-code SUNEDU aún (EP-IIE, EP-PSI-FCHE, EP-XXX) → null implícito
 ]
 def result = bsort2Map.get(code)
 if (result == null) {
