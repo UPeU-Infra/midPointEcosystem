@@ -388,20 +388,27 @@ return null // weak: no sobrescribe studentCycle — solo side-effect de log</co
         </mapping>
     </item>
 
-    <!-- D.2 — Auto-asignación BR-Estudiante-Pregrado/Posgrado/Doctorado según studentCycle
+    <!-- D.2 — Auto-asignación BR-Estudiante-Pregrado/Posgrado/Doctorado según studyLevel
          Solo actúa cuando primaryAffiliation == STUDENT.
-         Lógica: cycle >= 9 → Doctorado; 7-8 → Posgrado; resto → Pregrado.
-         Migrado desde UserTemplate-Student (upeu3: → sciback:). -->
+         FIX 2026-06-09: el routing pasa de studentCycle (proxy frágil — 5,356 pregrados
+         en ciclo>=7 de carreras de 10 ciclos quedaban mal marcados posgrado/doctorado) a
+         studyLevel GRANULAR (fuente única de nivel, derivada de la carrera principal en el
+         searchScript de estudiantes.xml, columna PROGRAM_LEVEL).
+         Mapeo de nivel → business role:
+           doctorado                                   → BR-Estudiante-Doctorado
+           posgrado | maestria | segunda-especialidad  → BR-Estudiante-Posgrado
+           resto (pregrado, diplomatura, idiomas, etc.) → BR-Estudiante-Pregrado (default conservador)
+         Ya NO depende de studentCycle (informativo). -->
     <mapping>
-        <name>D-autoassign-br-estudiante-by-cycle</name>
-        <description>Auto-asigna BR-Estudiante-Pregrado/Posgrado/Doctorado según studentCycle. Opción A: lógica en base template.</description>
+        <name>D-autoassign-br-estudiante-by-studyLevel</name>
+        <description>Auto-asigna BR-Estudiante-Pregrado/Posgrado/Doctorado según studyLevel granular (carrera principal). Opción A: lógica en base template. Reemplaza el routing previo por studentCycle (proxy frágil).</description>
         <lifecycleState>active</lifecycleState>
         <strength>strong</strength>
         <source>
             <path>extension/sciback:primaryAffiliation</path>
         </source>
         <source>
-            <path>extension/sciback:studentCycle</path>
+            <path>extension/sciback:studyLevel</path>
         </source>
         <expression>
             <assignmentTargetSearch>
@@ -411,7 +418,7 @@ return null // weak: no sobrescribe studentCycle — solo side-effect de log</co
                         <q:path>name</q:path>
                         <expression>
                             <script>
-                                <code>def raw = studentCycle; def n = null; try { def s = (raw instanceof java.util.Collection) ? (raw.isEmpty() ? null : raw.max { it.toString() as Integer }) : raw?.toString(); if (s != null) n = Integer.parseInt(s.trim()) } catch (Exception e) { log.warn("D.2: studentCycle no parseable '{}' en {}", raw, focus?.name) }; if (n == null) return 'BR-Estudiante-Pregrado'; if (n >= 9) return 'BR-Estudiante-Doctorado'; if (n >= 7) return 'BR-Estudiante-Posgrado'; return 'BR-Estudiante-Pregrado'</code>
+                                <code>def lvl = studyLevel != null ? basic.stringify(studyLevel).trim().toLowerCase() : ''; if (lvl == 'doctorado') return 'BR-Estudiante-Doctorado'; if (lvl == 'posgrado' || lvl == 'maestria' || lvl == 'segunda-especialidad') return 'BR-Estudiante-Posgrado'; return 'BR-Estudiante-Pregrado'</code>
                             </script>
                         </expression>
                     </q:equal>
@@ -424,7 +431,7 @@ return null // weak: no sobrescribe studentCycle — solo side-effect de log</co
         </target>
         <condition>
             <script>
-                <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; affil == 'student' &amp;&amp; studentCycle != null</code>
+                <code>def affil = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; affil == 'student'</code>
             </script>
         </condition>
     </mapping>

@@ -199,14 +199,45 @@
                     <xsd:element name="facultyName" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>Nombre de facultad</a:displayName><a:help>Nombre crudo de la facultad del programa de la matrícula vigente. IIA: Oracle LAMB ELISEO.ORG_AREA.NOMBRE (nodo padre de la escuela vía ID_PARENT). El código corto Koha (Bsort1) se deriva de este nombre en el resource koha-ils. Single-value.</a:help><a:indexed>true</a:indexed><a:displayOrder>517</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
+                    <!-- studyLevel: nivel canónico GRANULAR del programa de la matrícula
+                         vigente (la carrera PRINCIPAL, misma que da el P-code/facultad).
+                         Vocabulario controlado normalizado (lowercase): pregrado | posgrado |
+                         doctorado | segunda-especialidad | diplomatura | educación contínua |
+                         idiomas | cepre | conservatorio de música | técnica | básico |
+                         instituto | salt | clínica good hope | tesis. Single-value.
+                         IIA: Oracle LAMB DAVID.TIPO_NIVEL_ENSENANZA.NOMBRE + DAVID.ACAD_PROGRAMA_ESTUDIO
+                         (NOMBRE para distinguir doctorado/maestría/segunda-especialidad dentro de
+                         'Posgrado', CODIGO_SUNEDU2 IS NOT NULL ⇒ pregrado). DERIVADO en el searchScript
+                         de estudiantes.xml (columna PROGRAM_LEVEL, KEEP DENSE_RANK LAST con la MISMA
+                         clave compuesta que SUNEDU_CODE/FACULTY_NAME → coherente con la carrera principal).
+                         NO es la copia cruda de NIVEL_ENSENANZA (que no distingue maestría/doctorado).
+                         Es la ÚNICA fuente de verdad de nivel: la consume el routing de business role
+                         (D.2 base template: doctorado→BR-Doctorado, posgrado/segunda-especialidad→BR-Posgrado,
+                         resto→BR-Pregrado) y el outbound STUDY_LEVEL de Koha (Bsort STUDY_LEVEL). -->
                     <xsd:element name="studyLevel" type="xsd:string" minOccurs="0" maxOccurs="1">
-                        <xsd:annotation><xsd:appinfo><a:displayName>Nivel de estudios</a:displayName><a:displayOrder>520</a:displayOrder></xsd:appinfo></xsd:annotation>
+                        <xsd:annotation><xsd:appinfo><a:displayName>Nivel de estudios</a:displayName><a:help>Nivel canónico granular del programa de la matrícula vigente (carrera principal): pregrado | posgrado | doctorado | segunda-especialidad | diplomatura | educación contínua | idiomas | cepre | etc. IIA: Oracle LAMB (TIPO_NIVEL_ENSENANZA + ACAD_PROGRAMA_ESTUDIO). Single-value. Única fuente de nivel para routing de business role y STUDY_LEVEL de Koha.</a:help><a:indexed>true</a:indexed><a:displayOrder>520</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- studentEnrollmentType: tipo de matrícula del estudiante (regular vs irregular).
+                         Vocabulario controlado: regular | irregular. IIA: Oracle LAMB
+                         DAVID.ACAD_ALUMNO_CONTRATO.TIPO_ALUMNO ('RE'⇒regular; 'B18'/'BP'/'INT'/otros⇒irregular;
+                         NULL⇒sin clasificar, atributo vacío). KEEP DENSE_RANK LAST de la matrícula vigente.
+                         Single-value, INFORMATIVO (reporting / futuras políticas de matrícula). No gobierna
+                         provisioning hoy. Concepto canónico: toda universidad distingue estudiante regular
+                         de irregular (recuperación/repitencia). -->
+                    <xsd:element name="studentEnrollmentType" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Tipo de matrícula</a:displayName><a:help>Tipo de matrícula del estudiante: regular | irregular. IIA: Oracle LAMB DAVID.ACAD_ALUMNO_CONTRATO.TIPO_ALUMNO (RE⇒regular; B18/BP/INT⇒irregular; NULL⇒vacío). Single-value, informativo.</a:help><a:indexed>true</a:indexed><a:displayOrder>521</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
                     <xsd:element name="studyModality" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
                         <xsd:annotation><xsd:appinfo><a:displayName>Modalidad de estudio</a:displayName><a:displayOrder>530</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
+                    <!-- studentCycle: ciclos académicos cursados en la matrícula vigente (multivalor,
+                         deduplicado). IIA: Oracle LAMB DAVID.ACAD_PLAN_CURSO.CICLO (LISTAGG sin DISTINCT
+                         en SQL — Oracle 11g no soporta LISTAGG(DISTINCT) — + dedup .unique() en Groovy del
+                         map, mismo patrón que PROGRAM_CODES). INFORMATIVO: ya NO gobierna el nivel de
+                         estudios (eso lo hace studyLevel granular). Un estudiante puede llevar cursos de
+                         varios ciclos simultáneamente. -->
                     <xsd:element name="studentCycle" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
-                        <xsd:annotation><xsd:appinfo><a:displayName>Ciclo académico</a:displayName><a:displayOrder>540</a:displayOrder></xsd:appinfo></xsd:annotation>
+                        <xsd:annotation><xsd:appinfo><a:displayName>Ciclo académico</a:displayName><a:help>Ciclos cursados en la matrícula vigente (multivalor, deduplicado). IIA: Oracle LAMB DAVID.ACAD_PLAN_CURSO.CICLO. Informativo — NO determina el nivel (ver studyLevel).</a:help><a:displayOrder>540</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
                     <xsd:element name="admissionPeriod" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>Período de admisión</a:displayName><a:displayOrder>550</a:displayOrder></xsd:appinfo></xsd:annotation>
