@@ -428,6 +428,29 @@ return null // weak: no sobrescribe studentCycle — solo side-effect de log</co
         </expression>
         <target>
             <path>assignment</path>
+            <!-- RANGE AUTORITATIVO sobre el tier {Pregrado, Posgrado, Doctorado} (fix C1, 2026-06-09).
+                 Sin range, este mapping SUMA el tier correcto pero NO REMUEVE el tier viejo que la
+                 lógica previa (routing por studentCycle) había asignado → ~5,356 pregrados quedaban
+                 con AMBOS roles (correcto + stale). Las asignaciones viejas NO tienen <metadata>
+                 (creadas por bootstrap/mapping previo), por lo que matchingProvenance NO las limpiaría.
+                 Solución canónica (Evolveum Mapping Range, ejemplo "manager"): custom <set><condition>
+                 que declara al mapping autoritativo sobre el CONJUNTO estructural de los 3 OIDs
+                 BR-Estudiante-*. Semántica de range: MidPoint escanea los assignments existentes que
+                 caen en el range (condition==true); si NO están en el resultado de la expresión en esta
+                 evaluación → los REMUEVE. Es estructural (por targetRef.oid), NO depende de provenance,
+                 por eso barre las stale sin metadata. El range NO toca ningún otro assignment del foco
+                 (R-Affiliation-*, AR-*, orgs, archetypes) porque su OID no está en la lista → condición
+                 false → fuera del range → intactos.
+                 OIDs (REGISTRY): Pregrado=6e02ebe4-3962-4ad8-a855-aec69b0df3be,
+                 Posgrado=111e2e54-b484-4c18-bd1b-01131107eb11,
+                 Doctorado=03b2ecc8-de6b-4ecf-aba0-6f0175d35fdd. -->
+            <set>
+                <condition>
+                    <script>
+                        <code>def oid = input?.targetRef?.oid; oid in ['6e02ebe4-3962-4ad8-a855-aec69b0df3be', '111e2e54-b484-4c18-bd1b-01131107eb11', '03b2ecc8-de6b-4ecf-aba0-6f0175d35fdd']</code>
+                    </script>
+                </condition>
+            </set>
         </target>
         <condition>
             <script>
