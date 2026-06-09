@@ -1178,6 +1178,9 @@ return code ? code : null
                         <path>$focus/extension/sb:studyLevel</path>
                     </source>
                     <source>
+                        <path>$focus/extension/sb:studentCycle</path>
+                    </source>
+                    <source>
                         <path>$focus/extension/upeu:lambDocNum</path>
                     </source>
                     <expression>
@@ -1203,6 +1206,16 @@ return code ? code : null
                                         else log.warn("Koha STUDY_LEVEL: studyLevel vacío en student {} → default pregrado", focus?.name);
                                         out &lt;&lt; '{"type":"STUDY_LEVEL","value":"pregrado"}';
                                     }
+                                    // pares STUDYCYCLE (uno por ciclo vigente, multivalor). 2026-06-09:
+                                    // ciclo de estudio canónico (sb:studentCycle, multivalor: regular=1
+                                    // valor, irregular=N valores). Gobernado destructivamente por
+                                    // intolerantValuePattern STUDYCYCLE → MidPoint añade los vigentes y
+                                    // remueve los viejos. Solo students (dentro del guard aff=='student').
+                                    def cycles = (studentCycle instanceof Collection) ? studentCycle : (studentCycle != null ? [studentCycle] : []);
+                                    cycles.each { c ->
+                                        def cyc = c != null ? basic.stringify(c).trim() : '';
+                                        if (cyc) out &lt;&lt; '{"type":"STUDYCYCLE","value":"' + cyc + '"}';
+                                    }
                                 }
                                 // par DNI (para adopt-by-DNI del conector v1.3.10)
                                 def dni = lambDocNum != null ? basic.stringify(lambDocNum).trim() : '';
@@ -1213,7 +1226,7 @@ return code ? code : null
                     </expression>
                 </outbound>
                 <tolerant>true</tolerant>
-                <intolerantValuePattern>.*"type"\s*:\s*"(AREA|CRAI_TIER|RESEARCHER|STUDY_LEVEL)".*</intolerantValuePattern>
+                <intolerantValuePattern>.*"type"\s*:\s*"(AREA|CRAI_TIER|RESEARCHER|STUDY_LEVEL|STUDYCYCLE)".*</intolerantValuePattern>
             </attribute>
             <attribute>
                 <ref>ri:library_id</ref>
