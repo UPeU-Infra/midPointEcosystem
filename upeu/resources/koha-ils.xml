@@ -985,33 +985,67 @@
             </attribute>
             <attribute>
                 <ref>ri:statistics_1</ref>
-                <displayName>Facultad (Statistics 1)</displayName>
+                <displayName>Facultad (Statistics 1 / Bsort1)</displayName>
                 <outbound>
                     <name>statistics1-outbound</name>
                     <strength>normal</strength>
-                    <!-- Koha statistics_1 es single-valued. Focos multi-facultad
-                         (p.ej. estudiante en 2 EP/facultades) traen >1
-                         organizationalUnit y rompian la creacion del patron
-                         ("Attempt to add 2 values to a single-valued item
-                         attributes/statistics_1"). Un <source>/<script> relativista
-                         se evalua POR-VALOR (skill midpoint-best-practices L219) =>
-                         seguia emitiendo 2 valores. Solucion canonica: NO usar source
-                         relativo; leer el conjunto completo del foco (getFocusObjectNew)
-                         y colapsar a UN solo valor deterministico (primero por orden
-                         alfabetico, estable). 2026-06-02 Gap B. -->
+                    <!-- Koha statistics_1 = Bsort1: código de facultad autorizado por Koha.
+                         Valores válidos: FCS, FIA, FCE, FACIHED, FACTEO, EPG, COLEGIO, UNKNOWN.
+                         Fuente: extension/sciback:academicProgramCode (EP-XXX-FFF).
+                         Antes (2026-06-02): se mandaba organizationalUnit (texto libre) — incorrecto.
+                         Fix (2026-06-09): Groovy map inline EP-code → Bsort1.
+                         Decisión opción B (no LookupTable): mapeo estático UPeU-overlay,
+                         29 filas, no editable por admins, sin I/O repo adicional.
+                         Null-safe: EP desconocido → null (no error, no UNKNOWN forzado). -->
                     <expression>
                         <script>
                             <code><![CDATA[
-// 'focus' es el UserType nuevo bindeado en mappings outbound (no relativista).
 if (focus == null) return null
-def ous = focus.getOrganizationalUnit()
-if (ous == null || ous.isEmpty()) return null
-def v = ous.collect { it?.getOrig() ?: it?.toString() }.findAll { it != null }.sort().getAt(0)
-if (v == null) return null
-// Koha statistics_1 (borrower_attribute / authorised value) limita a 80 chars.
-// Algunas facultades exceden 80 y rompian la creacion del patron Gap B.
-// Truncar deterministicamente a 80. 2026-06-02 Gap B PASO 1.
-return v.length() > 80 ? v.substring(0, 80) : v
+// Leer academicProgramCode del foco (ya materializado por resource Estudiantes/Trabajadores).
+// Es single-valued indexado; usar getExtensionPropertyValue vía basic helper.
+def epCode = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'academicProgramCode'))
+if (epCode == null) return null
+def code = epCode.toString().trim()
+
+// Mapa EP-code → Bsort1 (código autorizado Koha).
+// Fuente: tabla analisis-programas-actuales.md + catálogo Koha Bsort1.
+// Carreras nuevas sin Bsort1 asignado aún: EP-SOFT-FIA, EP-CS-FIA, EP-CIBERSEG-FIA, EP-DIGBIZ-FCE
+// quedan en null hasta que DTI registre el código en Koha.
+def bsort1Map = [
+    'EP-PSI-FCS'    : 'FCS',
+    'EP-ENF-FCS'    : 'FCS',
+    'EP-MED-FCS'    : 'FCS',
+    'EP-NUT-FCS'    : 'FCS',
+    'EP-TMELC-FCS'  : 'FCS',
+    'EP-TMETF-FCS'  : 'FCS',
+    'EP-ARQ-FIA'    : 'FIA',
+    'EP-AMB-FIA'    : 'FIA',
+    'EP-CIV-FIA'    : 'FIA',
+    'EP-ALI-FIA'    : 'FIA',
+    'EP-SIS-FIA'    : 'FIA',
+    'EP-IND-FIA'    : 'FIA',
+    'EP-SOFT-FIA'   : 'FIA',
+    'EP-CS-FIA'     : 'FIA',
+    'EP-CIBERSEG-FIA': 'FIA',
+    'EP-ADM-FCE'    : 'FCE',
+    'EP-CON-FCE'    : 'FCE',
+    'EP-MKT-FCE'    : 'FCE',
+    'EP-DIGBIZ-FCE' : 'FCE',
+    'EP-COM-FACH'   : 'FACIHED',
+    'EP-EFI-FACH'   : 'FACIHED',
+    'EP-ING-FACH'   : 'FACIHED',
+    'EP-MUS-FACH'   : 'FACIHED',
+    'EP-INI-FACH'   : 'FACIHED',
+    'EP-PRI-FACH'   : 'FACIHED',
+    'EP-DER-FACH'   : 'FACIHED',
+    'EP-IBI-FACH'   : 'FACIHED',
+    'EP-TEO-FTEO'   : 'FACTEO',
+]
+def result = bsort1Map.get(code)
+if (result == null) {
+    log.debug('statistics1-outbound: no Bsort1 mapping for EP-code "{}"', code)
+}
+return result
                             ]]></code>
                         </script>
                     </expression>
@@ -1019,16 +1053,60 @@ return v.length() > 80 ? v.substring(0, 80) : v
             </attribute>
             <attribute>
                 <ref>ri:statistics_2</ref>
-                <displayName>Programa Académico (Statistics 2)</displayName>
+                <displayName>Programa Académico (Statistics 2 / Bsort2)</displayName>
                 <outbound>
                     <name>statistics2-outbound</name>
                     <strength>normal</strength>
-                    <source>
-                        <path>$focus/extension/sciback:academicProgram</path>
-                    </source>
+                    <!-- Koha statistics_2 = Bsort2: código P-code SUNEDU del programa.
+                         Valores válidos: P04, P06, P07, P08, P12, P14, P17, P19, P20,
+                         P22, P24, P25, P26, P27, P29, P30, P31, P33, P35, P143, P147,
+                         P152, P153, P154, etc.
+                         Fuente: extension/sciback:academicProgramCode (EP-XXX-FFF).
+                         Antes: se mandaba academicProgram (texto libre) — incorrecto.
+                         Fix (2026-06-09): Groovy map inline EP-code → Pcode SUNEDU.
+                         Carreras sin P-code asignado por SUNEDU aún → null (no error). -->
                     <expression>
                         <script>
-                            <code>academicProgram instanceof Collection ? academicProgram?.find()?.toString() : academicProgram?.toString()</code>
+                            <code><![CDATA[
+if (focus == null) return null
+def epCode = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'academicProgramCode'))
+if (epCode == null) return null
+def code = epCode.toString().trim()
+
+// Mapa EP-code → Pcode SUNEDU (Bsort2).
+// Carreras nuevas sin código SUNEDU aún: EP-SOFT-FIA, EP-CS-FIA, EP-CIBERSEG-FIA, EP-DIGBIZ-FCE → null.
+def bsort2Map = [
+    'EP-PSI-FCS'    : 'P33',
+    'EP-ENF-FCS'    : 'P22',
+    'EP-MED-FCS'    : 'P30',
+    'EP-NUT-FCS'    : 'P31',
+    'EP-TMELC-FCS'  : 'P153',
+    'EP-TMETF-FCS'  : 'P154',
+    'EP-ARQ-FIA'    : 'P06',
+    'EP-AMB-FIA'    : 'P24',
+    'EP-CIV-FIA'    : 'P25',
+    'EP-ALI-FIA'    : 'P26',
+    'EP-SIS-FIA'    : 'P27',
+    'EP-IND-FIA'    : 'P152',
+    'EP-ADM-FCE'    : 'P04',
+    'EP-CON-FCE'    : 'P08',
+    'EP-MKT-FCE'    : 'P29',
+    'EP-COM-FACH'   : 'P07',
+    'EP-EFI-FACH'   : 'P12',
+    'EP-ING-FACH'   : 'P14',
+    'EP-MUS-FACH'   : 'P17',
+    'EP-INI-FACH'   : 'P19',
+    'EP-PRI-FACH'   : 'P20',
+    'EP-DER-FACH'   : 'P143',
+    'EP-IBI-FACH'   : 'P147',
+    'EP-TEO-FTEO'   : 'P35',
+]
+def result = bsort2Map.get(code)
+if (result == null) {
+    log.debug('statistics2-outbound: no Bsort2/Pcode mapping for EP-code "{}"', code)
+}
+return result
+                            ]]></code>
                         </script>
                     </expression>
                 </outbound>
