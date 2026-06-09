@@ -307,7 +307,12 @@ return num</code>
                 <ref>ri:NIVEL_ENSENANZA</ref>
                 <inbound>
                     <name>nivel-ensenanza-to-studyLevel</name>
-                    <strength>strong</strength>
+                    <!-- weak (2026-06-09): el studyLevel del estudio VIVO actual lo gobierna
+                         Estudiantes (IIA autoritativa, strong). Egresados solo aporta studyLevel
+                         como fallback para egresados PUROS (alumni sin matrícula viva). Evita que
+                         el padrón histórico de egresados sobreescriba el nivel del estudio activo
+                         en un dual student+alum. iga-canonical-standards §1.3 (IIA única por atributo). -->
+                    <strength>weak</strength>
                     <expression>
                         <script>
                             <code>(input ?: '').toString().trim() ?: null</code>
