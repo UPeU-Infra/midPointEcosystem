@@ -989,61 +989,43 @@
                 <outbound>
                     <name>statistics1-outbound</name>
                     <strength>normal</strength>
-                    <!-- Koha statistics_1 = Bsort1: código de facultad autorizado por Koha.
-                         Valores válidos: FCS, FIA, FCE, FACIHED, FACTEO, EPG, COLEGIO, UNKNOWN.
-                         Fuente: extension/sciback:academicProgramCode (EP-XXX-FFF).
-                         Antes (2026-06-02): se mandaba organizationalUnit (texto libre) — incorrecto.
-                         Fix (2026-06-09): Groovy map inline EP-code → Bsort1.
-                         Decisión opción B (no LookupTable): mapeo estático UPeU-overlay,
-                         29 filas, no editable por admins, sin I/O repo adicional.
-                         Null-safe: EP desconocido → null (no error, no UNKNOWN forzado). -->
+                    <!-- Koha statistics_1 = Bsort1: código corto de facultad autorizado por Koha.
+                         authorised_values Bsort1 reales (verificado en Koha PROD 2026-06-09, son 8):
+                           FCS, FIA, FACIHED, FACTEO, FCE, EPG, COLEGIO, UNKNOWN.
+                         Fuente CANÓNICA: extension/sciback:facultyName (nombre crudo de la facultad,
+                         poblado por el resource Estudiantes desde Oracle LAMB ELISEO.ORG_AREA.NOMBRE
+                         del nodo padre de la escuela). El mapeo nombre-de-facultad → código-corto-Koha
+                         es ESPECÍFICO de Koha (los códigos FCS/FIA/... son los authorised_values Bsort1
+                         de Koha, NO un código canónico universal) → vive aquí, en el resource Koha
+                         (separación de concerns correcta). El foco solo guarda el nombre canónico crudo.
+                         Refactor 2026-06-09: ANTES se derivaba de academicProgramCode (EP-XXX) con un
+                         mapa estático que mezclaba el código corto Koha en el dominio canónico. Ahora el
+                         switch traduce el nombre de facultad de la IIA Oracle al authorised_value Koha.
+                         Códigos corregidos vs Koha PROD: FACIHED (no 'FCHE') y FACTEO (no 'FT').
+                         Null-safe: facultad no mapeada (Centro de Idiomas, Conservatorio, Proyectos
+                         Especiales, Capacitación Continua, facultad de prueba, etc.) → null (sin Bsort1,
+                         no error, no UNKNOWN forzado). -->
                     <expression>
                         <script>
                             <code><![CDATA[
 if (focus == null) return null
-// Leer academicProgramCode del foco (ya materializado por resource Estudiantes/Trabajadores).
-// Es single-valued indexado; usar getExtensionPropertyValue vía basic helper.
-def epCode = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'academicProgramCode'))
-if (epCode == null) return null
-def code = epCode.toString().trim()
-
-// Mapa EP-code → Bsort1 (código autorizado Koha).
-// EP-codes tomados de upeu/orgs/academic-programs/academic-programs-pregrado.xml (fuente canónica).
-// Validados vs VocBench Tesauro_Institucional_UPeU (2026-06-09).
-// EP sin Bsort1 (EP-IIE, EP-PSI-FCHE, EP-XXX) → null.
+def facName = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'facultyName'))
+if (facName == null) return null
+def name = facName.toString().trim()
+if (!name) return null
+// Switch nombre-de-facultad (ELISEO.ORG_AREA.NOMBRE) → authorised_value Bsort1 de Koha.
+// Match exacto contra el nombre crudo Oracle. Facultades no listadas → null.
 def bsort1Map = [
-    // FCS — Facultad de Ciencias de la Salud
-    'EP-PSI-FCS'    : 'FCS',
-    'EP-ENF'        : 'FCS',
-    'EP-MED'        : 'FCS',
-    'EP-NUT'        : 'FCS',
-    // FIA — Facultad de Ingeniería y Arquitectura
-    'EP-ARQ'        : 'FIA',
-    'EP-IAMB'       : 'FIA',
-    'EP-ICIV'       : 'FIA',
-    'EP-IIA'        : 'FIA',
-    'EP-SIS'        : 'FIA',
-    'EP-IIE'        : 'FIA',   // sin P-code SUNEDU aún
-    // FCE — Facultad de Ciencias Empresariales
-    'EP-ADM'        : 'FCE',
-    'EP-CON'        : 'FCE',
-    'EP-MKT'        : 'FCE',
-    // FACIHED — Facultad de Ciencias Humanas y Educación
-    'EP-COM'        : 'FACIHED',
-    'EP-EDU-EFI'    : 'FACIHED',
-    'EP-EDU-IES'    : 'FACIHED',
-    'EP-EDU-MUA'    : 'FACIHED',
-    'EP-EDU-INI'    : 'FACIHED',
-    'EP-EDU-PRI'    : 'FACIHED',
-    'EP-EDU-CIN'    : 'FACIHED',
-    'EP-EDU-MAT'    : 'FACIHED',
-    'EP-PSI-FCHE'   : 'FACIHED',  // sin P-code propio aún
-    // FACTEO — Facultad de Teología
-    'EP-TEO'        : 'FACTEO',
+    'Facultad de Ciencias de la Salud'           : 'FCS',
+    'Facultad de Ingeniería y Arquitectura'      : 'FIA',
+    'Facultad de Ciencias Humanas y Educación'   : 'FACIHED',
+    'Facultad de Ciencias Empresariales'         : 'FCE',
+    'Facultad de Teología'                       : 'FACTEO',
+    'Escuela General de Posgrado'                : 'EPG'
 ]
-def result = bsort1Map.get(code)
+def result = bsort1Map.get(name)
 if (result == null) {
-    log.debug('statistics1-outbound: no Bsort1 mapping for EP-code "{}"', code)
+    log.debug('statistics1-outbound: no Bsort1 mapping for facultyName "{}"', name)
 }
 return result
                             ]]></code>
@@ -1058,59 +1040,25 @@ return result
                     <name>statistics2-outbound</name>
                     <strength>normal</strength>
                     <!-- Koha statistics_2 = Bsort2: código P-code SUNEDU del programa.
-                         Valores válidos: P04, P06, P07, P08, P12, P14, P17, P19, P20,
-                         P22, P24, P25, P26, P27, P29, P30, P31, P33, P35, P143, P147,
-                         P152, P153, P154, etc.
-                         Fuente: extension/sciback:academicProgramCode (EP-XXX-FFF).
-                         Antes: se mandaba academicProgram (texto libre) — incorrecto.
-                         Fix (2026-06-09): Groovy map inline EP-code → Pcode SUNEDU.
-                         Carreras sin P-code asignado por SUNEDU aún → null (no error). -->
+                         Fuente CANÓNICA: extension/sciback:academicProgramSuneduCode (P-code),
+                         poblado por el resource Estudiantes desde Oracle LAMB
+                         DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_SUNEDU2 (IIA única). El P-code es el
+                         identificador oficial SUNEDU (Registro Nacional de Grados y Títulos) — se
+                         emite TAL CUAL a Koha, sin transformación: el dato ya es canónico y Koha lo
+                         consume directo (separación de concerns: el mapeo no vive en este resource).
+                         Refactor 2026-06-09: ANTES se derivaba con un mapa estático EP-code → P-code
+                         que duplicaba la verdad de Oracle y se desincronizaba (P30/P31/P33/P35/P143).
+                         Ahora P-code llega desde la IIA Oracle vía atributo dedicado. Koha ya tiene los
+                         authorised_values Bsort2 (verificado 2026-06-09: P30/P31/P33/P35/P143 existen).
+                         Null-safe: programa sin CODIGO_SUNEDU2 → atributo vacío → null → Koha sin Bsort2. -->
                     <expression>
                         <script>
                             <code><![CDATA[
 if (focus == null) return null
-def epCode = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'academicProgramCode'))
-if (epCode == null) return null
-def code = epCode.toString().trim()
-
-// Mapa EP-code → P-code SUNEDU (Bsort2).
-// EP-codes tomados de upeu/orgs/academic-programs/academic-programs-pregrado.xml.
-// Validados vs VocBench Tesauro_Institucional_UPeU (2026-06-09).
-// EP sin P-code SUNEDU asignado → null (SUNEDU pendiente de asignar).
-def bsort2Map = [
-    // FCS
-    'EP-PSI-FCS'    : 'P33',
-    'EP-ENF'        : 'P22',
-    'EP-MED'        : 'P30',
-    'EP-NUT'        : 'P31',
-    // FIA
-    'EP-ARQ'        : 'P06',
-    'EP-IAMB'       : 'P24',
-    'EP-ICIV'       : 'P25',
-    'EP-IIA'        : 'P26',
-    'EP-SIS'        : 'P27',
-    // FCE
-    'EP-ADM'        : 'P04',
-    'EP-CON'        : 'P08',
-    'EP-MKT'        : 'P29',
-    // FACIHED
-    'EP-COM'        : 'P07',
-    'EP-EDU-EFI'    : 'P12',
-    'EP-EDU-IES'    : 'P14',
-    'EP-EDU-MUA'    : 'P17',
-    'EP-EDU-INI'    : 'P19',
-    'EP-EDU-PRI'    : 'P20',
-    'EP-EDU-CIN'    : 'P15',
-    'EP-EDU-MAT'    : 'P16',
-    // FACTEO
-    'EP-TEO'        : 'P35',
-    // Sin P-code SUNEDU aún (EP-IIE, EP-PSI-FCHE, EP-XXX) → null implícito
-]
-def result = bsort2Map.get(code)
-if (result == null) {
-    log.debug('statistics2-outbound: no Bsort2/Pcode mapping for EP-code "{}"', code)
-}
-return result
+def pcode = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'academicProgramSuneduCode'))
+if (pcode == null) return null
+def code = pcode.toString().trim()
+return code ? code : null
                             ]]></code>
                         </script>
                     </expression>

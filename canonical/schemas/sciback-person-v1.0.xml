@@ -176,6 +176,29 @@
                     <xsd:element name="academicProgramCode" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
                         <xsd:annotation><xsd:appinfo><a:displayName>Código de programa académico</a:displayName><a:indexed>true</a:indexed><a:displayOrder>510</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
+                    <!-- academicProgramSuneduCode: código P-code SUNEDU del programa de estudio
+                         (ej. P30, P31, P143). IIA: Oracle LAMB DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_SUNEDU2
+                         (vía searchScript Estudiantes, columna SUNEDU_CODE, vigencia-aware KEEP DENSE_RANK
+                         LAST). Identificador oficial del programa en el Registro Nacional de Grados y
+                         Títulos SUNEDU (Ley 30220). Single-value: corresponde al programa de la matrícula
+                         vigente que termina más tarde. Destino: outbound koha-ils statistics2-outbound
+                         (Bsort2) — el código se emite tal cual (separación: el resource Koha consume el
+                         dato canónico SUNEDU sin transformación). NO confundir con academicProgramCode
+                         (EP-XXX, código corto interno SciBack/VocBench). -->
+                    <xsd:element name="academicProgramSuneduCode" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código SUNEDU del programa (P-code)</a:displayName><a:help>Código oficial del programa en el Registro Nacional de Grados y Títulos SUNEDU (ej. P30, P31, P143). IIA: Oracle LAMB DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_SUNEDU2. Single-value (programa de la matrícula vigente). Destino: Koha statistics_2/Bsort2.</a:help><a:indexed>true</a:indexed><a:displayOrder>515</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- facultyName: nombre crudo de la facultad a la que pertenece el programa de la
+                         matrícula vigente. IIA: Oracle LAMB ELISEO.ORG_AREA.NOMBRE del nodo PADRE de la
+                         escuela (oafac via ID_PARENT). NO es un código canónico universal — es el nombre
+                         legible de la facultad. El mapeo facultad→código corto (FCS/FIA/FACIHED/...) es
+                         específico de Koha (authorised_values Bsort1) y vive en el resource koha-ils
+                         (statistics1-outbound switch), NO aquí. Single-value (facultad de la matrícula
+                         vigente que termina más tarde, KEEP DENSE_RANK LAST). Ejemplos: 'Facultad de
+                         Ciencias de la Salud', 'Facultad de Ingeniería y Arquitectura'. -->
+                    <xsd:element name="facultyName" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Nombre de facultad</a:displayName><a:help>Nombre crudo de la facultad del programa de la matrícula vigente. IIA: Oracle LAMB ELISEO.ORG_AREA.NOMBRE (nodo padre de la escuela vía ID_PARENT). El código corto Koha (Bsort1) se deriva de este nombre en el resource koha-ils. Single-value.</a:help><a:indexed>true</a:indexed><a:displayOrder>517</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
                     <xsd:element name="studyLevel" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>Nivel de estudios</a:displayName><a:displayOrder>520</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
