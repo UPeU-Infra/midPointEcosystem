@@ -1185,43 +1185,70 @@ return code ? code : null
                     </source>
                     <expression>
                         <script>
-                            <code>
-                                def out = [];
-                                // par STUDY_LEVEL (solo students). Resuelve por studyLevel GRANULAR
-                                // (fuente única de nivel, derivada de la carrera principal). 2026-06-09:
-                                // ELIMINADO el fallback maxCycle>=7 (proxy frágil que marcaba posgrado a
-                                // pregrados de ciclo alto) y la source studentCycle.
-                                // Koha colapsa el nivel granular a 2 buckets: posgrado | pregrado.
-                                def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
-                                if (aff == 'student') {
-                                    def level = studyLevel != null ? basic.stringify(studyLevel).trim().toLowerCase() : '';
-                                    if (level == 'posgrado' || level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion') {
-                                        out &lt;&lt; '{"type":"STUDY_LEVEL","value":"posgrado"}';
-                                    } else if (level == 'pregrado') {
-                                        out &lt;&lt; '{"type":"STUDY_LEVEL","value":"pregrado"}';
-                                    } else {
-                                        // niveles no-grado (idiomas, cepre, diplomatura, etc.) o vacío:
-                                        // default conservador pregrado + log para visibilidad de datos.
-                                        if (level) log.warn("Koha STUDY_LEVEL: studyLevel no-grado '{}' en {} → default pregrado", level, focus?.name);
-                                        else log.warn("Koha STUDY_LEVEL: studyLevel vacío en student {} → default pregrado", focus?.name);
-                                        out &lt;&lt; '{"type":"STUDY_LEVEL","value":"pregrado"}';
-                                    }
-                                    // pares STUDYCYCLE (uno por ciclo vigente, multivalor). 2026-06-09:
-                                    // ciclo de estudio canónico (sb:studentCycle, multivalor: regular=1
-                                    // valor, irregular=N valores). Gobernado destructivamente por
-                                    // intolerantValuePattern STUDYCYCLE → MidPoint añade los vigentes y
-                                    // remueve los viejos. Solo students (dentro del guard aff=='student').
-                                    def cycles = (studentCycle instanceof Collection) ? studentCycle : (studentCycle != null ? [studentCycle] : []);
-                                    cycles.each { c ->
-                                        def cyc = c != null ? basic.stringify(c).trim() : '';
-                                        if (cyc) out &lt;&lt; '{"type":"STUDYCYCLE","value":"' + cyc + '"}';
-                                    }
-                                }
-                                // par DNI (para adopt-by-DNI del conector v1.3.10)
-                                def dni = lambDocNum != null ? basic.stringify(lambDocNum).trim() : '';
-                                if (dni ==~ /^\d{8}$/) out &lt;&lt; '{"type":"DNI","value":"' + dni + '"}';
-                                return out;
-                            </code>
+                            <code><![CDATA[
+// ===================================================================
+// FIX 2026-06-09 (provenance-binding): leer primaryAffiliation,
+// studyLevel y studentCycle vía basic.getExtensionPropertyValue(s)
+// en vez de las variables-source.
+//
+// CAUSA RAÍZ: estos items del foco llevan value-metadata/provenance
+// (se serializan con <_value>...</_value><_metadata><provenance>...).
+// La binding de la variable-source en el script entrega el contenedor
+// metadata-aware, NO la String plana → basic.stringify(primaryAffiliation)
+// no daba 'student' → el guard aff=='student' fallaba → bloque vacío
+// (solo el par DNI se emitía, porque upeu:lambDocNum es valor plano).
+//
+// basic.getExtensionPropertyValue(focus, QName) SÍ dereferencia el valor
+// real plano aunque tenga provenance — mismo patrón que los outbounds
+// statistics1/statistics2 que SÍ funcionan (FCS/P33 escritos a 24k).
+// Las <source> se conservan declaradas (no estorban; documentan deps).
+// ===================================================================
+def NS_SB = 'urn:sciback:midpoint:person';
+def qn = { n -> new javax.xml.namespace.QName(NS_SB, n) };
+def out = [];
+if (focus == null) return out;
+
+// par STUDY_LEVEL (solo students). Resuelve por studyLevel GRANULAR
+// (fuente única de nivel, derivada de la carrera principal). 2026-06-09:
+// ELIMINADO el fallback maxCycle>=7 (proxy frágil que marcaba posgrado a
+// pregrados de ciclo alto). Koha colapsa el nivel granular a 2 buckets:
+// posgrado | pregrado.
+def affRaw = basic.getExtensionPropertyValue(focus, qn('primaryAffiliation'));
+def aff = affRaw != null ? affRaw.toString().trim().toLowerCase() : '';
+if (aff == 'student') {
+    def levelRaw = basic.getExtensionPropertyValue(focus, qn('studyLevel'));
+    def level = levelRaw != null ? levelRaw.toString().trim().toLowerCase() : '';
+    if (level == 'posgrado' || level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion') {
+        out << '{"type":"STUDY_LEVEL","value":"posgrado"}';
+    } else if (level == 'pregrado') {
+        out << '{"type":"STUDY_LEVEL","value":"pregrado"}';
+    } else {
+        // niveles no-grado (idiomas, cepre, diplomatura, etc.) o vacío:
+        // default conservador pregrado + log para visibilidad de datos.
+        if (level) log.warn("Koha STUDY_LEVEL: studyLevel no-grado '{}' en {} -> default pregrado", level, focus?.name);
+        else log.warn("Koha STUDY_LEVEL: studyLevel vacio en student {} -> default pregrado", focus?.name);
+        out << '{"type":"STUDY_LEVEL","value":"pregrado"}';
+    }
+    // pares STUDYCYCLE (uno por ciclo vigente, multivalor). 2026-06-09:
+    // ciclo de estudio canónico (sb:studentCycle, multivalor: regular=1
+    // valor, irregular=N valores). getExtensionPropertyValues (plural)
+    // devuelve la colección de valores reales planos. Gobernado
+    // destructivamente por intolerantValuePattern STUDYCYCLE → MidPoint
+    // añade los vigentes y remueve los viejos. Solo students.
+    def cyclesRaw = basic.getExtensionPropertyValues(focus, qn('studentCycle'));
+    def cycles = (cyclesRaw instanceof Collection) ? cyclesRaw : (cyclesRaw != null ? [cyclesRaw] : []);
+    cycles.each { c ->
+        def cyc = c != null ? c.toString().trim() : '';
+        if (cyc) out << '{"type":"STUDYCYCLE","value":"' + cyc + '"}';
+    }
+}
+// par DNI (para adopt-by-DNI del conector v1.3.10). upeu:lambDocNum es
+// valor PLANO (sin provenance) → la variable-source funciona bien; se
+// mantiene tal cual.
+def dni = lambDocNum != null ? basic.stringify(lambDocNum).trim() : '';
+if (dni ==~ /^\d{8}$/) out << '{"type":"DNI","value":"' + dni + '"}';
+return out;
+                            ]]></code>
                         </script>
                     </expression>
                 </outbound>
