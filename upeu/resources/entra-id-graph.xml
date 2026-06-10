@@ -213,62 +213,71 @@
             </attribute>
 
             <!-- ================================================================
-                 ri:photo → jpegPhoto  (INBOUND, strength=STRONG)  [Fase 12-ready]
+                 ri:photo → extension/upeu:entraPhoto  (INBOUND)  [PROPOSED — NO ACTIVO]
                  ================================================================
-                 PROPÓSITO: la foto de perfil M365/Entra ID (la que el usuario
-                 eligió en su cuenta institucional) tiene PRIORIDAD sobre la foto
-                 de LAMB. El template Base (Bloque I) fetchea la foto de LAMB MinIO
-                 con strength=NORMAL; este inbound es STRONG → gana sobre LAMB.
+                 PROPÓSITO: foto de perfil M365/Entra ID con PRIORIDAD sobre LAMB.
 
-                 RELATIVITY / PRECEDENCIA (validado):
-                   - Si Entra ID trae photo  → este STRONG materializa jpegPhoto.
-                     Entonces la condición del Bloque I (focus.jpegPhoto == null)
-                     se vuelve false → LAMB (normal) NO compite. Entra gana. ✔
-                   - Si Entra ID NO trae photo → este mapping no aporta valor;
-                     Bloque I (normal) pone la foto de LAMB como fallback. ✔
-                   No hay conflicto: strong-con-valor desplaza a normal; strong-sin-
-                   valor no borra (normal puede poblar). Semántica canónica MidPoint.
+                 ⚠ HALLAZGO 2026-06-10 (canary en PROD) — REDISEÑO OBLIGATORIO:
+                 El diseño previo (inbound STRONG directo a $user/jpegPhoto, retornando
+                 null cuando Entra no trae foto) es DESTRUCTIVO. Un mapping inbound
+                 strong que produce null como valor es AUTORITATIVO → BORRA jpegPhoto.
+                 Comprobado en PROD: usuario 07660311 (con foto LAMB de 15497 bytes)
+                 perdió su foto al reconciliar porque no tiene foto en M365 → el strong
+                 retornó null → borró jpegPhoto → el Bloque I del template NO repuso
+                 (su fetch HTTP no se re-dispara sin delta en photoUrl/sin reconcile).
+                 La premisa "strong-sin-valor no borra" era FALSA. Se revirtió en PROD
+                 (PATCH delete del attribute) y se restauró la foto del canary. m_user
+                 con foto = 27.075 invariante, 0 daño colateral.
 
-                 TIPO: ri:photo es xsd:base64Binary; jpegPhoto es xsd:base64Binary
-                   → mapeo directo, sin conversión.
+                 DISEÑO CORRECTO (single chokepoint, evita strong-null destructivo):
+                   1. Este inbound escribe la foto M365 a un campo DEDICADO de
+                      extensión: extension/upeu:entraPhoto  (NO a jpegPhoto).
+                      Sin foto M365 → entraPhoto null → no borra nada de jpegPhoto.
+                   2. El Bloque I del UserTemplate-Person-Base decide la precedencia
+                      en UN solo punto:
+                        jpegPhoto = (entraPhoto != null) ? entraPhoto
+                                                         : fetch(photoUrl LAMB MinIO)
+                      M365 gana cuando existe; LAMB es fallback; nunca hay borrado.
 
-                 FETCH STRATEGY = explicit  (IMPRESCINDIBLE):
-                   El schema del connector marca ri:photo con
-                   <ra:returnedByDefault>false</ra:returnedByDefault>, es decir el
-                   connector Graph NO devuelve la foto en search/sync por defecto
-                   (Graph requiere GET /users/{id}/photo/$value aparte). Sin
-                   fetchStrategy=explicit el atributo llegaría siempre vacío y el
-                   inbound no jalaría nada. 'explicit' fuerza al connector a pedir
-                   la foto para cada objeto procesado por recon/livesync.
-                   COSTE: 1 GET extra por usuario a Graph en cada recon → aceptar
-                   en recon diario; livesync solo lo paga en deltas.
+                 PENDIENTE para activar (requiere visto bueno + validación canary):
+                   (a) Añadir al schema upeu-local: element upeu:entraPhoto
+                       (xsd:base64Binary, minOccurs=0).
+                   (b) Modificar Bloque I del template base: leer entraPhoto primero,
+                       fallback a LAMB; ajustar condición para no re-fetchear LAMB si
+                       entraPhoto poblado.
+                   (c) Cambiar lifecycleState de este inbound a 'active'.
+                   (d) Backfill PROGRESIVO scoped (ver nota BACKFILL abajo).
 
-                 ACTIVO HOY: el resource es inbound-only y el objectType está en
-                 lifecycleState=proposed (suprime OUTBOUND, NO inbound). Por tanto
-                 este inbound EMPIEZA a jalar fotos M365 apenas se importe — no
-                 requiere Entra ID write ni Fase 12. Es lectura pura.
+                 FETCH STRATEGY = explicit (IMPRESCINDIBLE): ri:photo tiene
+                 returnedByDefault=false (Graph requiere GET /users/{id}/photo/$value).
+                 'explicit' fuerza el GET por objeto. COSTE: 1 GET extra/usuario.
 
-                 IIA: foto de perfil institucional = Entra ID / M365 (autoritativa
-                 sobre la elección del usuario); LAMB MinIO = fuente secundaria.
+                 ⚠ SATURACIÓN: si el inbound queda activo en import-entra-id-hourly
+                 (procesa ~73.5K shadows exist=true), haría ~73.5K GET-foto/hora →
+                 throttling Graph 429. ADEMÁS jpegPhoto se proyecta OUTBOUND a LDAP
+                 (normal) y Koha (weak) → cada foto materializada dispara UPDATE
+                 downstream → storm. POR ESO el backfill debe ser scoped + throttled.
+
+                 BACKFILL PROGRESIVO (universo real = 3.979 shadows linked+exist=true:
+                 1.636 sin foto LAMB [prioridad] + 2.343 con foto LAMB):
+                   - Suspender import-entra-id-hourly + recon-entra-id-daily durante.
+                   - Driver por lotes de 150-200 shadows, reconcile serializado
+                     (concurrencia 1), pausa 30-60s entre lotes, respetar Retry-After
+                     en 429 + backoff exponencial. Heap gate.
+                   - Reanudar hourly + daily al terminar.
+
+                 IIA: foto de perfil institucional = Entra ID / M365 (autoritativa);
+                 LAMB MinIO = fuente secundaria.
                  ================================================================ -->
             <attribute>
                 <ref>ri:photo</ref>
                 <fetchStrategy>explicit</fetchStrategy>
                 <inbound>
-                    <name>entra-photo-to-jpegPhoto</name>
+                    <name>entra-photo-to-entraPhoto-ext</name>
+                    <lifecycleState>proposed</lifecycleState>
                     <strength>strong</strength>
-                    <expression>
-                        <script>
-                            <code>
-// Foto de perfil M365: gana sobre LAMB (Bloque I, normal).
-// Si Entra no trae foto, retorna null y NO borra: Bloque I (normal) la pone.
-if (input == null) return null;
-return input
-                            </code>
-                        </script>
-                    </expression>
                     <target>
-                        <path>$user/jpegPhoto</path>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">$user/extension/upeu:entraPhoto</path>
                     </target>
                 </inbound>
                 <!-- No outbound: doctrina inbound-only hasta Fase 12. -->
