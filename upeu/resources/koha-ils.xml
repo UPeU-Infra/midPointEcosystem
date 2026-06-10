@@ -1131,18 +1131,19 @@ return code ? code : null
                      PatronMapper.convertExtendedAttributes*).
 
                      MidPoint NO es dueño del atributo completo: es dueño SOLO de
-                     los pares cuyo "type" aparece en <intolerantValuePattern>.
+                     los pares gobernados (AREA, CRAI_TIER, RESEARCHER,
+                     STUDY_LEVEL, STUDYCYCLE).
 
-                     tolerant=true            → los pares NO intolerantes
-                                                (DNI, SEDE, TIPO_VINC, ORCID,
-                                                COD_UPEU, SHOW_BCODE) se preservan
-                                                intactos: MidPoint nunca los borra.
-                     intolerantValuePattern   → los pares "type":"AREA" y
-                                                "type":"CRAI_TIER" SÍ están bajo
-                                                gobierno MidPoint: si ninguna
-                                                construction activa los produce,
-                                                MidPoint emite el delete-value
-                                                granular de ese par (y solo de ese).
+                     Mecanismo (FIX 2026-06-10, ver nota junto a <tolerant>):
+                     tolerant=false           → pares gobernados: los producidos
+                                                por mappings/constructions se
+                                                añaden y conservan; los stale se
+                                                borran granularmente (range).
+                     tolerantValuePattern     → WHITELIST: todo par cuyo type NO
+                                                sea gobernado (DNI, SEDE,
+                                                TIPO_VINC, ORCID, COD_UPEU,
+                                                SHOW_BCODE, etc.) se preserva
+                                                intacto: MidPoint nunca lo borra.
                                                 CRAI_TIER añadido 2026-05-22
                                                 (niveles de acceso CRAI, Fase A).
 
@@ -1252,8 +1253,34 @@ return out;
                         </script>
                     </expression>
                 </outbound>
-                <tolerant>true</tolerant>
-                <intolerantValuePattern>.*"type"\s*:\s*"(AREA|CRAI_TIER|RESEARCHER|STUDY_LEVEL|STUDYCYCLE)".*</intolerantValuePattern>
+                <!-- ============================================================
+                     FIX 2026-06-10 (causa raíz delta-tragado, TRACE projector):
+                     tolerant=true + intolerantValuePattern ROMPÍA el provisioning
+                     de los pares gobernados. ReconciliationProcessor evalúa sobre
+                     el objeto NEW (que ya incluye el ADD pendiente del strong
+                     mapping): la fase de tolerancia marca DELETE de TODO valor
+                     que matchee el patrón intolerante SIN eximir los valores
+                     producidos por los propios mappings ("reconciliation will
+                     DELETE value ... because it has matched with intolerant
+                     pattern"). El DELETE se traga contra el ADD pendiente →
+                     delta neto VACÍO → STUDY_LEVEL/STUDYCYCLE jamás llegaban a
+                     Koha (también cancelaba deltas explícitos vía REST).
+
+                     Mecanismo correcto (canónico): tolerant=false +
+                     tolerantValuePattern WHITELIST de los tipos NO gobernados.
+                     La ruta non-tolerant del ReconciliationProcessor SÍ exime
+                     los valores presentes en las salidas de mappings (shouldBe):
+                       - pares gobernados vigentes (AREA/CRAI_TIER/RESEARCHER/
+                         STUDY_LEVEL/STUDYCYCLE producidos por mappings) → se
+                         AÑADEN y se conservan;
+                       - pares gobernados stale (no producidos ya por ningún
+                         mapping/construction) → DELETE granular (range);
+                       - cualquier otro type (DNI, SEDE, TIPO_VINC, ORCID,
+                         COD_UPEU, SHOW_BCODE, futuros) → tolerado por el
+                         patrón whitelist, MidPoint nunca los borra.
+                     ============================================================ -->
+                <tolerant>false</tolerant>
+                <tolerantValuePattern>.*"type"\s*:\s*"(?!(AREA|CRAI_TIER|RESEARCHER|STUDY_LEVEL|STUDYCYCLE)").*</tolerantValuePattern>
             </attribute>
             <attribute>
                 <ref>ri:library_id</ref>
