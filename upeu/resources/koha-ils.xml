@@ -7,8 +7,8 @@
     <lifecycleState>active</lifecycleState>
     <!-- 2026-05-31: proposed→active. Gate aprobado: 4/4 workers con primaryAffiliation materializado post-recompute. 71590328 archivado (leaver real). Raíz C + PARTITION BY fix aplicados. -->
     <!-- 2026-05-23: v1.3.8 (OID 6fb37940-6fc6-4b87-a8c9-8eabc0dea4ae) — fallback JDBC por DNI extended_attribute en 409. v1.3.7=f50111d4. v1.3.6=e9478d50. v1.3.5=2cd4db5d. v1.3.0=0bda47cd. -->
-    <!-- connectorRef → KohaConnector v1.3.10 (adopt-by-DNI en 409). Repuntado 2026-06-05. -->
-    <connectorRef oid="566c1121-785d-43be-8679-d939d2c8144b" relation="org:default" type="c:ConnectorType"/>
+    <!-- connectorRef → KohaConnector v1.3.11 (extended_attributes gobernables en UPDATE: STUDYCYCLE backfill vía reconcile, merge-preserve de atributos ajenos como DNI). Repuntado 2026-06-09. v1.3.10=566c1121-785d-43be-8679-d939d2c8144b (rollback retenido). -->
+    <connectorRef oid="45b4f0e0-b905-49c4-9d10-f0af7c067a6a" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration>
         <ns1:configurationProperties>
             <ns2:serviceAddress>http://192.168.12.135:8001</ns2:serviceAddress>
