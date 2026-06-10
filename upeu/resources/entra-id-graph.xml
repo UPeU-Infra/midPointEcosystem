@@ -212,8 +212,67 @@
                 <!-- No outbound: title lo gestiona el template desde LAMB -->
             </attribute>
 
-            <!-- ri:photo: no mapeado — política: solo URLs (upeu:photoUrl LAMB MinIO).
-                 No almacenar binarios de foto en MidPoint DB. -->
+            <!-- ================================================================
+                 ri:photo → jpegPhoto  (INBOUND, strength=STRONG)  [Fase 12-ready]
+                 ================================================================
+                 PROPÓSITO: la foto de perfil M365/Entra ID (la que el usuario
+                 eligió en su cuenta institucional) tiene PRIORIDAD sobre la foto
+                 de LAMB. El template Base (Bloque I) fetchea la foto de LAMB MinIO
+                 con strength=NORMAL; este inbound es STRONG → gana sobre LAMB.
+
+                 RELATIVITY / PRECEDENCIA (validado):
+                   - Si Entra ID trae photo  → este STRONG materializa jpegPhoto.
+                     Entonces la condición del Bloque I (focus.jpegPhoto == null)
+                     se vuelve false → LAMB (normal) NO compite. Entra gana. ✔
+                   - Si Entra ID NO trae photo → este mapping no aporta valor;
+                     Bloque I (normal) pone la foto de LAMB como fallback. ✔
+                   No hay conflicto: strong-con-valor desplaza a normal; strong-sin-
+                   valor no borra (normal puede poblar). Semántica canónica MidPoint.
+
+                 TIPO: ri:photo es xsd:base64Binary; jpegPhoto es xsd:base64Binary
+                   → mapeo directo, sin conversión.
+
+                 FETCH STRATEGY = explicit  (IMPRESCINDIBLE):
+                   El schema del connector marca ri:photo con
+                   <ra:returnedByDefault>false</ra:returnedByDefault>, es decir el
+                   connector Graph NO devuelve la foto en search/sync por defecto
+                   (Graph requiere GET /users/{id}/photo/$value aparte). Sin
+                   fetchStrategy=explicit el atributo llegaría siempre vacío y el
+                   inbound no jalaría nada. 'explicit' fuerza al connector a pedir
+                   la foto para cada objeto procesado por recon/livesync.
+                   COSTE: 1 GET extra por usuario a Graph en cada recon → aceptar
+                   en recon diario; livesync solo lo paga en deltas.
+
+                 ACTIVO HOY: el resource es inbound-only y el objectType está en
+                 lifecycleState=proposed (suprime OUTBOUND, NO inbound). Por tanto
+                 este inbound EMPIEZA a jalar fotos M365 apenas se importe — no
+                 requiere Entra ID write ni Fase 12. Es lectura pura.
+
+                 IIA: foto de perfil institucional = Entra ID / M365 (autoritativa
+                 sobre la elección del usuario); LAMB MinIO = fuente secundaria.
+                 ================================================================ -->
+            <attribute>
+                <ref>ri:photo</ref>
+                <fetchStrategy>explicit</fetchStrategy>
+                <inbound>
+                    <name>entra-photo-to-jpegPhoto</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+// Foto de perfil M365: gana sobre LAMB (Bloque I, normal).
+// Si Entra no trae foto, retorna null y NO borra: Bloque I (normal) la pone.
+if (input == null) return null;
+return input
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>$user/jpegPhoto</path>
+                    </target>
+                </inbound>
+                <!-- No outbound: doctrina inbound-only hasta Fase 12. -->
+            </attribute>
 
             <!-- ================================================================
                  ACTIVATION — outbound: accountEnabled desde effectiveStatus MidPoint
