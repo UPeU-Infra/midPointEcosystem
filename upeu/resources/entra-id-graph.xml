@@ -274,7 +274,7 @@
                 <fetchStrategy>explicit</fetchStrategy>
                 <inbound>
                     <name>entra-photo-to-entraPhoto-ext</name>
-                    <lifecycleState>proposed</lifecycleState>
+                    <lifecycleState>active</lifecycleState>
                     <strength>strong</strength>
                     <target>
                         <path xmlns:upeu="urn:upeu:midpoint:local">$user/extension/upeu:entraPhoto</path>
