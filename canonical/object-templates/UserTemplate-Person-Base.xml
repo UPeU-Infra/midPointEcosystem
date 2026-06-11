@@ -24,7 +24,7 @@
     G — Rejection reasons: trazabilidad de perfiles incompletos en draft
     H — Baja definitiva: active→archived para staff/faculty con grace periods por motivoCese (ISO 24760 §6.3)
          fallecimiento=0d, despido=7d, termino_contrato=0d, renuncia/mutuo_disenso/otro=30d, jubilacion=nunca
-    I — jpegPhoto fetch desde LAMB MinIO (upeu:photoUrl → jpegPhoto, normal, try/catch)
+    I — jpegPhoto precedencia foto: I.1 entraPhoto(M365,normal) gana → I.2 fallback LAMB MinIO(photoUrl,weak,try/catch). No-borrado: ambos normal/weak (2026-06-10)
     J — Migración lambDocNum → identityDocuments: construye contenedor canónico + limpia taxId
     J3 — Calcula primaryAffiliation desde affiliations multi-valor por prioridad (faculty>staff>student>alum>affiliate)
     K — Override jubilados→alum (Decisión B): strong, condicional a motivoCese=jubilacion y sin afiliación mayor
@@ -1684,44 +1684,80 @@ return ActivationStatusType.ENABLED</code>
     </mapping>
 
     <!-- ============================================================
-         BLOQUE I — FETCH JPEG DESDE LAMB MINIO (photoUrl → jpegPhoto)
-         Source: extension/upeu:photoUrl (inbound desde Oracle LAMB Trabajadores)
+         BLOQUE I — PRECEDENCIA DE FOTO (M365 Entra ID → LAMB MinIO) → jpegPhoto
          Target: jpegPhoto (core UserType, xsd:base64Binary)
-         Strength: normal — no sobreescribe si jpegPhoto ya tiene valor más reciente
-           (Entra ID inbound es strong; este es normal → Entra ID gana si existe)
-         Condición: solo si photoUrl no es null y no está vacío.
-           Estudiantes/egresados no tienen photoUrl → este mapping no actúa para ellos.
-         Timeout: connect 5s, read 10s (MinIO interno UPeU, red LAN 192.168.x)
-         Error handling: try/catch → retorna null (no lanza excepción al template)
-         IIA: ENOC.VW_TRABAJADOR.FOTO → LAMB MinIO → photoUrl
-         Nota: si Entra ID inbound (ri:photo → jpegPhoto, strength=strong) ya tiene
-           valor, este mapping de strength=normal no lo sobreescribe. El binding
-           Entra ID foto es la imagen elegida por el usuario → tiene prioridad.
-         Patrón canónico IGA: patrón reusable para fetch foto desde URL externa.
+
+         REDISEÑO 2026-06-10 (foto M365 con precedencia, NO destructivo):
+           El diseño previo (inbound Entra strong directo a jpegPhoto, retornando null
+           sin foto M365) BORRABA la foto LAMB de usuarios sin foto M365 (strong-null =
+           delete autoritativo). Verificado en PROD (07660311 perdió foto LAMB). Revertido.
+           Nuevo diseño: el inbound Entra escribe a un campo DEDICADO extension/upeu:entraPhoto
+           (entra-id-graph.xml, proposed→active). Este Bloque I elige la precedencia en UN
+           solo chokepoint vía DOS mappings sobre jpegPhoto:
+
+             I.1  entraPhoto → jpegPhoto   (strength=normal)
+                  Si entraPhoto != null → jpegPhoto = entraPhoto (M365 gana).
+             I.2  photoUrl(LAMB MinIO) → jpegPhoto   (strength=weak, FALLBACK)
+                  Solo fetch si entraPhoto == null Y jpegPhoto == null.
+
+         GARANTÍA DE NO-BORRADO (gate canary b): AMBOS mappings son normal/weak — NUNCA
+           strong. Un normal/weak que produce null NO borra el valor existente de jpegPhoto.
+           Usuario SIN foto M365 pero CON foto LAMB ya materializada: I.1 no contribuye
+           (entraPhoto null), I.2 no actúa (jpegPhoto != null) → jpegPhoto CONSERVADO.
+         Precedencia: I.1 normal gana sobre I.2 weak cuando ambos producen valor.
+         IIA: foto institucional = Entra ID / M365 (autoritativa) > LAMB MinIO (secundaria).
          ============================================================ -->
+
+    <!-- I.1 — entraPhoto (M365) → jpegPhoto, normal: M365 gana cuando existe -->
     <item>
         <ref>jpegPhoto</ref>
         <mapping>
-            <name>I-jpegPhoto-fetch-from-photoUrl</name>
-            <description>Fetcha foto JPEG desde URL MinIO LAMB (upeu:photoUrl) y la escribe en jpegPhoto. strength=normal: no sobreescribe si Entra ID (strong) ya puso una foto. Solo actúa si photoUrl tiene valor. Timeout connect 500ms / read 1000ms (reducido para recon masiva — MinIO LAN responde en &lt;50ms; fotos 404 no bloquean). try/catch retorna null en error.</description>
+            <name>I1-jpegPhoto-from-entraPhoto</name>
+            <description>Copia la foto M365/Entra ID (extension/upeu:entraPhoto, poblada por el inbound ri:photo) a jpegPhoto. strength=normal: M365 tiene precedencia sobre la foto LAMB (I.2 weak). Si entraPhoto es null no contribuye y NO borra jpegPhoto existente (normal-null no es destructivo).</description>
             <lifecycleState>active</lifecycleState>
             <strength>normal</strength>
             <source>
-                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:photoUrl</path>
+                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:entraPhoto</path>
             </source>
             <expression>
                 <script>
-                    <code>if (photoUrl == null) return null; def urlStr = basic.stringify(photoUrl)?.trim(); if (!urlStr) return null; try { def url = new java.net.URL(urlStr); def conn = (java.net.HttpURLConnection) url.openConnection(); conn.setConnectTimeout(500); conn.setReadTimeout(1000); conn.setRequestMethod('GET'); conn.setRequestProperty('User-Agent', 'MidPoint-UPeU-IGA/1.0'); def status = conn.getResponseCode(); if (status != 200) { log.warn('Bloque I jpegPhoto: HTTP {} al fetchear {} para {}', status, urlStr, focus?.name); return null }; def is = conn.getInputStream(); def baos = new java.io.ByteArrayOutputStream(); def buf = new byte[8192]; int n; while ((n = is.read(buf)) != -1) { baos.write(buf, 0, n) }; is.close(); def bytes = baos.toByteArray(); if (bytes.length == 0) { log.warn('Bloque I jpegPhoto: respuesta vacía desde {} para {}', urlStr, focus?.name); return null }; log.debug('Bloque I jpegPhoto: {} bytes leídos desde {} para {}', bytes.length, urlStr, focus?.name); return bytes } catch (Exception e) { log.warn('Bloque I jpegPhoto: error fetcheando {} para {}: {}', urlStr, focus?.name, e.message); return null }</code>
+                    <code>return entraPhoto</code>
                 </script>
             </expression>
             <condition>
                 <script>
-                    <!-- Idempotente (Vía A, validada en DEV 4.9.5 — semántica wave-processing identica en 4.10.2):
-                         solo fetch si hay URL Y jpegPhoto AUN no esta materializada.
-                         Wave 1: jpegPhoto==null -> condicion true -> fetch puebla jpegPhoto.
-                         Wave 2: jpegPhoto!=null -> condicion false -> NO refetch (mata el 2o fetch HTTP).
-                         Si Entra ID (strong) ya puso foto, jpegPhoto!=null -> no fetch innecesario. -->
-                    <code>def u = photoUrl != null ? basic.stringify(photoUrl)?.trim() : ''; u != '' &amp;&amp; focus?.jpegPhoto == null</code>
+                    <code>return entraPhoto != null</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <!-- I.2 — photoUrl (LAMB MinIO) → jpegPhoto, weak FALLBACK: solo si no hay foto M365 -->
+    <item>
+        <ref>jpegPhoto</ref>
+        <mapping>
+            <name>I2-jpegPhoto-fetch-from-photoUrl</name>
+            <description>Fallback: fetcha foto JPEG desde URL MinIO LAMB (upeu:photoUrl) y la escribe en jpegPhoto SOLO si no hay foto M365 (entraPhoto null) y jpegPhoto aún no está materializada. strength=weak: cede precedencia a I.1 (M365). Timeout connect 500ms / read 1000ms. try/catch retorna null en error (no borra: weak-null no es destructivo).</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>weak</strength>
+            <source>
+                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:photoUrl</path>
+            </source>
+            <source>
+                <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:entraPhoto</path>
+            </source>
+            <expression>
+                <script>
+                    <code>if (photoUrl == null) return null; def urlStr = basic.stringify(photoUrl)?.trim(); if (!urlStr) return null; try { def url = new java.net.URL(urlStr); def conn = (java.net.HttpURLConnection) url.openConnection(); conn.setConnectTimeout(500); conn.setReadTimeout(1000); conn.setRequestMethod('GET'); conn.setRequestProperty('User-Agent', 'MidPoint-UPeU-IGA/1.0'); def status = conn.getResponseCode(); if (status != 200) { log.warn('Bloque I.2 jpegPhoto: HTTP {} al fetchear {} para {}', status, urlStr, focus?.name); return null }; def is = conn.getInputStream(); def baos = new java.io.ByteArrayOutputStream(); def buf = new byte[8192]; int n; while ((n = is.read(buf)) != -1) { baos.write(buf, 0, n) }; is.close(); def bytes = baos.toByteArray(); if (bytes.length == 0) { log.warn('Bloque I.2 jpegPhoto: respuesta vacía desde {} para {}', urlStr, focus?.name); return null }; log.debug('Bloque I.2 jpegPhoto: {} bytes leídos desde {} para {}', bytes.length, urlStr, focus?.name); return bytes } catch (Exception e) { log.warn('Bloque I.2 jpegPhoto: error fetcheando {} para {}: {}', urlStr, focus?.name, e.message); return null }</code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <!-- Solo fallback: sin foto M365 (entraPhoto null) Y jpegPhoto aún no materializada.
+                         entraPhoto != null -> condicion false -> NO fetch LAMB (M365 gana, ahorra HTTP).
+                         jpegPhoto != null  -> condicion false -> NO refetch (idempotente, mata 2o fetch).
+                         Usuario con foto LAMB ya puesta y sin M365: condicion false -> jpegPhoto CONSERVADO. -->
+                    <code>def u = photoUrl != null ? basic.stringify(photoUrl)?.trim() : ''; u != '' &amp;&amp; entraPhoto == null &amp;&amp; focus?.jpegPhoto == null</code>
                 </script>
             </condition>
         </mapping>
