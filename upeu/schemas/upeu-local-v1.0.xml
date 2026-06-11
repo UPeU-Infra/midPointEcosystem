@@ -227,6 +227,25 @@
                         </xsd:annotation>
                     </xsd:element>
 
+                    <!-- L14 — FOTO M365 / ENTRA ID (campo dedicado, precedencia sobre LAMB) -->
+                    <!-- IIA: Entra ID / Microsoft 365 (GET /users/{id}/photo/$value).
+                         Poblado por el inbound 'entra-photo-to-entraPhoto-ext' en entra-id-graph.xml
+                         (ri:photo → extension/upeu:entraPhoto, fetchStrategy=explicit).
+                         REDISEÑO 2026-06-10: campo DEDICADO para evitar el strong-null destructivo
+                         (un inbound strong directo a jpegPhoto BORRABA la foto LAMB de usuarios sin
+                         foto M365). El Bloque I del UserTemplate-Person-Base elige la precedencia en
+                         un solo chokepoint: si entraPhoto != null → jpegPhoto = entraPhoto (M365 gana);
+                         si null → fallback fetch foto LAMB MinIO desde upeu:photoUrl. Nunca hay borrado.
+                         base64Binary single. jpegPhoto se proyecta a LDAP (normal) + Koha (weak). -->
+                    <xsd:element name="entraPhoto" type="xsd:base64Binary" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Foto M365 / Entra ID</a:displayName>
+                            <a:help>Foto de perfil desde Microsoft 365 / Entra ID (binario JPEG/PNG). Poblada por inbound ri:photo en entra-id-graph.xml. Tiene precedencia sobre la foto LAMB MinIO: el Bloque I del UserTemplate-Person-Base usa entraPhoto si existe, si no hace fallback a upeu:photoUrl (LAMB). IIA: Entra ID / M365.</a:help>
+                            <a:indexed>false</a:indexed>
+                            <a:displayOrder>62</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
                 </xsd:sequence>
             </xsd:complexType>
 
