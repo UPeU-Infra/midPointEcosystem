@@ -1713,7 +1713,7 @@ return ActivationStatusType.ENABLED</code>
         <ref>jpegPhoto</ref>
         <mapping>
             <name>I1-jpegPhoto-from-entraPhoto</name>
-            <description>Copia la foto M365/Entra ID (extension/upeu:entraPhoto, poblada por el inbound ri:photo) a jpegPhoto, NORMALIZANDO a JPEG ~200px. strength=normal: M365 tiene precedencia sobre la foto LAMB (I.2 weak). Si entraPhoto es null no contribuye y NO borra jpegPhoto existente (normal-null no es destructivo). CONVERSIÓN (2026-06-12): las fotos M365 vienen en PNG (hasta ~700KB); jpegPhoto (RFC 2798) es semánticamente JPEG y los consumidores (Koha photo_mimetype=image/jpeg, LDAP, SSO) esperan JPEG ligero. Se reescala a max 200px lado mayor (carnet) y se recodifica a JPEG q=0.85 vía javax.imageio -> típicamente <50KB. Robusto: si la conversión falla (formato no decodificable, etc.) retorna el binario original (try/catch) para no perder la foto.</description>
+            <description>Copia la foto M365/Entra ID (extension/upeu:entraPhoto, poblada por el inbound ri:photo) a jpegPhoto, NORMALIZANDO a JPEG ~200px. strength=normal: M365 tiene precedencia sobre la foto LAMB (I.2 weak). Si entraPhoto es null no contribuye y NO borra jpegPhoto existente (normal-null no es destructivo). CONVERSIÓN (2026-06-12): las fotos M365 vienen en PNG (hasta ~700KB); jpegPhoto (RFC 2798) es semánticamente JPEG y los consumidores (Koha photo_mimetype=image/jpeg, LDAP, SSO) esperan JPEG ligero. Se reescala a max 200px lado mayor (carnet) y se recodifica a JPEG q=0.85 vía javax.imageio -> típicamente menos de 50KB. Robusto: si la conversión falla (formato no decodificable, etc.) retorna el binario original (try/catch) para no perder la foto.</description>
             <lifecycleState>active</lifecycleState>
             <strength>normal</strength>
             <source>
@@ -1721,7 +1721,7 @@ return ActivationStatusType.ENABLED</code>
             </source>
             <expression>
                 <script>
-                    <code>
+                    <code><![CDATA[
 import javax.imageio.ImageIO
 import javax.imageio.IIOImage
 import javax.imageio.ImageWriteParam
@@ -1780,7 +1780,7 @@ try {
     log.warn('Bloque I.1 foto M365: error convirtiendo foto de {} ({}) -> binario original: {}', focus?.name, (src != null ? src.length : 0), e.message)
     return src
 }
-                    </code>
+                    ]]></code>
                 </script>
             </expression>
             <condition>
