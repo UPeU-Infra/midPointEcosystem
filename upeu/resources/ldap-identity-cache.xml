@@ -14319,6 +14319,23 @@
                  no escribe el atributo en LDAP — no rompe el provisioning. -->
             <attribute>
                 <ref>ri:jpegPhoto</ref>
+                <!-- REPLACE semantics (fix inappropriateMatching, 2026-06-12):
+                     El atributo LDAP jpegPhoto (RFC 2798, SYNTAX 1.3.6.1.4.1.1466.115.121.1.28)
+                     NO tiene EQUALITY matching rule. El schema nativo lo declara multivaluado
+                     (maxOccurs unbounded), por lo que MidPoint, al sustituir una foto por otra,
+                     emitía un value-delta (valuesToAdd + valuesToDelete). El delete value-specific
+                     exige que el servidor matchee el valor viejo contra los existentes -> sin
+                     EQUALITY rule -> inappropriateMatching (18) -> FATAL_ERROR -> rollback de la
+                     reconcile completa (jpegPhoto nunca se sustituía; solo funcionaba el primer ADD).
+                     Forzando maxOccurs=1 en la capa model, MidPoint produce valuesToReplace y el
+                     conector polygon-LDAP emite un MODIFY/REPLACE del atributo completo, que NO
+                     requiere matchear el valor previo. Semánticamente jpegPhoto es 1 foto/persona.
+                     usePermissiveModify=always (connector) NO resuelve esto: es ortogonal (permite
+                     add-existente/delete-inexistente, no exime del matching del delete). -->
+                <limitations>
+                    <layer>model</layer>
+                    <maxOccurs>1</maxOccurs>
+                </limitations>
                 <outbound>
                     <name>jpegPhoto-from-focus-ldap</name>
                     <strength>normal</strength>
