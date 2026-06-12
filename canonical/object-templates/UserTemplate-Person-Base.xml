@@ -1713,7 +1713,7 @@ return ActivationStatusType.ENABLED</code>
         <ref>jpegPhoto</ref>
         <mapping>
             <name>I1-jpegPhoto-from-entraPhoto</name>
-            <description>Copia la foto M365/Entra ID (extension/upeu:entraPhoto, poblada por el inbound ri:photo) a jpegPhoto, NORMALIZANDO a JPEG ~200px. strength=normal: M365 tiene precedencia sobre la foto LAMB (I.2 weak). Si entraPhoto es null no contribuye y NO borra jpegPhoto existente (normal-null no es destructivo). CONVERSIÓN (2026-06-12): las fotos M365 vienen en PNG (hasta ~700KB); jpegPhoto (RFC 2798) es semánticamente JPEG y los consumidores (Koha photo_mimetype=image/jpeg, LDAP, SSO) esperan JPEG ligero. Se reescala a max 200px lado mayor (carnet) y se recodifica a JPEG q=0.85 vía javax.imageio -> típicamente menos de 50KB. Robusto: si la conversión falla (formato no decodificable, etc.) retorna el binario original (try/catch) para no perder la foto.</description>
+            <description>Copia la foto M365/Entra ID (extension/upeu:entraPhoto) a jpegPhoto. strength=normal: M365 tiene precedencia sobre la foto LAMB (I.2 weak). Si entraPhoto es null no contribuye y NO borra jpegPhoto existente (normal-null no es destructivo). NOTA (2026-06-12): la normalización PNG->JPEG ~200px ahora se hace en el INBOUND entra-photo-to-entraPhoto-ext (entra-id-graph.xml), de modo que entraPhoto YA es JPEG ligero. Razones: (1) normalizar una sola vez al ingerir, no en cada consumidor; (2) el inbound convertido produce bytes distintos al PNG cacheado -> delta -> dispara esta propagación (un mapping normal NO se re-evalúa en recompute si la fuente no cambió; convertir aquí no se propagaba). Este mapping queda como passthrough simple.</description>
             <lifecycleState>active</lifecycleState>
             <strength>normal</strength>
             <source>
@@ -1721,66 +1721,7 @@ return ActivationStatusType.ENABLED</code>
             </source>
             <expression>
                 <script>
-                    <code><![CDATA[
-import javax.imageio.ImageIO
-import javax.imageio.IIOImage
-import javax.imageio.ImageWriteParam
-import java.awt.image.BufferedImage
-import java.awt.RenderingHints
-
-if (entraPhoto == null) return null
-byte[] src = entraPhoto
-try {
-    BufferedImage img = ImageIO.read(new java.io.ByteArrayInputStream(src))
-    if (img == null) {
-        log.warn('Bloque I.1 foto M365: ImageIO no pudo decodificar la imagen de {} ({} bytes) -> se usa binario original', focus?.name, src.length)
-        return src
-    }
-    int w = img.getWidth(), h = img.getHeight()
-    int maxDim = 200
-    double scale = Math.min(1.0d, (double) maxDim / Math.max(w, h))
-    int nw = Math.max(1, (int) Math.round(w * scale))
-    int nh = Math.max(1, (int) Math.round(h * scale))
-
-    // Aplanar a RGB sobre fondo blanco (PNG con alpha -> JPEG no soporta alpha)
-    BufferedImage rgb = new BufferedImage(nw, nh, BufferedImage.TYPE_INT_RGB)
-    def g = rgb.createGraphics()
-    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
-    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-    g.setColor(java.awt.Color.WHITE)
-    g.fillRect(0, 0, nw, nh)
-    g.drawImage(img, 0, 0, nw, nh, null)
-    g.dispose()
-
-    def writers = ImageIO.getImageWritersByFormatName('jpeg')
-    if (!writers.hasNext()) {
-        log.warn('Bloque I.1 foto M365: sin JPEG writer disponible para {} -> binario original', focus?.name)
-        return src
-    }
-    def writer = writers.next()
-    ImageWriteParam param = writer.getDefaultWriteParam()
-    if (param.canWriteCompressed()) {
-        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT)
-        param.setCompressionQuality(0.85f)
-    }
-    def baos = new java.io.ByteArrayOutputStream()
-    def ios = ImageIO.createImageOutputStream(baos)
-    writer.setOutput(ios)
-    writer.write(null, new IIOImage(rgb, null, null), param)
-    ios.close()
-    writer.dispose()
-    byte[] out = baos.toByteArray()
-    if (out == null || out.length == 0) {
-        log.warn('Bloque I.1 foto M365: JPEG resultante vacío para {} -> binario original', focus?.name)
-        return src
-    }
-    log.debug('Bloque I.1 foto M365: {} convertida {}x{} {}B -> JPEG {}x{} {}B', focus?.name, w, h, src.length, nw, nh, out.length)
-    return out
-} catch (Exception e) {
-    log.warn('Bloque I.1 foto M365: error convirtiendo foto de {} ({}) -> binario original: {}', focus?.name, (src != null ? src.length : 0), e.message)
-    return src
-}
-                    ]]></code>
+                    <code>return entraPhoto</code>
                 </script>
             </expression>
             <condition>

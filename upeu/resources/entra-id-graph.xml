@@ -274,8 +274,81 @@
                 <fetchStrategy>explicit</fetchStrategy>
                 <inbound>
                     <name>entra-photo-to-entraPhoto-ext</name>
-                    <lifecycleState>active</lifecycleState>
+                    <!-- lifecycleState=proposed: foto inbound desactivada en reposo. Se activa
+                         (PATCH -> active) solo durante backfill controlado de foto. -->
+                    <lifecycleState>proposed</lifecycleState>
                     <strength>strong</strength>
+                    <!-- NORMALIZACIÓN PNG->JPEG ~200px (2026-06-12): la foto M365 viene en PNG
+                         (hasta ~700KB). jpegPhoto (RFC 2798) es semánticamente JPEG y los consumidores
+                         (LDAP, Koha photo_mimetype=image/jpeg, SSO) esperan JPEG ligero. Convertir AQUÍ
+                         (no en el template) tiene dos ventajas: (1) entraPhoto queda normalizado una
+                         sola vez al ingerir; (2) el resultado JPEG difiere del PNG cacheado -> genera
+                         delta -> dispara la cadena Bloque I -> jpegPhoto -> proyección LDAP (un mapping
+                         normal del template NO se re-evalúa en recompute si su fuente no cambió).
+                         Reescala a max 200px lado mayor (carnet), aplana alpha sobre fondo blanco,
+                         recodifica JPEG q=0.85 -> típicamente menos de 50KB. Robusto: si la conversión
+                         falla retorna el binario original (try/catch) para no perder la foto. -->
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+import javax.imageio.ImageIO
+import javax.imageio.IIOImage
+import javax.imageio.ImageWriteParam
+import java.awt.image.BufferedImage
+import java.awt.RenderingHints
+
+if (photo == null) return null
+byte[] src = photo
+try {
+    BufferedImage img = ImageIO.read(new java.io.ByteArrayInputStream(src))
+    if (img == null) {
+        log.warn('Inbound foto M365->entraPhoto: ImageIO no pudo decodificar ({} bytes) para {} -> binario original', src.length, shadow?.name)
+        return src
+    }
+    int w = img.getWidth(), h = img.getHeight()
+    int maxDim = 200
+    double scale = Math.min(1.0d, (double) maxDim / Math.max(w, h))
+    int nw = Math.max(1, (int) Math.round(w * scale))
+    int nh = Math.max(1, (int) Math.round(h * scale))
+    BufferedImage rgb = new BufferedImage(nw, nh, BufferedImage.TYPE_INT_RGB)
+    def g = rgb.createGraphics()
+    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+    g.setColor(java.awt.Color.WHITE)
+    g.fillRect(0, 0, nw, nh)
+    g.drawImage(img, 0, 0, nw, nh, null)
+    g.dispose()
+    def writers = ImageIO.getImageWritersByFormatName('jpeg')
+    if (!writers.hasNext()) {
+        log.warn('Inbound foto M365->entraPhoto: sin JPEG writer para {} -> binario original', shadow?.name)
+        return src
+    }
+    def writer = writers.next()
+    ImageWriteParam param = writer.getDefaultWriteParam()
+    if (param.canWriteCompressed()) {
+        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT)
+        param.setCompressionQuality(0.85f)
+    }
+    def baos = new java.io.ByteArrayOutputStream()
+    def ios = ImageIO.createImageOutputStream(baos)
+    writer.setOutput(ios)
+    writer.write(null, new IIOImage(rgb, null, null), param)
+    ios.close()
+    writer.dispose()
+    byte[] out = baos.toByteArray()
+    if (out == null || out.length == 0) {
+        log.warn('Inbound foto M365->entraPhoto: JPEG vacío para {} -> binario original', shadow?.name)
+        return src
+    }
+    log.debug('Inbound foto M365->entraPhoto: {} convertida {}x{} {}B -> JPEG {}x{} {}B', shadow?.name, w, h, src.length, nw, nh, out.length)
+    return out
+} catch (Exception e) {
+    log.warn('Inbound foto M365->entraPhoto: error convirtiendo para {} ({}): {} -> binario original', shadow?.name, (src != null ? src.length : 0), e.message)
+    return src
+}
+                            ]]></code>
+                        </script>
+                    </expression>
                     <target>
                         <path xmlns:upeu="urn:upeu:midpoint:local">$user/extension/upeu:entraPhoto</path>
                     </target>
