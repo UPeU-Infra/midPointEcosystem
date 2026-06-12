@@ -297,8 +297,9 @@ import javax.imageio.ImageWriteParam
 import java.awt.image.BufferedImage
 import java.awt.RenderingHints
 
-if (photo == null) return null
-byte[] src = photo
+// 'input' es la variable implicita de la fuente del inbound (NO 'photo').
+if (input == null) return null
+byte[] src = input
 try {
     BufferedImage img = ImageIO.read(new java.io.ByteArrayInputStream(src))
     if (img == null) {
