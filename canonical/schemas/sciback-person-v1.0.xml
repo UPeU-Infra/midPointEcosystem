@@ -186,7 +186,24 @@
                          dato canónico SUNEDU sin transformación). NO confundir con academicProgramCode
                          (EP-XXX, código corto interno SciBack/VocBench). -->
                     <xsd:element name="academicProgramSuneduCode" type="xsd:string" minOccurs="0" maxOccurs="1">
-                        <xsd:annotation><xsd:appinfo><a:displayName>Código SUNEDU del programa (P-code)</a:displayName><a:help>Código oficial del programa en el Registro Nacional de Grados y Títulos SUNEDU (ej. P30, P31, P143). IIA: Oracle LAMB DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_SUNEDU2. Single-value (programa de la matrícula vigente). Destino: Koha statistics_2/Bsort2.</a:help><a:indexed>true</a:indexed><a:displayOrder>515</a:displayOrder></xsd:appinfo></xsd:annotation>
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código SUNEDU del programa (P-code)</a:displayName><a:help>Código oficial del programa en el Registro Nacional de Grados y Títulos SUNEDU (ej. P30, P31, P143). IIA: Oracle LAMB DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_SUNEDU2. Single-value (programa de la matrícula vigente). LEGACY desde 2026-06-13: se conserva como identificador SUNEDU interno (= skos:altLabel del tesauro). El identificador NACIONAL canónico del programa pasa a ser academicProgramIneiCode (INEI 8 díg). Coexisten: este NO se elimina.</a:help><a:indexed>true</a:indexed><a:displayOrder>515</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- academicProgramIneiCode: código INEI 2022 de 8 dígitos del programa de
+                         estudio (ej. 31300211=Psicología, 91300071=Enfermería, 41300270=Administración).
+                         Es el identificador NACIONAL canónico del programa según el clasificador
+                         INEI 2022 (alineado SCHAC familia schacPersonalUniqueCode como código nacional
+                         de programa). DERIVADO (no IIA directa): Oracle LAMB no expone el INEI; se
+                         resuelve desde academicProgramSuneduCode (P-code) vía el LookupTable
+                         LT-Pcode-INEI (OID e129d9e4-c2fd-4a02-9369-0ae5b8f59c06), cuyo contenido
+                         proviene del tesauro VocBench-UPeU v2 (skos:notation). Single-value
+                         (programa de la matrícula vigente, hereda la elección de academicProgramSuneduCode).
+                         Destino: koha-ils statistics2-outbound (Bsort2) — REEMPLAZA al P-code en Bsort2
+                         a partir de la migración 2026-06-13. Null-safe: si el P-code no está en el
+                         LookupTable (posgrado/2da-especialidad sin P-code, o P-code nuevo no cargado)
+                         → atributo vacío → Koha sin Bsort2 (mismo comportamiento previo, no regresión).
+                         Coexiste con academicProgramSuneduCode (P-code legacy = altLabel). -->
+                    <xsd:element name="academicProgramIneiCode" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código INEI del programa (8 díg)</a:displayName><a:help>Código nacional INEI 2022 de 8 dígitos del programa de estudio (ej. 31300211=Psicología). Identificador canónico nacional del programa. DERIVADO de academicProgramSuneduCode (P-code) vía LookupTable LT-Pcode-INEI (fuente: tesauro VocBench-UPeU, skos:notation). Single-value. Destino: Koha statistics_2/Bsort2 (reemplaza al P-code desde 2026-06-13). Null-safe: P-code sin entrada en el LookupTable → vacío. Coexiste con academicProgramSuneduCode.</a:help><a:indexed>true</a:indexed><a:displayOrder>516</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
                     <!-- facultyName: nombre crudo de la facultad a la que pertenece el programa de la
                          matrícula vigente. IIA: Oracle LAMB ELISEO.ORG_AREA.NOMBRE del nodo PADRE de la

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  LookupTable: LT-Pcode-INEI
+  OID: e129d9e4-c2fd-4a02-9369-0ae5b8f59c06
+  Versión: 1.0 (2026-06-13)
+
+  Puente P-code SUNEDU (Oracle LAMB ACAD_PROGRAMA_ESTUDIO.CODIGO_SUNEDU2)
+  → código INEI 2022 de 8 dígitos (clasificador nacional de programas
+  académicos). Fuente de verdad: VocBench-UPeU tesauro programas v2
+  (skos:altLabel = P-code; skos:notation = INEI 8 díg; skos:prefLabel =
+  denominación oficial SUNEDU). Insumo derivado:
+    ~/proyectos/upeu/vocbench-upeu/data/pcode-inei-bridge.csv
+
+  Propósito: migración Koha Bsort2 de P-code → INEI 8 dígitos. El inbound
+  de estudiantes.xml (o el object template) resuelve este LookupTable para
+  derivar extension/sciback:academicProgramIneiCode desde el P-code ya
+  materializado en extension/sciback:academicProgramSuneduCode.
+
+  Por qué un LookupTable y no un mapa literal en script:
+  el catálogo de programas cambia (SUNEDU licencia/renombra programas).
+  Cuando aparezca un P-code nuevo basta agregar 1 row vía la UI de MidPoint
+  (Repository objects → Lookup tables) — sin tocar XML ni redesplegar el
+  resource. Mismo patrón que LT-CRAI-Puesto-Tier.
+
+  OBJETO INERTE: no dispara recompute al desplegarse. No cambia ningún
+  atributo hasta que un mapping lo consume.
+
+  key   = P-code (skos:altLabel; ej. P33). Coincide con
+          extension/sciback:academicProgramSuneduCode.
+  value = código INEI 8 dígitos (skos:notation). Destino Bsort2 nuevo.
+  label = denominación oficial SUNEDU (skos:prefLabel) — inspección visual.
+
+  AGRUPAMIENTO: P04 agrupa ADMINISTRACIÓN y ADMINISTRACIÓN CON MENCIÓN EN
+  GESTIÓN EMPRESARIAL (mismo CODIGO_SUNEDU2 en Oracle, mismo INEI 41300270)
+  → una sola row. Filiales que comparten P-code resuelven al mismo INEI.
+
+  COBERTURA: 19 rows = los 19 P-codes ÚNICOS existentes en Oracle LAMB
+  (carreras profesionales). El CSV tiene 20 filas con P-code pero P04
+  aparece 2 veces (mismo INEI) → 19 keys distintas. El bridge tiene 2
+  programas adicionales SIN
+  P-code (Educación Esp. Ciencias Naturales y Educación Esp. Matemática)
+  → NO entran a este LookupTable (no hay key P-code que resolver). Esos y
+  el posgrado/2da-especialidad NO emiten Bsort2 hoy (sin P-code) y NO se
+  migran en esta fase — ver nota GAP en el plan de ejecución.
+
+  Total: 19 rows. Derivado de pcode-inei-bridge.csv 2026-06-13.
+-->
+<lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+             oid="e129d9e4-c2fd-4a02-9369-0ae5b8f59c06">
+    <name>LT-Pcode-INEI</name>
+    <description>Puente P-code SUNEDU → código INEI 2022 (8 dígitos). Fuente: VocBench-UPeU tesauro programas v2 (altLabel=P-code, notation=INEI, prefLabel=denominación SUNEDU). Usado para migrar Koha Bsort2 de P-code a INEI. Editable vía UI sin redeploy.</description>
+    <row>
+        <key>P04</key>
+        <value>41300270</value>
+        <label>Administración (agrupa Administración y Administración con Mención en Gestión Empresarial)</label>
+    </row>
+    <row>
+        <key>P06</key>
+        <value>73100273</value>
+        <label>Arquitectura y Urbanismo</label>
+    </row>
+    <row>
+        <key>P07</key>
+        <value>32100241</value>
+        <label>Ciencias de la Comunicación</label>
+    </row>
+    <row>
+        <key>P08</key>
+        <value>41101896</value>
+        <label>Contabilidad Gestión Tributaria y Aduanera</label>
+    </row>
+    <row>
+        <key>P12</key>
+        <value>12200708</value>
+        <label>Educación Especialidad Educación Física Recreación y Deportes</label>
+    </row>
+    <row>
+        <key>P14</key>
+        <value>12104952</value>
+        <label>Educación Especialidad Inglés y Español</label>
+    </row>
+    <row>
+        <key>P17</key>
+        <value>12302089</value>
+        <label>Educación Especialidad Música y Artes Visuales</label>
+    </row>
+    <row>
+        <key>P19</key>
+        <value>11102086</value>
+        <label>Educación Inicial y Puericultura</label>
+    </row>
+    <row>
+        <key>P20</key>
+        <value>11200247</value>
+        <label>Educación Primaria y Pedagogía Terapéutica</label>
+    </row>
+    <row>
+        <key>P22</key>
+        <value>91300071</value>
+        <label>Enfermería</label>
+    </row>
+    <row>
+        <key>P24</key>
+        <value>52100080</value>
+        <label>Ingeniería Ambiental</label>
+    </row>
+    <row>
+        <key>P25</key>
+        <value>73210077</value>
+        <label>Ingeniería Civil</label>
+    </row>
+    <row>
+        <key>P26</key>
+        <value>72100087</value>
+        <label>Ingeniería de Industrias Alimentarias</label>
+    </row>
+    <row>
+        <key>P27</key>
+        <value>61200093</value>
+        <label>Ingeniería de Sistemas</label>
+    </row>
+    <row>
+        <key>P29</key>
+        <value>41400200</value>
+        <label>Marketing y Negocios Internacionales</label>
+    </row>
+    <row>
+        <key>P30</key>
+        <value>91200267</value>
+        <label>Medicina Humana</label>
+    </row>
+    <row>
+        <key>P31</key>
+        <value>91801036</value>
+        <label>Nutrición Humana</label>
+    </row>
+    <row>
+        <key>P33</key>
+        <value>31300211</value>
+        <label>Psicología</label>
+    </row>
+    <row>
+        <key>P35</key>
+        <value>22103063</value>
+        <label>Teología</label>
+    </row>
+</lookupTable>

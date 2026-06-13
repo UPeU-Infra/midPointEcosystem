@@ -1039,25 +1039,38 @@ return result
                 <outbound>
                     <name>statistics2-outbound</name>
                     <strength>normal</strength>
-                    <!-- Koha statistics_2 = Bsort2: código P-code SUNEDU del programa.
-                         Fuente CANÓNICA: extension/sciback:academicProgramSuneduCode (P-code),
-                         poblado por el resource Estudiantes desde Oracle LAMB
-                         DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_SUNEDU2 (IIA única). El P-code es el
-                         identificador oficial SUNEDU (Registro Nacional de Grados y Títulos) — se
-                         emite TAL CUAL a Koha, sin transformación: el dato ya es canónico y Koha lo
-                         consume directo (separación de concerns: el mapeo no vive en este resource).
-                         Refactor 2026-06-09: ANTES se derivaba con un mapa estático EP-code → P-code
-                         que duplicaba la verdad de Oracle y se desincronizaba (P30/P31/P33/P35/P143).
-                         Ahora P-code llega desde la IIA Oracle vía atributo dedicado. Koha ya tiene los
-                         authorised_values Bsort2 (verificado 2026-06-09: P30/P31/P33/P35/P143 existen).
-                         Null-safe: programa sin CODIGO_SUNEDU2 → atributo vacío → null → Koha sin Bsort2. -->
+                    <!-- Koha statistics_2 = Bsort2: código INEI 2022 de 8 dígitos del programa.
+                         Fuente CANÓNICA: extension/sciback:academicProgramIneiCode (INEI 8 díg),
+                         derivado en el object template base (bloque D.1c) desde
+                         academicProgramSuneduCode (P-code) vía LookupTable LT-Pcode-INEI
+                         (fuente: tesauro VocBench-UPeU skos:notation). Es el identificador
+                         NACIONAL canónico del programa (clasificador INEI 2022) — se emite TAL
+                         CUAL a Koha, sin transformación: el resource consume el dato ya canónico.
+
+                         MIGRACIÓN 2026-06-13 (aprobada): Bsort2 pasa de P-code → INEI 8 díg.
+                         ANTES leía extension/sciback:academicProgramSuneduCode (P30/P31/P33/...).
+                         AHORA lee extension/sciback:academicProgramIneiCode (31300211/91300071/...).
+                         El P-code (academicProgramSuneduCode) se conserva como legacy (no se borra).
+
+                         PRERREQUISITOS de deploy de este outbound (en este orden):
+                           1. LT-Pcode-INEI desplegado (objeto inerte).
+                           2. academicProgramIneiCode presente en el schema sciback-person.
+                           3. Object template base con bloque D.1c desplegado + recompute masivo
+                              estudiantes Lima (materializa el INEI en el focus).
+                           4. authorised_values Bsort2 en Koha pobladas con los 19 INEI 8-díg.
+                         Desplegar este outbound ANTES de (3) emitiría INEI vacío → borraría Bsort2
+                         en cada reconcile. NO desplegar durante el backfill de fotos.
+
+                         Null-safe: programa sin INEI (P-code ausente o no mapeado: posgrado/
+                         2da-especialidad) → atributo vacío → null → Koha sin Bsort2 (igual que
+                         hoy con P-code null; no regresión). -->
                     <expression>
                         <script>
                             <code><![CDATA[
 if (focus == null) return null
-def pcode = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'academicProgramSuneduCode'))
-if (pcode == null) return null
-def code = pcode.toString().trim()
+def inei = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'academicProgramIneiCode'))
+if (inei == null) return null
+def code = inei.toString().trim()
 return code ? code : null
                             ]]></code>
                         </script>

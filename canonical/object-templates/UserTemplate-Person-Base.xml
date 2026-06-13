@@ -388,6 +388,76 @@ return null // weak: no sobrescribe studentCycle — solo side-effect de log</co
         </mapping>
     </item>
 
+    <!-- D.1c — Derivación academicProgramIneiCode (INEI 8 díg) desde el P-code.
+         Migración Koha Bsort2 P-code → INEI (aprobada 2026-06-13).
+         Resuelve extension/sciback:academicProgramSuneduCode (P-code, ya materializado
+         por el inbound de estudiantes.xml) contra el LookupTable LT-Pcode-INEI
+         (OID e129d9e4-c2fd-4a02-9369-0ae5b8f59c06; fuente VocBench-UPeU skos:notation)
+         y escribe el INEI de 8 dígitos en extension/sciback:academicProgramIneiCode.
+
+         strong + single-source (solo este mapping escribe el atributo) → IDEMPOTENTE:
+         mismo P-code de entrada produce siempre el mismo INEI; recompute repetido no
+         genera deltas. NO toca academicProgramSuneduCode (coexisten; P-code = legacy/altLabel).
+
+         Null-safe / no-regresión: si el P-code está vacío (posgrado/2da-especialidad
+         sin CODIGO_SUNEDU2) o no figura en el LookupTable (P-code nuevo aún no cargado),
+         devuelve null → el atributo queda vacío → Koha sin Bsort2 (mismo comportamiento
+         que hoy con P-code null). Para habilitar un P-code nuevo basta agregar 1 row al
+         LookupTable vía la UI — sin tocar este XML.
+
+         API LookupTable: mismo idiom productivo que Q5 (getObject(LookupTableType) con
+         F_ROW retrieve), ya que MidpointFunctions no expone getLookupTableEntry(). -->
+    <item>
+        <ref xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:academicProgramIneiCode</ref>
+        <mapping>
+            <name>D-derive-inei-from-pcode</name>
+            <description>Deriva el código INEI 8 díg (Bsort2 nuevo) desde el P-code (academicProgramSuneduCode) vía LookupTable LT-Pcode-INEI. Strong, single-source, idempotente. Null-safe: P-code ausente o no mapeado → INEI vacío (no regresión). Migración Koha Bsort2 P-code→INEI 2026-06-13.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:academicProgramSuneduCode</path>
+            </source>
+            <expression>
+                <script>
+                    <code><![CDATA[
+// Resolución P-code -> INEI 8 díg via LookupTable LT-Pcode-INEI.
+// Mismo idiom que Q5 (getObject(LookupTableType) + F_ROW retrieve);
+// MidpointFunctions NO expone getLookupTableEntry() en 4.10.2.
+def pcode = academicProgramSuneduCode != null ? basic.stringify(academicProgramSuneduCode).trim() : '';
+if (pcode == '') return null; // sin P-code (posgrado/2da-esp) → sin INEI → Koha sin Bsort2
+def inei = null;
+try {
+    def tableOid = 'e129d9e4-c2fd-4a02-9369-0ae5b8f59c06';
+    def ltClass = com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.class;
+    def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(
+        prismContext.toUniformPath(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.F_ROW),
+        com.evolveum.midpoint.schema.GetOperationOptions.createRetrieve()
+    );
+    def tableObj = midpoint.getObject(ltClass, tableOid, options);
+    def rows = tableObj != null ? tableObj.getRow() : null;
+    if (rows != null) {
+        for (def row : rows) {
+            if (row.getKey() != null && row.getKey().trim() == pcode) {
+                inei = row.getValue() != null ? row.getValue().trim() : null;
+                break;
+            }
+        }
+    }
+} catch (Exception e) {
+    log.warn("UPeU INEI: error leyendo LookupTable LT-Pcode-INEI para P-code '{}' en {}: {} — INEI vacío.", pcode, focus?.name, e.getMessage());
+    return null;
+}
+if (inei == null) {
+    log.warn("UPeU INEI: P-code '{}' sin entrada en LT-Pcode-INEI para {} — INEI vacío (Koha sin Bsort2). Agregar la fila si el programa debe migrarse.", pcode, focus?.name);
+    return null;
+}
+return inei
+                    ]]></code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+
     <!-- D.2 — Auto-asignación BR-Estudiante-Pregrado/Posgrado/Doctorado según studyLevel
          Solo actúa cuando primaryAffiliation == STUDENT.
          FIX 2026-06-09: el routing pasa de studentCycle (proxy frágil — 5,356 pregrados
