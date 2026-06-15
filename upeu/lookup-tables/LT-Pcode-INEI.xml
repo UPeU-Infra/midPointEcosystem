@@ -43,7 +43,15 @@
   el posgrado/2da-especialidad NO emiten Bsort2 hoy (sin P-code) y NO se
   migran en esta fase — ver nota GAP en el plan de ejecución.
 
-  Total: 19 rows. Derivado de pcode-inei-bridge.csv 2026-06-13.
+  Total: 19 rows (ronda 1, pregrado). Derivado de pcode-inei-bridge.csv 2026-06-13.
+
+  RONDA 2 (2026-06-14): +17 rows = posgrado/2da-esp + alias pregrado, derivadas
+  de pcode-inei-posgrado-bridge.csv. Total 36 rows. Las keys de posgrado
+  (P80,P69,P90,P74,P63,P68,P91,P93,P49,P99,P147,P149,P154) son P-codes
+  SINTÉTICOS ('P'||CODIGO_SUNEDU) que SOLO existen en el foco una vez que el
+  inbound de estudiantes.xml emita 'P'||CODIGO_SUNEDU para posgrado (fix
+  pendiente — sin él estas filas no derivan). Alias pregrado P58/P120/P106/P57
+  son CODIGO_SUNEDU2 reales y derivan de inmediato.
 -->
 <lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
              oid="e129d9e4-c2fd-4a02-9369-0ae5b8f59c06">
@@ -143,5 +151,113 @@
         <key>P35</key>
         <value>22103063</value>
         <label>Teología</label>
+    </row>
+    <!-- ============================================================
+         RONDA 2 (2026-06-14) — Posgrado / 2da-especialidad + alias pregrado.
+         Fuente: vocbench-upeu/data/pcode-inei-posgrado-bridge.csv (confianza ALTA).
+
+         NOTA DE SEMÁNTICA DE KEY (CRÍTICA):
+         Para POSGRADO/2da-esp Oracle NO tiene CODIGO_SUNEDU2 (P-code); el
+         identificador es CODIGO_SUNEDU numérico ('80','69',...). El P-code
+         "P80" usado como key aquí lo PRODUCE el inbound de estudiantes.xml
+         como 'P'||CODIGO_SUNEDU (fix ronda 2). Verificado en Oracle:
+         CODIGO_SUNEDU 1:1 con programa (sin colisiones) y el espacio
+         'P'||CODIGO_SUNEDU NO colisiona con ningún CODIGO_SUNEDU2 de pregrado.
+         Estas filas NO derivan INEI hasta que el fix del inbound esté
+         desplegado (sin él, academicProgramSuneduCode queda vacío en el foco).
+
+         Alias de pregrado (P58/P106/P57/P120): SÍ son CODIGO_SUNEDU2 reales
+         que el foco ya trae hoy → derivan en cuanto se carga esta fila.
+
+         EXCLUIDOS deliberadamente: P05, P143 (ambigüedad/conflicto, otra ronda);
+         P82/P83/P97/P132/P152/P153 (NO_INEI, sin referencia en Oracle). -->
+    <!-- Maestrías -->
+    <row>
+        <key>P80</key>
+        <value>61110044</value>
+        <label>Maestría en Ingeniería de Sistemas (Dirección y Gestión de TI)</label>
+    </row>
+    <row>
+        <key>P69</key>
+        <value>91902662</value>
+        <label>Maestría en Salud Pública (Gestión de los Servicios de Salud)</label>
+    </row>
+    <row>
+        <key>P90</key>
+        <value>41109526</value>
+        <label>Maestría en Auditoría (Auditoría Integral)</label>
+    </row>
+    <row>
+        <key>P74</key>
+        <value>11100371</value>
+        <label>Maestría en Educación (Investigación y Docencia Universitaria)</label>
+    </row>
+    <row>
+        <key>P63</key>
+        <value>31310527</value>
+        <label>Maestría en Terapia Familiar y de Pareja</label>
+    </row>
+    <row>
+        <key>P68</key>
+        <value>31302652</value>
+        <label>Maestría en Psicología Clínica y de la Salud</label>
+    </row>
+    <!-- Doctorados -->
+    <row>
+        <key>P91</key>
+        <value>41301949</value>
+        <label>Doctorado en Administración de Negocios</label>
+    </row>
+    <row>
+        <key>P93</key>
+        <value>19900243</value>
+        <label>Doctorado en Educación (Gestión Educativa)</label>
+    </row>
+    <row>
+        <key>P49</key>
+        <value>19900243</value>
+        <label>Doctorado en Educación (Currículo y Docencia) — INEI agrupa ambas menciones</label>
+    </row>
+    <row>
+        <key>P99</key>
+        <value>61203409</value>
+        <label>Doctorado en Ingeniería de Sistemas</label>
+    </row>
+    <!-- Segundas especialidades -->
+    <row>
+        <key>P147</key>
+        <value>91302149</value>
+        <label>Segunda Especialidad en Enfermería en Oncología</label>
+    </row>
+    <row>
+        <key>P149</key>
+        <value>54202992</value>
+        <label>Segunda Especialidad en Estadística Aplicada para Investigación</label>
+    </row>
+    <row>
+        <key>P154</key>
+        <value>31302933</value>
+        <label>Segunda Especialidad en Psicología Clínica y de la Salud</label>
+    </row>
+    <!-- Alias de pregrado (CODIGO_SUNEDU2 reales, derivan sin fix de inbound) -->
+    <row>
+        <key>P58</key>
+        <value>11102086</value>
+        <label>Educación Inicial y Puericultura (= P19)</label>
+    </row>
+    <row>
+        <key>P120</key>
+        <value>41101896</value>
+        <label>Contabilidad Gestión Tributaria y Aduanera — Tarapoto (= P09/P08)</label>
+    </row>
+    <row>
+        <key>P106</key>
+        <value>12104952</value>
+        <label>Educación Especialidad Inglés y Español (= P14)</label>
+    </row>
+    <row>
+        <key>P57</key>
+        <value>12104952</value>
+        <label>Educación Especialidad Inglés y Español (= P14; sin SUNEDU2, confianza revisar)</label>
     </row>
 </lookupTable>
