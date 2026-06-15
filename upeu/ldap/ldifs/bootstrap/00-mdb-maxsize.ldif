@@ -1,0 +1,35 @@
+# 00-mdb-maxsize.ldif — Tamaño máximo del mapa LMDB (olcDbMaxSize)
+#
+# INCIDENTE PROD 2026-06-14 (Lima -0500):
+#   La base MDB (data.mdb) llegó a ~24 KB de su tope de 1 GiB (default osixia/openldap).
+#   Toda escritura LDAP de MidPoint (add: mail, etc.) fallaba con error 80
+#   (MDB_MAP_FULL → "entry update failed"), abortando el clockwork completo de
+#   cada foco ANTES de provisionar. Fix online no destructivo: olcDbMaxSize
+#   subido 1 GiB → 4 GiB vía ldapmodify en cn=config (host 192.168.15.168 tiene
+#   ~44 GB libres en disco). LMDB es sparse: reservar 4 GiB de memory-map es
+#   gratis en disco hasta que se use realmente.
+#
+# POR QUÉ ESTE LDIF:
+#   El fix vivía solo en el volumen runtime `ldap_config`. Si el contenedor se
+#   recrea desde una config-volume fresca, osixia re-corre el bootstrap y la mdb
+#   vuelve al default (sin olcDbMaxSize explícito ⇒ tope chico) → el IGA colapsa
+#   de nuevo. Este LDIF fija 4 GiB de forma persistente en el bootstrap.
+#
+# CÓMO LO APLICA osixia/openldap:1.5.0:
+#   El compose monta ./ldifs/bootstrap → /container/.../bootstrap/ldif/custom (ro).
+#   En el primer arranque con config-volume vacío, startup.sh recorre custom/*.ldif
+#   con ldap_add_or_modify(): al detectar `changetype: modify` aplica
+#   `ldapmodify -Y EXTERNAL -H ldapi:///` contra cn=config. Idempotente (replace):
+#   en un down/up que conserva volúmenes el bloque bootstrap ni se ejecuta y el
+#   valor runtime persiste; en una recreación fresca este LDIF lo restablece.
+#
+# NOTA (no se aborda aquí): que la mdb crezca hacia 1 GiB es señal de DIT grande
+#   (p.ej. ~20K egresados `alum` stale). Existe un workstream aparte de
+#   deprovisioning de egresados-SSO. 4 GiB da margen amplio mientras tanto.
+#
+# {{ LDAP_BACKEND }} lo sustituye startup.sh por el backend real (mdb).
+
+dn: olcDatabase={1}{{ LDAP_BACKEND }},cn=config
+changetype: modify
+replace: olcDbMaxSize
+olcDbMaxSize: 4294967296

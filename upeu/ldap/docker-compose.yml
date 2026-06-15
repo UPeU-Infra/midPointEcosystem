@@ -10,6 +10,11 @@
 # Volúmenes named (permanentes):
 #   ldap_data    → datos LDAP (/var/lib/ldap)
 #   ldap_config  → configuración cn=config (/etc/ldap/slapd.d)
+#
+# Bootstrap LDIF clave: ldifs/bootstrap/00-mdb-maxsize.ldif fija olcDbMaxSize=4 GiB
+# (incidente PROD 2026-06-14: MDB_MAP_FULL en el tope de 1 GiB tumbaba el write-path
+# de MidPoint). osixia aplica los custom/*.ldif vía ldapmodify -Y EXTERNAL sobre
+# cn=config en un arranque con config-volume fresca. Ver cabecera de ese LDIF.
 
 services:
   openldap:
