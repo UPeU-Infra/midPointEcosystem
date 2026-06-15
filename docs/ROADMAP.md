@@ -1,6 +1,7 @@
 # UPeU IGA — Roadmap de Ejecución 2026
 
-**Versión:** 2026-05-20 rev10 (DT-7 resuelto · conector Koha v1.2.1 · HA completo) · **Owner:** Alberto Sánchez · **Estado:** En ejecución
+**Versión:** 2026-06-15 rev11 (Fases 0-11 cerradas · workstream operación Koha/INEI activo · conector Koha v1.3.12 · Fase 12 bloqueada por David Urquizo) · **Owner:** Alberto Sánchez · **Estado:** En operación / hardening de datos
+**Versiones previas:** 2026-05-20 rev10 (DT-7 resuelto · conector Koha v1.2.1 · HA completo)
 **Documento base:** [`iga-canonical-analysis-2026-05.md`](./iga-canonical-analysis-2026-05.md) · [`SKILL: iga-canonical-standards`](~/.claude/skills/iga-canonical-standards/SKILL.md) · [`SKILL: midpoint-best-practices`](~/.claude/skills/midpoint-best-practices/SKILL.md)
 
 ---
@@ -305,17 +306,17 @@ Fase 7 — RBAC bottom-up (1 semana)             ✅ COMPLETA 2026-06-06
    TC/TP real: MOISES.PERSONA_ACAD_REGIMEN (TC=175, TP=247, DE=87) — ticket DU-010 para Fase 8
    LAMB como resource write: Fase 8 (prerequisito para ARs operacionales)
 
-Fase 8 — Replanteo de documentos (3 dias)       NO INICIADA
-Fase 9 — Validacion end-to-end con piloto        NO INICIADA
-Fase 10 — Despliegue en PROD  ◀── REQUIERE APROBACION ALBERTO  NO INICIADA
-Fase 11 — Productizacion SciBack                 NO INICIADA
+Fase 8 — Replanteo de documentos (3 dias)       ✅ COMPLETA 2026-06-06
+Fase 9 — Validacion end-to-end con piloto        ✅ COMPLETA 2026-06-06
+Fase 10 — Despliegue en PROD                      ✅ PROD OPERATIVO (54K+ usuarios)
+Fase 11 — Productizacion SciBack                 ✅ DOCUMENTADA 2026-06-06 (blueprint)
 
-Fase 12 — Gobierno Entra ID UPeU               DIAGNOSTICO Y DISENO LISTOS
+Fase 12 — Gobierno Entra ID UPeU               🔒 BLOQUEADA (David Urquizo)
    Hecho: diagnostico completo (ENTRA-ID-ESTRUCTURA-UPEU.md)
    Hecho: diseno de AUs, roles delegados, grupos (propuesta)
-   Bloqueado: write hasta que David Urquizo conceda permisos
+   Bloqueado: 4 permisos read (DU-001b 🟡) + write hasta que David conceda permisos
 
-Fase 13 — Metricas COUNTER                      NO INICIADA
+Fase 13 — Metricas COUNTER                      🔒 BLOQUEADA (Fase 12 + creds SUSHI)
 ```
 
 ---
@@ -568,13 +569,40 @@ Fase 13 — Metricas COUNTER                      NO INICIADA
 
 ---
 
-## Siguiente accion inmediata
+## Siguiente accion inmediata (2026-06-15)
 
-**B0 — Recuperar MidPoint PROD del OOM.** No hay progreso posible en ningun frente hasta que PROD vuelva a responder.
+> **B0 (OOM PROD) RESUELTO** hace semanas. PROD operativo (upgrade 4.10.2, heap estable ~60%). El roadmap formal Fases 1-11 está **cerrado**; desde entonces el trabajo real ha sido el **workstream de operación / hardening de datos** (ver sección abajo), no nuevas fases.
 
-Una vez PROD recuperado:
-1. Smoke tests (ver seccion P0 arriba).
-2. Descargar y commitear artefactos faltantes (P1).
-3. Merge branch + tag + archivar repo padre (P2).
-4. Continuar Fase 3 — object templates per-archetype (P3).
-5. Completar permisos Entra ID con David Urquizo (P4).
+**Estado de frentes:**
+
+1. **Fase 12 — Gobierno Entra ID (write):** ⚫ **BLOQUEADA por David Urquizo.** Lo que toca formalmente, pero no avanza sin él. Ticket `DU-001b` 🟡 pendiente (faltan 4 permisos read: `AdministrativeUnit.Read.All`, `RoleManagement.Read.Directory`, `AuditLog.Read.All`, `Application.Read.All`) + permisos write no concedidos. **Acción de destrabe:** seguimiento a David sobre DU-001b + gestión de scopes write.
+2. **Fase 13 — Métricas COUNTER:** 🔒 Bloqueada por Fase 12 + credenciales SUSHI de proveedores (gestión externa).
+3. **Deuda técnica accionable sin terceros:** `DT-8` (Koha 409 `AlreadyExistsException` en homónimos con cardnumber distinto) + `DT-5` (deep clone `identityDocuments` en OT). Ver tabla DT en P8.
+4. **Operación continua:** cierre de calidad de datos Oracle LAMB (correos/documentos duplicados ~512, ya con fix de desempate IIA desplegado), onboarding Koha residual, materialización INEI en cohortes pendientes.
+
+---
+
+## Workstream de operación / hardening de datos (post-Fase 11, 2026-05 → 2026-06)
+
+Trabajo real ejecutado en PROD tras cerrar el modelo IGA (Fases 1-11). No son fases nuevas del roadmap sino consolidación de provisioning y calidad de datos sobre el modelo ya maduro. Detalle vive en `docs/runbooks/` y en la memoria del proyecto.
+
+| Hito | Estado | Evidencia |
+|---|---|---|
+| Limpieza focus MidPoint (archetypes/lifecycle a 54K usuarios) | ✅ 2026-05-28 | Bootstrap archetype 99.83%; recompute all users |
+| Migración Org canónica (árbol único, m_org→199) | ✅ 2026-05-30 | Fix D7/Bloque E; invariantes verdes |
+| Clasificación faculty vs staff (fuente de verdad MOISES) | ✅ 2026-05-30 | commit `a283fa3` |
+| Koha ILS provisioning: convergencia categorías + orphan-link + gate multi-campus | ✅ 2026-06-01→04 | Fases 2/3/3b/3d runbooks; connector v1.3.10; gate en AR-construction (commit `369731d`) |
+| Merge duplicados estudiantes Koha (54 fusionados) | ✅ 2026-06-02 | backup premerge; commit `e58e422` |
+| Fix Bsort1/Bsort2 + studyLevel/studentCycle (masivo 24,158) | ✅ 2026-06-09 | desde Oracle autoritativo; commits `ffbacc1`… |
+| Connector Koha v1.3.12 (denylist→allowlist, fix `self_renewal_available` Koha 26.05) | ✅ 2026-06-14 | commit `3187e93`; Test Connection 8/8 |
+| Migración Bsort2 P-code→INEI 8díg (catálogo canónico VocBench) | ✅ 2026-06-14→15 | LT-Pcode-INEI; pregrado 3,738 + posgrado 576 codes + 518 dual; sort2=INEI |
+| Fix desempate IIA dual student+worker (cardinalidad single-valued) | ✅ 2026-06-15 | tag `iga-desempate-dual-email-doc-2026-06-15`; commits `a5a4e6f`→`c45ce31` |
+| Incidente OPAC Koha BUL (zebra caído por OOM) | ✅ 2026-06-15 | `reference_koha-zebra-bul-incident` runbook en memoria |
+
+**Volumetría PROD actual (2026-06-15):** ~62,465 m_user · 199 orgs · borrowers Koha 19,876 (dup-card 0). Supera la volumetría 2026-05-19 de la tabla de arriba (35,450 users) — esa tabla es snapshot histórico post-OOM, no el estado vigente.
+
+**Pendientes de operación (no bloqueantes, sin terceros):**
+- ~512 dual sucios Oracle: fix IIA desplegado; barrido de cohorte ejecutado (518/518). Cohortes futuras convergen por recompute.
+- 992 BUL posgrado sin P-code → scope de materialización INEI posterior.
+- ~1,449 estudiantes posgrado en 31 P-codes sin INEI validado → nueva ronda VocBench/INEI 2022.
+- 13,733 estudiantes sin CORREO_INST en Oracle LAMB → reporte para DTI (calidad de datos origen, no bug).
