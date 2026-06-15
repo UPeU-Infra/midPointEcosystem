@@ -432,10 +432,16 @@ return num</code>
                 <ref>ri:CORREO_INST</ref>
                 <inbound>
                     <name>correo-inst-to-emailAddress</name>
-                    <!-- WEAK (2026-06-06): Entra ID es fuente de verdad STRONG para email.
-                         Oracle LAMB queda como fallback weak — aplica solo si Entra ID no proveyó
-                         un email real (@upeu.edu.pe no-numérico). Guard: descarta numéricos y nulos. -->
-                    <strength>weak</strength>
+                    <!-- NORMAL (2026-06-15, DESEMPATE IIA dual student+worker): Trabajadores es el IIA del
+                         correo institucional/funcional del puesto. Sube de weak→normal para GANAR de forma
+                         determinista sobre el email weak de Estudiantes en personas dual student+worker, sin
+                         provocar la colisión "2 values single-valued emailAddress" que dos weak producían
+                         (las <condition> no suprimen colisiones weak+weak en FullInboundsProcessing). Entra
+                         ID sigue siendo STRONG → gana sobre este normal (normal < strong) → worker-puro con
+                         email Entra: SIN cambio. Worker-puro sin email Entra: el valor que pone normal es el
+                         MISMO @upeu.edu.pe que ponía weak → sin cambio de contenido. Guard intacto: descarta
+                         numéricos y no-upeu. iga-canonical §1.3. -->
+                    <strength>normal</strength>
                     <expression>
                         <script>
                             <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d+/ ? null : v</code>

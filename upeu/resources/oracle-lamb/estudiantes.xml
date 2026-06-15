@@ -121,36 +121,27 @@
                      Guard: descarta fantasmas numéricos de cualquier longitud (\d+) y no-upeu. -->
                 <inbound>
                     <name>correo-upeu-to-emailAddress</name>
+                    <!-- DESEMPATE IIA dual student+worker (2026-06-15): email Estudiantes baja a
+                         strength MÍNIMA frente a Trabajadores (que sube a `normal`). Razón:
+                         ambos inbounds eran `weak` y, para un dual student+worker, ambos aportaban
+                         2 valores al item single-valued emailAddress → "Attempt to add 2 values to a
+                         single-valued item emailAddress in PROJECTOR (INITIAL)" → abortaba TODO el
+                         clockwork → SUNEDU→INEI nunca corría. Las <condition> focus/proyección NO
+                         suprimen colisiones weak+weak durante FullInboundsProcessing (sí funcionan
+                         para conflictos strong+strong, cf. lambDocNum/taxId/lambDocType abajo). El
+                         desempate determinista para weak es la ASIMETRÍA DE STRENGTH resuelta nativa
+                         por el consolidador: normal (Trabajadores, IIA del correo del puesto) gana
+                         sobre weak (Estudiantes); NO colisiona. iga-canonical §1.3.
+                         Cero regresión: estudiante PURO → solo aplica este weak (sin Trabajadores) →
+                         email de Estudiantes intacto. Worker PURO → solo Trabajadores normal. Entra ID
+                         sigue siendo STRONG y gana sobre ambos (normal/weak < strong). -->
                     <strength>weak</strength>
-                    <!-- DESEMPATE IIA dual student+worker (2026-06-15): cuando la persona tiene
-                         afiliación laboral VIVA (sb:liveAffiliationWorker != null), el IIA del email
-                         institucional es Trabajadores (correo del puesto), NO Estudiantes. Sin esta
-                         condición, ambos inbounds weak (Estudiantes + Trabajadores) aportan 2 valores
-                         al item single-valued emailAddress → "Attempt to add 2 values to a single-valued
-                         item emailAddress in PROJECTOR (INITIAL)" → aborta TODO el clockwork → el inbound
-                         de programa académico (SUNEDU→INEI) nunca corre. iga-canonical §1.3 (una sola IIA
-                         por atributo). La condición lee sb:liveAffiliationWorker del FOCUS (materializado
-                         por el inbound single-source strong de Trabajadores). Estudiante PURO: worker=null
-                         → condición true → este inbound aplica normal (cero regresión). Worker PURO: este
-                         inbound no existe en su feed → sin cambio. -->
                     <expression>
                         <script>
                             <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d+/ ? null : v</code>
                         </script>
                     </expression>
                     <target><path>emailAddress</path></target>
-                    <condition>
-                        <!-- DESEMPATE IIA: suprime el email de Estudiantes si la persona tiene cuenta
-                             linkeada en el resource Trabajadores (= es worker). Reality-vs-Policy (bp 2.1):
-                             se lee la PROYECCIÓN linkeada (no la extension del focus, que NO está hidratada
-                             durante FullInboundsProcessing/INITIAL → por eso falló el guard por extension).
-                             worker presente → false → gana Trabajadores. Estudiante puro → null → true. -->
-                        <script>
-                            <code>def w = null
-try { w = midpoint.getLinkedShadow(focus, '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21') } catch (Exception e) { w = null }
-return w == null</code>
-                        </script>
-                    </condition>
                 </inbound>
             </attribute>
             <attribute>
