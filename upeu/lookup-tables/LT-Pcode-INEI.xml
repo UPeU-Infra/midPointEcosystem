@@ -46,12 +46,24 @@
   Total: 19 rows (ronda 1, pregrado). Derivado de pcode-inei-bridge.csv 2026-06-13.
 
   RONDA 2 (2026-06-14): +17 rows = posgrado/2da-esp + alias pregrado, derivadas
-  de pcode-inei-posgrado-bridge.csv. Total 36 rows. Las keys de posgrado
+  de pcode-inei-posgrado-bridge.csv. Las keys de posgrado
   (P80,P69,P90,P74,P63,P68,P91,P93,P49,P99,P147,P149,P154) son P-codes
   SINTÉTICOS ('P'||CODIGO_SUNEDU) que SOLO existen en el foco una vez que el
   inbound de estudiantes.xml emita 'P'||CODIGO_SUNEDU para posgrado (fix
-  pendiente — sin él estas filas no derivan). Alias pregrado P58/P120/P106/P57
+  ronda 3 — aplicado). Alias pregrado P58/P120/P106/P57
   son CODIGO_SUNEDU2 reales y derivan de inmediato.
+
+  RONDA 3 (2026-06-14): values posgrado RE-VALIDADOS contra clasificador INEI
+  2022 (citas oficiales). Correcciones: P90 41109526→41110738, P74 11100371→
+  12410739, P69 91902662→91910681, P93 19900243→14100698, P49 19900243→
+  19910742, P99 61203409→61200058. +6 rows: P82,P132,P152,P153 (posgrado) y
+  P143 (Derecho 42100042), P05 (Admin Neg Int 41600562) pregrado-conflicto.
+  P83 EXCLUIDO (Salud Colectiva sin INEI 2022 validado — alumni histórico).
+  Total 42 rows. Inbound estudiantes.xml fix 'P'||CODIGO_SUNEDU desplegado:
+  IIA academicProgramSuneduCode = CODIGO_SUNEDU2 (pregrado) | 'P'||CODIGO_SUNEDU
+  (posgrado). Población activa Lima con INEI derivable: P68×203 P74×125 P63×65
+  P90×28 P80×14 P91×1 P49×1 + P143×132 P05×7. GAP: ~30 P-codes posgrado activos
+  (P178,P171,P75,P164,P159,P73,P78...) SIN INEI validado aún → ronda futura.
 -->
 <lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
              oid="e129d9e4-c2fd-4a02-9369-0ae5b8f59c06">
@@ -179,18 +191,18 @@
     </row>
     <row>
         <key>P69</key>
-        <value>91902662</value>
-        <label>Maestría en Salud Pública (Gestión de los Servicios de Salud)</label>
+        <value>91910681</value>
+        <label>Maestría en Salud Pública (Gestión de los Servicios de Salud) — INEI 2022 validado</label>
     </row>
     <row>
         <key>P90</key>
-        <value>41109526</value>
-        <label>Maestría en Auditoría (Auditoría Integral)</label>
+        <value>41110738</value>
+        <label>Maestría en Auditoría (Auditoría Integral) — INEI 2022 validado</label>
     </row>
     <row>
         <key>P74</key>
-        <value>11100371</value>
-        <label>Maestría en Educación (Investigación y Docencia Universitaria)</label>
+        <value>12410739</value>
+        <label>Maestría en Educación (Investigación y Docencia Universitaria) — INEI 2022 validado</label>
     </row>
     <row>
         <key>P63</key>
@@ -210,18 +222,18 @@
     </row>
     <row>
         <key>P93</key>
-        <value>19900243</value>
-        <label>Doctorado en Educación (Gestión Educativa)</label>
+        <value>14100698</value>
+        <label>Doctorado en Educación (Gestión Educativa) — INEI 2022 validado</label>
     </row>
     <row>
         <key>P49</key>
-        <value>19900243</value>
-        <label>Doctorado en Educación (Currículo y Docencia) — INEI agrupa ambas menciones</label>
+        <value>19910742</value>
+        <label>Doctorado en Educación (Currículo y Docencia) — INEI 2022 validado</label>
     </row>
     <row>
         <key>P99</key>
-        <value>61203409</value>
-        <label>Doctorado en Ingeniería de Sistemas</label>
+        <value>61200058</value>
+        <label>Doctorado en Ingeniería de Sistemas — INEI 2022 validado</label>
     </row>
     <!-- Segundas especialidades -->
     <row>
@@ -238,6 +250,43 @@
         <key>P154</key>
         <value>31302933</value>
         <label>Segunda Especialidad en Psicología Clínica y de la Salud</label>
+    </row>
+    <!-- ============================================================
+         RONDA 3 (2026-06-14) — Posgrado adicional validado INEI 2022 +
+         pregrado-conflicto resuelto. Keys posgrado sintéticas ('P'||CODIGO_SUNEDU);
+         P143/P05 son CODIGO_SUNEDU2 reales (pregrado, derivan sin fix de inbound).
+         Todos los values con cita oficial INEI 2022. P83 (Salud Colectiva) EXCLUIDO:
+         sin código 2022 validado (alumni histórico). -->
+    <row>
+        <key>P82</key>
+        <value>91910681</value>
+        <label>Maestría en Salud Pública (mención Salud Colectiva) — INEI 2022 validado (= P69)</label>
+    </row>
+    <row>
+        <key>P132</key>
+        <value>52100187</value>
+        <label>Maestría — programa posgrado INEI 2022 validado (P132)</label>
+    </row>
+    <row>
+        <key>P152</key>
+        <value>72200109</value>
+        <label>Segunda Especialidad — INEI 2022 validado (P152)</label>
+    </row>
+    <row>
+        <key>P153</key>
+        <value>91505513</value>
+        <label>Segunda Especialidad — INEI 2022 validado (P153)</label>
+    </row>
+    <!-- Pregrado-conflicto resuelto (CODIGO_SUNEDU2 reales) -->
+    <row>
+        <key>P143</key>
+        <value>42100042</value>
+        <label>Derecho — INEI 2022 validado</label>
+    </row>
+    <row>
+        <key>P05</key>
+        <value>41600562</value>
+        <label>Administración y Negocios Internacionales — INEI 2022 validado</label>
     </row>
     <!-- Alias de pregrado (CODIGO_SUNEDU2 reales, derivan sin fix de inbound) -->
     <row>
