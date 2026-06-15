@@ -133,22 +133,17 @@
                          por el inbound single-source strong de Trabajadores). Estudiante PURO: worker=null
                          → condición true → este inbound aplica normal (cero regresión). Worker PURO: este
                          inbound no existe en su feed → sin cambio. -->
-                    <source>
-                        <path>$shadow/attributes/ri:CORREO_UPEU</path>
-                    </source>
-                    <source>
-                        <name>liveAffiliationWorker</name>
-                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationWorker</path>
-                    </source>
                     <expression>
                         <script>
-                            <code>def v = (CORREO_UPEU ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d+/ ? null : v</code>
+                            <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d+/ ? null : v</code>
                         </script>
                     </expression>
                     <target><path>emailAddress</path></target>
                     <condition>
                         <script>
-                            <code>liveAffiliationWorker == null</code>
+                            <code>import javax.xml.namespace.QName
+def w = basic.getExtensionPropertyValue(focus, new QName('urn:sciback:midpoint:person','liveAffiliationWorker'))
+return w == null || w.toString().trim().isEmpty()</code>
                         </script>
                     </condition>
                 </inbound>
