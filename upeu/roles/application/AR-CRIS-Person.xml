@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AR-CRIS-Person — Application Role: cuenta Person (investigador) en DSpace-CRIS
+  OID: c4e8f1a2-9b03-4d57-8e62-1a4f7c0d9e35
+  Versión: 1.0 (2026-06-17) — DISEÑO, NO APLICADO A PROD (barrido dual en curso)
+  Resource target: DSpace-CRIS UPeU (OID 3f8b2d61-7c94-4a05-9e3b-6d1f8a2c5e70)
+  Archetype: Application Role (OID 279ad5be-a892-4add-946f-8cb3740bfc31)
+
+  ── PROBLEMA QUE RESUELVE ────────────────────────────────────────────────────────
+    El objectType person de cris-dspace.xml (kind=account intent=person) era
+    resource-driven con SOLO un existence-mapping (commit cf261d0), sin <construction>
+    ni <synchronization>/correlation. En MidPoint 4.10 el lens NUNCA instancia
+    (bootstrappea) una proyección que no esté inducida por una construction de
+    rol/template ni cargada por sync: el existence-mapping solo decide exists/not
+    sobre proyecciones YA presentes en el lensContext. Resultado: ningún recompute
+    proyectaba Person al CRIS.
+
+  ── ENFOQUE CANÓNICO: AR construction-driven (PD-RBAC) ─────────────────────────────
+    midpoint-best-practices §4.5 (pipeline focal: outbound phase consolida
+    constructions de inducements) + §2.3/§2.4 (application role = 1 app, 1
+    construction; role hierarchy con inducements) + §6.4 iga-canonical-standards
+    (cascada Business → Application → Entitlement con inducements).
+
+    Esta AR aporta la <construction> al objectType person que faltaba: al asignarse
+    a un foco, la construction entra al lensContext → la proyección se instancia
+    (bootstrap) → corren los outbound mappings del resource (dcTitle, givenName,
+    familyName, email, orcid, dni, affiliationOrgUnitUuid) → el connector hace
+    upsert idempotente (Update-no-create) en la colección "Investigadores".
+
+  ── GATE INVESTIGADOR: condición del INDUCEMENT (no del objectType) ────────────────
+    El criterio "ser investigador" deja de ser existence-mapping del resource y pasa
+    a ser la <condition> que gobierna la aplicación de esta construction al holder
+    (midpoint-best-practices §4.2 conditions relativistas, §7 conditions on
+    inducements; patrón idéntico al de AR-LDAP-Person y los AR-Koha-Patron).
+    Criterio (reality, vía roleMembershipRef indexado — barato, sin re-derivar):
+      (A) afiliación de investigación viva = membresía a un OrgType con archetype
+          org-research-center (6b1d9a4e-…): los Centros CII / DGI. La materializa
+          investigadores-afiliacion.xml (assignment relation org:default).
+      (B) padrón RENACYT = membresía al AR-Koha-Investigador (251f52db-…) o
+          AR-Koha-Researcher (02e7a70b-…), materializado por la lista anual DGI.
+    Mismo criterio que tenía el existence-mapping de cf261d0 — se mueve aquí intacto.
+
+  ── ASIGNACIÓN DEL AR (cómo llega a los investigadores) ────────────────────────────
+    NO se autoasigna por mapping propio (no hay <autoassign> en este ecosistema; los
+    AR-Koha se inducen desde Business Roles). Canónicamente esta AR se INDUCE desde
+    BR-Investigador (70c1606c-…) y BR-Visitante-Investigacion, igual que AR-Koha-*.
+    Así la cascada queda: User → BR-Investigador → (induce) AR-CRIS-Person → (induce)
+    construction CRIS person. La <condition> de abajo es defensa adicional: aunque un
+    BR la induzca, si el holder no cumple el gate investigador la construction no
+    aplica (least privilege; "no agregar privilegio").
+    NOTA: el inducement desde los BR se añade en un cambio posterior (ver plan de
+    aplicación en REPORTE); este archivo entrega solo la AR.
+
+  ── EXISTENCE-MAPPING DE cf261d0: se SIMPLIFICA (se retira del resource) ────────────
+    Con construction-driven la cuenta solo se instancia cuando esta AR (gated) aplica
+    → el criterio investigador ya gobierna la existencia desde la capa de policy. El
+    existence-mapping del objectType person se vuelve redundante (duplicaría el mismo
+    gate en la capa resource). Se retira de cris-dspace.xml para tener UN solo
+    chokepoint (esta AR) y evitar doble fuente del criterio (anti-duplicación,
+    midpoint-best-practices regla 4 reality-vs-policy / §7). La 2da barrera natural ya
+    existe: assignmentPolicyEnforcement=relative + delete deshabilitado en el resource
+    → MidPoint nunca borra Person del CRIS por baja IGA (solo deja de actualizar).
+    El contrato PerúCRIS (entity.type single-value, tiposubunidad por archetype,
+    afiliación CERIF relationshipType 5 place 0) lo siguen emitiendo los outbound del
+    resource — esta AR NO toca atributos, solo aporta la construction base.
+
+  Patrón IGA SciBack reutilizable: "AR construction-driven con gate por
+  roleMembershipRef" para proyectar a un resource que de otro modo nunca bootstrappea.
+-->
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+      oid="c4e8f1a2-9b03-4d57-8e62-1a4f7c0d9e35">
+    <name>AR-CRIS-Person</name>
+    <description>Application Role: proyecta la cuenta Person (investigador) en DSpace-CRIS (colección Investigadores). Aporta la construction (kind=account intent=person) que faltaba al objectType person de cris-dspace.xml para que el lens bootstrappee la proyección. El gate investigador (afiliación research-center O padrón RENACYT, vía roleMembershipRef) gobierna la aplicación de la construction al holder. Se induce desde BR-Investigador / BR-Visitante-Investigacion. Reemplaza el existence-mapping resource-driven (cf261d0). Upsert idempotente Update-no-create por orcid/dni. lifecycleState=draft hasta validar piloto (resource CRIS sigue proposed).</description>
+    <!-- draft: la AR no opera hasta que (a) cierre el barrido dual, (b) se importe,
+         (c) se la induzca desde los BR. El resource CRIS sigue proposed en paralelo. -->
+    <lifecycleState>draft</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application role (OID canónico PROD) -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <inducement>
+        <construction>
+            <resourceRef oid="3f8b2d61-7c94-4a05-9e3b-6d1f8a2c5e70" type="ResourceType"/>
+            <kind>account</kind>
+            <intent>person</intent>
+            <!-- Sin <attribute> override: los outbound (dcTitle/givenName/familyName/
+                 email/orcid/dni/affiliationOrgUnitUuid) viven en el objectType person
+                 del resource. Esta construction solo instancia la proyección. -->
+        </construction>
+        <!-- GATE INVESTIGADOR — chokepoint canónico en la capa de policy.
+             Migrado intacto desde el existence-mapping de cf261d0. Si el holder no es
+             investigador (sin afiliación research-center viva ni padrón RENACYT), la
+             condición es false → la construction no aplica → no se proyecta Person.
+             API: basic.getExtensionPropertyValue NO aplica aquí (criterio = membresías,
+             no extension). Se usa roleMembershipRef + resolución OrgType, igual que el
+             existence-mapping original. iga-canonical-standards §10.2/§10.3;
+             midpoint-best-practices §4.2 (conditions) / §7 (conditions on inducements). -->
+        <condition>
+            <expression>
+                <script>
+                    <code><![CDATA[
+// Centros de investigación (research-center archetype) + roles padrón RENACYT.
+def RESEARCH_CENTER_ARCHETYPE = '6b1d9a4e-2f53-4c8a-bf17-9d0c6e2a4b81'
+def RENACYT_ROLES = ['251f52db-af86-435d-9307-cc18ee0c3fa8',   // AR-Koha-Investigador
+                     '02e7a70b-32e5-48c9-96ab-84ecdde119e2']   // AR-Koha-Researcher
+import com.evolveum.midpoint.xml.ns._public.common.common_3.OrgType
+def refs = (focus?.roleMembershipRef instanceof Collection) ? focus.roleMembershipRef
+           : (focus?.roleMembershipRef == null ? [] : [focus.roleMembershipRef])
+for (r in refs) {
+    def oid = r?.getOid()
+    if (oid == null) continue
+    // (B) padrón RENACYT: membresía directa al AR investigador.
+    if (RENACYT_ROLES.contains(oid)) return true
+    // (A) afiliación de investigación: la membresía es a un OrgType research-center.
+    try {
+        def o = midpoint.getObject(OrgType.class, oid)?.asObjectable()
+        if (o != null) {
+            for (a in o.getArchetypeRef()) {
+                if (RESEARCH_CENTER_ARCHETYPE.equals(a?.getOid())) return true
+            }
+        }
+    } catch (Exception e) { /* no es OrgType resoluble -> ignorar */ }
+}
+return false
+                    ]]></code>
+                </script>
+            </expression>
+        </condition>
+    </inducement>
+</role>

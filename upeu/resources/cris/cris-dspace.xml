@@ -47,7 +47,17 @@
   reposo; el provisioning masivo se habilita por decisión del usuario. Validación: caso
   piloto Charming (ID_PERSONA 29266) primero.
 
+  ── Proyección Person = construction-driven (NO resource-driven) ────────────────────
+  La cuenta Person la instancia el Application Role AR-CRIS-Person
+  (OID c4e8f1a2-9b03-4d57-8e62-1a4f7c0d9e35, upeu/roles/application/), que aporta la
+  <construction> (kind=account intent=person) y lleva el gate investigador en la
+  <condition> de su inducement. Se induce desde BR-Investigador /
+  BR-Visitante-Investigacion. El existence-mapping de cf261d0 fue RETIRADO (v1.1): el
+  lens 4.10 no bootstrappea una proyección sin construction, y el existence-gate
+  duplicaba el criterio. Ver el bloque de comentario en el objectType person.
+
   Historial: v1.0 2026-06-17 — Fase 5 CRIS.
+             v1.1 2026-06-17 — existence-mapping → AR construction-driven (AR-CRIS-Person).
 -->
 <resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
@@ -337,69 +347,36 @@ return ordered
                 </outbound>
             </attribute>
 
-            <!-- ============================ GATE DE EXISTENCIA (chokepoint canónico) ====================
-                 Solo existe una cuenta Person en el CRIS para las personas que SON investigadores.
-                 Chokepoint = existence-mapping del objectType (NO construction-condition de un rol):
-                 no hay un Application Role 1:1 "ser Person del CRIS"; la proyección Person es
-                 resource-driven (focus=UserType). El existence-mapping corre en la fase de
-                 proyección y decide si la cuenta debe existir — defecto = NO para los ~35k no
-                 investigadores (least privilege / MidPoint suma, nunca resta).
+            <!-- ============================ EXISTENCIA = construction-driven (chokepoint en POLICY) ===========
+                 CAMBIO 2026-06-17 (supersede el existence-mapping de cf261d0):
+                 La proyección Person ya NO es resource-driven con existence-gate. En MidPoint 4.10
+                 un existence-mapping solo decide exists/not sobre proyecciones YA cargadas en el
+                 lensContext; sin construction que las instancie, el lens nunca bootstrappea la
+                 proyección y ningún recompute proyecta Person.
 
-                 Criterio canónico (reality, vía roleMembershipRef indexado):
-                   (A) afiliación de investigación viva  = membresía a un OrgType research-center
-                       (archetype 6b1d9a4e-…, los CII/DGI). La crea investigadores-afiliacion.xml
-                       como assignment relation org:default (afiliación CERIF isPersonOfOrgUnit).
-                   (B) padrón RENACYT                     = membresía a AR-Koha-Investigador
-                       (251f52db-…) o AR-Koha-Researcher (02e7a70b-…), materializado por la lista
-                       anual DGI (CSV) o BR de investigador.
-                 roleMembershipRef refleja la realidad de assignments efectivos (incluye membresías
-                 OrgType y roles) y está disponible en la fase de proyección — canónico y barato,
-                 sin re-derivar. iga-canonical-standards §10.2/§10.3; midpoint-best-practices §4.5.
+                 El chokepoint se movió a la capa de POLICY: el Application Role AR-CRIS-Person
+                 (OID c4e8f1a2-9b03-4d57-8e62-1a4f7c0d9e35) aporta la <construction> (kind=account
+                 intent=person) y lleva en su inducement la <condition> con el gate investigador
+                 (afiliación research-center 6b1d9a4e-… O padrón RENACYT 251f52db-…/02e7a70b-… vía
+                 roleMembershipRef) — el MISMO criterio que tenía este existence-mapping, ahora en
+                 un único lugar. La AR se induce desde BR-Investigador / BR-Visitante-Investigacion.
+
+                 Se RETIRA el existence-mapping para no duplicar el criterio en dos capas
+                 (anti-duplicación de policy; midpoint-best-practices §7 / regla 4 reality-vs-policy).
+                 2da barrera (defensa en profundidad) ya presente sin existence-mapping:
+                   - assignmentPolicyEnforcement=relative (abajo): MidPoint no toca proyecciones
+                     no gobernadas por una construction activa.
+                   - <cap:delete enabled=false> (abajo): nunca borra Person del CRIS por baja IGA;
+                     un investigador que pierde el gate deja de actualizarse (no se elimina).
+                 El contrato PerúCRIS (entity.type single-value, tiposubunidad por archetype,
+                 afiliación CERIF relationshipType 5 place 0) lo siguen emitiendo los outbound de
+                 arriba — la AR no toca atributos, solo instancia la proyección.
 
                  NOTA piloto Charming (938f33c0-…): es STAFF/directivo DGI, sin afiliación de
-                 investigación ni padrón RENACYT → el gate lo EXCLUYE (correcto: un directivo no es
-                 investigador). NO se ensancha el criterio a "directivos DGI" (no canónico). La
-                 validación outbound del piloto se hizo con un allowlist TEMPORAL de su OID en este
-                 existence-mapping, scoped-reconcile de su shadow, y luego se revirtió el allowlist
-                 dejando el gate canónico limpio (ver REPORTE). -->
-            <activation>
-              <existence>
-                <outbound>
-                <name>cris-person-existence-by-research</name>
-                <strength>strong</strength>
-                <source><path>$focus/roleMembershipRef</path></source>
-                <expression>
-                    <script>
-                        <code>
-// Centros de investigación (research-center archetype) + roles padrón RENACYT.
-def RESEARCH_CENTER_ARCHETYPE = '6b1d9a4e-2f53-4c8a-bf17-9d0c6e2a4b81'
-def RENACYT_ROLES = ['251f52db-af86-435d-9307-cc18ee0c3fa8',   // AR-Koha-Investigador
-                     '02e7a70b-32e5-48c9-96ab-84ecdde119e2']  // AR-Koha-Researcher
-import com.evolveum.midpoint.xml.ns._public.common.common_3.OrgType
-def refs = (roleMembershipRef instanceof Collection) ? roleMembershipRef
-           : (roleMembershipRef == null ? [] : [roleMembershipRef])
-for (r in refs) {
-    def oid = r?.getOid()
-    if (oid == null) continue
-    // (B) padrón RENACYT: membresía directa al AR investigador.
-    if (RENACYT_ROLES.contains(oid)) return true
-    // (A) afiliación de investigación: la membresía es a un OrgType research-center.
-    try {
-        def o = midpoint.getObject(OrgType.class, oid)?.asObjectable()
-        if (o != null) {
-            for (a in o.getArchetypeRef()) {
-                if (RESEARCH_CENTER_ARCHETYPE.equals(a?.getOid())) return true
-            }
-        }
-    } catch (Exception e) { /* no es OrgType resoluble → ignorar */ }
-}
-return false
-                        </code>
-                    </script>
-                </expression>
-                </outbound>
-              </existence>
-            </activation>
+                 investigación ni padrón RENACYT → el gate de la AR lo EXCLUYE (correcto: un
+                 directivo no es investigador). Para validar end-to-end ver el plan de aplicación
+                 (REPORTE): asignación TEMPORAL de la AR a Charming, o validación con un
+                 investigador real ya existente en CRIS por ORCID/DNI (recomendado). -->
         </objectType>
 
     </schemaHandling>
