@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Resource: DSpace-CRIS UPeU (outbound) v1.0
+  OID: 3f8b2d61-7c94-4a05-9e3b-6d1f8a2c5e70
+
+  Outbound MidPoint → DSpace-CRIS (https://cris.upeu.edu.pe/server/api).
+  CRIS detectado en PROD: DSpace 9.2 / cris-2025.02.00 (PerúCRIS v1.1).
+
+  Provisiona DESDE MidPoint (NO scripts ad-hoc):
+    - OrgUnit  (focus=OrgType): institución/facultades/carreras + DGI + Centros CII + líneas.
+    - Person   (focus=UserType): investigadores (colección "Investigadores").
+    - Afiliación CERIF Person↔OrgUnit (relationshipType id 5), principal en place 0.
+  La producción científica (publicaciones/patentes/citas) NO va por MidPoint.
+
+  ── Connector ──────────────────────────────────────────────────────────────────
+  ScriptedREST ConnId (net.tirasa.connid.bundles.rest) con scripts Groovy externos
+  (upeu/resources/cris/scripts/*.groovy). Mismo patrón "connector custom HTTP" del
+  ecosistema (keycloak-http, koha) pero usando el bundle ScriptedREST genérico para no
+  compilar Java a medida. La auth DSpace (CSRF + JWT) y el upsert PerúCRIS/CERIF viven en
+  CrisClient.groovy.
+
+  ⚠️ PRE-REQUISITO DE DESPLIEGUE (decisión del usuario, ver REPORTE):
+    El bundle ScriptedREST NO está instalado en PROD (solo ScriptedSQL, Koha, MSGraph,
+    LDAP, CSV). Antes de importar este resource hay que copiar el bundle
+    net.tirasa.connid.bundles.rest-*.jar a /opt/midpoint/var/icf-connectors/ y reiniciar
+    el connector framework. El connectorRef OID de abajo es PROVISIONAL: tras instalar el
+    bundle, descubrir el OID real (GET /connectors) y fijarlo aquí.
+
+  ── Upsert idempotente (NO duplica; CRIS ya tiene 97 Person + 41 OrgUnit) ───────────
+    OrgUnit: búsqueda por organization.legalName (Discovery, f.entityType=OrgUnit) → Update si existe.
+    Person : búsqueda por person.identifier.orcid, fallback perucris.person.dni → Update si existe.
+    El shadow de MidPoint guarda el uuid DSpace (__UID__) tras el primer create → idempotencia
+    en pasadas siguientes sin re-buscar.
+
+  ── Contrato PerúCRIS emitido (verificado) ─────────────────────────────────────────
+    dspace.entity.type = OrgUnit | Person   (UN SOLO valor — duplicarlo rompe indexación).
+    OrgUnit: organization.legalName, organization.parentOrganization (jerarquía),
+             perucris.orgunit.tiposubunidad (#unidadDeInvestigacionOInnovacion para DGI+7 CII,
+             #lineaDeInvestigacion para líneas). Solo raíz UPeU: tipoinstitucion #06 +
+             naturaleza #privada + sector #ensenanzaSuperior + RUC. Facultades/carreras:
+             solo parentOrganization. NO organizationType (vocab 404).
+    Person : dc.title "Apellidos, Nombres", person.givenName/familyName/email,
+             person.identifier.orcid, perucris.person.dni. Colección "Investigadores".
+    Afiliación: relación CERIF relationshipType 5, principal (dependencia laboral) en place 0.
+
+  lifecycleState=proposed: capabilities create/update activas pero el resource arranca en
+  reposo; el provisioning masivo se habilita por decisión del usuario. Validación: caso
+  piloto Charming (ID_PERSONA 29266) primero.
+
+  Historial: v1.0 2026-06-17 — Fase 5 CRIS.
+-->
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+    xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+    xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:sb="urn:sciback:midpoint:person"
+    xmlns:upeu="urn:upeu:midpoint:local"
+    oid="3f8b2d61-7c94-4a05-9e3b-6d1f8a2c5e70">
+
+    <name>DSpace-CRIS UPeU</name>
+    <description>Outbound MidPoint -> DSpace-CRIS (PerúCRIS v1.1). Provisiona OrgUnit (OrgType) + Person (UserType) + afiliación CERIF relationshipType 5. Upsert idempotente por legalName (OrgUnit) y orcid/dni (Person). Connector ScriptedREST (scripts Groovy externos). Fase 5 (2026-06-17). PROPOSED hasta validar piloto Charming.</description>
+    <lifecycleState>proposed</lifecycleState>
+
+    <!-- PROVISIONAL: reemplazar tras instalar el bundle ScriptedREST y descubrir el OID real. -->
+    <connectorRef type="c:ConnectorType">
+        <filter>
+            <q:equal>
+                <q:path>c:connectorType</q:path>
+                <q:value>net.tirasa.connid.bundles.rest.ScriptedRESTConnector</q:value>
+            </q:equal>
+        </filter>
+    </connectorRef>
+
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:configurationProperties
+            xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.rest/net.tirasa.connid.bundles.rest.ScriptedRESTConnector">
+            <cfg:baseUrl>https://cris.upeu.edu.pe/server/api</cfg:baseUrl>
+            <cfg:username>__SET_VIA_REST__</cfg:username>
+            <!-- password: setear cifrado vía REST/UI tras import (admin DSpace, ~/.secrets/upeu-dspace-cris.env DSPACE_ADMIN_PASSWORD) -->
+            <cfg:password>
+                <t:clearValue>__SET_VIA_REST__</t:clearValue>
+            </cfg:password>
+            <!-- colección owning para OrgUnit (la de Person está fija en CrisClient: Investigadores). -->
+            <cfg:orgUnitCollectionUuid>__SET_VIA_REST__</cfg:orgUnitCollectionUuid>
+            <!-- rutas a los scripts Groovy dentro del container MidPoint -->
+            <cfg:testScriptFileName>/opt/midpoint/var/cris-scripts/Test.groovy</cfg:testScriptFileName>
+            <cfg:schemaScriptFileName>/opt/midpoint/var/cris-scripts/Schema.groovy</cfg:schemaScriptFileName>
+            <cfg:searchScriptFileName>/opt/midpoint/var/cris-scripts/Search.groovy</cfg:searchScriptFileName>
+            <cfg:createScriptFileName>/opt/midpoint/var/cris-scripts/Create.groovy</cfg:createScriptFileName>
+            <cfg:updateScriptFileName>/opt/midpoint/var/cris-scripts/Update.groovy</cfg:updateScriptFileName>
+            <cfg:scriptRoots>
+                <cfg:string>/opt/midpoint/var/cris-scripts</cfg:string>
+            </cfg:scriptRoots>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+
+    <schemaHandling>
+
+        <!-- ============================ ORGUNIT (focus=OrgType) ============================ -->
+        <objectType>
+            <kind>generic</kind>
+            <intent>orgUnit</intent>
+            <displayName>OrgUnit CRIS</displayName>
+            <default>true</default>
+            <delineation>
+                <objectClass>ri:orgUnit</objectClass>
+            </delineation>
+            <focus>
+                <type>OrgType</type>
+                <!-- Solo se proyectan orgs relevantes para el CRIS: la institución raíz,
+                     facultades, programas académicos, DGI, Centros CII y líneas.
+                     Las orgs administrativas (departamentos) NO se publican al CRIS. -->
+            </focus>
+
+            <!-- __NAME__ = legalName (clave de upsert). displayName del OrgType. -->
+            <attribute>
+                <ref>ri:legalName</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <source><path>displayName</path></source>
+                    <expression>
+                        <script><code>basic.stringify(input)</code></script>
+                    </expression>
+                </outbound>
+            </attribute>
+
+            <!-- parentOrganization: nombre legible del padre (resuelto vía parentOrgRef). -->
+            <attribute>
+                <ref>ri:parentOrganizationName</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <source><path>parentOrgRef</path></source>
+                    <expression>
+                        <script>
+                            <code>
+// Resolver el displayName de la org padre (primer parentOrgRef de tipo OrgType).
+import com.evolveum.midpoint.xml.ns._public.common.common_3.OrgType
+if (input == null) return null
+def parentOid = (input instanceof Collection) ? (input.isEmpty()? null : input.iterator().next()?.oid) : input?.oid
+if (parentOid == null) return null
+def parent = midpoint.getObject(OrgType.class, parentOid)
+parent?.asObjectable()?.getDisplayName()?.getOrig()
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+
+            <!-- parentOrganization authority = uuid del OrgUnit padre en CRIS (si ya provisionado).
+                 Se resuelve por búsqueda en el connector (Search por legalName del padre). Para
+                 simplificar, MidPoint emite solo el nombre; el connector resuelve el uuid del padre
+                 vía findOrgUnitUuid en Create/Update. Aquí dejamos el uuid vacío (lo completa CRIS). -->
+
+            <!-- tiposubunidad PerúCRIS, derivado del ARCHETYPE de la org (chokepoint canónico). -->
+            <attribute>
+                <ref>ri:tiposubunidad</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <source><path>archetypeRef</path></source>
+                    <expression>
+                        <script>
+                            <code>
+// research-center (6b1d9a4e...) + DGI(academic-unit, identifier=69) → #unidadDeInvestigacionOInnovacion
+// research-line   (7c2e0b5f...)                                     → #lineaDeInvestigacion
+// resto (institution/campus/faculty/academic-program/department)   → null (sin tiposubunidad)
+def VOC = 'https://catalogos.concytec.gob.pe/vocabulario/concytec_tipoSubunidad.xml'
+def refs = (input instanceof Collection) ? input : (input == null ? [] : [input])
+def oids = refs.collect { it?.oid }
+if (oids.contains('6b1d9a4e-2f53-4c8a-bf17-9d0c6e2a4b81')) return VOC + '#unidadDeInvestigacionOInnovacion'
+if (oids.contains('7c2e0b5f-3a64-4d9b-c028-ae1d7f3b5c92')) return VOC + '#lineaDeInvestigacion'
+return null
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+
+            <!-- esRaiz: 'true' solo para la institución raíz UPeU (archetype org-institution). -->
+            <attribute>
+                <ref>ri:esRaiz</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <source><path>archetypeRef</path></source>
+                    <expression>
+                        <script>
+                            <code>
+def refs = (input instanceof Collection) ? input : (input == null ? [] : [input])
+refs.collect{it?.oid}.contains('455d90ab-b54a-4aa7-a402-a6b6ffc0c0d9') ? 'true' : 'false'
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+
+            <!-- RUC institucional (solo raíz). Constante UPeU. -->
+            <attribute>
+                <ref>ri:ruc</ref>
+                <outbound>
+                    <strength>weak</strength>
+                    <expression>
+                        <value>20138122191</value><!-- RUC UPeU (verificar en overlay UPeU) -->
+                    </expression>
+                </outbound>
+            </attribute>
+        </objectType>
+
+        <!-- ============================ PERSON (focus=UserType) ============================ -->
+        <objectType>
+            <kind>account</kind>
+            <intent>person</intent>
+            <displayName>Person CRIS (Investigador)</displayName>
+            <delineation>
+                <objectClass>ri:person</objectClass>
+            </delineation>
+            <focus>
+                <type>UserType</type>
+            </focus>
+
+            <!-- dc.title "Apellidos, Nombres" -->
+            <attribute>
+                <ref>ri:dcTitle</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <source><path>familyName</path></source>
+                    <source><path>givenName</path></source>
+                    <expression>
+                        <script>
+                            <code>
+def fam = familyName ? basic.stringify(familyName) : ''
+def giv = givenName ? basic.stringify(givenName) : ''
+(fam + (giv ? ', ' + giv : '')).trim() ?: null
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:givenName</ref>
+                <outbound><strength>strong</strength><source><path>givenName</path></source></outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:familyName</ref>
+                <outbound><strength>strong</strength><source><path>familyName</path></source></outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:email</ref>
+                <outbound><strength>strong</strength><source><path>emailAddress</path></source></outbound>
+            </attribute>
+
+            <!-- ORCID: desde extension/sb:orcid (forma sin URI: 0000-0000-0000-0000). -->
+            <attribute>
+                <ref>ri:orcid</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <source><path>extension/sb:orcid</path></source>
+                    <expression>
+                        <script>
+                            <code>
+def v = input ? basic.stringify(input).trim() : null
+if (!v) return null
+// normalizar a forma 16-dígitos sin prefijo URI
+v = v.replaceAll('https?://orcid.org/', '')
+v ?: null
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+
+            <!-- DNI: desde el documento primario canónico (sb:identityDocuments primary=true type=DNI). -->
+            <attribute>
+                <ref>ri:dni</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <source><path>extension/sb:identityDocuments</path></source>
+                    <expression>
+                        <script>
+                            <code>
+// identityDocuments es multivalor contenedor; tomar el primary=true type=DNI.
+def docs = (input instanceof Collection) ? input : (input == null ? [] : [input])
+for (d in docs) {
+    def dd = (d?.getRealValue != null) ? d.getRealValue() : d
+    def type = dd?.type?.toString()
+    def primary = dd?.primary?.toString()
+    if (('DNI'.equalsIgnoreCase(type)) &amp;&amp; ('true'.equalsIgnoreCase(primary) || primary == null)) {
+        return dd?.number?.toString()
+    }
+}
+return null
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+
+            <!-- Afiliaciones: uuids de OrgUnit CRIS. place 0 = principal (dependencia laboral),
+                 resto = afiliaciones de investigación (Centros CII). MidPoint emite los NOMBRES
+                 legibles de las orgs (parentOrgRef del user = membresías org) y el connector los
+                 resuelve a uuid CRIS (findOrgUnitUuid). Para mantener place 0 en la dependencia
+                 laboral, ordenamos: primero la org cuyo costCenter coincide (área de empleo). -->
+            <attribute>
+                <ref>ri:affiliationOrgUnitUuid</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <source><path>parentOrgRef</path></source>
+                    <source><path>costCenter</path></source>
+                    <expression>
+                        <script>
+                            <code>
+// Devuelve NOMBRES de OrgUnit (legalName) en orden de prioridad. El connector los resuelve
+// a uuid y crea las relaciones CERIF; el primero (index 0) → leftPlace 0 (principal).
+// Solo se publican orgs que existen como OrgUnit en CRIS (institución/facultad/carrera/DGI/CII/línea);
+// las administrativas las ignora el connector (findOrgUnitUuid devuelve null → no se relacionan).
+import com.evolveum.midpoint.xml.ns._public.common.common_3.OrgType
+def refs = (parentOrgRef instanceof Collection) ? parentOrgRef : (parentOrgRef == null ? [] : [parentOrgRef])
+def names = []
+def principalName = null
+def cc = costCenter ? basic.stringify(costCenter) : null
+refs.each { r ->
+    def o = midpoint.getObject(OrgType.class, r?.oid)?.asObjectable()
+    if (o == null) return
+    def nm = o.getDisplayName()?.getOrig()
+    if (nm == null) return
+    // si el costCenter del user coincide con el identifier/areaId del org → es la dependencia laboral
+    def ident = o.getIdentifier()
+    if (cc != null &amp;&amp; ident != null &amp;&amp; cc == ident.toString()) principalName = nm
+    names &lt;&lt; nm
+}
+def ordered = []
+if (principalName) ordered &lt;&lt; principalName
+names.each { if (it != principalName) ordered &lt;&lt; it }
+return ordered
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+
+            <!-- Solo se proyectan al CRIS las personas que son investigadores (tienen afiliación
+                 de investigación o están en el padrón RENACYT). Gate por condición de existencia. -->
+        </objectType>
+
+    </schemaHandling>
+
+    <capabilities>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <!-- outbound: create + update activos; delete deshabilitado (no se borra del CRIS por baja IGA). -->
+            <cap:delete><cap:enabled>false</cap:enabled></cap:delete>
+        </configured>
+    </capabilities>
+
+    <projection>
+        <assignmentPolicyEnforcement>relative</assignmentPolicyEnforcement>
+    </projection>
+
+</resource>
