@@ -82,18 +82,33 @@ while IFS=$'\t' read -r OID NAME LC LD; do
     -H 'Content-Type: application/xml' \
     -d "<objectModification xmlns=\"http://midpoint.evolveum.com/xml/ns/public/common/api-types-3\" xmlns:t=\"http://prism.evolveum.com/xml/ns/public/types-3\" xmlns:c=\"http://midpoint.evolveum.com/xml/ns/public/common/common-3\"><itemDelta><t:modificationType>replace</t:modificationType><t:path>c:description</t:path><t:value>dual970-sweep-$TS</t:value></itemDelta></objectModification>")
 
+  MARKER="dual970-sweep-$TS"
   if [ "$HTTP" = "204" ] || [ "$HTTP" = "200" ] || [ "$HTTP" = "250" ]; then
     OK=$((OK+1)); echo "$OID" >> "$DONE"
-  elif grep -qiE 'koha|timed out|read timed|connect timed|connection reset|sockettimeout' "$RESP"; then
-    # Ruido transitorio Koha (bot-flood .135). NO marcar done -> reintentable.
-    KNOISE=$((KNOISE+1))
-    echo "$(date +%H:%M:%S) $NAME $OID HTTP=$HTTP -> KOHA-NOISE(retry) :: $(head -c 180 $RESP | tr '\n' ' ')" >> "$LOG"
-  elif grep -qiE 'without any attributes|partial' "$RESP"; then
-    OK=$((OK+1)); BENIGN=$((BENIGN+1)); echo "$OID" >> "$DONE"
-    echo "$(date +%H:%M:%S) $NAME $OID HTTP=$HTTP -> OK(benign-partial)" >> "$LOG"
+  elif grep -qiE 'koha|read timed|connect timed|connection reset|sockettimeout' "$RESP"; then
+    # Ruido transitorio Koha (bot-flood .135) en la PROYECCION downstream.
+    # Verificar si el delta de la fase principal se commiteo igual (description).
+    APPLIED=$(docker exec midpoint-midpoint_data-1 psql -U midpoint -d midpoint -tAc \
+      "select 1 from m_user where oid='$OID' and convert_from(fullobject,'UTF8') like '%$MARKER%'" 2>/dev/null | tr -d ' ')
+    if [ "$APPLIED" = "1" ]; then
+      OK=$((OK+1)); BENIGN=$((BENIGN+1)); echo "$OID" >> "$DONE"
+      echo "$(date +%H:%M:%S) $NAME $OID HTTP=$HTTP -> OK(koha-noise,delta-commited)" >> "$LOG"
+    else
+      KNOISE=$((KNOISE+1))
+      echo "$(date +%H:%M:%S) $NAME $OID HTTP=$HTTP -> KOHA-NOISE(retry,no-commit) :: $(head -c 160 $RESP | tr '\n' ' ')" >> "$LOG"
+    fi
   else
-    FAIL=$((FAIL+1))
-    echo "$(date +%H:%M:%S) $NAME $OID HTTP=$HTTP FAIL :: $(head -c 220 $RESP | tr '\n' ' ')" >> "$LOG"
+    # 5xx (StackOverflowError de serializacion Wicket, partial-error, etc.):
+    # el clockwork puede haber commiteado igual. Verificar marker en description.
+    APPLIED=$(docker exec midpoint-midpoint_data-1 psql -U midpoint -d midpoint -tAc \
+      "select 1 from m_user where oid='$OID' and convert_from(fullobject,'UTF8') like '%$MARKER%'" 2>/dev/null | tr -d ' ')
+    if [ "$APPLIED" = "1" ]; then
+      OK=$((OK+1)); BENIGN=$((BENIGN+1)); echo "$OID" >> "$DONE"
+      echo "$(date +%H:%M:%S) $NAME $OID HTTP=$HTTP -> OK(benign,delta-commited; serialization/partial noise)" >> "$LOG"
+    else
+      FAIL=$((FAIL+1))
+      echo "$(date +%H:%M:%S) $NAME $OID HTTP=$HTTP FAIL(no-commit) :: $(grep -oE '<message>[^<]*' $RESP | head -1) :: $(head -c 160 $RESP | tr '\n' ' ')" >> "$LOG"
+    fi
   fi
 
   N=$((OK+FAIL+KNOISE))
