@@ -362,9 +362,12 @@ return ordered
                  validación outbound del piloto se hizo con un allowlist TEMPORAL de su OID en este
                  existence-mapping, scoped-reconcile de su shadow, y luego se revirtió el allowlist
                  dejando el gate canónico limpio (ver REPORTE). -->
-            <existence>
+            <activation>
+              <existence>
+                <outbound>
+                <name>cris-person-existence-by-research</name>
                 <strength>strong</strength>
-                <source><path>roleMembershipRef</path></source>
+                <source><path>$focus/roleMembershipRef</path></source>
                 <expression>
                     <script>
                         <code>
@@ -394,7 +397,9 @@ return false
                         </code>
                     </script>
                 </expression>
-            </existence>
+                </outbound>
+              </existence>
+            </activation>
         </objectType>
 
     </schemaHandling>
