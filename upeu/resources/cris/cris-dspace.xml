@@ -340,8 +340,64 @@ return ordered
                 </outbound>
             </attribute>
 
-            <!-- Solo se proyectan al CRIS las personas que son investigadores (tienen afiliación
-                 de investigación o están en el padrón RENACYT). Gate por condición de existencia. -->
+            <!-- ============================ GATE DE EXISTENCIA (chokepoint canónico) ====================
+                 Solo existe una cuenta Person en el CRIS para las personas que SON investigadores.
+                 Chokepoint = existence-mapping del objectType (NO construction-condition de un rol):
+                 no hay un Application Role 1:1 "ser Person del CRIS"; la proyección Person es
+                 resource-driven (focus=UserType). El existence-mapping corre en la fase de
+                 proyección y decide si la cuenta debe existir — defecto = NO para los ~35k no
+                 investigadores (least privilege / MidPoint suma, nunca resta).
+
+                 Criterio canónico (reality, vía roleMembershipRef indexado):
+                   (A) afiliación de investigación viva  = membresía a un OrgType research-center
+                       (archetype 6b1d9a4e-…, los CII/DGI). La crea investigadores-afiliacion.xml
+                       como assignment relation org:default (afiliación CERIF isPersonOfOrgUnit).
+                   (B) padrón RENACYT                     = membresía a AR-Koha-Investigador
+                       (251f52db-…) o AR-Koha-Researcher (02e7a70b-…), materializado por la lista
+                       anual DGI (CSV) o BR de investigador.
+                 roleMembershipRef refleja la realidad de assignments efectivos (incluye membresías
+                 OrgType y roles) y está disponible en la fase de proyección — canónico y barato,
+                 sin re-derivar. iga-canonical-standards §10.2/§10.3; midpoint-best-practices §4.5.
+
+                 NOTA piloto Charming (938f33c0-…): es STAFF/directivo DGI, sin afiliación de
+                 investigación ni padrón RENACYT → el gate lo EXCLUYE (correcto: un directivo no es
+                 investigador). NO se ensancha el criterio a "directivos DGI" (no canónico). La
+                 validación outbound del piloto se hizo con un allowlist TEMPORAL de su OID en este
+                 existence-mapping, scoped-reconcile de su shadow, y luego se revirtió el allowlist
+                 dejando el gate canónico limpio (ver REPORTE). -->
+            <existence>
+                <strength>strong</strength>
+                <source><path>roleMembershipRef</path></source>
+                <expression>
+                    <script>
+                        <code>
+// Centros de investigación (research-center archetype) + roles padrón RENACYT.
+def RESEARCH_CENTER_ARCHETYPE = '6b1d9a4e-2f53-4c8a-bf17-9d0c6e2a4b81'
+def RENACYT_ROLES = ['251f52db-af86-435d-9307-cc18ee0c3fa8',   // AR-Koha-Investigador
+                     '02e7a70b-32e5-48c9-96ab-84ecdde119e2']  // AR-Koha-Researcher
+import com.evolveum.midpoint.xml.ns._public.common.common_3.OrgType
+def refs = (roleMembershipRef instanceof Collection) ? roleMembershipRef
+           : (roleMembershipRef == null ? [] : [roleMembershipRef])
+for (r in refs) {
+    def oid = r?.getOid()
+    if (oid == null) continue
+    // (B) padrón RENACYT: membresía directa al AR investigador.
+    if (RENACYT_ROLES.contains(oid)) return true
+    // (A) afiliación de investigación: la membresía es a un OrgType research-center.
+    try {
+        def o = midpoint.getObject(OrgType.class, oid)?.asObjectable()
+        if (o != null) {
+            for (a in o.getArchetypeRef()) {
+                if (RESEARCH_CENTER_ARCHETYPE.equals(a?.getOid())) return true
+            }
+        }
+    } catch (Exception e) { /* no es OrgType resoluble → ignorar */ }
+}
+return false
+                        </code>
+                    </script>
+                </expression>
+            </existence>
         </objectType>
 
     </schemaHandling>
