@@ -371,6 +371,9 @@ return ordered
                 <expression>
                     <script>
                         <code>
+// === ALLOWLIST TEMPORAL PILOTO CHARMING (REVERTIR tras validar — gate final = cf261d0) ===
+if (focus?.getOid() == '938f33c0-4476-43ee-984e-8f40535073e5') return true
+// === FIN ALLOWLIST TEMPORAL ===
 // Centros de investigación (research-center archetype) + roles padrón RENACYT.
 def RESEARCH_CENTER_ARCHETYPE = '6b1d9a4e-2f53-4c8a-bf17-9d0c6e2a4b81'
 def RENACYT_ROLES = ['251f52db-af86-435d-9307-cc18ee0c3fa8',   // AR-Koha-Investigador
