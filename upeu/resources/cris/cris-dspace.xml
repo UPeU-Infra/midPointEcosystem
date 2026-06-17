@@ -64,36 +64,33 @@
     <description>Outbound MidPoint -> DSpace-CRIS (PerúCRIS v1.1). Provisiona OrgUnit (OrgType) + Person (UserType) + afiliación CERIF relationshipType 5. Upsert idempotente por legalName (OrgUnit) y orcid/dni (Person). Connector ScriptedREST (scripts Groovy externos). Fase 5 (2026-06-17). PROPOSED hasta validar piloto Charming.</description>
     <lifecycleState>proposed</lifecycleState>
 
-    <!-- PROVISIONAL: reemplazar tras instalar el bundle ScriptedREST y descubrir el OID real. -->
-    <connectorRef type="c:ConnectorType">
-        <filter>
-            <q:equal>
-                <q:path>c:connectorType</q:path>
-                <q:value>net.tirasa.connid.bundles.rest.ScriptedRESTConnector</q:value>
-            </q:equal>
-        </filter>
-    </connectorRef>
+    <!-- Connector real descubierto en PROD tras instalar el bundle 1.1.0 (framework 1.6.0.0,
+         compatible con MidPoint 4.10.2): net.tirasa.connid.bundles.rest.RESTConnector,
+         OID be4184fb-b3e1-4303-948e-189c53b452ba, version 1.1.0.
+         NOTA: NO es "ScriptedRESTConnector" (esa clase no existe en el bundle). El RESTConnector
+         genérico es scriptable en Groovy vía *ScriptFileName. Su esquema de configuración es FIJO:
+         baseAddress/username/password/scriptingLanguage/*Script(FileName)/clientId/... — NO admite
+         propiedades personalizadas (no hay baseUrl, scriptRoots ni orgUnitCollectionUuid). -->
+    <connectorRef oid="be4184fb-b3e1-4303-948e-189c53b452ba" type="c:ConnectorType"/>
 
     <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
         <icfc:configurationProperties
-            xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.rest/net.tirasa.connid.bundles.rest.ScriptedRESTConnector">
-            <cfg:baseUrl>https://cris.upeu.edu.pe/server/api</cfg:baseUrl>
+            xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.rest/net.tirasa.connid.bundles.rest.RESTConnector">
+            <cfg:baseAddress>https://cris.upeu.edu.pe/server/api</cfg:baseAddress>
             <cfg:username>__SET_VIA_REST__</cfg:username>
             <!-- password: setear cifrado vía REST/UI tras import (admin DSpace, ~/.secrets/upeu-dspace-cris.env DSPACE_ADMIN_PASSWORD) -->
             <cfg:password>
                 <t:clearValue>__SET_VIA_REST__</t:clearValue>
             </cfg:password>
-            <!-- colección owning para OrgUnit (la de Person está fija en CrisClient: Investigadores). -->
-            <cfg:orgUnitCollectionUuid>__SET_VIA_REST__</cfg:orgUnitCollectionUuid>
+            <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
             <!-- rutas a los scripts Groovy dentro del container MidPoint -->
             <cfg:testScriptFileName>/opt/midpoint/var/cris-scripts/Test.groovy</cfg:testScriptFileName>
             <cfg:schemaScriptFileName>/opt/midpoint/var/cris-scripts/Schema.groovy</cfg:schemaScriptFileName>
             <cfg:searchScriptFileName>/opt/midpoint/var/cris-scripts/Search.groovy</cfg:searchScriptFileName>
             <cfg:createScriptFileName>/opt/midpoint/var/cris-scripts/Create.groovy</cfg:createScriptFileName>
             <cfg:updateScriptFileName>/opt/midpoint/var/cris-scripts/Update.groovy</cfg:updateScriptFileName>
-            <cfg:scriptRoots>
-                <cfg:string>/opt/midpoint/var/cris-scripts</cfg:string>
-            </cfg:scriptRoots>
+            <!-- orgUnitCollectionUuid: el RESTConnector no tiene slot de config personalizado;
+                 la colección OrgUnit (dcca9716-…) vive como constante en Create.groovy. -->
         </icfc:configurationProperties>
     </connectorConfiguration>
 

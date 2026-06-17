@@ -13,7 +13,7 @@
  * Devuelve handler(uid, name, attrs) por cada match. Si no hay match, no emite nada
  * (MidPoint lo interpreta como inexistente → Create).
  */
-def client = new CrisClient(configuration.baseUrl?.toString(),
+def client = new CrisClient(configuration.baseAddress?.toString(),
                             configuration.username?.toString(),
                             configuration.password instanceof char[] ? new String(configuration.password) : configuration.password?.toString(),
                             log)

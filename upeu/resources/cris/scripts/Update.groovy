@@ -9,7 +9,7 @@
  */
 import CrisClient
 
-def client = new CrisClient(configuration.baseUrl?.toString(),
+def client = new CrisClient(configuration.baseAddress?.toString(),
                             configuration.username?.toString(),
                             configuration.password instanceof char[] ? new String(configuration.password) : configuration.password?.toString(),
                             log)

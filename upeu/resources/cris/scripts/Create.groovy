@@ -30,7 +30,7 @@
  */
 import CrisClient
 
-def client = new CrisClient(configuration.baseUrl?.toString(),
+def client = new CrisClient(configuration.baseAddress?.toString(),
                             configuration.username?.toString(),
                             configuration.password instanceof char[] ? new String(configuration.password) : configuration.password?.toString(),
                             log)
@@ -79,8 +79,13 @@ String upsertOrgUnit(CrisClient client, Closure a) {
         return existing
     }
     // OrgUnit collection no la indicó el contrato → se crea en la colección OrgUnit del CRIS.
-    // El owningCollection se pasa por configurationProperties (orgUnitCollectionUuid).
-    String coll = configuration.orgUnitCollectionUuid?.toString()
+    // El connector net.tirasa.connid.bundles.rest.RESTConnector v1.1.0 NO expone una
+    // propiedad de configuración personalizada para esto (su esquema es fijo:
+    // baseAddress/username/password/*ScriptFileName/clientId/...). Por eso el uuid de la
+    // colección OrgUnit se mantiene como constante (verificado en CRIS:
+    // dcca9716-6620-4fc8-b7bb-68a4fd0494ff), con override opcional si algún día el
+    // connector lo soporta vía binding.
+    String coll = (configuration.hasProperty('orgUnitCollectionUuid') ? configuration.orgUnitCollectionUuid?.toString() : null) ?: 'dcca9716-6620-4fc8-b7bb-68a4fd0494ff'
     String uuid = client.createItem(coll, md, 'OrgUnit')
     log.info('CRIS OrgUnit creado ' + legalName + ' uuid=' + uuid)
     return uuid

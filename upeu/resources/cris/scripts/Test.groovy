@@ -2,7 +2,7 @@
  * Test.groovy — Test Connection del resource DSpace-CRIS UPeU (ScriptedREST).
  * Verifica login JWT y lee el root REST para confirmar versión.
  */
-def client = new CrisClient(configuration.baseUrl?.toString(),
+def client = new CrisClient(configuration.baseAddress?.toString(),
                             configuration.username?.toString(),
                             configuration.password instanceof char[] ? new String(configuration.password) : configuration.password?.toString(),
                             log)
