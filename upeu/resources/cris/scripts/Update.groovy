@@ -19,9 +19,22 @@ def CRIS = {
     cache.put(key, c)
     return c
 }()
+// El RESTConnector (Tirasa) entrega configuration.password como GuardedString;
+// hay que desencriptarlo vía Accessor — .toString() devuelve el handle del objeto, no la clave.
+def __pwd = {
+    def p = configuration.password
+    if (p == null) return null
+    if (p instanceof org.identityconnectors.common.security.GuardedString) {
+        def sb = new StringBuilder()
+        p.access({ chars -> sb.append(chars) } as org.identityconnectors.common.security.GuardedString.Accessor)
+        return sb.toString()
+    }
+    if (p instanceof char[]) return new String(p)
+    return p.toString()
+}()
 def client = CRIS.newInstance(configuration.baseAddress?.toString(),
                             configuration.username?.toString(),
-                            configuration.password instanceof char[] ? new String(configuration.password) : configuration.password?.toString(),
+                            __pwd,
                             log)
 client.login()
 def mdVal = { String value, Integer place = null, String authority = null -> CRIS.mdVal(value, place, authority) }
