@@ -28,49 +28,67 @@
  *   La colección owning fija el entityType vía su plantilla; además seteamos
  *   dspace.entity.type explícito (un solo valor) por robustez.
  */
-import CrisClient
-
-def client = new CrisClient(configuration.baseAddress?.toString(),
+// --- carga dinámica del helper CrisClient (opción 1) ---
+// El RESTConnector compila cada *ScriptFileName aislado: 'import CrisClient' no resuelve
+// ni los static (mdVal/constantes). Cargamos la clase con GroovyClassLoader (cache JVM-wide
+// por path+lastModified), instanciamos vía newInstance y accedemos a los static por reflexión
+// sobre el objeto Class (CRIS = clase cargada).
+def CRIS = {
+    def f = new File('/opt/midpoint/var/cris-scripts/CrisClient.groovy')
+    def key = 'CRIS_CLIENT_CLASS@' + f.lastModified()
+    def cache = System.getProperties()
+    def cached = cache.get(key)
+    if (cached != null) return cached
+    def cl = new GroovyClassLoader(this.class.classLoader)
+    def c = cl.parseClass(f)
+    cache.put(key, c)
+    return c
+}()
+def client = CRIS.newInstance(configuration.baseAddress?.toString(),
                             configuration.username?.toString(),
                             configuration.password instanceof char[] ? new String(configuration.password) : configuration.password?.toString(),
                             log)
 client.login()
+
+// Acceso a static helpers/constantes de CrisClient vía el objeto Class.
+def mdVal = { String value, Integer place = null, String authority = null -> CRIS.mdVal(value, place, authority) }
+def COLLECTION_INVESTIGADORES = CRIS.COLLECTION_INVESTIGADORES
 
 String oc = objectClass.objectClassValue
 def a = { String n -> def v = attributes.findResult { it.name == n ? it.value : null }; (v && v.size() > 0) ? v[0]?.toString() : null }
 def aMulti = { String n -> def v = attributes.findResult { it.name == n ? it.value : null }; v ?: [] }
 
 if (oc == 'orgUnit') {
-    return upsertOrgUnit(client, a)
+    return upsertOrgUnit(client, a, mdVal)
 } else if (oc == 'person') {
-    return upsertPerson(client, a, aMulti)
+    return upsertPerson(client, a, aMulti, mdVal, COLLECTION_INVESTIGADORES)
 }
 throw new RuntimeException('objectClass no soportado en Create: ' + oc)
 
 // ============================ ORGUNIT ============================
-String upsertOrgUnit(CrisClient client, Closure a) {
+def upsertOrgUnit(def client, Closure a, Closure mdVal) {
     String legalName = a('legalName')
     if (!legalName) throw new RuntimeException('OrgUnit sin legalName')
 
     String existing = client.findOrgUnitUuid(legalName)
     def md = [:]
-    md['dspace.entity.type'] = [CrisClient.mdVal('OrgUnit', 0)]   // SINGLE value
-    md['organization.legalName'] = [CrisClient.mdVal(legalName, 0)]
-    md['dc.title'] = [CrisClient.mdVal(legalName, 0)]
+    md['dspace.entity.type'] = [mdVal('OrgUnit', 0)]   // SINGLE value
+    md['organization.legalName'] = [mdVal(legalName, 0)]
+    md['dc.title'] = [mdVal(legalName, 0)]
 
     String parentUuid = a('parentOrganizationUuid')
     String parentName = a('parentOrganizationName')
     if (parentName) {
-        md['organization.parentOrganization'] = [ CrisClient.mdVal(parentName, 0, parentUuid) ]
+        md['organization.parentOrganization'] = [ mdVal(parentName, 0, parentUuid) ]
     }
     String tiposub = a('tiposubunidad')
-    if (tiposub) md['perucris.orgunit.tiposubunidad'] = [CrisClient.mdVal(tiposub, 0)]
+    if (tiposub) md['perucris.orgunit.tiposubunidad'] = [mdVal(tiposub, 0)]
 
     if (a('esRaiz') == 'true') {
-        md['perucris.orgunit.tipoinstitucion'] = [CrisClient.mdVal('https://catalogos.concytec.gob.pe/vocabulario/concytec_tipoInstitucion.xml#06', 0)]
-        md['perucris.orgunit.naturalezajuridica'] = [CrisClient.mdVal('privada', 0)]
-        md['perucris.orgunit.sector'] = [CrisClient.mdVal('ensenanzaSuperior', 0)]
-        if (a('ruc')) md['organization.identifier'] = [CrisClient.mdVal(a('ruc'), 0)]
+        md['perucris.orgunit.tipoinstitucion'] = [mdVal('https://catalogos.concytec.gob.pe/vocabulario/concytec_tipoInstitucion.xml#06', 0)]
+        md['perucris.orgunit.naturalezajuridica'] = [mdVal('privada', 0)]
+        md['perucris.orgunit.sector'] = [mdVal('ensenanzaSuperior', 0)]
+        if (a('ruc')) md['organization.identifier'] = [mdVal(a('ruc'), 0)]
     }
 
     if (existing) {
@@ -92,19 +110,19 @@ String upsertOrgUnit(CrisClient client, Closure a) {
 }
 
 // ============================ PERSON ============================
-String upsertPerson(CrisClient client, Closure a, Closure aMulti) {
+def upsertPerson(def client, Closure a, Closure aMulti, Closure mdVal, String COLLECTION_INVESTIGADORES) {
     String orcid = a('orcid')
     String dni = a('dni')
     String existing = client.findPersonUuid(orcid, dni)
 
     def md = [:]
-    md['dspace.entity.type'] = [CrisClient.mdVal('Person', 0)]   // SINGLE value
-    if (a('dcTitle')) md['dc.title'] = [CrisClient.mdVal(a('dcTitle'), 0)]
-    if (a('givenName')) md['person.givenName'] = [CrisClient.mdVal(a('givenName'), 0)]
-    if (a('familyName')) md['person.familyName'] = [CrisClient.mdVal(a('familyName'), 0)]
-    if (a('email')) md['person.email'] = [CrisClient.mdVal(a('email'), 0)]
-    if (orcid) md['person.identifier.orcid'] = [CrisClient.mdVal(orcid, 0)]
-    if (dni) md['perucris.person.dni'] = [CrisClient.mdVal(dni, 0)]
+    md['dspace.entity.type'] = [mdVal('Person', 0)]   // SINGLE value
+    if (a('dcTitle')) md['dc.title'] = [mdVal(a('dcTitle'), 0)]
+    if (a('givenName')) md['person.givenName'] = [mdVal(a('givenName'), 0)]
+    if (a('familyName')) md['person.familyName'] = [mdVal(a('familyName'), 0)]
+    if (a('email')) md['person.email'] = [mdVal(a('email'), 0)]
+    if (orcid) md['person.identifier.orcid'] = [mdVal(orcid, 0)]
+    if (dni) md['perucris.person.dni'] = [mdVal(dni, 0)]
 
     String uuid
     if (existing) {
@@ -112,7 +130,7 @@ String upsertPerson(CrisClient client, Closure a, Closure aMulti) {
         uuid = existing
         log.info('CRIS Person upsert (update) ' + a('dcTitle') + ' uuid=' + uuid)
     } else {
-        uuid = client.createItem(CrisClient.COLLECTION_INVESTIGADORES, md, 'Person')
+        uuid = client.createItem(COLLECTION_INVESTIGADORES, md, 'Person')
         log.info('CRIS Person creado ' + a('dcTitle') + ' uuid=' + uuid)
     }
 

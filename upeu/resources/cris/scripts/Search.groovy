@@ -13,7 +13,19 @@
  * Devuelve handler(uid, name, attrs) por cada match. Si no hay match, no emite nada
  * (MidPoint lo interpreta como inexistente → Create).
  */
-def client = new CrisClient(configuration.baseAddress?.toString(),
+// --- carga dinámica del helper CrisClient (opción 1) ---
+def __crisClass = {
+    def f = new File('/opt/midpoint/var/cris-scripts/CrisClient.groovy')
+    def key = 'CRIS_CLIENT_CLASS@' + f.lastModified()
+    def cache = System.getProperties()
+    def cached = cache.get(key)
+    if (cached != null) return cached
+    def cl = new GroovyClassLoader(this.class.classLoader)
+    def c = cl.parseClass(f)
+    cache.put(key, c)
+    return c
+}()
+def client = __crisClass.newInstance(configuration.baseAddress?.toString(),
                             configuration.username?.toString(),
                             configuration.password instanceof char[] ? new String(configuration.password) : configuration.password?.toString(),
                             log)
