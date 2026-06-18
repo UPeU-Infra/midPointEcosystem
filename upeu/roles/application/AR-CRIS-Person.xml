@@ -75,7 +75,7 @@
     <description>Application Role: proyecta la cuenta Person (investigador) en DSpace-CRIS (colección Investigadores). Aporta la construction (kind=account intent=person) que faltaba al objectType person de cris-dspace.xml para que el lens bootstrappee la proyección. El gate investigador (afiliación research-center O padrón RENACYT, vía roleMembershipRef) gobierna la aplicación de la construction al holder. Se induce desde BR-Investigador / BR-Visitante-Investigacion. Reemplaza el existence-mapping resource-driven (cf261d0). Upsert idempotente Update-no-create por orcid/dni. lifecycleState=draft hasta validar piloto (resource CRIS sigue proposed).</description>
     <!-- draft: la AR no opera hasta que (a) cierre el barrido dual, (b) se importe,
          (c) se la induzca desde los BR. El resource CRIS sigue proposed en paralelo. -->
-    <lifecycleState>draft</lifecycleState>
+    <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
         <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
