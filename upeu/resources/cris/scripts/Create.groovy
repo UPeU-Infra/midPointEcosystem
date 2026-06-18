@@ -67,7 +67,9 @@ client.login()
 def mdVal = { String value, Integer place = null, String authority = null -> CRIS.mdVal(value, place, authority) }
 def COLLECTION_INVESTIGADORES = CRIS.COLLECTION_INVESTIGADORES
 
-String oc = objectClass.objectClassValue
+// RESTConnector v1.1.0 pasa objectClass como String en Create/Update pero como ObjectClass
+// en Search. Manejo defensivo para ambos casos.
+String oc = (objectClass instanceof String) ? objectClass : objectClass.objectClassValue
 def a = { String n -> def v = attributes.findResult { it.name == n ? it.value : null }; (v && v.size() > 0) ? v[0]?.toString() : null }
 def aMulti = { String n -> def v = attributes.findResult { it.name == n ? it.value : null }; v ?: [] }
 
