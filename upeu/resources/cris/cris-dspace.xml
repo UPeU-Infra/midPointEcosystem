@@ -289,24 +289,24 @@ v ?: null
                     <expression>
                         <script>
                             <code>
-// identityDocuments es multivalor PrismContainerValue. MidPoint pasa cada valor
-// como PrismContainerValue; acceder a sub-propiedades via findItem/PCV API.
+// identityDocuments es multivalor PrismContainerValue. Con el schema registrado,
+// asContainerable() devuelve el bean Java — acceso directo a propiedades por getter.
 // 'identityDocuments' = variable implícita nombrada por el path (NO usar 'input').
 import com.evolveum.midpoint.prism.PrismContainerValue
 def docs = (identityDocuments instanceof Collection) ? identityDocuments : (identityDocuments == null ? [] : [identityDocuments])
 for (d in docs) {
-    def pcv = (d instanceof PrismContainerValue) ? d : null
-    if (pcv == null) continue
-    // extraer sub-propiedades del PCV por nombre local
-    def typeProp = pcv.findProperty(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'type'))
-    def numProp  = pcv.findProperty(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'number'))
-    def primProp = pcv.findProperty(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'primary'))
-    def typeVal  = typeProp?.getRealValue()?.toString()
-    def numVal   = numProp?.getRealValue()?.toString()
-    def primVal  = primProp?.getRealValue()?.toString()
-    if ('DNI'.equalsIgnoreCase(typeVal) &amp;&amp; ('true'.equalsIgnoreCase(primVal) || primVal == null)) {
-        return numVal
-    }
+    try {
+        def pcv = (d instanceof PrismContainerValue) ? d : null
+        if (pcv == null) continue
+        def bean = pcv.asContainerable()
+        // bean es dinámico (Groovy); acceder a propiedades del schema sciback
+        def typeVal = bean.hasProperty('type') ? bean.type?.toString() : null
+        def numVal  = bean.hasProperty('number') ? bean.number?.toString() : null
+        def primVal = bean.hasProperty('primary') ? bean.primary?.toString() : null
+        if ('DNI'.equalsIgnoreCase(typeVal) &amp;&amp; ('true'.equalsIgnoreCase(primVal) || primVal == null)) {
+            return numVal
+        }
+    } catch (Exception e) { /* skip malformed entry */ }
 }
 return null
                             </code>
