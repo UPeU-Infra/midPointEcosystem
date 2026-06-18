@@ -222,7 +222,9 @@ class CrisClient {
 
     // ---------- helpers de metadatos DSpace ----------
     static Map mdVal(String value, Integer place = null, String authority = null) {
-        def m = [value: value]
+        // DSpace 9 REST: language y confidence son requeridos en la deserialización
+        // aunque sean null/-1. Su ausencia puede causar error 500 en el servidor.
+        def m = [value: value, language: null, confidence: -1]
         if (place != null) m.place = place
         if (authority != null) { m.authority = authority; m.confidence = 600 }
         return m
