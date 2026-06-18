@@ -44,7 +44,8 @@ def client = __crisClass.newInstance(configuration.baseAddress?.toString(),
                             log)
 client.login()
 
-String oc = objectClass.objectClassValue
+// RESTConnector v1.1.0 puede pasar objectClass como String (sin método objectClassValue).
+String oc = (objectClass instanceof String) ? objectClass : objectClass.objectClassValue
 def emit = { String uid, String name ->
     handler {
         uid uid
