@@ -25,6 +25,7 @@
 
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
+import java.net.ProtocolException
 
 class CrisClient {
 
@@ -53,10 +54,34 @@ class CrisClient {
     }
 
     // ---------- bajo nivel HTTP ----------
+    // java.net.HttpURLConnection NO soporta el método PATCH: setRequestMethod("PATCH")
+    // lanza ProtocolException("Invalid HTTP method: PATCH") porque PATCH no está en su
+    // lista blanca estática (GET/POST/PUT/DELETE/HEAD/OPTIONS/TRACE). Forzamos el método
+    // por reflection sobre el campo privado `method` (técnica estándar y portable, no
+    // depende de X-HTTP-Method-Override del servidor; DSpace REST espera un PATCH real).
+    private void forceRequestMethod(HttpURLConnection con, String method) {
+        try {
+            con.setRequestMethod(method)
+        } catch (ProtocolException pe) {
+            try {
+                def target = con
+                // delegado interno en conexiones https
+                try { def f = con.getClass().getDeclaredField('delegate'); f.setAccessible(true); def dlg = f.get(con); if (dlg != null) target = dlg } catch (NoSuchFieldException ignored) {}
+                def cls = target.getClass()
+                java.lang.reflect.Field mf = null
+                while (cls != null && mf == null) {
+                    try { mf = cls.getDeclaredField('method') } catch (NoSuchFieldException ignored) { cls = cls.getSuperclass() }
+                }
+                if (mf != null) { mf.setAccessible(true); mf.set(target, method) }
+                else { throw pe }
+            } catch (Exception e) { throw pe }
+        }
+    }
+
     private Map raw(String method, String path, Map headers, byte[] body) {
         def url = new URL(path.startsWith('http') ? path : (baseUrl + path))
         HttpURLConnection con = (HttpURLConnection) url.openConnection()
-        con.setRequestMethod(method)
+        forceRequestMethod(con, method)
         con.setConnectTimeout(20000)
         con.setReadTimeout(60000)
         con.setInstanceFollowRedirects(false)
