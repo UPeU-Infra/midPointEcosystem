@@ -1,26 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Task: recompute-dgi-investigadores — Fase 5 CRIS
+  Task: recompute-investigadores-cris-MASIVO — Fase 5 CRIS (PREPARADA, NO EJECUTAR aun)
   OID: f5a1c3b2-9d08-4e57-ae62-2b4f7c0d9e36
-  Objetivo: recompute de los 310 miembros de la DGI subtree (investigadores con
-  afiliación CII) para que el AR-CRIS-Person (gate RENACYT/research-center) evalúe
-  su proyección Person al DSpace-CRIS.
-  Ejecutado primera vez: 2026-06-18 (~310 usuarios).
+
+  ── OBJETIVO ───────────────────────────────────────────────────────────────────────
+    Proyectar al DSpace-CRIS (cris.upeu.edu.pe) la POBLACION COMPLETA de investigadores
+    UPeU (~3.776 personas del pipeline investigadores-afiliacion 8c4f1a36) como items
+    Person con su afiliacion CERIF. Es la continuacion del provisioning acotado DGI
+    ejecutado el 2026-06-18 (185 OrgUnit + 5 investigadores piloto).
+
+  ── PRECONDICIONES (verificar ANTES de correr) ──────────────────────────────────────
+    1. Resource CRIS (3f8b2d61-…) en lifecycleState=active (normalmente queda 'proposed';
+       activarlo con PATCH ?options=raw lifecycleState=active, luego volver a proposed).
+    2. Las afiliaciones persona->OrgType CII deben estar MATERIALIZADAS como assignment.
+       Estado 2026-06-18: solo 5 personas tienen BR-Investigador y NINGUNA tiene aun
+       assignment directo a un CII (la afiliacion masiva del resource investigadores-
+       afiliacion 8c4f1a36 no se ha reconciliado a PROD). Correr ese inbound primero
+       (recon scoped) o esta tarea solo proyectara Person sin afiliacion CERIF.
+    3. AR-CRIS-Person (c4e8f1a2, active) gobierna QUIEN se proyecta (gate: afiliacion
+       research-center O padron RENACYT). Personas sin gate NO se proyectan (correcto).
+    4. AR-CRIS-OrgUnit (bdfe5f18, active) debe estar asignado a los OrgType de
+       investigacion (DGI + 7 CII + 178 lineas) ANTES, para que findOrgUnitUuid resuelva
+       el padre de la afiliacion (ya hecho 2026-06-18 para el subtree DGI).
+
+  ── SUSPENDER DURANTE LA CORRIDA ─────────────────────────────────────────────────────
+    recon-entra-id-daily (a1e5b2c3-0001-4def-9abc-202406060001),
+    import-entra-id-hourly (a1e5b2c3-0002-4def-9abc-202406060002),
+    Cleanup dead shadows Koha (4eacfa96-e18a-4bf0-8f1b-54c805396028).
+    Reanudarlas al terminar.
+
+  ── RUIDO ESPERADO (tolerar como exito) ──────────────────────────────────────────────
+    El connector ScriptedREST deja el shadow CRIS 'dead' tras el create (no devuelve el
+    uid en el formato que MidPoint conserva para el link) -> el reconcile termina en
+    handled_error (HTTP 240) o partial_error (HTTP 250). El DATO en CRIS es correcto e
+    IDEMPOTENTE (upsert por organization.legalName / perucris.person.dni; 2o intento =
+    Update-no-create, no duplica). Verificar exito CONTRA EL CRIS (matches por DNI = 1),
+    NO contra el HTTP code. 'Attempt to add resource object without any attributes' =
+    foco con datos incompletos (dato sucio Oracle), no bug del pipeline.
+
+  ── METODO RECOMENDADO ───────────────────────────────────────────────────────────────
+    Esta tarea hace recompute (no reconcile on-resource) del scope. El recompute evalua
+    el AR-CRIS-Person y dispara la construction -> proyeccion Person. Para grandes
+    volumenes preferir ejecucion SERIALIZADA controlada con gate de heap (driver
+    upeu/tasks/fase5-cris/driver-masivo-cris.sh, espejo del driver de OrgUnits) en vez
+    de una task de un solo hilo de horas — pausa si heap>=90%, resumible, clasifica
+    240/250 como exito y 400 'sin attributes' como dato sucio a reportar.
+
+  ── SCOPE ────────────────────────────────────────────────────────────────────────────
+    Subtree DGI (OID 00000000-0000-0000-0000-205881674697). El AR-CRIS-Person filtra a
+    los investigadores reales; el resto del subtree (personal admin DGI como Charming
+    Morales, directivo) NO se proyecta (gate=false) — esperado y correcto.
 -->
 <task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
       oid="f5a1c3b2-9d08-4e57-ae62-2b4f7c0d9e36">
-    <name>recompute-dgi-investigadores-cris-fase5</name>
-    <description>Recompute miembros DGI subtree (investigadores con afiliación CII) para proyectar Person al DSpace-CRIS. AR-CRIS-Person gate filtra quiénes reciben la proyección (RENACYT o research-center membership). Fase 5, 2026-06-18.</description>
+    <name>recompute-investigadores-cris-MASIVO-fase5</name>
+    <description>PREPARADA, NO EJECUTAR sin verificar precondiciones. Recompute de la poblacion de investigadores (subtree DGI) para proyectar Person al DSpace-CRIS via AR-CRIS-Person (gate RENACYT/research-center). Para la poblacion completa (~3.776) preferir driver serializado con gate de heap. Fase 5.</description>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
-    <executionState>runnable</executionState>
+    <!-- suspended: NO debe arrancar sola. Cambiar a runnable solo tras verificar precondiciones. -->
+    <executionState>suspended</executionState>
     <activity>
         <work>
             <recomputation>
                 <objects>
                     <type>UserType</type>
                     <query>
-                        <!-- Miembros de DGI subtree: ID_AREA=69, OID auto-generado por ELISEO ORG recon -->
                         <q:filter>
                             <q:org>
                                 <q:orgRef oid="00000000-0000-0000-0000-205881674697"/>
@@ -31,5 +75,9 @@
                 </objects>
             </recomputation>
         </work>
+        <execution>
+            <!-- Serializa para no saturar el connector REST al CRIS ni el heap. -->
+            <mode>iterative</mode>
+        </execution>
     </activity>
 </task>
