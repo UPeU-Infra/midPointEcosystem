@@ -267,7 +267,9 @@ def giv = givenName ? basic.stringify(givenName) : ''
                     <expression>
                         <script>
                             <code>
-def v = input ? basic.stringify(input).trim() : null
+// 'orcid' es la variable implícita nombrada por el path extension/sb:orcid.
+// NO usar 'input' (no existe cuando el valor es null — MidPoint solo lo inyecta con valor).
+def v = orcid ? basic.stringify(orcid).trim() : null
 if (!v) return null
 // normalizar a forma 16-dígitos sin prefijo URI
 v = v.replaceAll('https?://orcid.org/', '')
@@ -288,7 +290,8 @@ v ?: null
                         <script>
                             <code>
 // identityDocuments es multivalor contenedor; tomar el primary=true type=DNI.
-def docs = (input instanceof Collection) ? input : (input == null ? [] : [input])
+// 'identityDocuments' es la variable implícita nombrada por el path (NO usar 'input').
+def docs = (identityDocuments instanceof Collection) ? identityDocuments : (identityDocuments == null ? [] : [identityDocuments])
 for (d in docs) {
     def dd = (d?.getRealValue != null) ? d.getRealValue() : d
     def type = dd?.type?.toString()
