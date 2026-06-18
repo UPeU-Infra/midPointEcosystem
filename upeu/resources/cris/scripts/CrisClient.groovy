@@ -187,14 +187,26 @@ class CrisClient {
         return r.json?.uuid
     }
 
-    // Reemplaza (replace/add) cada metadato del mapa en un item existente vía PATCH JSON.
+    // Aplica idempotentemente cada metadato del mapa a un item existente vía PATCH JSON DSpace.
+    // CRÍTICO (Fase 5): el JSON-PATCH 'add' sobre /metadata/<field> que YA existe NO reemplaza:
+    // APPENDS al array → duplica valores (dc.title ×2, dspace.entity.type ×2, dni ×2). Eso rompe
+    // el contrato PerúCRIS (entity.type single-value) y la indexación Solr (Person deja de ser
+    // buscable por dni). Por eso primero se LEE el item para saber qué campos ya existen y se
+    // emite 'replace' (reemplaza el array completo) para los presentes y 'add' solo para los nuevos.
     void patchReplaceAll(String itemUuid, Map metadata) {
-        // DSpace PATCH: [{op:'replace', path:'/metadata/<field>/0', value:{...}}] o add si no existe.
+        if (!metadata) return
+        // 1) leer metadatos actuales del item para decidir replace vs add por campo
+        def cur = getJson('/core/items/' + itemUuid)
+        def existingFields = (cur.json?.metadata instanceof Map) ? cur.json.metadata.keySet() : ([] as Set)
         def ops = []
         metadata.each { field, vals ->
-            // estrategia simple y robusta: replace del array completo del campo (op 'replace' sobre /metadata/<field>)
-            // DSpace acepta replace del array si el campo ya existe; usamos add que crea o reemplaza.
-            ops << [ op: 'add', path: '/metadata/' + field, value: vals ]
+            if (existingFields.contains(field)) {
+                // el campo ya existe → reemplazar el array completo (no duplicar)
+                ops << [ op: 'replace', path: '/metadata/' + field, value: vals ]
+            } else {
+                // el campo no existe → crearlo
+                ops << [ op: 'add', path: '/metadata/' + field, value: vals ]
+            }
         }
         if (ops.isEmpty()) return
         def r = patchJson('/core/items/' + itemUuid, ops)
