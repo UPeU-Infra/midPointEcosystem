@@ -294,15 +294,19 @@ v ?: null
 // y un try/catch que la trague deja el DNI vacio en CRIS sin error visible.
 // Acceso correcto: pcv.findProperty(QName) sobre el namespace sciback.
 // 'identityDocuments' = variable implícita nombrada por el path (NO usar 'input').
+// NOTA firma: PrismContainerValue.findProperty NO acepta javax.xml.namespace.QName plano
+// ("No signature of method ... findProperty()"). Hay que usar com.evolveum...path.ItemName
+// (subclase de QName que implementa ItemPath). Verificado en vivo contra foco 201610304.
 import com.evolveum.midpoint.prism.PrismContainerValue
+import com.evolveum.midpoint.prism.path.ItemName
 def SB = 'urn:sciback:midpoint:person'
 def docs = (identityDocuments instanceof Collection) ? identityDocuments : (identityDocuments == null ? [] : [identityDocuments])
 for (d in docs) {
     def pcv = (d instanceof PrismContainerValue) ? d : null
     if (pcv == null) continue
-    def typeVal = pcv.findProperty(new javax.xml.namespace.QName(SB,'type'))?.getRealValue()?.toString()
-    def numVal  = pcv.findProperty(new javax.xml.namespace.QName(SB,'number'))?.getRealValue()?.toString()
-    def primVal = pcv.findProperty(new javax.xml.namespace.QName(SB,'primary'))?.getRealValue()?.toString()
+    def typeVal = pcv.findProperty(new ItemName(SB,'type'))?.getRealValue()?.toString()
+    def numVal  = pcv.findProperty(new ItemName(SB,'number'))?.getRealValue()?.toString()
+    def primVal = pcv.findProperty(new ItemName(SB,'primary'))?.getRealValue()?.toString()
     if ('DNI'.equalsIgnoreCase(typeVal) &amp;&amp; ('true'.equalsIgnoreCase(primVal) || primVal == null)) return numVal
 }
 return null
