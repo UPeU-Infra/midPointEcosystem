@@ -148,8 +148,10 @@ import com.evolveum.midpoint.xml.ns._public.common.common_3.OrgType
 if (input == null) return null
 def parentOid = (input instanceof Collection) ? (input.isEmpty()? null : input.iterator().next()?.oid) : input?.oid
 if (parentOid == null) return null
+// MidPoint 4.10: getObject(OrgType.class, oid) ya devuelve el objectable (OrgType),
+// NO un PrismObject — llamar .asObjectable() lanza "No signature of method".
 def parent = midpoint.getObject(OrgType.class, parentOid)
-parent?.asObjectable()?.getDisplayName()?.getOrig()
+parent?.getDisplayName()?.getOrig()
                             </code>
                         </script>
                     </expression>
@@ -340,7 +342,8 @@ def names = []
 def principalName = null
 def cc = costCenter ? basic.stringify(costCenter) : null
 refs.each { r ->
-    def o = midpoint.getObject(OrgType.class, r?.oid)?.asObjectable()
+    // MidPoint 4.10: getObject devuelve el objectable directo (sin .asObjectable()).
+    def o = midpoint.getObject(OrgType.class, r?.oid)
     if (o == null) return
     def nm = o.getDisplayName()?.getOrig()
     if (nm == null) return
