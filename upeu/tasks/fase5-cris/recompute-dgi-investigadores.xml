@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: recompute-dgi-investigadores — Fase 5 CRIS
+  OID: f5a1c3b2-9d08-4e57-ae62-2b4f7c0d9e36
+  Objetivo: recompute de los 310 miembros de la DGI subtree (investigadores con
+  afiliación CII) para que el AR-CRIS-Person (gate RENACYT/research-center) evalúe
+  su proyección Person al DSpace-CRIS.
+  Ejecutado primera vez: 2026-06-18 (~310 usuarios).
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="f5a1c3b2-9d08-4e57-ae62-2b4f7c0d9e36">
+    <name>recompute-dgi-investigadores-cris-fase5</name>
+    <description>Recompute miembros DGI subtree (investigadores con afiliación CII) para proyectar Person al DSpace-CRIS. AR-CRIS-Person gate filtra quiénes reciben la proyección (RENACYT o research-center membership). Fase 5, 2026-06-18.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>runnable</executionState>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <!-- Miembros de DGI subtree: ID_AREA=69, OID auto-generado por ELISEO ORG recon -->
+                        <q:filter>
+                            <q:org>
+                                <q:orgRef oid="00000000-0000-0000-0000-205881674697"/>
+                                <q:scope>SUBTREE</q:scope>
+                            </q:org>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+    </activity>
+</task>
