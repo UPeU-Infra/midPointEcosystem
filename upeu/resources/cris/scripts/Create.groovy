@@ -69,9 +69,27 @@ def COLLECTION_INVESTIGADORES = CRIS.COLLECTION_INVESTIGADORES
 
 // RESTConnector v1.1.0 pasa objectClass como String en Create/Update pero como ObjectClass
 // en Search. Manejo defensivo para ambos casos.
+// RESTConnector v1.1.0 pasa objectClass como String en Create/Update pero como ObjectClass
+// en Search. Manejo defensivo para ambos casos.
 String oc = (objectClass instanceof String) ? objectClass : objectClass.objectClassValue
-def a = { String n -> def v = attributes.findResult { it.name == n ? it.value : null }; (v && v.size() > 0) ? v[0]?.toString() : null }
-def aMulti = { String n -> def v = attributes.findResult { it.name == n ? it.value : null }; v ?: [] }
+// RESTConnector v1.1.0 pasa attributes como Map<String,List> en Create/Update
+// (no como Set<Attribute> de ConnId). Manejo defensivo para ambos formatos.
+def a = { String n ->
+    if (attributes instanceof Map) {
+        def v = attributes.get(n)
+        return (v instanceof List && v.size() > 0) ? v[0]?.toString() : v?.toString()
+    }
+    def v = attributes.findResult { it.name == n ? it.value : null }
+    return (v && v.size() > 0) ? v[0]?.toString() : null
+}
+def aMulti = { String n ->
+    if (attributes instanceof Map) {
+        def v = attributes.get(n)
+        return (v instanceof List) ? v : (v == null ? [] : [v])
+    }
+    def v = attributes.findResult { it.name == n ? it.value : null }
+    return v ?: []
+}
 
 if (oc == 'orgUnit') {
     return upsertOrgUnit(client, a, mdVal)

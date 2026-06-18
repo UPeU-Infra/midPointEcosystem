@@ -41,10 +41,27 @@ def mdVal = { String value, Integer place = null, String authority = null -> CRI
 
 // RESTConnector v1.1.0 pasa objectClass como String en Create/Update pero como ObjectClass
 // en Search. Manejo defensivo para ambos casos.
+// RESTConnector v1.1.0 pasa objectClass como String en Create/Update pero como ObjectClass
+// en Search. Manejo defensivo para ambos casos.
 String oc = (objectClass instanceof String) ? objectClass : objectClass.objectClassValue
 String itemUuid = uid.uidValue
-def a = { String n -> def v = attributes.findResult { it.name == n ? it.value : null }; (v && v.size() > 0) ? v[0]?.toString() : null }
-def aMulti = { String n -> def v = attributes.findResult { it.name == n ? it.value : null }; v ?: [] }
+// RESTConnector v1.1.0 pasa attributes como Map<String,List> en Create/Update.
+def a = { String n ->
+    if (attributes instanceof Map) {
+        def v = attributes.get(n)
+        return (v instanceof List && v.size() > 0) ? v[0]?.toString() : v?.toString()
+    }
+    def v = attributes.findResult { it.name == n ? it.value : null }
+    return (v && v.size() > 0) ? v[0]?.toString() : null
+}
+def aMulti = { String n ->
+    if (attributes instanceof Map) {
+        def v = attributes.get(n)
+        return (v instanceof List) ? v : (v == null ? [] : [v])
+    }
+    def v = attributes.findResult { it.name == n ? it.value : null }
+    return v ?: []
+}
 
 def md = [:]
 if (oc == 'orgUnit') {
