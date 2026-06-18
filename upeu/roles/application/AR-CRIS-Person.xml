@@ -114,8 +114,16 @@ for (r in refs) {
     // (B) padrón RENACYT: membresía directa al AR investigador.
     if (RENACYT_ROLES.contains(oid)) return true
     // (A) afiliación de investigación: la membresía es a un OrgType research-center.
+    // Solo resolver los refs cuyo type sea OrgType — evita el "not found" (y su
+    // excepción) sobre los refs de Roles/Archetypes/Marks del holder.
+    def qn = r?.getType()
+    if (qn == null || !"OrgType".equals(qn.getLocalPart())) continue
     try {
-        def o = midpoint.getObject(OrgType.class, oid)?.asObjectable()
+        // MidPoint 4.10: midpoint.getObject(OrgType.class, oid) ya devuelve el
+        // objectable (OrgType), NO un PrismObject. Llamar .asObjectable() aquí lanza
+        // "No signature of method OrgType.asObjectable()" → la excepción caía al catch
+        // y el gate SIEMPRE retornaba false (la cuenta CRIS nunca se proyectaba).
+        def o = midpoint.getObject(OrgType.class, oid)
         if (o != null) {
             for (a in o.getArchetypeRef()) {
                 if (RESEARCH_CENTER_ARCHETYPE.equals(a?.getOid())) return true
