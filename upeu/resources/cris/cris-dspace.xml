@@ -289,24 +289,21 @@ v ?: null
                     <expression>
                         <script>
                             <code>
-// identityDocuments es multivalor PrismContainerValue. Con el schema registrado,
-// asContainerable() devuelve el bean Java — acceso directo a propiedades por getter.
+// identityDocuments es multivalor PrismContainerValue. El schema sciback es DINAMICO
+// (sin clase JAXB compilada) -> asContainerable() lanza "Unknown compile time class"
+// y un try/catch que la trague deja el DNI vacio en CRIS sin error visible.
+// Acceso correcto: pcv.findProperty(QName) sobre el namespace sciback.
 // 'identityDocuments' = variable implícita nombrada por el path (NO usar 'input').
 import com.evolveum.midpoint.prism.PrismContainerValue
+def SB = 'urn:sciback:midpoint:person'
 def docs = (identityDocuments instanceof Collection) ? identityDocuments : (identityDocuments == null ? [] : [identityDocuments])
 for (d in docs) {
-    try {
-        def pcv = (d instanceof PrismContainerValue) ? d : null
-        if (pcv == null) continue
-        def bean = pcv.asContainerable()
-        // bean es dinámico (Groovy); acceder a propiedades del schema sciback
-        def typeVal = bean.hasProperty('type') ? bean.type?.toString() : null
-        def numVal  = bean.hasProperty('number') ? bean.number?.toString() : null
-        def primVal = bean.hasProperty('primary') ? bean.primary?.toString() : null
-        if ('DNI'.equalsIgnoreCase(typeVal) &amp;&amp; ('true'.equalsIgnoreCase(primVal) || primVal == null)) {
-            return numVal
-        }
-    } catch (Exception e) { /* skip malformed entry */ }
+    def pcv = (d instanceof PrismContainerValue) ? d : null
+    if (pcv == null) continue
+    def typeVal = pcv.findProperty(new javax.xml.namespace.QName(SB,'type'))?.getRealValue()?.toString()
+    def numVal  = pcv.findProperty(new javax.xml.namespace.QName(SB,'number'))?.getRealValue()?.toString()
+    def primVal = pcv.findProperty(new javax.xml.namespace.QName(SB,'primary'))?.getRealValue()?.toString()
+    if ('DNI'.equalsIgnoreCase(typeVal) &amp;&amp; ('true'.equalsIgnoreCase(primVal) || primVal == null)) return numVal
 }
 return null
                             </code>
