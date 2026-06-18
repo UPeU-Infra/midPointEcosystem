@@ -122,7 +122,7 @@ class CrisClient {
         if (r.authHeader && r.authHeader.startsWith('Bearer ')) {
             jwt = r.authHeader.substring(7)
         }
-        if (!jwt) throw new RuntimeException('CRIS login falló (sin JWT). code=' + r.code + ' body=' + r.text?.take(300))
+        if (!jwt) throw new RuntimeException('CRIS login fallo (sin JWT). code=' + r.code + ' body=' + safeMsg(r.text?.take(300)))
         log?.info('CRIS login OK')
     }
 
@@ -157,6 +157,22 @@ class CrisClient {
         try { return new JsonSlurper().parseText(t) } catch (ignored) { return null }
     }
 
+    // DEFECTO 1 (Fase 5): el connector ConnId (net.tirasa RESTConnector) loguea los
+    // mensajes de excepción y los strings de log vía org.identityconnectors.common.logging.Log,
+    // cuyo .info/.warn/.error/.ok ejecutan java.text.MessageFormat sobre el mensaje como PATRÓN.
+    // El cuerpo de error JSON de DSpace ({"timestamp":...,"status":...}) contiene llaves '{'
+    // que MessageFormat interpreta como placeholders → IllegalArgumentException:
+    //   "can't parse argument number: \"timestamp\"".
+    // Eso ENMASCARA el status+body real (el script muere formateando, no reportando).
+    // Solución: neutralizar las llaves de TODO texto de error de DSpace antes de incluirlo
+    // en cualquier log o mensaje de excepción. Es texto diagnóstico → sustituir '{' '}' por
+    // '(' ')' (no se reinterpretan como placeholders). NO afecta los payloads enviados a DSpace
+    // (esos van por JsonOutput.toJson, nunca por aquí).
+    static String safeMsg(String t) {
+        if (t == null) return ''
+        return t.replace('{', '(').replace('}', ')')
+    }
+
     // ---------- creación / actualización de items ----------
     // Crea un item-entidad en una colección owning. entityType refuerza dspace.entity.type.
     String createItem(String owningCollectionUuid, Map metadata, String entityType) {
@@ -166,7 +182,7 @@ class CrisClient {
                         type: 'item', metadata: metadata ]
         def r = postJson('/core/items?owningCollection=' + owningCollectionUuid, payload)
         if (r.code != 201 && r.code != 200) {
-            throw new RuntimeException('createItem ' + entityType + ' falló code=' + r.code + ' body=' + (r.text?.take(400)))
+            throw new RuntimeException('createItem ' + entityType + ' fallo code=' + r.code + ' body=' + safeMsg(r.text?.take(800)))
         }
         return r.json?.uuid
     }
@@ -183,30 +199,72 @@ class CrisClient {
         if (ops.isEmpty()) return
         def r = patchJson('/core/items/' + itemUuid, ops)
         if (r.code != 200) {
-            log?.warn('patchReplaceAll code=' + r.code + ' body=' + (r.text?.take(300)))
+            log?.warn('patchReplaceAll code=' + r.code + ' body=' + safeMsg(r.text?.take(400)))
         }
     }
 
     // ---------- afiliaciones CERIF (relationshipType 5) ----------
-    // Asegura que la Person (leftItem) tenga relación isOrgUnitOfPerson con cada OrgUnit.
-    // orgUnitUuids en orden de prioridad; índice 0 = principal (leftPlace 0).
-    void syncPersonAffiliations(String personUuid, List<String> orgUnitUuids) {
-        if (!orgUnitUuids) return
-        // relaciones existentes de la persona en este tipo (para no duplicar)
+    // DEFECTO 2 (Fase 5): la afiliación CERIF Person↔OrgUnit no se escribía. Tres causas:
+    //   (1) syncPersonAffiliations recibía los NOMBRES (legalName) de las orgs que emite el
+    //       outbound del Person, pero los trataba como uuids → POST uri-list con un nombre →
+    //       relación inválida / no creada. FIX: resolver cada nombre a uuid vía findOrgUnitUuid.
+    //   (2) Si el OrgUnit del Centro CII aún no existe en CRIS (su provisión por la object class
+    //       orgUnit no corrió), findOrgUnitUuid devuelve null → sin relación. FIX: auto-crear un
+    //       OrgUnit mínimo (entity.type=OrgUnit + legalName) on-demand para que la afiliación sea
+    //       autocontenida e idempotente; la metadata rica (tiposubunidad/parent) la completa el
+    //       recompute del OrgType en su object class.
+    //   (3) El orden de la afiliación principal lo gobierna rightPlace (posición del OrgUnit dentro
+    //       de la Person), NO leftPlace. Verificado en vivo: las 85 relaciones reltype-5 del CRIS
+    //       tienen leftPlace=0 fijo y rightPlace variable. Principal = índice 0 → rightPlace 0.
+    //
+    // orgUnitNames en orden de prioridad; índice 0 = afiliación principal (dependencia laboral).
+    void syncPersonAffiliations(String personUuid, List<String> orgUnitNames) {
+        if (!orgUnitNames) return
+        // relaciones reltype-5 existentes de la persona (key = uuid del OrgUnit) para no duplicar
         def existing = listPersonOrgUnitRelations(personUuid)
-        orgUnitUuids.eachWithIndex { ouUuid, idx ->
-            if (!ouUuid) return
+        orgUnitNames.eachWithIndex { name, idx ->
+            if (!name) return
+            String ouUuid = findOrgUnitUuid(name)
+            if (!ouUuid) {
+                // OrgUnit aún no provisionado en CRIS → crear mínimo (idempotente por legalName).
+                ouUuid = ensureMinimalOrgUnit(name)
+            }
+            if (!ouUuid) {
+                log?.warn('syncPersonAffiliations: no se pudo resolver/crear OrgUnit legalName=' + name + ' (afiliación omitida)')
+                return
+            }
             if (existing.containsKey(ouUuid)) return    // ya afiliado → idempotente
             createPersonOrgUnitRelation(personUuid, ouUuid, idx)
         }
     }
 
+    // Crea un OrgUnit mínimo (entity.type=OrgUnit + legalName) si no existe, y devuelve su uuid.
+    private String ensureMinimalOrgUnit(String legalName) {
+        String existing = findOrgUnitUuid(legalName)
+        if (existing) return existing
+        def md = [:]
+        md['dspace.entity.type'] = [mdVal('OrgUnit', 0)]
+        md['organization.legalName'] = [mdVal(legalName, 0)]
+        md['dc.title'] = [mdVal(legalName, 0)]
+        String coll = 'dcca9716-6620-4fc8-b7bb-68a4fd0494ff'
+        String uuid = createItem(coll, md, 'OrgUnit')
+        log?.info('CRIS OrgUnit mínimo creado on-demand para afiliación: ' + legalName + ' uuid=' + uuid)
+        return uuid
+    }
+
+    // Lista las relaciones reltype-5 (Person↔OrgUnit) de la persona. key = uuid OrgUnit, val = relId.
+    // El JSON de cada relación NO incluye el id del relationshipType inline: hay que seguir el link
+    // _links.relationshipType.href → GET → comparar id == 5 (verificado en vivo). Una persona tiene
+    // pocas afiliaciones → coste despreciable.
     private Map listPersonOrgUnitRelations(String personUuid) {
         def map = [:]
         def r = getJson('/core/items/' + personUuid + '/relationships')
         def rels = r.json?._embedded?.relationships
         rels?.each { rel ->
-            if (rel?.relationshipType?.toString()?.endsWith('/' + RELTYPE_PERSON_ORGUNIT)) {
+            def rtHref = rel?._links?.relationshipType?.href?.toString()
+            if (!rtHref) return
+            def rt = getJson(rtHref.replace(baseUrl, ''))
+            if (rt.json?.id == RELTYPE_PERSON_ORGUNIT) {
                 def ouUuid = rel?._links?.rightItem?.href?.toString()?.tokenize('/')?.last()
                 if (ouUuid) map[ouUuid] = rel.id
             }
@@ -214,20 +272,21 @@ class CrisClient {
         return map
     }
 
-    private void createPersonOrgUnitRelation(String personUuid, String orgUnitUuid, int leftPlace) {
+    private void createPersonOrgUnitRelation(String personUuid, String orgUnitUuid, int rightPlace) {
         // POST /core/relationships?relationshipType=5
-        // body text/uri-list con los dos items (left=Person, right=OrgUnit).
+        // body text/uri-list: primera URI = leftItem (Person), segunda = rightItem (OrgUnit).
         def uriList = baseUrl + '/core/items/' + personUuid + '\n' + baseUrl + '/core/items/' + orgUnitUuid
         def r = postText('/core/relationships?relationshipType=' + RELTYPE_PERSON_ORGUNIT, 'text/uri-list', uriList)
         if (r.code != 201 && r.code != 200) {
-            log?.warn('createPersonOrgUnitRelation code=' + r.code + ' body=' + (r.text?.take(300)))
+            log?.warn('createPersonOrgUnitRelation code=' + r.code + ' body=' + safeMsg(r.text?.take(400)))
             return
         }
         def relId = r.json?.id
-        // fijar leftPlace (place 0 = principal) si el API lo permite
-        if (relId != null && leftPlace >= 0) {
-            patchJson('/core/relationships/' + relId, [[op: 'replace', path: '/leftPlace', value: leftPlace]])
+        // rightPlace ordena el OrgUnit dentro de la Person: índice 0 = afiliación principal.
+        if (relId != null && rightPlace > 0) {
+            patchJson('/core/relationships/' + relId, [[op: 'replace', path: '/rightPlace', value: rightPlace]])
         }
+        log?.info('CRIS afiliación CERIF creada person=' + personUuid + ' orgUnit=' + orgUnitUuid + ' rightPlace=' + rightPlace + ' relId=' + relId)
     }
 
     // ---------- helpers de metadatos DSpace ----------
