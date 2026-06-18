@@ -9,7 +9,7 @@
  *   - Relación CERIF Person↔OrgUnit (relationshipType id 5, isOrgUnitOfPerson /
  *     isPersonOfOrgUnit), repetible, principal en place 0.
  *
- * NO usa librerías externas: solo java.net.HttpURLConnection + groovy.json.
+ * NO usa librerías externas: solo java.net.http.HttpClient (JDK 11+, soporta PATCH) + groovy.json.
  * El connector ScriptedREST (net.tirasa.connid.bundles.rest) inyecta las
  * configurationProperties (baseUrl/username/password) en cada script como binding.
  *
@@ -25,7 +25,6 @@
 
 import groovy.json.JsonSlurper
 import groovy.json.JsonOutput
-import java.net.ProtocolException
 
 class CrisClient {
 
@@ -54,49 +53,35 @@ class CrisClient {
     }
 
     // ---------- bajo nivel HTTP ----------
-    // java.net.HttpURLConnection NO soporta el método PATCH: setRequestMethod("PATCH")
-    // lanza ProtocolException("Invalid HTTP method: PATCH") porque PATCH no está en su
-    // lista blanca estática (GET/POST/PUT/DELETE/HEAD/OPTIONS/TRACE). Forzamos el método
-    // por reflection sobre el campo privado `method` (técnica estándar y portable, no
-    // depende de X-HTTP-Method-Override del servidor; DSpace REST espera un PATCH real).
-    private void forceRequestMethod(HttpURLConnection con, String method) {
-        try {
-            con.setRequestMethod(method)
-        } catch (ProtocolException pe) {
-            try {
-                def target = con
-                // delegado interno en conexiones https
-                try { def f = con.getClass().getDeclaredField('delegate'); f.setAccessible(true); def dlg = f.get(con); if (dlg != null) target = dlg } catch (NoSuchFieldException ignored) {}
-                def cls = target.getClass()
-                java.lang.reflect.Field mf = null
-                while (cls != null && mf == null) {
-                    try { mf = cls.getDeclaredField('method') } catch (NoSuchFieldException ignored) { cls = cls.getSuperclass() }
-                }
-                if (mf != null) { mf.setAccessible(true); mf.set(target, method) }
-                else { throw pe }
-            } catch (Exception e) { throw pe }
-        }
-    }
+    // Cliente HTTP. Se usa java.net.http.HttpClient (JDK 11+, módulo java.net.http) en
+    // lugar de java.net.HttpURLConnection porque este último NO soporta el método PATCH
+    // (setRequestMethod("PATCH") lanza ProtocolException: Invalid HTTP method: PATCH) y
+    // el workaround por reflection sobre el campo privado `method` está bloqueado por el
+    // module system en Java 21 (InaccessibleObjectException, java.base no abierto).
+    // DSpace REST requiere un PATCH HTTP real (X-HTTP-Method-Override NO lo respeta → 415).
+    // HttpClient.method("PATCH", ...) emite un PATCH nativo sin restricciones.
+    private static final java.net.http.HttpClient HTTP =
+        java.net.http.HttpClient.newBuilder()
+            .connectTimeout(java.time.Duration.ofSeconds(20))
+            .followRedirects(java.net.http.HttpClient.Redirect.NEVER)
+            .build()
 
     private Map raw(String method, String path, Map headers, byte[] body) {
-        def url = new URL(path.startsWith('http') ? path : (baseUrl + path))
-        HttpURLConnection con = (HttpURLConnection) url.openConnection()
-        forceRequestMethod(con, method)
-        con.setConnectTimeout(20000)
-        con.setReadTimeout(60000)
-        con.setInstanceFollowRedirects(false)
-        headers?.each { k, v -> if (v != null) con.setRequestProperty(k, v.toString()) }
-        if (body != null) {
-            con.setDoOutput(true)
-            con.outputStream.withStream { it.write(body) }
-        }
-        int code = con.responseCode
-        def stream = (code >= 200 && code < 400) ? con.inputStream : con.errorStream
-        String text = stream ? stream.getText('UTF-8') : ''
-        // capturar set-cookie (XSRF) y DSPACE-XSRF-TOKEN header
-        def setCookies = con.getHeaderFields().get('Set-Cookie')
-        def xsrfHeader = con.getHeaderField('DSPACE-XSRF-TOKEN')
-        def authHeader = con.getHeaderField('Authorization')
+        def uri = java.net.URI.create(path.startsWith('http') ? path : (baseUrl + path))
+        def bp = (body != null) ? java.net.http.HttpRequest.BodyPublishers.ofByteArray(body)
+                                : java.net.http.HttpRequest.BodyPublishers.noBody()
+        def rb = java.net.http.HttpRequest.newBuilder(uri)
+            .timeout(java.time.Duration.ofSeconds(60))
+            .method(method, bp)
+        headers?.each { k, v -> if (v != null) rb.header(k.toString(), v.toString()) }
+        def resp = HTTP.send(rb.build(), java.net.http.HttpResponse.BodyHandlers.ofString(java.nio.charset.StandardCharsets.UTF_8))
+        int code = resp.statusCode()
+        String text = resp.body() ?: ''
+        // capturar set-cookie (XSRF), DSPACE-XSRF-TOKEN y Authorization de la respuesta.
+        def hdrs = resp.headers()
+        def setCookies = hdrs.allValues('Set-Cookie')
+        def xsrfHeader = hdrs.firstValue('DSPACE-XSRF-TOKEN').orElse(null)
+        def authHeader = hdrs.firstValue('Authorization').orElse(null)
         return [code: code, text: text, setCookies: setCookies, xsrfHeader: xsrfHeader, authHeader: authHeader]
     }
 
