@@ -54,14 +54,20 @@ def emit = { String uid, String name ->
     }
 }
 
-// filter puede ser null (full scan — devolvemos vacío para no inundar) o un EqualsFilter
-if (filter == null) {
+// El RESTConnector v1.1.0 puede pasar el filtro como 'filter' o 'query' según la operación.
+// Acceso defensivo para compatibilidad.
+def __filter = null
+try { __filter = filter } catch (MissingPropertyException e) {}
+if (__filter == null) {
+    try { __filter = query } catch (MissingPropertyException e) {}
+}
+if (__filter == null) {
     log.info('CRIS Search sin filtro: no-op (CRIS no es fuente autoritativa, no se reconcilia masivamente).')
     return
 }
 
-def attrName = filter.attributeName    // '__NAME__' o '__UID__'
-def value = filter.attributeValue ? filter.attributeValue[0]?.toString() : null
+def attrName = __filter.attributeName    // '__NAME__' o '__UID__'
+def value = __filter.attributeValue ? __filter.attributeValue[0]?.toString() : null
 if (!value) return
 
 if (attrName == '__UID__') {
