@@ -127,9 +127,12 @@
                 <ref>ri:legalName</ref>
                 <outbound>
                     <strength>strong</strength>
-                    <source><path>displayName</path></source>
                     <expression>
-                        <script><code>basic.stringify(input)</code></script>
+                        <script><code>
+// legalName = displayName del OrgType. Se lee de focus.displayName (NO de un
+// source-mapping) por robustez en construction outbound ("No such property: input").
+focus?.displayName == null ? null : basic.stringify(focus.getDisplayName().getOrig())
+                        </code></script>
                     </expression>
                 </outbound>
             </attribute>
@@ -139,14 +142,22 @@
                 <ref>ri:parentOrganizationName</ref>
                 <outbound>
                     <strength>strong</strength>
-                    <source><path>parentOrgRef</path></source>
                     <expression>
                         <script>
                             <code>
 // Resolver el displayName de la org padre (primer parentOrgRef de tipo OrgType).
+// Se lee de focus.parentOrgRef (NO de un source-mapping): en contexto de construction
+// outbound el binding 'input' de un item operacional/referencia no se expone
+// fiablemente ("No such property: input") -- usar focus directamente.
 import com.evolveum.midpoint.xml.ns._public.common.common_3.OrgType
-if (input == null) return null
-def parentOid = (input instanceof Collection) ? (input.isEmpty()? null : input.iterator().next()?.oid) : input?.oid
+def refs = (focus?.parentOrgRef instanceof Collection) ? focus.parentOrgRef
+           : (focus?.parentOrgRef == null ? [] : [focus.parentOrgRef])
+def parentOid = null
+for (r in refs) {
+    def qn = r?.getType()
+    if (qn != null &amp;&amp; !"OrgType".equals(qn.getLocalPart())) continue
+    parentOid = r?.getOid(); break
+}
 if (parentOid == null) return null
 // MidPoint 4.10: getObject(OrgType.class, oid) ya devuelve el objectable (OrgType),
 // NO un PrismObject — llamar .asObjectable() lanza "No signature of method".
@@ -168,18 +179,24 @@ parent?.getDisplayName()?.getOrig()
                 <ref>ri:tiposubunidad</ref>
                 <outbound>
                     <strength>strong</strength>
-                    <source><path>archetypeRef</path></source>
                     <expression>
                         <script>
                             <code>
-// research-center (6b1d9a4e...) + DGI(academic-unit, identifier=69) → #unidadDeInvestigacionOInnovacion
-// research-line   (7c2e0b5f...)                                     → #lineaDeInvestigacion
-// resto (institution/campus/faculty/academic-program/department)   → null (sin tiposubunidad)
+// research-center (6b1d9a4e...) + DGI(identifier=69)  → #unidadDeInvestigacionOInnovacion
+// research-line   (7c2e0b5f...)                       → #lineaDeInvestigacion
+// resto (institution/campus/faculty/academic-program/department) → null (sin tiposubunidad)
+// Se lee de focus.archetypeRef (NO de un source-mapping) por robustez en construction outbound.
 def VOC = 'https://catalogos.concytec.gob.pe/vocabulario/concytec_tipoSubunidad.xml'
-def refs = (input instanceof Collection) ? input : (input == null ? [] : [input])
-def oids = refs.collect { it?.oid }
+def refs = (focus?.archetypeRef instanceof Collection) ? focus.archetypeRef
+           : (focus?.archetypeRef == null ? [] : [focus.archetypeRef])
+def oids = refs.collect { it?.getOid() }
 if (oids.contains('6b1d9a4e-2f53-4c8a-bf17-9d0c6e2a4b81')) return VOC + '#unidadDeInvestigacionOInnovacion'
 if (oids.contains('7c2e0b5f-3a64-4d9b-c028-ae1d7f3b5c92')) return VOC + '#lineaDeInvestigacion'
+// DGI: direccion raiz de investigacion (identifier=69) -> unidad de I+i.
+// focus.identifier solo existe en OrgType; instanceof evita MissingPropertyException
+// cuando el lens evalua este outbound con un focus que no es OrgType.
+import com.evolveum.midpoint.xml.ns._public.common.common_3.OrgType
+if (focus instanceof OrgType &amp;&amp; '69'.equals(focus.getIdentifier())) return VOC + '#unidadDeInvestigacionOInnovacion'
 return null
                             </code>
                         </script>
@@ -192,12 +209,14 @@ return null
                 <ref>ri:esRaiz</ref>
                 <outbound>
                     <strength>strong</strength>
-                    <source><path>archetypeRef</path></source>
                     <expression>
                         <script>
                             <code>
-def refs = (input instanceof Collection) ? input : (input == null ? [] : [input])
-refs.collect{it?.oid}.contains('455d90ab-b54a-4aa7-a402-a6b6ffc0c0d9') ? 'true' : 'false'
+// esRaiz: 'true' solo para la institucion raiz UPeU (archetype org-institution).
+// Se lee de focus.archetypeRef por robustez en construction outbound.
+def refs = (focus?.archetypeRef instanceof Collection) ? focus.archetypeRef
+           : (focus?.archetypeRef == null ? [] : [focus.archetypeRef])
+refs.collect{it?.getOid()}.contains('455d90ab-b54a-4aa7-a402-a6b6ffc0c0d9') ? 'true' : 'false'
                             </code>
                         </script>
                     </expression>

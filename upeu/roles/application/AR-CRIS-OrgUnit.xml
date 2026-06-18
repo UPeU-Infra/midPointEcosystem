@@ -69,17 +69,21 @@
             <expression>
                 <script>
                     <code><![CDATA[
+// Solo aplica cuando el foco es un OrgType (unidad organizativa). Si el lens evalua
+// esta condicion con un foco que no es OrgType (p.ej. un User afiliado a un CII que
+// porta este AR), no debe crashear ni aplicar -> instanceof guard.
+import com.evolveum.midpoint.xml.ns._public.common.common_3.OrgType
+if (!(focus instanceof OrgType)) return false
 def RESEARCH_CENTER = '6b1d9a4e-2f53-4c8a-bf17-9d0c6e2a4b81'  // org-research-center (7 CII)
 def RESEARCH_LINE   = '7c2e0b5f-3a64-4d9b-c028-ae1d7f3b5c92'  // org-research-line (178 lineas)
 // (A)(B) por archetype del propio OrgType
-def archRefs = (focus?.archetypeRef instanceof Collection) ? focus.archetypeRef
-               : (focus?.archetypeRef == null ? [] : [focus.archetypeRef])
+def archRefs = (focus.getArchetypeRef() == null) ? [] : focus.getArchetypeRef()
 for (a in archRefs) {
     def oid = a?.getOid()
     if (RESEARCH_CENTER.equals(oid) || RESEARCH_LINE.equals(oid)) return true
 }
 // (C) la propia DGI (direccion raiz de investigacion) por identifier
-if ('69'.equals(focus?.identifier)) return true
+if ('69'.equals(focus.getIdentifier())) return true
 return false
                     ]]></code>
                 </script>
