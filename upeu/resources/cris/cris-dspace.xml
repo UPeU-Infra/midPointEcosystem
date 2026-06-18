@@ -289,15 +289,23 @@ v ?: null
                     <expression>
                         <script>
                             <code>
-// identityDocuments es multivalor contenedor; tomar el primary=true type=DNI.
-// 'identityDocuments' es la variable implícita nombrada por el path (NO usar 'input').
+// identityDocuments es multivalor PrismContainerValue. MidPoint pasa cada valor
+// como PrismContainerValue; acceder a sub-propiedades via findItem/PCV API.
+// 'identityDocuments' = variable implícita nombrada por el path (NO usar 'input').
+import com.evolveum.midpoint.prism.PrismContainerValue
 def docs = (identityDocuments instanceof Collection) ? identityDocuments : (identityDocuments == null ? [] : [identityDocuments])
 for (d in docs) {
-    def dd = (d?.getRealValue != null) ? d.getRealValue() : d
-    def type = dd?.type?.toString()
-    def primary = dd?.primary?.toString()
-    if (('DNI'.equalsIgnoreCase(type)) &amp;&amp; ('true'.equalsIgnoreCase(primary) || primary == null)) {
-        return dd?.number?.toString()
+    def pcv = (d instanceof PrismContainerValue) ? d : null
+    if (pcv == null) continue
+    // extraer sub-propiedades del PCV por nombre local
+    def typeProp = pcv.findProperty(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'type'))
+    def numProp  = pcv.findProperty(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'number'))
+    def primProp = pcv.findProperty(new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'primary'))
+    def typeVal  = typeProp?.getRealValue()?.toString()
+    def numVal   = numProp?.getRealValue()?.toString()
+    def primVal  = primProp?.getRealValue()?.toString()
+    if ('DNI'.equalsIgnoreCase(typeVal) &amp;&amp; ('true'.equalsIgnoreCase(primVal) || primVal == null)) {
+        return numVal
     }
 }
 return null
