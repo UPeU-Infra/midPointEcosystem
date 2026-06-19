@@ -73,9 +73,11 @@
       oid="c4e8f1a2-9b03-4d57-8e62-1a4f7c0d9e35">
     <name>AR-CRIS-Person</name>
     <description>Application Role: proyecta la cuenta Person (investigador) en DSpace-CRIS (colección Investigadores). Aporta la construction (kind=account intent=person) que faltaba al objectType person de cris-dspace.xml para que el lens bootstrappee la proyección. El gate investigador (afiliación research-center O padrón RENACYT, vía roleMembershipRef) gobierna la aplicación de la construction al holder. Se induce desde BR-Investigador / BR-Visitante-Investigacion. Reemplaza el existence-mapping resource-driven (cf261d0). Upsert idempotente Update-no-create por orcid/dni. lifecycleState=draft hasta validar piloto (resource CRIS sigue proposed).</description>
-    <!-- draft: la AR no opera hasta que (a) cierre el barrido dual, (b) se importe,
-         (c) se la induzca desde los BR. El resource CRIS sigue proposed en paralelo. -->
-    <lifecycleState>active</lifecycleState>
+    <!-- DESCONECTADO 2026-06-18/19: lifecycleState=draft. En draft la construction NO
+         aplica al holder, por lo que NO proyecta a CRIS. El inducement desde BR-Investigador
+         fue removido. El resource CRIS sigue proposed en paralelo. Ver upeu/resources/cris/DESCONECTADO.md.
+         Para reactivar: draft->active + re-inducir desde BR-Investigador + resource->active. -->
+    <lifecycleState>draft</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
         <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>

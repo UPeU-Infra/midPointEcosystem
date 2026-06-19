@@ -49,7 +49,9 @@
       oid="bdfe5f18-99f1-437b-80e6-ccffb52215ad">
     <name>AR-CRIS-OrgUnit</name>
     <description>Application Role: proyecta la cuenta OrgUnit (unidad de investigacion) en DSpace-CRIS. Aporta la construction (kind=generic intent=orgUnit) que faltaba al objectType orgUnit de cris-dspace.xml para que el lens bootstrappee la proyeccion del OrgType con metadata PeruCRIS rica (legalName, parentOrganization, tiposubunidad por archetype, esRaiz, ruc). Gate: solo unidades de investigacion (research-center, research-line, o DGI). Upsert idempotente por organization.legalName. Espejo de AR-CRIS-Person.</description>
-    <lifecycleState>active</lifecycleState>
+    <!-- DESCONECTADO 2026-06-18/19: lifecycleState=draft. En draft la construction NO aplica
+         al holder, por lo que NO proyecta OrgUnits a CRIS. Ver upeu/resources/cris/DESCONECTADO.md. -->
+    <lifecycleState>draft</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
         <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>

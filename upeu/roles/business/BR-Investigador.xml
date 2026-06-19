@@ -52,9 +52,12 @@
         <targetRef oid="3e979bbf-2f54-48e8-a304-9104f5e92ad3" relation="org:default" type="RoleType"/>
     </inducement>
     <!-- AR-CRIS-Person: cuenta Person (investigador) en DSpace-CRIS (Fase 5, 2026-06-18).
-         La construction solo aplica si el holder tiene afiliación research-center activa o
-         padrón RENACYT (gate en la condition del inducement del AR). -->
+         DESCONECTADO 2026-06-18/19: inducement REMOVIDO por decisión (MidPoint no gobierna
+         CRIS por ahora; llenado manual vía API/JSON/XML). Config preservada para reactivar.
+         Para reactivar la proyección al CRIS, restaurar este inducement (+ AR-CRIS-Person a
+         active + resource CRIS a active). Ver upeu/resources/cris/DESCONECTADO.md.
     <inducement>
         <targetRef oid="c4e8f1a2-9b03-4d57-8e62-1a4f7c0d9e35" relation="org:default" type="RoleType"/>
     </inducement>
+    -->
 </role>
