@@ -1,5 +1,20 @@
 # Fase 5 — Análisis de conformidad CONCYTEC + propuesta de revisión del modelo canónico de investigación
 
+> # ⛔ RETIRADO 2026-06-20
+>
+> **Este documento es histórico.** El modelado de investigación / CRIS se retiró
+> definitivamente de MidPoint el **2026-06-20**: el aprovisionamiento del CRIS lo asume el
+> producto separado **"SciBack Research Project"**, que lee directo de Oracle Lamb. MidPoint
+> ya no gobierna investigación. Todos los objetos research fueron borrados de PROD (archetypes
+> org-research-center/line, archetype-user-affiliate-researcher, BR-Investigador,
+> BR-Visitante-Investigacion, AR-CRIS-OrgUnit/Person, AR-Koha-Investigador/Researcher,
+> resources inbound Investigacion-DGI/Afiliacion/CSV-RENACYT, resource cris-dspace). El cargo
+> `POS-117` se conserva sin inducement a research. Ver banner de retiro en
+> [`docs/ROADMAP.md`](../ROADMAP.md). Se mantiene el análisis abajo solo como referencia
+> conceptual para el producto SciBack Research Project.
+>
+> ---
+
 > **Estado:** ANÁLISIS Y PROPUESTA. **NO APLICADO a PROD.** Los XML incluidos son
 > **borradores de propuesta** — no importar hasta aprobación del usuario.
 > **Fecha:** 2026-06-17 · **Autor:** midpoint-expert · **Skills:** `iga-canonical-standards`, `midpoint-best-practices`

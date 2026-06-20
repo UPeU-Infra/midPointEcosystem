@@ -6,6 +6,37 @@
 
 ---
 
+> ## ⛔ RETIRADO 2026-06-20 — Modelado de investigación / CRIS fuera del alcance de MidPoint
+>
+> Todo el stack de **investigación / DSpace-CRIS** que se exploró bajo el paraguas "Fase 5"
+> (provisioning a CRIS, modelado canónico de centros/líneas/investigadores RENACYT) fue
+> **retirado definitivamente de MidPoint el 2026-06-20**. El aprovisionamiento del CRIS lo
+> asume ahora el producto separado **"SciBack Research Project"**, que lee directo de Oracle
+> Lamb. MidPoint **se desentiende por completo de la investigación**.
+>
+> **Borrado de PROD (todos a 0 miembros / 0 shadows; verificado antes de cada DELETE):**
+> - Resource `cris-dspace` (`3f8b2d61-…`) — ya borrado en limpieza previa
+> - Application roles: `AR-CRIS-OrgUnit` (`bdfe5f18-…`), `AR-CRIS-Person` (`c4e8f1a2-…`),
+>   `AR-Koha-Investigador` (`251f52db-…`), `AR-Koha-Researcher` (`02e7a70b-…`)
+> - Business roles: `BR-Investigador` (`70c1606c-…`), `BR-Visitante-Investigacion` (`3399a9da-…`)
+> - Resources inbound: `Oracle LAMB Investigacion DGI (Org)` (`5a3d7e92-…`),
+>   `Oracle LAMB Investigadores Afiliacion` (`8c4f1a36-…`),
+>   `CSV DGI Investigadores RENACYT v1` (`a7c4f219-…`)
+> - Archetypes: `archetype-org-research-center` (`6b1d9a4e-…`),
+>   `archetype-org-research-line` (`7c2e0b5f-…`),
+>   `archetype-user-affiliate-researcher` (`ce162f6b-…`)
+>
+> **Conservados:** el cargo `POS-117` "Director General de Investigación" (`8626ba59-…`) sigue
+> siendo un cargo organizacional válido (su inducement a BR-Investigador se removió y se
+> recomputó para soltar la membership) y `BR-Estudiante-Doctorado` (`03b2ecc8-…`, modelo
+> académico, NO research).
+>
+> Las menciones a research/CRIS/RENACYT que sobreviven más abajo en este roadmap quedan como
+> **histórico**; ya no representan trabajo planificado en MidPoint. Detalle en
+> [`docs/specs/fase5-conformidad-concytec.md`](./specs/fase5-conformidad-concytec.md) (también marcado RETIRADO).
+
+---
+
 ## Principios de ejecución
 
 1. **Pre-prod primero, prod nunca primero.** Todo cambio se aplica en MidPoint DEV (`192.168.15.230`) antes que en PROD (`192.168.15.166`).
@@ -413,7 +444,7 @@ Fase 13 — Metricas COUNTER                      🔒 BLOQUEADA (Fase 12 + cred
 | # | Tarea | Archivos / objetos | Estim | Bloqueante | Aprobador |
 |---|---|---|---|---|---|
 | 7.1 | **Application Roles canonicos** — AR en `roles/application/`: M365-Student-A1, M365-Faculty-A1, M365-Faculty-A3, M365-Staff-A3, EntraID-Group-*, AD-Docentes/Estudiantes/Staff, Koha-Patron-Student/Faculty/Librarian, DSpace-Submitter/Editor, OJS-Reviewer, Indico-User, Keycloak-realm-upeu, FreeRADIUS-VPN-Docentes. Cada uno con archetype `application-role`. | `roles/application/*.xml` | 8h | Fase 6 | pre-prod auto |
-| 7.2 | **Business Roles canonicos** — BR en `roles/business/`: BR-Docente-TC, BR-Docente-TP, BR-Estudiante-Pregrado, BR-Estudiante-Posgrado, BR-Estudiante-Doctorado, BR-Admin-Area (parametrico), BR-Bibliotecario, BR-Investigador, BR-Egresado, BR-Decano, BR-Visitante-Investigacion. Cada uno con archetype `business-role` + inducements a Application Roles. | `roles/business/*.xml` | 6h | 7.1 | pre-prod auto |
+| 7.2 | **Business Roles canonicos** — BR en `roles/business/`: BR-Docente-TC, BR-Docente-TP, BR-Estudiante-Pregrado, BR-Estudiante-Posgrado, BR-Estudiante-Doctorado, BR-Admin-Area (parametrico), BR-Bibliotecario, ~~BR-Investigador~~, BR-Egresado, BR-Decano, ~~BR-Visitante-Investigacion~~. Cada uno con archetype `business-role` + inducements a Application Roles. _(BR-Investigador y BR-Visitante-Investigacion **RETIRADOS 2026-06-20** — research fuera de MidPoint, ver banner al inicio.)_ | `roles/business/*.xml` | 6h | 7.1 | pre-prod auto |
 | 7.3 | **Auto-asignacion via object templates** — para cada archetype, configurar `assignmentTargetSearch` que asigna Business Roles automaticamente segun condiciones. | upgrade `objectTemplates/per-archetype/*.xml` | 4h | 7.2 | pre-prod auto |
 | 7.4 | **SoD policies** — 2 reglas SSoD minimas (ISO 27001 A.8.2): Admin-Nomina ⊥ Aprobador-Pagos; Auditor-Sistemas ⊥ Operador-Sistemas. | `policy/sod/canonical-sod-rules.xml` | 2h | 7.2 | Alberto |
 | 7.5 | **Role mining piloto sobre `ELISEO.LAMB_ROL`** — analizar combinaciones reales de los 656 roles legacy. Producir reporte con candidatos a Business Roles UPeU-specific. | Reporte `role-mining-lamb-piloto.md` + nuevos roles en `roles/business/upeu-specific/` | 8h | Fase 5 (Oracle resource activo) | Alberto |

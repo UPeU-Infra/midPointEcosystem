@@ -578,6 +578,12 @@ Oracle `ELISEO.VW_APS_EMPLEADO.ID_CATEGORIAOCUPACIONAL` es un código numérico.
 
 ##### Investigadores RENACYT (CONCYTEC)
 
+> **⛔ RETIRADO 2026-06-20 (histórico).** El modelado de investigación se retiró de MidPoint:
+> ya no se crean positions/roles/archetypes RENACYT ni se afilia investigadores ni se proyecta
+> a CRIS. Esa capa la asume el producto separado **"SciBack Research Project"** (lee directo de
+> Oracle Lamb). Esta sub-sección queda como referencia conceptual; no representa trabajo
+> planificado en MidPoint. Ver banner de retiro en [`../../ROADMAP.md`](../../ROADMAP.md).
+
 | Code | Display | positionType | Fuente |
 |---|---|---|---|
 | `POS-INVESTIGADOR-RENACYT-III` | Investigador RENACYT Categoría III (Reconocido) | `research` | CONCYTEC RENACYT |
