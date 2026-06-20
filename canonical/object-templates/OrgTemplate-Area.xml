@@ -83,34 +83,20 @@
             <script>
                 <code>
                     // Solo asignar department si la org NO tiene ningún archetype estructural aún.
-                    // Comprobación doble:
                     // (A) archetypeRef — estado vigente ya computado (orgs curadas Fase 1, orgs
-                    //     linked existentes con archetype ya asignado).
-                    // (B) assignment actuales — cubre el caso ADD nuevo (addFocus desde recon):
-                    //     archetypeRef aún vacío pero los inbound del resource ya pusieron el
-                    //     assignment a archetype-org-research-center / archetype-org-research-line
-                    //     en el mismo clockwork. Sin esta comprobación, el template asignaría
-                    //     archetype-org-department en paralelo → dual structural archetype → error.
-                    //     OIDs research: research-center=6b1d9a4e-..., research-line=7c2e0b5f-...,
-                    //     (cualquier archetype-org-* no-department detectado también excluye).
-                    def RESEARCH_ARCHETYPES = [
-                        '6b1d9a4e-2f53-4c8a-bf17-9d0c6e2a4b81',  // archetype-org-research-center
-                        '7c2e0b5f-3a64-4d9b-c028-ae1d7f3b5c92'   // archetype-org-research-line
-                    ] as Set
+                    //     linked existentes con archetype ya asignado). Si ya hay archetype → no tocar.
+                    // NOTA (2026-06-20): el guard previo (B) excluía orgs con assignment en curso a
+                    //     archetype-org-research-center / archetype-org-research-line. Esos archetypes y
+                    //     todo el inbound de investigación se eliminaron (MidPoint ya NO gobierna
+                    //     investigación; la aprovisiona el producto SciBack Research Project). Ya no hay
+                    //     ningún inbound que asigne archetype research en el mismo clockwork, por lo que
+                    //     la comprobación (A) por archetypeRef es suficiente.
                     def o = focus
                     if (o == null) return true
                     def ot = (o instanceof com.evolveum.midpoint.prism.PrismObject) ? o.asObjectable() : o
                     // (A) archetypeRef ya computado
                     def refs = ot.getArchetypeRef()
                     if (refs != null &amp;&amp; !refs.isEmpty()) return false
-                    // (B) assignments en curso — buscar targetRef a archetype conocido research
-                    def assignments = ot.getAssignment()
-                    if (assignments != null) {
-                        for (def a : assignments) {
-                            def tr = a?.getTargetRef()
-                            if (tr != null &amp;&amp; RESEARCH_ARCHETYPES.contains(tr.getOid())) return false
-                        }
-                    }
                     return true
                 </code>
             </script>

@@ -67,8 +67,10 @@ def OID_STAFF   = '6460facf-3abf-4851-966e-0c95aa1a6c46';
 def OID_STUDENT = '3037fbd2-db02-4ffd-8b1a-83fab5e686aa';
 def OID_ALUM    = '87552943-9600-493b-88ca-74b7d3ba93e4';
 // structural que NO se derivan de liveAffiliation (se conservan si son únicos)
-def OTHER_STRUCT = ['ce162f6b-f6fb-4dc4-b395-a942ee5b491b', // researcher
-                    'c5cdc4b5-e14f-4b2f-b65e-0a3fee8f6bde', // visitor
+// NOTA (2026-06-20): archetype-user-affiliate-researcher (ce162f6b) removido del set —
+// el archetype se eliminó junto con todo el stack de investigación (MidPoint ya NO gobierna
+// investigación; la aprovisiona el producto SciBack Research Project).
+def OTHER_STRUCT = ['c5cdc4b5-e14f-4b2f-b65e-0a3fee8f6bde', // visitor
                     '18337126-27ad-421b-8860-59403c36f1b8', // contractor
                     '8f32f406-0d3d-4607-8406-9f1c494ab5fe', // partner-institution
                     '05ceed56-9a60-4531-903f-c7748b36de8a'] as Set; // service-account

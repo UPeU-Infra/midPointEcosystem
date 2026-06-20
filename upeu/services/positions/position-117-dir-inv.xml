@@ -150,7 +150,10 @@
     </activation>
     <displayName>Director General de Investigación</displayName>
     <identifier>117</identifier>
-    <inducement id="10">
-        <targetRef oid="70c1606c-9d56-42ce-989f-a025c98f9c0b" relation="org:default" type="c:RoleType"/>
-    </inducement>
+    <!-- Inducement a BR-Investigador (70c1606c) eliminado 2026-06-20: el stack de modelado de
+         investigación se retiró de MidPoint (lo aprovisiona el producto SciBack Research Project,
+         que lee directo de Oracle Lamb). POS-117 sigue siendo un cargo organizacional válido
+         (Director General de Investigación) pero ya no induce ningún rol de investigación.
+         Acción PROD pendiente: recompute del servicio POS-117 (8626ba59) para retirar el
+         roleMembershipRef materializado a BR-Investigador (si lo hubiera). -->
 </service>
