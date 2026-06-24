@@ -246,6 +246,28 @@
                         </xsd:appinfo></xsd:annotation>
                     </xsd:element>
 
+                    <!-- L14b — HASH DE IDEMPOTENCIA DE LA FOTO ENTRA (anti-bloat audit) -->
+                    <!-- IIA: derivado (no es dato de negocio) — SHA-256 del JPEG normalizado
+                         que el inbound 'entra-photo-to-entraPhoto-ext' produjo la última vez.
+                         PROPÓSITO: idempotencia. En cada pasada del inbound se calcula el hash
+                         del JPEG normalizado; si coincide con este valor previo, el inbound
+                         RETORNA el binario actual (focus.entraPhoto) en vez de uno nuevo →
+                         MidPoint (modelo de cambio relativo) NO genera delta MODIFY de foto →
+                         no se infla ma_audit_delta_default. Solo cuando el hash cambia se
+                         emite el binario nuevo y se actualiza este campo. Búsqueda en core:
+                         NO existe atributo nativo para "hash de binario externo" → extensión
+                         local legítima. xsd:string (hex SHA-256), single, NO indexado
+                         (no se filtra por él). NO es PII. Schema local OID
+                         64ed4155-147f-4081-89db-8d7e451d9c00, namespace urn:upeu:midpoint:local. -->
+                    <xsd:element name="entraPhotoHash" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Hash foto M365 (idempotencia)</a:displayName>
+                            <a:help>SHA-256 (hex) del JPEG normalizado de la foto M365/Entra ID producido por el inbound entra-photo-to-entraPhoto-ext. Campo de control de idempotencia: si el hash recalculado coincide, el inbound no re-emite el binario y no se genera delta MODIFY (evita bloat de auditoría). No es dato de negocio ni PII. No indexado.</a:help>
+                            <a:indexed>false</a:indexed>
+                            <a:displayOrder>63</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
                 </xsd:sequence>
             </xsd:complexType>
 

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ENTRA PHOTO BACKFILL — scoped + throttled (PREPARADO, NO EJECUTAR)
+  ===================================================================
+  Propósito:
+    Materializar por PRIMERA vez la foto M365/Entra ID en los focos que ya
+    tienen cuenta Entra vinculada, ahora que el inbound
+    'entra-photo-to-entraPhoto-ext' (entra-id-graph.xml) pasó a active.
+    El inbound escribe extension/upeu:entraPhoto -> el Bloque I del template
+    (UserTemplate-Person-Base.xml, I.1 normal) propaga a jpegPhoto -> LDAP
+    (ri:jpegPhoto) + Koha (ri:photo). Entra gana sobre la foto LAMB (I.2 weak).
+
+  Por qué un backfill DEDICADO y NO el reconcile diario masivo:
+    - ri:photo tiene fetchStrategy=explicit + returnedByDefault=false: cada
+      objeto exige un GET extra /users/{id}/photo/$value a Graph.
+    - El universo Entra son ~73.5K shadows exist=true. Activar la foto en
+      recon-entra-id-daily haría ~73.5K GET-foto/pasada -> 429 TooManyRequests
+      (Graph: 10.000 req/10min por tenant) + storm de UPDATE downstream a
+      LDAP/Koha por cada foto materializada.
+    - El universo REAL que NECESITA foto es mucho menor (~3.979 shadows linked
+      + exist=true). Este backfill lo recorre de forma acotada y serializada.
+
+  Por qué NO se corre AHORA (condiciones de ejecución):
+    1. Disco PROD .166 al 97% (ma_audit_delta_default 35G sin pg_repack).
+       Aunque cached=false + idempotencia por hash evitan REVIVIR el bloat,
+       el PRIMER materializado de cada foto SÍ emite 1 delta MODIFY con el
+       binario (~<50KB JPEG normalizado). 3.979 focos x ~1 delta = pico de
+       audit puntual sin margen de disco. Ejecutar SOLO tras ampliar el LV
+       (ubuntu-vg/ubuntu-lv) + pg_repack de la tabla de audit.
+    2. Requiere visto bueno explícito del usuario y un canary previo de 3-5
+       focos (verificar: entraPhoto poblado, jpegPhoto = entraPhoto, LDAP
+       ri:jpegPhoto actualizado, Koha ri:photo actualizado, hash persistido,
+       2a pasada NO genera delta = idempotencia OK).
+
+  Protocolo de ejecución (cuando se autorice):
+    - Suspender recon-entra-id-daily (OID a1e5b2c3-0001-4def-9abc-202406060001)
+      y livesync-entra-id ANTES de correr (evitar doble GET-foto / colisión).
+    - Lotes de ~150-200 focos (bucketing por name) con concurrencia 1
+      (workerThreads=1): respeta Retry-After de Graph 429 y no satura LDAP/Koha.
+    - Pausa entre lotes (operativa manual o re-lanzar por bucket).
+    - Heap gate: vigilar JVM; si >90% pausar.
+    - Reanudar recon-entra-id-daily + livesync al terminar.
+
+  Scope:
+    UserType, lifecycleState=active, con linkRef a un shadow del recurso
+    UPEU-EntraID-Graph (2f11c057-7b15-4641-a0eb-00c98a6fa4cb). El recompute
+    corre el clockwork: inbound entra-photo (active) -> entraPhoto -> Bloque I
+    -> jpegPhoto -> proyección LDAP/Koha. Idempotente en 2a pasada (hash).
+
+  executionState=suspended: NO arranca al importar. Canary manual primero.
+  OID determinista: md5("entra-photo-backfill-throttled-20260624")
+                    58f7e9de-300b-5752-6205-9e88fba3a256
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="58f7e9de-300b-5752-6205-9e88fba3a256">
+    <name>entra-photo-backfill-throttled-20260624</name>
+    <description>
+        Backfill scoped + throttled de la foto M365/Entra ID a los focos active con
+        cuenta Entra vinculada (~3.979). Materializa extension/upeu:entraPhoto -> Bloque I
+        -> jpegPhoto -> LDAP/Koha. workerThreads=1 (anti-429 Graph, anti-storm downstream).
+        SUSPENDED: requiere disco PROD ampliado + pg_repack audit + visto bueno + canary.
+        NO ejecutar en reconcile diario masivo (73.5K GET-foto = throttling).
+        Ver upeu/tasks/entra-photo-backfill/.
+    </description>
+    <executionState>suspended</executionState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <cleanupAfterCompletion>P7D</cleanupAfterCompletion>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <!-- Solo activos: archived/suspended no proyectan foto a
+                                     LDAP/Koha; no tiene sentido materializar su foto. -->
+                                <q:equal>
+                                    <q:path>lifecycleState</q:path>
+                                    <q:value>active</q:value>
+                                </q:equal>
+                                <!-- Con cuenta Entra vinculada: linkRef al recurso
+                                     UPEU-EntraID-Graph. Acota el universo a los focos que
+                                     realmente pueden traer foto M365 (evita los 29K huérfanos
+                                     y los sin cuenta Entra). -->
+                                <q:ref>
+                                    <q:path>linkRef</q:path>
+                                    <q:value oid="2f11c057-7b15-4641-a0eb-00c98a6fa4cb" type="ResourceType"/>
+                                </q:ref>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+        <distribution>
+            <!-- Concurrencia 1: serializa GET-foto a Graph (Retry-After/backoff)
+                 y evita storm de UPDATE a LDAP/Koha. NO subir sin medir 429. -->
+            <workerThreads>1</workerThreads>
+        </distribution>
+    </activity>
+</task>
