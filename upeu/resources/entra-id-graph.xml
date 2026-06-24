@@ -273,38 +273,36 @@
                 <ref>ri:photo</ref>
                 <fetchStrategy>explicit</fetchStrategy>
                 <!-- ================================================================
-                     ANTI-BLOAT AUDIT (obligatorio) — cached=false en ri:photo
+                     ANTI-BLOAT AUDIT (PARTE A — aislada, anti-llenado de disco)
                      ================================================================
                      CAUSA RAÍZ del bloat de auditoría (35G en ma_audit_delta_default,
                      ref reference_prod-disk-audit-bloat-2026-06-20): el binario JPEG de
-                     ri:photo se materializaba/cacheaba en el shadow y el reconcile
-                     recon-entra-id-daily lo leía/comparaba cada pasada → delta MODIFY
-                     con el binario embebido base64 → audit serializa JSON sin comprimir
-                     en bytea/TOAST.
+                     ri:photo se materializaba/cacheaba en el shadow y el reconcile diario
+                     recon-entra-id-daily lo leía/comparaba cada pasada -> delta MODIFY con
+                     el binario embebido base64 -> audit serializa JSON sin comprimir en
+                     bytea/TOAST -> el disco se llena.
                      cached=false impide que ri:photo se almacene en la copia cacheada del
-                     shadow → no hay binario en el shadow que comparar/re-emitir en cada
-                     reconcile. Evolveum usa LITERALMENTE jpegPhoto como EL ejemplo de
-                     atributo a NO cachear:
+                     shadow -> no hay binario en el shadow que comparar/re-emitir en cada
+                     reconcile -> CORTA la fuente del crecimiento (NO recupera lo ya
+                     acumulado; eso requiere ampliar LV + pg_repack).
+                     Evolveum usa LITERALMENTE jpegPhoto como EL ejemplo de atributo a NO
+                     cachear:
                        https://docs.evolveum.com/midpoint/reference/resources/attribute-caching/
                        "Exceptions (both positive and negative) to the scope can be defined
                         by using `cached` boolean property present for individual attributes."
-                     Sintaxis confirmada 4.10: elemento <cached> booleano dentro de la
-                     definición <attribute> (NO cachingStrategy, NO bloque <caching> aquí).
+                     Sintaxis 4.10: elemento <cached> booleano dentro de la definición
+                     <attribute> (NO cachingStrategy, NO bloque <caching> aquí).
+                     PARTE A es autosuficiente: NO requiere activar el inbound (sigue en
+                     proposed) ni el backfill. La autoridad de foto de Entra (activar inbound
+                     + idempotencia por hash + backfill) vive en rama
+                     feature/entra-photo-authority, para una fase posterior.
                      ================================================================ -->
                 <cached>false</cached>
                 <inbound>
                     <name>entra-photo-to-entraPhoto-ext</name>
-                    <!-- ACTIVO (2026-06-24): foto M365 -> extension/upeu:entraPhoto.
-                         Salvaguardas de no-borrado en el Bloque I del template (I.1 normal /
-                         I.2 weak, NUNCA strong) intactas: este inbound poblar un campo DEDICADO
-                         nunca borra jpegPhoto (caso 07660311 ya aprendido). -->
-                    <lifecycleState>active</lifecycleState>
-                    <!-- strength=strong: entraPhoto es campo dedicado (no jpegPhoto). Strong
-                         aquí NO es destructivo para jpegPhoto porque el target es entraPhoto.
-                         La IDEMPOTENCIA por hash (abajo) evita que strong re-emita el binario
-                         en cada pasada cuando la foto no cambió → no genera delta MODIFY de
-                         entraPhoto → no infla audit. Combinado con cached=false en ri:photo,
-                         elimina la doble fuente de bloat (shadow cache + re-emisión). -->
+                    <!-- lifecycleState=proposed: foto inbound desactivada en reposo. Se activa
+                         (PATCH -> active) solo durante backfill controlado de foto. -->
+                    <lifecycleState>proposed</lifecycleState>
                     <strength>strong</strength>
                     <!-- NORMALIZACIÓN PNG->JPEG ~200px (2026-06-12): la foto M365 viene en PNG
                          (hasta ~700KB). jpegPhoto (RFC 2798) es semánticamente JPEG y los consumidores
@@ -369,35 +367,7 @@ try {
         log.warn('Inbound foto M365->entraPhoto: JPEG vacío para {} -> binario original', shadow?.name)
         return src
     }
-    // ---- IDEMPOTENCIA POR HASH (anti-bloat audit) ------------------------
-    // Calcula SHA-256 del JPEG normalizado. Si coincide con el hash previo
-    // (extension/upeu:entraPhotoHash del foco), la foto NO cambió desde la
-    // última pasada -> retornar el binario YA materializado en el foco
-    // (focus.extension.entraPhoto) en vez de 'out'. MidPoint (cambio relativo)
-    // no genera delta MODIFY cuando el valor de salida == valor actual del
-    // target -> recon-entra-id-daily deja de emitir el binario cada pasada
-    // -> no infla ma_audit_delta_default. El hash se persiste por separado
-    // (inbound entra-photo-hash, abajo). El strong mantiene autoridad de Entra.
-    try {
-        def md = java.security.MessageDigest.getInstance('SHA-256')
-        byte[] dig = md.digest(out)
-        def sb = new StringBuilder()
-        for (b in dig) { sb.append(String.format('%02x', b)) }
-        def newHash = sb.toString()
-        // Acceso a extensión vía API 4.10 con QName (patrón del repo, ver
-        // canonical/object-templates/*.xml basic.getExtensionPropertyValue):
-        def prevHash = focus != null ? basic.getExtensionPropertyValue(focus,
-            new javax.xml.namespace.QName('urn:upeu:midpoint:local','entraPhotoHash')) : null
-        def curPhoto = focus != null ? basic.getExtensionPropertyValue(focus,
-            new javax.xml.namespace.QName('urn:upeu:midpoint:local','entraPhoto')) : null
-        if (prevHash != null && prevHash.toString() == newHash && curPhoto != null) {
-            log.debug('Inbound foto M365->entraPhoto: hash sin cambios para {} ({}) -> sin delta', shadow?.name, newHash)
-            return curPhoto
-        }
-        log.debug('Inbound foto M365->entraPhoto: {} convertida {}x{} {}B -> JPEG {}x{} {}B (hash {})', shadow?.name, w, h, src.length, nw, nh, out.length, newHash)
-    } catch (Exception he) {
-        log.warn('Inbound foto M365->entraPhoto: error hash idempotencia para {}: {} -> emite binario (no idempotente esta pasada)', shadow?.name, he.message)
-    }
+    log.debug('Inbound foto M365->entraPhoto: {} convertida {}x{} {}B -> JPEG {}x{} {}B', shadow?.name, w, h, src.length, nw, nh, out.length)
     return out
 } catch (Exception e) {
     log.warn('Inbound foto M365->entraPhoto: error convirtiendo para {} ({}): {} -> binario original', shadow?.name, (src != null ? src.length : 0), e.message)
@@ -408,86 +378,6 @@ try {
                     </expression>
                     <target>
                         <path xmlns:upeu="urn:upeu:midpoint:local">$user/extension/upeu:entraPhoto</path>
-                    </target>
-                </inbound>
-                <!-- ============================================================
-                     INBOUND auxiliar: persiste el hash de idempotencia.
-                     Recalcula el SHA-256 del MISMO JPEG normalizado y lo escribe
-                     en extension/upeu:entraPhotoHash. Es la "memoria" que el
-                     inbound principal consulta para no re-emitir el binario sin
-                     cambios. strength=strong (refleja siempre el estado de Entra).
-                     Coste: el hash es ~64 chars -> deltas/audit despreciables.
-                     Mismo pipeline de normalización que el inbound principal para
-                     que los hashes sean coherentes. Si la foto desaparece de Entra
-                     (input null) retorna null (no borra jpegPhoto; solo limpia el
-                     hash de control). ============================================ -->
-                <inbound>
-                    <name>entra-photo-hash</name>
-                    <lifecycleState>active</lifecycleState>
-                    <strength>strong</strength>
-                    <expression>
-                        <script>
-                            <code><![CDATA[
-import javax.imageio.ImageIO
-import javax.imageio.IIOImage
-import javax.imageio.ImageWriteParam
-import java.awt.image.BufferedImage
-import java.awt.RenderingHints
-
-if (input == null) return null
-byte[] src = input
-try {
-    BufferedImage img = ImageIO.read(new java.io.ByteArrayInputStream(src))
-    byte[] out
-    if (img == null) {
-        out = src
-    } else {
-        int w = img.getWidth(), h = img.getHeight()
-        int maxDim = 200
-        double scale = Math.min(1.0d, (double) maxDim / Math.max(w, h))
-        int nw = Math.max(1, (int) Math.round(w * scale))
-        int nh = Math.max(1, (int) Math.round(h * scale))
-        BufferedImage rgb = new BufferedImage(nw, nh, BufferedImage.TYPE_INT_RGB)
-        def g = rgb.createGraphics()
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
-        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-        g.setColor(java.awt.Color.WHITE)
-        g.fillRect(0, 0, nw, nh)
-        g.drawImage(img, 0, 0, nw, nh, null)
-        g.dispose()
-        def writers = ImageIO.getImageWritersByFormatName('jpeg')
-        if (!writers.hasNext()) { out = src }
-        else {
-            def writer = writers.next()
-            ImageWriteParam param = writer.getDefaultWriteParam()
-            if (param.canWriteCompressed()) {
-                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT)
-                param.setCompressionQuality(0.85f)
-            }
-            def baos = new java.io.ByteArrayOutputStream()
-            def ios = ImageIO.createImageOutputStream(baos)
-            writer.setOutput(ios)
-            writer.write(null, new IIOImage(rgb, null, null), param)
-            ios.close()
-            writer.dispose()
-            out = baos.toByteArray()
-            if (out == null || out.length == 0) out = src
-        }
-    }
-    def md = java.security.MessageDigest.getInstance('SHA-256')
-    byte[] dig = md.digest(out)
-    def sb = new StringBuilder()
-    for (b in dig) { sb.append(String.format('%02x', b)) }
-    return sb.toString()
-} catch (Exception e) {
-    log.warn('Inbound entra-photo-hash: error para {}: {} -> null', shadow?.name, e.message)
-    return null
-}
-                            ]]></code>
-                        </script>
-                    </expression>
-                    <target>
-                        <path xmlns:upeu="urn:upeu:midpoint:local">$user/extension/upeu:entraPhotoHash</path>
                     </target>
                 </inbound>
                 <!-- No outbound: doctrina inbound-only hasta Fase 12. -->
