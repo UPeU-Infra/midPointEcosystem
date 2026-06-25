@@ -1167,11 +1167,14 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
         <mapping>
             <name>E2-retract-orphan-title</name>
             <description>Retrae el title de CARGO LABORAL huérfano (IIA Trabajadores) cuando liveAffiliationWorker==null. El inbound strong del resource NO corre fuera de scope 7124, por eso el template retrae el valor huérfano. EXCLUYE del rango los fallbacks académicos "Estudiante"/"Egresado" (Q1 weak de los templates student/alumni) → solo limpia el cargo laboral. Tras la retracción, Q1 weak repuebla el fallback académico. Patrón range autoritativo (best-practices §4.1/§4.5, regla oro #4).</description>
-            <!-- REACTIVADO 2026-06-03: guard reescrita para leer el valor PERSISTIDO de
-                 liveAffiliationWorker (repo committed) en lugar del <source> relativo, que caía
-                 en zero-set transitorio en recompute focus-driven (borraba title/cc de trabajadores
-                 VIVOS). Sin <source> → el mapping se evalúa UNA vez y la condición consulta el
-                 repositorio. Retrae SOLO si NO hay afiliación laboral viva ni en repo ni en foco. -->
+            <!-- FIX 2026-06-25 (causa raíz provisioning-areas-caido): el RANGE de un mapping
+                 strong+value-vacío es AUTORITATIVO y se evalúa INDEPENDIENTE del <condition> del
+                 mapping. La guarda liveAffiliationWorker==null debe vivir en el <set><condition>
+                 del range, no en el <condition> del mapping, para que para un worker VIVO el range
+                 quede VACÍO (E2 no gobierna ningún valor → el title del inbound strong sobrevive).
+                 Anti-patrón latente igual que E2.b (que sí mordía costCenter). Se preserva la
+                 exclusión de fallbacks académicos (Estudiante/Egresado) dentro del mismo range.
+                 La autoridad retractiva vive en el RANGE, no en el <condition>. -->
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
             <expression>
@@ -1181,23 +1184,15 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
             <target>
                 <path>title</path>
                 <set>
-                    <!-- En rango: cualquier title EXCEPTO los fallbacks académicos
-                         (Estudiante/Egresado). El cargo laboral huérfano cae en rango
-                         y se remueve; el fallback académico queda intacto. -->
+                    <!-- En rango SOLO si: (a) title NO es fallback académico (Estudiante/Egresado)
+                         Y (b) NO hay afiliación laboral viva (guarda persistida, inmune al zero-set
+                         transitorio). Para un worker 7124 vivo (b)=false → range vacío → el title
+                         del inbound strong queda intacto; el cargo laboral huérfano (sin worker
+                         vivo) cae en rango y se remueve; el fallback académico queda fuera de rango. -->
                     <condition>
                         <script>
-                            <code>input != null &amp;&amp; !(basic.stringify(input).trim() in ['Estudiante','Egresado'])</code>
-                        </script>
-                    </condition>
-                </set>
-            </target>
-            <condition>
-                <script>
-                    <code>
-// GUARD persistida (2026-06-03): TRUE (retrae) solo si liveAffiliationWorker es null
-// tanto en el foco relativo (clockwork) como en el repositorio committed → inmune al
-// zero-set transitorio. Para un trabajador 7124 vivo el inbound strong ya persistió
-// 'faculty'/'staff' en repo → livePersisted != null → FALSE → no retrae (title intacto).
+                            <code>
+if (input == null || (basic.stringify(input).trim() in ['Estudiante','Egresado'])) return false
 def QN = new javax.xml.namespace.QName('urn:sciback:midpoint:person','liveAffiliationWorker')
 def relP = null
 try { relP = focus?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } catch (Exception e) {}
@@ -1209,9 +1204,11 @@ try {
   }
 } catch (Exception e) {}
 return (relP == null &amp;&amp; perP == null)
-                    </code>
-                </script>
-            </condition>
+                            </code>
+                        </script>
+                    </condition>
+                </set>
+            </target>
         </mapping>
     </item>
 
@@ -1222,7 +1219,17 @@ return (relP == null &amp;&amp; perP == null)
         <mapping>
             <name>E2-retract-orphan-costCenter</name>
             <description>Retrae costCenter (ID_AREA laboral, IIA Trabajadores) cuando liveAffiliationWorker==null. Complementa el guard del Bloque E (que retira la membership de org) limpiando además el valor en el foco. Solo abarca valores numéricos (ID_AREA LAMB).</description>
-            <!-- REACTIVADO 2026-06-03: guard persistida (ver E2.a). -->
+            <!-- FIX 2026-06-25 (causa raíz provisioning-areas-caido): el RANGE de un mapping
+                 strong+value-vacío es AUTORITATIVO y se evalúa INDEPENDIENTE del <condition> del
+                 mapping. Con la guarda liveAffiliationWorker==null en el <condition>, para un worker
+                 VIVO el mapping no aportaba output PERO su range (cualquier costCenter numérico)
+                 seguía activo → MidPoint retraía el costCenter=ID_AREA que el inbound
+                 id-area-to-costCenter SÍ había producido (4.903 workers activos sin costCenter →
+                 319 OrgTypes sin miembros). FIX (Opción A): mover el predicado worker-vivo al
+                 <set><condition> del range. Ahora para worker vivo el range queda VACÍO
+                 (E2 no gobierna ningún valor → el ID_AREA del inbound sobrevive); para foco SIN
+                 worker vivo el range sigue abarcando el costCenter numérico → E2 lo retrae igual
+                 que antes. La autoridad retractiva vive en el RANGE, no en el <condition>. -->
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
             <expression>
@@ -1233,17 +1240,29 @@ return (relP == null &amp;&amp; perP == null)
                 <set>
                     <condition>
                         <script>
-                            <!-- Solo el costCenter numérico (ID_AREA LAMB) es de autoría laboral. -->
-                            <code>input != null &amp;&amp; basic.stringify(input).trim().matches('\\d+')</code>
+                            <!-- En rango SOLO si: (a) es costCenter numérico (ID_AREA LAMB, autoría
+                                 laboral) Y (b) NO hay afiliación laboral viva (guarda persistida,
+                                 inmune al zero-set transitorio del recompute focus-driven). Para un
+                                 worker 7124 vivo (b)=false → range vacío → el ID_AREA del inbound
+                                 strong queda intacto. -->
+                            <code>
+if (input == null || !basic.stringify(input).trim().matches('\\d+')) return false
+def QN = new javax.xml.namespace.QName('urn:sciback:midpoint:person','liveAffiliationWorker')
+def relP = null
+try { relP = focus?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } catch (Exception e) {}
+def perP = null
+try {
+  if (focus?.oid != null) {
+    def repoUser = midpoint.getObjectByOid(com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class, focus.oid)
+    perP = repoUser?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue
+  }
+} catch (Exception e) {}
+return (relP == null &amp;&amp; perP == null)
+                            </code>
                         </script>
                     </condition>
                 </set>
             </target>
-            <condition>
-                <script>
-                    <code>def QN = new javax.xml.namespace.QName('urn:sciback:midpoint:person','liveAffiliationWorker'); def relP = null; try { relP = focus?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } catch (Exception e) {}; def perP = null; try { if (focus?.oid != null) { def repoUser = midpoint.getObjectByOid(com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class, focus.oid); perP = repoUser?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } } catch (Exception e) {}; return (relP == null &amp;&amp; perP == null)</code>
-                </script>
-            </condition>
         </mapping>
     </item>
 
@@ -1255,7 +1274,13 @@ return (relP == null &amp;&amp; perP == null)
         <mapping>
             <name>E2-retract-orphan-personal-email</name>
             <description>Retrae el emailAddress laboral huérfano (correo personal/gmail dejado por el inbound strong de Trabajadores) cuando liveAffiliationWorker==null. El RANGE abarca SOLO valores que NO terminan en @upeu.edu.pe → el institucional (worker vivo o student) nunca entra en rango y queda intacto. MidPoint no inventa correos (Bloque B archived); el inbound weak de estudiantes (correo-upeu-to-emailAddress) repuebla el @upeu.edu.pe real. IIA compartida (iga-canonical §1.3): worker strong / student weak; el template solo limpia lo huérfano no-institucional.</description>
-            <!-- REACTIVADO 2026-06-03: guard persistida (ver E2.a). -->
+            <!-- FIX 2026-06-25 (causa raíz provisioning-areas-caido): el RANGE de un mapping
+                 strong+value-vacío es AUTORITATIVO y se evalúa INDEPENDIENTE del <condition> del
+                 mapping. La guarda liveAffiliationWorker==null debe vivir en el <set><condition>
+                 del range, no en el <condition> del mapping, para que para un worker VIVO el range
+                 quede VACÍO. Anti-patrón latente igual que E2.b. Se preserva la exclusión del
+                 institucional @upeu.edu.pe dentro del mismo range (nunca entra en rango → intacto).
+                 La autoridad retractiva vive en el RANGE, no en el <condition>. -->
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
             <expression>
@@ -1266,18 +1291,29 @@ return (relP == null &amp;&amp; perP == null)
                 <set>
                     <condition>
                         <script>
-                            <!-- En rango: cualquier email que NO sea institucional @upeu.edu.pe
-                                 (= el huérfano laboral). El @upeu.edu.pe queda FUERA de rango → intacto. -->
-                            <code>input != null &amp;&amp; !basic.stringify(input).trim().toLowerCase().endsWith('@upeu.edu.pe')</code>
+                            <!-- En rango SOLO si: (a) email NO es institucional @upeu.edu.pe
+                                 (= huérfano laboral) Y (b) NO hay afiliación laboral viva (guarda
+                                 persistida, inmune al zero-set transitorio). Para un worker 7124
+                                 vivo (b)=false → range vacío → su email queda intacto. El @upeu.edu.pe
+                                 nunca entra en rango por (a). -->
+                            <code>
+if (input == null || basic.stringify(input).trim().toLowerCase().endsWith('@upeu.edu.pe')) return false
+def QN = new javax.xml.namespace.QName('urn:sciback:midpoint:person','liveAffiliationWorker')
+def relP = null
+try { relP = focus?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } catch (Exception e) {}
+def perP = null
+try {
+  if (focus?.oid != null) {
+    def repoUser = midpoint.getObjectByOid(com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class, focus.oid)
+    perP = repoUser?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue
+  }
+} catch (Exception e) {}
+return (relP == null &amp;&amp; perP == null)
+                            </code>
                         </script>
                     </condition>
                 </set>
             </target>
-            <condition>
-                <script>
-                    <code>def QN = new javax.xml.namespace.QName('urn:sciback:midpoint:person','liveAffiliationWorker'); def relP = null; try { relP = focus?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } catch (Exception e) {}; def perP = null; try { if (focus?.oid != null) { def repoUser = midpoint.getObjectByOid(com.evolveum.midpoint.xml.ns._public.common.common_3.UserType.class, focus.oid); perP = repoUser?.asPrismObject()?.findProperty(com.evolveum.midpoint.prism.path.ItemPath.create('extension', QN))?.realValue } } catch (Exception e) {}; return (relP == null &amp;&amp; perP == null)</code>
-                </script>
-            </condition>
         </mapping>
     </item>
 
