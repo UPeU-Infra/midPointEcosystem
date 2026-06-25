@@ -26,6 +26,22 @@ Este documento contiene **solo lo que la base NO puede responder**: decisiones d
 
 ---
 
+## Decisiones DTI (Alberto, 2026-06-25) y qué queda
+
+| # | Decisión / criterio | Estado | Acción derivada |
+|---|---|---|---|
+| P1 | **Autorizado** usar el flujo del log RENIEC (`DAVID.CONSULTA_APIS_LOG`) como fuente de nombres. | ✅ RESUELTO | Ninguna (ya en uso). |
+| P2 | El nombre legal **siempre** se toma con prioridad del **caché RENIEC**; las demás tablas son secundarias. | ✅ RESUELTO | MidPoint: el inbound de nombres desde RENIEC debe ganar (mayor precedencia) sobre PERSONA / VW_APS_EMPLEADO / VW_TRABAJADOR. |
+| P3 | La autoridad del régimen docente (y de RRHH) es **LAMB Talent** (módulo RRHH). Se **correlaciona en MidPoint**. | ⏳ PENDIENTE IDENTIFICAR | Ubicar la tabla/schema de **LAMB Talent** en Oracle (¿qué schema/objeto?). Luego correlacionar régimen en MidPoint desde esa fuente, no desde `PERSONA_ACAD_REGIMEN`. |
+| P4 | "Creo que ya lo sabemos, confirmar con DBAs." Hipótesis DTI: el área operativa del trabajador = **área del contrato** (`ID_DEPTO`→`ID_AREA`, ya usada en `costCenter`); el catálogo N:N `PLLA_PERFIL_PUESTO` solo dice qué puestos *pueden* existir en qué áreas, no la asignación. | 🔶 CONFIRMAR | Mantener pregunta de confirmación a DBAs. |
+| P5 | "Se puede deducir." Deducción DTI: autoridad/responsable de área = fila **activa** en `ELISEO.ORG_AREA_RESPONSABLE` (ACTIVO + ID_ANHO vigente). No requiere tabla de resoluciones. | ✅ DEDUCIBLE | MidPoint: derivar autoridad desde `ORG_AREA_RESPONSABLE` cuando se modele. |
+| P6 | "Creo que ya lo sabemos, confirmar." La investigación confirmó que **NO existe** flag de "semestre vigente"; la práctica aceptada es **codificar los IDs de semestre por periodo** en el conector. | 🔶 CONFIRMAR | Mantener práctica actual; confirmar con DBAs que no hay columna oficial. |
+| P7 | Aplicar las **normas IGA** (identityDocument = solo documentos de identidad reales, eduPerson/ISO 24760). | ✅ RESUELTO | MidPoint: el mapeo de tipo-doc del trabajador **excluye 97/98** (SNP/CUSPP pensiones). Coincide con corrección B4. |
+
+**Quedan para los DBAs solo 2 confirmaciones (P4, P6) + 1 dato a ubicar (P3: dónde vive "LAMB Talent").** Las demás están resueltas por decisión del responsable.
+
+---
+
 ## Anexo A — Lo que la base YA respondió (28 dudas resueltas, no requieren su tiempo)
 
 Catálogos de códigos confirmados (existe tabla de referencia para cada uno):
