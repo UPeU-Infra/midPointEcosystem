@@ -826,17 +826,19 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
     </mapping>
 
     <!-- D.5-base — Auto-asignación BR-Personal-General (piso mínimo para todo trabajador)
-         Actúa cuando primaryAffiliation == STAFF o FACULTY.
-         MidPoint suma, nunca resta: los trabajadores que ya tienen BR-Admin-Area
-         o BR-Docente-TC también reciben este BR — AR-LDAP-Person se deduplica.
-         Garantiza acceso LDAP/Keycloak a trabajadores sin posición tipificada. -->
+         Actúa cuando primaryAffiliation == STAFF o FACULTY,
+         O cuando primaryAffiliation == ALUM/STUDENT pero liveAffiliationWorker está activo
+         (caso egresado-trabajador: 954 usuarios con archetype alumno + contrato 7124 vivo). -->
     <mapping>
         <name>D-autoassign-br-personal-general</name>
-        <description>Auto-asigna BR-Personal-General (piso mínimo) a todo usuario con primaryAffiliation=staff o faculty (eduPerson 202208). Resuelve los 29.730 trabajadores activos sin BR que no llegan a LDAP/Keycloak. AR-LDAP-Person ya inducido en otros BRs — MidPoint lo deduplica. Opción A: lógica en base template.</description>
+        <description>Auto-asigna BR-Personal-General (piso mínimo) a todo usuario con primaryAffiliation=staff o faculty (eduPerson 202208). FIX 2026-06-26: extiende cobertura a egresados-trabajadores (primaryAffiliation=alum con liveAffiliationWorker activo) — 954 usuarios que tenían contrato 7124 vivo pero no llegaban a LDAP/Keycloak porque D.5-base solo cubría staff/faculty. AR-LDAP-Person ya inducido en otros BRs — MidPoint lo deduplica.</description>
         <lifecycleState>active</lifecycleState>
         <strength>strong</strength>
         <source>
             <path>extension/sciback:primaryAffiliation</path>
+        </source>
+        <source>
+            <path>extension/sciback:liveAffiliationWorker</path>
         </source>
         <expression>
             <assignmentTargetSearch>
@@ -855,7 +857,10 @@ return String.format('%04d-12-31T23:59:59-05:00', yearInt + 2);
         </target>
         <condition>
             <script>
-                <code>def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''; aff == 'staff' || aff == 'faculty'</code>
+                <code>def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+def QN = new javax.xml.namespace.QName('urn:sciback:midpoint:person','liveAffiliationWorker')
+def liveWorker = basic.getExtensionPropertyValue(focus, QN)
+aff == 'staff' || aff == 'faculty' || (liveWorker != null &amp;&amp; (aff == 'alum' || aff == 'student'))</code>
             </script>
         </condition>
     </mapping>
