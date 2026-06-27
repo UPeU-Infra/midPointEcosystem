@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
         oid="e800335c-9ca1-4a2d-b4ca-e06f6db42693">
-    <name>SciBack IGA — Schema canónico universitario Perú v1.2</name>
+    <name>SciBack IGA — Schema canónico universitario Perú v1.3</name>
     <description>Schema de extensión canónico para universidades peruanas. Namespace: urn:sciback:midpoint:person. Alineado: eduPerson 202208, SCHAC 1.6.0, SCIM 2.0, ISO 24760, Ley 29733, Ley 30220, SUNEDU CBC. Reutilizable por cualquier universidad licenciada SUNEDU en plataforma SciBack IGA.</description>
     <lifecycleState>active</lifecycleState>
     <definition>
@@ -390,6 +390,45 @@
                             <a:help>Categoría de investigador según clasificación interna de la universidad. Distinto de renacytLevel (padrón CONCYTEC). Vocabulario libre por institución.</a:help>
                             <a:indexed>true</a:indexed>
                             <a:displayOrder>720</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S7b — ESTATUS INSTITUCIONAL DEL INVESTIGADOR (EJE 2, ortogonal).
+                         Vocabulario controlado: oficial-dgi | detectado-autoria | externo.
+                         NO es archetype ni rol: es dato clasificatorio gobernado (no otorga
+                         accesos por sí mismo; si se requiere acceso, derivar business role vía
+                         assignmentTargetSearch filtrando este atributo).
+                         GOBERNANZA (Reality vs Policy):
+                           - detectado-autoria  -> lo DETECTA el CRIS por autoría/Scopus.
+                             IIA: resource DSpace-CRIS (inbound, strength weak/normal).
+                           - oficial-dgi        -> lo PROMUEVE la DGI (humano) desde la lista
+                             oficial (SINEACE E22/E24, SUNEDU). IIA: lista DGI (inbound strong;
+                             gana sobre la detección).
+                           - externo            -> coautor/colaborador sin afiliación contractual.
+                         Multivalor: un foco puede portar más de un token durante la promoción.
+                         El template deriva primaryResearcherStatus (single) si se requiere.
+                         Independiente del eje 3 (RENACYT): se puede ser oficial-dgi sin RENACYT,
+                         o RENACYT sin docencia activa. Eje ortogonal a eduPersonAffiliation
+                         (no está en el vocabulario eduPerson de 8 valores -> no es afiliación). -->
+                    <xsd:element name="researcherStatus" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Estatus institucional de investigador</a:displayName>
+                            <a:help>Vocabulario controlado: oficial-dgi | detectado-autoria | externo. Eje ortogonal a la afiliación eduPerson y a la calificación RENACYT. oficial-dgi lo promueve la DGI (lista oficial, IIA strong); detectado-autoria lo detecta el CRIS por autoría/Scopus (IIA DSpace-CRIS); externo = coautor sin afiliación contractual. No otorga accesos por sí mismo (no es rol); si se requiere acceso, derivar business role vía assignmentTargetSearch filtrando este atributo.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>721</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- S7c — Estatus principal derivado (single), opcional para downstream
+                         que requiera un solo valor (mismo patrón affiliations->primaryAffiliation).
+                         Precedencia: oficial-dgi > detectado-autoria > externo. Lo deriva el
+                         object template, NO una IIA directa. Destino: outbound a DSpace
+                         (upeu.person.estatus) y eventuales assignmentTargetSearch. -->
+                    <xsd:element name="primaryResearcherStatus" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Estatus de investigador principal (derivado)</a:displayName>
+                            <a:help>Valor único derivado por el object template desde researcherStatus (precedencia oficial-dgi > detectado-autoria > externo). Destino del outbound a DSpace (upeu.person.estatus) y de eventuales assignmentTargetSearch. No es IIA directa.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>722</a:displayOrder>
                         </xsd:appinfo></xsd:annotation>
                     </xsd:element>
 
