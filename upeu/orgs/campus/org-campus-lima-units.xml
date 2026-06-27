@@ -43,10 +43,20 @@
     </assignment>
   </org>
 
+  <!-- DIR-CRAI-LIMA: unidad MOF de gobierno del CRAI Campus Lima (academic-unit).
+       MANAGEMENT (SINEACE Est.4): el director (Orrego, en PROD) se modela como assignment DIRECTO
+       org:manager → DIR-CRAI-LIMA en el USER, NO vía Position. Razón (decisión Lima-only 2026-06-26):
+       el cargo Oracle es genérico (lambPositionId=112 para todos los campus) y el mapping P
+       (UserTemplate-Person-Base 855caaca) reasigna la Position genérica 112; especializar Position por
+       campus colisiona con ese mapping, por lo que se descartó. La pertenencia de planilla sigue en
+       AREA-93 (Oracle, archetype org-department); esta org es la capa de gobierno paralela.
+       archetypeRef EXPLÍCITO: requerido al crear vía ?options=raw para evitar doble-archetype
+       (OrgTemplate-Area inyecta org-department si archetypeRef está vacío en creación). -->
   <org oid="00000000-0000-0000-0000-248019316830">
     <name>DIR-CRAI-LIMA</name>
     <displayName>Dirección del CRAI</displayName>
     <identifier>CRAI-LIMA</identifier>
+    <archetypeRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" relation="org:default" type="ArchetypeType"/>
     <assignment>
       <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" type="ArchetypeType"/>
     </assignment>

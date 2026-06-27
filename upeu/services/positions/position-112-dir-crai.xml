@@ -103,12 +103,13 @@
             <effectiveStatus>enabled</effectiveStatus>
         </activation>
     </assignment>
-    <!-- F-1 (SINEACE Est.4): el cargo pertenece a DIR-CRAI-LIMA (assignment org:default → parentOrgRef derivado) -->
-    <!-- PENDIENTE confirmar unidad exacta con RRHH (CRAI multi-campus: existe DIR-CRAI-JULIACA y DIR-CRAI-TARAPOTO) -->
-    <!-- NO aplicada en PROD: la org DIR-CRAI-LIMA (OID 248019316830) no existe aun en PROD (F-1 Opcion A) -->
-    <assignment>
-        <targetRef oid="00000000-0000-0000-0000-248019316830" relation="org:default" type="c:OrgType"/>
-    </assignment>
+    <!-- F-1b (2026-06-26): POS-112 genérica SIN cablear a unidad/campus.
+         Es el cargo Oracle (lambPositionId=112) que el mapping P-assign-position-from-lambPositionId
+         (UserTemplate-Person-Base 855caaca) auto-asigna a TODOS los directores CRAI (Lima, Juliaca, Tarapoto).
+         DECISIÓN Lima-only: el management de CRAI Lima NO se modela aquí, sino como assignment directo
+         org:manager → DIR-CRAI-LIMA en el USER director (Orrego, en PROD). La especialización de Position
+         por campus (POS-112-LIMA, etc.) se DESCARTÓ porque colisiona con el mapping P (que reasigna la
+         genérica por identifier=112). Especialización por campus diferida hasta resolver el mapping P (F-1b futuro). -->
     <iteration>0</iteration>
     <iterationToken/>
     <archetypeRef oid="b51e4e39-fc48-42ef-9916-3b7ad6647b9b" relation="org:default" type="c:ArchetypeType"/>
@@ -140,8 +141,7 @@
     <inducement id="9">
         <targetRef oid="310ca80c-aff3-4a3b-8794-634b45762e3b" relation="org:default" type="c:RoleType"/>
     </inducement>
-    <!-- F-1 (SINEACE Est.4): linea de reporte — dirige la DIR-CRAI-LIMA -->
-    <inducement>
-        <targetRef oid="00000000-0000-0000-0000-248019316830" relation="org:manager" type="c:OrgType"/>
-    </inducement>
+    <!-- F-1b (2026-06-26): inducement org:manager → DIR-CRAI-LIMA REVERTIDO (era del commit 6f6d169).
+         La línea de reporte de CRAI Lima se modela como assignment directo org:manager en el USER director
+         (decisión Lima-only). La genérica queda sin cablear CRAI; sigue activa (Orrego, Luque y otros directores la usan). -->
 </service>
