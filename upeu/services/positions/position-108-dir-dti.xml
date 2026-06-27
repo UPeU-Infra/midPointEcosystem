@@ -35,6 +35,8 @@
     </_metadata>
     <name>POS-108</name>
     <description>Categoria: Director | Perfiles Lima: 1</description>
+    <!-- F-1 (SINEACE Est.4): el cargo pertenece a DTI -->
+    <parentOrgRef oid="00000000-0000-0000-0000-953119566392" relation="org:default" type="c:OrgType"/>
     <assignment id="1">
         <_metadata id="3">
             <storage>
@@ -133,5 +135,9 @@
     <identifier>108</identifier>
     <inducement id="9">
         <targetRef oid="e8ce3b1b-a53b-4090-b416-ab8d78399e17" relation="org:default" type="c:RoleType"/>
+    </inducement>
+    <!-- F-1 (SINEACE Est.4): linea de reporte — dirige la DTI -->
+    <inducement>
+        <targetRef oid="00000000-0000-0000-0000-953119566392" relation="org:manager" type="c:OrgType"/>
     </inducement>
 </service>

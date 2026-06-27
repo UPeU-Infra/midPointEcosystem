@@ -35,6 +35,8 @@
     </_metadata>
     <name>POS-114</name>
     <description>Categoria: Director | Perfiles Lima: 3</description>
+    <!-- F-1 (SINEACE Est.4): el cargo pertenece a DIR-TALENTO-HUMANO -->
+    <parentOrgRef oid="00000000-0000-0000-0000-293614965563" relation="org:default" type="c:OrgType"/>
     <subtype>
         <_value>aps.512</_value>
         <_metadata id="4">
@@ -152,5 +154,9 @@
     <identifier>114</identifier>
     <inducement id="10">
         <targetRef oid="e8ce3b1b-a53b-4090-b416-ab8d78399e17" relation="org:default" type="c:RoleType"/>
+    </inducement>
+    <!-- F-1 (SINEACE Est.4): linea de reporte — dirige la DIR-TALENTO-HUMANO -->
+    <inducement>
+        <targetRef oid="00000000-0000-0000-0000-293614965563" relation="org:manager" type="c:OrgType"/>
     </inducement>
 </service>

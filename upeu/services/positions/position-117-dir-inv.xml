@@ -35,6 +35,8 @@
     </_metadata>
     <name>POS-117</name>
     <description>Categoria: Director General | Perfiles Lima: 1</description>
+    <!-- F-1 (SINEACE Est.4): el cargo pertenece a DIR-INVESTIGACION-E-INNOVACION -->
+    <parentOrgRef oid="00000000-0000-0000-0000-205881674697" relation="org:default" type="c:OrgType"/>
     <subtype>
         <_value>aps.808</_value>
         <_metadata id="4">
@@ -156,4 +158,8 @@
          (Director General de Investigación) pero ya no induce ningún rol de investigación.
          Acción PROD pendiente: recompute del servicio POS-117 (8626ba59) para retirar el
          roleMembershipRef materializado a BR-Investigador (si lo hubiera). -->
+    <!-- F-1 (SINEACE Est.4): linea de reporte — dirige la DIR-INVESTIGACION-E-INNOVACION -->
+    <inducement>
+        <targetRef oid="00000000-0000-0000-0000-205881674697" relation="org:manager" type="c:OrgType"/>
+    </inducement>
 </service>
