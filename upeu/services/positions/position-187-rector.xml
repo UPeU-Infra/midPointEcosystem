@@ -35,8 +35,6 @@
     </_metadata>
     <name>POS-187</name>
     <description>Categoria: Rector | Perfiles Lima: 1</description>
-    <!-- F-1 (SINEACE Est.4): el cargo pertenece a RECTORADO -->
-    <parentOrgRef oid="00000000-0000-0000-0000-481102126730" relation="org:default" type="c:OrgType"/>
     <subtype>
         <_value>aps.45</_value>
         <_metadata id="4">
@@ -123,6 +121,10 @@
         <activation>
             <effectiveStatus>enabled</effectiveStatus>
         </activation>
+    </assignment>
+    <!-- F-1 (SINEACE Est.4): el cargo pertenece a RECTORADO (assignment org:default → parentOrgRef derivado) -->
+    <assignment>
+        <targetRef oid="00000000-0000-0000-0000-481102126730" relation="org:default" type="c:OrgType"/>
     </assignment>
     <iteration>0</iteration>
     <iterationToken/>

@@ -35,8 +35,6 @@
     </_metadata>
     <name>POS-114</name>
     <description>Categoria: Director | Perfiles Lima: 3</description>
-    <!-- F-1 (SINEACE Est.4): el cargo pertenece a DIR-TALENTO-HUMANO -->
-    <parentOrgRef oid="00000000-0000-0000-0000-293614965563" relation="org:default" type="c:OrgType"/>
     <subtype>
         <_value>aps.512</_value>
         <_metadata id="4">
@@ -123,6 +121,10 @@
         <activation>
             <effectiveStatus>enabled</effectiveStatus>
         </activation>
+    </assignment>
+    <!-- F-1 (SINEACE Est.4): el cargo pertenece a DIR-TALENTO-HUMANO (assignment org:default → parentOrgRef derivado) -->
+    <assignment>
+        <targetRef oid="00000000-0000-0000-0000-293614965563" relation="org:default" type="c:OrgType"/>
     </assignment>
     <iteration>0</iteration>
     <iterationToken/>

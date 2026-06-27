@@ -35,8 +35,6 @@
     </_metadata>
     <name>POS-218</name>
     <description>Categoria: Vicerrectores | Perfiles Lima: 1</description>
-    <!-- F-1 (SINEACE Est.4): el cargo pertenece al VICERRECTORADO-ACADEMICO -->
-    <parentOrgRef oid="00000000-0000-0000-0000-019204771296" relation="org:default" type="c:OrgType"/>
     <subtype>
         <_value>aps.93</_value>
         <_metadata id="4">
@@ -123,6 +121,10 @@
         <activation>
             <effectiveStatus>enabled</effectiveStatus>
         </activation>
+    </assignment>
+    <!-- F-1 (SINEACE Est.4): el cargo pertenece al VICERRECTORADO-ACADEMICO (assignment org:default → parentOrgRef derivado) -->
+    <assignment>
+        <targetRef oid="00000000-0000-0000-0000-019204771296" relation="org:default" type="c:OrgType"/>
     </assignment>
     <iteration>0</iteration>
     <iterationToken/>

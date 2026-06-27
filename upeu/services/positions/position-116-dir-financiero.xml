@@ -35,9 +35,6 @@
     </_metadata>
     <name>POS-116</name>
     <description>Categoria: Director | Perfiles Lima: 1</description>
-    <!-- F-1 (SINEACE Est.4): el cargo pertenece a DIR-FINANCIERA -->
-    <!-- PENDIENTE confirmar unidad exacta con RRHH (Director General Financiero Contable: existe tambien CONTABILIDAD-GENERAL area.48) -->
-    <parentOrgRef oid="00000000-0000-0000-0000-729518957077" relation="org:default" type="c:OrgType"/>
     <assignment id="1">
         <_metadata id="3">
             <storage>
@@ -105,6 +102,11 @@
         <activation>
             <effectiveStatus>enabled</effectiveStatus>
         </activation>
+    </assignment>
+    <!-- F-1 (SINEACE Est.4): el cargo pertenece a DIR-FINANCIERA (assignment org:default → parentOrgRef derivado) -->
+    <!-- PENDIENTE confirmar unidad exacta con RRHH (Director General Financiero Contable: existe tambien CONTABILIDAD-GENERAL area.48) -->
+    <assignment>
+        <targetRef oid="00000000-0000-0000-0000-729518957077" relation="org:default" type="c:OrgType"/>
     </assignment>
     <iteration>0</iteration>
     <iterationToken/>
