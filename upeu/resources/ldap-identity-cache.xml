@@ -14024,6 +14024,45 @@
                         </xsd:element>
                     </xsd:sequence>
                 </xsd:complexType>
+                <!-- scibackOrgUnit: aux objectClass para nodos OU del árbol organizativo
+                     (contrato RIMS←IGA Entregable 2). Presente en cn=config de .168 y .169.
+                     arc UPeU 1.3.6.1.4.1.47378.2.2 (.1.4–.1.8 attrs + 'c' estándar). -->
+                <xsd:complexType name="scibackOrgUnit">
+                    <xsd:annotation>
+                        <xsd:appinfo>
+                            <a:container>true</a:container>
+                            <ra:resourceObject>true</ra:resourceObject>
+                            <ra:nativeObjectClass>scibackOrgUnit</ra:nativeObjectClass>
+                            <ra:default>false</ra:default>
+                            <ra:auxiliary>true</ra:auxiliary>
+                            <ra:embedded>false</ra:embedded>
+                            <ra:namingAttribute>ri:dn</ra:namingAttribute>
+                            <ra:displayNameAttribute>ri:dn</ra:displayNameAttribute>
+                            <ra:identifier>ri:entryUUID</ra:identifier>
+                            <ra:secondaryIdentifier>ri:dn</ra:secondaryIdentifier>
+                        </xsd:appinfo>
+                    </xsd:annotation>
+                    <xsd:sequence>
+                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackOrgType" type="xsd:string">
+                            <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackOrgType</ra:nativeAttributeName><ra:frameworkAttributeName>scibackOrgType</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackOrgRorId" type="xsd:string">
+                            <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackOrgRorId</ra:nativeAttributeName><ra:frameworkAttributeName>scibackOrgRorId</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackOrgRuc" type="xsd:string">
+                            <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackOrgRuc</ra:nativeAttributeName><ra:frameworkAttributeName>scibackOrgRuc</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackAcademicProgramCode" type="xsd:string">
+                            <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackAcademicProgramCode</ra:nativeAttributeName><ra:frameworkAttributeName>scibackAcademicProgramCode</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackAcademicProgramUri" type="xsd:string">
+                            <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackAcademicProgramUri</ra:nativeAttributeName><ra:frameworkAttributeName>scibackAcademicProgramUri</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" maxOccurs="1" name="c" type="xsd:string">
+                            <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>c</ra:nativeAttributeName><ra:frameworkAttributeName>c</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
+                        </xsd:element>
+                    </xsd:sequence>
+                </xsd:complexType>
             </xsd:schema>
         </definition>
     </schema>
@@ -14490,6 +14529,60 @@ aff.collect { v -> def k = v?.toString()?.trim()?.toUpperCase(); def t = k ? (vo
                     </expression>
                 </outbound>
             </attribute>
+            <!-- P7 eduPersonOrgUnitDN: DN(s) del/los nodo(s) academic-program a los que
+                 pertenece la persona, en el subárbol ou=org. Resuelve los OrgType de tipo
+                 academic-program desde roleMembershipRef y construye su DN jerárquico (mismo
+                 algoritmo que la construction OU). El RIMS lo usa para hacer lookup base del
+                 nodo OU (Entregable 2.3 / 4.1.c). Multivalor. -->
+            <attribute>
+                <ref>ri:eduPersonOrgUnitDN</ref>
+                <displayName>eduPersonOrgUnitDN (DN del programa en ou=org)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/roleMembershipRef</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def PROGRAM_ARCH = '9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73'
+def base = 'ou=org,dc=upeu,dc=edu,dc=pe'
+def slug = { v -> v?.toString()?.trim()?.toLowerCase()?.replaceAll('[^a-z0-9._-]+','-')?.replaceAll('(^-+|-+$)','') }
+def dnFor = { org ->
+    def o = org.asObjectable()
+    def rid = o.getIdentifier()?.toString()?.trim() ?: o.getName()?.getOrig()?.toString()?.trim()
+    if (!rid) return null
+    def rdns = [slug(rid)]
+    def cur = org; def guard = 0
+    while (cur != null && guard < 12) {
+        guard++
+        def pr = cur.asObjectable().getParentOrgRef()
+        if (pr == null || pr.isEmpty()) break
+        def parent = midpoint.resolveReferenceIfExists(pr[0]); if (parent == null) break
+        def pid = parent.asObjectable().getIdentifier()?.toString()?.trim() ?: parent.asObjectable().getName()?.getOrig()?.toString()?.trim()
+        if (pid && !pid.contains('.')) rdns << slug(pid)
+        cur = parent
+    }
+    rdns.collect { 'ou=' + it }.join(',') + ',' + base
+}
+if (roleMembershipRef == null) return null
+def refs = roleMembershipRef instanceof Collection ? roleMembershipRef.toList() : [roleMembershipRef]
+def out = []
+refs.each { r ->
+    try {
+        if (r?.getType()?.getLocalPart() != 'OrgType') return
+        def org = midpoint.resolveReferenceIfExists(r); if (org == null) return
+        def arefs = org.asObjectable().getArchetypeRef()
+        def isProgram = arefs?.any { it?.getOid()?.toString() == PROGRAM_ARCH }
+        if (isProgram) { def d = dnFor(org); if (d) out << d }
+    } catch (e) { }
+}
+out.unique() ?: null
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
             <!-- ── NUEVOS ATRIBUTOS: SCHAC schacPersonalCharacteristics ── -->
             <attribute id="89">
                 <ref>ri:schacGender</ref>
@@ -14615,6 +14708,195 @@ aff.collect { v -> def k = v?.toString()?.trim()?.toUpperCase(); def t = k ? (vo
                 </outbound>
             </attribute>
 
+        </objectType>
+
+        <!-- ══ CONTRATO RIMS←IGA Entregable 2 — proyección del árbol OrgType a LDAP ══
+             Cada OrgType (institution/campus/faculty/department/academic-program) se proyecta
+             como una entry organizationalUnit + aux scibackOrgUnit bajo ou=org,dc=upeu,dc=edu,dc=pe,
+             con DN JERÁRQUICO derivado de la cadena parentOrgRef (RDN = identifier del nodo).
+             Disparado por inducement (construction kind=generic intent=ou) en los archetypes org.
+             El RIMS lee este subárbol vía cn=rims-reader (Entregable 4). -->
+        <objectType>
+            <kind>generic</kind>
+            <intent>ou</intent>
+            <displayName>OrgUnit LDAP (árbol organizativo)</displayName>
+            <description>Proyección de un OrgType MidPoint como nodo OU bajo ou=org. Contrato RIMS←IGA Entregable 2.</description>
+            <default>false</default>
+            <objectClass>ri:organizationalUnit</objectClass>
+            <auxiliaryObjectClass>ri:scibackOrgUnit</auxiliaryObjectClass>
+            <attribute>
+                <ref>ri:dn</ref>
+                <displayName>DN jerárquico (RDN=identifier, bajo ou=org)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/identifier</path>
+                    </source>
+                    <source>
+                        <name>focusName</name>
+                        <path>$focus/name</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+import javax.naming.ldap.Rdn
+def base = 'ou=org,dc=upeu,dc=edu,dc=pe'
+// RDN de este nodo = identifier (fallback a name). Normalizado a minúsculas, slug seguro.
+def rdnVal = (identifier?.toString()?.trim() ?: focusName?.toString()?.trim())
+if (!rdnVal) return null
+def slug = { v -> v?.toString()?.trim()?.toLowerCase()?.replaceAll('[^a-z0-9._-]+','-')?.replaceAll('(^-+|-+$)','') }
+// Camino jerárquico: recorre parentOrgRef hacia la raíz, apilando RDNs de los ancestros
+// que también son nodos OU proyectados (cualquier OrgType con identifier/name). La institución
+// raíz (identifier=upeu.edu.pe) NO se incluye como OU intermedia: es el ancla ou=org.
+def parents = []
+def current = focus
+def guard = 0
+while (current != null && guard < 12) {
+    guard++
+    def pr = current.asObjectable ? current.asObjectable().getParentOrgRef() : current.getParentOrgRef()
+    if (pr == null || pr.isEmpty()) break
+    def parentRef = pr[0]
+    def parent = midpoint.resolveReferenceIfExists(parentRef)
+    if (parent == null) break
+    def po = parent.asObjectable()
+    def pid = po.getIdentifier()?.toString()?.trim() ?: po.getName()?.getOrig()?.toString()?.trim()
+    // raíz institución: identifier con dominio (contiene '.') → no se apila como OU
+    if (pid && !pid.contains('.')) parents << slug(pid)
+    current = parent
+}
+def rdns = [slug(rdnVal)] + parents   // [este, padre, abuelo, ...]
+def dn = rdns.collect { 'ou=' + it }.join(',') + ',' + base
+dn
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:ou</ref>
+                <displayName>ou (RDN = identifier)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/identifier</path>
+                    </source>
+                    <source>
+                        <name>focusName</name>
+                        <path>$focus/name</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def v = (identifier?.toString()?.trim() ?: focusName?.toString()?.trim())
+v ? v.toLowerCase().replaceAll('[^a-z0-9._-]+','-').replaceAll('(^-+|-+$)','') : null
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:description</ref>
+                <displayName>description (displayName del OrgType — O2)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/displayName</path>
+                    </source>
+                    <source>
+                        <name>focusName</name>
+                        <path>$focus/name</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def d = displayName?.toString()?.trim()
+d ?: focusName?.toString()?.trim()
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:scibackOrgType</ref>
+                <displayName>scibackOrgType (de archetypeRef — O6)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/archetypeRef</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def map = [
+  '455d90ab-b54a-4aa7-a402-a6b6ffc0c0d9':'institution',
+  'a0c2e4e3-911c-4146-9447-f91a1416feff':'campus',
+  '87f84549-d101-4ae4-8036-42fb6abdfeec':'faculty',
+  '73795c10-2417-4323-b6fa-b88449a8bba4':'department',
+  '04c304d1-9205-4097-9c1d-6dce6ba98c7f':'academic-unit',
+  '9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73':'academic-program',
+  '20ee260b-8591-4a5b-8b93-f1607eb501a7':'governance',
+  '79bd8a9e-78f0-430f-8133-e8f3be6859c1':'partner-institution',
+  '07ed171e-c9cc-44d2-81b4-1655e1420970':'project'
+]
+if (archetypeRef == null) return null
+def refs = archetypeRef instanceof Collection ? archetypeRef.toList() : [archetypeRef]
+for (r in refs) { def t = map[r?.getOid()?.toString()]; if (t) return t }
+null
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:scibackOrgRorId</ref>
+                <displayName>scibackOrgRorId (O3)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:orgRorId</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:scibackOrgRuc</ref>
+                <displayName>scibackOrgRuc (O4)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:orgRuc</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:scibackAcademicProgramCode</ref>
+                <displayName>scibackAcademicProgramCode (O8)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:academicProgramCode</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:scibackAcademicProgramUri</ref>
+                <displayName>scibackAcademicProgramUri (O9)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:academicProgramUri</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:c</ref>
+                <displayName>c (país — O5, fijo PE)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>PE</value>
+                    </expression>
+                </outbound>
+            </attribute>
         </objectType>
     </schemaHandling>
     <capabilities>
