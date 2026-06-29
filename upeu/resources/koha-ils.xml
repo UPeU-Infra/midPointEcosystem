@@ -824,6 +824,18 @@
             <intent>default</intent>
             <displayName>Koha Patron</displayName>
             <default>true</default>
+            <!-- criticality=partial (2026-06-29, backfill RIMS←IGA LDAP):
+                 los shadows Koha huérfanos provocan AlreadyExistsException al
+                 (re)provisionar patrons/extended_attributes. Es un problema de
+                 linking IGA↔Koha PREEXISTENTE y separado del backfill LDAP.
+                 Con partial el error de la proyección Koha se registra como
+                 partial_error (warning) y el clockwork CONTINÚA con las demás
+                 proyecciones — en particular la proyección LDAP (identity cache)
+                 sigue materializándose. Sin esto, un recompute masivo abortaría
+                 el foco completo por culpa de Koha y el backfill LDAP no llegaría.
+                 Canónico Evolveum (consistency framework / projection criticality).
+                 Reversible: quitar esta línea revierte a fatal. -->
+            <criticality>partial</criticality>
             <delineation>
                 <objectClass>ri:AccountObjectClass</objectClass>
             </delineation>
