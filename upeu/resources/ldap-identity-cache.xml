@@ -14396,10 +14396,6 @@ if (check != String.valueOf(digits.charAt(15))) return null
                     <source>
                         <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:identityDocuments</path>
                     </source>
-                    <source>
-                        <name>dataQualityStatus</name>
-                        <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:dataQualityStatus</path>
-                    </source>
                     <expression>
                         <script>
                             <code><![CDATA[
@@ -14407,7 +14403,10 @@ def raw = identityDocuments == null ? [] : (identityDocuments instanceof Collect
 def docs = raw.collect { it.metaClass.respondsTo(it,'asContainerable') ? it.asContainerable() : it }
 def primary = docs.find { d -> d?.primary?.toString()?.trim()?.equalsIgnoreCase('true') } ?: (docs ? docs[0] : null)
 def vb = primary?.verifiedBy?.toString()?.trim()?.toUpperCase()
-def dq = dataQualityStatus?.toString()?.trim()?.toLowerCase()
+// dataQualityStatus se lee del focus via helper (evita el 2o source-container en ZERO set)
+def dqVal = null
+try { dqVal = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:upeu:midpoint:local','dataQualityStatus')) } catch (e) { dqVal = null }
+def dq = dqVal?.toString()?.trim()?.toLowerCase()
 def high = (vb in ['RENIEC','MIGRACIONES']) || (dq == 'reniec_validated')
 def out = []
 out << 'https://refeds.org/assurance'
