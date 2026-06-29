@@ -47,37 +47,60 @@ pero lambDocNum viejo sin prefijo → se autocorrige al recompute, sin colisión
 **colisiones dual-source** worker+alum tipo Gabriela (ELISEO DNI vs MOISES CE). El blocker
 inmediato del masivo es la colisión, no el etiquetado.
 
-## Fix canónico aplicado (artefactos listos, sin desplegar)
+## ❌ Intento v1 (commit b098f78) — NO funcionó: condición sobre valor computado
 
-1. **Nueva FunctionLibrary** `canonical/function-libraries/sb-document-normalizer.xml`
-   (OID `1c7e4b2d-3f5a-4061-ac9d-8f7e6d5c4b31`):
-   - `toCanonicalDocNumber(rawNum, docType)` → número type-aware con prefijo CE:/PP:
-     (DNI 1/24 zfill8; CE 4/6/31/22/23 zfill9 + `CE:`; PASS 7/9 `PP:`+upper).
-   - `resolveDocClass(docType)` → `DNI|CE|PASS|OTHER`.
-   - **Fuente única** de la forma del documento (elimina las 3 copias inline de CANON_DOC).
+v1 añadió a egresados el mismo desempate `<condition>liveAffiliationWorker == null</condition>`
+que ya tenía estudiantes (heredado de 2026-06-15). **Reimportado en PROD y NO resolvió la
+colisión.** Gabriela siguió fallando con `[CE:001253556, 01253556]` pese a tener
+`liveAffiliationWorker="staff"` (NO null).
 
-2. **`egresados.xml`** → `num-documento-to-lambDocNum` y `id-tipodocumento-to-lambDocType`
-   reciben el **mismo desempate `liveAffiliationWorker == null`** que ya tenía estudiantes.
-   Con empleo vivo, egresados cede → gana trabajadores → **un único strong** → sin colisión.
-   En `beforeCorrelation` el focus aún no está cargado → condición true → SÍ emite la clave de
-   correlación (cero regresión de correlación). lambDocNum vía función compartida.
+**Por qué falla (anti-patrón):** `liveAffiliationWorker` es un valor **computado por un inbound
+en el mismo projector wave**. Usarlo como `<condition>` de OTRO inbound (egresados/lambDocNum)
+es frágil: no está disponible/estable cuando se evalúa esa condición → la condición no suprime
+el write de egresados → egresados sigue emitiendo `strong` y colisiona con trabajadores.
+`strength` no arbitra entre dos `strong` que producen valor (mismo principio que givenName).
 
-3. **`estudiantes.xml` / `trabajadores.xml`** → `lambDocNum` ahora llama a
-   `toCanonicalDocNumber` (mismo output byte-idéntico para igual `(num,type)`), eliminando
-   la copia inline. trabajadores sigue `strong` sin condición (IIA con empleo vivo).
+## Fix v2 canónico (artefactos listos, sin desplegar) — patrón robusto givenName
 
-Resultado: **un único `strong`** efectivo por item single-valued (trabajadores cuando hay
-empleo vivo; si no, estudiantes/egresados, que leen el mismo MOISES y producen el mismo
-string). Colisión sólo posible entre dos fuentes MOISES con tipos genuinamente distintos
-(no observado: ambas leen `MOISES.PERSONA_NATURAL`).
+Se **abandona la condición** y se aplica EXACTAMENTE el patrón que SÍ funcionó para givenName:
+**un único `strong` (trabajadores) por item single-valued; el resto `weak`.**
+
+1. **FunctionLibrary** `canonical/function-libraries/sb-document-normalizer.xml`
+   (OID `1c7e4b2d-3f5a-4061-ac9d-8f7e6d5c4b31`) — `toCanonicalDocNumber(rawNum, docType)` +
+   `resolveDocClass(docType)`. Fuente única de la forma del documento (sin cambios desde v1).
+
+2. **`trabajadores.xml`** → `lambDocNum` y `lambDocType` siguen **`strong` (ÚNICO winner)**,
+   sin condición. lambDocNum vía `toCanonicalDocNumber`.
+
+3. **`estudiantes.xml` y `egresados.xml`** → `lambDocNum`, `lambDocType` **y `taxId`
+   (`dni-to-taxId-urn`) pasan a `weak`** y se les **retira la `<condition>` frágil**. Todas
+   canonicalizan con la misma forma (función compartida / misma URN SCHAC).
+
+4. **`taxId`** (latente, mismo patrón): trabajadores ya lo tenía `archived` (inactivo); ahora
+   estudiantes/egresados → `weak`; reniec-cache se queda `normal` (solo emite `:DNI:`, RENIEC no
+   tiene CE → no colisiona con los weak `:CE:`).
+
+Determinismo (sin condiciones):
+- solo-estudiante / solo-egresado → weak provee (no hay strong compitiendo) ✓
+- trabajador+egresado (Gabriela) → trabajadores `strong` gana, egresados `weak` NO compite →
+  **un solo valor** ✓
+- estudiante+egresado puro (sin worker) → ambos weak; leen el mismo MOISES + misma función →
+  string idéntico → sin colisión ✓
+
+| Item | trabajadores | estudiantes | egresados | reniec-cache |
+|---|---|---|---|---|
+| `lambDocNum`  | **strong (winner)** | weak | weak | — |
+| `lambDocType` | **strong (winner)** | weak | weak | — |
+| `taxId`       | archived (inactivo) | weak | weak | normal (solo DNI) |
 
 ## ⚠️ Limitación conocida (NO bloquea el masivo) — etiquetado CE→DNI en worker-extranjeros
 
-Con el desempate, en worker+alum tipo Gabriela **gana trabajadores/ELISEO**, que puede traer
-el tipo MAL (DNI en vez de CE). Consecuencia: su `identityDocuments.type=DNI` y
-`schacPersonalUniqueID` quedan con tipo incorrecto (el número es correcto). Esto es un
-**defecto de datos preexistente en Oracle (ELISEO)**, no introducido por este fix; el masivo
-ya NO crashea. Remediación recomendada (fase aparte, decidir con el usuario):
+Con el patrón single-strong, en worker+alum tipo Gabriela **gana trabajadores/ELISEO** (único
+strong), que puede traer el tipo MAL (DNI en vez de CE) — y ahora egresados (que tenía el CE
+correcto) es `weak` y queda suprimido cuando trabajadores escribe. Consecuencia: su
+`identityDocuments.type=DNI` y `schacPersonalUniqueID` quedan con tipo incorrecto (el número es
+correcto). Esto es un **defecto de datos preexistente en Oracle (ELISEO)**, no introducido por
+este fix; el masivo ya NO crashea. Remediación recomendada (fase aparte, decidir con el usuario):
 
 - **Opción A (preferida, canónica):** invertir el IIA del **tipo** de documento: para
   `lambDocType` (y la rama de `lambDocNum`), MOISES > ELISEO cuando MOISES asserta no-DNI
@@ -89,20 +112,21 @@ ya NO crashea. Remediación recomendada (fase aparte, decidir con el usuario):
 El número canónico (`number` en identityDocuments) es correcto en ambos casos; sólo el `type`
 y el subtipo SCHAC quedan por corregir en ese subconjunto.
 
-## Plan de aplicación en PROD (ejecutar con autorización del usuario)
+## Plan de aplicación v2 en PROD (ejecutar con autorización del usuario)
 
-> GitOps. Nunca `scp`. Tag git de backup antes de tocar resources.
+> GitOps. Nunca `scp`. La FunctionLibrary `sb-document-normalizer` YA está en PROD (importada
+> en v1, commit b098f78). v2 solo cambia strengths/condiciones en los 3 resources → basta
+> reimportarlos.
 
 ### 1. Commit + push (local)
 
 ```bash
 cd /Users/alberto/proyectos/upeu/midPointEcosystem
-git add canonical/function-libraries/sb-document-normalizer.xml \
-        upeu/resources/oracle-lamb/trabajadores.xml \
+git add upeu/resources/oracle-lamb/trabajadores.xml \
         upeu/resources/oracle-lamb/estudiantes.xml \
         upeu/resources/oracle-lamb/egresados.xml \
-        docs/runbooks/lambDocNum-collision-fix-2026-06-29.md
-git commit -m "fix(iga): colisión lambDocNum single-valued (CE vs DNI) — desempate egresados + sb-document-normalizer"
+        docs/runbooks/lambDocNum-collision-fix-2026-06-29.md docs/IIA-MATRIX.md
+git commit -m "fix(iga) v2: colisión lambDocNum/lambDocType/taxId — single-strong trabajadores + resto weak (abandona condición frágil)"
 git push
 ```
 
@@ -114,16 +138,10 @@ sshpass -p "$MIDPOINT_PROD_PASS" ssh -o StrictHostKeyChecking=no midpoint-prod \
   "cd /home/juansanchez/midPointEcosystem && git pull --ff-only"
 ```
 
-### 3. Importar la FunctionLibrary PRIMERO (los resources la referencian)
+### 3. (FunctionLibrary ya presente — no reimportar salvo cambio)
 
-```bash
-set -a; source ~/.secrets/midpoint-upeu.env; set +a
-curl -s -u "$MIDPOINT_ADMIN_USER:$MIDPOINT_ADMIN_PASS" \
-  -H "Content-Type: application/xml" \
-  -X POST "$MIDPOINT_URL_PUBLIC/ws/rest/functionLibraries" \
-  --data-binary @canonical/function-libraries/sb-document-normalizer.xml
-# si ya existiera: PUT /functionLibraries/1c7e4b2d-3f5a-4061-ac9d-8f7e6d5c4b31?options=overwrite
-```
+`sb-document-normalizer` (OID `1c7e4b2d-3f5a-4061-ac9d-8f7e6d5c4b31`) no cambió en v2; ya está
+en PROD. Saltar a la reimportación de resources.
 
 ### 4. Reimportar los 3 resources (overwrite por OID)
 

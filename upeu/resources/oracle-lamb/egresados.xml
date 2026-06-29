@@ -152,7 +152,12 @@
                          type-blind y estudiantes el type-aware, habria conflicto strong/strong en lambDocNum.
                          Tipos: 1/24=DNI, 4/6/31=CE, 22=PTP, 23=CPP, 7/9=passport. -->
                     <name>dni-to-taxId-urn</name>
-                    <strength>strong</strength>
+                    <!-- WEAK (FIX 2026-06-29 v2). Mismo patrón robusto que lambDocNum/estudiantes:
+                         taxId (URN SCHAC type-aware) es single-valued y colisiona si dos fuentes clasifican
+                         el doc distinto. trabajadores ya NO escribe taxId (archived) y Bloque J2 lo limpia;
+                         todas las fuentes activas (estudiantes/egresados/reniec) weak con la misma forma
+                         SCHAC → valores coincidentes idénticos, sin colisión. -->
+                    <strength>weak</strength>
                     <source><path>$shadow/attributes/ri:NUM_DOCUMENTO</path></source>
                     <source><path>$shadow/attributes/ri:TIPO_DOC</path></source>
                     <expression>
@@ -188,26 +193,22 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                          (best-practices §4.4 / iga-canonical-standards §1.3: una sola representación
                          del documento para correlación). beforeCorrelation: poblado antes de correlar. -->
                     <name>num-documento-to-lambDocNum</name>
-                    <strength>strong</strength>
+                    <!-- WEAK (FIX 2026-06-29 v2, colisión lambDocNum). Mismo patrón robusto que givenName:
+                         un ÚNICO strong (trabajadores) por item single-valued; estudiantes/egresados WEAK.
+                         El intento previo con <condition>liveAffiliationWorker==null</condition> NO funcionó:
+                         liveAffiliationWorker es un valor COMPUTADO por inbound en el mismo projector wave,
+                         no está disponible/estable cuando se evalúa la condición de OTRO inbound → egresados
+                         seguía emitiendo strong y colisionaba (canario Gabriela: worker vivo pero condición
+                         no suprimía). weak es determinista:
+                           - solo-egresado → weak provee (sin strong compitiendo) ✓
+                           - trabajador+egresado (Gabriela) → trabajadores strong gana, egresados weak NO
+                             compite → un solo valor ✓
+                         Canonicalización vía sb-document-normalizer (output byte-idéntico a trabajadores
+                         para igual (num,type)). beforeCorrelation: weak igual emite la clave de correlación
+                         si el foco aún no tiene lambDocNum (egresado puro). -->
+                    <strength>weak</strength>
                     <source><path>$shadow/attributes/ri:NUM_DOCUMENTO</path></source>
                     <source><path>$shadow/attributes/ri:TIPO_DOC</path></source>
-                    <!-- DESEMPATE IIA dual worker+alum (FIX 2026-06-29, colisión lambDocNum).
-                         Mismo patrón que estudiantes.xml: cuando la persona tiene afiliación laboral
-                         VIVA, el IIA del documento es Trabajadores/ELISEO (gana). Sin esto, egresados
-                         (rama type-aware) y trabajadores emitían 2 valores strong distintos al item
-                         single-valued lambDocNum cuando ELISEO y MOISES discrepan en el tipo (ej.
-                         ELISEO ID_TIPODOCUMENTO=1 'DNI' → "01253556" vs MOISES TIPO_DOC=4 'CE' →
-                         "CE:001253556" para el mismo extranjero) → "Strong mappings provided more than
-                         one value for single-valued item extension/lambDocNum" → aborta el clockwork.
-                         En beforeCorrelation el focus aún no está cargado → liveAffiliationWorker == null
-                         → condición true → SÍ emite la clave de correlación (sin regresión). En clockwork
-                         con worker vivo → false → suprime el write → gana Trabajadores. Egresado PURO
-                         (worker=null) → true en ambas fases → sin cambio. iga-canonical §1.3.
-                         Canonicalización vía FunctionLibrary sb-document-normalizer (fuente única). -->
-                    <source>
-                        <name>liveAffiliationWorker</name>
-                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationWorker</path>
-                    </source>
                     <expression>
                         <function>
                             <libraryRef oid="1c7e4b2d-3f5a-4061-ac9d-8f7e6d5c4b31" type="FunctionLibraryType"/>
@@ -225,11 +226,6 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                     <target>
                         <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</path>
                     </target>
-                    <condition>
-                        <script>
-                            <code>liveAffiliationWorker == null</code>
-                        </script>
-                    </condition>
                     <evaluationPhases>
                         <include>beforeCorrelation</include>
                         <include>clockwork</include>
@@ -242,19 +238,13 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                 <ref>ri:TIPO_DOC</ref>
                 <inbound>
                     <name>id-tipodocumento-to-lambDocType</name>
-                    <strength>strong</strength>
-                    <!-- DESEMPATE IIA dual worker+alum (FIX 2026-06-29). Idéntico a estudiantes.xml:
-                         lambDocType también es dual-strong (egresados TIPO_DOC vs trabajadores
-                         ID_TIPODOCUMENTO). Con doc clasificado distinto en cada fuente (CE vs DNI) hay
-                         conflicto single-valued en lambDocType que también aborta el clockwork.
-                         IIA = Trabajadores/ELISEO cuando hay empleo vivo. Egresado puro → condición
-                         true → sin cambio. -->
+                    <!-- WEAK (FIX 2026-06-29 v2). Mismo patrón que lambDocNum: un único strong
+                         (trabajadores) por item single-valued; egresados/estudiantes WEAK. Evita el
+                         conflicto dual-strong en lambDocType (egresados TIPO_DOC vs trabajadores
+                         ID_TIPODOCUMENTO) sin depender de condiciones frágiles sobre valores computados. -->
+                    <strength>weak</strength>
                     <source>
                         <path>$shadow/attributes/ri:TIPO_DOC</path>
-                    </source>
-                    <source>
-                        <name>liveAffiliationWorker</name>
-                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationWorker</path>
                     </source>
                     <expression>
                         <script>
@@ -264,11 +254,6 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                     <target>
                         <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocType</path>
                     </target>
-                    <condition>
-                        <script>
-                            <code>liveAffiliationWorker == null</code>
-                        </script>
-                    </condition>
                 </inbound>
             </attribute>
             <attribute>
