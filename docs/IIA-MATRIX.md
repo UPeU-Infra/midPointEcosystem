@@ -22,6 +22,18 @@ Cuando un atributo tiene **autoridad principal + autoridad de override legal/jur
 
 Esto NO viola Patrón B porque las semánticas son distintas: override (legal) prevalece, principal (curado) es default, fallback (weak) cubre transitorios.
 
+> **⚠️ CORRECCIÓN 2026-06-29 (colisión de tildes en `givenName`/`familyName`).**
+> La "excepción" de **dos `strong` (principal + override)** sobre un item **single-valued**
+> es **inválida en MidPoint** y se retira. `strength` NO arbitra entre dos mappings que
+> ambos producen valor: MidPoint intenta materializar **ambos** y lanza
+> `SchemaException: Strong mappings provided more than one value for single-valued item`.
+> Esto rompió el recompute en personas con doble afiliación (trabajador "Rubi Nélida"
+> vs RENIEC "Rubi Nelida" sin tilde). Regla corregida y vigente:
+> **un único `strong` por item single-valued; el resto `weak` (+ `condition` last-resort).**
+> Para multi-IIA sobre single-valued, canonicalizar TODAS las fuentes con la misma función
+> (`FunctionLibrary sb-name-normalizer`) para que valores coincidentes sean idénticos.
+> Detalle: `docs/runbooks/givenName-collision-fix-2026-06-29.md`.
+
 ---
 
 ## 2. Tabla de autoridad por atributo
@@ -34,8 +46,8 @@ Esto NO viola Patrón B porque las semánticas son distintas: override (legal) p
 | `personalNumber` (== `name`, código institucional) | computed `= name` en object template | — | — | Réplica del código institucional para compat SCIM (`employeeNumber` RFC 7643 §4.3). **NO es el DNI.** Ver `DECISION-canonical-identifier.md` |
 | `extension/institutionalCode` (== `name`) | computed `= name` en object template | — | — | Alias semántico para visualización. **NO es el DNI** |
 | DNI / CE (documento legal) | `trabajadores` / `estudiantes` (`NUM_DOCUMENTO`) | `reniec-cache` (valida) | — | Va a `identityDocuments[]` → primario exportado como `schacPersonalUniqueID` (URN SCHAC) + `extension/sb:taxId`. **Llave de correlación, NO login.** Inmutable |
-| `givenName` | `trabajadores` (PATERNO+normalizado) | **`reniec-cache` strong** (autoridad jurídica RENIEC) | `estudiantes`, `egresados` (solo si new + no RENIEC) | RENIEC = nombre legal del Estado peruano |
-| `familyName` | `trabajadores` (PATERNO+MATERNO) | **`reniec-cache` strong** | `estudiantes`, `egresados` (fallback) | Ídem |
+| `givenName` | **`trabajadores` `strong` (ÚNICO)** — NOMBRE canonicalizado (Title Case + NFC, conserva tildes) | — (RENIEC ya NO es override de nombre) | `estudiantes`, `egresados` `weak`; `reniec-cache` `weak`+`condition` last-resort | RENIEC entrega el nombre SIN diacríticos → degrada calidad y colisiona con trabajadores (single-valued). trabajadores ya trae el nombre con tildes correctas. Corrección 2026-06-29 |
+| `familyName` | **`trabajadores` `strong` (ÚNICO)** | — | `estudiantes`, `egresados` `weak`; `reniec-cache` `weak`+`condition` last-resort | Ídem. Todas las fuentes pasan por `sb-name-normalizer.toCanonicalName` |
 | `fullName` | computado en object template | — | — | Derivado de given + family |
 | `emailAddress` | **`trabajadores` strong** (CORREO_INST) | — | — | Email institucional curado por RRHH. Egresados/estudiantes NO deben sobreescribirlo |
 | `telephoneNumber` | `trabajadores` (CELULAR) | — | `estudiantes`, `egresados` (fallback) | Celular se actualiza más rápido en estudiantes activos |

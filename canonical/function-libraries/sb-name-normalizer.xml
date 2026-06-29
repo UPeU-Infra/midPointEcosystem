@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================================
+     Function Library: sb-name-normalizer
+     OID: 0b6f3a1c-2d4e-4f5a-9b8c-7e6d5c4b3a2f
+
+     Propósito: una ÚNICA fuente de verdad para canonicalizar nombres
+     personales (givenName / familyName) provenientes de Oracle LAMB.
+
+     Por qué existe (FIX 2026-06-29, colisión de tildes):
+       givenName / familyName son single-valued en UserType. Cuando varios
+       inbound mappings (de distintos resources Oracle) escriben el MISMO
+       item single-valued con valores que solo difieren en mayúsculas o
+       diacríticos (ej. "RUBI NELIDA" vs "Rubi Nélida" vs "Rubi Nelida"),
+       MidPoint NO los arbitra por strength: intenta poner ambos valores y
+       lanza SchemaException ("Strong/weak mappings provided more than one
+       value for single-valued item givenName"). Ver
+       docs/runbooks/givenName-collision-fix-2026-06-29.md.
+
+     Estrategia canónica:
+       - trabajadores = ÚNICO inbound strong de givenName/familyName.
+       - estudiantes / egresados / reniec-cache = weak (fallback).
+       - TODAS las fuentes canonicalizan con esta misma función => cuando
+         describen a la misma persona producen un string IDÉNTICO y no
+         colisionan. Solo colisionan nombres genuinamente distintos (defecto
+         real de datos), que deben aflorar como excepción, no esconderse.
+
+     Forma canónica: Title Case español (preposiciones/artículos en
+     minúscula salvo posición inicial) + normalización Unicode NFC +
+     colapso de espacios. Conserva diacríticos correctos cuando la fuente
+     los trae (Oracle trabajadores SÍ los trae; RENIEC NO).
+     ============================================================ -->
+<functionLibrary xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                 xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                 xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 oid="0b6f3a1c-2d4e-4f5a-9b8c-7e6d5c4b3a2f">
+    <name>sb-name-normalizer</name>
+    <description>Canonicaliza nombres personales (Title Case espanol + NFC + colapso de espacios) para evitar colisiones single-valued entre inbounds de distintos resources Oracle. Fuente unica de la forma canonica de givenName/familyName.</description>
+
+    <function>
+        <name>toCanonicalName</name>
+        <parameter>
+            <name>raw</name>
+            <type>xsd:string</type>
+        </parameter>
+        <returnType>xsd:string</returnType>
+        <script>
+            <code>
+if (raw == null) return null
+def s = raw.toString().trim()
+if (s.isEmpty()) return null
+// Preposiciones/articulos espanoles que van en minuscula salvo posicion inicial
+def preposiciones = ['de','del','la','las','los','y','e','a','al','en','con','o'] as Set
+// Title Case por palabra
+def titled = s.toLowerCase().split(' ').toList().findAll { it }.withIndex().collect { word, i ->
+    (i == 0 || !(word in preposiciones)) ? word.capitalize() : word
+}.join(' ')
+// NFC + colapso de espacios
+def out = java.text.Normalizer.normalize(titled, java.text.Normalizer.Form.NFC).replaceAll('\\s+', ' ').trim()
+return out ?: null
+            </code>
+        </script>
+    </function>
+</functionLibrary>

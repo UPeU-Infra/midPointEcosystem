@@ -136,16 +136,36 @@
                  Title Case: capitaliza cada palabra excepto preposiciones/artículos
                  de 1-3 letras en posición no inicial (de, del, la, las, los, y, e, a).
                  Ejemplo: "JUAN CARLOS DE LA TORRE" → "Juan Carlos de la Torre"
-                 strength strong: RENIEC es fuente jurídicamente validada.
-                          Prevalece sobre mappings weak/normal de otros resources. -->
+                 strength WEAK (FIX 2026-06-29, colisión tildes): RENIEC ya NO es autoridad de
+                 display de givenName. Dos mappings strong sobre un item single-valued no se
+                 arbitran por strength → MidPoint lanza SchemaException si trabajadores y reniec
+                 difieren (ej. trabajadores "Rubi Nélida" vs RENIEC "Rubi Nelida" sin tilde).
+                 Además RENIEC ENTREGA EL NOMBRE SIN DIACRÍTICOS, degradando el dato. Por eso:
+                   - trabajadores = ÚNICO strong de givenName/familyName (NOMBRE ya viene con tildes)
+                   - reniec-cache = WEAK (solo rellena si el foco aún no tiene valor; típicamente
+                     personas student-only sin shadow de trabajadores)
+                 RENIEC sigue siendo autoridad para birthDate y dataQualityStatus (campos donde
+                 es IIA único, sin colisión). Ver docs/IIA-MATRIX.md §2.1 (corregido). -->
             <attribute>
                 <ref>ri:CONTENT</ref>
                 <inbound>
                     <name>reniec-content-to-givenName</name>
-                    <strength>strong</strength>
+                    <strength>weak</strength>
+                    <!-- LAST-RESORT: solo rellena si el foco AÚN NO tiene givenName.
+                         Evita que el nombre RENIEC (sin tildes) compita en el merge weak con
+                         estudiantes/egresados (que pueden traer tildes) y produzca dos valores
+                         distintos en un item single-valued (SchemaException). FIX 2026-06-29. -->
+                    <condition>
+                        <script>
+                            <code>focus == null || focus.givenName == null || focus.givenName.toString().trim().isEmpty()</code>
+                        </script>
+                    </condition>
                     <expression>
                         <script>
-                            <code>def preposiciones = ['de','del','la','las','los','los','y','e','a','al','en','con','o'] as Set; def titleCase = { String s -> s ? s.toLowerCase().split(' ').toList().withIndex().collect { word, i -> (i == 0 || !(word in preposiciones)) ? word.capitalize() : word }.join(' ') : null }; if (input == null || input.toString().trim().isEmpty()) return null; try { def json = new groovy.json.JsonSlurper().parseText(input.toString()); def nombres = json?.nombres?.toString()?.trim(); return (nombres &amp;&amp; nombres.length() &gt; 0) ? titleCase(nombres) : null } catch (Exception e) { log.warn('reniec-cache: givenName parse error', e.getMessage()); return null }</code>
+                            <!-- weak; misma forma canonica que sb-name-normalizer.toCanonicalName
+                                 (Title Case + NFC). NOTA: RENIEC entrega SIN tildes, por eso es weak
+                                 (no debe ganar a trabajadores, que SI las trae). FIX 2026-06-29. -->
+                            <code>def prep = ['de','del','la','las','los','y','e','a','al','en','con','o'] as Set; def canon = { String s -> if (!s) return null; def t = s.toLowerCase().split(' ').toList().findAll { it }.withIndex().collect { w, i -> (i == 0 || !(w in prep)) ? w.capitalize() : w }.join(' '); return java.text.Normalizer.normalize(t, java.text.Normalizer.Form.NFC).replaceAll('\\s+', ' ').trim() ?: null }; if (input == null || input.toString().trim().isEmpty()) return null; try { def json = new groovy.json.JsonSlurper().parseText(input.toString()); def nombres = json?.nombres?.toString()?.trim(); return (nombres &amp;&amp; nombres.length() &gt; 0) ? canon(nombres) : null } catch (Exception e) { log.warn('reniec-cache: givenName parse error', e.getMessage()); return null }</code>
                         </script>
                     </expression>
                     <target><path>givenName</path></target>
@@ -155,11 +175,20 @@
                      Construye el apellido completo concatenando ambos campos RENIEC.
                      Se omite ap_materno si está vacío (ciudadanos con un solo apellido). -->
                 <inbound>
+                    <!-- WEAK (FIX 2026-06-29): ver justificación en reniec-content-to-givenName.
+                         trabajadores es el único strong de familyName.
+                         LAST-RESORT: solo rellena si el foco aún no tiene familyName. -->
                     <name>reniec-content-to-familyName</name>
-                    <strength>strong</strength>
+                    <strength>weak</strength>
+                    <condition>
+                        <script>
+                            <code>focus == null || focus.familyName == null || focus.familyName.toString().trim().isEmpty()</code>
+                        </script>
+                    </condition>
                     <expression>
                         <script>
-                            <code>def preposiciones = ['de','del','la','las','los','y','e','a','al','en','con','o'] as Set; def titleCase = { String s -> s ? s.toLowerCase().split(' ').toList().withIndex().collect { word, i -> (i == 0 || !(word in preposiciones)) ? word.capitalize() : word }.join(' ') : null }; if (input == null || input.toString().trim().isEmpty()) return null; try { def json = new groovy.json.JsonSlurper().parseText(input.toString()); def pat = json?.ap_paterno?.toString()?.trim() ?: ''; def mat = json?.ap_materno?.toString()?.trim() ?: ''; def full = (pat + (mat ? ' ' + mat : '')).trim(); return full ? titleCase(full) : null } catch (Exception e) { log.warn('reniec-cache: familyName parse error', e.getMessage()); return null }</code>
+                            <!-- weak; misma forma canonica que sb-name-normalizer.toCanonicalName. FIX 2026-06-29. -->
+                            <code>def prep = ['de','del','la','las','los','y','e','a','al','en','con','o'] as Set; def canon = { String s -> if (!s) return null; def t = s.toLowerCase().split(' ').toList().findAll { it }.withIndex().collect { w, i -> (i == 0 || !(w in prep)) ? w.capitalize() : w }.join(' '); return java.text.Normalizer.normalize(t, java.text.Normalizer.Form.NFC).replaceAll('\\s+', ' ').trim() ?: null }; if (input == null || input.toString().trim().isEmpty()) return null; try { def json = new groovy.json.JsonSlurper().parseText(input.toString()); def pat = json?.ap_paterno?.toString()?.trim() ?: ''; def mat = json?.ap_materno?.toString()?.trim() ?: ''; def full = (pat + (mat ? ' ' + mat : '')).trim(); return full ? canon(full) : null } catch (Exception e) { log.warn('reniec-cache: familyName parse error', e.getMessage()); return null }</code>
                         </script>
                     </expression>
                     <target><path>familyName</path></target>

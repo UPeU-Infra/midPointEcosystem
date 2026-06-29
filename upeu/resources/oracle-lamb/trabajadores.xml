@@ -168,8 +168,30 @@
             <attribute>
                 <ref>ri:NOMBRE</ref>
                 <inbound>
+                    <!-- IIA ÚNICO STRONG de givenName (FIX 2026-06-29, colisión tildes).
+                         trabajadores es la fuente STRONG single-valued única para givenName:
+                         su NOMBRE viene ya en Title Case y CON diacríticos correctos desde Oracle
+                         (ej. "Rubi Nélida"). reniec-cache/estudiantes/egresados quedan WEAK (fallback).
+                         Razón: dos mappings strong sobre un item single-valued NO se arbitran por
+                         strength — MidPoint intenta poner ambos valores y lanza SchemaException
+                         ("Strong mappings provided more than one value for single-valued item givenName").
+                         RENIEC además ENTREGA EL NOMBRE SIN TILDES (degrada calidad), por eso NO es
+                         autoridad de display. Ver docs/IIA-MATRIX.md §2.1 (corregido) y
+                         docs/runbooks/givenName-collision-fix-2026-06-29.md.
+                         La expresión normaliza forma Unicode (NFC) + colapsa espacios para que el
+                         valor sea determinista y único. -->
                     <name>nombre-to-givenName</name>
                     <strength>strong</strength>
+                    <expression>
+                        <function>
+                            <libraryRef oid="0b6f3a1c-2d4e-4f5a-9b8c-7e6d5c4b3a2f" type="FunctionLibraryType"/>
+                            <name>toCanonicalName</name>
+                            <parameter>
+                                <name>raw</name>
+                                <expression><path>$input</path></expression>
+                            </parameter>
+                        </function>
+                    </expression>
                     <target><path>givenName</path></target>
                 </inbound>
             </attribute>
@@ -182,7 +204,10 @@
                     <source><path>$shadow/attributes/ri:MATERNO</path></source>
                     <expression>
                         <script>
-                            <code>def p = (PATERNO ?: '').toString().trim(); def m = (MATERNO ?: '').toString().trim(); (p + (m ? ' ' + m : '')).trim() ?: null</code>
+                            <!-- familyName concatena 2 sources; aplica la MISMA forma canonica que
+                                 la FunctionLibrary sb-name-normalizer.toCanonicalName (referencia de la
+                                 forma; ver canonical/function-libraries/sb-name-normalizer.xml). -->
+                            <code>def p = (PATERNO ?: '').toString().trim(); def m = (MATERNO ?: '').toString().trim(); def full = (p + (m ? ' ' + m : '')).trim(); if (!full) return null; def prep = ['de','del','la','las','los','y','e','a','al','en','con','o'] as Set; def titled = full.toLowerCase().split(' ').toList().findAll { it }.withIndex().collect { w, i -&gt; (i == 0 || !(w in prep)) ? w.capitalize() : w }.join(' '); return java.text.Normalizer.normalize(titled, java.text.Normalizer.Form.NFC).replaceAll('\\s+', ' ').trim() ?: null</code>
                         </script>
                     </expression>
                     <target><path>familyName</path></target>

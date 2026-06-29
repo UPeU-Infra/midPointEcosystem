@@ -94,8 +94,20 @@
             <attribute>
                 <ref>ri:NOMBRE</ref>
                 <inbound>
+                    <!-- weak (fallback); canonicaliza con sb-name-normalizer para no colisionar
+                         en el item single-valued givenName (FIX 2026-06-29). -->
                     <name>nombre-to-givenName</name>
                     <strength>weak</strength>
+                    <expression>
+                        <function>
+                            <libraryRef oid="0b6f3a1c-2d4e-4f5a-9b8c-7e6d5c4b3a2f" type="FunctionLibraryType"/>
+                            <name>toCanonicalName</name>
+                            <parameter>
+                                <name>raw</name>
+                                <expression><path>$input</path></expression>
+                            </parameter>
+                        </function>
+                    </expression>
                     <target><path>givenName</path></target>
                 </inbound>
             </attribute>
@@ -108,7 +120,8 @@
                     <source><path>$shadow/attributes/ri:MATERNO</path></source>
                     <expression>
                         <script>
-                            <code>def p = (PATERNO ?: '').toString().trim(); def m = (MATERNO ?: '').toString().trim(); (p + (m ? ' ' + m : '')).trim() ?: null</code>
+                            <!-- weak; misma forma canonica que sb-name-normalizer.toCanonicalName (FIX 2026-06-29). -->
+                            <code>def p = (PATERNO ?: '').toString().trim(); def m = (MATERNO ?: '').toString().trim(); def full = (p + (m ? ' ' + m : '')).trim(); if (!full) return null; def prep = ['de','del','la','las','los','y','e','a','al','en','con','o'] as Set; def titled = full.toLowerCase().split(' ').toList().findAll { it }.withIndex().collect { w, i -&gt; (i == 0 || !(w in prep)) ? w.capitalize() : w }.join(' '); return java.text.Normalizer.normalize(titled, java.text.Normalizer.Form.NFC).replaceAll('\\s+', ' ').trim() ?: null</code>
                         </script>
                     </expression>
                     <target><path>familyName</path></target>
