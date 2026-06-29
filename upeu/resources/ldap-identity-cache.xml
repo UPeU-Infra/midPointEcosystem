@@ -14339,16 +14339,17 @@ out.unique() ?: null
                     </source>
                     <expression>
                         <script>
-                            <code>
+                            <code><![CDATA[
 if (identityDocuments == null) return null
-def docs = identityDocuments instanceof Collection ? identityDocuments.toList() : [identityDocuments]
+def raw = identityDocuments instanceof Collection ? identityDocuments.toList() : [identityDocuments]
+def docs = raw.collect { it.metaClass.respondsTo(it,'asContainerable') ? it.asContainerable() : it }
 def chosen = docs.find { d -> d?.primary?.toString()?.trim()?.equalsIgnoreCase('true') } ?: docs.find { d -> d?.number?.toString()?.trim() }
 if (chosen == null) return null
 def type = chosen.type?.toString()?.trim()?.toUpperCase() ?: 'DNI'
 def num = chosen.number?.toString()?.trim()
 if (!num) return null
 'urn:schac:personalUniqueID:pe:' + type + ':PE:' + num
-                            </code>
+]]></code>
                         </script>
                     </expression>
                 </outbound>
@@ -14402,7 +14403,8 @@ if (check != String.valueOf(digits.charAt(15))) return null
                     <expression>
                         <script>
                             <code><![CDATA[
-def docs = identityDocuments == null ? [] : (identityDocuments instanceof Collection ? identityDocuments.toList() : [identityDocuments])
+def raw = identityDocuments == null ? [] : (identityDocuments instanceof Collection ? identityDocuments.toList() : [identityDocuments])
+def docs = raw.collect { it.metaClass.respondsTo(it,'asContainerable') ? it.asContainerable() : it }
 def primary = docs.find { d -> d?.primary?.toString()?.trim()?.equalsIgnoreCase('true') } ?: (docs ? docs[0] : null)
 def vb = primary?.verifiedBy?.toString()?.trim()?.toUpperCase()
 def dq = dataQualityStatus?.toString()?.trim()?.toLowerCase()
