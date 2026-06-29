@@ -87,11 +87,37 @@ Determinismo (sin condiciones):
 - estudiante+egresado puro (sin worker) → ambos weak; leen el mismo MOISES + misma función →
   string idéntico → sin colisión ✓
 
-| Item | trabajadores | estudiantes | egresados | reniec-cache |
-|---|---|---|---|---|
-| `lambDocNum`  | **strong (winner)** | weak | weak | — |
-| `lambDocType` | **strong (winner)** | weak | weak | — |
-| `taxId`       | archived (inactivo) | weak | weak | normal (solo DNI) |
+## ❌ v2 (commit a061839) — incompleto: faltó un 3.er resource (grados)
+
+v2 aplicado y verificado en PROD (estudiantes/egresados weak), pero Gabriela SIGUIÓ colisionando
+`[CE:001253556, 01253556]`. Inventario de los 6 shadows de Gabriela reveló un **tercer strong
+oculto**: el resource **"Oracle LAMB Grados v1"** (`upeu/resources/oracle-lamb/grados.xml`, OID
+`3b2d8c4a-6f17-4e90-a1d5-9c0e7b5a4f62`) tenía `num-documento-to-lambDocNum` **`strong`** (TIPO_DOC=4
+CE → "CE:001253556") y `dni-to-taxId-urn` **`strong`**. Era el segundo strong que colisionaba con
+trabajadores (DNI → "01253556"). Lección: hacer el **inventario exhaustivo de TODOS los resources**
+antes de declarar cerrado un fix de colisión single-valued.
+
+## Fix v3 (artefactos listos, sin desplegar) — cierra grados + inventario exhaustivo
+
+3.b **`grados.xml`** → `num-documento-to-lambDocNum` (era strong) → **`weak`** + función compartida
+`toCanonicalDocNumber`; `dni-to-taxId-urn` (era strong) → **`weak`**. (`lambDocType` ya era weak.)
+
+### Inventario EXHAUSTIVO de escritores del documento del foco (verificado por audit de XML)
+
+| Resource / fuente | lambDocNum | lambDocType | taxId |
+|---|---|---|---|
+| **trabajadores** (ELISEO) | **strong (ÚNICO winner)** | **strong (ÚNICO winner)** | archived ×2 (inactivo) |
+| estudiantes (MOISES) | weak | weak | weak |
+| egresados (MOISES) | weak | weak | weak |
+| **grados (Sec. General)** | weak ✓ (era strong, v3) | weak | weak ✓ (era strong, v3) |
+| reniec-cache | — | — | normal (solo `:DNI:`, sin CE) |
+| koha-ils | — | — | — (no es target del foco) |
+| datasets CSV (CRM/RRHH/SIS) | — | — | — |
+| object-templates employee staff/faculty | — (solo comentario) | — | — (Bloque J **lee** lambDoc y escribe identityDocuments) |
+
+**Resultado verificado por audit:** el ÚNICO escritor `strong` + `active` de `lambDocNum`/`lambDocType`
+es `trabajadores`. Ningún `strong` activo escribe `taxId` (trabajadores archived; reniec normal;
+resto weak). Política single-strong completa.
 
 ## ⚠️ Limitación conocida (NO bloquea el masivo) — etiquetado CE→DNI en worker-extranjeros
 
@@ -118,15 +144,13 @@ y el subtipo SCHAC quedan por corregir en ese subconjunto.
 > en v1, commit b098f78). v2 solo cambia strengths/condiciones en los 3 resources → basta
 > reimportarlos.
 
-### 1. Commit + push (local)
+### 1. Commit + push (local) — v3 solo toca grados.xml + docs
 
 ```bash
 cd /Users/alberto/proyectos/upeu/midPointEcosystem
-git add upeu/resources/oracle-lamb/trabajadores.xml \
-        upeu/resources/oracle-lamb/estudiantes.xml \
-        upeu/resources/oracle-lamb/egresados.xml \
+git add upeu/resources/oracle-lamb/grados.xml \
         docs/runbooks/lambDocNum-collision-fix-2026-06-29.md docs/IIA-MATRIX.md
-git commit -m "fix(iga) v2: colisión lambDocNum/lambDocType/taxId — single-strong trabajadores + resto weak (abandona condición frágil)"
+git commit -m "fix(iga) v3: cierra colisión lambDocNum — grados (3.er strong oculto) a weak; inventario exhaustivo"
 git push
 ```
 
@@ -138,29 +162,30 @@ sshpass -p "$MIDPOINT_PROD_PASS" ssh -o StrictHostKeyChecking=no midpoint-prod \
   "cd /home/juansanchez/midPointEcosystem && git pull --ff-only"
 ```
 
-### 3. (FunctionLibrary ya presente — no reimportar salvo cambio)
+### 3. (FunctionLibrary ya presente — no reimportar)
 
-`sb-document-normalizer` (OID `1c7e4b2d-3f5a-4061-ac9d-8f7e6d5c4b31`) no cambió en v2; ya está
-en PROD. Saltar a la reimportación de resources.
+`sb-document-normalizer` (OID `1c7e4b2d-3f5a-4061-ac9d-8f7e6d5c4b31`) ya está en PROD (v1).
 
-### 4. Reimportar los 3 resources (overwrite por OID)
+### 4. Reimportar grados (overwrite por OID) — único resource cambiado en v3
 
 ```bash
-for f in trabajadores estudiantes egresados; do
-  oid=$(grep -m1 -oE 'oid="[0-9a-f-]{36}"' upeu/resources/oracle-lamb/$f.xml | head -1 | sed 's/oid="//;s/"//')
-  curl -s -u "$MIDPOINT_ADMIN_USER:$MIDPOINT_ADMIN_PASS" \
-    -H "Content-Type: application/xml" \
-    -X PUT "$MIDPOINT_URL_PUBLIC/ws/rest/resources/$oid?options=overwrite" \
-    --data-binary @upeu/resources/oracle-lamb/$f.xml
-  echo "  reimported $f ($oid)"
-done
+set -a; source ~/.secrets/midpoint-upeu.env; set +a
+oid=$(grep -m1 -oE 'oid="[0-9a-f-]{36}"' upeu/resources/oracle-lamb/grados.xml | head -1 | sed 's/oid="//;s/"//')
+curl -s -u "$MIDPOINT_ADMIN_USER:$MIDPOINT_ADMIN_PASS" \
+  -H "Content-Type: application/xml" \
+  -X PUT "$MIDPOINT_URL_PUBLIC/ws/rest/resources/$oid?options=overwrite" \
+  --data-binary @upeu/resources/oracle-lamb/grados.xml
+echo "  reimported grados ($oid)"   # esperado: 3b2d8c4a-6f17-4e90-a1d5-9c0e7b5a4f62
 ```
+
+> Nota: estudiantes/egresados/trabajadores ya están en PROD con su versión v2 correcta (commit
+> a061839); v3 no los modifica. Solo grados.
 
 ### 5. Test Connection (sanity)
 
 ```bash
-for oid in 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22 \
-           6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23; do
+# v3: basta probar grados (el único reimportado). Los demás ya estaban OK en v2.
+for oid in 3b2d8c4a-6f17-4e90-a1d5-9c0e7b5a4f62; do
   curl -s -u "$MIDPOINT_ADMIN_USER:$MIDPOINT_ADMIN_PASS" \
     -X POST "$MIDPOINT_URL_PUBLIC/ws/rest/resources/$oid/test" | grep -o '"status":"[a-z_]*"' | head -1
 done
@@ -197,5 +222,13 @@ Esperado: status `success`, sin `SchemaException` de lambDocNum. (lambDocNum que
 
 ## Rollback
 
-`git revert` del commit + reimport (PUT overwrite) de los 3 resources con la versión previa.
+`git revert` del commit v3 + reimport (PUT overwrite) de `grados.xml` con la versión previa.
 La FunctionLibrary es aditiva (puede quedar o borrarse después).
+
+## Post-mortem / lección
+
+La colisión single-valued no se cierra hasta que **TODOS** los inbound `strong` activos al item
+quedan reducidos a uno solo. Se necesitaron 3 iteraciones porque el inventario inicial no fue
+exhaustivo (v1 condición frágil; v2 cubrió estudiantes/egresados pero omitió grados). **Antes de
+declarar cerrado:** correr el audit de XML que lista TODO escritor `strong`+`active` del item
+(ver sección "Inventario EXHAUSTIVO") y confirmar que solo queda trabajadores.

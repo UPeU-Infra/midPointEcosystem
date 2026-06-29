@@ -77,7 +77,11 @@
                          si grados emitiera taxId type-blind y los otros feeds type-aware, habria conflicto
                          strong/strong. Tipos: 1/24=DNI, 4/6/31=CE, 22=PTP, 23=CPP, 7/9=passport. -->
                     <name>dni-to-taxId-urn</name>
-                    <strength>strong</strength>
+                    <!-- WEAK (FIX 2026-06-29 v3). Mismo patrón que estudiantes/egresados: grados es
+                         fuente parcial y su taxId type-aware colisiona si clasifica el doc distinto a
+                         otra fuente. trabajadores ya NO escribe taxId (archived) y Bloque J2 lo limpia;
+                         todas las fuentes activas weak con la misma forma SCHAC → sin colisión. -->
+                    <strength>weak</strength>
                     <source><path>$shadow/attributes/ri:NUM_DOCUMENTO</path></source>
                     <source><path>$shadow/attributes/ri:TIPO_DOC</path></source>
                     <expression>
@@ -114,30 +118,29 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                            tipo desconocido/vacio           : rama generica DNI.
                            vacio/'0'/'000...0'              : null. -->
                     <name>num-documento-to-lambDocNum</name>
-                    <strength>strong</strength>
+                    <!-- WEAK (FIX 2026-06-29 v3). Grados es FUENTE PARCIAL, NO IIA del documento.
+                         Era el 3.er strong oculto que colisionaba con trabajadores en personas
+                         worker+grado (canario Gabriela uid 201520472: trabajadores ID_TIPODOCUMENTO=1
+                         'DNI' → "01253556" vs grados TIPO_DOC=4 'CE' → "CE:001253556"). Mismo patrón
+                         robusto que estudiantes/egresados: un ÚNICO strong (trabajadores); el resto weak.
+                         weak igual emite la clave de correlación en beforeCorrelation si el foco aún no
+                         tiene lambDocNum. Canonicalización vía sb-document-normalizer (fuente única). -->
+                    <strength>weak</strength>
                     <source><path>$shadow/attributes/ri:NUM_DOCUMENTO</path></source>
                     <source><path>$shadow/attributes/ri:TIPO_DOC</path></source>
                     <expression>
-                        <script>
-                            <code>def num = (NUM_DOCUMENTO ?: '').toString().trim()
-def type = (TIPO_DOC ?: '').toString().trim()
-if (!num) return null
-def DNI = ['1','24'] as Set
-def CE9 = ['4','6','31','22','23'] as Set
-def PASS = ['7','9'] as Set
-def strip = { it.replaceFirst(/^0+/, '') }
-if (type in DNI) {
-    if (num ==~ /\d+/) { def n = strip(num); if (!n) return null; return n.length() &lt;= 8 ? n.padLeft(8,'0') : n }
-    return num
-}
-if (type in CE9) {
-    if (num ==~ /\d+/) { def n = strip(num); if (!n) return null; def z = n.length() &lt;= 9 ? n.padLeft(9,'0') : n; return 'CE:'+z }
-    return 'CE:'+num
-}
-if (type in PASS) { return 'PP:'+num.toUpperCase() }
-if (num ==~ /\d+/) { def n = strip(num); if (!n) return null; return n.length() &lt;= 8 ? n.padLeft(8,'0') : n }
-return num</code>
-                        </script>
+                        <function>
+                            <libraryRef oid="1c7e4b2d-3f5a-4061-ac9d-8f7e6d5c4b31" type="FunctionLibraryType"/>
+                            <name>toCanonicalDocNumber</name>
+                            <parameter>
+                                <name>rawNum</name>
+                                <expression><path>$shadow/attributes/ri:NUM_DOCUMENTO</path></expression>
+                            </parameter>
+                            <parameter>
+                                <name>docType</name>
+                                <expression><path>$shadow/attributes/ri:TIPO_DOC</path></expression>
+                            </parameter>
+                        </function>
                     </expression>
                     <target>
                         <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</path>
