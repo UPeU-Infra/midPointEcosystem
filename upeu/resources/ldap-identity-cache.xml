@@ -14399,22 +14399,21 @@ if (check != String.valueOf(digits.charAt(15))) return null
                     <expression>
                         <script>
                             <code><![CDATA[
-def raw = identityDocuments == null ? [] : (identityDocuments instanceof Collection ? identityDocuments.toList() : [identityDocuments])
+if (identityDocuments == null) return null
+def raw = identityDocuments instanceof Collection ? identityDocuments.toList() : [identityDocuments]
 def docs = raw.collect { it.metaClass.respondsTo(it,'asContainerable') ? it.asContainerable() : it }
 def primary = docs.find { d -> d?.primary?.toString()?.trim()?.equalsIgnoreCase('true') } ?: (docs ? docs[0] : null)
+if (primary == null) return null
 def vb = primary?.verifiedBy?.toString()?.trim()?.toUpperCase()
-// dataQualityStatus se lee del focus via helper (evita el 2o source-container en ZERO set)
-def dqVal = null
-try { dqVal = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:upeu:midpoint:local','dataQualityStatus')) } catch (e) { dqVal = null }
-def dq = dqVal?.toString()?.trim()?.toLowerCase()
-def high = (vb in ['RENIEC','MIGRACIONES']) || (dq == 'reniec_validated')
+// IIA del proofing = verifiedBy del documento primario (RENIEC/MIGRACIONES = verificacion presencial).
+// El cruce con upeu:dataQualityStatus lo hace el RIMS leyendo ese atributo aparte (ya en LDAP).
+def high = (vb in ['RENIEC','MIGRACIONES'])
 def out = []
 out << 'https://refeds.org/assurance'
 out << 'https://refeds.org/assurance/IAP/' + (high ? 'high' : 'low')
 out << (high ? 'https://refeds.org/assurance/profile/cappuccino' : 'https://refeds.org/assurance/profile/espresso')
 // NIST IAL: IAL2 si verificacion RENIEC presencial; IAL1 auto-declarado
 out.add(0, high ? 'https://refeds.org/assurance/IAP/medium' : 'https://refeds.org/assurance/IAP/local-enterprise')
-if (primary == null && dq == null) return null
 out.unique()
 ]]></code>
                         </script>
