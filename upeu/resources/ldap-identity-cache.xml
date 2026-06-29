@@ -45,7 +45,13 @@
                     </t:cipherData>
                 </t:encryptedData>
             </cfg:bindPassword>
-            <cfg:baseContext>ou=people,dc=upeu,dc=edu,dc=pe</cfg:baseContext>
+            <!-- baseContext = raíz del dominio (RIMS←IGA Fase 3): el conector enruta tanto
+                 ou=people (cuentas) como ou=org (árbol organizativo OrgType→OU). Antes era
+                 ou=people; ampliarlo a la raíz es aditivo (cubre ambos subárboles) — necesario
+                 para que el conector acepte escribir/leer DNs bajo ou=org sin 'No LDAP server
+                 configured for DN'. Las búsquedas de personas siguen filtrando por objectClass
+                 inetOrgPerson y los DN de cuenta siguen anclados a ou=people. -->
+            <cfg:baseContext>dc=upeu,dc=edu,dc=pe</cfg:baseContext>
             <cfg:passwordHashAlgorithm>SSHA</cfg:passwordHashAlgorithm>
             <cfg:vlvSortAttribute>uid</cfg:vlvSortAttribute>
             <cfg:vlvSortOrderingRule>2.5.13.3</cfg:vlvSortOrderingRule>
@@ -14742,7 +14748,10 @@ out.unique() ?: null
 import javax.naming.ldap.Rdn
 def base = 'ou=org,dc=upeu,dc=edu,dc=pe'
 // RDN de este nodo = identifier (fallback a name). Normalizado a minúsculas, slug seguro.
-def rdnVal = (identifier?.toString()?.trim() ?: focusName?.toString()?.trim())
+// RDN del nodo: identifier salvo que sea un dominio (institución raíz, contiene '.'),
+// en cuyo caso se usa el name (UPeU → upeu) para no meter puntos en el RDN del OU.
+def rawId = identifier?.toString()?.trim()
+def rdnVal = (rawId && !rawId.contains('.')) ? rawId : focusName?.toString()?.trim()
 if (!rdnVal) return null
 def slug = { v -> v?.toString()?.trim()?.toLowerCase()?.replaceAll('[^a-z0-9._-]+','-')?.replaceAll('(^-+|-+$)','') }
 // Camino jerárquico: recorre parentOrgRef hacia la raíz, apilando RDNs de los ancestros
@@ -14787,7 +14796,8 @@ dn
                     <expression>
                         <script>
                             <code><![CDATA[
-def v = (identifier?.toString()?.trim() ?: focusName?.toString()?.trim())
+def rawId = identifier?.toString()?.trim()
+def v = (rawId && !rawId.contains('.')) ? rawId : focusName?.toString()?.trim()
 v ? v.toLowerCase().replaceAll('[^a-z0-9._-]+','-').replaceAll('(^-+|-+$)','') : null
 ]]></code>
                         </script>
