@@ -14555,20 +14555,22 @@ def PROGRAM_ARCH = '9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73'
 def base = 'ou=org,dc=upeu,dc=edu,dc=pe'
 def slug = { v -> v?.toString()?.trim()?.toLowerCase()?.replaceAll('[^a-z0-9._-]+','-')?.replaceAll('(^-+|-+$)','') }
 def asObj = { o -> (o != null && o.metaClass.respondsTo(o,'asObjectable')) ? o.asObjectable() : o }
+def OU_ARCH = ['455d90ab-b54a-4aa7-a402-a6b6ffc0c0d9','a0c2e4e3-911c-4146-9447-f91a1416feff','87f84549-d101-4ae4-8036-42fb6abdfeec','73795c10-2417-4323-b6fa-b88449a8bba4','04c304d1-9205-4097-9c1d-6dce6ba98c7f','9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73'] as Set
+def isOu = { obj -> obj.getArchetypeRef()?.any { OU_ARCH.contains(it?.getOid()?.toString()) } }
 def dnFor = { org ->
     def o = asObj(org)
     def rid = o.getIdentifier()?.toString()?.trim() ?: o.getName()?.getOrig()?.toString()?.trim()
     if (!rid) return null
     def rdns = [slug(rid)]
     def cur = o; def guard = 0
-    while (cur != null && guard < 12) {
+    while (cur != null && guard < 16) {
         guard++
         def pr = cur.getParentOrgRef()
         if (pr == null || pr.isEmpty()) break
         def parent = midpoint.resolveReferenceIfExists(pr[0]); if (parent == null) break
         def po = asObj(parent)
         def pid = po.getIdentifier()?.toString()?.trim() ?: po.getName()?.getOrig()?.toString()?.trim()
-        if (pid && !pid.contains('.')) rdns << slug(pid)
+        if (isOu(po) && pid && !pid.contains('.')) rdns << slug(pid)
         cur = po
     }
     rdns.collect { 'ou=' + it }.join(',') + ',' + base
@@ -14762,10 +14764,15 @@ def slug = { v -> v?.toString()?.trim()?.toLowerCase()?.replaceAll('[^a-z0-9._-]
 def parents = []
 // helper: resolveReferenceIfExists puede devolver objectable o PrismObject → normaliza a objectable
 def asObj = { o -> (o != null && o.metaClass.respondsTo(o,'asObjectable')) ? o.asObjectable() : o }
+// Solo se apilan en el DN los ancestros que TAMBIÉN son nodos OU proyectados (uno de los 5
+// archetypes). El árbol real UPeU intercala nodos governance (Rectorado, Vicerrectorado) entre
+// facultad e institución; esos NO se proyectan como OU y se SALTAN para no romper el DN.
+def OU_ARCH = ['455d90ab-b54a-4aa7-a402-a6b6ffc0c0d9','a0c2e4e3-911c-4146-9447-f91a1416feff','87f84549-d101-4ae4-8036-42fb6abdfeec','73795c10-2417-4323-b6fa-b88449a8bba4','04c304d1-9205-4097-9c1d-6dce6ba98c7f','9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73'] as Set
+def isOu = { obj -> obj.getArchetypeRef()?.any { OU_ARCH.contains(it?.getOid()?.toString()) } }
 // 'focus' es el objectable (OrgType).
 def curObjable = focus
 def guard = 0
-while (curObjable != null && guard < 12) {
+while (curObjable != null && guard < 16) {
     guard++
     def pr = curObjable.getParentOrgRef()
     if (pr == null || pr.isEmpty()) break
@@ -14773,8 +14780,9 @@ while (curObjable != null && guard < 12) {
     if (parent == null) break
     def po = asObj(parent)
     def pid = po.getIdentifier()?.toString()?.trim() ?: po.getName()?.getOrig()?.toString()?.trim()
-    // raíz institución: identifier con dominio (contiene '.') → no se apila como OU
-    if (pid && !pid.contains('.')) parents << slug(pid)
+    // apila solo si es nodo OU proyectado y su RDN no es dominio (institución raíz contiene '.')
+    if (isOu(po) && pid && !pid.contains('.')) parents << slug(pid)
+    // la institución (identifier con '.') es el ancla ou=org → no se apila pero sí corta el ascenso
     curObjable = po
 }
 def rdns = [slug(rdnVal)] + parents   // [este, padre, abuelo, ...]
