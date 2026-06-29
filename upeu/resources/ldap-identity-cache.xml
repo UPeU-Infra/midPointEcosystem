@@ -45,7 +45,13 @@
                     </t:cipherData>
                 </t:encryptedData>
             </cfg:bindPassword>
-            <cfg:baseContext>ou=people,dc=upeu,dc=edu,dc=pe</cfg:baseContext>
+            <!-- baseContext = raíz del dominio (RIMS←IGA Fase 3): el conector enruta tanto
+                 ou=people (cuentas) como ou=org (árbol organizativo OrgType→OU). Antes era
+                 ou=people; ampliarlo a la raíz es aditivo (cubre ambos subárboles) — necesario
+                 para que el conector acepte escribir/leer DNs bajo ou=org sin 'No LDAP server
+                 configured for DN'. Las búsquedas de personas siguen filtrando por objectClass
+                 inetOrgPerson y los DN de cuenta siguen anclados a ou=people. -->
+            <cfg:baseContext>dc=upeu,dc=edu,dc=pe</cfg:baseContext>
             <cfg:passwordHashAlgorithm>SSHA</cfg:passwordHashAlgorithm>
             <cfg:vlvSortAttribute>uid</cfg:vlvSortAttribute>
             <cfg:vlvSortOrderingRule>2.5.13.3</cfg:vlvSortOrderingRule>
@@ -14010,6 +14016,57 @@
                                 </xsd:appinfo>
                             </xsd:annotation>
                         </xsd:element>
+                        <!-- isni: añadido cached schema 2026-06-29 (contrato RIMS←IGA P5).
+                             Atributo LDAP isni (arc UPeU 1.3.6.1.4.1.47378.1.3) en objectClass
+                             aux upeuPerson, presente en cn=config de .168 y .169. -->
+                        <xsd:element minOccurs="0" maxOccurs="1" name="isni" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <ra:nativeAttributeName>isni</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>isni</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                    </xsd:sequence>
+                </xsd:complexType>
+                <!-- scibackOrgUnit: aux objectClass para nodos OU del árbol organizativo
+                     (contrato RIMS←IGA Entregable 2). Presente en cn=config de .168 y .169.
+                     arc UPeU 1.3.6.1.4.1.47378.2.2 (.1.4–.1.8 attrs + 'c' estándar). -->
+                <xsd:complexType name="scibackOrgUnit">
+                    <xsd:annotation>
+                        <xsd:appinfo>
+                            <a:container>true</a:container>
+                            <ra:resourceObject>true</ra:resourceObject>
+                            <ra:nativeObjectClass>scibackOrgUnit</ra:nativeObjectClass>
+                            <ra:default>false</ra:default>
+                            <ra:auxiliary>true</ra:auxiliary>
+                            <ra:embedded>false</ra:embedded>
+                            <ra:namingAttribute>ri:dn</ra:namingAttribute>
+                            <ra:displayNameAttribute>ri:dn</ra:displayNameAttribute>
+                            <ra:identifier>ri:entryUUID</ra:identifier>
+                            <ra:secondaryIdentifier>ri:dn</ra:secondaryIdentifier>
+                        </xsd:appinfo>
+                    </xsd:annotation>
+                    <xsd:sequence>
+                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackOrgType" type="xsd:string">
+                            <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackOrgType</ra:nativeAttributeName><ra:frameworkAttributeName>scibackOrgType</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackOrgRorId" type="xsd:string">
+                            <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackOrgRorId</ra:nativeAttributeName><ra:frameworkAttributeName>scibackOrgRorId</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackOrgRuc" type="xsd:string">
+                            <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackOrgRuc</ra:nativeAttributeName><ra:frameworkAttributeName>scibackOrgRuc</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackAcademicProgramCode" type="xsd:string">
+                            <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackAcademicProgramCode</ra:nativeAttributeName><ra:frameworkAttributeName>scibackAcademicProgramCode</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackAcademicProgramUri" type="xsd:string">
+                            <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackAcademicProgramUri</ra:nativeAttributeName><ra:frameworkAttributeName>scibackAcademicProgramUri</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" maxOccurs="1" name="c" type="xsd:string">
+                            <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>c</ra:nativeAttributeName><ra:frameworkAttributeName>c</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
+                        </xsd:element>
                     </xsd:sequence>
                 </xsd:complexType>
             </xsd:schema>
@@ -14241,12 +14298,299 @@
             <!-- ── NUEVOS ATRIBUTOS: eduPerson ────────────────────────── -->
             <attribute id="88">
                 <ref>ri:eduPersonEntitlement</ref>
-                <displayName>eduPersonEntitlement (programa académico URI)</displayName>
+                <displayName>eduPersonEntitlement (programa académico URI + roles de investigación)</displayName>
+                <!-- UN solo outbound (attribute/outbound es single-valued en el modelo del
+                     resource) que produce el atributo eduPersonEntitlement MULTIVALOR combinando
+                     dos fuentes:
+                       1) academicProgramUri (comportamiento previo, intacto).
+                       2) catálogo cerrado de 17 roles de investigación (contrato RIMS←IGA P8):
+                          por cada roleMembershipRef cuyo target name/identifier esté en el
+                          catálogo, emite urn:sciback:research:role:<token>.
+                     Reality-vs-Policy: lee la pertenencia REAL a roles; sin roles de investigación
+                     (estado actual PROD) el atributo solo lleva el/los programUri. -->
                 <outbound>
                     <strength>strong</strength>
                     <source>
                         <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:academicProgramUri</path>
                     </source>
+                    <source>
+                        <name>roleMembershipRef</name>
+                        <path>$focus/roleMembershipRef</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def out = []
+// 1) programa(s) académico(s)
+if (academicProgramUri != null) {
+    def progs = academicProgramUri instanceof Collection ? academicProgramUri.toList() : [academicProgramUri]
+    progs.each { p -> def v = p?.toString()?.trim(); if (v) out << v }
+}
+// 2) roles de investigación (catálogo cerrado de 17)
+def catalog = ['researcher','advisor','juror','program-director','dean','ogi','vri','accounting','administration','cataloger','evaluation-committee','evaluator-external','evaluator-senior','panel','cei-admin','cei-member','coi-reviewer'] as Set
+if (roleMembershipRef != null) {
+    def refs = roleMembershipRef instanceof Collection ? roleMembershipRef.toList() : [roleMembershipRef]
+    refs.each { r ->
+        try {
+            def target = midpoint.resolveReferenceIfExists(r)
+            if (target == null) return
+            def n = target.getName()?.getOrig()?.toString()?.trim()?.toLowerCase()
+            def id = (target.asObjectable().getIdentifier())?.toString()?.trim()?.toLowerCase()
+            [n, id].each { tok -> if (tok && catalog.contains(tok)) out << ('urn:sciback:research:role:' + tok) }
+        } catch (e) { /* ref no resoluble: ignora, no rompe provisioning */ }
+    }
+}
+out.unique() ?: null
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <!-- ── CONTRATO RIMS←IGA: identificadores y afiliación (FASE 2) ── -->
+            <!-- P1 eduPersonUniqueId: ancla estable de correlación = {name}@upeu.edu.pe
+                 (name = código institucional inmutable, ratificado docs/DECISION-canonical-identifier).
+                 Lee el valor ya computado en extension/sciback:eduPersonUniqueId; fallback a
+                 name@upeu.edu.pe si el slot está vacío. lowercase, no reasignable. -->
+            <attribute>
+                <ref>ri:eduPersonUniqueId</ref>
+                <displayName>eduPersonUniqueId (ePUID — ancla de correlación RIMS)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:eduPersonUniqueId</path>
+                    </source>
+                    <source>
+                        <name>focusName</name>
+                        <path>$focus/name</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>def v = eduPersonUniqueId?.toString()?.trim(); if (v) return v.toLowerCase(); def n = focusName?.toString()?.trim(); n ? (n.toLowerCase() + '@upeu.edu.pe') : null</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <!-- P3 schacPersonalUniqueID: URN del documento PRIMARIO (PII; el RIMS la lee
+                 por cn=rims-reader, nunca va al token). Forma SCHAC
+                 urn:schac:personalUniqueID:pe:<DOCTYPE>:PE:<number>. DNI canónico; CE → token CE
+                 (Anexo C pendiente de registro formal; se usa el doctype tal cual normalizado). -->
+            <attribute>
+                <ref>ri:schacPersonalUniqueID</ref>
+                <displayName>SCHAC Personal Unique ID (documento, PII)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:identityDocuments</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+import com.evolveum.midpoint.prism.PrismContainerValue
+import javax.xml.namespace.QName
+def NS = 'urn:sciback:midpoint:person'
+def field = { pcv, n -> def p = pcv.findProperty(new com.evolveum.midpoint.prism.path.ItemName(NS, n)); p?.getRealValue()?.toString()?.trim() }
+if (identityDocuments == null) return null
+def raw = identityDocuments instanceof Collection ? identityDocuments.toList() : [identityDocuments]
+def pcvs = raw.collect { it instanceof PrismContainerValue ? it : (it.metaClass.respondsTo(it,'asPrismContainerValue') ? it.asPrismContainerValue() : it) }
+def chosen = pcvs.find { field(it,'primary')?.equalsIgnoreCase('true') } ?: pcvs.find { field(it,'number') }
+if (chosen == null) return null
+def type = (field(chosen,'type') ?: 'DNI').toUpperCase()
+def num = field(chosen,'number')
+if (!num) return null
+'urn:schac:personalUniqueID:pe:' + type + ':PE:' + num
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <!-- P4 eduPersonOrcid: URL canónica https://orcid.org/{orcid} con validación
+                 ISO 7064 MOD 11-2 del dígito de control. Si el checksum es inválido → null
+                 (no se publica un ORCID corrupto). Acepta entrada con o sin guiones/URL. -->
+            <attribute>
+                <ref>ri:eduPersonOrcid</ref>
+                <displayName>eduPersonOrcid (URL canónica, checksum MOD 11-2)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:orcid</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def raw = orcid?.toString()?.trim()
+if (!raw) return null
+def digits = raw.replaceAll('(?i)https?://orcid.org/','').replaceAll('-','').trim().toUpperCase()
+if (!(digits ==~ /[0-9]{15}[0-9X]/)) return null
+// MOD 11-2 (ISO 7064): valida los 15 primeros digitos contra el digito de control
+int total = 0
+for (int i = 0; i < 15; i++) { total = (total + Character.getNumericValue(digits.charAt(i))) * 2 }
+int rem = (12 - (total % 11)) % 11
+def check = (rem == 10) ? 'X' : String.valueOf(rem)
+if (check != String.valueOf(digits.charAt(15))) return null
+'https://orcid.org/' + digits.substring(0,4) + '-' + digits.substring(4,8) + '-' + digits.substring(8,12) + '-' + digits.substring(12,16)
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <!-- P11 eduPersonAssurance: deriva URIs REFEDS Assurance / NIST IAL a partir de
+                 verifiedBy del documento primario + upeu:dataQualityStatus.
+                   verifiedBy=RENIEC|MIGRACIONES ó dataQualityStatus=reniec_validated → IAP/high (IAL2)
+                   resto con documento → IAP/low (IAL1). Sin documento → null. -->
+            <attribute>
+                <ref>ri:eduPersonAssurance</ref>
+                <displayName>eduPersonAssurance (REFEDS / NIST IAL derivado)</displayName>
+                <!-- Fuentes ESCALARES (no el container identityDocuments): evita el
+                     'Unknown compile time class of container value' en la ZERO-set de un
+                     outbound MULTIVALOR. Señal de proofing alto = upeu:dataQualityStatus
+                     (reniec_validated) — el equivalente escalar de verifiedBy=RENIEC, poblado
+                     por el mismo pipeline RENIEC. personalNumber actúa como señal de presencia
+                     (todo foco proyectado a LDAP lo tiene) para emitir el baseline low. -->
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <name>dataQualityStatus</name>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:dataQualityStatus</path>
+                    </source>
+                    <source>
+                        <name>personalNumber</name>
+                        <path>$focus/personalNumber</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def pn = personalNumber?.toString()?.trim()
+if (!pn) return null
+def dq = dataQualityStatus?.toString()?.trim()?.toLowerCase()
+def high = (dq == 'reniec_validated')
+def out = []
+out << 'https://refeds.org/assurance'
+out << ('https://refeds.org/assurance/IAP/' + (high ? 'high' : 'low'))
+out << (high ? 'https://refeds.org/assurance/profile/cappuccino' : 'https://refeds.org/assurance/profile/espresso')
+// NIST IAL: IAL2 si verificacion RENIEC; IAL1 (auto-declarado/institucional) en otro caso
+out.add(0, (high ? 'https://refeds.org/assurance/IAP/medium' : 'https://refeds.org/assurance/IAP/local-enterprise'))
+out.unique()
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <!-- P5 isni: ISO 27729, atributo LDAP isni (upeuPerson). Forma canónica con espacios
+                 cada 4 dígitos. Lee extension/sciback:isni; valida 16 dígitos (acepta espacios/guiones
+                 de entrada) y normaliza a '0000 0000 0000 0000'. Inválido → null. -->
+            <attribute>
+                <ref>ri:isni</ref>
+                <displayName>ISNI (ISO 27729)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:isni</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+def raw = isni?.toString()?.trim()
+if (!raw) return null
+def d = raw.replaceAll('[ -]','').trim().toUpperCase()
+if (!(d ==~ /[0-9]{15}[0-9X]/)) return null
+d.substring(0,4) + ' ' + d.substring(4,8) + ' ' + d.substring(8,12) + ' ' + d.substring(12,16)
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <!-- O10 eduPersonScopedAffiliation (ePSA): afiliación con ámbito affiliation@scope.
+                 Origen preferente: extension/sciback:scopedAffiliations (ya computado, lleva el
+                 matiz primary). Fallback: deriva de affiliations + scope upeu.edu.pe. Vocabulario
+                 eduPerson de 8 valores. Privacidad: ePSA es lo que se publica a SPs (no ePPN). -->
+            <attribute>
+                <ref>ri:eduPersonScopedAffiliation</ref>
+                <displayName>eduPersonScopedAffiliation (ePSA)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:scopedAffiliations</path>
+                    </source>
+                    <source>
+                        <name>affiliations</name>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:affiliations</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+def vocab = ['ALUMNI':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff','EMPLOYEE':'employee','MEMBER':'member','AFFILIATE':'affiliate']
+def scope = 'upeu.edu.pe'
+// 1) si ya hay scopedAffiliations computadas, úsalas (respetan el matiz primary)
+if (scopedAffiliations != null) {
+    def items = scopedAffiliations instanceof Collection ? scopedAffiliations.toList() : [scopedAffiliations]
+    def r = items.collect { it?.toString()?.trim() }.findAll { it }.collect { it.contains('@') ? it.toLowerCase() : (it.toLowerCase() + '@' + scope) }.unique()
+    if (r) return r
+}
+// 2) fallback: deriva de affiliations
+if (affiliations == null) return null
+def aff = affiliations instanceof Collection ? affiliations.toList() : [affiliations]
+aff.collect { v -> def k = v?.toString()?.trim()?.toUpperCase(); def t = k ? (vocab[k] ?: v.toString().trim().toLowerCase()) : null; t ? (t + '@' + scope) : null }.findAll { it }.unique() ?: null
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <!-- P7 eduPersonOrgUnitDN: DN(s) del/los nodo(s) academic-program a los que
+                 pertenece la persona, en el subárbol ou=org. Resuelve los OrgType de tipo
+                 academic-program desde roleMembershipRef y construye su DN jerárquico (mismo
+                 algoritmo que la construction OU). El RIMS lo usa para hacer lookup base del
+                 nodo OU (Entregable 2.3 / 4.1.c). Multivalor. -->
+            <attribute>
+                <ref>ri:eduPersonOrgUnitDN</ref>
+                <displayName>eduPersonOrgUnitDN (DN del programa en ou=org)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/roleMembershipRef</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def PROGRAM_ARCH = '9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73'
+def base = 'ou=org,dc=upeu,dc=edu,dc=pe'
+def slug = { v -> v?.toString()?.trim()?.toLowerCase()?.replaceAll('[^a-z0-9._-]+','-')?.replaceAll('(^-+|-+$)','') }
+def asObj = { o -> (o != null && o.metaClass.respondsTo(o,'asObjectable')) ? o.asObjectable() : o }
+def OU_ARCH = ['455d90ab-b54a-4aa7-a402-a6b6ffc0c0d9','a0c2e4e3-911c-4146-9447-f91a1416feff','87f84549-d101-4ae4-8036-42fb6abdfeec','73795c10-2417-4323-b6fa-b88449a8bba4','04c304d1-9205-4097-9c1d-6dce6ba98c7f','9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73'] as Set
+def isOu = { obj -> obj.getArchetypeRef()?.any { OU_ARCH.contains(it?.getOid()?.toString()) } }
+def dnFor = { org ->
+    def o = asObj(org)
+    def rid = o.getIdentifier()?.toString()?.trim() ?: o.getName()?.getOrig()?.toString()?.trim()
+    if (!rid) return null
+    def rdns = [slug(rid)]
+    def cur = o; def guard = 0
+    while (cur != null && guard < 16) {
+        guard++
+        def pr = cur.getParentOrgRef()
+        if (pr == null || pr.isEmpty()) break
+        def parent = midpoint.resolveReferenceIfExists(pr[0]); if (parent == null) break
+        def po = asObj(parent)
+        def pid = po.getIdentifier()?.toString()?.trim() ?: po.getName()?.getOrig()?.toString()?.trim()
+        if (isOu(po) && pid && !pid.contains('.')) rdns << slug(pid)
+        cur = po
+    }
+    rdns.collect { 'ou=' + it }.join(',') + ',' + base
+}
+if (roleMembershipRef == null) return null
+def refs = roleMembershipRef instanceof Collection ? roleMembershipRef.toList() : [roleMembershipRef]
+def out = []
+refs.each { r ->
+    try {
+        if (r?.getType()?.getLocalPart() != 'OrgType') return
+        def org = midpoint.resolveReferenceIfExists(r); if (org == null) return
+        def arefs = asObj(org).getArchetypeRef()
+        def isProgram = arefs?.any { it?.getOid()?.toString() == PROGRAM_ARCH }
+        if (isProgram) { def d = dnFor(org); if (d) out << d }
+    } catch (e) { }
+}
+out.unique() ?: null
+]]></code>
+                        </script>
+                    </expression>
                 </outbound>
             </attribute>
             <!-- ── NUEVOS ATRIBUTOS: SCHAC schacPersonalCharacteristics ── -->
@@ -14374,6 +14718,207 @@
                 </outbound>
             </attribute>
 
+        </objectType>
+
+        <!-- ══ CONTRATO RIMS←IGA Entregable 2 — proyección del árbol OrgType a LDAP ══
+             Cada OrgType (institution/campus/faculty/department/academic-program) se proyecta
+             como una entry organizationalUnit + aux scibackOrgUnit bajo ou=org,dc=upeu,dc=edu,dc=pe,
+             con DN JERÁRQUICO derivado de la cadena parentOrgRef (RDN = identifier del nodo).
+             Disparado por inducement (construction kind=generic intent=ou) en los archetypes org.
+             El RIMS lee este subárbol vía cn=rims-reader (Entregable 4). -->
+        <objectType>
+            <kind>generic</kind>
+            <intent>ou</intent>
+            <displayName>OrgUnit LDAP (árbol organizativo)</displayName>
+            <description>Proyección de un OrgType MidPoint como nodo OU bajo ou=org. Contrato RIMS←IGA Entregable 2.</description>
+            <default>false</default>
+            <objectClass>ri:organizationalUnit</objectClass>
+            <auxiliaryObjectClass>ri:scibackOrgUnit</auxiliaryObjectClass>
+            <attribute>
+                <ref>ri:dn</ref>
+                <displayName>DN jerárquico (RDN=identifier, bajo ou=org)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/identifier</path>
+                    </source>
+                    <source>
+                        <name>focusName</name>
+                        <path>$focus/name</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+import javax.naming.ldap.Rdn
+def base = 'ou=org,dc=upeu,dc=edu,dc=pe'
+// RDN de este nodo = identifier (fallback a name). Normalizado a minúsculas, slug seguro.
+// RDN del nodo: identifier salvo que sea un dominio (institución raíz, contiene '.'),
+// en cuyo caso se usa el name (UPeU → upeu) para no meter puntos en el RDN del OU.
+def rawId = identifier?.toString()?.trim()
+def rdnVal = (rawId && !rawId.contains('.')) ? rawId : focusName?.toString()?.trim()
+if (!rdnVal) return null
+def slug = { v -> v?.toString()?.trim()?.toLowerCase()?.replaceAll('[^a-z0-9._-]+','-')?.replaceAll('(^-+|-+$)','') }
+// Camino jerárquico: recorre parentOrgRef hacia la raíz, apilando RDNs de los ancestros
+// que también son nodos OU proyectados (cualquier OrgType con identifier/name). La institución
+// raíz (identifier=upeu.edu.pe) NO se incluye como OU intermedia: es el ancla ou=org.
+def parents = []
+// helper: resolveReferenceIfExists puede devolver objectable o PrismObject → normaliza a objectable
+def asObj = { o -> (o != null && o.metaClass.respondsTo(o,'asObjectable')) ? o.asObjectable() : o }
+// Solo se apilan en el DN los ancestros que TAMBIÉN son nodos OU proyectados (uno de los 5
+// archetypes). El árbol real UPeU intercala nodos governance (Rectorado, Vicerrectorado) entre
+// facultad e institución; esos NO se proyectan como OU y se SALTAN para no romper el DN.
+def OU_ARCH = ['455d90ab-b54a-4aa7-a402-a6b6ffc0c0d9','a0c2e4e3-911c-4146-9447-f91a1416feff','87f84549-d101-4ae4-8036-42fb6abdfeec','73795c10-2417-4323-b6fa-b88449a8bba4','04c304d1-9205-4097-9c1d-6dce6ba98c7f','9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73'] as Set
+def isOu = { obj -> obj.getArchetypeRef()?.any { OU_ARCH.contains(it?.getOid()?.toString()) } }
+// 'focus' es el objectable (OrgType).
+def curObjable = focus
+def guard = 0
+while (curObjable != null && guard < 16) {
+    guard++
+    def pr = curObjable.getParentOrgRef()
+    if (pr == null || pr.isEmpty()) break
+    def parent = midpoint.resolveReferenceIfExists(pr[0])
+    if (parent == null) break
+    def po = asObj(parent)
+    def pid = po.getIdentifier()?.toString()?.trim() ?: po.getName()?.getOrig()?.toString()?.trim()
+    // apila solo si es nodo OU proyectado y su RDN no es dominio (institución raíz contiene '.')
+    if (isOu(po) && pid && !pid.contains('.')) parents << slug(pid)
+    // la institución (identifier con '.') es el ancla ou=org → no se apila pero sí corta el ascenso
+    curObjable = po
+}
+def rdns = [slug(rdnVal)] + parents   // [este, padre, abuelo, ...]
+def dn = rdns.collect { 'ou=' + it }.join(',') + ',' + base
+dn
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:ou</ref>
+                <displayName>ou (RDN = identifier)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/identifier</path>
+                    </source>
+                    <source>
+                        <name>focusName</name>
+                        <path>$focus/name</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def rawId = identifier?.toString()?.trim()
+def v = (rawId && !rawId.contains('.')) ? rawId : focusName?.toString()?.trim()
+v ? v.toLowerCase().replaceAll('[^a-z0-9._-]+','-').replaceAll('(^-+|-+$)','') : null
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:description</ref>
+                <displayName>description (displayName del OrgType — O2)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/displayName</path>
+                    </source>
+                    <source>
+                        <name>focusName</name>
+                        <path>$focus/name</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def d = displayName?.toString()?.trim()
+d ?: focusName?.toString()?.trim()
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:scibackOrgType</ref>
+                <displayName>scibackOrgType (de archetypeRef — O6)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/archetypeRef</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def map = [
+  '455d90ab-b54a-4aa7-a402-a6b6ffc0c0d9':'institution',
+  'a0c2e4e3-911c-4146-9447-f91a1416feff':'campus',
+  '87f84549-d101-4ae4-8036-42fb6abdfeec':'faculty',
+  '73795c10-2417-4323-b6fa-b88449a8bba4':'department',
+  '04c304d1-9205-4097-9c1d-6dce6ba98c7f':'academic-unit',
+  '9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73':'academic-program',
+  '20ee260b-8591-4a5b-8b93-f1607eb501a7':'governance',
+  '79bd8a9e-78f0-430f-8133-e8f3be6859c1':'partner-institution',
+  '07ed171e-c9cc-44d2-81b4-1655e1420970':'project'
+]
+if (archetypeRef == null) return null
+def refs = archetypeRef instanceof Collection ? archetypeRef.toList() : [archetypeRef]
+for (r in refs) { def t = map[r?.getOid()?.toString()]; if (t) return t }
+null
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:scibackOrgRorId</ref>
+                <displayName>scibackOrgRorId (O3)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:orgRorId</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:scibackOrgRuc</ref>
+                <displayName>scibackOrgRuc (O4)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:orgRuc</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:scibackAcademicProgramCode</ref>
+                <displayName>scibackAcademicProgramCode (O8)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:academicProgramCode</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:scibackAcademicProgramUri</ref>
+                <displayName>scibackAcademicProgramUri (O9)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:academicProgramUri</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:c</ref>
+                <displayName>c (país — O5, fijo PE)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>PE</value>
+                    </expression>
+                </outbound>
+            </attribute>
         </objectType>
     </schemaHandling>
     <capabilities>

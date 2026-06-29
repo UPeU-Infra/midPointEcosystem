@@ -1,0 +1,9 @@
+# Genera el hash:  docker exec openldap slappasswd -h '{SSHA}' -s "$RIMS_READER_PASS"
+# Sustituye __SSHA_HASH__ y aplica con ldapadd en UN nodo (replica al otro).
+dn: cn=rims-reader,ou=services,dc=upeu,dc=edu,dc=pe
+objectClass: organizationalRole
+objectClass: simpleSecurityObject
+objectClass: top
+cn: rims-reader
+description: Cuenta de servicio RIMS read-only (contrato RIMS-IGA Entregable 4). Lee ou=people y ou=org por ePUID; puede leer schacPersonalUniqueID; no userPassword.
+userPassword: __SSHA_HASH__

@@ -17,4 +17,12 @@
             </icon>
         </display>
     </archetypePolicy>
+    <!-- Contrato RIMS←IGA Entregable 2: proyección OU a LDAP (kind=generic intent=ou). -->
+    <inducement>
+        <construction>
+            <resourceRef oid="7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f" type="ResourceType"/>
+            <kind>generic</kind>
+            <intent>ou</intent>
+        </construction>
+    </inducement>
 </archetype>

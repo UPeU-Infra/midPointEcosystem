@@ -1,0 +1,10 @@
+dn: cn={12}upeu,cn=schema,cn=config
+changetype: modify
+add: olcAttributeTypes
+olcAttributeTypes: ( 1.3.6.1.4.1.47378.1.3 NAME 'isni' DESC 'International Standard Name Identifier (ISO 27729). Forma canonica 0000 0000 0000 0000. Contrato RIMS-IGA P5.' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+-
+delete: olcObjectClasses
+olcObjectClasses: {0}
+-
+add: olcObjectClasses
+olcObjectClasses: ( 1.3.6.1.4.1.47378.2.1 NAME 'upeuPerson' DESC 'Clase auxiliar UPeU para atributos de calidad de datos e identidad institucional' SUP top AUXILIARY MAY ( upeuDataQualityStatus $ upeuReniecValidationDate $ isni ) )

@@ -17,4 +17,15 @@
             </icon>
         </display>
     </archetypePolicy>
+    <!-- Contrato RIMS←IGA Entregable 2: proyecta el nodo OrgType a LDAP como OU
+         (kind=generic intent=ou en ldapidentitycacheupeu). Inducement → aplica a los
+         holders del archetype (los nodos institution). El DN/atributos se computan en el
+         schemaHandling del resource. La institución raíz es el ancla bajo ou=org. -->
+    <inducement>
+        <construction>
+            <resourceRef oid="7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f" type="ResourceType"/>
+            <kind>generic</kind>
+            <intent>ou</intent>
+        </construction>
+    </inducement>
 </archetype>
