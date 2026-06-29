@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  RIMS←IGA — Backfill LDAP identity cache — LOTE 2: FACULTY
+  ================================================================
+  Objetivo (spec 2026-06-29): materializar a LDAP (ldapidentitycacheupeu,
+  HA .168/.169) los outbounds strong del contrato RIMS:
+    schacPersonalUniqueID (DNI), eduPersonOrgUnitDN (afiliacion->programa),
+    eduPersonScopedAffiliation, schacGender   (+ eduPersonOrcid/isni cuando
+    la fuente Oracle los provea — hoy vacios, fuera de alcance).
+  Los outbounds ya estan en el resource LDAP (editado 29-jun) pero no se
+  materializaron masivamente: este recompute focus-side los empuja.
+
+  Mecanismo = recompute focus-side (NO reconcile on-resource):
+    - El object template recalcula liveAffiliation*/primaryAffiliation; el
+      AR-LDAP-Person tiene construction para todo foco con afiliacion viva.
+    - El recompute corre el clockwork completo -> deltas outbound idempotentes
+      al shadow LDAP. Si el valor ya esta, delta vacio, 0 MODIFY. (GAP-1
+      blueprint, midpoint-best-practices §4.5/§5).
+    - NO reconcile on-resource: leeria 28k+ entries LDAP + correria inbounds,
+      riesgoso y pisa valores. recompute acotado por archetype es quirurgico.
+
+  Koha NO aborta: el resource Koha tiene criticality=partial (commit de hoy);
+    AlreadyExistsException por shadows Koha huerfanos (linking PREEXISTENTE)
+    se degrada a partial_error/warning y el clockwork sigue con LDAP.
+
+  Scope: archetype-user-employee-faculty + lifecycleState=active  (~1,781).
+  el mas pequeno tras faculty; valida pipeline antes del masivo.
+
+  SEGURIDAD PROD post-OOM:
+    - workerThreads=1 (minimo). Monitorear heap/disco entre lotes.
+    - executionState=suspended: importar suspendida, resume manual tras canary.
+    - cleanupAfterCompletion=P7D.
+
+  OID determinista: md5("rims-ldap-backfill-faculty-20260629")
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="1dd379e3-6285-039a-7870-22a3e62d5b0f">
+    <name>RIMS-backfill-LDAP-faculty-20260629</name>
+    <description>
+        Backfill LDAP identity cache (contrato RIMS): recompute focus-side de staff
+        activos para materializar schacPersonalUniqueID/eduPersonOrgUnitDN/
+        eduPersonScopedAffiliation/schacGender al LDAP. Idempotente. workerThreads=1.
+        Koha no fatal (criticality=partial). Ver carpeta del task.
+    </description>
+    <executionState>suspended</executionState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <cleanupAfterCompletion>P7D</cleanupAfterCompletion>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <q:ref>
+                                    <q:path>archetypeRef</q:path>
+                                    <q:value oid="c93083ca-f4c5-4704-acf4-d53b97c9556e" type="ArchetypeType"/>
+                                </q:ref>
+                                <q:equal>
+                                    <q:path>lifecycleState</q:path>
+                                    <q:value>active</q:value>
+                                </q:equal>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>1</workerThreads>
+        </distribution>
+    </activity>
+</task>
