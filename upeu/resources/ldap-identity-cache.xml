@@ -14253,41 +14253,47 @@
             <!-- ── NUEVOS ATRIBUTOS: eduPerson ────────────────────────── -->
             <attribute id="88">
                 <ref>ri:eduPersonEntitlement</ref>
-                <displayName>eduPersonEntitlement (programa académico URI)</displayName>
+                <displayName>eduPersonEntitlement (programa académico URI + roles de investigación)</displayName>
+                <!-- UN solo outbound (attribute/outbound es single-valued en el modelo del
+                     resource) que produce el atributo eduPersonEntitlement MULTIVALOR combinando
+                     dos fuentes:
+                       1) academicProgramUri (comportamiento previo, intacto).
+                       2) catálogo cerrado de 17 roles de investigación (contrato RIMS←IGA P8):
+                          por cada roleMembershipRef cuyo target name/identifier esté en el
+                          catálogo, emite urn:sciback:research:role:<token>.
+                     Reality-vs-Policy: lee la pertenencia REAL a roles; sin roles de investigación
+                     (estado actual PROD) el atributo solo lleva el/los programUri. -->
                 <outbound>
                     <strength>strong</strength>
                     <source>
                         <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:academicProgramUri</path>
                     </source>
-                </outbound>
-                <!-- 2º outbound del MISMO atributo multivalor (mergea con el de programa,
-                     best-practices §4.2): catálogo cerrado de 17 roles de investigación
-                     (contrato RIMS←IGA P8). Origen: roleMembershipRef del foco — para cada
-                     membership cuyo target name/identifier coincida con un token del catálogo,
-                     emite la URN urn:sciback:research:role:<token>. Reality-vs-Policy: lee la
-                     pertenencia REAL a roles; si no hay roles de investigación asignados (estado
-                     actual PROD), no emite nada (null) y el atributo solo lleva el programUri. -->
-                <outbound>
-                    <name>eduPersonEntitlement-research-roles</name>
-                    <strength>strong</strength>
                     <source>
+                        <name>roleMembershipRef</name>
                         <path>$focus/roleMembershipRef</path>
                     </source>
                     <expression>
                         <script>
                             <code><![CDATA[
-def catalog = ['researcher','advisor','juror','program-director','dean','ogi','vri','accounting','administration','cataloger','evaluation-committee','evaluator-external','evaluator-senior','panel','cei-admin','cei-member','coi-reviewer'] as Set
-if (roleMembershipRef == null) return null
-def refs = roleMembershipRef instanceof Collection ? roleMembershipRef.toList() : [roleMembershipRef]
 def out = []
-refs.each { r ->
-    try {
-        def target = midpoint.resolveReferenceIfExists(r)
-        if (target == null) return
-        def n = target.getName()?.getOrig()?.toString()?.trim()?.toLowerCase()
-        def id = (target.asObjectable().getIdentifier())?.toString()?.trim()?.toLowerCase()
-        [n, id].each { tok -> if (tok && catalog.contains(tok)) out << ('urn:sciback:research:role:' + tok) }
-    } catch (e) { /* foco con ref no resoluble: ignora, no rompe el provisioning */ }
+// 1) programa(s) académico(s)
+if (academicProgramUri != null) {
+    def progs = academicProgramUri instanceof Collection ? academicProgramUri.toList() : [academicProgramUri]
+    progs.each { p -> def v = p?.toString()?.trim(); if (v) out << v }
+}
+// 2) roles de investigación (catálogo cerrado de 17)
+def catalog = ['researcher','advisor','juror','program-director','dean','ogi','vri','accounting','administration','cataloger','evaluation-committee','evaluator-external','evaluator-senior','panel','cei-admin','cei-member','coi-reviewer'] as Set
+if (roleMembershipRef != null) {
+    def refs = roleMembershipRef instanceof Collection ? roleMembershipRef.toList() : [roleMembershipRef]
+    refs.each { r ->
+        try {
+            def target = midpoint.resolveReferenceIfExists(r)
+            if (target == null) return
+            def n = target.getName()?.getOrig()?.toString()?.trim()?.toLowerCase()
+            def id = (target.asObjectable().getIdentifier())?.toString()?.trim()?.toLowerCase()
+            [n, id].each { tok -> if (tok && catalog.contains(tok)) out << ('urn:sciback:research:role:' + tok) }
+        } catch (e) { /* ref no resoluble: ignora, no rompe provisioning */ }
+    }
 }
 out.unique() ?: null
 ]]></code>
