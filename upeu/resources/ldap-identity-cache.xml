@@ -14010,6 +14010,18 @@
                                 </xsd:appinfo>
                             </xsd:annotation>
                         </xsd:element>
+                        <!-- isni: añadido cached schema 2026-06-29 (contrato RIMS←IGA P5).
+                             Atributo LDAP isni (arc UPeU 1.3.6.1.4.1.47378.1.3) en objectClass
+                             aux upeuPerson, presente en cn=config de .168 y .169. -->
+                        <xsd:element minOccurs="0" maxOccurs="1" name="isni" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <ra:nativeAttributeName>isni</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>isni</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
                     </xsd:sequence>
                 </xsd:complexType>
             </xsd:schema>
@@ -14247,6 +14259,219 @@
                     <source>
                         <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:academicProgramUri</path>
                     </source>
+                </outbound>
+                <!-- 2º outbound del MISMO atributo multivalor (mergea con el de programa,
+                     best-practices §4.2): catálogo cerrado de 17 roles de investigación
+                     (contrato RIMS←IGA P8). Origen: roleMembershipRef del foco — para cada
+                     membership cuyo target name/identifier coincida con un token del catálogo,
+                     emite la URN urn:sciback:research:role:<token>. Reality-vs-Policy: lee la
+                     pertenencia REAL a roles; si no hay roles de investigación asignados (estado
+                     actual PROD), no emite nada (null) y el atributo solo lleva el programUri. -->
+                <outbound>
+                    <name>eduPersonEntitlement-research-roles</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/roleMembershipRef</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def catalog = ['researcher','advisor','juror','program-director','dean','ogi','vri','accounting','administration','cataloger','evaluation-committee','evaluator-external','evaluator-senior','panel','cei-admin','cei-member','coi-reviewer'] as Set
+if (roleMembershipRef == null) return null
+def refs = roleMembershipRef instanceof Collection ? roleMembershipRef.toList() : [roleMembershipRef]
+def out = []
+refs.each { r ->
+    try {
+        def target = midpoint.resolveReferenceIfExists(r)
+        if (target == null) return
+        def n = target.getName()?.getOrig()?.toString()?.trim()?.toLowerCase()
+        def id = (target.asObjectable().getIdentifier())?.toString()?.trim()?.toLowerCase()
+        [n, id].each { tok -> if (tok && catalog.contains(tok)) out << ('urn:sciback:research:role:' + tok) }
+    } catch (e) { /* foco con ref no resoluble: ignora, no rompe el provisioning */ }
+}
+out.unique() ?: null
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <!-- ── CONTRATO RIMS←IGA: identificadores y afiliación (FASE 2) ── -->
+            <!-- P1 eduPersonUniqueId: ancla estable de correlación = {name}@upeu.edu.pe
+                 (name = código institucional inmutable, ratificado docs/DECISION-canonical-identifier).
+                 Lee el valor ya computado en extension/sciback:eduPersonUniqueId; fallback a
+                 name@upeu.edu.pe si el slot está vacío. lowercase, no reasignable. -->
+            <attribute>
+                <ref>ri:eduPersonUniqueId</ref>
+                <displayName>eduPersonUniqueId (ePUID — ancla de correlación RIMS)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:eduPersonUniqueId</path>
+                    </source>
+                    <source>
+                        <name>focusName</name>
+                        <path>$focus/name</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>def v = eduPersonUniqueId?.toString()?.trim(); if (v) return v.toLowerCase(); def n = focusName?.toString()?.trim(); n ? (n.toLowerCase() + '@upeu.edu.pe') : null</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <!-- P3 schacPersonalUniqueID: URN del documento PRIMARIO (PII; el RIMS la lee
+                 por cn=rims-reader, nunca va al token). Forma SCHAC
+                 urn:schac:personalUniqueID:pe:<DOCTYPE>:PE:<number>. DNI canónico; CE → token CE
+                 (Anexo C pendiente de registro formal; se usa el doctype tal cual normalizado). -->
+            <attribute>
+                <ref>ri:schacPersonalUniqueID</ref>
+                <displayName>SCHAC Personal Unique ID (documento, PII)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:identityDocuments</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+if (identityDocuments == null) return null
+def docs = identityDocuments instanceof Collection ? identityDocuments.toList() : [identityDocuments]
+def chosen = docs.find { d -> d?.primary?.toString()?.trim()?.equalsIgnoreCase('true') } ?: docs.find { d -> d?.number?.toString()?.trim() }
+if (chosen == null) return null
+def type = chosen.type?.toString()?.trim()?.toUpperCase() ?: 'DNI'
+def num = chosen.number?.toString()?.trim()
+if (!num) return null
+'urn:schac:personalUniqueID:pe:' + type + ':PE:' + num
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <!-- P4 eduPersonOrcid: URL canónica https://orcid.org/{orcid} con validación
+                 ISO 7064 MOD 11-2 del dígito de control. Si el checksum es inválido → null
+                 (no se publica un ORCID corrupto). Acepta entrada con o sin guiones/URL. -->
+            <attribute>
+                <ref>ri:eduPersonOrcid</ref>
+                <displayName>eduPersonOrcid (URL canónica, checksum MOD 11-2)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:orcid</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def raw = orcid?.toString()?.trim()
+if (!raw) return null
+def digits = raw.replaceAll('(?i)https?://orcid.org/','').replaceAll('-','').trim().toUpperCase()
+if (!(digits ==~ /[0-9]{15}[0-9X]/)) return null
+// MOD 11-2 (ISO 7064): valida los 15 primeros digitos contra el digito de control
+int total = 0
+for (int i = 0; i < 15; i++) { total = (total + Character.getNumericValue(digits.charAt(i))) * 2 }
+int rem = (12 - (total % 11)) % 11
+def check = (rem == 10) ? 'X' : String.valueOf(rem)
+if (check != String.valueOf(digits.charAt(15))) return null
+'https://orcid.org/' + digits.substring(0,4) + '-' + digits.substring(4,8) + '-' + digits.substring(8,12) + '-' + digits.substring(12,16)
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <!-- P11 eduPersonAssurance: deriva URIs REFEDS Assurance / NIST IAL a partir de
+                 verifiedBy del documento primario + upeu:dataQualityStatus.
+                   verifiedBy=RENIEC|MIGRACIONES ó dataQualityStatus=reniec_validated → IAP/high (IAL2)
+                   resto con documento → IAP/low (IAL1). Sin documento → null. -->
+            <attribute>
+                <ref>ri:eduPersonAssurance</ref>
+                <displayName>eduPersonAssurance (REFEDS / NIST IAL derivado)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:identityDocuments</path>
+                    </source>
+                    <source>
+                        <name>dataQualityStatus</name>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:dataQualityStatus</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def docs = identityDocuments == null ? [] : (identityDocuments instanceof Collection ? identityDocuments.toList() : [identityDocuments])
+def primary = docs.find { d -> d?.primary?.toString()?.trim()?.equalsIgnoreCase('true') } ?: (docs ? docs[0] : null)
+def vb = primary?.verifiedBy?.toString()?.trim()?.toUpperCase()
+def dq = dataQualityStatus?.toString()?.trim()?.toLowerCase()
+def high = (vb in ['RENIEC','MIGRACIONES']) || (dq == 'reniec_validated')
+def out = []
+out << 'https://refeds.org/assurance'
+out << 'https://refeds.org/assurance/IAP/' + (high ? 'high' : 'low')
+out << (high ? 'https://refeds.org/assurance/profile/cappuccino' : 'https://refeds.org/assurance/profile/espresso')
+// NIST IAL: IAL2 si verificacion RENIEC presencial; IAL1 auto-declarado
+out.add(0, high ? 'https://refeds.org/assurance/IAP/medium' : 'https://refeds.org/assurance/IAP/local-enterprise')
+if (primary == null && dq == null) return null
+out.unique()
+]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <!-- P5 isni: ISO 27729, atributo LDAP isni (upeuPerson). Forma canónica con espacios
+                 cada 4 dígitos. Lee extension/sciback:isni; valida 16 dígitos (acepta espacios/guiones
+                 de entrada) y normaliza a '0000 0000 0000 0000'. Inválido → null. -->
+            <attribute>
+                <ref>ri:isni</ref>
+                <displayName>ISNI (ISO 27729)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:isni</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+def raw = isni?.toString()?.trim()
+if (!raw) return null
+def d = raw.replaceAll('[ -]','').trim().toUpperCase()
+if (!(d ==~ /[0-9]{15}[0-9X]/)) return null
+d.substring(0,4) + ' ' + d.substring(4,8) + ' ' + d.substring(8,12) + ' ' + d.substring(12,16)
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <!-- O10 eduPersonScopedAffiliation (ePSA): afiliación con ámbito affiliation@scope.
+                 Origen preferente: extension/sciback:scopedAffiliations (ya computado, lleva el
+                 matiz primary). Fallback: deriva de affiliations + scope upeu.edu.pe. Vocabulario
+                 eduPerson de 8 valores. Privacidad: ePSA es lo que se publica a SPs (no ePPN). -->
+            <attribute>
+                <ref>ri:eduPersonScopedAffiliation</ref>
+                <displayName>eduPersonScopedAffiliation (ePSA)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:scopedAffiliations</path>
+                    </source>
+                    <source>
+                        <name>affiliations</name>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:affiliations</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+def vocab = ['ALUMNI':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff','EMPLOYEE':'employee','MEMBER':'member','AFFILIATE':'affiliate']
+def scope = 'upeu.edu.pe'
+// 1) si ya hay scopedAffiliations computadas, úsalas (respetan el matiz primary)
+if (scopedAffiliations != null) {
+    def items = scopedAffiliations instanceof Collection ? scopedAffiliations.toList() : [scopedAffiliations]
+    def r = items.collect { it?.toString()?.trim() }.findAll { it }.collect { it.contains('@') ? it.toLowerCase() : (it.toLowerCase() + '@' + scope) }.unique()
+    if (r) return r
+}
+// 2) fallback: deriva de affiliations
+if (affiliations == null) return null
+def aff = affiliations instanceof Collection ? affiliations.toList() : [affiliations]
+aff.collect { v -> def k = v?.toString()?.trim()?.toUpperCase(); def t = k ? (vocab[k] ?: v.toString().trim().toLowerCase()) : null; t ? (t + '@' + scope) : null }.findAll { it }.unique() ?: null
+                            </code>
+                        </script>
+                    </expression>
                 </outbound>
             </attribute>
             <!-- ── NUEVOS ATRIBUTOS: SCHAC schacPersonalCharacteristics ── -->
