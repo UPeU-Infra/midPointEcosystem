@@ -15,6 +15,13 @@
             <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
             <kind>account</kind>
             <intent>default</intent>
+            <!-- criticality=partial (2026-06-29 backfill RIMS←IGA LDAP): la proyeccion Koha
+                 es best-effort. AlreadyExistsException por shadows huerfanos (linking
+                 IGA<->Koha PREEXISTENTE, ajeno a este backfill) se degrada a partial_error
+                 y NO aborta el foco: la proyeccion LDAP (identity cache RIMS) sigue
+                 materializandose. Projection criticality canonica (ConstructionType),
+                 NO el connectorErrorCriticality experimental. Reversible. -->
+            <criticality>partial</criticality>
             <!-- R5 (FASE 4): override category_id eliminado.
                  category_id lo resuelve el resource koha-ils desde
                  extension/sciback:primaryAffiliation (mapping unico, deterministico). -->
