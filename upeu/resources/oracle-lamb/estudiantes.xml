@@ -253,39 +253,22 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                         <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationWorker</path>
                     </source>
                     <expression>
-                        <script>
-                            <!-- CANON_DOC type-aware (FIX 2026-06-05). REEMPLAZA la normalizacion anterior
-                                 type-blind (asumia DNI: strip+zfill8 para TODO numerico) que colapsaba un
-                                 CE 12345678 con un DNI 12345678 (riesgo fusion) y NO marcaba el tipo. Ahora
-                                 es IDENTICA a trabajadores.xml/egresados (num-documento-to-lambDocNum):
-                                   DNI (1/24)             : strip ceros + zfill8 (DNI peruano canonico).
-                                   CE/visa (4/6/31)+PTP(22)/CPP(23) : strip ceros + zfill9, PREFIJO 'CE:'.
-                                   pasaporte (7/9)        : 'PP:' + upper (alfanumerico).
-                                   tipo desconocido/vacio : rama generica DNI (strip + zfill8 si numerico).
-                                   vacio / '0' / '000...0': null.
-                                 Unifica la clave de correlacion type-aware entre Estudiantes/Trabajadores/
-                                 Egresados (iga-canonical-standards §1.3: una sola representacion por doc).
-                                 Antes Estudiantes/Egresados no tenian columna de tipo => rama DNI por
-                                 defecto; ahora Estudiantes SI emite TIPO_DOC (MOISES.PERSONA_NATURAL). -->
-                            <code>def num = (NUM_DOCUMENTO ?: '').toString().trim()
-def type = (TIPO_DOC ?: '').toString().trim()
-if (!num) return null
-def DNI = ['1','24'] as Set
-def CE9 = ['4','6','31','22','23'] as Set
-def PASS = ['7','9'] as Set
-def strip = { it.replaceFirst(/^0+/, '') }
-if (type in DNI) {
-    if (num ==~ /\d+/) { def n = strip(num); if (!n) return null; return n.length() &lt;= 8 ? n.padLeft(8,'0') : n }
-    return num
-}
-if (type in CE9) {
-    if (num ==~ /\d+/) { def n = strip(num); if (!n) return null; def z = n.length() &lt;= 9 ? n.padLeft(9,'0') : n; return 'CE:'+z }
-    return 'CE:'+num
-}
-if (type in PASS) { return 'PP:'+num.toUpperCase() }
-if (num ==~ /\d+/) { def n = strip(num); if (!n) return null; return n.length() &lt;= 8 ? n.padLeft(8,'0') : n }
-return num</code>
-                        </script>
+                        <!-- CANON_DOC type-aware vía FunctionLibrary sb-document-normalizer (fuente única,
+                             FIX 2026-06-29). Reemplaza la copia inline de CANON_DOC; output byte-idéntico
+                             al de trabajadores/egresados para el mismo (num,type) => no colisiona.
+                             DNI(1/24)=zfill8; CE(4/6/31/22/23)=zfill9 prefijo 'CE:'; PASS(7/9)='PP:'+upper. -->
+                        <function>
+                            <libraryRef oid="1c7e4b2d-3f5a-4061-ac9d-8f7e6d5c4b31" type="FunctionLibraryType"/>
+                            <name>toCanonicalDocNumber</name>
+                            <parameter>
+                                <name>rawNum</name>
+                                <expression><path>$shadow/attributes/ri:NUM_DOCUMENTO</path></expression>
+                            </parameter>
+                            <parameter>
+                                <name>docType</name>
+                                <expression><path>$shadow/attributes/ri:TIPO_DOC</path></expression>
+                            </parameter>
+                        </function>
                     </expression>
                     <target>
                         <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</path>
