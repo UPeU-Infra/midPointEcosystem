@@ -14554,20 +14554,22 @@ aff.collect { v -> def k = v?.toString()?.trim()?.toUpperCase(); def t = k ? (vo
 def PROGRAM_ARCH = '9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73'
 def base = 'ou=org,dc=upeu,dc=edu,dc=pe'
 def slug = { v -> v?.toString()?.trim()?.toLowerCase()?.replaceAll('[^a-z0-9._-]+','-')?.replaceAll('(^-+|-+$)','') }
+def asObj = { o -> (o != null && o.metaClass.respondsTo(o,'asObjectable')) ? o.asObjectable() : o }
 def dnFor = { org ->
-    def o = org.asObjectable()
+    def o = asObj(org)
     def rid = o.getIdentifier()?.toString()?.trim() ?: o.getName()?.getOrig()?.toString()?.trim()
     if (!rid) return null
     def rdns = [slug(rid)]
-    def cur = org; def guard = 0
+    def cur = o; def guard = 0
     while (cur != null && guard < 12) {
         guard++
-        def pr = cur.asObjectable().getParentOrgRef()
+        def pr = cur.getParentOrgRef()
         if (pr == null || pr.isEmpty()) break
         def parent = midpoint.resolveReferenceIfExists(pr[0]); if (parent == null) break
-        def pid = parent.asObjectable().getIdentifier()?.toString()?.trim() ?: parent.asObjectable().getName()?.getOrig()?.toString()?.trim()
+        def po = asObj(parent)
+        def pid = po.getIdentifier()?.toString()?.trim() ?: po.getName()?.getOrig()?.toString()?.trim()
         if (pid && !pid.contains('.')) rdns << slug(pid)
-        cur = parent
+        cur = po
     }
     rdns.collect { 'ou=' + it }.join(',') + ',' + base
 }
@@ -14578,7 +14580,7 @@ refs.each { r ->
     try {
         if (r?.getType()?.getLocalPart() != 'OrgType') return
         def org = midpoint.resolveReferenceIfExists(r); if (org == null) return
-        def arefs = org.asObjectable().getArchetypeRef()
+        def arefs = asObj(org).getArchetypeRef()
         def isProgram = arefs?.any { it?.getOid()?.toString() == PROGRAM_ARCH }
         if (isProgram) { def d = dnFor(org); if (d) out << d }
     } catch (e) { }
@@ -14758,7 +14760,9 @@ def slug = { v -> v?.toString()?.trim()?.toLowerCase()?.replaceAll('[^a-z0-9._-]
 // que también son nodos OU proyectados (cualquier OrgType con identifier/name). La institución
 // raíz (identifier=upeu.edu.pe) NO se incluye como OU intermedia: es el ancla ou=org.
 def parents = []
-// 'focus' es el objectable (OrgType); los refs resueltos son PrismObject → .asObjectable().
+// helper: resolveReferenceIfExists puede devolver objectable o PrismObject → normaliza a objectable
+def asObj = { o -> (o != null && o.metaClass.respondsTo(o,'asObjectable')) ? o.asObjectable() : o }
+// 'focus' es el objectable (OrgType).
 def curObjable = focus
 def guard = 0
 while (curObjable != null && guard < 12) {
@@ -14767,7 +14771,7 @@ while (curObjable != null && guard < 12) {
     if (pr == null || pr.isEmpty()) break
     def parent = midpoint.resolveReferenceIfExists(pr[0])
     if (parent == null) break
-    def po = parent.asObjectable()
+    def po = asObj(parent)
     def pid = po.getIdentifier()?.toString()?.trim() ?: po.getName()?.getOrig()?.toString()?.trim()
     // raíz institución: identifier con dominio (contiene '.') → no se apila como OU
     if (pid && !pid.contains('.')) parents << slug(pid)
