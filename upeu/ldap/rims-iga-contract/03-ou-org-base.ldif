@@ -1,0 +1,5 @@
+dn: ou=org,dc=upeu,dc=edu,dc=pe
+objectClass: organizationalUnit
+objectClass: top
+ou: org
+description: Subarbol de estructura organizativa UPeU (proyeccion OrgType MidPoint). Contrato RIMS-IGA Entregable 2.

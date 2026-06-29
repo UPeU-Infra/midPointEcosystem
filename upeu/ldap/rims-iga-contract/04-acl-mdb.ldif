@@ -1,0 +1,8 @@
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+replace: olcAccess
+olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break
+olcAccess: {1}to attrs=userPassword,shadowLastChange by self write by dn="cn=admin,dc=upeu,dc=edu,dc=pe" write by anonymous auth by * none
+olcAccess: {2}to dn.subtree="ou=people,dc=upeu,dc=edu,dc=pe" by dn="cn=admin,dc=upeu,dc=edu,dc=pe" write by dn="cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe" write by dn="cn=keycloak,dc=upeu,dc=edu,dc=pe" read by dn="cn=rims-reader,ou=services,dc=upeu,dc=edu,dc=pe" read by * none
+olcAccess: {3}to dn.subtree="ou=org,dc=upeu,dc=edu,dc=pe" by dn="cn=admin,dc=upeu,dc=edu,dc=pe" write by dn="cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe" write by dn="cn=keycloak,dc=upeu,dc=edu,dc=pe" read by dn="cn=rims-reader,ou=services,dc=upeu,dc=edu,dc=pe" read by * none
+olcAccess: {4}to * by dn="cn=admin,dc=upeu,dc=edu,dc=pe" write by dn="cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe" read by dn="cn=keycloak,dc=upeu,dc=edu,dc=pe" read by self read by * none
