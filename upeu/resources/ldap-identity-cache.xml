@@ -1,7 +1,20 @@
-<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f" version="8">
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f" version="193">
+    <_metadata id="457">
+        <storage>
+            <modifyTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-06-30T06:55:11.986-05:00</modifyTimestamp>
+            <modifierRef>
+                <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+            </modifierRef>
+            <modifyChannel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</modifyChannel>
+        </storage>
+    </_metadata>
     <name>LDAP-IdentityCache-UPeU</name>
     <description>OpenLDAP Identity Cache UPeU. MidPoint provisiona identidades activas. Keycloak lee via User Federation.</description>
     <lifecycleState>active</lifecycleState>
+    <iteration>0</iteration>
+    <iterationToken/>
     <operationalState>
         <lastAvailabilityStatus>up</lastAvailabilityStatus>
         <message>Status set to UP because resource schema was successfully fetched</message>
@@ -24,13 +37,7 @@
         <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.evolveum.polygon.connector-ldap/com.evolveum.polygon.connector.ldap.LdapConnector">
             <cfg:host>192.168.15.168</cfg:host>
             <cfg:port>389</cfg:port>
-            <!-- HA: Nodo 2 como servidor adicional (N-Way Multimaster). El conector
-                 selecciona aleatoriamente entre nodos con el mismo baseContext.
-                 Configurado 2026-05-20 tras activar N-Way mirrormode entre 168 y 169. -->
-            <cfg:servers>host=192.168.15.169; port=389</cfg:servers>
             <cfg:connectionSecurity>none</cfg:connectionSecurity>
-            <!-- TLS deshabilitado en servidor (LDAP_TLS=false, red interna 192.168.15.x).
-                 Activar starttls en Fase 7 con cert EJBCA. starttls fallaba con Connect error -11. -->
             <cfg:bindDn>cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe</cfg:bindDn>
             <cfg:bindPassword>
                 <t:encryptedData>
@@ -45,13 +52,8 @@
                     </t:cipherData>
                 </t:encryptedData>
             </cfg:bindPassword>
-            <!-- baseContext = raíz del dominio (RIMS←IGA Fase 3): el conector enruta tanto
-                 ou=people (cuentas) como ou=org (árbol organizativo OrgType→OU). Antes era
-                 ou=people; ampliarlo a la raíz es aditivo (cubre ambos subárboles) — necesario
-                 para que el conector acepte escribir/leer DNs bajo ou=org sin 'No LDAP server
-                 configured for DN'. Las búsquedas de personas siguen filtrando por objectClass
-                 inetOrgPerson y los DN de cuenta siguen anclados a ou=people. -->
             <cfg:baseContext>dc=upeu,dc=edu,dc=pe</cfg:baseContext>
+            <cfg:servers>host=192.168.15.169; port=389</cfg:servers>
             <cfg:passwordHashAlgorithm>SSHA</cfg:passwordHashAlgorithm>
             <cfg:vlvSortAttribute>uid</cfg:vlvSortAttribute>
             <cfg:vlvSortOrderingRule>2.5.13.3</cfg:vlvSortOrderingRule>
@@ -64,7 +66,7 @@
             <serialNumber>f37ca768d8654fe5-86cbe70709757f1a</serialNumber>
         </cachingMetadata>
         <definition>
-            <xsd:schema xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:ra="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:tns="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+            <xsd:schema xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:ra="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:tns="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xml:space="preserve">
                 <xsd:import namespace="http://prism.evolveum.com/xml/ns/public/annotation-3"/>
                 <xsd:import namespace="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3"/>
                 <xsd:complexType name="simpleSecurityObject">
@@ -13998,7 +14000,7 @@
                         </xsd:appinfo>
                     </xsd:annotation>
                     <xsd:sequence>
-                        <xsd:element minOccurs="0" maxOccurs="1" name="upeuDataQualityStatus" type="xsd:string">
+                        <xsd:element maxOccurs="1" minOccurs="0" name="upeuDataQualityStatus" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
                                     <ra:nativeAttributeName>upeuDataQualityStatus</ra:nativeAttributeName>
@@ -14007,7 +14009,7 @@
                                 </xsd:appinfo>
                             </xsd:annotation>
                         </xsd:element>
-                        <xsd:element minOccurs="0" maxOccurs="1" name="upeuReniecValidationDate" type="xsd:dateTime">
+                        <xsd:element maxOccurs="1" minOccurs="0" name="upeuReniecValidationDate" type="xsd:dateTime">
                             <xsd:annotation>
                                 <xsd:appinfo>
                                     <ra:nativeAttributeName>upeuReniecValidationDate</ra:nativeAttributeName>
@@ -14019,7 +14021,7 @@
                         <!-- isni: añadido cached schema 2026-06-29 (contrato RIMS←IGA P5).
                              Atributo LDAP isni (arc UPeU 1.3.6.1.4.1.47378.1.3) en objectClass
                              aux upeuPerson, presente en cn=config de .168 y .169. -->
-                        <xsd:element minOccurs="0" maxOccurs="1" name="isni" type="xsd:string">
+                        <xsd:element maxOccurs="1" minOccurs="0" name="isni" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
                                     <ra:nativeAttributeName>isni</ra:nativeAttributeName>
@@ -14049,22 +14051,22 @@
                         </xsd:appinfo>
                     </xsd:annotation>
                     <xsd:sequence>
-                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackOrgType" type="xsd:string">
+                        <xsd:element maxOccurs="1" minOccurs="0" name="scibackOrgType" type="xsd:string">
                             <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackOrgType</ra:nativeAttributeName><ra:frameworkAttributeName>scibackOrgType</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
                         </xsd:element>
-                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackOrgRorId" type="xsd:string">
+                        <xsd:element maxOccurs="1" minOccurs="0" name="scibackOrgRorId" type="xsd:string">
                             <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackOrgRorId</ra:nativeAttributeName><ra:frameworkAttributeName>scibackOrgRorId</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
                         </xsd:element>
-                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackOrgRuc" type="xsd:string">
+                        <xsd:element maxOccurs="1" minOccurs="0" name="scibackOrgRuc" type="xsd:string">
                             <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackOrgRuc</ra:nativeAttributeName><ra:frameworkAttributeName>scibackOrgRuc</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
                         </xsd:element>
-                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackAcademicProgramCode" type="xsd:string">
+                        <xsd:element maxOccurs="1" minOccurs="0" name="scibackAcademicProgramCode" type="xsd:string">
                             <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackAcademicProgramCode</ra:nativeAttributeName><ra:frameworkAttributeName>scibackAcademicProgramCode</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
                         </xsd:element>
-                        <xsd:element minOccurs="0" maxOccurs="1" name="scibackAcademicProgramUri" type="xsd:string">
+                        <xsd:element maxOccurs="1" minOccurs="0" name="scibackAcademicProgramUri" type="xsd:string">
                             <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>scibackAcademicProgramUri</ra:nativeAttributeName><ra:frameworkAttributeName>scibackAcademicProgramUri</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
                         </xsd:element>
-                        <xsd:element minOccurs="0" maxOccurs="1" name="c" type="xsd:string">
+                        <xsd:element maxOccurs="1" minOccurs="0" name="c" type="xsd:string">
                             <xsd:annotation><xsd:appinfo><ra:nativeAttributeName>c</ra:nativeAttributeName><ra:frameworkAttributeName>c</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation>
                         </xsd:element>
                     </xsd:sequence>
@@ -14085,7 +14087,7 @@
             <auxiliaryObjectClass>ri:schacEntryMetadata</auxiliaryObjectClass>
             <auxiliaryObjectClass>ri:midPointPerson</auxiliaryObjectClass>
             <auxiliaryObjectClass>ri:upeuPerson</auxiliaryObjectClass>
-            <attribute>
+            <attribute id="435">
                 <ref>ri:dn</ref>
                 <displayName>Distinguished Name (DN)</displayName>
                 <outbound>
@@ -14194,7 +14196,7 @@
                     </source>
                     <expression>
                         <script>
-                            <code>def vocabMap = ['ALUMNI':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff','EMPLOYEE':'employee','MEMBER':'member','AFFILIATE':'affiliate']; if (affiliations == null) return null; def items = affiliations instanceof Collection ? affiliations.toList() : [affiliations]; items.collect { v -> def k = v?.toString()?.trim()?.toUpperCase(); k ? (vocabMap[k] ?: v.toString().trim().toLowerCase()) : null }.findAll { it != null } ?: null</code>
+                            <code>def vocabMap = ['ALUMNI':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff','EMPLOYEE':'employee','MEMBER':'member','AFFILIATE':'affiliate']; if (affiliations == null) return null; def items = affiliations instanceof Collection ? affiliations.toList() : [affiliations]; items.collect { v -&gt; def k = v?.toString()?.trim()?.toUpperCase(); k ? (vocabMap[k] ?: v.toString().trim().toLowerCase()) : null }.findAll { it != null } ?: null</code>
                         </script>
                     </expression>
                 </outbound>
@@ -14224,7 +14226,6 @@
                     </expression>
                 </outbound>
             </attribute>
-            <!-- ── NUEVOS ATRIBUTOS: inetOrgPerson ─────────────────────── -->
             <attribute id="83">
                 <ref>ri:mobile</ref>
                 <displayName>Mobile (celular)</displayName>
@@ -14235,7 +14236,7 @@
                     </source>
                     <expression>
                         <script>
-                            <code>def p = telephoneNumber?.toString()?.trim(); if (!p || p.length() == 0) return null; def clean = p.replaceAll("[^A-Za-z0-9 '()+,-./:=? ]", '').trim(); clean.replaceAll('[^0-9]','').length() >= 7 ? clean : null</code>
+                            <code>def p = telephoneNumber?.toString()?.trim(); if (!p || p.length() == 0) return null; def clean = p.replaceAll("[^A-Za-z0-9 '()+,-./:=? ]", '').trim(); clean.replaceAll('[^0-9]','').length() &gt;= 7 ? clean : null</code>
                         </script>
                     </expression>
                 </outbound>
@@ -14250,11 +14251,6 @@
                     </source>
                 </outbound>
             </attribute>
-            <!-- l (localityName): campus UPeU para Dynamic VLAN en FreeRADIUS 802.1X.
-                 FreeRADIUS lee este atributo y selecciona la VLAN correcta por sede.
-                 Valores esperados: LIMA | JULIACA | TARAPOTO.
-                 Fuente autoritativa: Oracle LAMB SEDE_NOMBRE → $focus/locality (inbound strong).
-                 Ref: smart-wifi/docs/01-arquitectura.md §3.2 Dynamic VLAN RFC 3580. -->
             <attribute id="93">
                 <ref>ri:l</ref>
                 <displayName>Locality / Campus (Dynamic VLAN 802.1X)</displayName>
@@ -14295,19 +14291,9 @@
                     </source>
                 </outbound>
             </attribute>
-            <!-- ── NUEVOS ATRIBUTOS: eduPerson ────────────────────────── -->
             <attribute id="88">
                 <ref>ri:eduPersonEntitlement</ref>
                 <displayName>eduPersonEntitlement (programa académico URI + roles de investigación)</displayName>
-                <!-- UN solo outbound (attribute/outbound es single-valued en el modelo del
-                     resource) que produce el atributo eduPersonEntitlement MULTIVALOR combinando
-                     dos fuentes:
-                       1) academicProgramUri (comportamiento previo, intacto).
-                       2) catálogo cerrado de 17 roles de investigación (contrato RIMS←IGA P8):
-                          por cada roleMembershipRef cuyo target name/identifier esté en el
-                          catálogo, emite urn:sciback:research:role:<token>.
-                     Reality-vs-Policy: lee la pertenencia REAL a roles; sin roles de investigación
-                     (estado actual PROD) el atributo solo lleva el/los programUri. -->
                 <outbound>
                     <strength>strong</strength>
                     <source>
@@ -14319,39 +14305,32 @@
                     </source>
                     <expression>
                         <script>
-                            <code><![CDATA[
-def out = []
-// 1) programa(s) académico(s)
+                            <code>def out = []
 if (academicProgramUri != null) {
     def progs = academicProgramUri instanceof Collection ? academicProgramUri.toList() : [academicProgramUri]
-    progs.each { p -> def v = p?.toString()?.trim(); if (v) out << v }
+    progs.each { p -> def v = p?.toString()?.trim(); if (v) { out.add(v) } }
 }
-// 2) roles de investigación (catálogo cerrado de 17)
-def catalog = ['researcher','advisor','juror','program-director','dean','ogi','vri','accounting','administration','cataloger','evaluation-committee','evaluator-external','evaluator-senior','panel','cei-admin','cei-member','coi-reviewer'] as Set
+def catalog = ['researcher','advisor','juror','program-director','dean','ogi','vri','accounting','administration','cataloger','rims-admin','evaluation-committee','evaluator-external','evaluator-senior','panel','cei-admin','cei-member','coi-reviewer'] as Set
 if (roleMembershipRef != null) {
     def refs = roleMembershipRef instanceof Collection ? roleMembershipRef.toList() : [roleMembershipRef]
     refs.each { r ->
         try {
             def target = midpoint.resolveReferenceIfExists(r)
-            if (target == null) return
-            def n = target.getName()?.getOrig()?.toString()?.trim()?.toLowerCase()
-            def id = (target.asObjectable().getIdentifier())?.toString()?.trim()?.toLowerCase()
-            [n, id].each { tok -> if (tok && catalog.contains(tok)) out << ('urn:sciback:research:role:' + tok) }
-        } catch (e) { /* ref no resoluble: ignora, no rompe provisioning */ }
+            if (target != null) {
+                def n = target.getName()?.getOrig()?.toString()?.trim()?.toLowerCase()
+                def id = null
+                try { id = target.getIdentifier()?.toString()?.trim()?.toLowerCase() } catch (Exception ignored) { }
+                [n, id].each { tok -> if (tok != null) { if (catalog.contains(tok)) { out.add('urn:sciback:research:role:' + tok) } } }
+            }
+        } catch (Exception ignored) { }
     }
 }
-out.unique() ?: null
-]]></code>
+out.unique() ?: null</code>
                         </script>
                     </expression>
                 </outbound>
             </attribute>
-            <!-- ── CONTRATO RIMS←IGA: identificadores y afiliación (FASE 2) ── -->
-            <!-- P1 eduPersonUniqueId: ancla estable de correlación = {name}@upeu.edu.pe
-                 (name = código institucional inmutable, ratificado docs/DECISION-canonical-identifier).
-                 Lee el valor ya computado en extension/sciback:eduPersonUniqueId; fallback a
-                 name@upeu.edu.pe si el slot está vacío. lowercase, no reasignable. -->
-            <attribute>
+            <attribute id="436">
                 <ref>ri:eduPersonUniqueId</ref>
                 <displayName>eduPersonUniqueId (ePUID — ancla de correlación RIMS)</displayName>
                 <outbound>
@@ -14370,11 +14349,7 @@ out.unique() ?: null
                     </expression>
                 </outbound>
             </attribute>
-            <!-- P3 schacPersonalUniqueID: URN del documento PRIMARIO (PII; el RIMS la lee
-                 por cn=rims-reader, nunca va al token). Forma SCHAC
-                 urn:schac:personalUniqueID:pe:<DOCTYPE>:PE:<number>. DNI canónico; CE → token CE
-                 (Anexo C pendiente de registro formal; se usa el doctype tal cual normalizado). -->
-            <attribute>
+            <attribute id="437">
                 <ref>ri:schacPersonalUniqueID</ref>
                 <displayName>SCHAC Personal Unique ID (documento, PII)</displayName>
                 <outbound>
@@ -14384,11 +14359,11 @@ out.unique() ?: null
                     </source>
                     <expression>
                         <script>
-                            <code><![CDATA[
+                            <code>
 import com.evolveum.midpoint.prism.PrismContainerValue
 import javax.xml.namespace.QName
 def NS = 'urn:sciback:midpoint:person'
-def field = { pcv, n -> def p = pcv.findProperty(new com.evolveum.midpoint.prism.path.ItemName(NS, n)); p?.getRealValue()?.toString()?.trim() }
+def field = { pcv, n -&gt; def p = pcv.findProperty(new com.evolveum.midpoint.prism.path.ItemName(NS, n)); p?.getRealValue()?.toString()?.trim() }
 if (identityDocuments == null) return null
 def raw = identityDocuments instanceof Collection ? identityDocuments.toList() : [identityDocuments]
 def pcvs = raw.collect { it instanceof PrismContainerValue ? it : (it.metaClass.respondsTo(it,'asPrismContainerValue') ? it.asPrismContainerValue() : it) }
@@ -14398,15 +14373,12 @@ def type = (field(chosen,'type') ?: 'DNI').toUpperCase()
 def num = field(chosen,'number')
 if (!num) return null
 'urn:schac:personalUniqueID:pe:' + type + ':PE:' + num
-]]></code>
+</code>
                         </script>
                     </expression>
                 </outbound>
             </attribute>
-            <!-- P4 eduPersonOrcid: URL canónica https://orcid.org/{orcid} con validación
-                 ISO 7064 MOD 11-2 del dígito de control. Si el checksum es inválido → null
-                 (no se publica un ORCID corrupto). Acepta entrada con o sin guiones/URL. -->
-            <attribute>
+            <attribute id="438">
                 <ref>ri:eduPersonOrcid</ref>
                 <displayName>eduPersonOrcid (URL canónica, checksum MOD 11-2)</displayName>
                 <outbound>
@@ -14416,36 +14388,26 @@ if (!num) return null
                     </source>
                     <expression>
                         <script>
-                            <code><![CDATA[
+                            <code>
 def raw = orcid?.toString()?.trim()
 if (!raw) return null
 def digits = raw.replaceAll('(?i)https?://orcid.org/','').replaceAll('-','').trim().toUpperCase()
 if (!(digits ==~ /[0-9]{15}[0-9X]/)) return null
 // MOD 11-2 (ISO 7064): valida los 15 primeros digitos contra el digito de control
 int total = 0
-for (int i = 0; i < 15; i++) { total = (total + Character.getNumericValue(digits.charAt(i))) * 2 }
+for (int i = 0; i &lt; 15; i++) { total = (total + Character.getNumericValue(digits.charAt(i))) * 2 }
 int rem = (12 - (total % 11)) % 11
 def check = (rem == 10) ? 'X' : String.valueOf(rem)
 if (check != String.valueOf(digits.charAt(15))) return null
 'https://orcid.org/' + digits.substring(0,4) + '-' + digits.substring(4,8) + '-' + digits.substring(8,12) + '-' + digits.substring(12,16)
-]]></code>
+</code>
                         </script>
                     </expression>
                 </outbound>
             </attribute>
-            <!-- P11 eduPersonAssurance: deriva URIs REFEDS Assurance / NIST IAL a partir de
-                 verifiedBy del documento primario + upeu:dataQualityStatus.
-                   verifiedBy=RENIEC|MIGRACIONES ó dataQualityStatus=reniec_validated → IAP/high (IAL2)
-                   resto con documento → IAP/low (IAL1). Sin documento → null. -->
-            <attribute>
+            <attribute id="439">
                 <ref>ri:eduPersonAssurance</ref>
                 <displayName>eduPersonAssurance (REFEDS / NIST IAL derivado)</displayName>
-                <!-- Fuentes ESCALARES (no el container identityDocuments): evita el
-                     'Unknown compile time class of container value' en la ZERO-set de un
-                     outbound MULTIVALOR. Señal de proofing alto = upeu:dataQualityStatus
-                     (reniec_validated) — el equivalente escalar de verifiedBy=RENIEC, poblado
-                     por el mismo pipeline RENIEC. personalNumber actúa como señal de presencia
-                     (todo foco proyectado a LDAP lo tiene) para emitir el baseline low. -->
                 <outbound>
                     <strength>strong</strength>
                     <source>
@@ -14458,27 +14420,24 @@ if (check != String.valueOf(digits.charAt(15))) return null
                     </source>
                     <expression>
                         <script>
-                            <code><![CDATA[
+                            <code>
 def pn = personalNumber?.toString()?.trim()
 if (!pn) return null
 def dq = dataQualityStatus?.toString()?.trim()?.toLowerCase()
 def high = (dq == 'reniec_validated')
 def out = []
-out << 'https://refeds.org/assurance'
-out << ('https://refeds.org/assurance/IAP/' + (high ? 'high' : 'low'))
-out << (high ? 'https://refeds.org/assurance/profile/cappuccino' : 'https://refeds.org/assurance/profile/espresso')
+out &lt;&lt; 'https://refeds.org/assurance'
+out &lt;&lt; ('https://refeds.org/assurance/IAP/' + (high ? 'high' : 'low'))
+out &lt;&lt; (high ? 'https://refeds.org/assurance/profile/cappuccino' : 'https://refeds.org/assurance/profile/espresso')
 // NIST IAL: IAL2 si verificacion RENIEC; IAL1 (auto-declarado/institucional) en otro caso
 out.add(0, (high ? 'https://refeds.org/assurance/IAP/medium' : 'https://refeds.org/assurance/IAP/local-enterprise'))
 out.unique()
-]]></code>
+</code>
                         </script>
                     </expression>
                 </outbound>
             </attribute>
-            <!-- P5 isni: ISO 27729, atributo LDAP isni (upeuPerson). Forma canónica con espacios
-                 cada 4 dígitos. Lee extension/sciback:isni; valida 16 dígitos (acepta espacios/guiones
-                 de entrada) y normaliza a '0000 0000 0000 0000'. Inválido → null. -->
-            <attribute>
+            <attribute id="440">
                 <ref>ri:isni</ref>
                 <displayName>ISNI (ISO 27729)</displayName>
                 <outbound>
@@ -14499,11 +14458,7 @@ d.substring(0,4) + ' ' + d.substring(4,8) + ' ' + d.substring(8,12) + ' ' + d.su
                     </expression>
                 </outbound>
             </attribute>
-            <!-- O10 eduPersonScopedAffiliation (ePSA): afiliación con ámbito affiliation@scope.
-                 Origen preferente: extension/sciback:scopedAffiliations (ya computado, lleva el
-                 matiz primary). Fallback: deriva de affiliations + scope upeu.edu.pe. Vocabulario
-                 eduPerson de 8 valores. Privacidad: ePSA es lo que se publica a SPs (no ePPN). -->
-            <attribute>
+            <attribute id="441">
                 <ref>ri:eduPersonScopedAffiliation</ref>
                 <displayName>eduPersonScopedAffiliation (ePSA)</displayName>
                 <outbound>
@@ -14529,18 +14484,13 @@ if (scopedAffiliations != null) {
 // 2) fallback: deriva de affiliations
 if (affiliations == null) return null
 def aff = affiliations instanceof Collection ? affiliations.toList() : [affiliations]
-aff.collect { v -> def k = v?.toString()?.trim()?.toUpperCase(); def t = k ? (vocab[k] ?: v.toString().trim().toLowerCase()) : null; t ? (t + '@' + scope) : null }.findAll { it }.unique() ?: null
+aff.collect { v -&gt; def k = v?.toString()?.trim()?.toUpperCase(); def t = k ? (vocab[k] ?: v.toString().trim().toLowerCase()) : null; t ? (t + '@' + scope) : null }.findAll { it }.unique() ?: null
                             </code>
                         </script>
                     </expression>
                 </outbound>
             </attribute>
-            <!-- P7 eduPersonOrgUnitDN: DN(s) del/los nodo(s) academic-program a los que
-                 pertenece la persona, en el subárbol ou=org. Resuelve los OrgType de tipo
-                 academic-program desde roleMembershipRef y construye su DN jerárquico (mismo
-                 algoritmo que la construction OU). El RIMS lo usa para hacer lookup base del
-                 nodo OU (Entregable 2.3 / 4.1.c). Multivalor. -->
-            <attribute>
+            <attribute id="442">
                 <ref>ri:eduPersonOrgUnitDN</ref>
                 <displayName>eduPersonOrgUnitDN (DN del programa en ou=org)</displayName>
                 <outbound>
@@ -14550,27 +14500,27 @@ aff.collect { v -> def k = v?.toString()?.trim()?.toUpperCase(); def t = k ? (vo
                     </source>
                     <expression>
                         <script>
-                            <code><![CDATA[
+                            <code>
 def PROGRAM_ARCH = '9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73'
 def base = 'ou=org,dc=upeu,dc=edu,dc=pe'
-def slug = { v -> v?.toString()?.trim()?.toLowerCase()?.replaceAll('[^a-z0-9._-]+','-')?.replaceAll('(^-+|-+$)','') }
-def asObj = { o -> (o != null && o.metaClass.respondsTo(o,'asObjectable')) ? o.asObjectable() : o }
+def slug = { v -&gt; v?.toString()?.trim()?.toLowerCase()?.replaceAll('[^a-z0-9._-]+','-')?.replaceAll('(^-+|-+$)','') }
+def asObj = { o -&gt; (o != null &amp;&amp; o.metaClass.respondsTo(o,'asObjectable')) ? o.asObjectable() : o }
 def OU_ARCH = ['455d90ab-b54a-4aa7-a402-a6b6ffc0c0d9','a0c2e4e3-911c-4146-9447-f91a1416feff','87f84549-d101-4ae4-8036-42fb6abdfeec','73795c10-2417-4323-b6fa-b88449a8bba4','04c304d1-9205-4097-9c1d-6dce6ba98c7f','9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73'] as Set
-def isOu = { obj -> obj.getArchetypeRef()?.any { OU_ARCH.contains(it?.getOid()?.toString()) } }
-def dnFor = { org ->
+def isOu = { obj -&gt; obj.getArchetypeRef()?.any { OU_ARCH.contains(it?.getOid()?.toString()) } }
+def dnFor = { org -&gt;
     def o = asObj(org)
     def rid = o.getIdentifier()?.toString()?.trim() ?: o.getName()?.getOrig()?.toString()?.trim()
     if (!rid) return null
     def rdns = [slug(rid)]
     def cur = o; def guard = 0
-    while (cur != null && guard < 16) {
+    while (cur != null &amp;&amp; guard &lt; 16) {
         guard++
         def pr = cur.getParentOrgRef()
         if (pr == null || pr.isEmpty()) break
         def parent = midpoint.resolveReferenceIfExists(pr[0]); if (parent == null) break
         def po = asObj(parent)
         def pid = po.getIdentifier()?.toString()?.trim() ?: po.getName()?.getOrig()?.toString()?.trim()
-        if (isOu(po) && pid && !pid.contains('.')) rdns << slug(pid)
+        if (isOu(po) &amp;&amp; pid &amp;&amp; !pid.contains('.')) rdns &lt;&lt; slug(pid)
         cur = po
     }
     rdns.collect { 'ou=' + it }.join(',') + ',' + base
@@ -14578,22 +14528,21 @@ def dnFor = { org ->
 if (roleMembershipRef == null) return null
 def refs = roleMembershipRef instanceof Collection ? roleMembershipRef.toList() : [roleMembershipRef]
 def out = []
-refs.each { r ->
+refs.each { r -&gt;
     try {
         if (r?.getType()?.getLocalPart() != 'OrgType') return
         def org = midpoint.resolveReferenceIfExists(r); if (org == null) return
         def arefs = asObj(org).getArchetypeRef()
         def isProgram = arefs?.any { it?.getOid()?.toString() == PROGRAM_ARCH }
-        if (isProgram) { def d = dnFor(org); if (d) out << d }
+        if (isProgram) { def d = dnFor(org); if (d) out &lt;&lt; d }
     } catch (e) { }
 }
 out.unique() ?: null
-]]></code>
+</code>
                         </script>
                     </expression>
                 </outbound>
             </attribute>
-            <!-- ── NUEVOS ATRIBUTOS: SCHAC schacPersonalCharacteristics ── -->
             <attribute id="89">
                 <ref>ri:schacGender</ref>
                 <displayName>SCHAC Gender (ISO 5218, integer)</displayName>
@@ -14634,7 +14583,6 @@ out.unique() ?: null
                     </source>
                 </outbound>
             </attribute>
-            <!-- ── NUEVOS ATRIBUTOS: SCHAC schacEntryMetadata ────────── -->
             <attribute id="92">
                 <ref>ri:schacExpiryDate</ref>
                 <displayName>SCHAC Expiry Date (terminationDate → dateTime)</displayName>
@@ -14650,47 +14598,14 @@ out.unique() ?: null
                     </expression>
                 </outbound>
             </attribute>
-
-            <!-- jpegPhoto: consume la propiedad nativa $focus/jpegPhoto ya poblada.
-                 R10 (FASE 4): este outbound YA NO re-descarga el binario desde
-                 upeu:photoUrl. El Bloque I del UserTemplate-Person-Base hace la
-                 ÚNICA descarga HTTP (photoUrl → jpegPhoto). Este outbound, igual
-                 que cualquier otro consumidor (Koha, Entra ID), solo lee la
-                 propiedad nativa jpegPhoto ya en memoria.
-                 Patrón canónico: una sola descarga (Bloque I) → jpegPhoto →
-                 N outbounds que consumen $focus/jpegPhoto.
-                 jpegPhoto null (usuario sin foto): identity mapping retorna null,
-                 no escribe el atributo en LDAP — no rompe el provisioning. -->
-            <attribute>
+            <attribute id="443">
                 <ref>ri:jpegPhoto</ref>
-                <!-- REPLACE semantics (fix inappropriateMatching, 2026-06-12):
-                     El atributo LDAP jpegPhoto (RFC 2798, SYNTAX 1.3.6.1.4.1.1466.115.121.1.28)
-                     NO tiene EQUALITY matching rule. El schema nativo lo declara multivaluado
-                     (maxOccurs unbounded), por lo que MidPoint, al sustituir una foto por otra,
-                     emitía un value-delta (valuesToAdd + valuesToDelete). El delete value-specific
-                     exige que el servidor matchee el valor viejo contra los existentes -> sin
-                     EQUALITY rule -> inappropriateMatching (18) -> FATAL_ERROR -> rollback de la
-                     reconcile completa (jpegPhoto nunca se sustituía; solo funcionaba el primer ADD).
-                     Forzando maxOccurs=1 en la capa model, MidPoint produce valuesToReplace y el
-                     conector polygon-LDAP emite un MODIFY/REPLACE del atributo completo, que NO
-                     requiere matchear el valor previo. Semánticamente jpegPhoto es 1 foto/persona.
-                     usePermissiveModify=always (connector) NO resuelve esto: es ortogonal (permite
-                     add-existente/delete-inexistente, no exime del matching del delete). -->
-                <limitations>
+                <limitations id="444">
                     <layer>model</layer>
                     <maxOccurs>1</maxOccurs>
                 </limitations>
-                <outbound>
-                    <name>jpegPhoto-from-focus-ldap</name>
-                    <strength>normal</strength>
-                    <source>
-                        <path>$focus/jpegPhoto</path>
-                    </source>
-                </outbound>
             </attribute>
-
-            <!-- ── CALIDAD DE DATOS / VALIDACIÓN RENIEC (upeuPerson) ──────────── -->
-            <attribute>
+            <attribute id="445">
                 <ref>ri:upeuDataQualityStatus</ref>
                 <displayName>Data Quality Status (RENIEC)</displayName>
                 <outbound>
@@ -14700,16 +14615,9 @@ out.unique() ?: null
                     </source>
                 </outbound>
             </attribute>
-
-            <attribute>
+            <attribute id="446">
                 <ref>ri:upeuReniecValidationDate</ref>
                 <displayName>RENIEC Validation Date (generalizedTime)</displayName>
-                <!-- El atributo LDAP upeuReniecValidationDate es generalizedTime
-                     (SYNTAX 1.3.6.1.4.1.1466.115.121.1.24). El schema del resource lo
-                     declara xsd:dateTime y el conector polygon LDAP serializa
-                     XMLGregorianCalendar -> generalizedTime nativamente. Mapeo directo,
-                     sin conversion a String (causaba HTTP 500: XMLGregorianCalendar
-                     does not conform to xsd:string). Fix 2026-06-03. -->
                 <outbound>
                     <strength>strong</strength>
                     <source>
@@ -14717,16 +14625,8 @@ out.unique() ?: null
                     </source>
                 </outbound>
             </attribute>
-
         </objectType>
-
-        <!-- ══ CONTRATO RIMS←IGA Entregable 2 — proyección del árbol OrgType a LDAP ══
-             Cada OrgType (institution/campus/faculty/department/academic-program) se proyecta
-             como una entry organizationalUnit + aux scibackOrgUnit bajo ou=org,dc=upeu,dc=edu,dc=pe,
-             con DN JERÁRQUICO derivado de la cadena parentOrgRef (RDN = identifier del nodo).
-             Disparado por inducement (construction kind=generic intent=ou) en los archetypes org.
-             El RIMS lee este subárbol vía cn=rims-reader (Entregable 4). -->
-        <objectType>
+        <objectType id="447">
             <kind>generic</kind>
             <intent>ou</intent>
             <displayName>OrgUnit LDAP (árbol organizativo)</displayName>
@@ -14734,7 +14634,7 @@ out.unique() ?: null
             <default>false</default>
             <objectClass>ri:organizationalUnit</objectClass>
             <auxiliaryObjectClass>ri:scibackOrgUnit</auxiliaryObjectClass>
-            <attribute>
+            <attribute id="448">
                 <ref>ri:dn</ref>
                 <displayName>DN jerárquico (RDN=identifier, bajo ou=org)</displayName>
                 <outbound>
@@ -14748,31 +14648,31 @@ out.unique() ?: null
                     </source>
                     <expression>
                         <script>
-                            <code><![CDATA[
+                            <code>
 import javax.naming.ldap.Rdn
 def base = 'ou=org,dc=upeu,dc=edu,dc=pe'
 // RDN de este nodo = identifier (fallback a name). Normalizado a minúsculas, slug seguro.
 // RDN del nodo: identifier salvo que sea un dominio (institución raíz, contiene '.'),
 // en cuyo caso se usa el name (UPeU → upeu) para no meter puntos en el RDN del OU.
 def rawId = identifier?.toString()?.trim()
-def rdnVal = (rawId && !rawId.contains('.')) ? rawId : focusName?.toString()?.trim()
+def rdnVal = (rawId &amp;&amp; !rawId.contains('.')) ? rawId : focusName?.toString()?.trim()
 if (!rdnVal) return null
-def slug = { v -> v?.toString()?.trim()?.toLowerCase()?.replaceAll('[^a-z0-9._-]+','-')?.replaceAll('(^-+|-+$)','') }
+def slug = { v -&gt; v?.toString()?.trim()?.toLowerCase()?.replaceAll('[^a-z0-9._-]+','-')?.replaceAll('(^-+|-+$)','') }
 // Camino jerárquico: recorre parentOrgRef hacia la raíz, apilando RDNs de los ancestros
 // que también son nodos OU proyectados (cualquier OrgType con identifier/name). La institución
 // raíz (identifier=upeu.edu.pe) NO se incluye como OU intermedia: es el ancla ou=org.
 def parents = []
 // helper: resolveReferenceIfExists puede devolver objectable o PrismObject → normaliza a objectable
-def asObj = { o -> (o != null && o.metaClass.respondsTo(o,'asObjectable')) ? o.asObjectable() : o }
+def asObj = { o -&gt; (o != null &amp;&amp; o.metaClass.respondsTo(o,'asObjectable')) ? o.asObjectable() : o }
 // Solo se apilan en el DN los ancestros que TAMBIÉN son nodos OU proyectados (uno de los 5
 // archetypes). El árbol real UPeU intercala nodos governance (Rectorado, Vicerrectorado) entre
 // facultad e institución; esos NO se proyectan como OU y se SALTAN para no romper el DN.
 def OU_ARCH = ['455d90ab-b54a-4aa7-a402-a6b6ffc0c0d9','a0c2e4e3-911c-4146-9447-f91a1416feff','87f84549-d101-4ae4-8036-42fb6abdfeec','73795c10-2417-4323-b6fa-b88449a8bba4','04c304d1-9205-4097-9c1d-6dce6ba98c7f','9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73'] as Set
-def isOu = { obj -> obj.getArchetypeRef()?.any { OU_ARCH.contains(it?.getOid()?.toString()) } }
+def isOu = { obj -&gt; obj.getArchetypeRef()?.any { OU_ARCH.contains(it?.getOid()?.toString()) } }
 // 'focus' es el objectable (OrgType).
 def curObjable = focus
 def guard = 0
-while (curObjable != null && guard < 16) {
+while (curObjable != null &amp;&amp; guard &lt; 16) {
     guard++
     def pr = curObjable.getParentOrgRef()
     if (pr == null || pr.isEmpty()) break
@@ -14781,19 +14681,19 @@ while (curObjable != null && guard < 16) {
     def po = asObj(parent)
     def pid = po.getIdentifier()?.toString()?.trim() ?: po.getName()?.getOrig()?.toString()?.trim()
     // apila solo si es nodo OU proyectado y su RDN no es dominio (institución raíz contiene '.')
-    if (isOu(po) && pid && !pid.contains('.')) parents << slug(pid)
+    if (isOu(po) &amp;&amp; pid &amp;&amp; !pid.contains('.')) parents &lt;&lt; slug(pid)
     // la institución (identifier con '.') es el ancla ou=org → no se apila pero sí corta el ascenso
     curObjable = po
 }
 def rdns = [slug(rdnVal)] + parents   // [este, padre, abuelo, ...]
 def dn = rdns.collect { 'ou=' + it }.join(',') + ',' + base
 dn
-]]></code>
+</code>
                         </script>
                     </expression>
                 </outbound>
             </attribute>
-            <attribute>
+            <attribute id="449">
                 <ref>ri:ou</ref>
                 <displayName>ou (RDN = identifier)</displayName>
                 <outbound>
@@ -14807,16 +14707,16 @@ dn
                     </source>
                     <expression>
                         <script>
-                            <code><![CDATA[
+                            <code>
 def rawId = identifier?.toString()?.trim()
-def v = (rawId && !rawId.contains('.')) ? rawId : focusName?.toString()?.trim()
+def v = (rawId &amp;&amp; !rawId.contains('.')) ? rawId : focusName?.toString()?.trim()
 v ? v.toLowerCase().replaceAll('[^a-z0-9._-]+','-').replaceAll('(^-+|-+$)','') : null
-]]></code>
+</code>
                         </script>
                     </expression>
                 </outbound>
             </attribute>
-            <attribute>
+            <attribute id="450">
                 <ref>ri:description</ref>
                 <displayName>description (displayName del OrgType — O2)</displayName>
                 <outbound>
@@ -14830,15 +14730,15 @@ v ? v.toLowerCase().replaceAll('[^a-z0-9._-]+','-').replaceAll('(^-+|-+$)','') :
                     </source>
                     <expression>
                         <script>
-                            <code><![CDATA[
+                            <code>
 def d = displayName?.toString()?.trim()
 d ?: focusName?.toString()?.trim()
-]]></code>
+</code>
                         </script>
                     </expression>
                 </outbound>
             </attribute>
-            <attribute>
+            <attribute id="451">
                 <ref>ri:scibackOrgType</ref>
                 <displayName>scibackOrgType (de archetypeRef — O6)</displayName>
                 <outbound>
@@ -14848,7 +14748,7 @@ d ?: focusName?.toString()?.trim()
                     </source>
                     <expression>
                         <script>
-                            <code><![CDATA[
+                            <code>
 def map = [
   '455d90ab-b54a-4aa7-a402-a6b6ffc0c0d9':'institution',
   'a0c2e4e3-911c-4146-9447-f91a1416feff':'campus',
@@ -14864,12 +14764,12 @@ if (archetypeRef == null) return null
 def refs = archetypeRef instanceof Collection ? archetypeRef.toList() : [archetypeRef]
 for (r in refs) { def t = map[r?.getOid()?.toString()]; if (t) return t }
 null
-]]></code>
+</code>
                         </script>
                     </expression>
                 </outbound>
             </attribute>
-            <attribute>
+            <attribute id="452">
                 <ref>ri:scibackOrgRorId</ref>
                 <displayName>scibackOrgRorId (O3)</displayName>
                 <outbound>
@@ -14879,7 +14779,7 @@ null
                     </source>
                 </outbound>
             </attribute>
-            <attribute>
+            <attribute id="453">
                 <ref>ri:scibackOrgRuc</ref>
                 <displayName>scibackOrgRuc (O4)</displayName>
                 <outbound>
@@ -14889,7 +14789,7 @@ null
                     </source>
                 </outbound>
             </attribute>
-            <attribute>
+            <attribute id="454">
                 <ref>ri:scibackAcademicProgramCode</ref>
                 <displayName>scibackAcademicProgramCode (O8)</displayName>
                 <outbound>
@@ -14899,7 +14799,7 @@ null
                     </source>
                 </outbound>
             </attribute>
-            <attribute>
+            <attribute id="455">
                 <ref>ri:scibackAcademicProgramUri</ref>
                 <displayName>scibackAcademicProgramUri (O9)</displayName>
                 <outbound>
@@ -14909,7 +14809,7 @@ null
                     </source>
                 </outbound>
             </attribute>
-            <attribute>
+            <attribute id="456">
                 <ref>ri:c</ref>
                 <displayName>c (país — O5, fijo PE)</displayName>
                 <outbound>
@@ -14922,11 +14822,6 @@ null
         </objectType>
     </schemaHandling>
     <capabilities>
-        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
-            <!-- activation capability removida: LDAP es Identity Cache read-only de MidPoint;
-                 administrativeStatus=null en usuarios LAMB causaba FATAL_ERROR al intentar
-                 escribir midPointAccountStatus sin valor definido para null. 2026-05-19 -->
-        </configured>
         <cachingMetadata>
             <retrievalTimestamp>2026-05-15T12:10:14.876Z</retrievalTimestamp>
             <serialNumber>a86a6ecef82bd365-c244fe765e81baa5</serialNumber>
@@ -14958,6 +14853,7 @@ null
             <cap:pagedSearch/>
             <cap:auxiliaryObjectClasses/>
         </native>
+        <configured/>
     </capabilities>
     <synchronization>
         <objectSynchronization id="75">
@@ -14986,8 +14882,6 @@ null
             </reaction>
             <reaction>
                 <situation>unmatched</situation>
-                <!-- noReaction: LDAP es proyector outbound puro, nunca fuente de creación de identidades.
-                     addFocus era anti-patrón (iga-canonical-standards §1.3). 2026-06-03. -->
                 <action>
                     <handlerUri>http://midpoint.evolveum.com/xml/ns/public/model/action-3#noReaction</handlerUri>
                 </action>

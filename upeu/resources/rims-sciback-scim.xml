@@ -1,0 +1,575 @@
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="09a81691-37fe-4ffe-b00b-64186787895e" version="66">
+    <name>RIMS-SciBack</name>
+    <description>
+        Provisioning PUSH de identidad + roles RIMS hacia la API SCIM 2.0 que el
+        RIMS expone en /scim/v2. Correlacion por externalId = eduPersonUniqueId
+        (legajo@scope), NUNCA por correo. Los roles RIMS (rims-admin, cataloger)
+        se inducen desde los AR-RIMS-* y viajan en el atributo SCIM roles[].
+        Borrado = soft (active=false). Fuente: docs/architecture/provisioning-midpoint-rims.md
+    </description>
+    <operationalState>
+        <lastAvailabilityStatus>up</lastAvailabilityStatus>
+        <message>Status set to UP because resource schema was successfully fetched</message>
+        <timestamp>2026-06-30T21:09:30.945-05:00</timestamp>
+        <nodeId>DefaultNode</nodeId>
+    </operationalState>
+    <operationalStateHistory id="531">
+        <lastAvailabilityStatus>up</lastAvailabilityStatus>
+        <message>Status set to UP because resource schema was successfully fetched</message>
+        <timestamp>2026-06-30T21:09:30.945-05:00</timestamp>
+        <nodeId>DefaultNode</nodeId>
+    </operationalStateHistory>
+    <connectorRef oid="be4184fb-b3e1-4303-948e-189c53b452ba" relation="org:default" type="c:ConnectorType"/>
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.rest/net.tirasa.connid.bundles.rest.RESTConnector">
+            <cfg:baseAddress>https://rims.upeu.edu.pe/scim/v2</cfg:baseAddress>
+            <cfg:accept>application/scim+json</cfg:accept>
+            <cfg:contentType>application/scim+json</cfg:contentType>
+            <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
+            <cfg:password>
+                <t:clearValue>8TClL6o1aTwypVSYUxvOgeeWwdz7REym</t:clearValue>
+            </cfg:password>
+            <cfg:clientId>rims-provisioning</cfg:clientId>
+            <cfg:createScript>
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+def first = { k -&gt; def v = attributes.get(k); (v instanceof Collection) ? (v.isEmpty()? null : v.iterator().next()) : v }
+def all   = { k -&gt; def v = attributes.get(k); (v == null) ? [] : (v instanceof Collection ? v.toList() : [v]) }
+
+client.replaceHeader('Authorization', 'Bearer ' + ({ def cid = configuration.getClientId(); def secPlain = org.identityconnectors.common.security.SecurityUtil.decrypt(configuration.getPassword()); def form = 'grant_type=client_credentials&amp;client_id=' + java.net.URLEncoder.encode(cid,'UTF-8') + '&amp;client_secret=' + java.net.URLEncoder.encode(secPlain,'UTF-8') + '&amp;scope=' + java.net.URLEncoder.encode('scim:write','UTF-8'); def wc = org.apache.cxf.jaxrs.client.WebClient.create('https://keyid.upeu.edu.pe/realms/upeu/protocol/openid-connect/token').type('application/x-www-form-urlencoded').accept('application/json'); def rp = wc.post(form); def tt = rp.readEntity(String.class); rp.close(); def tok = new groovy.json.JsonSlurper().parseText(tt)?.access_token; if (!tok) { throw new RuntimeException('RIMS OAuth2 client_credentials fallo: ' + tt) }; tok.toString() })())
+def externalId = id   // __NAME__
+def active = first('__ENABLE__')
+
+def body = [
+    schemas    : ['urn:ietf:params:scim:schemas:core:2.0:User'],
+    externalId : externalId,
+    userName   : first('userName') ?: externalId,
+    displayName: first('displayName'),
+    name       : [ givenName: first('givenName'), familyName: first('familyName') ],
+    active     : (active == null) ? true : Boolean.valueOf(active.toString()),
+    emails     : (first('email') ? [[ value: first('email'), primary: true ]] : []),
+    roles      : all('roles').collect { [ value: it.toString() ] },
+    campus     : all('campus').collect { it.toString() }
+]
+
+def resp = client.replacePath('/Users')
+        .accept('application/scim+json').type('application/scim+json')
+        .post(JsonOutput.toJson(body))
+def status = resp.getStatus()
+def txt = resp.readEntity(String.class)
+resp.close()
+
+if (status == 409) { throw new org.identityconnectors.framework.common.exceptions.AlreadyExistsException("externalId ya existe: " + externalId) }
+if (status != 201 &amp;&amp; status != 200) { throw new RuntimeException("RIMS POST /Users HTTP " + status + " - " + txt) }
+
+def created = new JsonSlurper().parseText(txt)
+return created.id?.toString()
+</cfg:createScript>
+            <cfg:updateScript>
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+client.replaceHeader('Authorization', 'Bearer ' + ({ def cid = configuration.getClientId(); def secPlain = org.identityconnectors.common.security.SecurityUtil.decrypt(configuration.getPassword()); def form = 'grant_type=client_credentials' + '~client_id=' + java.net.URLEncoder.encode(cid,'UTF-8') + '~client_secret=' + java.net.URLEncoder.encode(secPlain,'UTF-8') + '~scope=' + java.net.URLEncoder.encode('scim:write','UTF-8'); form = form.replace('~', String.valueOf((char) 38)); def wc = org.apache.cxf.jaxrs.client.WebClient.create('https://keyid.upeu.edu.pe/realms/upeu/protocol/openid-connect/token').type('application/x-www-form-urlencoded').accept('application/json'); def rp = wc.post(form); def tt = rp.readEntity(String.class); rp.close(); def tok = new groovy.json.JsonSlurper().parseText(tt)?.access_token; if (!tok) { throw new RuntimeException('RIMS OAuth2 client_credentials fallo: ' + tt) }; tok.toString() })())
+
+def slurper = new JsonSlurper()
+
+// UPDATE_DELTA (commons-scripted): bindings valuesToAdd/valuesToRemove/valuesToReplace.
+// Estrategia read-modify-write: GET estado actual, aplicar deltas, PUT completo
+// (el PUT del SCIM del RIMS es idempotente; PATCH via CXF WebClient es problematico).
+def rg = client.replacePath('/Users/' + uid).accept('application/scim+json').get()
+def rgStatus = rg.getStatus()
+def rgTxt = rg.readEntity(String.class)
+rg.close()
+if (rgStatus != 200) { throw new RuntimeException('RIMS GET /Users/' + uid + ' HTTP ' + rgStatus + ' - ' + rgTxt) }
+def cur = slurper.parseText(rgTxt)
+
+def roles  = ((cur.roles ?: []).collect { it.value?.toString() }.findAll { it != null }) as LinkedHashSet
+def campus = ((cur.campus ?: []).collect { it?.toString() }.findAll { it != null }) as LinkedHashSet
+def body = [
+    schemas    : ['urn:ietf:params:scim:schemas:core:2.0:User'],
+    id         : uid,
+    userName   : cur.userName,
+    displayName: cur.displayName,
+    name       : [ givenName: cur.name?.givenName, familyName: cur.name?.familyName ],
+    active     : (cur.active == null) ? true : (cur.active as boolean),
+    emails     : cur.emails ?: []
+]
+
+def asList = { v -&gt; (v == null) ? [] : (v instanceof Collection ? v.toList() : [v]) }
+
+def apply = { String mode, Map m -&gt;
+    if (m == null) return
+    m.each { k, vraw -&gt;
+        def vals = asList(vraw)
+        if (k == 'roles') {
+            def rs = vals.collect { it.toString() }
+            if (mode == 'replace') { roles = rs as LinkedHashSet }
+            if (mode == 'add')     { roles.addAll(rs) }
+            if (mode == 'remove')  { roles.removeAll(rs) }
+        } else if (k == 'campus') {
+            def cs = vals.collect { it.toString() }
+            if (mode == 'replace') { campus = cs as LinkedHashSet }
+            if (mode == 'add')     { campus.addAll(cs) }
+            if (mode == 'remove')  { campus.removeAll(cs) }
+        } else if (k == '__ENABLE__') {
+            if (!vals.isEmpty()) { body.active = Boolean.valueOf(vals[0].toString()) }
+        } else if (k == 'userName') {
+            if (mode == 'replace') { if (!vals.isEmpty()) { body.userName = vals[0].toString() } }
+        } else if (k == 'displayName') {
+            if (mode != 'remove') { body.displayName = vals.isEmpty() ? null : vals[0].toString() }
+        } else if (k == 'givenName') {
+            if (mode != 'remove') { body.name.givenName = vals.isEmpty() ? null : vals[0].toString() }
+        } else if (k == 'familyName') {
+            if (mode != 'remove') { body.name.familyName = vals.isEmpty() ? null : vals[0].toString() }
+        } else if (k == 'email') {
+            if (mode == 'remove') { body.emails = [] }
+            else { body.emails = vals.isEmpty() ? [] : [[ value: vals[0].toString(), primary: true ]] }
+        }
+    }
+}
+
+if (binding.hasVariable('valuesToReplace')) { apply('replace', valuesToReplace) }
+if (binding.hasVariable('valuesToAdd'))     { apply('add',     valuesToAdd) }
+if (binding.hasVariable('valuesToRemove'))  { apply('remove',  valuesToRemove) }
+if (binding.hasVariable('attributes'))      { apply('replace', attributes) }
+
+body.roles  = roles.collect  { [ value: it ] }
+body.campus = campus.collect { it }
+
+def resp = client.replacePath('/Users/' + uid)
+        .accept('application/scim+json').type('application/scim+json')
+        .put(JsonOutput.toJson(body))
+def status = resp.getStatus()
+def txt = resp.readEntity(String.class)
+resp.close()
+if (!(status in [200, 204])) { throw new RuntimeException('RIMS PUT /Users/' + uid + ' HTTP ' + status + ' - ' + txt) }
+return uid
+</cfg:updateScript>
+            <cfg:deleteScript>
+import groovy.json.JsonOutput
+client.replaceHeader('Authorization', 'Bearer ' + ({ def cid = configuration.getClientId(); def secPlain = org.identityconnectors.common.security.SecurityUtil.decrypt(configuration.getPassword()); def form = 'grant_type=client_credentials&amp;client_id=' + java.net.URLEncoder.encode(cid,'UTF-8') + '&amp;client_secret=' + java.net.URLEncoder.encode(secPlain,'UTF-8') + '&amp;scope=' + java.net.URLEncoder.encode('scim:write','UTF-8'); def wc = org.apache.cxf.jaxrs.client.WebClient.create('https://keyid.upeu.edu.pe/realms/upeu/protocol/openid-connect/token').type('application/x-www-form-urlencoded').accept('application/json'); def rp = wc.post(form); def tt = rp.readEntity(String.class); rp.close(); def tok = new groovy.json.JsonSlurper().parseText(tt)?.access_token; if (!tok) { throw new RuntimeException('RIMS OAuth2 client_credentials fallo: ' + tt) }; tok.toString() })())
+def patch = [
+    schemas    : ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+    Operations : [[ op: 'replace', path: 'active', value: false ]]
+]
+def resp = client.replacePath('/Users/' + uid)
+        .accept('application/scim+json').type('application/scim+json')
+        .invoke('PATCH', JsonOutput.toJson(patch))
+def status = resp.getStatus()
+def txt = resp.readEntity(String.class)
+resp.close()
+if (status != 200 &amp;&amp; status != 204) { throw new RuntimeException("RIMS soft-delete /Users/" + uid + " HTTP " + status + " - " + txt) }
+</cfg:deleteScript>
+            <cfg:searchScript>
+import groovy.json.JsonSlurper
+
+// Bearer OAuth2 client_credentials inline (secret en 'password' GuardedString).
+def BEARER = 'Bearer ' + ({ def cid = configuration.getClientId(); def secPlain = org.identityconnectors.common.security.SecurityUtil.decrypt(configuration.getPassword()); def form = 'grant_type=client_credentials&amp;client_id=' + java.net.URLEncoder.encode(cid,'UTF-8') + '&amp;client_secret=' + java.net.URLEncoder.encode(secPlain,'UTF-8') + '&amp;scope=' + java.net.URLEncoder.encode('scim:write','UTF-8'); def wc = org.apache.cxf.jaxrs.client.WebClient.create('https://keyid.upeu.edu.pe/realms/upeu/protocol/openid-connect/token').type('application/x-www-form-urlencoded').accept('application/json'); def rp = wc.post(form); def tt = rp.readEntity(String.class); rp.close(); def tok = new groovy.json.JsonSlurper().parseText(tt)?.access_token; if (!tok) { throw new RuntimeException('RIMS OAuth2 client_credentials fallo: ' + tt) }; tok.toString() })()
+
+def slurper = new JsonSlurper()
+def results = []
+
+// RESTConnector 1.1.0 (Tirasa) espera que el searchScript RETORNE List&lt;Map&gt;; el
+// bundle convierte cada Map en ConnectorObject. Claves especiales __UID__/__NAME__.
+// (NO usar handler(ConnectorObject): ese binding no existe en este bundle.)
+def toMap = { u -&gt;
+    def m = [:]
+    m['__UID__']  = u.id?.toString()
+    m['__NAME__'] = u.externalId?.toString() ?: u.userName?.toString()
+    if (u.userName    != null) m['userName']    = u.userName?.toString()
+    if (u.displayName != null) m['displayName'] = u.displayName?.toString()
+    if (u.name?.givenName  != null) m['givenName']  = u.name.givenName?.toString()
+    if (u.name?.familyName != null) m['familyName'] = u.name.familyName?.toString()
+    m['__ENABLE__'] = (u.active == null) ? true : (u.active as boolean)
+    def primaryMail = u.emails?.find { it.primary }?.value ?: u.emails?.getAt(0)?.value
+    if (primaryMail != null) m['email'] = primaryMail.toString()
+    m['roles'] = (u.roles ?: []).collect { it.value?.toString() }.findAll { it != null }
+    // campus[] llega como lista de strings simples (no objetos {value}).
+    m['campus'] = (u.campus ?: []).collect { it?.toString() }.findAll { it != null }
+    return m
+}
+
+def byUid = null
+def byName = null
+if (query != null) {
+    def ct = query.get('conditionType')?.toString()
+    def left = query.get('left')?.toString()
+    def right = query.get('right')?.toString()
+    if (ct == 'EQUALS') {
+        if (left == '__UID__') { byUid = right }
+        if (left == '__NAME__') { byName = right }
+        if (left == 'externalId') { byName = right }
+    }
+}
+
+if (byUid != null) {
+    def r = client.replacePath('/Users/' + byUid).accept('application/scim+json').header('Authorization', BEARER).get()
+    if (r.getStatus() == 200) { results &lt;&lt; toMap(slurper.parseText(r.readEntity(String.class))) }
+    r.close()
+    return results
+}
+
+int startIndex = 1
+int count = 100
+while (true) {
+    def wc = client.replacePath('/Users').accept('application/scim+json').header('Authorization', BEARER)
+    if (byName != null) wc = wc.replaceQueryParam('filter', 'externalId eq "' + byName + '"')
+    wc = wc.replaceQueryParam('startIndex', startIndex).replaceQueryParam('count', count)
+    def r = wc.get()
+    def status = r.getStatus()
+    def txt = r.readEntity(String.class)
+    r.close()
+    if (status != 200) { throw new RuntimeException("RIMS GET /Users HTTP " + status + " - " + txt) }
+    def list = slurper.parseText(txt)
+    def resources = list.Resources ?: []
+    resources.each { results &lt;&lt; toMap(it) }
+    def total = (list.totalResults ?: resources.size()) as int
+    if (byName != null || resources.isEmpty() || (startIndex - 1 + resources.size()) &gt;= total) break
+    startIndex += count
+}
+return results
+</cfg:searchScript>
+            <cfg:schemaScript>
+import org.identityconnectors.framework.common.objects.*
+
+// IMPORTANTE: el RESTConnector (AbstractScriptedConnector) INYECTA el binding
+// 'builder' (un SchemaBuilder ya instanciado) y USA ESE para construir el schema;
+// el valor de retorno del script se IGNORA. Por eso NO se debe crear un
+// 'new SchemaBuilder(...)' local (shadowing) -&gt; produciria "Must be at least one
+// ObjectClassInfo object!" porque el object class se anadiria al builder equivocado.
+// Se opera directamente sobre el 'builder' inyectado.
+def ocBuilder = new ObjectClassInfoBuilder()
+ocBuilder.setType(ObjectClass.ACCOUNT_NAME)   // __ACCOUNT__
+
+// __NAME__ = externalId (clave de correlacion, requerido, no actualizable aqui)
+ocBuilder.addAttributeInfo(Name.INFO)
+// __UID__ = SCIM id (asignado por RIMS, read-only). ConnId lo aporta SIEMPRE de
+// forma implicita en cada ObjectClass; este bundle (RESTConnector 1.1.0) NO expone
+// la constante Uid.INFO (MissingPropertyException), asi que NO se declara aqui.
+
+def s = { name, multi=false, updatable=true -&gt;
+    def b = new AttributeInfoBuilder(name, String.class)
+    b.setMultiValued(multi); b.setUpdateable(updatable); b.setCreateable(true)
+    ocBuilder.addAttributeInfo(b.build())
+}
+s('userName')
+s('displayName')
+s('givenName')
+s('familyName')
+s('email')
+ocBuilder.addAttributeInfo(OperationalAttributeInfos.ENABLE)   // active
+s('roles', true)   // multivaluado
+s('campus', true)  // multivaluado: campus del catalogador (LIMA|JULIACA|TARAPOTO|ISTAT)
+
+// 'builder' es el SchemaBuilder inyectado por el conector (no crear uno nuevo).
+builder.defineObjectClass(ocBuilder.build())
+</cfg:schemaScript>
+            <cfg:testScript>
+import groovy.json.JsonSlurper
+import org.identityconnectors.common.security.SecurityUtil
+// --- OAuth2 client_credentials inline (robusto: no depende del generateToken()
+//     nativo del RESTConnector 1.1.0, que no soporta client_credentials). El
+//     client_secret viaja en 'password' (GuardedString) y se descifra aqui. ---
+def __rimsBearer = {
+    def cid = configuration.getClientId()
+    def secPlain = SecurityUtil.decrypt(configuration.getPassword())
+    def form = 'grant_type=client_credentials&amp;client_id=' + java.net.URLEncoder.encode(cid,'UTF-8') +
+               '&amp;client_secret=' + java.net.URLEncoder.encode(secPlain,'UTF-8') +
+               '&amp;scope=' + java.net.URLEncoder.encode('scim:write','UTF-8')
+    def wc = org.apache.cxf.jaxrs.client.WebClient.create('https://keyid.upeu.edu.pe/realms/upeu/protocol/openid-connect/token')
+            .type('application/x-www-form-urlencoded').accept('application/json')
+    def rp = wc.post(form); def tt = rp.readEntity(String.class); rp.close()
+    def tok = new JsonSlurper().parseText(tt)?.access_token
+    if (!tok) { throw new RuntimeException('RIMS OAuth2 client_credentials fallo: ' + tt) }
+    return tok.toString()
+}
+client.replaceHeader('Authorization', 'Bearer ' + __rimsBearer())
+def r = client.replacePath('/Users').replaceQueryParam('count', 1)
+        .accept('application/scim+json').get()
+def code = r.getStatus()
+r.close()
+if (code != 200) {
+    throw new RuntimeException("RIMS SCIM GET /Users devolvio HTTP " + code + " (esperado 200; 401/403 = auth OAuth2 fallida)")
+}
+log.ok("RIMS SCIM endpoint alcanzable y autenticado (HTTP {0})", code)
+</cfg:testScript>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+    <schema>
+        <cachingMetadata>
+            <retrievalTimestamp>2026-06-30T21:09:30.945-05:00</retrievalTimestamp>
+            <serialNumber>6b5014e834cfb771-9e285983248870c6</serialNumber>
+        </cachingMetadata>
+        <definition>
+            <xsd:schema xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:ra="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:tns="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+                <xsd:import namespace="http://prism.evolveum.com/xml/ns/public/annotation-3"/>
+                <xsd:import namespace="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"/>
+                <xsd:import namespace="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3"/>
+                <xsd:complexType name="AccountObjectClass">
+                    <xsd:annotation>
+                        <xsd:appinfo>
+                            <a:container>true</a:container>
+                            <ra:resourceObject>true</ra:resourceObject>
+                            <ra:nativeObjectClass>__ACCOUNT__</ra:nativeObjectClass>
+                            <ra:default>true</ra:default>
+                            <ra:auxiliary>false</ra:auxiliary>
+                            <ra:embedded>false</ra:embedded>
+                            <ra:namingAttribute>icfs:name</ra:namingAttribute>
+                            <ra:displayNameAttribute>icfs:name</ra:displayNameAttribute>
+                            <ra:identifier>icfs:uid</ra:identifier>
+                            <ra:secondaryIdentifier>icfs:name</ra:secondaryIdentifier>
+                        </xsd:appinfo>
+                    </xsd:annotation>
+                    <xsd:sequence>
+                        <xsd:element minOccurs="0" name="displayName" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>120</a:displayOrder>
+                                    <ra:frameworkAttributeName>displayName</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element maxOccurs="unbounded" minOccurs="0" name="campus" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>130</a:displayOrder>
+                                    <ra:frameworkAttributeName>campus</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element maxOccurs="unbounded" minOccurs="0" name="roles" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>140</a:displayOrder>
+                                    <ra:frameworkAttributeName>roles</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="userName" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>150</a:displayOrder>
+                                    <ra:frameworkAttributeName>userName</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element ref="icfs:name">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayName>ConnId Name</a:displayName>
+                                    <a:displayOrder>110</a:displayOrder>
+                                    <ra:frameworkAttributeName>__NAME__</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="email" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>160</a:displayOrder>
+                                    <ra:frameworkAttributeName>email</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="givenName" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>170</a:displayOrder>
+                                    <ra:frameworkAttributeName>givenName</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="familyName" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>180</a:displayOrder>
+                                    <ra:frameworkAttributeName>familyName</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" ref="icfs:uid">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayName>ConnId UID</a:displayName>
+                                    <a:displayOrder>100</a:displayOrder>
+                                    <a:access>read</a:access>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:schema>
+        </definition>
+    </schema>
+    <schemaHandling>
+        <objectType id="511">
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>Cuenta RIMS (SCIM User)</displayName>
+            <default>true</default>
+            <delineation>
+                <objectClass>ri:AccountObjectClass</objectClass>
+            </delineation>
+            <attribute id="512">
+                <ref>icfs:name</ref>
+                <displayName>externalId (eduPersonUniqueId - ancla de correlacion)</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:eduPersonUniqueId</path>
+                    </source>
+                    <source>
+                        <name>focusName</name>
+                        <path>$focus/name</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>def v = eduPersonUniqueId?.toString()?.trim(); if (v) return v.toLowerCase(); def n = focusName?.toString()?.trim(); n ? (n.toLowerCase() + '@upeu.edu.pe') : null</code>
+                        </script>
+                    </expression>
+                </outbound>
+                <inbound>
+                    <strength>weak</strength>
+                    <use>correlation</use>
+                    <expression>
+                        <script>
+                            <code>input?.toString()?.tokenize('@')?.getAt(0)</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>$focus/name</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="513">
+                <ref>ri:userName</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/name</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="514">
+                <ref>ri:displayName</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/fullName</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="515">
+                <ref>ri:givenName</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/givenName</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="516">
+                <ref>ri:familyName</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/familyName</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="517">
+                <ref>ri:email</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/emailAddress</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="518">
+                <ref>ri:roles</ref>
+                <tolerant>false</tolerant>
+            </attribute>
+            <attribute id="519">
+                <ref>ri:campus</ref>
+                <tolerant>false</tolerant>
+            </attribute>
+            <activation>
+                <administrativeStatus>
+                    <outbound id="520">
+                        <strength>strong</strength>
+                    </outbound>
+                </administrativeStatus>
+            </activation>
+            <correlation>
+                <correlators>
+                    <items id="521">
+                        <item id="522">
+                            <ref>name</ref>
+                        </item>
+                    </items>
+                </correlators>
+            </correlation>
+            <synchronization>
+                <reaction id="523">
+                    <situation>linked</situation>
+                    <actions>
+                        <synchronize id="524"/>
+                    </actions>
+                </reaction>
+                <reaction id="525">
+                    <situation>deleted</situation>
+                    <actions>
+                        <inactivateFocus id="526"/>
+                    </actions>
+                </reaction>
+                <reaction id="527">
+                    <situation>unlinked</situation>
+                    <actions>
+                        <link id="528"/>
+                    </actions>
+                </reaction>
+                <reaction id="529">
+                    <situation>unmatched</situation>
+                    <actions/>
+                </reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>
+    <capabilities>
+        <cachingMetadata>
+            <retrievalTimestamp>2026-06-30T21:09:30.940-05:00</retrievalTimestamp>
+            <serialNumber>3d5a18369e616aae-85efde65d0ee12ed</serialNumber>
+        </cachingMetadata>
+        <native xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:schema/>
+            <cap:activation>
+                <cap:status/>
+            </cap:activation>
+            <cap:liveSync/>
+            <cap:create/>
+            <cap:read>
+                <cap:returnDefaultAttributesOption>false</cap:returnDefaultAttributesOption>
+            </cap:read>
+            <cap:update>
+                <cap:delta>true</cap:delta>
+                <cap:addRemoveAttributeValues>true</cap:addRemoveAttributeValues>
+            </cap:update>
+            <cap:delete/>
+            <cap:testConnection/>
+            <cap:script>
+                <cap:host id="530">
+                    <cap:type>connector</cap:type>
+                </cap:host>
+            </cap:script>
+        </native>
+    </capabilities>
+</resource>
