@@ -34,6 +34,8 @@ source ~/.secrets/midpoint-upeu.env
 sshpass -p "$MIDPOINT_PROD_PASS" ssh -o StrictHostKeyChecking=no midpoint-prod "<comando>"
 ```
 
+**Conectividad a la LAN UPeU:** vía VPN corporativa, O vía túnel WireGuard OCI (nuevo, reemplaza la VPN). Si `.166` y el resto de `192.168.x` no responden = red/VPN caída, no el servidor. Levantar túnel en la Mac: `~/.secrets/wg-upeu-oci/wg-mac.sh up`. PROD .166 es el **ancla** del túnel. Detalles en el CLAUDE.md global ("Acceso a la LAN interna de UPeU") y memoria `project_wg-tunnel-oci-upeu-2026-07-03`.
+
 ## Repos relacionados
 
 - `UPeU-Infra/midPointEcosystem` — **este** repo (config GitOps UPeU, fuente única de verdad)
