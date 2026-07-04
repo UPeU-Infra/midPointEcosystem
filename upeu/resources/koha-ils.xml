@@ -824,18 +824,28 @@
             <intent>default</intent>
             <displayName>Koha Patron</displayName>
             <default>true</default>
-            <!-- criticality=partial (2026-06-29, backfill RIMS←IGA LDAP):
-                 los shadows Koha huérfanos provocan AlreadyExistsException al
-                 (re)provisionar patrons/extended_attributes. Es un problema de
-                 linking IGA↔Koha PREEXISTENTE y separado del backfill LDAP.
-                 Con partial el error de la proyección Koha se registra como
-                 partial_error (warning) y el clockwork CONTINÚA con las demás
-                 proyecciones — en particular la proyección LDAP (identity cache)
-                 sigue materializándose. Sin esto, un recompute masivo abortaría
-                 el foco completo por culpa de Koha y el backfill LDAP no llegaría.
-                 Canónico Evolveum (consistency framework / projection criticality).
-                 Reversible: quitar esta línea revierte a fatal. -->
-            <criticality>partial</criticality>
+            <!-- NOTA (2026-07-04): NO existe un <criticality> a nivel de <objectType>.
+                 En MidPoint 4.10 `criticality` NO es un hijo válido de objectType
+                 (ver ResourceObjectTypeDefinitionType); solo es válido en
+                 AssignmentType/ConstructionType (criticality de una construction) y
+                 en ResourceObjectTypeDependencyType (dependencias). Una línea
+                 <criticality>partial</criticality> aquí es drift inválido y PROD
+                 NUNCA la tuvo (resource live: 0 ocurrencias de criticality).
+
+                 Objetivo perseguido (que un error de la proyección Koha —p.ej.
+                 AlreadyExistsException por shadow huérfano— NO aborte el foco y el
+                 clockwork siga materializando la proyección LDAP identity cache):
+                 el mecanismo canónico es marcar como partial la CONSTRUCTION de Koha
+                 en el Application Role que la asigna, NO el objectType del resource:
+
+                   assignment (en AR-Koha-Patron)
+                     construction
+                       resourceRef oid=9b5a7c81-47aa-42ac-9a08-4de8b64935af
+                       criticality = partial
+                     (fin construction)
+                   (fin assignment)
+
+                 Se deja documentado aquí; NO se reintroduce ninguna línea inválida. -->
             <delineation>
                 <objectClass>ri:AccountObjectClass</objectClass>
             </delineation>
