@@ -32,10 +32,17 @@
   NO se tocan. Las 97 in-scope sin archetype → org-department.
 
   ── Regla de exclusión (anti "MidPoint resta") ───────────────────────────────────
-  El mapping SOLO actúa cuando archetypeRef está VACÍO. Las orgs que ya tienen archetype
-  (institution/campus/faculty/academic-program/governance/partner-institution/academic-unit)
-  NO reciben department. La condición relativista de MidPoint garantiza que, una vez
+  El mapping SOLO actúa cuando la org NO tiene archetype estructural — ni materializado en
+  archetypeRef NI entrante en un assignment del objectNew. Las orgs que ya tienen archetype
+  (institution/campus/faculty/academic-program/governance/partner-institution/academic-unit/
+  project) NO reciben department. La condición relativista de MidPoint garantiza que, una vez
   asignado, el strong no lo re-evalúa contra orgs ya clasificadas.
+
+  CRÍTICO (2026-06-26): la condición revisa AMBAS fuentes (archetypeRef materializado +
+  assignment/targetRef entrante). Durante la CREACIÓN (PUT) de una org que ya trae un
+  assignment a otro archetype estructural, archetypeRef aún está vacío en el clockwork;
+  mirar solo archetypeRef provocaba doble archetype → HTTP 500. Esto habilita importar orgs
+  curadas vía PUT normal sin ?options=raw (caso CRAI Lima/Juliaca/Tarapoto, blueprint SciBack).
 
   Mapeo a estándares: iga-canonical-standards §10.2 (OrgType archetypes).
 -->
@@ -82,21 +89,60 @@
         <condition>
             <script>
                 <code>
-                    // Solo asignar department si la org NO tiene ningún archetype estructural aún.
-                    // (A) archetypeRef — estado vigente ya computado (orgs curadas Fase 1, orgs
+                    // Solo asignar department si la org NO tiene NINGÚN archetype estructural de org,
+                    // ni ya materializado ni entrante en un assignment del objectNew.
+                    //
+                    // (A) archetypeRef — estado vigente YA computado (orgs curadas Fase 1, orgs
                     //     linked existentes con archetype ya asignado). Si ya hay archetype → no tocar.
-                    // NOTA (2026-06-20): el guard previo (B) excluía orgs con assignment en curso a
-                    //     archetype-org-research-center / archetype-org-research-line. Esos archetypes y
-                    //     todo el inbound de investigación se eliminaron (MidPoint ya NO gobierna
-                    //     investigación; la aprovisiona el producto SciBack Research Project). Ya no hay
-                    //     ningún inbound que asigne archetype research en el mismo clockwork, por lo que
-                    //     la comprobación (A) por archetypeRef es suficiente.
+                    //
+                    // (B) assignment entrante hacia archetype estructural ≠ department.
+                    //     CAUSA RAÍZ (2026-06-26, caso CRAI-Lima): durante la CREACIÓN (PUT) de una org
+                    //     que YA trae en su payload un assignment hacia otro archetype estructural
+                    //     (p.ej. academic-unit/governance/faculty), el object template se evalúa ANTES de
+                    //     que ese assignment se materialice en archetypeRef. La comprobación (A) sola
+                    //     devolvía true → el template inyectaba TAMBIÉN department → dos archetypes
+                    //     estructurales en el mismo objeto → MidPoint aborta HTTP 500
+                    //     "only a single archetype is supported". Por eso revisamos también el
+                    //     assignment crudo del focus (objectNew). best-practices §4.2: conditions
+                    //     relativistas sobre el focus; idiomático inspeccionar focus.getAssignment().
+                    //
+                    //     NOTA (2026-06-20): el guard research-center/research-line previo se eliminó
+                    //     (MidPoint ya NO gobierna investigación). Este guard (B) lo generaliza a TODOS
+                    //     los archetypes estructurales de org, no solo a research.
+                    //
+                    // Set canónico de archetypes ESTRUCTURALES de org (excluye department, que es el
+                    // que este mapping inyecta). OIDs estables — ver canonical/archetypes/org/ y
+                    // iga-canonical-standards §10.2. Reutilizable como blueprint SciBack.
+                    def STRUCTURAL_ORG_ARCHETYPES = [
+                        '455d90ab-b54a-4aa7-a402-a6b6ffc0c0d9', // org-institution
+                        'a0c2e4e3-911c-4146-9447-f91a1416feff', // org-campus
+                        '87f84549-d101-4ae4-8036-42fb6abdfeec', // org-faculty
+                        '04c304d1-9205-4097-9c1d-6dce6ba98c7f', // org-academic-unit
+                        '9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73', // org-academic-program
+                        '20ee260b-8591-4a5b-8b93-f1607eb501a7', // org-governance
+                        '79bd8a9e-78f0-430f-8133-e8f3be6859c1', // org-partner-institution
+                        '07ed171e-c9cc-44d2-81b4-1655e1420970'  // org-project
+                    ] as Set
+
                     def o = focus
                     if (o == null) return true
                     def ot = (o instanceof com.evolveum.midpoint.prism.PrismObject) ? o.asObjectable() : o
-                    // (A) archetypeRef ya computado
+
+                    // (A) archetypeRef YA computado: cualquier archetype → no tocar.
                     def refs = ot.getArchetypeRef()
                     if (refs != null &amp;&amp; !refs.isEmpty()) return false
+
+                    // (B) assignment entrante hacia un archetype estructural ≠ department.
+                    def asgs = ot.getAssignment()
+                    if (asgs != null) {
+                        for (def a : asgs) {
+                            def tr = a?.getTargetRef()
+                            if (tr == null) continue
+                            // targetRef puede no traer type explícito; basta con que el OID esté en el set.
+                            if (STRUCTURAL_ORG_ARCHETYPES.contains(tr.getOid())) return false
+                        }
+                    }
+
                     return true
                 </code>
             </script>
