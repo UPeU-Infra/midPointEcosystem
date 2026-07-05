@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ESQUELETO — Resource CSV RENACYT/CONCYTEC (DGI) → enriquecimiento identidad-investigador.
+  Estado: DISEÑO. NO importar a PROD. Rama feature/researcher-source-ingest.
+
+  Skills: iga-canonical-standards (IIA strong DGI §1.3), midpoint-best-practices
+          (inbound-only, correlación por identifier inmutable, no crear personas aquí).
+
+  Reusa:
+   - CSV connector v2.9, OID 3517c9ef (filtro por connectorType CsvConnector).
+     >>> AJUSTAR el connectorRef@oid al OID real 3517c9ef si difiere del skeleton conector genérico.
+   - Schema canónico urn:sciback:midpoint:person (OID e800335c-…42693): renacytLevel,
+     renacytStatus, concytecId, ctiVitaeId, orcid (YA existen; NO se crean atributos).
+   - Patrón de correlación por DNI probado en trabajadores.xml: inbound beforeCorrelation
+     que popula extension/upeu:lambDocNum, y correlación por ese campo de transporte.
+
+  Principio: este resource SOLO ENRIQUECE focos existentes. NO crea usuarios
+  (reaction unlinked = no-op / informe). La alta de personas es responsabilidad de LAMB.
+-->
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+          xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3"
+          xmlns:sciback="urn:sciback:midpoint:person"
+          xmlns:upeu="urn:upeu:midpoint:local"
+          oid="c5e7a9f1-2b34-4d56-8e90-renacyt00csv1">
+    <name>RENACYT-DGI-CSV</name>
+    <displayName>RENACYT/CONCYTEC — CSV curado DGI (enriquecimiento investigador)</displayName>
+    <description>
+        Ingesta del CSV RENACYT que entrega la DGI (IIA de la calificación RENACYT).
+        Contrato de datos: docs/specs/researcher-source-ingest/01-contrato-csv-renacyt-dgi.md.
+        Correlación por DNI. Inbound STRONG (DGI autoritativa) a renacytLevel/renacytStatus/
+        concytecId/ctiVitaeId; orcid WEAK (respaldo; IIA primaria = RIMS self-service).
+        NO crea personas: solo enriquece focos existentes.
+    </description>
+
+    <connectorRef oid="3517c9ef-0000-0000-0000-000000000000" type="c:ConnectorType">
+        <!-- Preferir resolución por tipo para no depender del OID exacto del skeleton: -->
+        <filter>
+            <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
+                <q:path>c:connectorType</q:path>
+                <q:value>com.evolveum.polygon.connector.csv.CsvConnector</q:value>
+            </q:equal>
+        </filter>
+    </connectorRef>
+
+    <connectorConfiguration>
+        <icfc:configurationProperties>
+            <filePath>{{CSV_RENACYT_PATH}}</filePath>       <!-- ej. /opt/midpoint/var/import/renacyt-dgi-upeu-YYYYMMDD.csv -->
+            <encoding>UTF-8</encoding>
+            <fieldDelimiter>;</fieldDelimiter>               <!-- v2.9 requiere delimitador explícito -->
+            <quoteMode>DEFAULT</quoteMode>
+            <firstLineIsHeader>true</firstLineIsHeader>
+            <!-- uniqueAttribute = columna clave del CSV. La correlación real al foco es por lambDocNum;
+                 aquí solo se declara la clave del registro CSV para el shadow. -->
+            <uniqueAttribute>dni</uniqueAttribute>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+
+    <schemaHandling>
+        <objectType>
+            <kind>account</kind>
+            <intent>renacyt</intent>
+            <displayName>Registro RENACYT DGI</displayName>
+            <default>true</default>
+            <focus>
+                <type>c:UserType</type>
+                <!-- NO se declara archetypeRef: no se crean focos desde aquí. -->
+            </focus>
+
+            <!-- =========================================================
+                 A) CORRELACIÓN POR DNI (patrón trabajadores.xml)
+                 El DNI del CSV se normaliza a extension/upeu:lambDocNum en fase
+                 beforeCorrelation; MidPoint correla el UserType que ya tiene ese
+                 lambDocNum (poblado por el pipeline LAMB). type-aware: CE/PP prefijados.
+                 ========================================================= -->
+            <attribute>
+                <ref>ri:dni</ref>
+                <inbound>
+                    <name>renacyt-dni-to-lambDocNum-forCorrelation</name>
+                    <strength>strong</strength>
+                    <source><path>$shadow/attributes/ri:dni</path></source>
+                    <source><path>$shadow/attributes/ri:tipo_doc</path></source>
+                    <expression>
+                        <!-- Reusar la FunctionLibrary canónica sb-document-normalizer
+                             (OID 1c7e4b2d-…4b31, función toCanonicalDocNumber) para producir
+                             output byte-idéntico al de LAMB (mismo prefijo type-aware). -->
+                        <function>
+                            <libraryRef oid="1c7e4b2d-3f5a-4061-ac9d-8f7e6d5c4b31" type="c:FunctionLibraryType"/>
+                            <name>toCanonicalDocNumber</name>
+                            <parameter>
+                                <name>rawNum</name>
+                                <expression><path>$shadow/attributes/ri:dni</path></expression>
+                            </parameter>
+                            <parameter>
+                                <name>docType</name>
+                                <!-- Mapear tipo_doc textual (DNI|CE|PASSPORT) al código que espere la
+                                     función; si la función espera código LAMB numérico, envolver en un
+                                     script que traduzca DNI->1, CE->4, PASSPORT->7. TODO confirmar firma. -->
+                                <expression><path>$shadow/attributes/ri:tipo_doc</path></expression>
+                            </parameter>
+                        </function>
+                    </expression>
+                    <target>
+                        <path>extension/upeu:lambDocNum</path>
+                    </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
+                </inbound>
+            </attribute>
+
+            <!-- =========================================================
+                 B) NIVEL RENACYT (strong, DGI autoritativa) → sciback:renacytLevel
+                 Normalización al vocab controlado en el inbound (no en el schema).
+                 ========================================================= -->
+            <attribute>
+                <ref>ri:nivel_renacyt</ref>
+                <inbound>
+                    <name>renacyt-level-normalized</name>
+                    <strength>strong</strength>
+                    <source><path>$shadow/attributes/ri:nivel_renacyt</path></source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+if (input == null) return null
+def v = input.toString().trim().toUpperCase()
+                                    .replaceAll('INVESTIGADOR', '').trim()
+switch (v) {
+    case ['DIST','DISTINGUIDO']:            return 'DISTINGUIDO'
+    case ['I','NIVEL I','NIVEL_I','1']:     return 'NIVEL_I'
+    case ['II','NIVEL II','NIVEL_II','2']:  return 'NIVEL_II'
+    case ['III','NIVEL III','NIVEL_III','3']:return 'NIVEL_III'
+    case ['IV','NIVEL IV','NIVEL_IV','4']:  return 'NIVEL_IV'
+    case ['V','NIVEL V','NIVEL_V','5']:     return 'NIVEL_V'
+    case ['VI','NIVEL VI','NIVEL_VI','6']:  return 'NIVEL_VI'
+    case ['VII','NIVEL VII','NIVEL_VII','7']:return 'NIVEL_VII'
+    default:
+        // Valor fuera de vocab: no ensuciar el foco; log y descartar.
+        log.warn("RENACYT nivel no reconocido: '{}' (dni shadow)", input)
+        return null
+}
+                            ]]></code>
+                        </script>
+                    </expression>
+                    <target><path>extension/sciback:renacytLevel</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- =========================================================
+                 C) CONDICIÓN RENACYT (strong) → sciback:renacytStatus
+                 ========================================================= -->
+            <attribute>
+                <ref>ri:condicion_renacyt</ref>
+                <inbound>
+                    <name>renacyt-status-normalized</name>
+                    <strength>strong</strength>
+                    <source><path>$shadow/attributes/ri:condicion_renacyt</path></source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+if (input == null) return null
+def v = input.toString().trim().toUpperCase().replaceAll('\\s+', '_')
+switch (v) {
+    case ['ACTIVO','VIGENTE']:              return 'ACTIVO'
+    case ['ACTIVO_AFILIADO','AFILIADO']:    return 'ACTIVO_AFILIADO'
+    case ['NO_ACTIVO','INACTIVO','NO_VIGENTE']: return 'NO_ACTIVO'
+    case ['EXCLUIDO','RETIRADO']:           return 'EXCLUIDO'
+    default:
+        log.warn("RENACYT condicion no reconocida: '{}'", input)
+        return null
+}
+                            ]]></code>
+                        </script>
+                    </expression>
+                    <target><path>extension/sciback:renacytStatus</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- =========================================================
+                 D) CÓDIGO CONCYTEC / RENACYT (strong si presente) → sciback:concytecId
+                 ========================================================= -->
+            <attribute>
+                <ref>ri:concytec_id</ref>
+                <inbound>
+                    <name>concytec-id</name>
+                    <strength>strong</strength>
+                    <source><path>$shadow/attributes/ri:concytec_id</path></source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def v = input?.toString()?.trim()
+if (!v) return null
+if (!(v ==~ /^P0\d{6}$/)) { log.warn("concytecId formato inválido: '{}'", v); return null }
+return v
+                            ]]></code>
+                        </script>
+                    </expression>
+                    <target><path>extension/sciback:concytecId</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- =========================================================
+                 E) CTI VITAE ID (strong si presente) → sciback:ctiVitaeId
+                 ========================================================= -->
+            <attribute>
+                <ref>ri:cti_vitae_id</ref>
+                <inbound>
+                    <name>cti-vitae-id</name>
+                    <strength>strong</strength>
+                    <source><path>$shadow/attributes/ri:cti_vitae_id</path></source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def v = input?.toString()?.trim()
+if (!v) return null
+if (!(v ==~ /^\d+$/)) { log.warn("ctiVitaeId no numérico: '{}'", v); return null }
+return v
+                            ]]></code>
+                        </script>
+                    </expression>
+                    <target><path>extension/sciback:ctiVitaeId</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- =========================================================
+                 F) ORCID (WEAK — respaldo). IIA primaria = RIMS self-service.
+                 weak: no sobrescribe un ORCID ya afirmado por el investigador vía RIMS.
+                 El outbound a LDAP (eduPersonOrcid) revalida MOD 11-2 igualmente.
+                 ========================================================= -->
+            <attribute>
+                <ref>ri:orcid</ref>
+                <inbound>
+                    <name>orcid-backup-weak</name>
+                    <strength>weak</strength>
+                    <source><path>$shadow/attributes/ri:orcid</path></source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def raw = input?.toString()?.trim()
+if (!raw) return null
+def digits = raw.replaceAll('(?i)https?://orcid.org/','').replaceAll('-','').trim().toUpperCase()
+if (digits.length() != 16) return null
+// MOD 11-2 (ISO 7064): valida 15 primeros contra dígito de control (X=10).
+int total = 0
+for (int i = 0; i < 15; i++) { total = (total + Character.getNumericValue(digits.charAt(i))) * 2 }
+int remainder = total % 11
+int result = (12 - remainder) % 11
+def check = (result == 10) ? 'X' : String.valueOf(result)
+if (check != String.valueOf(digits.charAt(15))) { log.warn("ORCID checksum inválido: '{}'", raw); return null }
+// Guardar en forma 0000-0000-0000-0000 (el schema orcid es sin URL).
+return digits.substring(0,4)+'-'+digits.substring(4,8)+'-'+digits.substring(8,12)+'-'+digits.substring(12,16)
+                            ]]></code>
+                        </script>
+                    </expression>
+                    <target><path>extension/sciback:orcid</path></target>
+                </inbound>
+            </attribute>
+
+            <!-- area_ocde, fecha_calificacion, fecha_vigencia_fin: NO mapeados en Fase 1
+                 (ver contrato §6). Quedan en el shadow como atributos leídos, sin inbound. -->
+
+            <!-- =========================================================
+                 CORRELACIÓN por lambDocNum (poblado en A, fase beforeCorrelation)
+                 ========================================================= -->
+            <correlation>
+                <correlators>
+                    <items>
+                        <name>correlate-by-dni-lambDocNum</name>
+                        <item>
+                            <ref>extension/upeu:lambDocNum</ref>
+                        </item>
+                    </items>
+                </correlators>
+            </correlation>
+
+            <synchronization>
+                <reaction>
+                    <situation>linked</situation>
+                    <actions><synchronize/></actions>
+                </reaction>
+                <reaction>
+                    <!-- Foco correlacionado pero aún sin link → link y enriquece. -->
+                    <situation>unlinked</situation>
+                    <actions><link/></actions>
+                </reaction>
+                <reaction>
+                    <!-- DNI del CSV SIN foco existente: NO crear usuario. Es enriquecimiento.
+                         Se deja unmatched → aparece en informe de cobertura (gap DGI vs IGA). -->
+                    <situation>unmatched</situation>
+                    <!-- sin <actions>: no-op deliberado -->
+                </reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>
+
+    <!-- ===========================================================================
+         TASK DE IMPORT ESCALONABLE (esqueleto de referencia; al aplicar, extraer a
+         un TaskType propio en archivo aparte, fuera de este ResourceType).
+         Import (no reconciliation): recorre el CSV y aplica inbounds a focos correlacionados.
+         Escalonable por lotes con un CSV filtrado (primero los ~80 DNIs de la lista-semilla
+         Oracle, luego el padrón completo) o con workerThreads.
+
+           task oid d6f8b0a2 3c45 4e67 9f01 renacyt00task1
+             executionState suspended   (arrancar suspendido; lanzar manual)
+             activity/work/import/resourceObjects:
+                resourceRef oid c5e7a9f1 2b34 4d56 8e90 renacyt00csv1
+                kind account / intent renacyt
+             distribution/workerThreads 2   (escalonable)
+             execution/mode full            (usar preview/simulación primero)
+
+         Escalonamiento recomendado:
+           1) SIMULACIÓN (preview) sobre CSV completo: revisar correlaciones y descartes de vocab.
+           2) Lote semilla: CSV con solo los ~80 DNIs de MOISES.PERSONA_ACAD_CALIF_INV (cobertura).
+           3) Lote completo: padrón DGI entero.
+           4) Refresh anual/semestral: re-import del nuevo CSV (strong sobrescribe; downgrade y
+              exclusión se reflejan porque renacytLevel/renacytStatus son strong desde la única IIA).
+         =========================================================================== -->
+</resource>
