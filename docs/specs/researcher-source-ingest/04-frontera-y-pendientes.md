@@ -1,9 +1,16 @@
 # Frontera de alcance y pendientes — ingesta identidad-investigador
 
-**Estado:** DISEÑO (no aplicado) · **Fecha:** 2026-07-04 · **Rama:** `feature/researcher-source-ingest`
+**Estado:** DISEÑO (no aplicado) · **Fecha:** 2026-07-04 (rev. 2026-07-05) · **Rama:** `feature/researcher-source-ingest`
 
 Resumen del alcance del pipeline diseñado y lo que queda fuera / por confirmar antes de go-live.
 Los 4 atributos objetivo hoy están en **0** en LDAP (confirmado en `scratchpad/17-fuente-orcid-renacyt.md`).
+
+> ⚠️ **CORRECCIÓN 2026-07-05 — la investigación del 04-jul estaba incompleta para ORCID.**
+> Se dijo "ORCID cobertura = 0 en Oracle" porque solo se buscó el patrón en texto libre de
+> `MOISES.PERSONA_ACAD_CALIF_INV`. Un cruce más profundo (motivado por pregunta del usuario: "¿esos
+> investigadores RENACYT están registrados en LAMB research/DGI?") encontró que **`ESTHER.DGI_PERFIL`
+> tiene una columna ORCID dedicada, con datos reales y de buena calidad**: el propio sistema DGI ya
+> corre un self-service de ORCID. Ver §6 (nuevo) para el detalle y el impacto en el diseño.
 
 ---
 
@@ -58,6 +65,27 @@ enriquecen focos ya provisionados desde LAMB.
 - Path canónico exacto del ePUID en el schema para correlación RIMS (`extension/sciback:eduPersonUniqueId`).
 - Connector REST para `RIMS-ORCID-INBOUND` (scripted REST existente vs REST genérico) + su OID.
 - OIDs definitivos de resource CSV y de las tasks (usar md5 del código, patrón del deployment).
+
+---
+
+## 6. HALLAZGO 2026-07-05 — `ESTHER.DGI_PERFIL.ORCID` ya existe como self-service en producción
+
+Verificado por lectura directa (túnel Oracle vía jump OCI, SOLO LECTURA):
+
+- **`ESTHER.DGI_PERFIL`** (`ID_PERFIL, ID_PERSONA, ORCID, URL_FOTO, ID_PERSONA_REG, FECHA_REG, ID_PERSONA_ACT, FECHA_ACT`) es un perfil de investigador que el propio sistema DGI ya permite auto-registrar.
+- **306 filas, las 306 con ORCID no nulo.** Fechas de registro **23-abr-2025 → 02-jul-2026** (activo, uso continuo hasta hace 3 días) → **es un self-service YA en producción**, no un diseño futuro.
+- **Calidad alta:** 303/306 (99%) pasan checksum MOD 11-2; 2 con formato correcto pero checksum inválido; 1 con formato inválido; **1 ORCID duplicado** (2 personas con el mismo ORCID — revisar antes de importar).
+- **Overlap con los 84 investigadores RENACYT vigentes:** 27 de 84 (32%) ya tienen su ORCID en `DGI_PERFIL`.
+- **Overlap con la población `DGI_INVESTIGADOR`** (4.242 tesistas/asesores, tabla de participación — confirma que NO reconcilia RENACYT, solo 3/84 overlap ahí): 166 de 4.242 (4%) tienen ORCID en `DGI_PERFIL`.
+
+### Impacto en el diseño (actualiza `02` y `03`)
+
+1. **No hace falta partir de cero con el self-service ORCID.** Antes de construirlo en el RIMS, hay **306 ORCID reales que importar como semilla** al IGA. Recomendación: añadir un **inbound adicional de solo lectura `DGI-PERFIL-ORCID`** (mismo patrón que el CSV RENACYT: connector contra Oracle vía vista/extracto read-only, o CSV export de esta tabla) que alimente `sciback:orcid` con `strength=weak` (rellena vacíos) **antes** de que el canal RIMS self-service (`strong`, autoridad del titular) quede operativo. Correlación: por `ID_PERSONA` → resolver a DNI (`MOISES.PERSONA_NATURAL.NUM_DOCUMENTO`) → `identityDocuments[DNI]`, igual patrón que el CSV RENACYT.
+2. **El self-service del RIMS (`03-canal-orcid-rims-iga.md`) sigue siendo el diseño correcto para el futuro** (fuente autoritativa continua, no un extracto puntual) — pero ya no es la única fuente ni el punto de partida en cero. Cuando el RIMS reemplace a DGI, este flujo de `DGI_PERFIL` se apaga y el RIMS pasa a ser la única fuente.
+3. **Antes de importar:** deduplicar el 1 ORCID repetido (decidir cuál de las 2 personas es la titular real, o marcar ambas para revisión manual) y descartar los 3 con checksum/formato inválido (o corregirlos a mano si el error es obvio, p. ej. dígito de control mal tecleado).
+4. **No confundir con RENACYT:** `DGI_PERSONA_VALIDACION` (60/84 overlap) NO es RENACYT — sus columnas (`ID_TIPO_VALIDADOR`, `CUPO`, `EXPERIENCIA`, `TIPO='I'`) son validación de elegibilidad de jurado/asesor por programa (workflow interno de DGI), no identidad de investigador. Se descarta como fuente de RENACYT.
+
+**PENDIENTE nuevo (P7):** confirmar con la DGI si `DGI_PERFIL` es el "perfil de investigador" oficial de su plataforma (para saber si seguirá vivo mientras el RIMS no reemplace a DGI, y si debe tratarse como fuente *strong* en vez de *weak* — si es la plataforma oficial que los investigadores ya usan activamente, podría ser preferible a esperar el self-service nuevo en el RIMS).
 
 ---
 
