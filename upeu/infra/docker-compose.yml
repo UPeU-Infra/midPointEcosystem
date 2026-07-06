@@ -1,0 +1,112 @@
+services:
+  midpoint_data:
+    image: postgres:16-bullseye
+    command: >
+      postgres
+      -c shared_buffers=1536MB
+      -c effective_cache_size=3GB
+      -c work_mem=48MB
+      -c maintenance_work_mem=512MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=32MB
+      -c max_connections=50
+      -c random_page_cost=1.1
+      -c max_parallel_workers_per_gather=6
+      -c max_worker_processes=14
+    environment:
+      - POSTGRES_PASSWORD=${MP_DB_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_INITDB_ARGS=--lc-collate=en_US.utf8 --lc-ctype=en_US.utf8
+    networks:
+      - net
+    volumes:
+      - midpoint_data:/var/lib/postgresql/data
+    mem_limit: 5g
+    mem_reservation: 3g
+    restart: unless-stopped
+    shm_size: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d midpoint"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  data_init:
+    image: evolveum/midpoint:${MP_VER}-alpine
+    command: >
+      bash -c "
+      cd /opt/midpoint ;
+      bin/midpoint.sh init-native ;
+      echo  - - - - - -  ;
+      bin/ninja.sh -B info >/dev/null 2>/tmp/ninja.log ;
+      grep -q \"ERROR\" /tmp/ninja.log && (
+      bin/ninja.sh run-sql --create --mode REPOSITORY  ;
+      bin/ninja.sh run-sql --create --mode AUDIT
+      ) ||
+      echo -e n Repository init is not needed... ;
+      "
+    depends_on:
+      midpoint_data:
+        condition: service_healthy
+    environment:
+      - MP_SET_midpoint_repository_jdbcUsername=${POSTGRES_USER}
+      - MP_SET_midpoint_repository_jdbcPassword=${MP_DB_PASSWORD}
+      - MP_SET_midpoint_repository_jdbcUrl=jdbc:postgresql://midpoint_data:5432/midpoint
+      - MP_SET_midpoint_repository_database=postgresql
+      - MP_INIT_CFG=/opt/midpoint/var
+    networks:
+      - net
+    volumes:
+      - midpoint_home:/opt/midpoint/var
+
+  midpoint_server:
+    image: evolveum/midpoint:${MP_VER}-ubuntu
+    container_name: midpoint_server
+    restart: unless-stopped
+    hostname: midpoint-container
+    depends_on:
+      data_init:
+        condition: service_completed_successfully
+      midpoint_data:
+        condition: service_healthy
+    command: ["/opt/midpoint/bin/midpoint.sh", "container"]
+    ports:
+      - "8080:8080"
+    environment:
+      - MP_SET_midpoint_repository_jdbcUsername=${POSTGRES_USER}
+      - MP_SET_midpoint_repository_jdbcPassword=${MP_DB_PASSWORD}
+      - MP_SET_midpoint_repository_jdbcUrl=jdbc:postgresql://midpoint_data:5432/midpoint
+      - MP_SET_midpoint_repository_database=postgresql
+      - MP_SET_midpoint_administrator_initialPassword=${MP_ADMIN_PASSWORD}
+      - MP_UNSET_midpoint_repository_hibernateHbm2ddl=1
+      - MP_NO_ENV_COMPAT=1
+      - TZ=America/Lima
+      - MP_MEM_INIT=5120m
+      - MP_MEM_MAX=9216m
+      - JAVA_OPTS=-XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:G1HeapRegionSize=32m -XX:+ParallelRefProcEnabled -XX:+DisableExplicitGC -XX:ParallelGCThreads=8 -XX:ConcGCThreads=4 -XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=35 -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStorePassword=changeit
+    networks:
+      - net
+    volumes:
+      - midpoint_home:/opt/midpoint/var
+      - /opt/midpoint/connectors:/opt/midpoint/var/icf-connectors:ro
+    mem_limit: 10g
+    mem_reservation: 8g
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+networks:
+  net:
+    driver: bridge
+
+volumes:
+  midpoint_data:
+  midpoint_home:
