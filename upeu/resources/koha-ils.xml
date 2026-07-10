@@ -824,28 +824,30 @@
             <intent>default</intent>
             <displayName>Koha Patron</displayName>
             <default>true</default>
-            <!-- NOTA (2026-07-04): NO existe un <criticality> a nivel de <objectType>.
-                 En MidPoint 4.10 `criticality` NO es un hijo válido de objectType
-                 (ver ResourceObjectTypeDefinitionType); solo es válido en
-                 AssignmentType/ConstructionType (criticality de una construction) y
-                 en ResourceObjectTypeDependencyType (dependencias). Una línea
-                 <criticality>partial</criticality> aquí es drift inválido y PROD
-                 NUNCA la tuvo (resource live: 0 ocurrencias de criticality).
+            <!-- NOTA (2026-07-04, CORREGIDA 2026-07-10): NO existe un
+                 <criticality> a nivel de <objectType>. En MidPoint 4.10
+                 `criticality` NO es hijo válido de objectType.
 
-                 Objetivo perseguido (que un error de la proyección Koha —p.ej.
-                 AlreadyExistsException por shadow huérfano— NO aborte el foco y el
-                 clockwork siga materializando la proyección LDAP identity cache):
-                 el mecanismo canónico es marcar como partial la CONSTRUCTION de Koha
-                 en el Application Role que la asigna, NO el objectType del resource:
+                 CORRECCIÓN 2026-07-10 (GAP-2 / DT-8): el cierre anterior de
+                 esta nota afirmaba que el mecanismo canónico era marcar
+                 `criticality=partial` en la CONSTRUCTION de Koha dentro de cada
+                 AR-Koha-Patron. Al verificarlo contra el schema real de esta
+                 versión (schema-4.10.2.jar extraído del contenedor PROD) se
+                 comprobó que ESO TAMBIÉN ES INVÁLIDO: en 4.10.2 el elemento
+                 `criticality` NO existe en ConstructionType NI en AssignmentType
+                 — su única aparición en el schema es dentro de
+                 ProvisioningScriptType. Añadir <criticality> a la construction
+                 habría sido el mismo drift inválido, sólo que en otro nivel.
 
-                   assignment (en AR-Koha-Patron)
-                     construction
-                       resourceRef oid=9b5a7c81-47aa-42ac-9a08-4de8b64935af
-                       criticality = partial
-                     (fin construction)
-                   (fin assignment)
-
-                 Se deja documentado aquí; NO se reintroduce ninguna línea inválida. -->
+                 Mecanismo canónico REAL en MidPoint 4.10 para que un error de la
+                 proyección Koha (p.ej. CommunicationException por recurso caído)
+                 degrade a partial_error y NO aborte el foco:
+                   resource/consistency/connectorErrorCriticality/network = partial
+                 (ErrorSelectorType → CriticalityType {fatal|partial|ignore}).
+                 Aplicado el 2026-07-10 en el bloque <consistency> de este mismo
+                 resource (ver más abajo). Vive en el RESOURCE (una sola vez,
+                 cubre las 6 constructions Koha), NO en cada Application Role.
+                 Los 6 AR-Koha-Patron NO se tocan. -->
             <delineation>
                 <objectClass>ri:AccountObjectClass</objectClass>
             </delineation>
@@ -1941,8 +1943,36 @@ return (cn ==~ /^\d{8}$/) ? cn : '__NO_MATCH__'
          selectores válidos son: network, security, policy, schema,
          configuration, unsupported, generic (EXPERIMENTAL, peligroso).
          El manejo de 404 es nativo, no requiere connectorErrorCriticality.
+
+         RESILIENCIA KOHA (2026-07-10, GAP-2 / DT-8):
+         connectorErrorCriticality/network = partial.
+         Cuando el conector Koha lanza CommunicationException (recurso
+         caído a nivel LAN — p.ej. Koha 192.168.12.135:8001 tras la
+         incidencia FortiGate del 08-jul), MidPoint clasifica el error
+         como categoria `network`. Por defecto una network error escala a
+         FATAL y ABORTA el foco: al recomputar un egresado que además es
+         borrower Koha, el outbound a Koha caído tumbaba todo el clockwork
+         y NO se materializaba la proyeccion (LDAP cache / extension).
+         Con `partial`, la proyeccion Koha degrada a partial_error
+         (error VISIBLE y AUDITADO — NO `ignore`, que lo ocultaria) y el
+         foco continua: sb:personalEmail y demas atributos SI se
+         materializan aunque Koha este caido.
+
+         Ubicacion canonica MidPoint 4.10: este selector vive en el
+         RESOURCE (una sola IIA de comportamiento, cubre TODAS las
+         constructions Koha de los 6 AR-Koha-Patron y cualquier futura),
+         NO en la <construction> de cada Application Role. En 4.10.2
+         `criticality` NO es hijo valido de ConstructionType ni de
+         AssignmentType (verificado contra schema-4.10.2.jar del PROD:
+         `criticality` solo existe en ProvisioningScriptType). El
+         mecanismo per-construction que se penso el 2026-07-04 (ver NOTA
+         en <schemaHandling>) NO existe en esta version; se corrigio a
+         este connectorErrorCriticality a nivel resource.
          ================================================================ -->
     <consistency>
+        <connectorErrorCriticality>
+            <network>partial</network>
+        </connectorErrorCriticality>
         <deadShadowRetentionPeriod>P3D</deadShadowRetentionPeriod>
     </consistency>
 
