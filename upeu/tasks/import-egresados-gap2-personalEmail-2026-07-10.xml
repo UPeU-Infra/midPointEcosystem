@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: Import Oracle LAMB Egresados — GAP-2 Propuesta A (personalEmail)
+  Resource: Oracle LAMB Egresados v3 (OID 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23)
+  One-shot (runnable, NO recurrente). Materializa el nuevo inbound weak
+  correo-personal-to-personalEmail -> extension/sb:personalEmail para todos los
+  egresados. Ver docs/ROADMAP.md GAP-2 + docs/IIA-MATRIX.md §2.7b.
+  Fecha: 2026-07-10.
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      oid="e9a2c7f0-6b1d-4a3e-9c85-0f7a1e2d3b40">
+    <name>Import Oracle LAMB Egresados - GAP2 personalEmail 2026-07-10</name>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>runnable</executionState>
+    <activity>
+        <work>
+            <import>
+                <resourceObjects>
+                    <resourceRef oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23" type="c:ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
+                </resourceObjects>
+            </import>
+        </work>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
+    </activity>
+</task>
