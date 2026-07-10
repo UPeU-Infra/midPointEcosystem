@@ -1971,7 +1971,22 @@ return (cn ==~ /^\d{8}$/) ? cn : '__NO_MATCH__'
          ================================================================ -->
     <consistency>
         <connectorErrorCriticality>
+            <!-- network: CommunicationException / NoRouteToHostException /
+                 ConnectorIOException cuando Koha 192.168.12.135:8001 está caído
+                 (incidencia FortiGate 08-jul). Es el error del GET/OAuth. -->
             <network>partial</network>
+            <!-- generic: cuando Koha está totalmente inalcanzable, tras fallar el
+                 GET por uid el conector intenta un search de compensación que
+                 lanza ConnectorException('Search script error: Uid cannot be null')
+                 = categoría `generic`. Con network solo en partial, ESTE seguía
+                 escalando a FATAL y abortando el foco (task GAP-2 se suspendía en
+                 progress 27). Koha es un recurso PERIFÉRICO (carné de biblioteca):
+                 su indisponibilidad NO debe abortar el ciclo de identidad ni la
+                 materialización de atributos del foco (sb:personalEmail). partial =
+                 VISIBLE/AUDITADO (no `ignore`). Doctrina: un SP no crítico nunca
+                 debe ser gate de las operaciones de identidad. Cuando Koha vuelva,
+                 la reconciliación diaria (reconcile-koha-daily) re-sincroniza. -->
+            <generic>partial</generic>
         </connectorErrorCriticality>
         <deadShadowRetentionPeriod>P3D</deadShadowRetentionPeriod>
     </consistency>
