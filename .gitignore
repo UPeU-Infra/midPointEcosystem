@@ -98,3 +98,6 @@ secrets/
 
 # PII: dataset dual-shadow con DNI
 docs/runbooks/ldap-dualshadow-dedup-265/*_dataset_*.csv
+
+# Backups forenses con PII real (LDAP, usuarios) — nunca a git, solo disco local
+archive/backups-2026-06-prod-campus/

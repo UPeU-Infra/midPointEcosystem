@@ -23,6 +23,22 @@
                 </resourceObjects>
             </import>
         </work>
+        <controlFlow>
+            <!-- Ignorar errores por objeto: NO suspender la task cuando el recompute
+                 de un egresado dual (alumni + borrower Koha) falle su outbound Koha.
+                 Koha (192.168.12.135) está caído a nivel LAN (2026-07-10), lo que aborta
+                 el clockwork de ~2,667 alumni con shadow Koha. Los ~15k+ alumni puros
+                 (sin proyección Koha) materializan personalEmail sin problema. Los duales
+                 se reintentan con la recon normal cuando Koha vuelva. Blast radius acotado
+                 (788 del gap ciego tienen shadow Koha). -->
+            <errorHandling>
+                <entry>
+                    <reaction>
+                        <ignore/>
+                    </reaction>
+                </entry>
+            </errorHandling>
+        </controlFlow>
         <distribution>
             <workerThreads>4</workerThreads>
         </distribution>
