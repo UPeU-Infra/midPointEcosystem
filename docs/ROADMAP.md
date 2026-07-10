@@ -119,7 +119,7 @@ Los 4 templates per-archetype (alumni, student, faculty, staff) existen en PROD 
 | Fase 6 — Resources WRITE → OpenLDAP | ✅ **VALIDADO** | 37.491 sombras LDAP ✅; Keycloak User Federation activa (P7 ✅); Keycloak lee de OpenLDAP correctamente |
 | Fase 7 — RBAC | ✅ **COMPLETA** 2026-06-06 | 4 ARs versionados, 26 lifecycleState corregidos, D.3 split TC/TP/fallback, SoD GOV bidireccional (ISO 27001 A.8.2), role mining LAMB documentado — commits `43e1981`+`394fa73` |
 | Fase 8 — Documentación | ✅ **COMPLETA** 2026-06-06 | ARCHITECTURE.md, eduperson-reference.md, sso-academic-vendors.md actualizados — commit `03e49d9` |
-| Fase 9 — Validación E2E | ✅ **COMPLETA** 2026-06-06 | 3 pilotos validados (faculty/student/staff). 4 GAPs diagnosticados: GAP-1 en ejecución (recompute LDAP 1,945 docentes), GAP-2 calidad datos Oracle (13,733 sin correo, reporte para DTI), GAP-3 diferido Fase 12, GAP-4 no aplica. Pipeline IGA OPERATIVO. — commit `5394adc` |
+| Fase 9 — Validación E2E | ✅ **COMPLETA** 2026-06-06 | 3 pilotos validados (faculty/student/staff). 4 GAPs diagnosticados: GAP-1 en ejecución (recompute LDAP 1,945 docentes), GAP-2 email (cifra revisada 2026-07-10: **32,133 active sin emailAddress**, no 13,733 — ver detalle §Workstream), GAP-3 diferido Fase 12, GAP-4 no aplica. Pipeline IGA OPERATIVO. — commit `5394adc` |
 | Fase 10 — Deploy PROD | ✅ **PROD OPERATIVO** | 54,499 usuarios activos en produccion (2026-06-06) |
 | Fase 11 — Productización SciBack | ✅ **DOCUMENTADA** 2026-06-06 | Blueprint `docs/sciback-iga-blueprint-plan.md` — commit `03e49d9` |
 | Fase 12 — Gobierno Entra ID | 🔒 **BLOQUEADA** | Requiere permisos write en Entra ID UPeU — ticket DU-001b a David Urquizo |
@@ -636,4 +636,9 @@ Trabajo real ejecutado en PROD tras cerrar el modelo IGA (Fases 1-11). No son fa
 - ~512 dual sucios Oracle: fix IIA desplegado; barrido de cohorte ejecutado (518/518). Cohortes futuras convergen por recompute.
 - 992 BUL posgrado sin P-code → scope de materialización INEI posterior.
 - ~1,449 estudiantes posgrado en 31 P-codes sin INEI validado → nueva ronda VocBench/INEI 2022.
-- 13,733 estudiantes sin CORREO_INST en Oracle LAMB → reporte para DTI (calidad de datos origen, no bug).
+- **GAP-2 email — re-diagnosticado y enriquecido 2026-07-10** (reemplaza la cifra obsoleta "13,733 estudiantes sin CORREO_INST", que era solo un subconjunto de junio). Estado real en PROD tras el email-cleanup 2026-06-06:
+  - **32,133 usuarios `active` sin `emailAddress`** institucional (de 53,854 active). Desglose por archetype: alumni 19,908 (62%) · student 10,970 (34%) · staff 875 · faculty 379 · service-account 1.
+  - De esos 32,133, **13,859 SÍ tienen un correo capturable** (`sb:personalEmail` ya poblado): student 10,734 · alumni 1,910 · staff 836 · faculty 379. No requieren DTI.
+  - **Gap ciego real irreducible = 18,274** (sin `emailAddress` NI `personalEmail` en ninguna fuente conectada): alumni 17,998 · student 236 · staff 39 · service-account 1. **Esto es lo único que va a reporte DTI** (dato inexistente en todo el ecosistema, no responsabilidad de MidPoint).
+  - **Propuesta A APLICADA 2026-07-10** (commit `6e4fe02`): `egresados.xml` ahora lee `MOISES.PERSONA_NATURAL.CORREO` → inbound weak `sb:personalEmail`. Existía en Oracle para 26,230 de 30,917 egresados (84,8%) pero nunca se ingería. Materializa personalEmail para ~15-17k alumni del gap, reduciendo el gap ciego. Sin tocar `emailAddress` ni doctrina IIA. Ver `docs/IIA-MATRIX.md` §2.7b.
+  - Doc corregida: `IIA-MATRIX.md` §2.1 — el IIA `strong` de `emailAddress` es **Entra ID `ri:mail`**, NO trabajadores (obsoleto desde 2026-06-06).

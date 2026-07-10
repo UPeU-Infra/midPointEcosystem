@@ -52,8 +52,30 @@ Esto NO viola Patrón B porque las semánticas son distintas: override (legal) p
 | `givenName` | **`trabajadores` `strong` (ÚNICO)** — NOMBRE canonicalizado (Title Case + NFC, conserva tildes) | — (RENIEC ya NO es override de nombre) | `estudiantes`, `egresados` `weak`; `reniec-cache` `weak`+`condition` last-resort | RENIEC entrega el nombre SIN diacríticos → degrada calidad y colisiona con trabajadores (single-valued). trabajadores ya trae el nombre con tildes correctas. Corrección 2026-06-29 |
 | `familyName` | **`trabajadores` `strong` (ÚNICO)** | — | `estudiantes`, `egresados` `weak`; `reniec-cache` `weak`+`condition` last-resort | Ídem. Todas las fuentes pasan por `sb-name-normalizer.toCanonicalName` |
 | `fullName` | computado en object template | — | — | Derivado de given + family |
-| `emailAddress` | **`trabajadores` strong** (CORREO_INST) | — | — | Email institucional curado por RRHH. Egresados/estudiantes NO deben sobreescribirlo |
+| `emailAddress` | **`entra-id-graph` `ri:mail` `strong` (ÚNICO)** | — | `trabajadores` CORREO_INST `normal`; `entra-id` UPN `icfs:name` `weak`; `estudiantes` CORREO_UPEU `weak`; `koha` `ri:email` `weak` | **Corrección 2026-07-10:** el IIA real desde el email-cleanup 2026-06-06 es **Entra ID (mailbox M365)**, NO trabajadores. Solo institucional (`@upeu.edu.pe`, no numérico). Ver nota ⚠ abajo + `docs/runbooks/email-cleanup-2026-06-06/RUNBOOK.md` |
 | `telephoneNumber` | `trabajadores` (CELULAR) | — | `estudiantes`, `egresados` (fallback) | Celular se actualiza más rápido en estudiantes activos |
+
+> **⚠️ CORRECCIÓN 2026-07-10 (IIA real de `emailAddress`).**
+> La versión previa de esta fila afirmaba "`trabajadores` strong (CORREO_INST), egresados/estudiantes
+> NO deben sobreescribirlo". **Eso quedó obsoleto tras el email-cleanup del 2026-06-06/07.** El IIA
+> `strong` único de `emailAddress` es hoy **Entra ID `ri:mail`** (mailbox real M365). La cadena real
+> vigente en PROD es una degradación `weak`/`normal` conforme a Patrón B (un solo `strong`; resto
+> fallback; sin dos `strong` sobre item single-valued — misma regla que la corrección 2026-06-29 de
+> `givenName`/`familyName`):
+>
+> | Prioridad | Fuente | Resource | Strength | Guard |
+> |---|---|---|---|---|
+> | 1 | `ri:mail` | `entra-id-graph.xml` | **strong** | `@upeu.edu.pe` + no-numérico |
+> | 2 | `icfs:name` (UPN) | `entra-id-graph.xml` | weak | idem |
+> | 3 | `CORREO_INST` | `trabajadores.xml` | normal | idem |
+> | 4 | `CORREO_UPEU` | `estudiantes.xml` | weak | idem |
+> | 5 | `ri:email` | `koha-ils.xml` | weak | idem |
+> | — | (ninguna) | `egresados.xml` | sin inbound (deliberado) | — |
+>
+> Guard universal (descarta no-`@upeu.edu.pe` y locales numéricos): ver `RUNBOOK.md` §2 L1. Si ninguna
+> fuente aporta email institucional → `emailAddress` vacío + `upeu:emailReviewNeeded=true`
+> (mapping `B-email-review-flag` del template base). MidPoint NO inventa correos institucionales.
+> `emailAddress` es SOLO institucional; el correo personal va a `extension/sb:personalEmail` (ver §2.7b).
 
 ### 2.2 Atributos de fecha y validación
 
@@ -112,6 +134,12 @@ Esto NO viola Patrón B porque las semánticas son distintas: override (legal) p
 |---|---|---|---|---|
 | `jpegPhoto` | `trabajadores` (LAMB-files staff) | — | `estudiantes` (weak, LAMB-files student) | Foto institucional staff es más curada |
 | `extension/sb:photoUrl` | `trabajadores` | — | `estudiantes` (weak), `egresados` (weak) | Mismo principio |
+
+### 2.7b Correo personal (distinto de `emailAddress` institucional)
+
+| Atributo | IIA (multi-fuente `add`, todas `weak`/`normal`) | Justificación |
+|---|---|---|
+| `extension/sb:personalEmail` | `trabajadores` CORREO `normal`; `estudiantes` CORREO `weak`; **`egresados` CORREO `weak` (añadido 2026-07-10, Propuesta A GAP-2)** | Correo libre (gmail/hotmail) de `MOISES.PERSONA_NATURAL.CORREO`. **NO es `emailAddress`** (que es solo institucional `@upeu.edu.pe`). Hasta 2026-07-10 `egresados.xml` NO leía `MOISES.CORREO`, dejando ~18k alumni sin ningún correo capturado pese a existir en Oracle para 84,8% de egresados. Propuesta A cierra esa asimetría de pipeline sin tocar `emailAddress` ni la doctrina de IIA. Ver `docs/ROADMAP.md` GAP-2. |
 
 ---
 
