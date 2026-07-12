@@ -629,7 +629,7 @@ Trabajo real ejecutado en PROD tras cerrar el modelo IGA (Fases 1-11). No son fa
 | Merge duplicados estudiantes Koha (54 fusionados) | ✅ 2026-06-02 | backup premerge; commit `e58e422` |
 | Fix Bsort1/Bsort2 + studyLevel/studentCycle (masivo 24,158) | ✅ 2026-06-09 | desde Oracle autoritativo; commits `ffbacc1`… |
 | Connector Koha v1.3.12 (denylist→allowlist, fix `self_renewal_available` Koha 26.05) | ✅ 2026-06-14 | commit `3187e93`; Test Connection 8/8 |
-| Migración Bsort2 P-code→INEI 8díg (catálogo canónico VocBench) | ✅ 2026-06-14→15 | LT-Pcode-INEI; pregrado 3,738 + posgrado 576 codes + 518 dual; sort2=INEI |
+| Migración Bsort2 P-code→INEI 8díg (catálogo canónico VocBench) | ✅ 2026-06-14→15 · **pregrado CERRADO** | LT-Pcode-INEI (42 rows); pregrado 3,738 + posgrado 576 codes + 518 dual; sort2=INEI. Proyección usa la LT (no VocBench en vivo). INEI repetidos = aliases N:1 intencionales (no bug). Estado consolidado + Koha nuevo: [`docs/specs/koha-consolidado-contrato-configuracion.md`](specs/koha-consolidado-contrato-configuracion.md) y `upeu/tasks/bsort2-inei-posgrado/README.md` |
 | Fix desempate IIA dual student+worker (cardinalidad single-valued) | ✅ 2026-06-15 | tag `iga-desempate-dual-email-doc-2026-06-15`; commits `a5a4e6f`→`c45ce31` |
 | Incidente OPAC Koha BUL (zebra caído por OOM) | ✅ 2026-06-15 | `reference_koha-zebra-bul-incident` runbook en memoria |
 
@@ -638,7 +638,7 @@ Trabajo real ejecutado en PROD tras cerrar el modelo IGA (Fases 1-11). No son fa
 **Pendientes de operación (no bloqueantes, sin terceros):**
 - ~512 dual sucios Oracle: fix IIA desplegado; barrido de cohorte ejecutado (518/518). Cohortes futuras convergen por recompute.
 - 992 BUL posgrado sin P-code → scope de materialización INEI posterior.
-- ~1,449 estudiantes posgrado en 31 P-codes sin INEI validado → nueva ronda VocBench/INEI 2022.
+- ~1,449 estudiantes posgrado en 31 P-codes sin INEI validado → nueva ronda VocBench/INEI 2022. **Único gap real de INEI** (pregrado ya cerrado; "no es bug"). Al consolidar Koha, estos salen "(sin programa)" en el reporte por programa hasta cerrar la ronda.
 - **GAP-2 email — re-diagnosticado y enriquecido 2026-07-10** (reemplaza la cifra obsoleta "13,733 estudiantes sin CORREO_INST", que era solo un subconjunto de junio). Estado real en PROD tras el email-cleanup 2026-06-06:
   - **32,133 usuarios `active` sin `emailAddress`** institucional (de 53,854 active). Desglose por archetype: alumni 19,908 (62%) · student 10,970 (34%) · staff 875 · faculty 379 · service-account 1.
   - De esos 32,133, **13,859 SÍ tienen un correo capturable** (`sb:personalEmail` ya poblado): student 10,734 · alumni 1,910 · staff 836 · faculty 379. No requieren DTI.

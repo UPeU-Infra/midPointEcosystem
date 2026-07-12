@@ -2,6 +2,14 @@
 
 Ronda posgrado de la migración Bsort2 P-code→INEI (continúa la ronda pregrado del 2026-06-14).
 
+> ## Estado consolidado (2026-07-12)
+>
+> - **Pregrado: CERRADO.** Los P-codes de pregrado activos tienen su INEI en `LT-Pcode-INEI` (42 rows). Bsort2 se proyecta correctamente.
+> - **Posgrado: gap conocido, "no es bug".** ~1.449 estudiantes Lima en 31 P-codes sin INEI validado (ver §GAP) → Bsort2 vacío hasta nueva ronda de validación INEI 2022. NO bloquea pregrado.
+> - **La proyección NO lee VocBench en vivo.** El P-code viene de **Oracle**; la traducción a INEI la hace la **LookupTable ya poblada**. VocBench fue la fuente de *curación* de la LT, no una dependencia en tiempo de ejecución. Por tanto la salud del tesauro VocBench en vivo **no bloquea** el reporte Koha por programa.
+> - **Los INEI repetidos en la LT son aliases N:1 intencionales, NO bug** (varios P-codes → mismo programa INEI; `key`=P-code única). Al poblar los authorised_values Bsort2 de Koha, **deduplicar por INEI** (`SELECT DISTINCT value` → ~37 únicos). Ver header de `upeu/lookup-tables/LT-Pcode-INEI.xml`.
+> - **Consumo en el Koha nuevo consolidado (4 bibliotecas):** contrato completo en [`docs/specs/koha-consolidado-contrato-configuracion.md`](../../../docs/specs/koha-consolidado-contrato-configuracion.md) — el reporte "usuarios que usaron la biblioteca por programa INEI" cruza `statistics.branch` × `borrowers.sort2`.
+
 ## Qué hace
 Reconcilia (PATCH `?options=reconcile`, no-op en `description`) los estudiantes Lima
 activos de posgrado cuyo P-code tiene INEI validado en `LT-Pcode-INEI`

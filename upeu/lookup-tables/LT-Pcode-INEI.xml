@@ -34,6 +34,22 @@
   GESTIÓN EMPRESARIAL (mismo CODIGO_SUNEDU2 en Oracle, mismo INEI 41300270)
   → una sola row. Filiales que comparten P-code resuelven al mismo INEI.
 
+  RELACIÓN N:1 (P-code → INEI) — NO ES BUG, NO DEDUPLICAR AQUÍ.
+  Varios P-codes DISTINTOS mapean legítimamente al mismo `value` (INEI):
+  el P-code SUNEDU distingue mención/sede/recodificación, pero el INEI de 8
+  díg identifica el PROGRAMA. Casos vigentes (documentados en cada label):
+    11102086 = P19, P58            (Educación Inicial y Puericultura)
+    12104952 = P14, P106, P57      (Educación Inglés y Español)
+    41101896 = P08, P120           (Contabilidad G.T. — P120 = Tarapoto)
+    91910681 = P69, P82            (Maestría Salud Pública — 2 menciones)
+  La `key` (P-code) es única → la resolución P-code→INEI es determinista y
+  correcta. Que el `value` se repita es lo esperado. NO "corregir" estos
+  INEI repetidos. Al proyectar a los authorised_values Bsort2 de Koha,
+  deduplicar por INEI (SELECT DISTINCT value → ~37 INEI únicos): en Koha el
+  código es el INEI y debe ser único; el reporte por programa agrupa por
+  INEI, consolidando menciones/sedes bajo el programa (deseable).
+  Contrato completo: docs/specs/koha-consolidado-contrato-configuracion.md
+
   COBERTURA: 19 rows = los 19 P-codes ÚNICOS existentes en Oracle LAMB
   (carreras profesionales). El CSV tiene 20 filas con P-code pero P04
   aparece 2 veces (mismo INEI) → 19 keys distintas. El bridge tiene 2

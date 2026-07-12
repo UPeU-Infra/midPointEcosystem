@@ -114,6 +114,8 @@ Esto NO viola Patrón B porque las semánticas son distintas: override (legal) p
 |---|---|---|
 | `extension/sb:academicProgram` | URI VocBench resuelto vía `sb-program-resolver` | `estudiantes` |
 | `extension/sb:academicProgramCode` | notation EP-XXX | `estudiantes` |
+| `extension/sb:academicProgramSuneduCode` | P-code SUNEDU (`COALESCE(CODIGO_SUNEDU2,'P'\|\|CODIGO_SUNEDU)`) | `estudiantes` |
+| `extension/sb:academicProgramIneiCode` | **DERIVADO** (no IIA directa): P-code → INEI 8díg vía `LookupTable LT-Pcode-INEI` en template base (D.1c). Destino Koha Bsort2. Relación LT P-code→INEI es N:1 (aliases intencionales, no bug — ver header de la LT). Estado: pregrado cerrado, posgrado con gap doc. Detalle: [`docs/specs/koha-consolidado-contrato-configuracion.md`](specs/koha-consolidado-contrato-configuracion.md) | template (LT) |
 | `extension/sb:admissionPeriod` | SEMESTRE de matrícula | `estudiantes` |
 | `extension/sb:studyLevel` | TIPO_NIVEL_ENSENANZA | `estudiantes` |
 | `extension/sb:graduationDate` | FEC_GRADUACION | `egresados` |
