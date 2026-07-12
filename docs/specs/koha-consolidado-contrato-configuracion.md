@@ -65,7 +65,9 @@ Outbound `statistics1-outbound`, normal. Match exacto `facultyName` (Oracle) →
 No listada → null.
 
 ### 3.3 Programa → `statistics_2` (Bsort2) — EL CRÍTICO
-Outbound `statistics2-outbound`, normal, **sin transformación** (emite el valor tal cual). La derivación ocurre aguas arriba: bloque **D.1c** del template base resuelve `academicProgramSuneduCode` (P-code) → `academicProgramIneiCode` (INEI) vía **LookupTable `LT-Pcode-INEI`** (OID `e129d9e4-c2fd-4a02-9369-0ae5b8f59c06`). Cadena: **VocBench → LT-Pcode-INEI → (D.1c) focus → (outbound) Bsort2**.
+Outbound `statistics2-outbound`, normal, **sin transformación** (emite el valor tal cual). La derivación ocurre aguas arriba: bloque **D.1c** del template base resuelve `academicProgramSuneduCode` (P-code, de Oracle `COALESCE(CODIGO_SUNEDU2,'P'||CODIGO_SUNEDU)`) → `academicProgramIneiCode` (INEI) vía **LookupTable `LT-Pcode-INEI`** (OID `e129d9e4-c2fd-4a02-9369-0ae5b8f59c06`, **42 rows pobladas**). Cadena: **VocBench (fuente de curación) → LT-Pcode-INEI → (D.1c) focus → (outbound) Bsort2**.
+
+> **IMPORTANTE — la proyección NO lee VocBench en vivo.** El P-code del estudiante viene de **Oracle**; la traducción a INEI la hace la **LookupTable ya poblada**. VocBench fue la fuente para *curar* esa tabla, pero la operación diaria no lo toca. Por tanto la **salud del tesauro VocBench en vivo NO es un bloqueante del reporte Koha** — lo que gobierna Bsort2 es la LT + los P-codes de Oracle. Estado real del workstream Bsort2→INEI (jun-2026, ver `upeu/tasks/bsort2-inei-posgrado/README.md`): **pregrado CERRADO** (INEI en la LT); **posgrado con GAP conocido y documentado** (~1.449 estudiantes Lima en 31 P-codes sin INEI validado — "no es bug, ronda futura").
 
 ### 3.4 Ortogonales → `extended_attributes`
 Multivaluado, JSON `{"type":"CODE","value":"..."}` (conector v1.3.x). Gobierno parcial: `tolerant=false` + whitelist `tolerantValuePattern`.
@@ -170,16 +172,12 @@ El dropdown `<<Biblioteca|branches>>` hace que el mismo reporte sirva a las 4. U
 
 Ordenados por criticidad:
 
-1. **🔴 Curar el tesauro VocBench** (proyecto real: `Tesauro_Institucional_UPeU`). El catálogo Bsort2 NO está listo para carga limpia:
-   - **14 programas de PREGRADO sin INEI8** (incl. Medicina Humana) → esos alumnos saldrían "(sin programa)". Varios parecen duplicados por reforma de nombre de carrera.
-   - **1 INEI8 duplicado** entre 2 conceptos (Maestría Salud Pública) → doble fila del mismo programa.
-   - **82% de programas sin vínculo formal a facultad** (solo texto libre en `scopeNote`) → Bsort1 frágil.
-   - 6 conceptos importados por RIMS sin SKOS-XL; 2 sin label; `ciencias-de-la-salud` con doble notation (`FCS`/`FACISAL`).
-   - *Resolver al menos INEI8 faltante/duplicado (inconsistencias 1 y 2) antes de generar los AV definitivos.*
-2. **🔴 Sincronizar `LT-Pcode-INEI` ↔ AV Bsort2 de Koha** desde el mismo corte de VocBench (ver §9). GAP actual: ~30 P-codes de posgrado sin INEI validado en el LookupTable.
+1. **🟠 Poblar AV Bsort2 en Koha desde la `LT-Pcode-INEI` (42 rows), NO desde el tesauro en vivo.** El catálogo operativo de INEI ya existe en la LookupTable (pregrado cerrado). Generar los authorised_values Bsort2 del Koha nuevo **desde las 42 filas de la LT** (no re-derivar del tesauro). Corregir de paso el **INEI duplicado real en la LT**: `P69→91910681` y `P82→91910681` apuntan al mismo INEI (dos maestrías) → daría dos filas del mismo código. Ver §9.
+2. **🟡 Cerrar el gap de posgrado** (documentado, "no es bug"): ~1.449 estudiantes Lima en 31 P-codes sin INEI validado (P178, P171, P75, P164, P159, P73, P78…). Sin esto esos patrons de posgrado salen con `Bsort2` vacío ("(sin programa)"). Requiere nueva ronda de validación INEI 2022 y agregar rows a la LT. **NO bloquea pregrado.**
 3. **🟠 Decidir discriminador CIA docentes** (§5): `teachingProgram⊇EP-TEO` (rápido) vs extender inbound `trabajadores.xml` (canónico). Confirmar cobertura de semestres de corte con Calidad.
 4. **🟠 Pre-crear el catálogo receptor** completo en el Koha nuevo (§4).
 5. **🟡 Confirmar** listas de valores AV para `AREA`/`CRAI_TIER`/`TIPO_VINC`/`SEDE`.
+6. **🟢 (Higiene VocBench, NO bloqueante Koha)** — el snapshot del tesauro en vivo tiene deuda de curación que afecta a *otros* consumidores (DSpace/Indico) y a futuras regeneraciones de la LT, pero NO a la proyección Koha actual: ~14 conceptos duplicados/legacy de pregrado sin `IneiCode8` (son gemelos de conceptos que sí lo tienen — p.ej. Medicina Humana proyecta bien vía `P30→91200267` en la LT), 82% de programas sin vínculo formal a facultad (solo `scopeNote`), 6 conceptos RIMS sin SKOS-XL, `ciencias-de-la-salud` con doble notation `FCS`/`FACISAL`. Deseable curar, sin urgencia para Koha.
 
 ---
 
