@@ -50,14 +50,17 @@
   INEI, consolidando menciones/sedes bajo el programa (deseable).
   Contrato completo: docs/specs/koha-consolidado-contrato-configuracion.md
 
-  ⚠️ CONFLICTOS LT↔TESAURO SIN RESOLVER (reconciliación 2026-07-12).
-  Esta LT y el tesauro VocBench divergen en 3 códigos (mismo programa, INEI
-  distinto). Oracle NO arbitra (CODIGO_NACIONAL NULL para todos). Hasta
-  dirimir con el clasificador INEI 2022 oficial, estos values PUEDEN estar
-  mal — Koha proyecta lo que diga la LT:
-    P35 Teología          LT 22103063  vs tesauro 22101180  (⚠️ programa de CIA)
-    P05 Adm. Neg. Int.    LT 41600562  vs tesauro 41300011
-    P99 Doct. Ing. Sist.  LT 61200058  vs tesauro 61203409 (sin tipar)
+  CONFLICTOS LT↔TESAURO — RESUELTOS contra clasificador INEI 2022 oficial
+  (Res. Jefatural 067-2024-INEI) + denominación Oracle vigente (2026-07-12):
+    P35 Teología       → 22101180 CORRECTO (Oracle: programa "Teología" vigente,
+                         no la mención discontinuada). LT CORREGIDA 22103063→22101180
+                         este commit. El tesauro ya lo tenía bien.
+    P05 Adm. Neg. Int. → 41600562 CORRECTO (LT ya lo tenía; corregir el TESAURO,
+                         que tiene 41300011 "Administración Y Negocios Int.").
+    P99 Doct. Ing.Sist.→ 61200058 CORRECTO (LT ya lo tenía; corregir el TESAURO,
+                         que tiene 61203409 "Ingeniería de Sistemas" corto).
+  ⚠️ PROD: tras corregir P35 aquí, aplicar PATCH REST de la fila + recompute de
+  los ~5 estudiantes de Teología para actualizar su Bsort2 en Koha.
   Plan de curación: upeu/tasks/bsort2-inei-posgrado/curacion-tesauro-inei-2026-07-12.md
 
   COBERTURA: 19 rows = los 19 P-codes ÚNICOS existentes en Oracle LAMB
@@ -187,7 +190,7 @@
     </row>
     <row>
         <key>P35</key>
-        <value>22103063</value>
+        <value>22101180</value>
         <label>Teología</label>
     </row>
     <!-- ============================================================

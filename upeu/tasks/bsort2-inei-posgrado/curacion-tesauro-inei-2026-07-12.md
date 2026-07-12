@@ -45,23 +45,34 @@ Cada huérfano es un duplicado por renombre de carrera; su gemelo canónico YA t
 |---|---|---|---|---|---|
 | P05 | Administración **de** Negocios Internacionales | `41600562` ✅ | `41300011` | `41600562`="Administración de Negocios Internacionales" (exacto); `41300011`="Administración **y** Negocios Int." (otra denominación) | **LT correcta → corregir TESAURO** a 41600562 |
 | P99 | Doctorado en Ingeniería de Sistemas | `61200058` ✅ | `61203409` | `61200058`="Doctorado en Ingeniería de Sistemas" (exacto); `61203409`="Ingeniería de Sistemas" (denom. corta) | **LT correcta → corregir TESAURO** a 61200058 |
-| **P35** | **Teología** (⚠️ programa de CIA) | `22103063` | `22101180` | **AMBOS existen:** `22103063`="Teología **con Mención en Liderazgo Eclesiástico**"; `22101180`="**Teología**". Sin ganador automático. | **PENDIENTE: confirmar la denominación SUNEDU exacta de la carrera de Teología de UPeU** (§F). Si es "Teología" a secas → tesauro (22101180) correcto, corregir LT; si lleva la mención → LT (22103063) correcta, corregir tesauro. |
+| **P35** | **Teología** (⚠️ programa de CIA) | `22103063` ❌ | `22101180` ✅ | **RESUELTO por Oracle:** el programa vigente de UPeU es **"Teología"** (P35, matrícula activa continua; la variante "con Mención en Liderazgo Eclesiástico" está discontinuada desde 2021 y sin CODIGO_SUNEDU). → `22101180` correcto. | **TESAURO correcto → corregir LA LT** (hecho en repo: `22103063→22101180`). Falta aplicar a PROD (§G). |
 
-En P05 y P99 la LT tenía razón (su nota "RONDA 3 re-validada" era correcta, solo faltaba preservar la evidencia — ahora está). **Al fijar cada valor, ponerlo en AMBAS capas** (tesauro `IneiCode8` + row LT) para no re-divergir.
+En P05 y P99 la LT tenía razón; en **P35 la LT estaba mal** y el tesauro bien — ninguna capa es infalible, por eso se verificó cada caso contra el clasificador oficial + Oracle. **Al fijar cada valor, ponerlo en AMBAS capas** (tesauro `IneiCode8` + row LT) para no re-divergir.
 
 ## D. Huecos reales — 1 resuelto, 2 requieren denominación exacta UPeU
 
-| Programa | INEI clasificador | Estado |
+| Programa | Denominación Oracle vigente | INEI clasificador | Estado |
+|---|---|---|---|
+| `ingenieria-informatica-y-estadistica` | — | **`61202313`** = "Ingeniería Informática y Estadística" (exacto) | ✅ **RESUELTO** — cargar al tesauro |
+| `educacion-ciencias-naturales` | "Educación, Especialidad Ciencias Naturales y Tecnología" (ID 1157) | — | ⏸ **PILOTO sin licenciar** — sin CODIGO_SUNEDU, matrícula mínima (2 en 2025-1, **0 en semestres actuales**). No forzar código hasta licenciamiento SUNEDU (Calidad/DTI). |
+| `educacion-matematica` | "Educación, Especialidad Matemática, Análisis de Datos y Computación" (ID 1158) | — | ⏸ **PILOTO sin licenciar** — ídem (2 en 2025-1, 0 actuales). |
+
+> Los huecos SIN P-code no proyectan a Koha aunque se cargue el INEI al tesauro (la vía actual es P-code→LT→INEI). Requieren además una vía de materialización alterna (por `academicProgramCode` EP-XXX o por nombre) — decisión de diseño MidPoint aparte. Dado que los 2 pilotos tienen **0 matriculados en los semestres actuales**, su impacto en el reporte de biblioteca es **nulo hoy** → baja prioridad hasta que se licencien y tengan matrícula.
+
+## F. Estado final — todo dirimido salvo 2 pilotos sin licenciar
+
+| Caso | Resolución | Fuente |
 |---|---|---|
-| `ingenieria-informatica-y-estadistica` | **`61202313`** = "Ingeniería Informática y Estadística" (coincidencia exacta) | ✅ **RESUELTO** — cargar al tesauro |
-| `educacion-ciencias-naturales` (/ variante) | (decenas de variantes) | **PENDIENTE** — requiere denominación SUNEDU exacta UPeU (§F) |
-| `educacion-matematica` (/ variante) | (decenas de variantes) | **PENDIENTE** — requiere denominación SUNEDU exacta UPeU (§F) |
+| P35 Teología | **22101180** (corregir LT ✅ hecho) | Oracle: "Teología" vigente + clasificador |
+| P05 Adm. Neg. Int. | **41600562** (corregir tesauro) | clasificador (match exacto) |
+| P99 Doct. Ing. Sistemas | **61200058** (corregir tesauro) | clasificador (match exacto) |
+| Ing. Informática y Estadística | **61202313** (cargar tesauro; sin P-code → no proyecta a Koha aún) | clasificador (match exacto) |
+| Medicina Humana | **91200267** (backfill tesauro; ya proyecta vía LT) | LT + Oracle confirma P30 |
+| 8 duplicados de slug | mergear (§A) | tesauro |
+| Educ. Ciencias Naturales / Matemática | ⏸ pilotos sin licenciar, 0 matrícula actual | Oracle |
 
-> Los huecos SIN P-code no proyectan a Koha aunque se cargue el INEI al tesauro (la vía actual es P-code→LT→INEI). Requieren además una vía de materialización alterna (por `academicProgramCode` EP-XXX o por nombre) — decisión de diseño MidPoint aparte.
-
-## F. Lo único que falta — denominación SUNEDU exacta de 3 carreras UPeU
-
-Para cerrar Teología (P35), Educ. Ciencias Naturales y Educ. Matemática hace falta **la denominación EXACTA como UPeU registró el programa ante SUNEDU** (en `DAVID.ACAD_PROGRAMA_ESTUDIO` o el registro de licenciamiento), para hacer match 1:1 con la fila del clasificador. No se puede elegir entre las variantes sin ese dato — elegir a ojo sería inventar.
+## G. Aplicar a PROD (pendiente de confirmación)
+La corrección P35 en la LT ya está en el repo. Falta: `git pull` en PROD + PATCH REST de la fila P35 de `LT-Pcode-INEI` + recompute de los ~5 estudiantes de Teología activos para que su `Bsort2` pase a `22101180`. Bajo riesgo (5 usuarios, dato corregido, reversible). El Koha viejo está en maintenance (caído) → sin urgencia; conviene hacerlo junto con el re-apuntado al Koha nuevo.
 
 ## E. Flags menores (verificar con Calidad, no bloqueantes)
 - `P152` Ingeniería Industrial (INEI `72200109`): programa nuevo (2026-07), solo existe como legacy `c_iii00716` sin tipar; su `editorialNote` dice sin licencia SUNEDU vigente. No tipar hasta confirmar.
