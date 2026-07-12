@@ -50,6 +50,16 @@
   INEI, consolidando menciones/sedes bajo el programa (deseable).
   Contrato completo: docs/specs/koha-consolidado-contrato-configuracion.md
 
+  ⚠️ CONFLICTOS LT↔TESAURO SIN RESOLVER (reconciliación 2026-07-12).
+  Esta LT y el tesauro VocBench divergen en 3 códigos (mismo programa, INEI
+  distinto). Oracle NO arbitra (CODIGO_NACIONAL NULL para todos). Hasta
+  dirimir con el clasificador INEI 2022 oficial, estos values PUEDEN estar
+  mal — Koha proyecta lo que diga la LT:
+    P35 Teología          LT 22103063  vs tesauro 22101180  (⚠️ programa de CIA)
+    P05 Adm. Neg. Int.    LT 41600562  vs tesauro 41300011
+    P99 Doct. Ing. Sist.  LT 61200058  vs tesauro 61203409 (sin tipar)
+  Plan de curación: upeu/tasks/bsort2-inei-posgrado/curacion-tesauro-inei-2026-07-12.md
+
   COBERTURA: 19 rows = los 19 P-codes ÚNICOS existentes en Oracle LAMB
   (carreras profesionales). El CSV tiene 20 filas con P-code pero P04
   aparece 2 veces (mismo INEI) → 19 keys distintas. El bridge tiene 2
