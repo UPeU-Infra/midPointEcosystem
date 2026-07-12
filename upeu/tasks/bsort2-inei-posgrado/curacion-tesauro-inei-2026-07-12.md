@@ -32,29 +32,36 @@ Cada huérfano es un duplicado por renombre de carrera; su gemelo canónico YA t
 |---|---|---|
 | `medicina-humana` | **91200267** | Backfill directo: agregar `skos:notation "91200267"^^IneiCode8`. Carrera activa con matrícula real; hoy **sí proyecta a Koha** vía la LT, pero el tesauro no la tiene → cargar para consistencia con DSpace/Indico. |
 
-## C. Conflictos de valor LT ↔ tesauro (mismo programa, INEI distinto — DECISIÓN HUMANA)
+## Fuente oficial (obtenida y parseada 2026-07-12)
 
-Requieren el clasificador INEI 2022 oficial para dirimir cuál es el correcto. **Hasta resolverlos, la LT (lo que proyecta a Koha) puede estar emitiendo el INEI equivocado.**
+**INEI — "Clasificador Nacional de Programas e Instituciones de Educación Superior y Técnico Productiva 2022"**, Res. Jefatural N° 067-2024-INEI. Archivo de programas (hoja `profesional _universidad` / `doctorado_universidad`):
+`https://cdn.www.gob.pe/uploads/document/file/6264275/5355494-listado-de-programas-de-educacion-superior-31-12-2022(2).xlsx`
 
-| P-code | Programa | INEI en la LT (→ Koha hoy) | INEI en el tesauro | Nota |
-|---|---|---|---|---|
-| **P35** | **Teología** | `22103063` | `22101180` (tipado) | ⚠️ **Prioritario: Teología es el programa de CIA.** El reporte de CIA por programa depende de este código. |
-| P05 | Administración de Negocios Internacionales | `41600562` | `41300011` (tipado, RIMS 2026-06-28) | Dos INEI distintos para el mismo programa. |
-| P99 | Doctorado en Ingeniería de Sistemas | `61200058` | `61203409` (sin tipar, `xsd:string`) | La LT (nota "RONDA 3") dice que `61203409→61200058` fue corrección validada; el tesauro quedó con el valor viejo. |
+**Estructura del código (confirmada):** 9 dígitos = `CCC`(campo detallado) + `PPPPP`(programa) + `N`(nivel: 6=profesional, 7=maestría, 8=doctorado, 9=2ª esp.). **El "código de 8 dígitos" de UPeU = CCC+PPPPP** (columna "Código de campo_programa"), sin el dígito de nivel. Verificado contra los 7 códigos conocidos.
 
-**Al resolver cada conflicto:** fijar el INEI correcto en AMBAS capas (tesauro `IneiCode8` + row de la LT) para no re-divergir.
+## C. Conflictos de valor LT ↔ tesauro — RESUELTOS contra el clasificador oficial
 
-## D. Huecos reales — sin INEI en NINGUNA capa (requieren clasificador INEI 2022 externo)
+| P-code | Programa (denominación UPeU) | INEI LT | INEI tesauro | Veredicto clasificador | Acción |
+|---|---|---|---|---|---|
+| P05 | Administración **de** Negocios Internacionales | `41600562` ✅ | `41300011` | `41600562`="Administración de Negocios Internacionales" (exacto); `41300011`="Administración **y** Negocios Int." (otra denominación) | **LT correcta → corregir TESAURO** a 41600562 |
+| P99 | Doctorado en Ingeniería de Sistemas | `61200058` ✅ | `61203409` | `61200058`="Doctorado en Ingeniería de Sistemas" (exacto); `61203409`="Ingeniería de Sistemas" (denom. corta) | **LT correcta → corregir TESAURO** a 61200058 |
+| **P35** | **Teología** (⚠️ programa de CIA) | `22103063` | `22101180` | **AMBOS existen:** `22103063`="Teología **con Mención en Liderazgo Eclesiástico**"; `22101180`="**Teología**". Sin ganador automático. | **PENDIENTE: confirmar la denominación SUNEDU exacta de la carrera de Teología de UPeU** (§F). Si es "Teología" a secas → tesauro (22101180) correcto, corregir LT; si lleva la mención → LT (22103063) correcta, corregir tesauro. |
 
-Oracle no los tiene (CODIGO_NACIONAL NULL), no están en el crosswalk RIMS, no tienen P-code. Sin INEI, estos alumnos salen "(sin programa)" en el reporte de biblioteca.
+En P05 y P99 la LT tenía razón (su nota "RONDA 3 re-validada" era correcta, solo faltaba preservar la evidencia — ahora está). **Al fijar cada valor, ponerlo en AMBAS capas** (tesauro `IneiCode8` + row LT) para no re-divergir.
 
-| Programa (y variante slug) | ¿P-code? | Fuente para el INEI |
+## D. Huecos reales — 1 resuelto, 2 requieren denominación exacta UPeU
+
+| Programa | INEI clasificador | Estado |
 |---|---|---|
-| `educacion-ciencias-naturales` / `…-especialidad-ciencias-naturales-y-tecnologia` | No | Clasificador INEI 2022 oficial |
-| `educacion-matematica` / `…-especialidad-matematica-analisis-datos-y-computacion` | No | Clasificador INEI 2022 oficial |
-| `ingenieria-informatica-y-estadistica` | No | Clasificador INEI 2022 oficial |
+| `ingenieria-informatica-y-estadistica` | **`61202313`** = "Ingeniería Informática y Estadística" (coincidencia exacta) | ✅ **RESUELTO** — cargar al tesauro |
+| `educacion-ciencias-naturales` (/ variante) | (decenas de variantes) | **PENDIENTE** — requiere denominación SUNEDU exacta UPeU (§F) |
+| `educacion-matematica` (/ variante) | (decenas de variantes) | **PENDIENTE** — requiere denominación SUNEDU exacta UPeU (§F) |
 
-> Como no tienen P-code en Oracle, aunque se cargue el INEI en el tesauro **no bastará** para que proyecten a Koha por la vía actual (P-code → LT → INEI). Requieren además una vía de materialización alterna (mapear por `academicProgramCode` EP-XXX o por nombre) — decisión de diseño MidPoint aparte, fuera de la curación del tesauro.
+> Los huecos SIN P-code no proyectan a Koha aunque se cargue el INEI al tesauro (la vía actual es P-code→LT→INEI). Requieren además una vía de materialización alterna (por `academicProgramCode` EP-XXX o por nombre) — decisión de diseño MidPoint aparte.
+
+## F. Lo único que falta — denominación SUNEDU exacta de 3 carreras UPeU
+
+Para cerrar Teología (P35), Educ. Ciencias Naturales y Educ. Matemática hace falta **la denominación EXACTA como UPeU registró el programa ante SUNEDU** (en `DAVID.ACAD_PROGRAMA_ESTUDIO` o el registro de licenciamiento), para hacer match 1:1 con la fila del clasificador. No se puede elegir entre las variantes sin ese dato — elegir a ojo sería inventar.
 
 ## E. Flags menores (verificar con Calidad, no bloqueantes)
 - `P152` Ingeniería Industrial (INEI `72200109`): programa nuevo (2026-07), solo existe como legacy `c_iii00716` sin tipar; su `editorialNote` dice sin licencia SUNEDU vigente. No tipar hasta confirmar.
