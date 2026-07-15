@@ -3,9 +3,19 @@
     <name>Koha ILS UPeU (consolidado)</name>
     <!-- ============================================================
          P1 (2026-07-15) — RESOURCE NUEVO Y AISLADO para la arquitectura Koha
-         consolidada 4->1 (una sola instancia koha_upeu en 192.168.15.167).
+         consolidada 4->1 (una sola instancia koha_upeu en el servidor de
+         producción koha-plus-prod 192.168.12.136, BD koha_upeu).
          Clonado de koha-ils.xml (OID 9b5a7c81, BUL viejo .12.135), que se
          mantiene INTACTO y en producción hasta el cutover.
+
+         CAMBIO DE SERVIDOR (2026-07-15): el .167 fue modelado temporal y YA NO
+         se usa. La producción del Koha consolidado es ahora el .136
+         (koha-plus-prod, instancia `upeu`, BD `koha_upeu`), que ya tiene la
+         capa de identidad lista y verificada: OAuth2 client_credentials OK,
+         JDBC koha_connector, atributos DNI/COD_UPEU/DOCTYPE, 7 categorías
+         eduPerson, 4 branches (BUL/BUJ/BUT/CIA), Plack habilitado, 0 patrons.
+         Secretos placeholders → corresponden a KOHA_PLUS_* de
+         ~/.secrets/koha-plus-prod.env.
 
          lifecycleState=proposed: el recurso EXISTE (schema/testConnection
          funcionan) pero los OUTBOUND NO se ejecutan -> aislamiento total, no
@@ -13,7 +23,7 @@
          NO subir a active vía PUT sin gate.
 
          Cambios de contenido vs koha-ils.xml (ver comentarios en cada bloque):
-           - Conexión -> koha_upeu en .167 (REST OAuth2 + JDBC foto).
+           - Conexión -> koha_upeu en .136 (REST OAuth2 + JDBC foto).
            - cardnumber = extension/sciback:externalSystemId (ID_PERSONA, P0), strong.
            - correlación única: cardnumber == externalSystemId (retirados los 3 legacy).
            - extended_attributes: + par COD_UPEU; DNI queda informativo (sin adopt-by-DNI).
@@ -23,21 +33,22 @@
     <lifecycleState>proposed</lifecycleState>
     <!-- connectorRef → KohaConnector (bundle compartido; el conector NUEVO ya
          retiró la lógica adopt-by-DNI legacy, D-14). Mantengo el mismo OID de
-         conector que koha-ils.xml; si el bundle .167 tuviera OID distinto,
+         conector que koha-ils.xml; si el bundle .136 tuviera OID distinto,
          actualizar aquí al desplegar. -->
     <connectorRef oid="45b4f0e0-b905-49c4-9d10-f0af7c067a6a" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration>
         <ns1:configurationProperties>
-            <ns2:serviceAddress>http://192.168.15.167:8001</ns2:serviceAddress>
+            <ns2:serviceAddress>http://192.168.12.136:8001</ns2:serviceAddress>
             <ns2:trustAllCertificates>false</ns2:trustAllCertificates>
             <ns2:authenticationMethodStrategy>OAUTH2</ns2:authenticationMethodStrategy>
-            <!-- PLACEHOLDER: reemplazar por KOHA167_OAUTH_CLIENT_ID (~/.secrets/koha-167.env) al desplegar. -->
-            <ns2:clientId>__REPLACE_KOHA167_OAUTH_CLIENT_ID__</ns2:clientId>
+            <!-- PLACEHOLDER: reemplazar por KOHA_PLUS_OAUTH_CLIENT_ID (~/.secrets/koha-plus-prod.env) al desplegar. -->
+            <ns2:clientId>__REPLACE_KOHA_PLUS_OAUTH_CLIENT_ID__</ns2:clientId>
             <!-- SECRETO — placeholder en clearValue. Al desplegar: sustituir el token por
-                 KOHA167_OAUTH_SECRET; MidPoint cifra el clearValue a encryptedData en el import
-                 (no queda en claro en el repo de MidPoint). NUNCA commitear el secreto real. -->
+                 KOHA_PLUS_OAUTH_SECRET (~/.secrets/koha-plus-prod.env); MidPoint cifra el clearValue
+                 a encryptedData en el import (no queda en claro en el repo de MidPoint).
+                 NUNCA commitear el secreto real. -->
             <ns2:clientSecret>
-                <t:clearValue>__REPLACE_KOHA167_OAUTH_SECRET__</t:clearValue>
+                <t:clearValue>__REPLACE_KOHA_PLUS_OAUTH_SECRET__</t:clearValue>
             </ns2:clientSecret>
             <!-- ============================================================
                  Canal JDBC (conector Koha v1.3.0) — usado SOLO para el
@@ -47,15 +58,16 @@
                  en el repo.
                  ============================================================ -->
             <ns2:dbEnabled>true</ns2:dbEnabled>
-            <ns2:dbHost>192.168.15.167</ns2:dbHost>
+            <ns2:dbHost>192.168.12.136</ns2:dbHost>
             <ns2:dbPort>3306</ns2:dbPort>
             <ns2:dbName>koha_upeu</ns2:dbName>
-            <!-- PLACEHOLDER: reemplazar por KOHA167_JDBC_USER al desplegar. -->
-            <ns2:dbUser>__REPLACE_KOHA167_JDBC_USER__</ns2:dbUser>
+            <!-- PLACEHOLDER: reemplazar por KOHA_PLUS_JDBC_USER (~/.secrets/koha-plus-prod.env) al desplegar. -->
+            <ns2:dbUser>__REPLACE_KOHA_PLUS_JDBC_USER__</ns2:dbUser>
             <!-- SECRETO — placeholder en clearValue (mismo criterio que clientSecret): sustituir
-                 por KOHA167_JDBC_PASS al desplegar; MidPoint lo cifra en el import. -->
+                 por KOHA_PLUS_JDBC_PASS (~/.secrets/koha-plus-prod.env) al desplegar; MidPoint lo
+                 cifra en el import. -->
             <ns2:dbPassword>
-                <t:clearValue>__REPLACE_KOHA167_JDBC_PASS__</t:clearValue>
+                <t:clearValue>__REPLACE_KOHA_PLUS_JDBC_PASS__</t:clearValue>
             </ns2:dbPassword>
             <ns2:dbPoolSize>32</ns2:dbPoolSize>
         </ns1:configurationProperties>
