@@ -101,3 +101,6 @@ docs/runbooks/ldap-dualshadow-dedup-265/*_dataset_*.csv
 
 # Backups forenses con PII real (LDAP, usuarios) — nunca a git, solo disco local
 archive/backups-2026-06-prod-campus/
+
+# Exports crudos de config PROD (backups de rollback P0) — NUNCA commitear
+.backups-prod-p0/
