@@ -1,0 +1,1987 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:sciback="urn:sciback:midpoint:person" xmlns:sb="urn:sciback:midpoint:person" xmlns:upeu="urn:upeu:midpoint:local" xmlns:ns1="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3" xmlns:ns2="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.identicum.midpoint.connector-koha/com.identicum.connectors.KohaConnector" xmlns:ns5="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:ns6="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:ns7="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xs="http://www.w3.org/2001/XMLSchema" oid="e10a539a-cb7f-4c72-a19f-60f7f62e4b96">
+    <name>Koha ILS UPeU (consolidado)</name>
+    <!-- ============================================================
+         P1 (2026-07-15) — RESOURCE NUEVO Y AISLADO para la arquitectura Koha
+         consolidada 4->1 (una sola instancia koha_upeu en 192.168.15.167).
+         Clonado de koha-ils.xml (OID 9b5a7c81, BUL viejo .12.135), que se
+         mantiene INTACTO y en producción hasta el cutover.
+
+         lifecycleState=proposed: el recurso EXISTE (schema/testConnection
+         funcionan) pero los OUTBOUND NO se ejecutan -> aislamiento total, no
+         provisiona nada hasta que se apruebe el dry-run y se suba a `active`.
+         NO subir a active vía PUT sin gate.
+
+         Cambios de contenido vs koha-ils.xml (ver comentarios en cada bloque):
+           - Conexión -> koha_upeu en .167 (REST OAuth2 + JDBC foto).
+           - cardnumber = extension/sciback:externalSystemId (ID_PERSONA, P0), strong.
+           - correlación única: cardnumber == externalSystemId (retirados los 3 legacy).
+           - extended_attributes: + par COD_UPEU; DNI queda informativo (sin adopt-by-DNI).
+           - 4->1: sin gate hasLimaAffiliation; adminStatus sin excepción JULIACA/TARAPOTO.
+           - library_id: default seguro (campus desconocido NO cae a BUL).
+         ============================================================ -->
+    <lifecycleState>proposed</lifecycleState>
+    <!-- connectorRef → KohaConnector (bundle compartido; el conector NUEVO ya
+         retiró la lógica adopt-by-DNI legacy, D-14). Mantengo el mismo OID de
+         conector que koha-ils.xml; si el bundle .167 tuviera OID distinto,
+         actualizar aquí al desplegar. -->
+    <connectorRef oid="45b4f0e0-b905-49c4-9d10-f0af7c067a6a" relation="org:default" type="c:ConnectorType"/>
+    <connectorConfiguration>
+        <ns1:configurationProperties>
+            <ns2:serviceAddress>http://192.168.15.167:8001</ns2:serviceAddress>
+            <ns2:trustAllCertificates>false</ns2:trustAllCertificates>
+            <ns2:authenticationMethodStrategy>OAUTH2</ns2:authenticationMethodStrategy>
+            <!-- PLACEHOLDER: reemplazar por KOHA167_OAUTH_CLIENT_ID (~/.secrets/koha-167.env) al desplegar. -->
+            <ns2:clientId>__REPLACE_KOHA167_OAUTH_CLIENT_ID__</ns2:clientId>
+            <!-- SECRETO — placeholder en clearValue. Al desplegar: sustituir el token por
+                 KOHA167_OAUTH_SECRET; MidPoint cifra el clearValue a encryptedData en el import
+                 (no queda en claro en el repo de MidPoint). NUNCA commitear el secreto real. -->
+            <ns2:clientSecret>
+                <t:clearValue>__REPLACE_KOHA167_OAUTH_SECRET__</t:clearValue>
+            </ns2:clientSecret>
+            <!-- ============================================================
+                 Canal JDBC (conector Koha v1.3.0) — usado SOLO para el
+                 outbound de foto (ri:photo / ri:photo_mimetype). Las
+                 propiedades REST de arriba siguen siendo el canal primario.
+                 dbPassword va cifrado (encryptedData); NUNCA en clearValue
+                 en el repo.
+                 ============================================================ -->
+            <ns2:dbEnabled>true</ns2:dbEnabled>
+            <ns2:dbHost>192.168.15.167</ns2:dbHost>
+            <ns2:dbPort>3306</ns2:dbPort>
+            <ns2:dbName>koha_upeu</ns2:dbName>
+            <!-- PLACEHOLDER: reemplazar por KOHA167_JDBC_USER al desplegar. -->
+            <ns2:dbUser>__REPLACE_KOHA167_JDBC_USER__</ns2:dbUser>
+            <!-- SECRETO — placeholder en clearValue (mismo criterio que clientSecret): sustituir
+                 por KOHA167_JDBC_PASS al desplegar; MidPoint lo cifra en el import. -->
+            <ns2:dbPassword>
+                <t:clearValue>__REPLACE_KOHA167_JDBC_PASS__</t:clearValue>
+            </ns2:dbPassword>
+            <ns2:dbPoolSize>32</ns2:dbPoolSize>
+        </ns1:configurationProperties>
+    </connectorConfiguration>
+    <schema>
+        <cachingMetadata>
+            <retrievalTimestamp>2026-05-21T22:31:22.646Z</retrievalTimestamp>
+            <serialNumber>cea8d94cdd93c795-5f6e412b33312105</serialNumber>
+        </cachingMetadata>
+        <definition>
+            <xsd:schema xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:ra="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:tns="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+                <xsd:import namespace="http://prism.evolveum.com/xml/ns/public/annotation-3"/>
+                <xsd:import namespace="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3"/>
+                <xsd:complexType name="GroupObjectClass">
+                    <xsd:annotation>
+                        <xsd:appinfo>
+                            <a:container>true</a:container>
+                            <ra:resourceObject>true</ra:resourceObject>
+                            <ra:nativeObjectClass>__GROUP__</ra:nativeObjectClass>
+                            <ra:default>false</ra:default>
+                            <ra:auxiliary>false</ra:auxiliary>
+                            <ra:embedded>false</ra:embedded>
+                            <ra:namingAttribute>ri:description</ra:namingAttribute>
+                            <ra:displayNameAttribute>ri:description</ra:displayNameAttribute>
+                            <ra:identifier>ri:patron_category_id</ra:identifier>
+                            <ra:secondaryIdentifier>ri:description</ra:secondaryIdentifier>
+                        </xsd:appinfo>
+                    </xsd:annotation>
+                    <xsd:sequence>
+                        <xsd:element minOccurs="0" name="upper_age_limit" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>120</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>upper_age_limit</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>upper_age_limit</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="enrolment_fee" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>130</a:displayOrder>
+                                    <ra:nativeAttributeName>enrolment_fee</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>enrolment_fee</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="lower_age_limit" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>140</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>lower_age_limit</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>lower_age_limit</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="default_privacy" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>150</a:displayOrder>
+                                    <ra:nativeAttributeName>default_privacy</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>default_privacy</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="categorycode" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>160</a:displayOrder>
+                                    <ra:nativeAttributeName>patron_category_id</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>categorycode</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="enrolment_period" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>170</a:displayOrder>
+                                    <ra:nativeAttributeName>enrolment_period_in_months</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>enrolment_period</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="require_strong_password" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>180</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>require_strong_password</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>require_strong_password</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="description" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>110</a:displayOrder>
+                                    <ra:nativeAttributeName>description</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>__NAME__</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="overdue_notice_required" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>190</a:displayOrder>
+                                    <ra:nativeAttributeName>overdue_notice_required</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>overdue_notice_required</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="min_password_length" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>200</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>min_password_length</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>min_password_length</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="category_type" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>210</a:displayOrder>
+                                    <ra:nativeAttributeName>category_type</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>category_type</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="patron_category_id" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>100</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>patron_category_id</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>__UID__</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                    </xsd:sequence>
+                </xsd:complexType>
+                <xsd:complexType name="AccountObjectClass">
+                    <xsd:annotation>
+                        <xsd:appinfo>
+                            <a:container>true</a:container>
+                            <ra:resourceObject>true</ra:resourceObject>
+                            <ra:nativeObjectClass>__ACCOUNT__</ra:nativeObjectClass>
+                            <ra:default>true</ra:default>
+                            <ra:auxiliary>false</ra:auxiliary>
+                            <ra:embedded>false</ra:embedded>
+                            <ra:namingAttribute>ri:userid</ra:namingAttribute>
+                            <ra:displayNameAttribute>ri:userid</ra:displayNameAttribute>
+                            <ra:identifier>ri:patron_id</ra:identifier>
+                            <ra:secondaryIdentifier>ri:userid</ra:secondaryIdentifier>
+                        </xsd:appinfo>
+                    </xsd:annotation>
+                    <xsd:sequence>
+                        <xsd:element minOccurs="0" name="initials" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>120</a:displayOrder>
+                                    <ra:nativeAttributeName>initials</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>initials</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="category_id" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>130</a:displayOrder>
+                                    <ra:nativeAttributeName>category_id</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>category_id</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="altaddress_address" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>140</a:displayOrder>
+                                    <ra:nativeAttributeName>altaddress_address</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>altaddress_address</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="statistics_2" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>150</a:displayOrder>
+                                    <ra:nativeAttributeName>statistics_2</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>statistics_2</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="sms_provider_id" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>160</a:displayOrder>
+                                    <ra:nativeAttributeName>sms_provider_id</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>sms_provider_id</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="statistics_1" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>170</a:displayOrder>
+                                    <ra:nativeAttributeName>statistics_1</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>statistics_1</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="library_id" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>180</a:displayOrder>
+                                    <ra:nativeAttributeName>library_id</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>library_id</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="firstname" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>190</a:displayOrder>
+                                    <ra:nativeAttributeName>firstname</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>firstname</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="email" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>200</a:displayOrder>
+                                    <ra:nativeAttributeName>email</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>email</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="anonymized" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>210</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>anonymized</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>anonymized</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="country" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>220</a:displayOrder>
+                                    <ra:nativeAttributeName>country</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>country</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="cardnumber" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>230</a:displayOrder>
+                                    <ra:nativeAttributeName>cardnumber</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>cardnumber</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="photo" type="xsd:base64Binary">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>240</a:displayOrder>
+                                    <ra:nativeAttributeName>photo</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>photo</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>false</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="secondary_email" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>250</a:displayOrder>
+                                    <ra:nativeAttributeName>secondary_email</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>secondary_email</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="opac_notes" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>260</a:displayOrder>
+                                    <ra:nativeAttributeName>opac_notes</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>opac_notes</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="photo_mimetype" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>270</a:displayOrder>
+                                    <ra:nativeAttributeName>photo_mimetype</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>photo_mimetype</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>false</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="altaddress_postal_code" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>280</a:displayOrder>
+                                    <ra:nativeAttributeName>altaddress_postal_code</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>altaddress_postal_code</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="address" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>290</a:displayOrder>
+                                    <ra:nativeAttributeName>address</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>address</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="other_name" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>300</a:displayOrder>
+                                    <ra:nativeAttributeName>other_name</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>other_name</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="relationship_type" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>310</a:displayOrder>
+                                    <ra:nativeAttributeName>relationship_type</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>relationship_type</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="altaddress_email" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>320</a:displayOrder>
+                                    <ra:nativeAttributeName>altaddress_email</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>altaddress_email</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="patron_card_lost" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>330</a:displayOrder>
+                                    <ra:nativeAttributeName>patron_card_lost</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>patron_card_lost</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="altaddress_state" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>340</a:displayOrder>
+                                    <ra:nativeAttributeName>altaddress_state</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>altaddress_state</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element maxOccurs="unbounded" minOccurs="0" name="extended_attributes" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>350</a:displayOrder>
+                                    <ra:nativeAttributeName>extended_attributes</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>extended_attributes</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="phone" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>360</a:displayOrder>
+                                    <ra:nativeAttributeName>phone</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>phone</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="expired" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>370</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>expired</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>expired</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="state" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>380</a:displayOrder>
+                                    <ra:nativeAttributeName>state</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>state</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="lang" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>390</a:displayOrder>
+                                    <ra:nativeAttributeName>lang</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>lang</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="restricted" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>400</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>restricted</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>restricted</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="sms_number" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>410</a:displayOrder>
+                                    <ra:nativeAttributeName>sms_number</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>sms_number</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="updated_on" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>420</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>updated_on</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>updated_on</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="expiry_date" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>430</a:displayOrder>
+                                    <ra:nativeAttributeName>expiry_date</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>expiry_date</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="pronouns" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>440</a:displayOrder>
+                                    <ra:nativeAttributeName>pronouns</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>pronouns</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="staff_notes" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>450</a:displayOrder>
+                                    <ra:nativeAttributeName>staff_notes</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>staff_notes</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="altaddress_phone" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>460</a:displayOrder>
+                                    <ra:nativeAttributeName>altaddress_phone</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>altaddress_phone</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="date_enrolled" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>470</a:displayOrder>
+                                    <a:access>create</a:access>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>date_enrolled</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>date_enrolled</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="postal_code" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>480</a:displayOrder>
+                                    <ra:nativeAttributeName>postal_code</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>postal_code</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="preferred_name" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>490</a:displayOrder>
+                                    <ra:nativeAttributeName>preferred_name</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>preferred_name</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="altaddress_city" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>500</a:displayOrder>
+                                    <ra:nativeAttributeName>altaddress_city</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>altaddress_city</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="gender" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>510</a:displayOrder>
+                                    <ra:nativeAttributeName>gender</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>gender</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="primary_contact_method" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>520</a:displayOrder>
+                                    <ra:nativeAttributeName>primary_contact_method</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>primary_contact_method</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="userid" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>110</a:displayOrder>
+                                    <ra:nativeAttributeName>userid</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>__NAME__</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="middle_name" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>530</a:displayOrder>
+                                    <ra:nativeAttributeName>middle_name</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>middle_name</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="protected" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>540</a:displayOrder>
+                                    <ra:nativeAttributeName>protected</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>protected</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="autorenew_checkouts" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>550</a:displayOrder>
+                                    <ra:nativeAttributeName>autorenew_checkouts</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>autorenew_checkouts</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="altaddress_country" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>560</a:displayOrder>
+                                    <ra:nativeAttributeName>altaddress_country</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>altaddress_country</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="date_of_birth" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>570</a:displayOrder>
+                                    <ra:nativeAttributeName>date_of_birth</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>date_of_birth</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="last_seen" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>580</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>last_seen</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>last_seen</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="address2" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>590</a:displayOrder>
+                                    <ra:nativeAttributeName>address2</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>address2</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="surname" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>600</a:displayOrder>
+                                    <ra:nativeAttributeName>surname</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>surname</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="privacy" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>610</a:displayOrder>
+                                    <ra:nativeAttributeName>privacy</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>privacy</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="city" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>620</a:displayOrder>
+                                    <ra:nativeAttributeName>city</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>city</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="incorrect_address" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>630</a:displayOrder>
+                                    <ra:nativeAttributeName>incorrect_address</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>incorrect_address</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="title" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>640</a:displayOrder>
+                                    <ra:nativeAttributeName>title</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>title</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="login_attempts" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>650</a:displayOrder>
+                                    <ra:nativeAttributeName>login_attempts</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>login_attempts</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="date_renewed" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>660</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>date_renewed</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>date_renewed</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="mobile" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>670</a:displayOrder>
+                                    <ra:nativeAttributeName>mobile</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>mobile</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="patron_id" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>100</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>patron_id</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>__UID__</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:schema>
+        </definition>
+    </schema>
+    <schemaHandling>
+        <objectType>
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>Koha Patron</displayName>
+            <default>true</default>
+            <!-- NOTA (2026-07-04, CORREGIDA 2026-07-10): NO existe un
+                 <criticality> a nivel de <objectType>. En MidPoint 4.10
+                 `criticality` NO es hijo válido de objectType.
+
+                 CORRECCIÓN 2026-07-10 (GAP-2 / DT-8): el cierre anterior de
+                 esta nota afirmaba que el mecanismo canónico era marcar
+                 `criticality=partial` en la CONSTRUCTION de Koha dentro de cada
+                 AR-Koha-Patron. Al verificarlo contra el schema real de esta
+                 versión (schema-4.10.2.jar extraído del contenedor PROD) se
+                 comprobó que ESO TAMBIÉN ES INVÁLIDO: en 4.10.2 el elemento
+                 `criticality` NO existe en ConstructionType NI en AssignmentType
+                 — su única aparición en el schema es dentro de
+                 ProvisioningScriptType. Añadir <criticality> a la construction
+                 habría sido el mismo drift inválido, sólo que en otro nivel.
+
+                 Mecanismo canónico REAL en MidPoint 4.10 para que un error de la
+                 proyección Koha (p.ej. CommunicationException por recurso caído)
+                 degrade a partial_error y NO aborte el foco:
+                   resource/consistency/connectorErrorCriticality/network = partial
+                 (ErrorSelectorType → CriticalityType {fatal|partial|ignore}).
+                 Aplicado el 2026-07-10 en el bloque <consistency> de este mismo
+                 resource (ver más abajo). Vive en el RESOURCE (una sola vez,
+                 cubre las 6 constructions Koha), NO en cada Application Role.
+                 Los 6 AR-Koha-Patron NO se tocan. -->
+            <delineation>
+                <objectClass>ri:AccountObjectClass</objectClass>
+            </delineation>
+            <focus>
+                <type>c:UserType</type>
+            </focus>
+            <attribute>
+                <ref>ri:userid</ref>
+                <displayName>User ID (login)</displayName>
+                <!-- fix 2026-05-21: ANTES outbound strong desde emailAddress
+                     -> generaba userid con dominio ('jhoselyn.quispe@upeu.edu.pe')
+                     mientras Koha tiene el login sin dominio o el codigo
+                     ('jhoselyn.quispe' / '70073344'). Esa discrepancia rompia
+                     el discovery post-409: MidPoint hacia GET por el userid
+                     equivocado y no recuperaba la cuenta existente.
+                     Ahora: userid = name (codigo UPeU), consistente con
+                     cardnumber. weak: NO sobreescribe el login real de cuentas
+                     Koha ya existentes (preserva reality). Solo aplica a
+                     patrones nuevos creados por MidPoint. -->
+                <outbound>
+                    <name>userid-outbound</name>
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/name</path>
+                    </source>
+                </outbound>
+                <!-- inbound userid->name ELIMINADO: Koha no es IIA de 'name'.
+                     El name del user lo fija el IIA Oracle LAMB. Mantenerlo
+                     causaba ambiguedad de correlacion (competia con
+                     cardnumber-inbound, ambos a $user/name). -->
+            </attribute>
+            <attribute>
+                <ref>ri:cardnumber</ref>
+                <displayName>Número de Carnet (ID_PERSONA)</displayName>
+                <!-- ============================================================
+                     P1 D-11.bis (Opción A): cardnumber = ID_PERSONA, el identificador
+                     universal, único e inmutable del MDM MOISES, materializado por P0 en
+                     extension/sciback:externalSystemId (writer único: object-template base,
+                     Bloque A2). El DNI y el código universitario NO son cardnumber:
+                       - código universitario (=name) -> userid (login), ver userid-outbound.
+                       - DNI y COD_UPEU -> extended_attributes (informativos).
+                     strong: identificador inmutable, se impone. (El weak del resource viejo
+                     era por el drift name=DNI de la era código; con ID_PERSONA como fuente
+                     ese motivo desaparece.) Inbound cardnumber->name ELIMINADO: Koha no es
+                     IIA de name ni de externalSystemId. iga-canonical §4.4.
+                     ============================================================ -->
+                <outbound>
+                    <name>cardnumber-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/extension/sciback:externalSystemId</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:surname</ref>
+                <displayName>Apellido(s)</displayName>
+                <outbound>
+                    <name>surname-outbound</name>
+                    <strength>normal</strength>
+                    <source>
+                        <path>$focus/familyName</path>
+                    </source>
+                    <source>
+                        <path>$focus/fullName</path>
+                    </source>
+                    <expression>
+                        <!-- Fallback: si familyName es null (datos LAMB incompletos),
+                             usar fullName para que Koha no rechace el POST por surname vacío.
+                             fix 2026-05-23: jubilados y otros usuarios con nombre completo
+                             en givenName/fullName sin familyName separado. -->
+                        <script>
+                            <code>if (familyName != null &amp;&amp; basic.stringify(familyName).trim() != '') return basic.stringify(familyName).trim(); if (fullName != null &amp;&amp; basic.stringify(fullName).trim() != '') return basic.stringify(fullName).trim(); return null</code>
+                        </script>
+                    </expression>
+                </outbound>
+                <inbound>
+                    <name>surname-inbound</name>
+                    <strength>weak</strength>
+                    <target>
+                        <path>$user/familyName</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:firstname</ref>
+                <displayName>Nombre(s)</displayName>
+                <outbound>
+                    <name>firstname-outbound</name>
+                    <strength>normal</strength>
+                    <source>
+                        <path>$focus/givenName</path>
+                    </source>
+                </outbound>
+                <inbound>
+                    <name>firstname-inbound</name>
+                    <strength>weak</strength>
+                    <target>
+                        <path>$user/givenName</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:email</ref>
+                <displayName>Correo Electrónico</displayName>
+                <outbound>
+                    <name>email-outbound</name>
+                    <strength>normal</strength>
+                    <source>
+                        <path>$focus/emailAddress</path>
+                    </source>
+                </outbound>
+                <inbound>
+                    <name>email-inbound</name>
+                    <!-- GUARD @upeu.edu.pe (2026-06-06): Koha puede tener emails personales
+                         (gmail/hotmail) en ri:email del borrower (datos heredados). Solo aceptar
+                         @upeu.edu.pe para no proponer gmail como ADD conflictivo con Entra ID strong.
+                         Mismo patrón que Oracle y Entra ID: descarta no-upeu y numéricos. -->
+                    <strength>weak</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d+/ ? null : v</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>$user/emailAddress</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:phone</ref>
+                <displayName>Teléfono</displayName>
+                <outbound>
+                    <name>phone-outbound</name>
+                    <strength>normal</strength>
+                    <source>
+                        <path>$focus/telephoneNumber</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:sms_number</ref>
+                <displayName>Número SMS</displayName>
+                <outbound>
+                    <name>sms-number-outbound</name>
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/telephoneNumber</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:statistics_1</ref>
+                <displayName>Facultad (Statistics 1 / Bsort1)</displayName>
+                <outbound>
+                    <name>statistics1-outbound</name>
+                    <strength>normal</strength>
+                    <!-- Koha statistics_1 = Bsort1: código corto de facultad autorizado por Koha.
+                         authorised_values Bsort1 reales (verificado en Koha PROD 2026-06-09, son 8):
+                           FCS, FIA, FACIHED, FACTEO, FCE, EPG, COLEGIO, UNKNOWN.
+                         Fuente CANÓNICA: extension/sciback:facultyName (nombre crudo de la facultad,
+                         poblado por el resource Estudiantes desde Oracle LAMB ELISEO.ORG_AREA.NOMBRE
+                         del nodo padre de la escuela). El mapeo nombre-de-facultad → código-corto-Koha
+                         es ESPECÍFICO de Koha (los códigos FCS/FIA/... son los authorised_values Bsort1
+                         de Koha, NO un código canónico universal) → vive aquí, en el resource Koha
+                         (separación de concerns correcta). El foco solo guarda el nombre canónico crudo.
+                         Refactor 2026-06-09: ANTES se derivaba de academicProgramCode (EP-XXX) con un
+                         mapa estático que mezclaba el código corto Koha en el dominio canónico. Ahora el
+                         switch traduce el nombre de facultad de la IIA Oracle al authorised_value Koha.
+                         Códigos corregidos vs Koha PROD: FACIHED (no 'FCHE') y FACTEO (no 'FT').
+                         Null-safe: facultad no mapeada (Centro de Idiomas, Conservatorio, Proyectos
+                         Especiales, Capacitación Continua, facultad de prueba, etc.) → null (sin Bsort1,
+                         no error, no UNKNOWN forzado). -->
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+if (focus == null) return null
+def facName = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'facultyName'))
+if (facName == null) return null
+def name = facName.toString().trim()
+if (!name) return null
+// Switch nombre-de-facultad (ELISEO.ORG_AREA.NOMBRE) → authorised_value Bsort1 de Koha.
+// Match exacto contra el nombre crudo Oracle. Facultades no listadas → null.
+def bsort1Map = [
+    'Facultad de Ciencias de la Salud'           : 'FCS',
+    'Facultad de Ingeniería y Arquitectura'      : 'FIA',
+    'Facultad de Ciencias Humanas y Educación'   : 'FACIHED',
+    'Facultad de Ciencias Empresariales'         : 'FCE',
+    'Facultad de Teología'                       : 'FACTEO',
+    'Escuela General de Posgrado'                : 'EPG'
+]
+def result = bsort1Map.get(name)
+if (result == null) {
+    log.debug('statistics1-outbound: no Bsort1 mapping for facultyName "{}"', name)
+}
+return result
+                            ]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:statistics_2</ref>
+                <displayName>Programa Académico (Statistics 2 / Bsort2)</displayName>
+                <outbound>
+                    <name>statistics2-outbound</name>
+                    <strength>normal</strength>
+                    <!-- Koha statistics_2 = Bsort2: código INEI 2022 de 8 dígitos del programa.
+                         Fuente CANÓNICA: extension/sciback:academicProgramIneiCode (INEI 8 díg),
+                         derivado en el object template base (bloque D.1c) desde
+                         academicProgramSuneduCode (P-code) vía LookupTable LT-Pcode-INEI
+                         (fuente: tesauro VocBench-UPeU skos:notation). Es el identificador
+                         NACIONAL canónico del programa (clasificador INEI 2022) — se emite TAL
+                         CUAL a Koha, sin transformación: el resource consume el dato ya canónico.
+
+                         MIGRACIÓN 2026-06-13 (aprobada): Bsort2 pasa de P-code → INEI 8 díg.
+                         ANTES leía extension/sciback:academicProgramSuneduCode (P30/P31/P33/...).
+                         AHORA lee extension/sciback:academicProgramIneiCode (31300211/91300071/...).
+                         El P-code (academicProgramSuneduCode) se conserva como legacy (no se borra).
+
+                         PRERREQUISITOS de deploy de este outbound (en este orden):
+                           1. LT-Pcode-INEI desplegado (objeto inerte).
+                           2. academicProgramIneiCode presente en el schema sciback-person.
+                           3. Object template base con bloque D.1c desplegado + recompute masivo
+                              estudiantes Lima (materializa el INEI en el focus).
+                           4. authorised_values Bsort2 en Koha pobladas con los 19 INEI 8-díg.
+                         Desplegar este outbound ANTES de (3) emitiría INEI vacío → borraría Bsort2
+                         en cada reconcile. NO desplegar durante el backfill de fotos.
+
+                         Null-safe: programa sin INEI (P-code ausente o no mapeado: posgrado/
+                         2da-especialidad) → atributo vacío → null → Koha sin Bsort2 (igual que
+                         hoy con P-code null; no regresión). -->
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+if (focus == null) return null
+def inei = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'academicProgramIneiCode'))
+if (inei == null) return null
+def code = inei.toString().trim()
+return code ? code : null
+                            ]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:category_id</ref>
+                <displayName>Categoría Patrón Koha</displayName>
+                <!-- ============================================================
+                     GOBIERNO IGA → KOHA — Diseño B (eduPerson 202208 literal)
+                     Decisión APROBADA: docs/DECISION-eduperson-koha-categorycodes.md
+                     Implementada 2026-05-30 (reactivación Koha+LDAP).
+
+                     category_id = primaryAffiliation MidPoint, literal lowercase,
+                     vocabulario eduPerson 202208:
+                       faculty | staff | student | alum | affiliate | local
+
+                     MidPoint es la ÚNICA fuente de verdad. Koha es una PROYECCIÓN,
+                     no un eje paralelo de gobernanza. Si MidPoint dice 'faculty',
+                     Koha dice 'faculty'. Las 6 categorías ya existen en Koha
+                     (verificado 2026-05-30: faculty/staff/student/alum/affiliate/local).
+
+                     EJES ORTOGONALES — NO van en category_id:
+                       - Nivel académico (pregrado/posgrado) → extended_attribute STUDY_LEVEL
+                       - Investigador DGI/RENACYT             → extended_attribute RESEARCHER=Y
+                                                                 (rol AR-Koha-Investigador)
+                       - Lifecycle jubilado                   → primaryAffiliation=alum,
+                                                                 derivado por el template (J3)
+                                                                 cuando motivoCese=jubilacion y
+                                                                 no hay afiliación viva mayor.
+                                                                 NO es categoría Koha.
+                       - Área CRAI bibliotecario              → extended_attribute AREA=CRAI
+                                                                 (rol AR-Koha-Librarian)
+
+                     Mapeo employee→staff: 'employee' no es categoría Koha; eduPerson
+                     trata staff/employee como personal → 'staff'.
+
+                     strength=strong: re-evalúa en cada recompute, fuente única.
+                     NO hay overrides por-rol de category_id (Diseño B los eliminó:
+                     INVESTI→extended_attribute, JUBILADO→alum vía template).
+                     ============================================================ -->
+                <outbound>
+                    <name>category-id-from-primary-affiliation</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/extension/sb:primaryAffiliation</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+                                def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
+                                if (aff == '') return null;
+                                if (aff == 'employee') return 'staff';
+                                // vocabulario eduPerson 202208 literal: faculty/staff/student/alum/affiliate
+                                if (aff == 'faculty' || aff == 'staff' || aff == 'student' || aff == 'alum' || aff == 'affiliate') return aff;
+                                // cuentas sistema u otros → local (convención local explícita)
+                                return 'local';
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:extended_attributes</ref>
+                <displayName>Atributos extendidos de patrón (pares JSON)</displayName>
+                <!-- ============================================================
+                     GOBIERNO IGA → KOHA — extended_attributes
+                     Atributo multivaluado. Cada valor es un string JSON
+                     {"type":"CODE","value":"..."} (formato del conector v1.3.0,
+                     PatronMapper.convertExtendedAttributes*).
+
+                     MidPoint NO es dueño del atributo completo: es dueño SOLO de
+                     los pares gobernados (AREA, CRAI_TIER, RESEARCHER,
+                     STUDY_LEVEL, STUDYCYCLE).
+
+                     Mecanismo (FIX 2026-06-10, ver nota junto a <tolerant>):
+                     tolerant=false           → pares gobernados: los producidos
+                                                por mappings/constructions se
+                                                añaden y conservan; los stale se
+                                                borran granularmente (range).
+                     tolerantValuePattern     → WHITELIST: todo par cuyo type NO
+                                                sea gobernado (DNI, SEDE,
+                                                TIPO_VINC, ORCID, COD_UPEU,
+                                                SHOW_BCODE, etc.) se preserva
+                                                intacto: MidPoint nunca lo borra.
+                                                CRAI_TIER añadido 2026-05-22
+                                                (niveles de acceso CRAI, Fase A).
+
+                     El conector declara addRemoveAttributeValues=true → los deltas
+                     se aplican como add/remove-value, nunca como replace total.
+
+                     La construction que PRODUCE el par AREA vive en el Application
+                     Role AR-Koha-Librarian (no aquí). El par RESEARCHER lo produce
+                     AR-Koha-Investigador. El par STUDY_LEVEL lo produce el outbound
+                     de abajo (Diseño B: nivel académico fuera de category_id).
+                     ============================================================ -->
+                <!-- Diseño B (2026-05-30): nivel académico pregrado/posgrado como par
+                     {"type":"STUDY_LEVEL","value":"pregrado|posgrado"}. Solo students;
+                     null para el resto. Gobernado por intolerantValuePattern STUDY_LEVEL. -->
+                <!-- outbound ÚNICO (single-valued en MidPoint) que produce una LISTA
+                     de pares JSON para este atributo multivalor:
+                       1. {"type":"STUDY_LEVEL","value":"pregrado|posgrado"} (solo students)
+                          — gobernado destructivamente por intolerantValuePattern.
+                       2. {"type":"DNI","value":"<dni>"} desde upeu:lambDocNum (2026-06-05)
+                          — imprescindible para el adopt-by-DNI del conector v1.3.10: ante
+                          un 409 (borrower legacy con cardnumber=DNI != cardnumber canónico
+                          =código), el conector lee este par DNI del payload, resuelve el
+                          borrower legacy por cardnumber=DNI con _match=exact y lo ADOPTA 1:1
+                          (idempotente, sin crear ni fusionar). NO intolerante → tolerado
+                          (MidPoint lo añade pero no lo gobierna destructivamente). -->
+                <outbound>
+                    <name>extended-attributes-study-level-and-dni</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/extension/sb:primaryAffiliation</path>
+                    </source>
+                    <source>
+                        <path>$focus/extension/sb:studyLevel</path>
+                    </source>
+                    <source>
+                        <path>$focus/extension/sb:studentCycle</path>
+                    </source>
+                    <source>
+                        <path>$focus/extension/upeu:lambDocNum</path>
+                    </source>
+                    <source>
+                        <path>$focus/extension/sb:institutionalCode</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+// ===================================================================
+// FIX 2026-06-09 (provenance-binding): leer primaryAffiliation,
+// studyLevel y studentCycle vía basic.getExtensionPropertyValue(s)
+// en vez de las variables-source.
+//
+// CAUSA RAÍZ: estos items del foco llevan value-metadata/provenance
+// (se serializan con <_value>...</_value><_metadata><provenance>...).
+// La binding de la variable-source en el script entrega el contenedor
+// metadata-aware, NO la String plana → basic.stringify(primaryAffiliation)
+// no daba 'student' → el guard aff=='student' fallaba → bloque vacío
+// (solo el par DNI se emitía, porque upeu:lambDocNum es valor plano).
+//
+// basic.getExtensionPropertyValue(focus, QName) SÍ dereferencia el valor
+// real plano aunque tenga provenance — mismo patrón que los outbounds
+// statistics1/statistics2 que SÍ funcionan (FCS/P33 escritos a 24k).
+// Las <source> se conservan declaradas (no estorban; documentan deps).
+// ===================================================================
+def NS_SB = 'urn:sciback:midpoint:person';
+def qn = { n -> new javax.xml.namespace.QName(NS_SB, n) };
+def out = [];
+if (focus == null) return out;
+
+// par STUDY_LEVEL (solo students). Resuelve por studyLevel GRANULAR
+// (fuente única de nivel, derivada de la carrera principal). 2026-06-09:
+// ELIMINADO el fallback maxCycle>=7 (proxy frágil que marcaba posgrado a
+// pregrados de ciclo alto). Koha colapsa el nivel granular a 2 buckets:
+// posgrado | pregrado.
+def affRaw = basic.getExtensionPropertyValue(focus, qn('primaryAffiliation'));
+def aff = affRaw != null ? affRaw.toString().trim().toLowerCase() : '';
+if (aff == 'student') {
+    def levelRaw = basic.getExtensionPropertyValue(focus, qn('studyLevel'));
+    def level = levelRaw != null ? levelRaw.toString().trim().toLowerCase() : '';
+    if (level == 'posgrado' || level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion') {
+        out << '{"type":"STUDY_LEVEL","value":"posgrado"}';
+    } else if (level == 'pregrado') {
+        out << '{"type":"STUDY_LEVEL","value":"pregrado"}';
+    } else {
+        // niveles no-grado (idiomas, cepre, diplomatura, etc.) o vacío:
+        // default conservador pregrado + log para visibilidad de datos.
+        if (level) log.warn("Koha STUDY_LEVEL: studyLevel no-grado '{}' en {} -> default pregrado", level, focus?.name);
+        else log.warn("Koha STUDY_LEVEL: studyLevel vacio en student {} -> default pregrado", focus?.name);
+        out << '{"type":"STUDY_LEVEL","value":"pregrado"}';
+    }
+    // pares STUDYCYCLE (uno por ciclo vigente, multivalor). 2026-06-09:
+    // ciclo de estudio canónico (sb:studentCycle, multivalor: regular=1
+    // valor, irregular=N valores). getExtensionPropertyValues (plural)
+    // devuelve la colección de valores reales planos. Gobernado
+    // destructivamente por intolerantValuePattern STUDYCYCLE → MidPoint
+    // añade los vigentes y remueve los viejos. Solo students.
+    def cyclesRaw = basic.getExtensionPropertyValues(focus, qn('studentCycle'));
+    def cycles = (cyclesRaw instanceof Collection) ? cyclesRaw : (cyclesRaw != null ? [cyclesRaw] : []);
+    cycles.each { c ->
+        def cyc = c != null ? c.toString().trim() : '';
+        if (cyc) out << '{"type":"STUDYCYCLE","value":"' + cyc + '"}';
+    }
+}
+// par COD_UPEU (P1 D-11.bis): código universitario legible. Fuente
+// sciback:institutionalCode (código académico); fallback a focus.name
+// (que para trabajador puro es el personalNumber/COD_APS). Informativo y
+// GOBERNADO (ver tolerantValuePattern): MidPoint lo mantiene en sync.
+def codRaw = basic.getExtensionPropertyValue(focus, qn('institutionalCode'));
+def cod = codRaw != null ? codRaw.toString().trim() : (focus?.name != null ? focus.name.toString().trim() : '');
+if (cod) out << '{"type":"COD_UPEU","value":"' + cod + '"}';
+// par DNI (P1): AHORA INFORMATIVO. El conector nuevo retiró el adopt-by-DNI
+// (D-14: instancia consolidada arranca sin borrowers legacy; la correlación
+// es cardnumber==externalSystemId). upeu:lambDocNum es valor plano.
+def dni = lambDocNum != null ? basic.stringify(lambDocNum).trim() : '';
+if (dni ==~ /^\d{8}$/) out << '{"type":"DNI","value":"' + dni + '"}';
+return out;
+                            ]]></code>
+                        </script>
+                    </expression>
+                </outbound>
+                <!-- ============================================================
+                     FIX 2026-06-10 (causa raíz delta-tragado, TRACE projector):
+                     tolerant=true + intolerantValuePattern ROMPÍA el provisioning
+                     de los pares gobernados. ReconciliationProcessor evalúa sobre
+                     el objeto NEW (que ya incluye el ADD pendiente del strong
+                     mapping): la fase de tolerancia marca DELETE de TODO valor
+                     que matchee el patrón intolerante SIN eximir los valores
+                     producidos por los propios mappings ("reconciliation will
+                     DELETE value ... because it has matched with intolerant
+                     pattern"). El DELETE se traga contra el ADD pendiente →
+                     delta neto VACÍO → STUDY_LEVEL/STUDYCYCLE jamás llegaban a
+                     Koha (también cancelaba deltas explícitos vía REST).
+
+                     Mecanismo correcto (canónico): tolerant=false +
+                     tolerantValuePattern WHITELIST de los tipos NO gobernados.
+                     La ruta non-tolerant del ReconciliationProcessor SÍ exime
+                     los valores presentes en las salidas de mappings (shouldBe):
+                       - pares gobernados vigentes (AREA/CRAI_TIER/RESEARCHER/
+                         STUDY_LEVEL/STUDYCYCLE producidos por mappings) → se
+                         AÑADEN y se conservan;
+                       - pares gobernados stale (no producidos ya por ningún
+                         mapping/construction) → DELETE granular (range);
+                       - cualquier otro type (DNI, SEDE, TIPO_VINC, ORCID,
+                         COD_UPEU, SHOW_BCODE, futuros) → tolerado por el
+                         patrón whitelist, MidPoint nunca los borra.
+                     ============================================================ -->
+                <tolerant>false</tolerant>
+                <!-- P1: COD_UPEU añadido al grupo GOBERNADO (negative lookahead) → MidPoint
+                     lo mantiene en sync (añade el vigente, remueve stale). DNI NO se gobierna
+                     (queda tolerado/preservado, informativo). -->
+                <tolerantValuePattern>.*"type"\s*:\s*"(?!(AREA|CRAI_TIER|RESEARCHER|STUDY_LEVEL|STUDYCYCLE|COD_UPEU)").*</tolerantValuePattern>
+            </attribute>
+            <attribute>
+                <ref>ri:library_id</ref>
+                <displayName>Sede Biblioteca</displayName>
+                <outbound>
+                    <name>library-id-outbound</name>
+                    <strength>strong</strength>
+                    <!-- ================================================================
+                         CHANGE 3 (2026-06-04): branchcode sigue al CAMPUS VIVO, no al
+                         locality crudo. Precedencia canónica:
+                           campusStudent ?: campusWorker ?: locality
+                         (campus vivo del eje académico, luego laboral, luego locality
+                         como fallback). Misma fuente per-IIA que gobierna el GATE de
+                         existence Koha (campusStudent/campusWorker, single-writer, vigencia
+                         VIVA) — así branchcode y elegibilidad son coherentes: si el gate
+                         te dejó entrar por campus vivo Lima, tu branchcode es BUL aunque
+                         tu locality (lugar físico, libre para LDAP/Entra/M365) sea otro.
+                         Resuelve el caso Critsi (estudia Lima, locality Juliaca stale →
+                         antes escribía BUJ; ahora BUL por campusStudent=LIMA).
+
+                         Mapa de campus → branchcode Koha (los 3 branches EXISTEN en
+                         koha_bul: BUL/BUJ/BUT). Hoy el gate de existence solo deja crear
+                         cuenta a vínculo vivo LIMA → en la práctica solo se escribe BUL.
+                         Cuando entren BUJ/BUT al IGA (fusión 4 Koha), este mapping ya
+                         emite el branchcode correcto sin más cambios.
+
+                         FALLBACK SEGURO: si ni campusStudent ni campusWorker están
+                         materializados (p.ej. elegible solo por guest/hasLib), cae a
+                         locality con el mapa previo y default BUL — nunca branchcode vacío
+                         ni inválido. Un código de campus desconocido → BUL (default
+                         conservador: el único branch operativo hoy para creación).
+                         ================================================================ -->
+                    <source>
+                        <path>$focus/extension/sb:campusStudent</path>
+                    </source>
+                    <source>
+                        <path>$focus/extension/sb:campusWorker</path>
+                    </source>
+                    <source>
+                        <path>$focus/locality</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+def cs = campusStudent?.toString()?.trim()?.toUpperCase()
+def cw = campusWorker?.toString()?.trim()?.toUpperCase()
+def loc = locality?.toString()?.trim()?.toUpperCase()
+// Precedencia: campus vivo académico → campus vivo laboral → locality (fallback).
+def effective = (cs != null &amp;&amp; cs != '') ? cs : ((cw != null &amp;&amp; cw != '') ? cw : (loc ?: ''))
+// P1 4->1: mapa campus → branch de la instancia consolidada (BUL/BUJ/BUT/CIA).
+def branch = ['LIMA':'BUL', 'JULIACA':'BUJ', 'TARAPOTO':'BUT', 'CIA':'CIA', 'ICA':'CIA'].get(effective)
+if (branch == null) {
+    // P1: campus desconocido/sin resolver → NO forzar BUL (evita misfiling silencioso de
+    // toda sede no mapeada a Lima). Sin valor + warn para corrección de datos. El gate de
+    // existence solo admite afiliación viva, así que un elegible debería resolver su campus;
+    // si no, se hace VISIBLE aquí en vez de enviarlo a la sede equivocada.
+    log.warn('koha library_id: campus no resuelto para {} (cs={}, cw={}, loc={}) -> sin branch', focus?.name, cs, cw, loc)
+    return null
+}
+return branch
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:expiry_date</ref>
+                <displayName>Fecha de Expiración</displayName>
+                <!-- GUARD #1 (null-guard contra blanqueo): tolerant=true.
+                     Con strength=strong, un mapping cuyo output set es VACIO (return null,
+                     ambas termination ausentes) seria autoritativo sobre su rango y BORRARIA
+                     el expiry_date existente. tolerant=true hace que valores fuera del rango
+                     emitido NO se eliminen => si no hay valor calculado, no se toca el expiry
+                     vigente de la cuenta. El script ademas retorna null (no cadena vacia). -->
+                <tolerant>true</tolerant>
+                <outbound>
+                    <name>expiry-date-outbound</name>
+                    <strength>strong</strength>
+                    <!-- Expiry efectivo = MAX de las fechas de término por-IIA de las afiliaciones vivas.
+                         terminationDate          = IIA Trabajadores (FEC_TERMINO del contrato UPeU).
+                         terminationDateStudent   = IIA Estudiantes  (MAX FECHA_FIN matrícula vigente).
+                         Cada uno es single-writer (canónico §1.3) -> sin colisión dual-strong en focos
+                         employee+student. Tomamos el mayor: una persona con empleo y matrícula vigentes
+                         debe expirar en la cuenta Koha por la afiliación que dure más. Fechas YYYY-MM-DD
+                         comparan lexicográfico == cronológico. null si ninguna afiliación viva.
+
+                         strong (2026-06-01d): el delta-based 'normal' no empujaba el expiry
+                         vencido cuando el shadow ya tenia un valor stale. strong fuerza recompute
+                         del atributo para imponer la fecha de politica correcta. Aprobado con 2 guards.
+
+                         GUARD #2 (no colisión con archivado leaver): condition exige afiliación
+                         VIVA (worker o student). Para leavers (sin afiliación viva) este mapping
+                         NO participa => el path de archivado gobierna: administrativeStatus=DISABLED
+                         que el conector v1.3.x traduce a expiry_date=ayer + card_lost=true. Asi el
+                         archivado GANA inequivocamente sobre expiry_date y no hay dos writers strong
+                         colisionando sobre el mismo campo Koha. Para cuentas con afiliación viva,
+                         manda el MAX(termination). suma-nunca-resta intacto. -->
+                    <source>
+                        <path>$focus/extension/sb:terminationDate</path>
+                    </source>
+                    <source>
+                        <path>$focus/extension/sb:terminationDateStudent</path>
+                    </source>
+                    <source>
+                        <path>$focus/extension/sb:liveAffiliationWorker</path>
+                    </source>
+                    <source>
+                        <path>$focus/extension/sb:liveAffiliationStudent</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+// Expiry efectivo = MAX de las fechas de término reales por-IIA de las afiliaciones vivas.
+def w = terminationDate?.toString()?.take(10)
+def s = terminationDateStudent?.toString()?.take(10)
+def realMax = null
+if (w != null &amp;&amp; s != null) { realMax = (w.compareTo(s) >= 0) ? w : s }
+else if (w != null) { realMax = w }
+else if (s != null) { realMax = s }
+
+def today = java.time.LocalDate.now()
+
+// FALLBACK (2026-06-02, tarea expiry): este mapping SOLO corre con afiliación viva
+// (condition liveAffiliationWorker||liveAffiliationStudent). Casos sin fecha real futura:
+//   (a) realMax == null  -> trabajador permanente FEC_TERMINO NULL (77 casos): nunca hubo fecha.
+//   (b) realMax vencido  -> matrícula/contrato con fecha pasada pero afiliación AUN viva.
+// En ambos, una afiliación VIVA no debe expirar la cuenta Koha. Computamos today + P12M.
+// ANCLAJE canónico: liveAffiliation* ya retorna null cuando contrato/matrícula vence (IIA);
+// al cesar, la condition false -> el mapping no participa -> el archivado leaver gana
+// (DISABLED -> expiry=ayer). No sobre-extiende. eduPerson/SCHAC schacExpiryDate deriva del
+// lifecycle desde la IIA (iga-canonical-standards §1.2).
+if (realMax == null) {
+    return today.plusMonths(12).toString()
+}
+def realMaxDate = java.time.LocalDate.parse(realMax)
+if (realMaxDate.isBefore(today)) {
+    return today.plusMonths(12).toString()
+}
+// Fecha real futura: comportamiento existente intacto (no se degrada).
+return realMax
+                            </code>
+                        </script>
+                    </expression>
+                    <!-- GUARD #2: solo cuentas con afiliación viva. Leaver (sin afiliación viva)
+                         queda fuera => el archivado (DISABLED -> expiry=ayer) gana sin colisión. -->
+                    <condition>
+                        <script>
+                            <code>liveAffiliationWorker != null || liveAffiliationStudent != null</code>
+                        </script>
+                    </condition>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:title</ref>
+                <displayName>Cargo / Puesto</displayName>
+                <outbound>
+                    <name>title-outbound</name>
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/title</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:date_of_birth</ref>
+                <displayName>Fecha de Nacimiento</displayName>
+                <outbound>
+                    <name>date-of-birth-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/extension/sb:birthDate</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>if (birthDate == null) return null; birthDate.toString().take(10)</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:gender</ref>
+                <displayName>Género</displayName>
+                <outbound>
+                    <name>gender-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/extension/sb:gender</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>switch ((gender ?: '').toString()) { case '1': return 'M'; case '2': return 'F'; default: return null }</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:mobile</ref>
+                <displayName>Móvil (Koha)</displayName>
+                <outbound>
+                    <name>mobile-outbound</name>
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/telephoneNumber</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:middle_name</ref>
+                <displayName>Segundo Nombre</displayName>
+                <outbound>
+                    <name>middle-name-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/additionalName</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:secondary_email</ref>
+                <displayName>Correo de Recuperación</displayName>
+                <outbound>
+                    <name>secondary-email-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/extension/sb:personalEmail</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:photo</ref>
+                <displayName>Foto del Patrón</displayName>
+                <!-- ============================================================
+                     Conector Koha v1.3.0 — canal JDBC para fotos.
+                     Fuente: $focus/jpegPhoto (propiedad nativa UserType,
+                     base64Binary, poblada por el Bloque I del UserTemplate).
+                     strength=weak: NO-OP cuando jpegPhoto es null — nunca
+                     borrar una foto ya existente en Koha (MidPoint suma,
+                     nunca resta). Passthrough sin expression (el
+                     <expression>jpegPhoto == null ? null : jpegPhoto</expression>
+                     previo era no-op — Ola 1 fix 8.1, 2026-05-26).
+                     ============================================================ -->
+                <outbound>
+                    <name>photo-outbound</name>
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/jpegPhoto</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:photo_mimetype</ref>
+                <displayName>MIME Type de la Foto</displayName>
+                <!-- jpegPhoto siempre es JPEG (propiedad nativa MidPoint).
+                     Valor constante; weak para no producir delta si no
+                     aplica. -->
+                <outbound>
+                    <name>photo-mimetype-outbound</name>
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/jpegPhoto</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>jpegPhoto == null ? null : 'image/jpeg'</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <activation>
+                <!-- ================================================================
+                     EXISTENCE — gobierno canónico de la existencia del patrón Koha
+                     (Semančík Cap.7, midpoint-best-practices §7 existence mappings).
+                     Reactivación 2026-05-30. Patrón "MidPoint suma, nunca resta".
+
+                     ELEGIBLE_KOHA = afiliación viva worker (contrato UPeU)
+                                   OR matrícula viva student
+                                   OR visita Smart WiFi activa (hook futuro)
+                                   OR bibliotecario (AR-Koha-Librarian)
+
+                     CLAVE (archivar-no-borrar): el mapping retorna TRUE si el shadow
+                     YA EXISTE (reality), aunque la afiliación viva sea null. Así el
+                     leaver NUNCA se borra (preserva transacciones para métricas); se
+                     archiva vía administrativeStatus=disabled (expiry+card_lost).
+                     Solo los focos SIN shadow y SIN elegibilidad no crean patrón.
+                     ================================================================ -->
+                <existence>
+                    <outbound>
+                        <name>koha-account-existence-by-live-affiliation</name>
+                        <strength>strong</strength>
+                        <source>
+                            <path>$focus/extension/sb:liveAffiliationWorker</path>
+                        </source>
+                        <source>
+                            <path>$focus/extension/sb:liveAffiliationStudent</path>
+                        </source>
+                        <source>
+                            <path>$focus/extension/upeu:smartwifiGuest</path>
+                        </source>
+                        <source>
+                            <path>$focus/extension/sb:campusStudent</path>
+                        </source>
+                        <source>
+                            <path>$focus/extension/sb:campusWorker</path>
+                        </source>
+                        <expression>
+                            <script>
+                                <code><![CDATA[
+// ================================================================
+// GATE KOHA MULTI-CAMPUS AFILIACIÓN-AWARE (tarea #65, 2026-06-03).
+// Koha hoy = solo BUL (Lima). Elegible Koha-Lima si la persona tiene
+// un VÍNCULO VIVO con Lima:
+//   - matrícula vigente Lima  (campusStudent == 'LIMA'), O
+//   - contrato 7124 vivo Lima (campusWorker  == 'LIMA').
+// El EGRESO histórico de Lima NO cuenta (sin campusAlum en el gate):
+// un egresado puro de Lima sin matrícula/contrato vivo NO es elegible.
+// Provincia pura (Juliaca/Tarapoto/ISTAT, sin vínculo vivo Lima) → excluido.
+//
+// campusStudent/campusWorker son slots per-IIA single-valued single-writer
+// (Estudiantes/Trabajadores) poblados strong single-source — misma vigencia
+// VIVA que liveAffiliationStudent/Worker. locality NO entra al gate (queda
+// libre para LDAP/Entra/M365, semántica de lugar físico).
+//
+// FUSIÓN 4 KOHA (mitad de año): cuando BUJ/BUT/BU-ISTAT entren a este IGA,
+// quitar la condición `&& hasLimaAffiliation` (1 línea) → vuelve a ser
+// gate puro por afiliación viva multi-campus. Diseñado para ese cambio.
+// ================================================================
+def worker  = liveAffiliationWorker
+def student = liveAffiliationStudent
+def guest   = smartwifiGuest
+def hasLib  = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72e-b874b3c48fa6' }
+// hasLiveAff: tiene algún vínculo vivo elegible (worker|student|guest|bibliotecario).
+def hasLiveAff = (worker != null) || (student != null) || (guest != null) || hasLib
+// P1 4->1: gate PURO por afiliación viva MULTI-CAMPUS. Retirado `&& hasLimaAffiliation`
+// (la instancia consolidada koha_upeu sirve a BUL/BUJ/BUT/CIA; cualquier vínculo vivo
+// UPeU es elegible, sin importar sede). El branch concreto lo fija library_id.
+def eligible = hasLiveAff
+// suma-nunca-resta: si el patrón Koha YA EXISTE (reality), NUNCA borrar.
+// Se archiva vía administrativeStatus=disabled (expiry+card_lost), jamás delete.
+// El deprovisioning de provincia (Juliaca/Tarapoto) se hace por bulk unlink +
+// archivado koha-expert fuera de este mapping; aquí solo gobernamos creación
+// y preservación (no confiamos el delete a este gate).
+//
+// BLINDAJE ANTI-DELETE (Fase 2.5, 2026-06-04).
+// La barrera DURA contra el borrado es la capability `delete` DESHABILITADA
+// (bloque <configured> al final del resource): Koha NUNCA recibe un DELETE de
+// patrón, pase lo que pase con este mapping. Por eso aquí NO replicamos lógica
+// de query frágil (un error de script abortaría el existence en CADA recompute
+// de CADA foco — peor que el problema). Guard simple y defensivo:
+// BLINDAJE getLinkedShadow (tarea #65, caso Tito 43508613): si el foco tiene un
+// shadow huérfano/dangling, getLinkedShadow puede lanzar; con try/catch→null no
+// abortamos el mapping ni afirmamos existencia falsa.
+//
+// Caso 22422 (runbook §4): durante un recon que crea+linkea en el MISMO
+// clockwork, getLinkedShadow aún devuelve null para un foco inelegible → este
+// mapping retorna false. ANTES eso disparaba DELETE; AHORA la capability delete
+// deshabilitada lo intercepta → 0 borrado. El deprovisioning real del leaver lo
+// hace administrativeStatus=DISABLED (expiry+card_lost), archivado graceful.
+def existing = null
+try {
+    existing = midpoint.getLinkedShadow(focus, 'e10a539a-cb7f-4c72-a19f-60f7f62e4b96')
+} catch (Exception e) {
+    log.warn('koha-account-existence: getLinkedShadow falló para {} → existing=null: {}', focus?.name, e.message)
+    existing = null
+}
+// Decisión final. Aunque retorne false para un inelegible-sin-shadow (caso
+// legítimo: NO crear), el DELETE está bloqueado por capability → 0 riesgo de
+// borrado. midpoint-best-practices §7 (existence defensivo).
+return eligible || (existing != null)
+                                ]]></code>
+                            </script>
+                        </expression>
+                    </outbound>
+                </existence>
+                <!-- ================================================================
+                     ADMINISTRATIVE STATUS — archivado canónico del leaver
+                     elegible (worker/student/visita/bibliotecario) → ENABLED
+                     no elegible                                     → DISABLED
+                     El conector v1.3.x traduce DISABLED a:
+                       patron_card_lost=true + expiry_date=ayer
+                     => patrón ARCHIVADO, presente, con historial intacto
+                        (old_issues/statistics preservados). NUNCA delete.
+                     El override perenne jubilado→ENABLED fue ELIMINADO (2026-05-30):
+                     bajo el scope canónico, jubilado = leaver → se archiva.
+                     ================================================================ -->
+                <administrativeStatus>
+                    <outbound>
+                        <name>koha-admin-status-by-live-affiliation</name>
+                        <strength>strong</strength>
+                        <source>
+                            <path>$focus/extension/sb:liveAffiliationWorker</path>
+                        </source>
+                        <source>
+                            <path>$focus/extension/sb:liveAffiliationStudent</path>
+                        </source>
+                        <source>
+                            <path>$focus/extension/upeu:smartwifiGuest</path>
+                        </source>
+                        <source>
+                            <path>$focus/locality</path>
+                        </source>
+                        <expression>
+                            <script>
+                                <code><![CDATA[
+import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+def worker  = liveAffiliationWorker
+def student = liveAffiliationStudent
+def guest   = smartwifiGuest
+def hasLib  = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72e-b874b3c48fa6' }
+def eligible = (worker != null) || (student != null) || (guest != null) || hasLib
+return eligible ? ActivationStatusType.ENABLED : ActivationStatusType.DISABLED
+                                ]]></code>
+                            </script>
+                        </expression>
+                        <!-- P1 4->1: RETIRADA la condición que excluía JULIACA/TARAPOTO. Esa
+                             abstención existía para no chocar con koha-expert (delete_patrons.pl)
+                             en las instancias BUJ/BUT SEPARADAS. En la instancia consolidada
+                             koha_upeu MidPoint gobierna el lifecycle de TODAS las sedes: el
+                             leaver (sin afiliación viva) se archiva vía administrativeStatus=
+                             DISABLED (expiry+card_lost) en cualquier campus. NUNCA delete
+                             (capability delete deshabilitada más abajo). -->
+                    </outbound>
+                </administrativeStatus>
+            </activation>
+            <!-- ================================================================
+                 CORRELACION — fix 2026-05-21 (causa raiz AlreadyExistsException)
+                 Correlator de filtro EXPLICITO. El correlator anterior
+                 (items <ref>name</ref>) era ambiguo: dos atributos (userid y
+                 cardnumber) tienen inbound a $user/name, y MidPoint resolvia
+                 'name' con el inbound de userid (que trae el login Koha, p.ej.
+                 'jhoselyn.quispe'), nunca con el codigo UPeU del user
+                 ('202012377'). Resultado: 4.734 cuentas Koha reales quedaban
+                 UNMATCHED -> MidPoint intentaba CREATE -> Koha 409.
+                 El cardnumber de Koha == codigo UPeU == $user/name. Este filtro
+                 correlaciona inequivocamente sin depender de los inbounds.
+                 ================================================================ -->
+            <correlation>
+                <!-- ============================================================
+                     P1 D-11.bis: CORRELACIÓN ÚNICA por identificador inmutable.
+                     cardnumber del patrón Koha == extension/sciback:externalSystemId
+                     (ID_PERSONA del MDM MOISES, materializado por P0). Retirados los 3
+                     correlators legacy (dni-extended / cardnumber-as-code / cardnumber-as-dni):
+                     eran andamiaje de adopción por DNI/código de la instancia BUL vieja.
+                     D-14: la instancia consolidada koha_upeu arranca SIN borrowers legacy y
+                     MidPoint provisiona todo → un solo eje de correlación, determinista.
+                     Sentinel zero-match: cardnumber ausente/blank → '__NO_MATCH__' (0
+                     candidatos, nunca filtro vacío). iga-canonical §4.4.
+                     ============================================================ -->
+                <correlators>
+                    <filter>
+                        <name>correlate-by-cardnumber-idpersona</name>
+                        <documentation>cardnumber del patrón Koha == extension/sciback:externalSystemId (ID_PERSONA). Correlación única por identificador universal, único e inmutable del MDM. Sentinel zero-match si cardnumber ausente/blank.</documentation>
+                        <ownerFilter>
+                            <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+                                     xmlns:sciback="urn:sciback:midpoint:person">
+                                <q:path>extension/sciback:externalSystemId</q:path>
+                                <expression>
+                                    <script>
+                                        <code><![CDATA[
+def cn = basic.getAttributeValue(projection, 'cardnumber')
+if (cn == null) return '__NO_MATCH__'
+cn = cn.toString().trim()
+return cn ? cn : '__NO_MATCH__'
+                                        ]]></code>
+                                    </script>
+                                </expression>
+                            </q:equal>
+                        </ownerFilter>
+                    </filter>
+                </correlators>
+            </correlation>
+            <synchronization>
+                <reaction>
+                    <situation>linked</situation>
+                    <actions>
+                        <synchronize/>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <!-- 2026-05-23: revertido a link. synchronize causaba POST 400
+                         (missing surname) para usuarios sin shadow que tienen familyName
+                         vacío. link solo vincula el shadow existente sin intentar CREATE.
+                         Los unlinked sin shadow se gestionan via reconciliación Koha. -->
+                    <situation>unlinked</situation>
+                    <actions>
+                        <link/>
+                    </actions>
+                </reaction>
+                <!-- ============================================================
+                     unmatched: fix 2026-05-21. ANTES inactivateResourceObject
+                     -> peligroso: una reconciliacion masiva habria DESACTIVADO
+                     miles de cuentas Koha reales de patrones sin user en
+                     MidPoint. Koha NO es IIA; MidPoint no debe inactivar
+                     cuentas que no reconoce. Sin accion: la cuenta unmatched
+                     se ignora (reality preservada, policy no resta).
+                     ============================================================ -->
+                <reaction>
+                    <situation>unmatched</situation>
+                </reaction>
+                <reaction>
+                    <situation>deleted</situation>
+                    <actions>
+                        <unlink/>
+                    </actions>
+                </reaction>
+                <reaction>
+                    <situation>disputed</situation>
+                    <actions>
+                        <createCorrelationCase/>
+                    </actions>
+                </reaction>
+            </synchronization>
+        </objectType>
+        <objectType>
+            <kind>entitlement</kind>
+            <intent>default</intent>
+            <displayName>Categoría de Patrón</displayName>
+            <default>true</default>
+            <delineation>
+                <objectClass>ri:GroupObjectClass</objectClass>
+            </delineation>
+        </objectType>
+    </schemaHandling>
+
+    <!-- ================================================================
+         CONSISTENCY — manejo de errores de conector
+
+         Problema: shadows activos apuntan a patrons eliminados
+         directamente en Koha (sin pasar por MidPoint). Cuando clockwork
+         intenta PATCH → Koha responde 404 → ObjectNotFoundException.
+
+         MidPoint maneja este caso nativamente: marca el shadow dead=true.
+         La reconciliación (fase 2) detecta estos shadows como deleted →
+         la reaction unlink (configurada en synchronization) limpia el
+         vínculo automáticamente.
+
+         deadShadowRetentionPeriod=P3D: limpia tombstones en 3 días
+         (default=7). Combinado con la tarea shadowCleanup semanal.
+
+         NOTA: ErrorSelectorType en MidPoint 4.10 NO tiene selector
+         objectNotFound — ese elemento no existe en el schema. Los
+         selectores válidos son: network, security, policy, schema,
+         configuration, unsupported, generic (EXPERIMENTAL, peligroso).
+         El manejo de 404 es nativo, no requiere connectorErrorCriticality.
+
+         RESILIENCIA KOHA (2026-07-10, GAP-2 / DT-8):
+         connectorErrorCriticality/network = partial.
+         Cuando el conector Koha lanza CommunicationException (recurso
+         caído a nivel LAN — p.ej. Koha 192.168.12.135:8001 tras la
+         incidencia FortiGate del 08-jul), MidPoint clasifica el error
+         como categoria `network`. Por defecto una network error escala a
+         FATAL y ABORTA el foco: al recomputar un egresado que además es
+         borrower Koha, el outbound a Koha caído tumbaba todo el clockwork
+         y NO se materializaba la proyeccion (LDAP cache / extension).
+         Con `partial`, la proyeccion Koha degrada a partial_error
+         (error VISIBLE y AUDITADO — NO `ignore`, que lo ocultaria) y el
+         foco continua: sb:personalEmail y demas atributos SI se
+         materializan aunque Koha este caido.
+
+         Ubicacion canonica MidPoint 4.10: este selector vive en el
+         RESOURCE (una sola IIA de comportamiento, cubre TODAS las
+         constructions Koha de los 6 AR-Koha-Patron y cualquier futura),
+         NO en la <construction> de cada Application Role. En 4.10.2
+         `criticality` NO es hijo valido de ConstructionType ni de
+         AssignmentType (verificado contra schema-4.10.2.jar del PROD:
+         `criticality` solo existe en ProvisioningScriptType). El
+         mecanismo per-construction que se penso el 2026-07-04 (ver NOTA
+         en <schemaHandling>) NO existe en esta version; se corrigio a
+         este connectorErrorCriticality a nivel resource.
+         ================================================================ -->
+    <consistency>
+        <connectorErrorCriticality>
+            <!-- network: CommunicationException / NoRouteToHostException /
+                 ConnectorIOException cuando Koha 192.168.12.135:8001 está caído
+                 (incidencia FortiGate 08-jul). Es el error del GET/OAuth. -->
+            <network>partial</network>
+            <!-- generic: cuando Koha está totalmente inalcanzable, tras fallar el
+                 GET por uid el conector intenta un search de compensación que
+                 lanza ConnectorException('Search script error: Uid cannot be null')
+                 = categoría `generic`. Con network solo en partial, ESTE seguía
+                 escalando a FATAL y abortando el foco (task GAP-2 se suspendía en
+                 progress 27). Koha es un recurso PERIFÉRICO (carné de biblioteca):
+                 su indisponibilidad NO debe abortar el ciclo de identidad ni la
+                 materialización de atributos del foco (sb:personalEmail). partial =
+                 VISIBLE/AUDITADO (no `ignore`). Doctrina: un SP no crítico nunca
+                 debe ser gate de las operaciones de identidad. Cuando Koha vuelva,
+                 la reconciliación diaria (reconcile-koha-daily) re-sincroniza. -->
+            <generic>partial</generic>
+        </connectorErrorCriticality>
+        <deadShadowRetentionPeriod>P3D</deadShadowRetentionPeriod>
+    </consistency>
+
+    <capabilities>
+        <cachingMetadata>
+            <retrievalTimestamp>2026-04-16T16:16:00.386Z</retrievalTimestamp>
+            <serialNumber>1db688f004832b67-74fff745868ae754</serialNumber>
+        </cachingMetadata>
+        <native>
+            <ns7:schema/>
+            <ns7:activation>
+                <ns7:status/>
+            </ns7:activation>
+            <ns7:create/>
+            <ns7:read>
+                <ns7:returnDefaultAttributesOption>false</ns7:returnDefaultAttributesOption>
+            </ns7:read>
+            <ns7:update>
+                <ns7:addRemoveAttributeValues>true</ns7:addRemoveAttributeValues>
+            </ns7:update>
+            <ns7:delete/>
+            <ns7:testConnection/>
+            <ns7:script>
+                <ns7:host>
+                    <ns7:type>connector</ns7:type>
+                </ns7:host>
+            </ns7:script>
+        </native>
+        <!-- ================================================================
+             CONFIGURED CAPABILITIES — BLINDAJE ANTI-DELETE (Fase 2.5, 2026-06-04)
+             ================================================================
+             DELETE DESHABILITADO permanentemente para el patrón Koha.
+
+             FUNDAMENTO CANÓNICO:
+             - ISO/IEC 24760 lifecycle: un patrón con historial transita a
+               'archived' (disabled, RETIENE datos), NUNCA a 'destroyed'
+               (delete). Sólo una purga explícita (destroyed) borraría, y eso
+               NO se confía a un existence mapping automático.
+             - ISO/IEC 27001:2022 A.5.18 — retención del historial de préstamos/
+               multas/transacciones del patrón es requisito. Borrar el borrower
+               destruye esa evidencia.
+             - Principio "MidPoint suma, nunca resta": el deprovisioning Koha es
+               por activation (administrativeStatus=DISABLED → el connector
+               v1.3.x escribe expiry_date=ayer + patron_card_lost=true), JAMÁS
+               por DELETE de la cuenta.
+
+             INCIDENTE QUE LO MOTIVA (runbook phase2 §4, canary 22422): un recon
+             que crea+linkea el shadow en el MISMO clockwork deja getLinkedShadow
+             retornando null para un foco inelegible → el existence mapping
+             computaba false → MidPoint emitía DELETE del borrower (se borró el
+             22422; se restauró desde deletedborrowers, tenía 0 préstamos — uno
+             con historial habría sido pérdida real e irreversible).
+
+             EFECTO: con delete deshabilitado, aunque cualquier mapping compute
+             "no debe existir", MidPoint NO puede borrar el borrower en Koha. La
+             baja se materializa únicamente vía administrativeStatus=DISABLED
+             (archivado graceful, datos intactos). Esta es la barrera DURA;
+             el existence mapping (abajo) es la barrera blanda complementaria.
+
+             Para purgar un patrón legítimamente (destroyed): re-habilitar delete
+             temporalmente bajo decisión explícita y documentada, NUNCA dejarlo
+             abierto durante recons/onboarding masivos.
+             ================================================================ -->
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
+        </configured>
+    </capabilities>
+</resource>
