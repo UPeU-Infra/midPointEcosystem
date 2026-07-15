@@ -119,6 +119,50 @@
     </item>
 
     <!-- ============================================================
+         BLOQUE A2 — externalSystemId CANÓNICO (ID_PERSONA MDM MOISES)
+         (P0 D-11.bis, 2026-07-14)
+
+         extension/sciback:externalSystemId ← extension/upeu:lambIdPersona (strong)
+
+         ID_PERSONA es el identificador universal, único e inmutable de toda
+         persona en el MDM MOISES (presente en Oracle LAMB para estudiante,
+         egresado, trabajador y grado). Los resources lo materializan en el slot
+         RAW upeu:lambIdPersona (weak, mismo valor en todas las IIAs porque una
+         persona = un ID_PERSONA). Este bloque es el ÚNICO writer STRONG del item
+         canónico sciback:externalSystemId — resuelve el problema de multi-strong
+         sobre single-valued en focos duales (estudiante-trabajador): antes
+         trabajadores.xml escribía externalSystemId strong directamente; al sumar
+         estudiantes/egresados habría colisión. Separación de concerns idéntica al
+         Bloque A (`name`): los resources proveen datos RAW; el template gobierna
+         el item canónico.
+
+         Base para cardnumber=ID_PERSONA en Koha (fase siguiente): el outbound de
+         Koha leerá sciback:externalSystemId, no `name`. iga-canonical §4.4
+         (identificador inmutable para correlación) + midpoint-best-practices §4.5
+         (template gana post-inbound, single writer canónico).
+         strength=strong: valor inmutable, se impone sobre cualquier inbound.
+         Null-safe implícito: sin lambIdPersona no produce valor (no borra: el
+         weak de los resources solo aporta, y strong sin source-value = no-op sobre
+         item ya poblado; en alta sin ID_PERSONA queda vacío, no error).
+         ============================================================ -->
+    <item>
+        <ref>extension/sciback:externalSystemId</ref>
+        <mapping>
+            <name>A2-externalSystemId-from-lambIdPersona</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>extension/upeu:lambIdPersona</path>
+            </source>
+            <expression>
+                <script>
+                    <code>def v = lambIdPersona != null ? basic.stringify(lambIdPersona).trim() : ''; return v != '' ? v : null</code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
          BLOQUE B — DATOS DERIVADOS BÁSICOS
          fullName ← givenName + familyName (strong)
          emailAddress ← personalNumber + "@upeu.edu.pe" (weak)

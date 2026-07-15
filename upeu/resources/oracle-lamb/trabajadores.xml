@@ -374,11 +374,21 @@
             </attribute>
             <attribute>
                 <ref>ri:ID_PERSONA</ref>
+                <!-- P0 D-11.bis (2026-07-14): REENCAMINADO strong→extension/sb:externalSystemId
+                     hacia weak→extension/upeu:lambIdPersona (slot RAW intermedio). Antes trabajadores
+                     era el ÚNICO writer de externalSystemId (strong), pero al materializar ID_PERSONA
+                     también en estudiantes/egresados se produciría multi-strong sobre un item
+                     single-valued en focos duales (estudiante-trabajador). Solución canónica
+                     (midpoint-best-practices §4.5, best-practices §4.4): los resources solo proveen el
+                     dato RAW (weak, mismo valor en todas las IIAs porque una persona = un ID_PERSONA);
+                     el object-template base (Bloque A) es el ÚNICO writer strong de
+                     extension/sb:externalSystemId ← extension/upeu:lambIdPersona. Idéntico patrón al de
+                     `name` (resources → institutionalCode/personalNumber; template → name). -->
                 <inbound>
-                    <name>id-persona-to-externalSystemId</name>
-                    <strength>strong</strength>
+                    <name>id-persona-to-lambIdPersona</name>
+                    <strength>weak</strength>
                     <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:externalSystemId</path>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambIdPersona</path>
                     </target>
                 </inbound>
             </attribute>
