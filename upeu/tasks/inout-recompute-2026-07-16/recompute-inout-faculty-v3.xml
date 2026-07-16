@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  InOut <- IGA — Recompute materializacion atributos LDAP — LOTE FACULTY (v3)
+  =====================================================================================
+  Objetivo (D-11.bis): materializar en ou=people los atributos del identity_map de InOut
+  (scibackDocumentNumber / scibackFacultyCode / scibackCampusCode + eduPersonUniqueId)
+  y eduPersonAffiliation=member.
+
+  CLAVE DE DISENO: executionOptions/reconcile=false
+  =====================================================================================
+  El lote v1 (archetypeRef + lifecycleState=active, reconcile por defecto) paro al 10%
+  con 22 DELETE bloqueados por la barrera anti-delete. Causa raiz MEDIDA (simulaciones
+  preview SIM-A/SIM-B, 2026-07-16, 10 focos):
+
+    Con reconcile (default) el recompute carga el full shadow de cada proyeccion y
+    RE-EVALUA los inbounds. El inbound archetype-to-liveAffiliationWorker
+    (trabajadores.xml) devuelve null si ESTADO='I' o FEC_TERMINO < hoy => el propio
+    recompute RETRACTA el token, el foco pierde toda afiliacion viva, la condition de
+    AR-LDAP-Person pasa a false, la construction se desactiva y MidPoint intenta BORRAR
+    su entry LDAP. El recompute fabrica al leaver y acto seguido lo deprovisiona.
+
+  NO ES FILTRABLE DESDE EL REPO. Se intento excluir por terminationDate y la simulacion
+  lo refuto en AMBAS direcciones (m_user.ext es un espejo desactualizado de Oracle):
+    - 001914732 / 001914761: terminationDate=2027-06-30 (FUTURA) => "seguros" por filtro,
+      pero SI se borran (ESTADO='I' en Oracle, invisible desde el repo).
+    - 201420147: terminationDate=2026-07-04 (VENCIDA) => excluido por filtro, pero NO se
+      borra (contrato renovado en Oracle; el repo tenia la fecha vieja).
+  2 de 8 focos "seguros" habrian dado FATAL. Ninguna lista de exclusion calculada sobre
+  el repo puede predecir el flip: depende de datos que solo existen tras el fetch.
+
+  reconcile=false lo resuelve ESTRUCTURALMENTE: sin carga de full shadow no hay
+  re-evaluacion de inbounds -> no hay retraccion de token -> NUNCA se intenta un DELETE.
+  Verificado: SIM-B = 0 deletes sobre los mismos 10 focos (incluidos 2 leavers plantados
+  a proposito); SIM-A = 3 deletes.
+
+  Y SIGUE ESCRIBIENDO (la pregunta que decidia la opcion). Delta identico al de SIM-A
+  para el mismo foco (uid=00118523):
+      add     ri:eduPersonAffiliation   = member
+      replace ri:scibackDocumentNumber  = 00118523
+      replace ri:scibackCampusCode      = LIMA
+  CANARY-D (real, persiste, 20 estudiantes): 20/20 OK, 0 FATAL, 20 LDAP updates, los 4
+  atributos verificados en .168 Y .169.
+
+  QUE SE PIERDE con reconcile=false (explicito):
+    - Los inbounds NO se refrescan: esta task NO actua como refresco de datos desde
+      Oracle/Entra. Materializa el outbound a partir de lo que YA esta en el foco.
+      Es la separacion canonica correcta: el import ingiere realidad (IIA), el recompute
+      materializa politica. Los datos del foco los mantiene frescos el import nocturno.
+    - La deprovision del leaver NO ocurre aqui (sigue siendo el "leaver gap", proceso
+      aparte que decide Alberto). No es una regresion: la barrera anti-delete ya lo
+      impedia.
+
+  Rendimiento MEDIDO: ~4 s/foco -> 0,23 s/foco con reconcile=false
+  Provisioning con reconcile=false = solo LDAP (get 3ms + update 6ms). Cero Oracle,
+  cero Entra. El cuello del v1 era el get de Oracle LAMB Trabajadores (3,07 s/get,
+  78,1% del tiempo), no la foto (bloque I.2 = 0,14%: el fetch a lamb-files mide 46-48ms).
+
+  Scope: archetypeRef + lifecycleState=active + predicado real de AR-LDAP-Person
+  (liveAffiliationWorker|Student != null; liveAffiliationAlum NO cuenta). SIN lista de
+  exclusion: con reconcile=false no hay riesgo de DELETE y la lista era irreproducible.
+  Focos medidos en PROD (SQL sobre m_user.ext, 2026-07-16): 1148.
+
+  SEGURIDAD
+    - workerThreads=1: con 0,23 s/foco el masivo completo (27.041) cabe en ~1,7 h.
+      NO hace falta subir threads (heap Xmx9216m en contenedor de 10 GiB = riesgo OOM).
+    - executionState=suspended: se importa suspendida, resume manual.
+    - NO se toca la barrera anti-delete.
+    - Koha ILS esta en MAINTENANCE -> sus operaciones no se ejecutan durante el lote.
+    - Si aparece UN FATAL de delete, PARAR: significaria que la hipotesis reconcile=false
+      no se sostiene en algun caso no cubierto por las simulaciones.
+
+  OID determinista: md5("inout-recompute-faculty-v3-20260716")
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:sb="urn:sciback:midpoint:person"
+      oid="6841455b-c1a0-3f03-cb31-e77cf6a7719d">
+    <name>InOut-recompute-FACULTY-v3-20260716</name>
+    <description>Lote FACULTY (1148 focos): materializa scibackDocumentNumber/FacultyCode/CampusCode + eduPersonUniqueId + member en ou=people. reconcile=false (sin flips de leaver, sin fetch Oracle/Entra). Filtro = predicado real de AR-LDAP-Person.</description>
+    <executionState>suspended</executionState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <cleanupAfterCompletion>P7D</cleanupAfterCompletion>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <q:ref>
+                                    <q:path>archetypeRef</q:path>
+                                    <q:value oid="c93083ca-f4c5-4704-acf4-d53b97c9556e" type="c:ArchetypeType"/>
+                                </q:ref>
+                                <q:equal>
+                                    <q:path>lifecycleState</q:path>
+                                    <q:value>active</q:value>
+                                </q:equal>
+                                <!-- Predicado REAL de AR-LDAP-Person (7c1a2b3d-...): al menos un
+                                     token de afiliacion viva worker o student. "not equal (sin
+                                     valor)" = "el item tiene algun valor". Ambos items estan
+                                     indexados (m_ext_item id 216 y 217) -> filtro resoluble en
+                                     repo. liveAffiliationAlum NO cuenta: alumni puro no entra
+                                     al identity cache. -->
+                                <q:or>
+                                    <q:not>
+                                        <q:equal>
+                                            <q:path>extension/sb:liveAffiliationWorker</q:path>
+                                        </q:equal>
+                                    </q:not>
+                                    <q:not>
+                                        <q:equal>
+                                            <q:path>extension/sb:liveAffiliationStudent</q:path>
+                                        </q:equal>
+                                    </q:not>
+                                </q:or>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+                <!-- LA linea que hace seguro este masivo. Ver bloque CLAVE DE DISENO arriba. -->
+                <executionOptions>
+                    <reconcile>false</reconcile>
+                </executionOptions>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>1</workerThreads>
+        </distribution>
+    </activity>
+</task>
