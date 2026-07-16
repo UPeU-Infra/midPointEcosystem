@@ -1,4 +1,4 @@
-# Curación tesauro VocBench — cierre de códigos INEI (2026-07-12)
+# Curación tesauro VocBench — cierre de códigos INEI (2026-07-16)
 
 **Para:** curador del tesauro `Tesauro_Institucional_UPeU` (VocBench) · **Origen:** reconciliación LT-Pcode-INEI ↔ tesauro ↔ Oracle LAMB, workstream Bsort2→INEI.
 **Estado:** insumo de curación. Nada aplicado — solo lectura SPARQL/Oracle.
@@ -32,7 +32,7 @@ Cada huérfano es un duplicado por renombre de carrera; su gemelo canónico YA t
 |---|---|---|
 | `medicina-humana` | **91200267** | Backfill directo: agregar `skos:notation "91200267"^^IneiCode8`. Carrera activa con matrícula real; hoy **sí proyecta a Koha** vía la LT, pero el tesauro no la tiene → cargar para consistencia con DSpace/Indico. |
 
-## Fuente oficial (obtenida y parseada 2026-07-12)
+## Fuente oficial (obtenida y parseada 2026-07-16)
 
 **INEI — "Clasificador Nacional de Programas e Instituciones de Educación Superior y Técnico Productiva 2022"**, Res. Jefatural N° 067-2024-INEI. Archivo de programas (hoja `profesional _universidad` / `doctorado_universidad`):
 `https://cdn.www.gob.pe/uploads/document/file/6264275/5355494-listado-de-programas-de-educacion-superior-31-12-2022(2).xlsx`

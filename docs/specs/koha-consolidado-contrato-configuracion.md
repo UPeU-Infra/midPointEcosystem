@@ -1,7 +1,9 @@
 # Contrato de configuración — Koha nuevo consolidado (1 instancia, 4 bibliotecas)
 
-**Fecha:** 2026-07-12 · **Owner:** Alberto Sánchez · **Estado:** DISEÑO (pre-implementación; el Koha nuevo aún se está armando)
+**Fecha:** 2026-07-16 · **Owner:** Alberto Sánchez · **Estado:** el resource del consolidado YA EXISTE en `lifecycleState=proposed` — ver §1
 **Fuentes:** validado por `midpoint-expert` (lado proyección + verificación PROD), `koha-expert` (lado receptor + conector v1.3.12), `vocbench-expert` (catálogo tesauro real).
+
+> **⚠️ CORRECCIÓN 2026-07-16.** La primera versión de este contrato se redactó analizando `upeu/resources/koha-ils.xml` (el resource **viejo**, `.135`/`koha_bul`) y afirmaba que "el resource ya es único, solo hay que re-apuntar `serviceAddress`+`dbHost`". **Es falso.** Existe un resource **dedicado** para el consolidado — `upeu/resources/koha-upeu.xml` — creado y re-apuntado al `.136` en otra sesión (commit `300f6aa`, 15-jul). El re-apuntado **ya se hizo**. Las §1 y §10 quedan corregidas abajo; el resto del contrato (5 ejes, checklist receptor, reporte SQL, circulación, dedup INEI, discriminador CIA) **sigue siendo válido y es justo lo que falta** para promover `koha-upeu` de `proposed` a `active`.
 
 > **Principio rector.** MidPoint es la **única fuente de verdad**. Koha es una **proyección** del gobierno IGA, no un eje paralelo de gobernanza. El "Koha nuevo" (1 instancia, 4 branches `BUL/CIA/BUJ/BUT`) debe estar **preparado para recibir** exactamente los valores/formatos de abajo. Ningún operador de Koha edita manualmente estos campos: MidPoint los reescribe en cada recompute/reconcile.
 
@@ -9,7 +11,16 @@
 
 ## 1. Contexto
 
-UPeU migra de **4 instancias Koha (una por biblioteca)** a **1 instancia con las 4 bibliotecas como branches**. Del lado MidPoint el resource `upeu/resources/koha-ils.xml` **ya es único** y **ya proyecta** el gobierno IGA — no hay que crear/borrar resources ni tocar archetypes. Re-apuntar al Koha nuevo = cambiar `serviceAddress` + `dbHost` en ese resource, **una vez cumplido el checklist receptor** de la §4.
+UPeU migra de **4 instancias Koha (una por biblioteca)** a **1 instancia con las 4 bibliotecas como branches**. Del lado MidPoint hay **DOS resources Koha** (estado verificado 2026-07-16):
+
+| Resource | OID | Endpoint / BD | `lifecycleState` | Rol |
+|---|---|---|---|---|
+| `upeu/resources/koha-ils.xml` | `9b5a7c81…` | `192.168.12.135:8001` / `koha_bul` | active | **Viejo** (instancia por-biblioteca). Hoy en *maintenance* por la caída del FortiGate del 08-jul. |
+| **`upeu/resources/koha-upeu.xml`** — "Koha ILS UPeU (consolidado)" | `e10a539a-cb7f-4c72-a19f-60f7f62e4b96` | **`192.168.12.136:8001` / `koha_upeu`** (koha-plus-prod) | **`proposed`** | **El consolidado.** Re-apuntado del `.167` (modelado) al `.136` en el commit `300f6aa` (15-jul). `dbEnabled=false` temporal: el FortiGate bloquea `.166→.136:3306` (canal de fotos, commit `acb9538`). |
+
+**`koha-upeu.xml` ya porta los 5 ejes** (`category_id`, `statistics_1`/Bsort1, `statistics_2`/Bsort2, `extended_attributes`, `library_id`). Su `library-id-outbound` ya usa `.get(effective)` sin default (null si no mapea) — mejor que el viejo, que forzaba `BUL`.
+
+**Lo que este contrato aporta y AÚN falta en `koha-upeu.xml`:** su `library-id-outbound` sigue resolviendo CIA por el **parche legacy `locality=='CIA'/'ICA'`**, sin el discriminador gobernado de Teología (§3.5/§5). Más el checklist receptor del lado Koha (§4), el reporte SQL (§7) y la circulación cross-sede (§6). Eso es lo que hay que cerrar para promover el resource de `proposed` → `active`.
 
 ### Topología campus / biblioteca
 
@@ -69,7 +80,7 @@ Outbound `statistics2-outbound`, normal, **sin transformación** (emite el valor
 
 > **IMPORTANTE — la proyección NO lee VocBench en vivo.** El P-code del estudiante viene de **Oracle**; la traducción a INEI la hace la **LookupTable ya poblada**. VocBench fue la fuente para *curar* esa tabla, pero la operación diaria no lo toca. Por tanto la **salud del tesauro VocBench en vivo NO es un bloqueante del reporte Koha** — lo que gobierna Bsort2 es la LT + los P-codes de Oracle. Estado real del workstream Bsort2→INEI (jun-2026, ver `upeu/tasks/bsort2-inei-posgrado/README.md`): **pregrado casi cerrado** (INEI en la LT, salvo ~3 carreras sin P-code en Oracle); **posgrado con GAP conocido y documentado** (~1.449 estudiantes Lima en 31 P-codes sin INEI validado — "no es bug, ronda futura").
 >
-> **⚠️ La LT y el tesauro NO están perfectamente sincronizados (reconciliación 2026-07-12).** Oracle LAMB **no** tiene INEI poblado (`DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_NACIONAL` = NULL para todos) → la única autoridad de INEI es VocBench + la LT, y **divergen en algunos códigos**. Conflictos de valor detectados (mismo programa, INEI distinto en cada capa): **P35 Teología** (LT `22103063` vs tesauro `22101180` — relevante porque Teología es el programa de CIA), **P05 Administración Negocios Int.** (LT `41600562` vs tesauro `41300011`), **P99 Doctorado Ing. Sistemas** (LT `61200058` vs tesauro `61203409` sin tipar). Requieren el clasificador INEI 2022 oficial para dirimir. Detalle y plan de curación: [`upeu/tasks/bsort2-inei-posgrado/curacion-tesauro-inei-2026-07-12.md`](../../upeu/tasks/bsort2-inei-posgrado/curacion-tesauro-inei-2026-07-12.md).
+> **⚠️ La LT y el tesauro NO están perfectamente sincronizados (reconciliación 2026-07-16).** Oracle LAMB **no** tiene INEI poblado (`DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_NACIONAL` = NULL para todos) → la única autoridad de INEI es VocBench + la LT, y **divergen en algunos códigos**. Conflictos de valor detectados (mismo programa, INEI distinto en cada capa): **P35 Teología** (LT `22103063` vs tesauro `22101180` — relevante porque Teología es el programa de CIA), **P05 Administración Negocios Int.** (LT `41600562` vs tesauro `41300011`), **P99 Doctorado Ing. Sistemas** (LT `61200058` vs tesauro `61203409` sin tipar). Requieren el clasificador INEI 2022 oficial para dirimir. Detalle y plan de curación: [`upeu/tasks/bsort2-inei-posgrado/curacion-tesauro-inei-2026-07-16.md`](../../upeu/tasks/bsort2-inei-posgrado/curacion-tesauro-inei-2026-07-16.md).
 
 ### 3.4 Ortogonales → `extended_attributes`
 Multivaluado, JSON `{"type":"CODE","value":"..."}` (conector v1.3.x). Gobierno parcial: `tolerant=false` + whitelist `tolerantValuePattern`.
@@ -77,7 +88,9 @@ Multivaluado, JSON `{"type":"CODE","value":"..."}` (conector v1.3.x). Gobierno p
 - **Preservados (emite pero no borra):** `DNI` (adopt-by-DNI del conector), `SEDE`, `TIPO_VINC`, `ORCID`, `COD_UPEU`, `SHOW_BCODE`.
 
 ### 3.5 Biblioteca home → `library_id` (branchcode)
-**Estado actual:** `['LIMA':'BUL','JULIACA':'BUJ','TARAPOTO':'BUT','CIA':'CIA','ICA':'CIA'].getOrDefault(effective,'BUL')`. CIA solo se alcanza por el **parche legacy** `locality == 'CIA'/'ICA'` (frágil, no gobernado).
+**Estado actual (verificado 2026-07-16):**
+- `koha-ils.xml` (viejo): `[...].getOrDefault(effective,'BUL')` — forzaba `BUL` por defecto.
+- **`koha-upeu.xml` (consolidado):** `['LIMA':'BUL','JULIACA':'BUJ','TARAPOTO':'BUT','CIA':'CIA','ICA':'CIA'].get(effective)` — ya **sin default** (null si no mapea; mejor). Pero **CIA sigue alcanzándose solo por el parche legacy** `locality=='CIA'/'ICA'` (frágil, no gobernado). **Este es el cambio que falta aplicar en `koha-upeu.xml`.**
 
 **Propuesta:** `library_id = f(campus, unidad-Teología)`. **Requiere DOS señales** (ver §5, verificado en PROD):
 - **Estudiantes:** `facultyName == 'Facultad de Teología'` → `CIA`. ✅ ya materializado.
@@ -199,13 +212,18 @@ Ordenados por criticidad:
 
 ---
 
-## 10. Re-apuntado al Koha nuevo (cuando §8 esté cumplido)
+## 10. Promover `koha-upeu` de `proposed` → `active` (el re-apuntado YA se hizo)
 
-1. Cumplir el checklist receptor §4 (categories, AV Bsort1/Bsort2, attribute types, 4 branches).
-2. Editar `koha-ils.xml`: `serviceAddress` + `dbHost` → instancia nueva. Actualizar el bloque `library-id-outbound` a `f(campus, teachingProgram/facultyName)` (§3.5) conservando el fallback locality.
-3. Commit → push → `git pull` en PROD → PUT vía REST → Test Connection (`success`).
-4. Reconcile (con Koha nuevo **arriba**; recordar que hoy `.135` está en maintenance mode por la caída del FortiGate — ver `docs/runbooks/koha-maintenance-135-outage-2026-07-10.md`).
-5. Verificar contra un patrón muestra por branch (BUL/CIA/BUJ/BUT) que category/Bsort1/Bsort2/extended_attributes/library_id llegan correctos.
+> El paso "cambiar `serviceAddress`/`dbHost`" **ya está hecho** (commit `300f6aa`): `koha-upeu.xml` apunta al `.136`/`koha_upeu`. Lo que queda:
+
+1. **Cumplir el checklist receptor §4** en la instancia `.136` (6 categories, AV Bsort1/Bsort2 **sin límite por branch**, 11 patron attribute types, 4 branches `BUL/CIA/BUJ/BUT`). El conector no crea nada de esto.
+2. **Poblar AV Bsort2 desde la LT** deduplicando por INEI (§8.1, ~37 únicos).
+3. **Actualizar `library-id-outbound` de `koha-upeu.xml`** al discriminador gobernado de Teología (§3.5: `facultyName` para students + `teachingProgram ⊇ EP-TEO` para faculty), retirando el parche `locality=='CIA'/'ICA'` solo cuando la cobertura lo permita.
+4. **Desbloquear `dbEnabled`**: hoy `false` porque el FortiGate bloquea `.166→.136:3306` (canal de fotos). Depende de Redes — misma causa raíz que tumbó los LAMB el 08-jul.
+5. Commit → push → `git pull` en PROD → aplicar vía REST → Test Connection (`success`).
+6. **Promover `lifecycleState`: `proposed` → `active`.**
+7. Reconcile + verificar un patrón muestra **por branch** (BUL/CIA/BUJ/BUT): category/Bsort1/Bsort2/extended_attributes/library_id correctos.
+8. Retirar el resource viejo `koha-ils.xml` (`.135`) cuando el consolidado esté validado.
 
 ---
 

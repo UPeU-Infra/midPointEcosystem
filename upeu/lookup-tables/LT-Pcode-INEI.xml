@@ -51,7 +51,7 @@
   Contrato completo: docs/specs/koha-consolidado-contrato-configuracion.md
 
   CONFLICTOS LT↔TESAURO — RESUELTOS contra clasificador INEI 2022 oficial
-  (Res. Jefatural 067-2024-INEI) + denominación Oracle vigente (2026-07-12):
+  (Res. Jefatural 067-2024-INEI) + denominación Oracle vigente (2026-07-16):
     P35 Teología       → 22101180 CORRECTO (Oracle: programa "Teología" vigente,
                          no la mención discontinuada). LT CORREGIDA 22103063→22101180
                          este commit. El tesauro ya lo tenía bien.
@@ -61,7 +61,7 @@
                          que tiene 61203409 "Ingeniería de Sistemas" corto).
   ⚠️ PROD: tras corregir P35 aquí, aplicar PATCH REST de la fila + recompute de
   los ~5 estudiantes de Teología para actualizar su Bsort2 en Koha.
-  Plan de curación: upeu/tasks/bsort2-inei-posgrado/curacion-tesauro-inei-2026-07-12.md
+  Plan de curación: upeu/tasks/bsort2-inei-posgrado/curacion-tesauro-inei-2026-07-16.md
 
   COBERTURA: 19 rows = los 19 P-codes ÚNICOS existentes en Oracle LAMB
   (carreras profesionales). El CSV tiene 20 filas con P-code pero P04
