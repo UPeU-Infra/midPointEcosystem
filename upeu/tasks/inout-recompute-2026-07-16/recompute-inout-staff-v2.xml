@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  InOut ← IGA — Recompute materialización atributos LDAP — LOTE STAFF (v2, filtro corregido)
+  =====================================================================================
+  Objetivo (D-11.bis): materializar en ou=people los 4 atributos del identity_map de
+  InOut (scibackDocumentNumber / scibackFacultyCode / scibackCampusCode +
+  eduPersonUniqueId) y eduPersonAffiliation=member.
+
+  POR QUÉ v2 — corrección del scope (2026-07-16)
+  =====================================================================================
+  El lote v1 (task 032e0175-01d8-ee47-6c71-4ecee6362dfc) se detuvo al 10% con 24
+  FATAL_ERROR / 171 OK. Causa raíz MEDIDA: 22 de los 24 fueron DELETE de la entry LDAP
+  bloqueados por la barrera anti-delete (DeleteCapabilityType missing). El filtro v1 era
+  `archetypeRef + lifecycleState=active`, que NO replica la condición real de
+  AR-LDAP-Person (7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d):
+
+      (lifecycleState in [active,null]) AND (liveAffiliationWorker != null
+                                             OR liveAffiliationStudent != null)
+
+  Nótese que `liveAffiliationAlum` NO cuenta: alumni puro no entra al identity cache.
+  Un ex-trabajador-egresado queda lifecycleState=active (Bloque L: liveAff={alum} ≠ ∅)
+  pero SIN afiliación viva worker/student → construction inactiva → DELETE. `affiliations`
+  tampoco sirve como proxy: es la unión histórica acumulada (J3b), no el conjunto vivo.
+
+  MECANISMO REAL DEL FALLO (medido, no asumido): los 22 no estaban "stale" en el repo. El
+  recompute (reconcile=true ⇒ carga full shadow ⇒ re-evalúa inbounds) RETRAE
+  liveAffiliationWorker en vuelo, porque el inbound `archetype-to-liveAffiliationWorker`
+  (trabajadores.xml) devuelve null si ESTADO='I' o FEC_TERMINO < hoy. Es decir: el propio
+  recompute convierte al usuario en leaver y acto seguido intenta borrar su entry.
+  Por eso el filtro debe además excluir a quien tiene FEC_TERMINO ya vencido.
+
+  FILTRO v2 = archetypeRef + lifecycleState=active
+              + (liveAffiliationWorker != null OR liveAffiliationStudent != null)
+              + NOT inOid(leaver gap: worker con terminationDate vencida y sin token student)
+
+  El token de estudiante NO caduca por fecha (el inbound school-name-to-liveAffiliationStudent
+  no tiene predicado temporal; existe mientras exista el shadow del semestre en scope),
+  por eso el lote STUDENT no necesita exclusiones.
+
+  Scope medido en PROD (SQL sobre m_user.ext, 2026-07-16): 1525 focos.
+
+  SEGURIDAD
+    - workerThreads=1. Subir a 2 SOLO con OK explícito (heap Xmx9216m en contenedor de
+      10 GiB → 72,9% de memoria ya ocupada en reposo; precedente post-OOM 2026-06-18
+      fijó workers<=2).
+    - executionState=suspended: se importa suspendida, resume manual.
+    - NO se toca la barrera anti-delete. Si aun así aparece un FATAL de delete, PARAR:
+      significa que un contrato venció entre el snapshot y la corrida.
+    - Koha ILS está en MAINTENANCE → sus operaciones no se ejecutan durante el lote.
+
+  OID determinista: md5("inout-recompute-staff-v2-20260716")
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:sb="urn:sciback:midpoint:person"
+      oid="f5d2a8d5-1d9b-064b-53a3-eec7fa47ad31">
+    <name>InOut-recompute-STAFF-v2-20260716</name>
+    <description>Lote STAFF (1525 focos): materializa scibackDocumentNumber/FacultyCode/CampusCode + eduPersonUniqueId + member en ou=people. Filtro v2 = predicado real de AR-LDAP-Person (liveAffiliationWorker|Student) + exclusión del leaver gap. Ver README de la carpeta.</description>
+    <executionState>suspended</executionState>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <cleanupAfterCompletion>P7D</cleanupAfterCompletion>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:and>
+                                <q:ref>
+                                    <q:path>archetypeRef</q:path>
+                                    <q:value oid="6460facf-3abf-4851-966e-0c95aa1a6c46" type="c:ArchetypeType"/>
+                                </q:ref>
+                                <q:equal>
+                                    <q:path>lifecycleState</q:path>
+                                    <q:value>active</q:value>
+                                </q:equal>
+                                <!-- Predicado REAL de AR-LDAP-Person: al menos un token de
+                                     afiliación viva worker o student. "not equal (sin valor)"
+                                     = "el item tiene algún valor" (ambos indexados: m_ext_item
+                                     id 216 y 217). liveAffiliationAlum NO cuenta. -->
+                                <q:or>
+                                    <q:not>
+                                        <q:equal>
+                                            <q:path>extension/sb:liveAffiliationWorker</q:path>
+                                        </q:equal>
+                                    </q:not>
+                                    <q:not>
+                                        <q:equal>
+                                            <q:path>extension/sb:liveAffiliationStudent</q:path>
+                                        </q:equal>
+                                    </q:not>
+                                </q:or>
+                                <!-- Exclusión explícita del leaver gap: 120 focos cuyo
+                                     liveAffiliationWorker se RETRAE en vuelo (FEC_TERMINO vencido)
+                                     y que por tanto dispararían un DELETE de su entry LDAP contra
+                                     la barrera anti-delete. Lista = snapshot SQL 2026-07-16
+                                     (scope-leavers-excluidos-20260716.tsv). NO se borran: quedan
+                                     fuera del alcance; su limpieza es el proceso "leaver gap". -->
+                                <q:not>
+                                    <q:inOid>
+                            <q:value>d86e8a3b-3c8c-4af8-b3f0-bf1b8561d26f</q:value>
+                            <q:value>9bf4ea08-1a8d-43a0-a675-2a9352e6d09e</q:value>
+                            <q:value>af5a599a-89a3-4aa4-9974-9e0b5ace00a9</q:value>
+                            <q:value>9d0eb8fb-8967-4ba0-8c3b-2b75997d84b7</q:value>
+                            <q:value>7b447985-d6c3-4a53-b61b-3a4546107399</q:value>
+                            <q:value>2a4d873e-9ba7-4cd3-9a1f-b1fd60ea20f2</q:value>
+                            <q:value>f554f699-7b1e-4919-8324-c81b86001d19</q:value>
+                            <q:value>ca3b291c-99a4-47cf-ac4b-bd25a0e74f10</q:value>
+                            <q:value>bbbd5a93-b98c-4a62-92cc-7b977dea6e2b</q:value>
+                            <q:value>5c99cb57-7d4c-4299-bd92-4486fd7aae5a</q:value>
+                            <q:value>be4e4940-7109-4b78-a3af-fff271a8edea</q:value>
+                            <q:value>734a53dd-bd77-4851-8c65-c7b61fed39b8</q:value>
+                            <q:value>6f9f1639-ddea-42bd-abdf-2fbe5027630b</q:value>
+                            <q:value>30ebde4a-2522-43df-905f-83d9a5b8aca1</q:value>
+                            <q:value>46b3709a-eb2d-4090-9ac2-abf5ac5bd0ba</q:value>
+                            <q:value>28f51547-60c4-42a0-9545-a96b039af1eb</q:value>
+                            <q:value>90f23221-8ac5-4538-9c46-de7540a47db7</q:value>
+                            <q:value>f672f9d4-b985-47af-ad10-1e50c747d773</q:value>
+                            <q:value>4e5e96ff-13f4-4291-aa10-6a2ab03ad6bb</q:value>
+                            <q:value>f31ded04-efac-4845-8f4c-36bd0cfbd43d</q:value>
+                            <q:value>3a872aa5-bdbb-4eaa-bf18-db9acadd8d6f</q:value>
+                            <q:value>2eb45b07-ce14-4102-9adc-e26be7ca4134</q:value>
+                            <q:value>af45efe7-0bd9-4ed7-9d57-80080bcd2aa6</q:value>
+                            <q:value>fa29ef26-bdb5-46b7-890b-c47db9d79b14</q:value>
+                            <q:value>ce77b2aa-eab4-4d37-a88b-de3a4f4c7cfe</q:value>
+                            <q:value>5509c76b-9741-4d97-aac4-174420a99832</q:value>
+                            <q:value>896ae582-e524-4251-9bee-37e5695ddb38</q:value>
+                            <q:value>6c686110-fe87-479f-b719-8bd2405368ef</q:value>
+                            <q:value>da1a8a4f-54ad-4f4b-9874-0d9a4dd6ef1e</q:value>
+                            <q:value>c6d7b9bc-1247-44cf-b573-5951ec787951</q:value>
+                            <q:value>f406b32b-b693-4c19-9f50-7eae9b3da73a</q:value>
+                            <q:value>aa94b0f8-ffa7-40cd-a88b-4a9872d0f10f</q:value>
+                            <q:value>6e10819d-e456-46d9-bc13-aa2f80f625ab</q:value>
+                            <q:value>bf987fa7-424b-4532-8214-aba6848a6c0b</q:value>
+                            <q:value>f06456c2-0b56-4515-ac25-c33853747e57</q:value>
+                            <q:value>cbc99053-bab9-48bd-a7ba-8f0c9d599852</q:value>
+                            <q:value>f216b584-1a1f-4721-9675-94de85da0a1a</q:value>
+                            <q:value>e888a100-8070-4a96-9734-c300a4a861bf</q:value>
+                            <q:value>d62266ef-2ed2-4dcc-acfd-9ce07ee72a39</q:value>
+                            <q:value>f9d6229e-21ce-4699-9afd-f5ea5eb528f9</q:value>
+                            <q:value>53d88094-cbee-4e60-a2e3-173807b878cf</q:value>
+                            <q:value>313b133c-b8f8-4361-bc99-0d1c38dc0ad1</q:value>
+                            <q:value>56e3bc66-e18d-444d-a0d9-9cc1a96820c9</q:value>
+                            <q:value>a67f53b9-45bb-4f44-8cb5-30669bbb2595</q:value>
+                            <q:value>7c51e8d8-cb83-43c5-b1e8-1733d5642f5a</q:value>
+                            <q:value>8f339d79-2b02-4d34-8d40-a0c6e49fe642</q:value>
+                            <q:value>2b947fbe-cb2b-4a3c-8e9b-6bf03aada104</q:value>
+                            <q:value>8e576a23-895e-46d8-815b-70e8d0510256</q:value>
+                            <q:value>76d4768a-035d-4842-ad7d-7ea44740103c</q:value>
+                            <q:value>cd8a82f0-5d3d-4485-b7e3-25d8159de186</q:value>
+                            <q:value>edb9bb9e-3e6b-403f-b075-0cfbee8d86d2</q:value>
+                            <q:value>f2013188-80fa-4fb0-9ec0-4e1865793333</q:value>
+                            <q:value>f923da0d-79a5-4acd-95ac-8ad99bde9224</q:value>
+                            <q:value>556a037a-4755-4425-b50b-26252e49adea</q:value>
+                            <q:value>f56f1381-f52d-4815-922b-c860937dccde</q:value>
+                            <q:value>a4a01759-0d33-4c32-bd05-afc477195c64</q:value>
+                            <q:value>43e68fca-2366-4e59-9087-fb93d1ec526c</q:value>
+                            <q:value>b8e653d8-4ba0-4cd8-bc4e-fac18610aad8</q:value>
+                            <q:value>b93272ee-f379-4edf-92e1-f7388bf48c73</q:value>
+                            <q:value>8217fda8-b06b-4fc2-81b4-ebf94fe03930</q:value>
+                            <q:value>9bd5c82d-c774-45b8-9856-0feee0165a6f</q:value>
+                            <q:value>da1465a6-4408-4cb7-acff-5d6e2823904f</q:value>
+                            <q:value>ab5d1796-5996-49e8-957d-37d45344dc5f</q:value>
+                            <q:value>472393da-3042-4a13-ba3b-012f66e7258c</q:value>
+                            <q:value>7c2bbd58-a268-415d-af9d-587e27dd0f63</q:value>
+                            <q:value>ed49097b-7e32-480c-b078-e4552b629060</q:value>
+                            <q:value>704b3596-ce7c-4b8c-baed-8ff4b34345fd</q:value>
+                            <q:value>438f6b4b-c00c-407d-877d-c2fd180ef430</q:value>
+                            <q:value>2d266147-1938-4f13-bef7-375c144420a0</q:value>
+                            <q:value>d7a35259-9991-43ee-9399-c8e1e88000b6</q:value>
+                            <q:value>3aae66a8-88fe-4fb9-8898-7ab6298a6c45</q:value>
+                            <q:value>c53e260c-4fbc-4690-a2fe-84f34afd20cf</q:value>
+                            <q:value>e5927b19-c5d0-4a9e-ae3f-17ce49bc1b6b</q:value>
+                            <q:value>27f03557-ff40-4423-9cbe-69ba8cb74155</q:value>
+                            <q:value>b820a71a-94c7-4000-8a6b-247c09aa6b03</q:value>
+                            <q:value>667498da-4cb5-46f1-b943-f004ca23a765</q:value>
+                            <q:value>cb758cb5-37d9-4c99-b7f1-d6282cf09da4</q:value>
+                            <q:value>54e22b8f-df51-493b-91e1-8a96b4108e53</q:value>
+                            <q:value>c4a399d4-c0e1-4d47-b2e0-9370efac79b2</q:value>
+                            <q:value>5047f8b2-205a-47ed-b978-35ab41ed7c1b</q:value>
+                            <q:value>8aa047a3-b749-4659-a47d-e08fb1f3ef8f</q:value>
+                            <q:value>bef1ea30-64c2-400d-8d90-870e83919d07</q:value>
+                            <q:value>5c5ff33b-553a-4dba-8a27-a3bac406e342</q:value>
+                            <q:value>242d397c-9abb-4290-a053-1b005e0d0579</q:value>
+                            <q:value>2cfea499-1d9d-4e80-b503-a371de1e5dbb</q:value>
+                            <q:value>ccb5ea78-28e9-4895-90f6-a77844941941</q:value>
+                            <q:value>8d53a271-56cc-4e8c-a568-aa3e09273718</q:value>
+                            <q:value>d0157f04-a4c4-4f34-acf3-b6450f130436</q:value>
+                            <q:value>4f81265e-d447-42b8-9c09-f7e7026513ac</q:value>
+                            <q:value>cf757c78-b4ee-44f4-a652-619e6ee621e8</q:value>
+                            <q:value>f664a2b7-afd5-4437-8bcf-3c5636522212</q:value>
+                            <q:value>d103819e-8600-4a9d-9cbd-c1a32e5f7554</q:value>
+                            <q:value>b0469fca-4ab9-45dc-8c0b-f2dced13c2cd</q:value>
+                            <q:value>e8d401c9-285e-4c97-a51d-c7761cc07e2d</q:value>
+                            <q:value>3e73531d-5ad2-4cfb-9048-667f28d84b70</q:value>
+                            <q:value>4aa6a977-75a0-4792-b9a5-49a086770e04</q:value>
+                            <q:value>c1f6379e-bcdd-42c6-913c-3ecbbf60784d</q:value>
+                            <q:value>92d7fc8d-6c89-4bf0-ba7c-1b6d0b2e2f5f</q:value>
+                            <q:value>245ef7dd-a290-448e-b64c-cb00bb1697ac</q:value>
+                            <q:value>bc0f7741-3d86-4a4b-be47-152c0539fe76</q:value>
+                            <q:value>c654695c-bc96-4635-b7c0-35d3c7fe19b6</q:value>
+                            <q:value>67ef44ca-6d5c-45d3-9f98-3db761f0d573</q:value>
+                            <q:value>aa3c6604-b6b3-47ba-bcfd-b1244f8ebf1f</q:value>
+                            <q:value>945a6554-efb1-445b-8a6e-7bd43d1cb4b9</q:value>
+                            <q:value>479461ff-e217-4583-b3ae-731b6a211cd5</q:value>
+                            <q:value>23bd42cb-7904-43dc-85a8-bc5f588cf372</q:value>
+                            <q:value>ca6e40cd-1b60-42f2-b95c-1757e82743c1</q:value>
+                            <q:value>53eae02f-4375-41eb-a9e3-12e3604262cb</q:value>
+                            <q:value>5c0307b9-0971-4e82-8847-2e688c06b0d9</q:value>
+                            <q:value>f7ce4c67-6d56-44bf-8130-f3fc6ad7e9d2</q:value>
+                            <q:value>ab21f1d0-5475-4e35-85f3-1472af59eaed</q:value>
+                            <q:value>c1796a2c-2a8b-4895-9dc6-7fa3c1a2c383</q:value>
+                            <q:value>ff2eb0ed-0355-4856-8f15-55fd1aa2e9a6</q:value>
+                            <q:value>d6765b3a-e10c-4445-bcf9-3d1b3317b952</q:value>
+                            <q:value>e991c94c-6fb8-4fff-970e-b34d48e84ef8</q:value>
+                            <q:value>20bde41a-abc5-4982-9512-9fb7fce3542d</q:value>
+                            <q:value>d0195b02-8d42-427d-85ac-51b436e73ffb</q:value>
+                            <q:value>4a72572a-3042-43c4-a7d3-1bef9f0b80ed</q:value>
+                            <q:value>358a5be9-7802-4eb3-8418-ce5288b388f2</q:value>
+                            <q:value>eacd6b16-ee86-44e9-9d2a-3c6107e52f50</q:value>
+                                    </q:inOid>
+                                </q:not>
+                            </q:and>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>1</workerThreads>
+        </distribution>
+    </activity>
+</task>
