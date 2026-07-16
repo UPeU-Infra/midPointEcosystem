@@ -15046,7 +15046,34 @@ null
              MidPoint NO puede borrar la entrada LDAP. Esta es la barrera DURA.
              Para purgar legitimamente: re-habilitar delete bajo decision
              explicita y documentada, NUNCA durante recons/imports masivos.
+
+             !! DESPLIEGUE: PATCH QUIRURGICO, **NUNCA** PUT COMPLETO !!
+             Aplicado en PROD (2026-07-16) via:
+               PATCH /resources/{oid}  con objectModification
+               replace capabilities/configured -> <cap:delete><cap:enabled>false
+             NO usar PUT ?options=overwrite con este archivo: su <schema>
+             cacheado (retrievalTimestamp 2026-05-15) esta DESACTUALIZADO
+             respecto a PROD y NO define 'scibackDocumentNumber', atributo que
+             el <schemaHandling> de este mismo archivo SI referencia -> el PUT
+             reemplaza el schema bueno de PROD por este viejo y el recurso queda
+             lastAvailabilityStatus=broken ("Definition of attribute
+             'scibackDocumentNumber' not found in object class 'inetOrgPerson'").
+             Ocurrio el 2026-07-16; recuperado restaurando el backup de PROD.
+             Ver DRIFT GITOPS abajo.
              ================================================================ -->
+
+    <!-- ================================================================
+         DRIFT GITOPS PENDIENTE (2026-07-16) — este archivo NO es desplegable
+         por PUT completo. Es internamente inconsistente:
+           <schema> (cache 2026-05-15) NO define scibackDocumentNumber
+           <schemaHandling>            SI lo referencia
+         PROD tiene el schema re-fetcheado (mas nuevo) y por eso funciona.
+         El repo quedo atras. Mientras no se resincronice:
+           - cambios a este recurso -> PATCH quirurgico del item concreto.
+           - para resincronizar: exportar el recurso de PROD, reemplazar el
+             bloque <schema> de este archivo por el vigente, y validar con
+             Test Connection en pre-produccion ANTES de cualquier PUT.
+         ================================================================ -->
         <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
             <cap:delete>
                 <cap:enabled>false</cap:enabled>
