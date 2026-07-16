@@ -14189,6 +14189,20 @@
             <attribute id="72">
                 <ref>ri:eduPersonAffiliation</ref>
                 <displayName>eduPersonAffiliation (multivalor)</displayName>
+                <!-- 2026-07-16: se añade la derivación de `member`.
+                     eduPerson 202208: `member` es afiliación derivada — la tiene
+                     quien sea faculty/student/staff/employee. `alum` NO implica
+                     `member` (un egresado no es miembro de la institución).
+                     Coste marginal cero: el mapping ya recorría `affiliations`.
+                     LinkedHashSet = dedupe (si la fuente ya trae MEMBER) +
+                     orden estable. Se evita el operador `<<` de Groovy a
+                     propósito: dentro de <code> obligaría a escapar `&lt;&lt;`.
+                     Aplicado a PROD por REST PATCH sobre
+                     schemaHandling/objectType[62]/attribute[72]/outbound
+                     (v203→v204). NUNCA por PUT: el <schema> cacheado de este
+                     archivo está desfasado respecto a PROD y un PUT deja el
+                     resource `broken` (commits 670b312 / 8ab4dc9).
+                     Validado en PROD por el canario 20260716: member 0→6. -->
                 <outbound>
                     <strength>strong</strength>
                     <source>
@@ -14196,7 +14210,12 @@
                     </source>
                     <expression>
                         <script>
-                            <code>def vocabMap = ['ALUMNI':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff','EMPLOYEE':'employee','MEMBER':'member','AFFILIATE':'affiliate']; if (affiliations == null) return null; def items = affiliations instanceof Collection ? affiliations.toList() : [affiliations]; items.collect { v -&gt; def k = v?.toString()?.trim()?.toUpperCase(); k ? (vocabMap[k] ?: v.toString().trim().toLowerCase()) : null }.findAll { it != null } ?: null</code>
+                            <code>def vocabMap = ['ALUMNI':'alum','STUDENT':'student','FACULTY':'faculty','STAFF':'staff','EMPLOYEE':'employee','MEMBER':'member','AFFILIATE':'affiliate']
+if (affiliations == null) return null
+def items = affiliations instanceof Collection ? affiliations.toList() : [affiliations]
+def mapped = new LinkedHashSet(items.collect { v -&gt; def k = v?.toString()?.trim()?.toUpperCase(); k ? (vocabMap[k] ?: v.toString().trim().toLowerCase()) : null }.findAll { it != null })
+if (mapped.any { it in ['faculty','student','staff','employee'] }) mapped.add('member')
+return mapped ? new ArrayList(mapped) : null</code>
                         </script>
                     </expression>
                 </outbound>

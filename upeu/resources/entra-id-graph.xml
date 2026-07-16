@@ -457,10 +457,37 @@ try {
          CONSISTENCY — errores de Entra ID no son fatales mientras
          User.ReadWrite.All esté pendiente (B3 David Urquizo).
          Cuando B3 se resuelva: eliminar este bloque.
+
+         CORRECCIÓN 2026-07-16: el intento de 2026-06-03 usó
+         <consistency><errorCriticality>, que efectivamente NO existe. El
+         elemento correcto en 4.10.2 es <consistency><connectorErrorCriticality>
+         de tipo ErrorSelectorType (verificado contra
+         BOOT-INF/lib/schema-4.10.2.jar del PROD:
+         ResourceConsistencyType → connectorErrorCriticality). Mismo mecanismo
+         que ya usa koha-ils.xml. No es cosmético:
+         ChangeExecutor.executeProjectionsChanges NO tiene try/catch, así que un
+         FATAL de Entra aborta el bucle de proyecciones y las restantes
+         (incluida LDAP) no se ejecutan.
+
+         ORDEN XSD OBLIGATORIO (xsd:sequence de ErrorSelectorType):
+           network, security, policy, policyThreshold, schema, configuration,
+           unsupported, generic
+         → <schema> DEBE ir antes que <unsupported>.
+
+         `generic` NO cubre el error de Entra: cae en la categoría `unsupported`
+         (create/update deshabilitados a la espera de B3).
+
+         Aplicado a PROD por REST PATCH (v104→v105), NO por PUT: el <schema>
+         cacheado del archivo está desfasado respecto a PROD y un PUT dejaría
+         el resource `broken` (mismo incidente que ldap-identity-cache,
+         commits 670b312 / 8ab4dc9).
          ================================================================ -->
-<!-- <consistency><errorCriticality> removido 2026-06-03: elemento no válido en
-         ResourceConsistencyType de MidPoint 4.10 (cambió de ubicación entre versiones).
-         Bloqueaba el PUT por validación de schema. Default basta para resource inbound. -->
+    <consistency>
+        <connectorErrorCriticality>
+            <schema>partial</schema>
+            <unsupported>partial</unsupported>
+        </connectorErrorCriticality>
+    </consistency>
 
     <!-- ================================================================
          CAPABILITIES CONFIGURADAS
