@@ -1703,41 +1703,97 @@ return 'draft'
         <ref>activation/administrativeStatus</ref>
         <mapping>
             <name>leaver-disable-on-terminationdate</name>
-            <!-- GOBERNANZA 2026-05-29 (opción 1b): el DISABLE por terminationDate SOLO aplica a quien
-                 SIGUE siendo trabajador (primaryAffiliation staff|faculty). Un ex-trabajador que
-                 conserva afiliación académica viva (alum/student) NO debe quedar DISABLED — su
-                 identidad persiste por otra IIA. Antes, este strong desactivaba a TODO usuario con
-                 terminationDate pasada (incluidos 104 alumni/jubilados egresados) → bug reparado.
-                 Al añadir primaryAffiliation como source y exigir staff|faculty, el mapping retira el
-                 DISABLED en el recompute cuando el usuario pasa a alum/student (relatividad: source
-                 cambia, el strong recomputa null → ENABLED por effectiveStatus). -->
+            <!-- ============================================================
+                 REDISENO 2026-07-16 — decidir por AFILIACION VIVA REAL, no por
+                 el proxy primaryAffiliation.
+
+                 BUG ANTERIOR (uno solo, dos sintomas SIMETRICOS): el mapping
+                 preguntaba "cual es tu afiliacion principal?" cuando debe
+                 preguntar "te queda algun vinculo vivo?". primaryAffiliation es
+                 un DERIVADO por PRECEDENCIA (faculty>staff>student>alum, bloque
+                 J3) que devuelve null si no hay ninguna viva. De ahi:
+                   (a) FALSO DISABLE — dual staff+student que cesa como
+                       trabajador: aff='staff' gana por precedencia aunque siga
+                       con matricula viva -> DISABLED. Medido en PROD 2026-07-16:
+                       3 estudiantes ACTIVOS desactivados (201010960, 201520563,
+                       201610198) durante el import de Estudiantes.
+                   (b) FALSO ENABLE — cesado puro: aff=null caia en la rama
+                       "afiliacion no laboral (alum/student/affiliate/null) ->
+                       recuperar ENABLED". Pero null NO es 'alum': es "sin
+                       ningun vinculo". Medido por simulacion preview
+                       (SimulationResult 2647ede5-...): habria REACTIVADO 1.811
+                       leavers sin vinculo vivo. Evento de seguridad, no bug.
+
+                 FIX: leer los 3 slots de HECHO (liveAffiliationWorker/Student/
+                 Alum), cada uno single-writer por su IIA, en vez del derivado.
+                 DISABLED solo si ceso Y no le queda NINGUN vinculo vivo.
+
+                 'alum' ES afiliacion viva (eduPerson 202208: "Graduado/
+                 egresado", uno de los 8 valores canonicos). Es estado
+                 PERMANENTE derivado de graduarse, NO una vigencia: exigirle
+                 matricula vigente a un alum es contradiccion en terminos (un
+                 egresado por definicion ya no esta matriculado). La IIA de
+                 'alum' es DAVID.VW_PERSONA_EGRESADO (-> liveAffiliationAlum,
+                 inbound strong en egresados.xml). OJO: "estuvo en
+                 PERSONA_NATURAL_ALUMNO" NO es alum — son ex-estudiantes que
+                 nunca se graduaron (434 casos medidos): no son alum ni nada.
+
+                 !! NUNCA retornar null con la <condition> verdadera !!
+                 En un mapping STRONG un output vacio NO es abstencion: la doc
+                 de Evolveum dice "If no value or null is produced, then it is
+                 assumed that the target should have no value" -> BORRA
+                 administrativeStatus -> effectiveStatus recomputa -> ENABLED de
+                 facto. Seria un reactivador encubierto (el mismo bug (b) por
+                 otra via). Tampoco <condition> sirve como abstencion: un
+                 true->false REMUEVE por relatividad los valores que el mapping
+                 produjo. Aqui no existe "no opinar": solo cabe afirmar ENABLED
+                 o DISABLED. Por eso el script computa booleanos (ceased/anyLive)
+                 y siempre afirma un valor.
+
+                 PENDIENTE DE REDISENO (anotado, fuera de alcance): gobernar
+                 administrativeStatus con un strong contradice
+                 iga-canonical-standards 1.2 ("administrativeStatus queda como
+                 ultimo recurso de override manual"; el lifecycle se sincroniza
+                 desde la IIA). Lo canonico seria gobernar lifecycleState
+                 (active/archived) y dejar administrativeStatus libre. Es
+                 PREEXISTENTE, no lo introduce este fix.
+                 ============================================================ -->
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
             <source>
                 <path>extension/sciback:terminationDate</path>
             </source>
             <source>
-                <name>primaryAffiliation</name>
-                <path>extension/sciback:primaryAffiliation</path>
+                <name>worker</name>
+                <path>extension/sciback:liveAffiliationWorker</path>
+            </source>
+            <source>
+                <name>student</name>
+                <path>extension/sciback:liveAffiliationStudent</path>
+            </source>
+            <source>
+                <name>alum</name>
+                <path>extension/sciback:liveAffiliationAlum</path>
             </source>
             <expression>
                 <script>
                     <code>import java.time.LocalDate; import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType;
-def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
-// Este mapping (strong) GOBIERNA administrativeStatus para usuarios con terminationDate.
-// Retorna ENABLED (no null) cuando NO corresponde desactivar, para sobrescribir cualquier
-// DISABLED huérfano dejado por reactions previos (inactivateFocus). Caso clave: ex-trabajador
-// que ahora es alumni/student → debe quedar ENABLED aunque tenga terminationDate.
 if (terminationDate == null) return null;
+// ¿Ceso de verdad? Solo true con fecha valida YYYY-MM-DD y ya cumplida.
+// Dato ilegible o fecha futura -> ceased=false -> NO se desactiva (fail-safe).
+def ceased = false;
 def v = basic.stringify(terminationDate);
-if (!(v ==~ /^\d{4}-\d{2}-\d{2}$/)) return ActivationStatusType.ENABLED;
-// Solo desactivar a trabajador VIGENTE (staff/faculty) con fecha de cese ya cumplida.
-if (['staff','faculty'].contains(aff)) {
-    try { def td = LocalDate.parse(v); if (!td.isAfter(LocalDate.now())) { return ActivationStatusType.DISABLED } } catch (Exception e) { log.warn("UPeU template leaver: terminationDate no parseable '{}' en {}: {}", v, focus?.name, e.message); return ActivationStatusType.ENABLED }
-    return ActivationStatusType.ENABLED
+if (v ==~ /^\d{4}-\d{2}-\d{2}$/) {
+    try { ceased = !LocalDate.parse(v).isAfter(LocalDate.now()) } catch (Exception e) { log.warn("leaver: terminationDate no parseable '{}' en {} -> no se desactiva", v, focus?.name) }
+} else {
+    log.warn("leaver: terminationDate con formato inesperado '{}' en {} -> no se desactiva", v, focus?.name)
 }
-// Afiliación no laboral (alum/student/affiliate/null) con terminationDate: recuperar ENABLED.
-return ActivationStatusType.ENABLED</code>
+// ¿Le queda ALGUN vinculo vivo? 'sin dato' y 'vacio' NO cuentan como vivo.
+def liveOf = { it != null &amp;&amp; basic.stringify(it).trim() != '' };
+def anyLive = liveOf(worker) || liveOf(student) || liveOf(alum);
+// ISO 24760: ceso y sin ningun vinculo -> suspended. Con vinculo vivo -> su
+// identidad persiste por otra IIA -> ENABLED.
+return (ceased &amp;&amp; !anyLive) ? ActivationStatusType.DISABLED : ActivationStatusType.ENABLED</code>
                 </script>
             </expression>
             <condition>
