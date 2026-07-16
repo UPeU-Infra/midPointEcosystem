@@ -7,6 +7,20 @@
 
 ---
 
+## 🟢 ESTADO (revisado 2026-07-16): NO hay nada pendiente que pedirle a Rudy
+
+Los 3 tickets de abajo tenían condiciones de disparo **vencidas o ya resueltas por otra vía**, lo que hacía parecer que había pendientes con Rudy cuando no los hay. Estado real, verificado en vivo:
+
+| Ticket | Estado anterior (engañoso) | Estado REAL |
+|---|---|---|
+| **RU-001** cuenta de servicio | "🔵 no solicitar todavía — antes de Fase 10" | **Vencido como condición** (Fase 10 cerró el 2026-06-06), pero **SIN urgencia**: se verificó que `JUANSANCHEZ` **no expira nunca** (`user_users`: `EXPIRY_DATE = NUNCA`, `ACCOUNT_STATUS = OPEN`). Deuda de higiene, sin fecha. Ver §RU-001. |
+| **RU-002** vista lenta | "🟡 ACTIVO" | **CERRADO.** Ningún resource la usa (grep en `upeu/` + `canonical/` = 0 hits) → se resolvió por la alternativa que el propio ticket contemplaba. La vista **sigue lenta** (medido 2026-07-16: 5,26 s vs 0,01 s de una sana) pero es irrelevante para el IGA. |
+| **RU-003** horarios/entorno | "diferido junto con RU-001" | **Mayormente respondido por la operación.** Ver §RU-003. |
+
+> **Regla para no repetir esto:** un ticket cuya condición de disparo es un hito ("antes de Fase X") **debe revisarse cuando ese hito se cierra**. Aquí la Fase 10 cerró el 2026-06-06 y nadie releyó el runbook durante ~40 días. Si se difiere algo, dejar el disparo por **fecha**, no por hito.
+
+---
+
 ## Decisión 2026-05-11 — Approach pragmático
 
 **Decisión de Alberto:** Para validar el flujo end-to-end primero, MidPoint PROD usará **temporalmente** la cuenta personal `JUANSANCHEZ` (con rol `DEVELOP_READ`) que ya tiene SELECT sobre los 33 objetos verificados. Una vez validado que el modelo IGA funciona y sabemos exactamente qué tablas se consumen en operación real, pediremos a Rudy crear `MIDPOINT_IGA_RO` con permisos mínimos.
@@ -32,11 +46,19 @@
 
 ---
 
-## RU-001 — Crear cuenta de servicio `MIDPOINT_IGA_RO` ⚪ DIFERIDO
+## RU-001 — Crear cuenta de servicio `MIDPOINT_IGA_RO` 🟡 DEUDA DE HIGIENE (sin urgencia)
 
-**Estado:** 🔵 No solicitar todavía. Se ejecuta **antes de Fase 10** (despliegue real), no ahora. Durante Fases 5-9 usamos `JUANSANCHEZ`.
+**Estado (revisado 2026-07-16):** la condición original ("antes de Fase 10") **está vencida** — la Fase 10 cerró el **2026-06-06** y PROD sigue usando `JUANSANCHEZ` en los 7 resources Oracle (`egresados`, `estudiantes`, `grados`, `org`, `posiciones`, `reniec-cache`, `trabajadores`). **Pero NO es urgente**, y conviene decir por qué en vez de dejarlo como alarma perpetua:
 
-**Para:** Fase 10 del [roadmap](./roadmap-iga-2026.md) (despliegue PROD definitivo).
+- **No hay riesgo con fecha.** Verificado en vivo (`SELECT ... FROM user_users`): `JUANSANCHEZ` → `ACCOUNT_STATUS = OPEN`, **`EXPIRY_DATE = NUNCA`**. La hipótesis de "si el password expira, el IGA se cae" **no aplica**.
+- **Lo que sí queda, menor:** (a) el audit trail de ~54k identidades queda firmado como `JUANSANCHEZ`; (b) si Alberto deja el rol/puesto, su cuenta se desactiva y PROD muere; (c) `DEVELOP_READ` es más amplio que el mínimo necesario; (d) ISO 27001 A.8.2 (cumplimiento, no riesgo operativo).
+- **En contra de hacerlo ahora:** funciona hace meses, y rotar credenciales en 7 resources tiene su propio riesgo de rotura.
+
+**Cuándo hacerlo:** cuando haya otro motivo para escribirle a Rudy (agrupar), o si cambia el contexto (rotación de rol de Alberto, auditoría, incidente de seguridad). **No abrir un ticket solo por esto.**
+
+**Ventaja ya cobrada:** el diferimiento tenía un objetivo — *"pedir solo lo necesario, sabiendo qué tablas se usan de verdad"*. **Ya se cumplió**: tras meses de operación real se sabe exactamente qué objetos consume MidPoint. Si se ejecuta, **revisar la lista de 34 objetos de abajo contra el uso real** antes de enviarla (probablemente sobran).
+
+**Para:** Fase 10 del [roadmap](./roadmap-iga-2026.md) (despliegue PROD definitivo) — *hito ya cerrado el 2026-06-06*.
 **Sistema:** Oracle LAMB UPeU (`192.168.13.9:1521/UPEU`).
 
 ### Acción solicitada
@@ -137,7 +159,15 @@ Yo lo guardaré en `~/.secrets/oracle-lamb-midpoint.env` (permisos 600).
 
 ---
 
-## RU-002 — Diagnóstico de la vista `DAVID.VW_DATOS_IDENTIDAD_USUARIO` 🟡 ACTIVO
+## RU-002 — Diagnóstico de la vista `DAVID.VW_DATOS_IDENTIDAD_USUARIO` ✅ CERRADO (no enviar)
+
+**Estado (verificado 2026-07-16): CERRADO — no hace falta pedir nada.**
+- **Ningún resource del IGA la usa.** `grep -rl VW_DATOS_IDENTIDAD_USUARIO upeu/ canonical/` → **0 hits**. Se resolvió por la alternativa que el propio ticket ya contemplaba (reconstruir los joins desde `VW_PERSONA_NATURAL` + `VW_PERSONA_COMUN`), que es lo que hacen hoy los searchScripts.
+- **El síntoma sigue vivo pero es irrelevante para nosotros.** Medido hoy: `SELECT 1 ... WHERE 1=0` sobre esa vista → **5,26 s**; contra `MOISES.PERSONA_NATURAL` (control) → **0,01 s**. Sigue lenta, pero ya no la consumimos.
+- Si algún día se quisiera usar como "vista oro" de identidad consolidada, este ticket se reabre **con esta medición como evidencia**.
+
+<details>
+<summary>Contenido original del ticket (histórico, no enviar)</summary>
 
 **Para:** Fase 5 (es la vista oro de identidad consolidada — la más importante).
 **Sistema:** Oracle LAMB UPeU.
@@ -179,11 +209,25 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 Esta vista parece ser la **identidad consolidada** (datos centralizados). Es candidata natural para el inbound mapping principal de MidPoint. Si queda inaccesible:
 - Tendremos que reconstruir los joins manualmente desde `VW_PERSONA_NATURAL` + `VW_PERSONA_COMUN` + tablas de identificadores. Funciona pero duplica lógica que ya existe en la vista.
 
+</details>
+
 ---
 
-## RU-003 — Confirmación de horario de ejecución de queries de MidPoint ⚪ DIFERIDO
+## RU-003 — Confirmación de horario de ejecución de queries de MidPoint 🟢 RESPONDIDO por la operación
 
-**Estado:** Diferido — preguntar junto con RU-001 antes de Fase 10.
+**Estado (revisado 2026-07-16):** las 4 preguntas ya las contestó la práctica tras meses de operación. **No hace falta preguntarlas.**
+
+| Pregunta original | Lo que sabemos hoy |
+|---|---|
+| ¿Hay horario protegido donde no pegarle? | Los crons de reconcile corren a las **02:00 UTC** desde mayo-2026 sin ninguna queja de LAMB. Si hubiera ventana protegida, ya habría saltado. |
+| ¿Hay índices para `WHERE fecha_modificacion > sysdate-1`? | Los 4 resources Oracle operan con volúmenes reales (30.917 objetos en la corrida GAP-2) dentro de tiempos aceptables. |
+| **¿Es Oracle 11g/12c/19c?** | **Oracle 11.2.0.4** — confirmado. (Consecuencia práctica ya conocida: **no soporta `FETCH FIRST n ROWS ONLY`** → usar `rownum`.) |
+| ¿Límite de sesiones concurrentes? | Nunca se topó. Los recomputes usan `workerThreads=1` por límites de RAM de MidPoint, no de Oracle. |
+
+**Único residuo con valor:** si algún día se crea `MIDPOINT_IGA_RO` (RU-001), preguntar entonces si a esa cuenta le aplica algún límite de sesiones — pero va **dentro** de ese ticket, no aparte.
+
+<details>
+<summary>Contenido original del ticket (histórico)</summary>
 
 **Para:** Fase 5 + Fase 7 (operación continua).
 **Sistema:** Oracle LAMB.
@@ -201,6 +245,8 @@ MidPoint hará:
 2. ¿Hay índices que MidPoint pueda aprovechar para filtros `WHERE fecha_modificacion > sysdate-1`? Si no, ¿podemos agregar uno?
 3. ¿Es Oracle 11g/12c/19c? — afecta features SQL disponibles
 4. ¿Hay límite de sesiones concurrentes por usuario que aplique a `MIDPOINT_IGA_RO`?
+
+</details>
 
 ---
 
