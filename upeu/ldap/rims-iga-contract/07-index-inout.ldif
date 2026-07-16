@@ -1,0 +1,48 @@
+# 07-index-inout.ldif — Índices eq para el contrato InOut←IGA (aforo CRAI, D-11.bis)
+#
+# InOut resuelve a la persona con un filtro de igualdad sobre carné O DNI:
+#   (|(uid=<valor>)(scibackDocumentNumber=<valor>))
+# y filtra/agrupa el aforo por facultad y campus. Sin índice `eq`, cada scan de
+# carné haría un full-scan de ~37.5k entries de ou=people.
+#
+# ESTADO PROD VERIFICADO (2026-07-16, solo lectura, .168 y .169 IDÉNTICOS):
+#   olcDbIndex: uid eq          ← YA EXISTE, no se toca (cubre el carné COD_UPEU)
+#   olcDbIndex: mail eq
+#   olcDbIndex: memberOf eq
+#   olcDbIndex: entryCSN eq
+#   olcDbIndex: entryUUID eq
+#   olcDbIndex: objectClass eq
+#
+# Este ldif añade SOLO lo que falta:
+#   - scibackDocumentNumber eq  → búsqueda por DNI (la mitad del filtro D-11.bis)
+#   - scibackFacultyCode eq     → filtro/agrupación de aforo por facultad
+#   - scibackCampusCode eq      → filtro/agrupación de aforo por campus
+#   - eduPersonUniqueId eq      → ancla de correlación estable (InOut + RIMS)
+#
+# ⚠️ DESPLIEGUE — cn=config NO SE REPLICA.
+#   `olcDbIndex` cuelga de olcDatabase={1}mdb,cn=config → es cn=config → syncrepl NO lo
+#   propaga (solo se replica la BD de datos dc=upeu,dc=edu,dc=pe). Un índice aplicado
+#   solo en .168 dejaría a .169 haciendo full-scan si el consumidor cae al réplica.
+#   APLICAR EN AMBOS NODOS: 192.168.15.168 y 192.168.15.169.
+#     ldapmodify -Y EXTERNAL -H ldapi:/// -f 07-index-inout.ldif
+#
+# ORDEN: aplicar DESPUÉS de 06-schema-inout-person.ldif — slapd rechaza un olcDbIndex
+#   sobre un atributo que aún no existe en el schema (error 80 / "unknown attribute type").
+#
+# REINDEXADO: slapd (back-mdb) lanza el indexado en background al añadir el índice sobre
+#   una BD ya poblada. Verificar en el log (`journalctl -u slapd` / logs del contenedor)
+#   que termina sin error y que las búsquedas de InOut no emiten
+#   "<attr> not indexed". Si el volumen lo exige, alternativa offline: parar slapd y
+#   `slapindex -b dc=upeu,dc=edu,dc=pe` (requiere ventana; NO necesario a priori a 37.5k).
+#
+# VERIFICACIÓN POST-APLICACIÓN (ambos nodos):
+#   ldapsearch -x -H ldap://<nodo>:389 -D 'cn=admin,cn=config' -W \
+#     -b 'olcDatabase={1}mdb,cn=config' olcDbIndex
+
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: scibackDocumentNumber eq
+olcDbIndex: scibackFacultyCode eq
+olcDbIndex: scibackCampusCode eq
+olcDbIndex: eduPersonUniqueId eq

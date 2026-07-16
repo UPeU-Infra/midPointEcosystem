@@ -163,6 +163,65 @@
     </item>
 
     <!-- ============================================================
+         BLOQUE A3 — eduPersonUniqueId CANÓNICO (ID_PERSONA@upeu.edu.pe)
+         (Contrato InOut←IGA, 2026-07-16)
+
+         extension/sciback:eduPersonUniqueId ← extension/sciback:externalSystemId + '@upeu.edu.pe'
+
+         PROBLEMA QUE RESUELVE (verificado en PROD 2026-07-16):
+         Ningún template escribía sciback:eduPersonUniqueId. El outbound del
+         resource LDAP (attr id=436) lo usa como source, pero al estar vacío caía
+         a su fallback `name@upeu.edu.pe` → en PROD:
+             uid=202611481 → eduPersonUniqueId: 202611481@upeu.edu.pe
+         es decir COD_UPEU@, no un identificador opaco. eduPerson 202208 §.1.13
+         exige que eduPersonUniqueId sea OPACO, INMUTABLE y NO reasignable
+         (iga-canonical-standards §3.4 regla 1 y §11 regla 4: es el identificador
+         de correlación entre consumidores; el ePPN/COD no lo es).
+
+         POR QUÉ ID_PERSONA: es el identificador universal e inmutable de la persona
+         en el MDM MOISES — NO cambia entre matrículas, ni al cambiar de programa, ni
+         entre los ejes estudiante/egresado/trabajador (una persona = un ID_PERSONA).
+         Ya está materializado como sciback:externalSystemId por el Bloque A2, que es
+         su ÚNICO writer strong → este bloque deriva de ahí (no vuelve a leer el slot
+         RAW upeu:lambIdPersona): un solo writer canónico, sin multi-strong.
+
+         EFECTO EN LDAP: ninguno que configurar. El outbound id=436 de
+         ldap-identity-cache.xml ya prefiere la extensión sobre el fallback → al
+         poblarse este item, empieza a emitir ID_PERSONA@upeu.edu.pe solo.
+
+         ⚠️ MIGRACIÓN DE CORRELACIÓN RIMS: el attr id=436 está anotado como "ancla de
+         correlación RIMS". Este bloque CAMBIA EL VALOR del ancla (COD_UPEU@ →
+         ID_PERSONA@) para toda la población (~37.5k). Es la jugada canónicamente
+         correcta y unifica el ancla de RIMS e InOut, pero es una migración de una
+         sola vez que debe COORDINARSE CON RIMS antes del recompute masivo. Ver
+         docs/specs/inout-ldap-identity-map.md §Migración.
+
+         Personas sin ID_PERSONA: este mapping no produce valor y el outbound id=436
+         mantiene su fallback name@upeu.edu.pe → nunca queda sin eduPersonUniqueId
+         (valor mixto documentado en el contrato).
+
+         strength=strong: valor derivado de un inmutable, se impone en cada recompute.
+         Null-safe: sin externalSystemId no produce valor (no borra).
+         ============================================================ -->
+    <item>
+        <ref>extension/sciback:eduPersonUniqueId</ref>
+        <mapping>
+            <name>A3-eduPersonUniqueId-from-externalSystemId</name>
+            <lifecycleState>active</lifecycleState>
+            <description>Deriva el eduPersonUniqueId canónico (eduPerson 202208 .1.13: opaco, inmutable, no reasignable, con scope institucional) desde sciback:externalSystemId (= ID_PERSONA del MDM MOISES, poblado por el Bloque A2). Reemplaza el fallback name@upeu.edu.pe (COD_UPEU) del outbound LDAP id=436. Ancla de correlación compartida por RIMS e InOut.</description>
+            <strength>strong</strength>
+            <source>
+                <path>extension/sciback:externalSystemId</path>
+            </source>
+            <expression>
+                <script>
+                    <code>def v = externalSystemId != null ? basic.stringify(externalSystemId).trim() : ''; return v != '' ? (v + '@upeu.edu.pe') : null</code>
+                </script>
+            </expression>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
          BLOQUE B — DATOS DERIVADOS BÁSICOS
          fullName ← givenName + familyName (strong)
          emailAddress ← personalNumber + "@upeu.edu.pe" (weak)

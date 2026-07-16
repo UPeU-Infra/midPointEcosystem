@@ -1,0 +1,65 @@
+# 06-schema-inout-person.ldif — Contrato InOut←IGA (aforo CRAI, D-11.bis)
+#
+# Añade 3 atributos de persona al arco OID Enterprise UPeU 1.3.6.1.4.1.47378 y los
+# incorpora a la objectClass auxiliar `upeuPerson` (ya presente en toda entry de
+# ou=people, verificado en PROD 2026-07-16).
+#
+# Propósito: InOut (sistema de aforo del CRAI) lee ou=people vía `cn=rims-reader`
+# y debe poder (a) resolver a la persona por carné COD_UPEU **o** por DNI
+# indistintamente (D-11.bis), y (b) agrupar el aforo por facultad y por campus.
+#
+# ESTADO PROD VERIFICADO (2026-07-16, solo lectura):
+#   - Schema entry .......... cn={12}upeu,cn=schema,cn=config
+#   - upeuPerson ............ olcObjectClasses {0}  (OID .2.1)   ← por eso el delete/add {0}
+#   - scibackOrgUnit ........ olcObjectClasses {1}  (OID .2.2)
+#   - olcAttributeTypes ..... {0}..{7} = OIDs .1.1 .. .1.8  → siguiente libre: .1.9
+#   - `uid` YA indexado eq en .168 y .169 → el carné no requiere atributo nuevo.
+#   - El DNI hoy solo existe embebido en el URN schacPersonalUniqueID
+#     (urn:schac:personalUniqueID:pe:DNI:PE:61532826) → no permite equality search limpio.
+#   - `employeeNumber` está VACÍO, pero NO se reutiliza (ver justificación abajo).
+#
+# ASIGNACIÓN DE OIDs (arco 1.3.6.1.4.1.47378):
+#   .1.9   — scibackDocumentNumber
+#   .1.10  — scibackFacultyCode
+#   .1.11  — scibackCampusCode
+#   .2.1   — upeuPerson (existente, se extiende su MAY)
+#
+# JUSTIFICACIÓN CANÓNICA (iga-canonical-standards):
+#   - scibackDocumentNumber: SCHAC .15 `schacPersonalUniqueID` es el hogar canónico del
+#     DNI, pero la spec SCHAC obliga a forma URN → NO se sobrecarga con el valor plano
+#     (rompería el contrato SCHAC que ya consumen RIMS/Keycloak). `employeeNumber`
+#     (inetOrgPerson/SCIM Enterprise) es semánticamente el número asignado por el
+#     EMPLEADOR — en este modelo ese rol lo cumple personalNumber→schacPersonalUniqueCode —
+#     usarlo para el documento nacional es un anti-pattern semántico. eduPerson e
+#     inetOrgPerson no tienen atributo para "documento nacional en plano" → regla #12 de
+#     iga-canonical-standards: se define atributo custom bajo el arco propio.
+#     Semántica: número del documento PRIMARIO (identityDocuments[primary].number),
+#     cubre DNI (8 díg) y CE (extranjeros) con un solo campo.
+#   - scibackFacultyCode / scibackCampusCode: no existe atributo estándar para "código
+#     corto de facultad" ni "código de campus" → custom.
+#
+# DESPLIEGUE: cn=config NO se replica (solo olcDatabase={1}mdb / dc=upeu,dc=edu,dc=pe).
+#   APLICAR EN AMBOS NODOS: 192.168.15.168 y 192.168.15.169.
+#     ldapmodify -Y EXTERNAL -H ldapi:/// -f 06-schema-inout-person.ldif
+#   Tras aplicarlo: Refresh Schema del resource LDAP-IdentityCache-UPeU en MidPoint,
+#   para que aparezcan ri:scibackDocumentNumber / ri:scibackFacultyCode / ri:scibackCampusCode
+#   ANTES de importar los outbounds de ldap-identity-cache.xml.
+#
+# NOTA: `delete: olcObjectClasses {0}` + re-add es el patrón ya usado en 01-schema-isni.ldif
+#   (OpenLDAP no permite modificar un olcObjectClasses in-place). El ordinal {0} está
+#   verificado en PROD; RE-VERIFICAR antes de aplicar si el schema cambió:
+#     ldapsearch -x -H ldap://<nodo>:389 -D 'cn=admin,cn=config' -W \
+#       -b 'cn=schema,cn=config' 'cn=*upeu*' olcObjectClasses
+
+dn: cn={12}upeu,cn=schema,cn=config
+changetype: modify
+add: olcAttributeTypes
+olcAttributeTypes: ( 1.3.6.1.4.1.47378.1.9 NAME 'scibackDocumentNumber' DESC 'Numero del documento de identidad primario en forma PLANA (DNI 8 digitos o CE), sin envoltura URN. Clave de busqueda por igualdad para InOut/CRAI (D-11.bis: carne o DNI resuelven al mismo registro). Fuente: extension/sciback:identityDocuments[primary].number. La forma canonica URN sigue viviendo en schacPersonalUniqueID (SCHAC 1.6.0), que NO se toca. PII. Contrato InOut-IGA I1.' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+olcAttributeTypes: ( 1.3.6.1.4.1.47378.1.10 NAME 'scibackFacultyCode' DESC 'Codigo corto normalizado de la facultad: FCS | FIA | FACIHED | FCE | FACTEO | EPG. Vocabulario compartido con el authorised_value Bsort1 de Koha (statistics_1). Fuente: extension/sciback:facultyName (IIA Oracle LAMB ELISEO.ORG_AREA.NOMBRE). Dimension de agrupacion de aforo InOut. Contrato InOut-IGA I2.' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+olcAttributeTypes: ( 1.3.6.1.4.1.47378.1.11 NAME 'scibackCampusCode' DESC 'Codigo del campus (sede fisica) de pertenencia: LIMA | JULIACA | TARAPOTO. Precedencia: campusStudent (vinculo academico vivo) ?: campusWorker (vinculo laboral vivo) ?: locality (fallback). NO es un branchcode de biblioteca: CIA es un edificio con biblioteca especializada dentro del campus Lima, no un campus, y se modela como dimension del LECTOR de InOut, no como atributo de persona. Sin default: si no mapea, el atributo queda ausente (dato demografico de reporte; un default inventado contaminaria el aforo). Contrato InOut-IGA I3.' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+-
+delete: olcObjectClasses
+olcObjectClasses: {0}
+-
+add: olcObjectClasses
+olcObjectClasses: ( 1.3.6.1.4.1.47378.2.1 NAME 'upeuPerson' DESC 'Clase auxiliar UPeU para atributos de calidad de datos e identidad institucional' SUP top AUXILIARY MAY ( upeuDataQualityStatus $ upeuReniecValidationDate $ isni $ scibackDocumentNumber $ scibackFacultyCode $ scibackCampusCode ) )
