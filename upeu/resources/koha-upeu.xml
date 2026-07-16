@@ -56,8 +56,25 @@
                  propiedades REST de arriba siguen siendo el canal primario.
                  dbPassword va cifrado (encryptedData); NUNCA en clearValue
                  en el repo.
+
+                 ⏸️ DESACTIVADO TEMPORALMENTE (2026-07-16) — PENDIENTE DE RED.
+                 El FortiGate bloquea 192.168.15.166 -> 192.168.12.136 tcp/3306
+                 (puertos de BD entre segmentos .15 y .12). Verificado con
+                 contadores de iptables en el .136: la regla ACCEPT para .166
+                 en 3306 recibe 0 paquetes (nunca llegan al host), mientras la
+                 de 8001 sí recibe trafico -> el bloqueo es upstream, no local.
+                 Con dbEnabled=true el Test Connection fallaria por el canal
+                 JDBC, bloqueando el provisioning REST que SI funciona.
+                 => Se deja en false para habilitar el provisioning de patrons.
+                 Para reactivar las fotos: pedir a Redes abrir SOLO
+                 192.168.15.166 -> 192.168.12.136 tcp/3306, poner esto en true,
+                 reimportar el resource y correr Test Connection.
+                 Lado Koha YA LISTO: MariaDB escucha en 0.0.0.0 (protegido por
+                 iptables: REJECT 3306 desde ens192 salvo .166) y el usuario
+                 koha_connector@'192.168.15.166' ya tiene sus 9 grants
+                 (incluye INSERT/UPDATE/DELETE en patronimage).
                  ============================================================ -->
-            <ns2:dbEnabled>true</ns2:dbEnabled>
+            <ns2:dbEnabled>false</ns2:dbEnabled>
             <ns2:dbHost>192.168.12.136</ns2:dbHost>
             <ns2:dbPort>3306</ns2:dbPort>
             <ns2:dbName>koha_upeu</ns2:dbName>
