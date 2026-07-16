@@ -15016,7 +15016,42 @@ null
             <cap:pagedSearch/>
             <cap:auxiliaryObjectClasses/>
         </native>
-        <configured/>
+        <!-- ================================================================
+             BLINDAJE ANTI-DELETE (2026-07-16)
+             ================================================================
+             DELETE DESHABILITADO para la entrada LDAP de persona.
+
+             MOTIVO (hallazgo de simulacion, SimulationResult
+             2647ede5-7b82-4649-bad8-778e4f1eb563): la simulacion preview del
+             import de Trabajadores predijo **464 SHADOW DELETED** sobre este
+             recurso -> 464 personas perderian su entrada LDAP y con ella el SSO
+             via Keycloak (User Federation). LDAP era el UNICO destino de
+             escritura vivo SIN barrera: `delete` esta en las capabilities
+             nativas, no habia <configured> que lo desactivara, y NO hay
+             <existence> mapping que gobierne la existencia -> el borrado se
+             habria ejecutado.
+
+             FUNDAMENTO CANONICO (identico a koha-ils.xml / koha-upeu.xml):
+             - ISO/IEC 24760 lifecycle: una identidad con historial transita a
+               'archived' (disabled), NUNCA a 'destroyed'. Solo una purga
+               explicita borra, y eso NO se confia a un mapping automatico.
+             - Principio "MidPoint suma, nunca resta": el deprovisioning se
+               materializa por activation (administrativeStatus=DISABLED),
+               JAMAS por DELETE de la entrada.
+             - LDAP es un Identity Cache (fuente de Keycloak User Federation):
+               borrar la entrada destruye el sujeto de autenticacion; el
+               archivado graceful preserva la trazabilidad.
+
+             EFECTO: aunque cualquier mapping compute "no debe existir",
+             MidPoint NO puede borrar la entrada LDAP. Esta es la barrera DURA.
+             Para purgar legitimamente: re-habilitar delete bajo decision
+             explicita y documentada, NUNCA durante recons/imports masivos.
+             ================================================================ -->
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
+        </configured>
     </capabilities>
     <synchronization>
         <objectSynchronization id="75">
