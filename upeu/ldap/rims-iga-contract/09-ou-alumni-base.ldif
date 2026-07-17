@@ -1,0 +1,47 @@
+# 09-ou-alumni-base.ldif — Entry base de la rama de EGRESADOS (ou=alumni)
+#
+# ⚠️ ESTO ES **DATO**, NO cn=config → SÍ SE REPLICA.
+#   Aplicar en UN SOLO NODO (.168). El syncrepl lo propaga a .169. Aplicarlo en
+#   ambos crea un conflicto de replicación. (Al revés que los ldif de cn=config
+#   de este directorio, que hay que aplicar en los dos.)
+#     ldapadd -x -H ldap://192.168.15.168:389 -D 'cn=admin,dc=upeu,dc=edu,dc=pe' -W \
+#       -f 09-ou-alumni-base.ldif
+#
+# QUÉ ES ESTA RAMA
+#   Directorio de CONSULTA de egresados, para el aforo CRAI de InOut. Los egresados
+#   SÍ son público real del CRAI (un egresado puede usar cualquier CRAI), pero NO
+#   vuelven a ou=people: BR-Egresado.xml removió AR-LDAP-Person el 2026-05-26 por
+#   least privilege — ou=people es el Identity Cache de autenticación ACTIVA
+#   (WiFi 802.1X, Keycloak User Federation), y un egresado no tiene contrato ni
+#   matrícula vigente.
+#
+#   Por eso esta rama es deliberadamente distinta de ou=people:
+#     - SIN userPassword        → bind imposible, no es sujeto de autenticación
+#     - SIN memberOf de acceso  → no otorga privilegios
+#     - cn=keycloak → `none` EXPLÍCITO en la ACL (ver 04-acl-mdb.ldif regla {4})
+#   Si Keycloak pudiera leerla, los egresados entrarían en su User Federation y se
+#   volverían sujetos de autenticación → violaría el propio BR-Egresado que esta
+#   rama existe para respetar. La ACL {4} es la barrera; va ANTES de la catch-all {5}.
+#
+# CONSUMIDOR (contrato InOut←IGA)
+#   InOut es multi-fuente por configuración: mismo LdapProvider, mismo bind
+#   cn=rims-reader, mismo identity_map. Solo cambia el BASE_DN:
+#     BASE_DN: ou=alumni,dc=upeu,dc=edu,dc=pe
+#     FILTRO:  (&(objectClass=inetOrgPerson)(eduPersonAffiliation=alum))
+#   `member` NO aplica aquí: eduPerson 202208 — `alum` no deriva `member`.
+#   Se filtra por eduPersonAffiliation (indexado eq, ver 08) y NO por
+#   eduPersonPrimaryAffiliation (NO indexado → full-scan).
+#   Detalle: docs/specs/inout-ldap-identity-map.md
+#
+# ÍNDICES: ninguno nuevo. olcDbIndex cuelga de olcDatabase={1}mdb → es por BASE DE
+#   DATOS, no por subtree: uid / scibackDocumentNumber / scibackFacultyCode /
+#   eduPersonAffiliation ya cubren esta rama automáticamente (ver 07 y 08).
+#
+# SCHEMA: ninguno nuevo. Los attrs sciback* y la objectClass upeuPerson ya existen
+#   en cn={12}upeu,cn=schema,cn=config en ambos nodos (ver 06).
+
+dn: ou=alumni,dc=upeu,dc=edu,dc=pe
+objectClass: organizationalUnit
+objectClass: top
+ou: alumni
+description: Subarbol de EGRESADOS (alumni) - directorio de CONSULTA para el aforo CRAI de InOut. NO es rama de autenticacion: sin userPassword, sin memberOf de acceso, y cn=keycloak tiene `none` explicito en la ACL. Proyectado desde MidPoint por el intent `alumni` del resource LDAP-IdentityCache-UPeU (rol AR-LDAP-Alumni, inducido desde BR-Egresado). Contrato InOut-IGA D-11.bis.

@@ -19,6 +19,22 @@
          trabajador o estudiante, su lifecycleState pasa a active y otro BR (BR-Docente-TC,
          BR-Estudiante-Pregrado, etc.) proveerá LDAP automáticamente.
          OID conservado para audit trail: 7c1a2b3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d -->
+    <!-- AR-LDAP-Alumni: entrada en la rama de CONSULTA ou=alumni (2026-07-16).
+         NO es la vuelta atrás del AR-LDAP-Person removido arriba — es su opuesto:
+           ou=people  = Identity Cache de autenticación ACTIVA (WiFi 802.1X, Keycloak).
+                        El egresado NO entra: eso sigue removido y así se queda.
+           ou=alumni  = directorio de CONSULTA, sin userPassword, sin memberOf, y con
+                        cn=keycloak en `none` EXPLÍCITO en la ACL (regla {4}, va ANTES
+                        de la catch-all {5}). El egresado no puede autenticarse.
+         Decisión de negocio: los egresados SÍ son público real del CRAI (un egresado
+         puede usar cualquier CRAI) → InOut necesita resolverlos por carné/DNI. Se les
+         da identificación SIN darles autenticación, que es justo lo que exige el
+         least privilege que motivó quitar AR-LDAP-Person.
+         El guard de AR-LDAP-Alumni es el complemento exacto del de AR-LDAP-Person →
+         las dos ramas son disjuntas por construcción. -->
+    <inducement>
+        <targetRef oid="d87d28d4-5f1d-4917-96e3-393b788f6d12" relation="org:default" type="RoleType"/>
+    </inducement>
     <!-- AR-Vendor-Academic-Access: acceso limitado a bases de datos académicas -->
     <inducement>
         <targetRef oid="9cc94538-d576-4735-a16c-e70562cd98b9" relation="org:default" type="RoleType"/>

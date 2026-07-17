@@ -1,0 +1,85 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="d87d28d4-5f1d-4917-96e3-393b788f6d12">
+    <name>AR-LDAP-Alumni</name>
+    <lifecycleState>active</lifecycleState>
+    <description>Application Role que provee la entrada del egresado en la rama de CONSULTA ou=alumni del OpenLDAP (Identity Cache UPeU), para el aforo CRAI de InOut. NO es cuenta de autenticacion. Inducido desde BR-Egresado. NO confundir con AR-LDAP-Person (ou=people), que es la rama de autenticacion ACTIVA y que BR-Egresado dejo de inducir el 2026-05-26.</description>
+    <assignment>
+        <!-- Archetype: Application Role -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <inducement>
+        <construction>
+            <resourceRef oid="7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f" type="ResourceType"/>
+            <kind>account</kind>
+            <intent>alumni</intent>
+        </construction>
+        <!-- ================================================================
+             GUARD: COMPLEMENTO EXACTO DEL DE AR-LDAP-Person.
+
+             AR-LDAP-Person (ou=people) exige AFILIACION VIVA:
+                 (active || null) && (worker || student)
+             Este rol (ou=alumni) exige lo contrario:
+                 (active || null) && alum && !(worker || student)
+
+             Asi las dos ramas son DISJUNTAS POR CONSTRUCCION: nadie puede tener
+             entrada en ou=people y en ou=alumni a la vez. Es un invariante
+             verificable con una sola query, no una convencion que hay que recordar.
+
+             Coste real medido en PROD (2026-07-16): de los 26.801 alumni activos,
+             solo 1 tiene liveAffiliationWorker y 0 tienen liveAffiliationStudent
+             -> el guard excluye exactamente 1 persona, que YA esta en ou=people
+             como `member` y a la que InOut encuentra igual por la otra rama. No
+             pierde cobertura; gana un invariante limpio.
+
+             MidPoint 4.10: NO usar focus.extension.<item> (ExtensionType no expone
+             items como propiedades Groovy -> MissingPropertyException). API canonica:
+             basic.getExtensionPropertyValue(object, localName). Leccion ya aprendida
+             en AR-LDAP-Person; se reutiliza tal cual.
+
+             midpoint-best-practices §4.2 (conditions/strength), §7 (conditions on
+             inducements).
+             ================================================================ -->
+        <condition>
+            <expression>
+                <script>
+                    <code><![CDATA[
+def ls      = focus?.lifecycleState
+def alum    = basic.getExtensionPropertyValue(focus, 'liveAffiliationAlum')
+def worker  = basic.getExtensionPropertyValue(focus, 'liveAffiliationWorker')
+def student = basic.getExtensionPropertyValue(focus, 'liveAffiliationStudent')
+def liveActive = (worker != null) || (student != null)
+return (ls == 'active' || ls == null) && (alum != null) && !liveActive
+                    ]]></code>
+                </script>
+            </expression>
+        </condition>
+    </inducement>
+    <!-- ================================================================
+         ⚠️ DEUDA CONSCIENTE — ESTA RAMA NACE SIN DEPROVISIONING.
+         Aceptada explicitamente por Alberto el 2026-07-16 para desbloquear a InOut.
+         NO ES UN OLVIDO. Quien lea esto en 6 meses debe saber que fue una decision.
+
+         QUE PASA CUANDO UN EGRESADO DEJA DE SER ACTIVO:
+           La condition de arriba pasa a false -> MidPoint quiere borrar el shadow ->
+           el resource tiene <cap:delete><enabled>false (blindaje anti-delete, a
+           nivel de RESOURCE: no se puede habilitar solo para este intent, MidPoint
+           no soporta capabilities por objectType) -> EL BORRADO NO OCURRE.
+           Y no hay <activation> ni <existence> mapping en este resource -> tampoco
+           hay atributo que se marque como "inactivo". La entry se CONGELA con sus
+           ultimos valores, incluido eduPersonAffiliation=alum.
+
+         CONSECUENCIA: "presencia en ou=alumni" == "alumni activo" SOLO el dia del
+           build. Despues deriva. Drift estimado hoy: ~723 (2,6% de 27.524).
+
+         ESTE ES EXACTAMENTE EL MECANISMO QUE PRODUJO LOS 20.012 HUERFANOS DE
+           ou=people (egresados a los que se les removio AR-LDAP-Person el
+           2026-05-26 y cuya entry nunca se pudo borrar; 300/300 verificados en
+           muestra el 2026-07-16, 97,7% ya sin shadow en MidPoint). Se esta
+           sembrando la misma semilla, a sabiendas y acotada.
+
+         SE CIERRA JUNTO CON EL LEAVER GAP, no antes y no por separado: es el mismo
+           problema (blindaje anti-delete sin contrapartida de archivado). Tres
+           frentes ya lo piden. Ver docs/specs/inout-ldap-identity-map.md §Deuda.
+         ================================================================ -->
+</role>

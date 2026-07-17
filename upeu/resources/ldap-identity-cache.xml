@@ -14082,6 +14082,32 @@
             <description>Cuenta LDAP de persona activa (lifecycleState=active) proyectada desde MidPoint</description>
             <default>true</default>
             <objectClass>ri:inetOrgPerson</objectClass>
+            <!-- ================================================================
+                 DELINEATION (añadido 2026-07-16, PATCH itemDelta add).
+                 OBLIGATORIO desde que existe un SEGUNDO objectType sobre el MISMO
+                 objectClass (ri:inetOrgPerson): el intent `alumni`. Sin delineation,
+                 la separación entre ramas la haría SOLO la expresión del `dn`, y
+                 cualquier import/reconcile sobre este resource clasificaría las
+                 ~26.800 entries de ou=alumni como intent=default → intentaría
+                 tratarlas como cuentas de ou=people. Hoy no existe ninguna tarea
+                 import/reconcile sobre este resource (verificado 2026-07-16), luego
+                 el riesgo era latente — pero la rama alumni es justamente un motivo
+                 para que esa tarea exista. Se cierra la trampa antes de sembrarla.
+                 Es aditivo: solo afecta a la clasificación en búsquedas, no al
+                 provisioning outbound (que sigue gobernado por el `dn`).
+                 Verificado tras aplicar: ou=people = 47.527, padrón member = 26.993.
+                 ================================================================ -->
+            <delineation>
+                <baseContext>
+                    <objectClass>ri:organizationalUnit</objectClass>
+                    <filter>
+                        <q:equal>
+                            <q:path>attributes/ri:dn</q:path>
+                            <q:value>ou=people,dc=upeu,dc=edu,dc=pe</q:value>
+                        </q:equal>
+                    </filter>
+                </baseContext>
+            </delineation>
             <auxiliaryObjectClass>ri:eduPerson</auxiliaryObjectClass>
             <auxiliaryObjectClass>ri:schacPersonalCharacteristics</auxiliaryObjectClass>
             <auxiliaryObjectClass>ri:schacEntryMetadata</auxiliaryObjectClass>
@@ -14800,6 +14826,227 @@ def campusMap = ['LIMA':'LIMA', 'JULIACA':'JULIACA', 'TARAPOTO':'TARAPOTO']
 def result = campusMap.get(effective)
 if (result == null) {
     log.debug('scibackCampusCode: campus no reconocido "{}" — sin valor (no se inventa default)', effective)
+}
+return result
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+        </objectType>
+        <!-- ================================================================
+             objectType account/alumni — RAMA ou=alumni (EGRESADOS)
+             Aplicado a PROD 2026-07-16 vía PATCH itemDelta `add` (NUNCA PUT: ver
+             el aviso de DRIFT GITOPS al final de este archivo).
+
+             QUÉ ES: directorio de CONSULTA de egresados para el aforo CRAI de InOut.
+             NO es cuenta de autenticación. BR-Egresado removió AR-LDAP-Person el
+             2026-05-26 (least privilege: el egresado no tiene contrato ni matrícula
+             vigente → no necesita SSO académico activo). Esta rama le da
+             IDENTIFICACIÓN sin darle AUTENTICACIÓN.
+
+             DIFERENCIAS DELIBERADAS con account/default (ou=people) — cada ausencia
+             es una decisión, no un olvido:
+               - SIN userPassword → bind imposible. Es la barrera real: la ACL {1}
+                 (`by anonymous auth`) se evalúa ANTES de la {4}, así que si algún día
+                 se mapeara userPassword aquí, la rama sería autenticable PESE a la {4}.
+               - SIN memberOf     → no otorga privilegios.
+               - SIN mail         → no es buzón ni identidad de correo.
+               - SIN campus       → el campus no es dimensión fiable del egresado.
+               - Solo 2 aux classes (eduPerson + upeuPerson) en vez de 5: least
+                 privilege también en el schema.
+             Verificado en PROD tras el build: userPassword/memberOf/mail = 0 entries.
+
+             ACL: cn=keycloak → `none` EXPLÍCITO en la regla {4}, insertada ANTES de la
+             catch-all {5} (04-acl-mdb.ldif). Sin ella los ~26.800 egresados entrarían
+             en la User Federation de Keycloak → violaría el propio BR-Egresado que
+             esta rama existe para respetar. Probado en ambos nodos: keycloak recibe
+             `No such object (32)` sobre ou=alumni y sigue leyendo ou=people.
+
+             ⚠️ DEUDA CONSCIENTE — NACE SIN DEPROVISIONING (aceptada por Alberto
+             2026-07-16, NO es un olvido): con <cap:delete> deshabilitado a nivel de
+             resource y sin mapping <activation>/<existence>, cuando un egresado deja
+             de ser activo la entry se CONGELA con eduPersonAffiliation=alum. Es el
+             MISMO mecanismo que produjo los 20.012 huérfanos de ou=people. Drift
+             estimado: ~723 (2,6%). Se cierra junto con el leaver gap, no antes.
+             Ver docs/specs/inout-ldap-identity-map.md §9.6.
+             ================================================================ -->
+        <objectType>
+            <kind>account</kind>
+            <intent>alumni</intent>
+            <displayName>LDAP Alumni (rama de CONSULTA, no de autenticacion)</displayName>
+            <description>Egresado proyectado bajo ou=alumni para el aforo CRAI de InOut. NO es cuenta de autenticacion: sin userPassword, sin memberOf, sin mail. cn=keycloak tiene `none` explicito sobre esta rama (ACL regla {4}). Rol: AR-LDAP-Alumni, inducido desde BR-Egresado. Contrato InOut-IGA D-11.bis.</description>
+            <default>false</default>
+            <objectClass>ri:inetOrgPerson</objectClass>
+            <auxiliaryObjectClass>ri:eduPerson</auxiliaryObjectClass>
+            <auxiliaryObjectClass>ri:upeuPerson</auxiliaryObjectClass>
+            <delineation>
+                <baseContext>
+                    <objectClass>ri:organizationalUnit</objectClass>
+                    <filter>
+                        <q:equal>
+                            <q:path>attributes/ri:dn</q:path>
+                            <q:value>ou=alumni,dc=upeu,dc=edu,dc=pe</q:value>
+                        </q:equal>
+                    </filter>
+                </baseContext>
+            </delineation>
+            <attribute>
+                <ref>ri:dn</ref>
+                <displayName>Distinguished Name (DN) - rama ou=alumni</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/name</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>'uid=' + name + ',ou=alumni,dc=upeu,dc=edu,dc=pe'</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:uid</ref>
+                <displayName>UID (carne COD_UPEU) - clave de resolucion de InOut</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/name</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:cn</ref>
+                <displayName>Common Name</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/fullName</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:sn</ref>
+                <displayName>Surname</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/familyName</path>
+                    </source>
+                    <source>
+                        <name>fullName</name>
+                        <path>$focus/fullName</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>def s = familyName?.toString()?.trim(); def f = fullName?.toString()?.trim(); s ?: (f ?: 'NN')</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:givenName</ref>
+                <displayName>Given Name</displayName>
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/givenName</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:eduPersonAffiliation</ref>
+                <displayName>eduPersonAffiliation = alum (predicado de filtro de InOut)</displayName>
+                <!-- Literal `alum`, no derivado: la condition de AR-LDAP-Alumni ya
+                     garantiza que quien llega aquí ES egresado sin afiliación viva.
+                     eduPerson 202208: `alum` NO deriva `member` — por eso el filtro de
+                     InOut para esta rama es (eduPersonAffiliation=alum) y no `member`.
+                     Se filtra por eduPersonAffiliation (indexado eq, 08-index-affiliation)
+                     y NUNCA por eduPersonPrimaryAffiliation (NO indexado → full-scan). -->
+                <outbound>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>alum</value>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:scibackDocumentNumber</ref>
+                <displayName>DNI/CE plano (clave de busqueda eq - InOut/CRAI)</displayName>
+                <!-- Extractor IDÉNTICO al de account/default (attr sin id, bloque
+                     InOut): mismo documento primario, misma precedencia, mismo número
+                     pelado. Cobertura medida en alumni: 100% (26.800/26.801). -->
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:identityDocuments</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+import com.evolveum.midpoint.prism.PrismContainerValue
+def NS = 'urn:sciback:midpoint:person'
+def field = { pcv, n -&gt; def p = pcv.findProperty(new com.evolveum.midpoint.prism.path.ItemName(NS, n)); p?.getRealValue()?.toString()?.trim() }
+if (identityDocuments == null) return null
+def raw = identityDocuments instanceof Collection ? identityDocuments.toList() : [identityDocuments]
+def pcvs = raw.collect { it instanceof PrismContainerValue ? it : (it.metaClass.respondsTo(it,'asPrismContainerValue') ? it.asPrismContainerValue() : it) }
+def chosen = pcvs.find { field(it,'primary')?.equalsIgnoreCase('true') } ?: pcvs.find { field(it,'number') }
+if (chosen == null) return null
+def num = field(chosen,'number')
+return num ?: null
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:scibackFacultyCode</ref>
+                <displayName>Facultad de egreso (codigo) - agrupacion de aforo InOut</displayName>
+                <!-- ⚠️ FUENTE DISTINTA A LA DE ou=people. El scibackFacultyCode de
+                     account/default deriva de extension/sciback:facultyName, que en
+                     alumni tiene cobertura 0%. La facultad de EGRESO vive en
+                     $focus/organizationalUnit (egresados.xml:356, NOM_FACULTAD →
+                     organizationalUnit), con 100% de cobertura medida.
+                     El vocabulario de códigos SÍ se reutiliza (mismo bsort1Map de
+                     koha-ils.xml) para que los reportes de InOut y Koha cuadren.
+                     Cobertura del switch: 26.752/26.801 = 99,82%. -->
+                <outbound>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/organizationalUnit</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+// OJO AL TIPO: aqui la fuente es $focus/organizationalUnit, que es POLYSTRING y
+// MULTIVALOR — no un string plano como el extension/sciback:facultyName que usa el
+// mapping gemelo de ou=people y de koha-ils.xml. Por eso NO se puede copiar aquel
+// script tal cual: hay que desenvolver orig y tomar el primer valor.
+// Medido en PROD 2026-07-16: los 26.801 alumni tienen EXACTAMENTE 1 valor cada uno
+// (suma de la distribucion = 26.801), pero se trata la coleccion por robustez.
+def raw = organizationalUnit
+if (raw instanceof Collection) raw = raw.isEmpty() ? null : raw.toList()[0]
+if (raw == null) return null
+def name = (raw.metaClass.respondsTo(raw, 'getOrig') ? raw.getOrig() : raw.toString())?.trim()
+if (!name) return null
+// Strings EXACTOS de ELISEO.NOM_FACULTAD medidos en PROD 2026-07-16 sobre los
+// 26.801 alumni activos. LAS TILDES SON PARTE DE LA CLAVE: 'Ingeniería',
+// 'Educación', 'Teología'. Normalizarlas a ASCII rompe el match de FIA+FACIHED+
+// FACTEO = 8.037 personas (30% de la rama). Match exacto, igual que el bsort1Map
+// de koha-ils.xml y el scibackFacultyCode de ou=people: mismo vocabulario, para
+// que los reportes de InOut y Koha cuadren.
+def facultyCodeMap = [
+    'Facultad de Ciencias de la Salud'           : 'FCS',
+    'Facultad de Ingeniería y Arquitectura'      : 'FIA',
+    'Facultad de Ciencias Humanas y Educación'   : 'FACIHED',
+    'Facultad de Ciencias Empresariales'         : 'FCE',
+    'Facultad de Teología'                       : 'FACTEO',
+    'Escuela General de Posgrado'                : 'EPG'
+]
+def result = facultyCodeMap.get(name)
+if (result == null) {
+    log.debug('scibackFacultyCode(alumni): sin mapeo para organizationalUnit "{}"', name)
 }
 return result
                             </code>

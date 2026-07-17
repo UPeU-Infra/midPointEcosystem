@@ -178,3 +178,170 @@ Esperado: **una sola entry**, con `scibackDocumentNumber: 61532826`, `scibackCam
 (documento nacional primario / código de facultad / código de campus) → son bloque candidato del
 blueprint `sciback-iga-blueprint`. Lo específico de UPeU (los códigos `FCS/FIA/...`, los campus
 `LIMA/JULIACA/TARAPOTO`) vive en los mappings del overlay, no en el schema.
+
+---
+
+# 9. Rama `ou=alumni` — EGRESADOS (aplicado a PROD el 2026-07-16)
+
+> **Estado:** ✅ **APLICADO Y OPERATIVO**. A diferencia de §1-§8, esta sección describe
+> configuración viva en PROD.
+
+**Decisión de negocio:** los egresados **SÍ son público real del CRAI** (un egresado puede usar
+cualquier CRAI). Pero **NO vuelven a `ou=people`**: `BR-Egresado.xml` removió `AR-LDAP-Person` el
+2026-05-26 por least privilege — `ou=people` es el Identity Cache de autenticación **ACTIVA**
+(WiFi 802.1X, Keycloak User Federation) y un egresado no tiene contrato ni matrícula vigente.
+
+La rama `ou=alumni` resuelve la tensión: **da identificación sin dar autenticación.**
+
+## 9.1 Lo que cambia para InOut: SOLO el `BASE_DN`
+
+Mismo `LdapProvider`, mismo bind `cn=rims-reader`, mismo `identity_map`. **Cero código nuevo.**
+
+```python
+BASE_ALUMNI  = 'ou=alumni,dc=upeu,dc=edu,dc=pe'    # <-- lo único distinto
+
+# El mismo search_filter de §2 sirve para resolver el scan:
+search_filter = '(|(uid={v})(scibackDocumentNumber={v}))'
+
+# Predicado de "es egresado" (equivalente de (eduPersonAffiliation=member) en ou=people):
+alumni_filter = '(&(objectClass=inetOrgPerson)(eduPersonAffiliation=alum))'
+```
+
+**`member` NO aplica aquí, y no es un descuido:** eduPerson 202208 — `member` es afiliación
+derivada de faculty/student/staff/employee; **`alum` NO implica `member`** (un egresado no es
+miembro de la institución). Buscar `member` en esta rama devuelve 0.
+
+⚠️ **Filtrar por `eduPersonAffiliation`, NUNCA por `eduPersonPrimaryAffiliation`.**
+`eduPersonAffiliation` está indexado `eq` (ver `08-index-affiliation.ldif`);
+`eduPersonPrimaryAffiliation` **no lo está** → usarlo degrada a full-scan de ~26.8k entries en
+silencio.
+
+## 9.2 Atributos disponibles (medidos en PROD sobre los 26.801 alumni activos)
+
+| Rol en InOut | Atributo | Cobertura **medida** | Nota |
+|---|---|---|---|
+| **Carné (COD_UPEU)** | `uid` | **100%** | `$focus/name` |
+| **DNI plano** | `scibackDocumentNumber` | **100%** (1 sin dato) | mismo extractor que `ou=people` |
+| **Nombre** | `cn` / `sn` / `givenName` | **100%** | — |
+| **Facultad de egreso** | `scibackFacultyCode` | **99,82%** (26.752/26.801) | ver 9.3 |
+| Campus | `scibackCampusCode` | **NO SE MAPEA** | no es dimensión fiable del egresado |
+| Género | — | **NO EXISTE** (11,37%) | ver 9.4 |
+
+**Atributos deliberadamente ausentes** (verificado en PROD: 0 entries con cada uno):
+`userPassword`, `memberOf`, `mail`. **La rama no es autenticable por construcción**, no por
+configuración de Keycloak. Si alguien mapeara `userPassword` aquí, la regla ACL `{1}`
+(`by anonymous auth`, que se evalúa ANTES de la `{4}`) la volvería autenticable pese a la `{4}`.
+
+## 9.3 Facultad: `organizationalUnit`, NO `facultyName`
+
+**Trampa real.** El `scibackFacultyCode` de `ou=people` deriva de
+`extension/sciback:facultyName` — que en alumni da **0%**. La facultad de egreso vive en
+**`$focus/organizationalUnit`** (`egresados.xml:356`, `NOM_FACULTAD → organizationalUnit`), con
+**100%** de cobertura. El mapping del intent `alumni` usa esa fuente, y **no se puede copiar el
+script de `ou=people` tal cual**: `organizationalUnit` es **PolyString multivalor**, no string plano.
+
+Distribución medida (2026-07-16):
+
+| `organizationalUnit` | → código | N |
+|---|---|---|
+| Facultad de Ciencias Empresariales | `FCE` | 8.139 |
+| Escuela General de Posgrado | `EPG` | 6.100 |
+| Facultad de Ingenier**í**a y Arquitectura | `FIA` | 4.497 |
+| Facultad de Ciencias de la Salud | `FCS` | 4.476 |
+| Facultad de Ciencias Humanas y Educaci**ó**n | `FACIHED` | 2.302 |
+| Facultad de Teolog**í**a | `FACTEO` | 1.238 |
+| *Beca 18 · Capacitacion Continua · Centro de Idiomas · Ciencias Contables y Administrativas · DGI - Cursos y Capacitaciones* | *(sin código)* | 49 |
+
+⚠️ **Las tildes son parte de la clave.** El switch hace match **exacto**. Normalizar
+`Ingeniería`/`Educación`/`Teología` a ASCII deja sin código a **8.037 personas (30%)**. Se detectó
+al escribir el mapping y se validó explícitamente en el canary.
+
+Los 49 sin mapeo → atributo **ausente** (`null`), **no `UNKNOWN`**: mejor sin valor que con una
+facultad inventada que contamine el reporte de aforo. *`Ciencias Contables y Administrativas` (8)
+parece FCE legacy — decisión abierta, no se asumió.*
+
+## 9.4 Género: NO se promete
+
+Cobertura medida **11,37%** (3.048/26.801) y **sin IIA**: `egresados.xml` no tiene inbound de sexo
+(verificado: `grep -i "sexo|gender"` → 0 resultados). **No se mapea.** InOut lo muestra vacío.
+Mapear un atributo con 11% de cobertura y sin fuente autoritativa es peor que no tenerlo: invita a
+construir reportes sobre un dato que no existe.
+
+## 9.5 Seguridad: por qué Keycloak tiene `none` EXPLÍCITO
+
+ACL regla **`{4}`**, insertada **ANTES** de la catch-all `{5}` (`04-acl-mdb.ldif`). Sin ella,
+`ou=alumni` caería en la `{5}`, que da `read` a `cn=keycloak` → los ~26.800 egresados entrarían en
+su User Federation → **se violaría el propio `BR-Egresado` que esta rama existe para respetar**.
+
+⚠️ **El DN de Keycloak es `cn=keycloak,dc=upeu,dc=edu,dc=pe`** — NO cuelga de `ou=services`, a
+diferencia de `cn=midpoint` y `cn=rims-reader`. `~/.secrets/ldap-upeu.env` tenía un DN
+**inexistente** (`cn=keycloak,ou=services,...`); escribir la denegación desde ese valor habría
+producido una cláusula que no matchea a nadie. **Verificar DNs contra el directorio vivo, nunca
+desde el `.env`.** (El `.env` se corrigió el 2026-07-16.)
+
+Verificación funcional ejecutada en **ambos nodos**:
+
+| Bind | Rama | Resultado |
+|---|---|---|
+| `cn=keycloak` | `ou=alumni` | ✅ `No such object (32)` — la rama le es invisible |
+| `cn=keycloak` | `ou=people` | ✅ sigue leyendo (no se rompió la federación) |
+| `cn=rims-reader` | `ou=alumni` | ✅ lee |
+
+## 9.6 ⚠️ DEUDA CONSCIENTE — esta rama nace SIN DEPROVISIONING
+
+> **Aceptada explícitamente por Alberto el 2026-07-16 para desbloquear a InOut.**
+> **NO ES UN OLVIDO.** Quien lea esto en 6 meses debe saber que fue una decisión, no un descuido.
+
+**Mecánica del gap.** Cuando un egresado deja de ser activo, la `condition` de `AR-LDAP-Alumni`
+pasa a `false` → MidPoint quiere borrar el shadow → el resource tiene
+`<cap:delete><enabled>false` (**blindaje anti-delete, a nivel de RESOURCE**: MidPoint no soporta
+capabilities por objectType, así que no se puede habilitar solo para este intent sin exponer
+`ou=people`) → **el borrado no ocurre**. Y **no hay `<activation>` ni `<existence>` mapping** en
+este resource → tampoco hay atributo que se marque como inactivo. **La entry se congela** con sus
+últimos valores, incluido `eduPersonAffiliation=alum`.
+
+**Consecuencia operativa:** *"presencia en `ou=alumni`" == "egresado activo"* **solo el día del
+build**. Después deriva. Drift estimado hoy: **~723 (2,6%** de 27.524 BR-Egresado totales**)**, y
+crece lento.
+
+**Es exactamente el mecanismo que produjo los 20.012 huérfanos de `ou=people`** — egresados a los
+que se removió `AR-LDAP-Person` el 2026-05-26 y cuya entry nunca se pudo borrar (verificado
+2026-07-16: muestra aleatoria de 300 → **300/300** tienen `BR-Egresado` activo, y **97,7% ya no
+tienen shadow** en MidPoint: son invisibles para el IGA). **Se está sembrando la misma semilla, a
+sabiendas y acotada.**
+
+**Se cierra junto con el leaver gap, no antes y no por separado:** es el mismo problema — blindaje
+anti-delete sin contrapartida de archivado (ISO 24760: `archived`, no `destroyed`). Ya lo piden
+tres frentes. Opciones sobre la mesa (ninguna decidida): mapear `schacExpiryDate`, o dejar la
+construction siempre activa y derivar un status de `lifecycleState` para que InOut lo filtre.
+
+**Nota aparte — los 20.012 huérfanos SÍ son visibles a Keycloak** (están en `ou=people`, donde
+`cn=keycloak` tiene `read`). No pueden autenticarse por bind (`userPassword` = **0 entries en todo
+el directorio**), pero sí se importan en su User Federation. **Es preexistente a esta rama y se
+levanta como tema aparte.** No se tocó.
+
+## 9.7 Artefactos de la rama alumni
+
+| Archivo | Contenido |
+|---|---|
+| `upeu/ldap/rims-iga-contract/04-acl-mdb.ldif` | ACL con la regla `{4}` (`ou=alumni`, keycloak `none`) + catch-all renumerada a `{5}` |
+| `upeu/ldap/rims-iga-contract/08-index-affiliation.ldif` | `eduPersonAffiliation eq` (cierre de drift; ya estaba en PROD) |
+| `upeu/ldap/rims-iga-contract/09-ou-alumni-base.ldif` | Entry base `ou=alumni` (**dato → replica; aplicar en UN nodo**) |
+| `upeu/ldap/rims-iga-contract/10-limits-rims-reader.ldif` | `size=unlimited` para `rims-reader` — **versionado, NO aplicado** (espera ventana de InOut) |
+| `upeu/ldap/rims-iga-contract/11-fix-frontend-sizelimit-169.ldif` | `olcSizeLimit` 500→10000 en `.169` (**aplicado**) |
+| `upeu/roles/application/AR-LDAP-Alumni.xml` | AR nuevo (OID `d87d28d4-5f1d-4917-96e3-393b788f6d12`), guard = complemento exacto del de `AR-LDAP-Person` |
+| `upeu/roles/business/BR-Egresado.xml` | Inducement a `AR-LDAP-Alumni` |
+| `upeu/resources/ldap-identity-cache.xml` | objectType `account/alumni` + `delineation` en ambos intents |
+
+⚠️ **`ldap-identity-cache.xml` SOLO por PATCH, NUNCA PUT.** Su `<schema>` cacheado está
+desactualizado respecto a PROD → un PUT dejó el resource `broken` (commits `670b312`/`8ab4dc9`).
+El intent `alumni` y los `delineation` se aplicaron con `itemDelta` **`add`**, que no toca el
+`<schema>` ni el objectType existente.
+
+## 9.8 Límite de tamaño — leer antes del primer sync masivo
+
+`cn=rims-reader` **no tiene `olcLimits` propio** → hereda el del frontend = **10.000**. La rama
+tiene ~26.800 entries → **un enumerado completo se corta en 10.000 con resultados parciales**, y
+LDAP lo señala con `sizeLimitExceeded` que un cliente distraído no mira. **Antes del primer sync
+masivo de InOut hay que aplicar `10-limits-rims-reader.ldif`.** Para el uso normal (resolver un
+scan → 1 entry) no aplica.

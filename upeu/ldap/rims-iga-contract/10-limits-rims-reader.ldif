@@ -1,0 +1,58 @@
+# 10-limits-rims-reader.ldif — Límites de búsqueda para cn=rims-reader
+#
+# ############################################################################
+# ##  NO APLICAR TODAVÍA — ESPERA LA VENTANA DE SYNC QUE ANUNCIARÁ InOut.   ##
+# ##  Versionado 2026-07-16 para que esté listo y revisado cuando llegue.   ##
+# ############################################################################
+#
+# PROBLEMA QUE RESUELVE:
+#   `cn=rims-reader` no tiene olcLimits propio (verificado en vivo 2026-07-16: el
+#   único olcLimits de olcDatabase={1}mdb es el de `cn=midpoint`). Sin límite
+#   propio hereda el del frontend → 10.000 tras aplicar 11-fix-frontend-sizelimit-169
+#   (antes: 10.000 en .168 / 500 en .169).
+#
+#   Los dos consumidores que usan esta cuenta necesitan enumerar por encima de eso:
+#     - InOut aforo CRAI: ou=people (eduPersonAffiliation=member) = 26.993
+#     - InOut alumni:     ou=alumni (eduPersonAffiliation=alum)   = ~26.800
+#     - RIMS:             ou=people / ou=org
+#   Un sync masivo se corta en 10.000 con sizeLimitExceeded y resultados PARCIALES.
+#   Si el cliente no inspecciona el result code, cree que tiene el conjunto completo
+#   → padrón silenciosamente truncado. Este es el modo de fallo a evitar.
+#
+# POR QUÉ `unlimited` Y NO UN NÚMERO MÁS ALTO:
+#   Un número fijo (p.ej. 50.000) vuelve a caducar cuando el padrón crezca, y su
+#   caducidad es de nuevo silenciosa. `unlimited` para una cuenta de SOLO LECTURA,
+#   con ACL restringida a `read` sobre ou=people/ou=org/ou=alumni (ver 04-acl-mdb.ldif),
+#   es la opción correcta: el riesgo de un lector sin techo es de carga, no de
+#   confidencialidad, y se acota con time=unlimited + paginación del cliente.
+#   Es exactamente el mismo trato que ya tiene `cn=midpoint` (size/time unlimited).
+#
+# POR QUÉ ESPERA VENTANA:
+#   Cambiar el límite habilita enumerados completos de ~27k entries por parte de
+#   InOut. Se coordina con su ventana de sync para no solapar con el recompute
+#   masivo de MidPoint sobre el mismo directorio.
+#
+# NOTA: `size.prtotal=unlimited` gobierna el TOTAL devuelto vía paged results
+#   (RFC 2696). Sin él, un cliente que pagina sigue topando con el total. InOut
+#   pagina (pr=1000) → es necesario.
+#
+# ⚠️ DESPLIEGUE — cn=config NO SE REPLICA. APLICAR EN AMBOS NODOS (.168 y .169):
+#   ldapmodify -Y EXTERNAL -H ldapi:/// -f 10-limits-rims-reader.ldif
+#
+# ORDEN: `add` sobre olcLimits añade una regla al final. El olcLimits de
+#   `cn=midpoint` ya existe como {0} y no se toca → ésta entra como {1}.
+#   Las reglas olcLimits se evalúan por orden y la primera que hace match gana;
+#   como los dn.exact son disjuntos, el orden es irrelevante aquí.
+#
+# VERIFICACIÓN POST-APLICACIÓN (ambos nodos):
+#   ldapsearch -x -H ldap://<nodo>:389 -D 'cn=admin,cn=config' -W \
+#     -b 'olcDatabase={1}mdb,cn=config' olcLimits
+#   Y prueba funcional real (debe devolver 26993, no 10000):
+#   ldapsearch -x -H ldap://<nodo>:389 -D 'cn=rims-reader,ou=services,dc=upeu,dc=edu,dc=pe' \
+#     -w '<pass>' -b 'ou=people,dc=upeu,dc=edu,dc=pe' \
+#     -E pr=1000/noprompt '(eduPersonAffiliation=member)' 1.1 | grep -c '^dn:'
+
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+add: olcLimits
+olcLimits: dn.exact="cn=rims-reader,ou=services,dc=upeu,dc=edu,dc=pe" size=unlimited size.prtotal=unlimited time=unlimited

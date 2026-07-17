@@ -1,3 +1,69 @@
+# 04-acl-mdb.ldif — ACL completa de olcDatabase={1}mdb
+#
+# ⚠️ cn=config NO SE REPLICA → APLICAR EN AMBOS NODOS (.168 y .169).
+#   ldapmodify -x -H ldap://<nodo>:389 -D 'cn=admin,cn=config' -W -f 04-acl-mdb.ldif
+#   Es `replace: olcAccess` del conjunto COMPLETO: el fichero es la verdad entera,
+#   no un parche. Cambiar una regla obliga a reescribir todas y a RENUMERAR.
+#
+# ORDEN = SEGURIDAD. slapd evalúa las reglas EN ORDEN y para en el primer match de
+#   `to <what>`. Toda regla específica va ANTES de la catch-all {5}. Insertar una
+#   rama nueva DESPUÉS de la catch-all equivale a no protegerla.
+#
+# --- DNs REALES (verificados contra el directorio vivo el 2026-07-16) -----------
+#   cn=admin,dc=upeu,dc=edu,dc=pe                    rootdn
+#   cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe     provisioning IGA (write)
+#   cn=rims-reader,ou=services,dc=upeu,dc=edu,dc=pe  lector RIMS + InOut (read)
+#   cn=keycloak,dc=upeu,dc=edu,dc=pe                 User Federation  <-- OJO: NO cuelga
+#                                                    de ou=services, a diferencia de los
+#                                                    otros dos.
+#
+#   ⚠️ TRAMPA REAL (2026-07-16): `~/.secrets/ldap-upeu.env` tenía
+#      LDAP_KEYCLOAK_DN=cn=keycloak,ou=services,... — un DN que NO EXISTE en el
+#      directorio. Escribir la denegación de la regla {4} desde ese valor habría
+#      producido una cláusula que no matchea a nadie → la denegación explícita a
+#      Keycloak sería decorativa. Los DN de este fichero se verifican SIEMPRE contra
+#      el directorio vivo, nunca desde el .env:
+#        ldapsearch -x -b dc=upeu,dc=edu,dc=pe '(|(cn=keycloak)(cn=rims-reader)(cn=midpoint))' dn
+#      El .env se corrigió el 2026-07-16; este comentario queda como aviso permanente.
+#
+# --- MAPA DE REGLAS ------------------------------------------------------------
+#   {0} root peercred → manage, y `break` para seguir evaluando
+#   {1} userPassword/shadowLastChange → self write, admin write, anonymous auth
+#   {2} ou=people  → midpoint write / keycloak read  / rims-reader read
+#   {3} ou=org     → midpoint write / keycloak read  / rims-reader read
+#   {4} ou=alumni  → midpoint write / keycloak NONE  / rims-reader read   <-- NUEVA
+#   {5} catch-all  → midpoint read  / keycloak read  / self read / * none
+#
+# --- POR QUÉ {4} EXISTE Y POR QUÉ NIEGA A KEYCLOAK EXPLÍCITAMENTE --------------
+#   ou=alumni es un directorio de CONSULTA de egresados para el aforo CRAI de InOut,
+#   NO una rama de autenticación. BR-Egresado.xml removió AR-LDAP-Person el
+#   2026-05-26 (least privilege: un egresado no tiene contrato ni matrícula vigente,
+#   luego no necesita SSO académico activo).
+#
+#   Sin esta regla, ou=alumni caería en la catch-all {5}, que otorga `read` a
+#   cn=keycloak → los ~26.800 egresados entrarían en la User Federation de Keycloak
+#   → se volverían sujetos de autenticación → se violaría el propio BR-Egresado que
+#   esta rama existe para respetar. La {4} es esa barrera.
+#
+#   `by ... none` a keycloak es REDUNDANTE hoy (el `by * none` final ya lo negaría)
+#   y aun así va EXPLÍCITO, a propósito:
+#     - documenta la decisión en el punto donde se aplica, no en un comentario lejano
+#     - sobrevive a que alguien relaje el `by * none` a `by * read` en el futuro
+#     - hace auditable la intención (ISO 27001 A.5.15 / A.8.2)
+#
+#   La regla {1} (userPassword) se evalúa ANTES y aplica también a ou=alumni:
+#   `by anonymous auth` permitiría INTENTAR bind. Es inocuo porque el intent `alumni`
+#   del resource NO mapea userPassword → no hay credencial contra la que autenticar
+#   (verificado 2026-07-16: userPassword = 0 entries en todo el directorio de personas).
+#   Esa ausencia es parte del diseño, no un descuido: si algún día se mapeara
+#   userPassword a esta rama, la regla {1} la volvería autenticable PESE a la {4}.
+#
+# --- rims-reader: por qué `read` en las tres ramas ------------------------------
+#   RIMS e InOut comparten esta cuenta. Ya lee ou=people sin restricción por atributo
+#   (incluido schacPersonalUniqueID, que contiene el DNI en URN) → darle ou=alumni,
+#   cuyo contenido es un subconjunto demográfico de lo que ya ve, no añade exposición
+#   nueva. Sigue siendo SOLO LECTURA.
+
 dn: olcDatabase={1}mdb,cn=config
 changetype: modify
 replace: olcAccess
@@ -5,4 +71,5 @@ olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,c
 olcAccess: {1}to attrs=userPassword,shadowLastChange by self write by dn="cn=admin,dc=upeu,dc=edu,dc=pe" write by anonymous auth by * none
 olcAccess: {2}to dn.subtree="ou=people,dc=upeu,dc=edu,dc=pe" by dn="cn=admin,dc=upeu,dc=edu,dc=pe" write by dn="cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe" write by dn="cn=keycloak,dc=upeu,dc=edu,dc=pe" read by dn="cn=rims-reader,ou=services,dc=upeu,dc=edu,dc=pe" read by * none
 olcAccess: {3}to dn.subtree="ou=org,dc=upeu,dc=edu,dc=pe" by dn="cn=admin,dc=upeu,dc=edu,dc=pe" write by dn="cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe" write by dn="cn=keycloak,dc=upeu,dc=edu,dc=pe" read by dn="cn=rims-reader,ou=services,dc=upeu,dc=edu,dc=pe" read by * none
-olcAccess: {4}to * by dn="cn=admin,dc=upeu,dc=edu,dc=pe" write by dn="cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe" read by dn="cn=keycloak,dc=upeu,dc=edu,dc=pe" read by self read by * none
+olcAccess: {4}to dn.subtree="ou=alumni,dc=upeu,dc=edu,dc=pe" by dn="cn=admin,dc=upeu,dc=edu,dc=pe" write by dn="cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe" write by dn="cn=rims-reader,ou=services,dc=upeu,dc=edu,dc=pe" read by dn="cn=keycloak,dc=upeu,dc=edu,dc=pe" none by * none
+olcAccess: {5}to * by dn="cn=admin,dc=upeu,dc=edu,dc=pe" write by dn="cn=midpoint,ou=services,dc=upeu,dc=edu,dc=pe" read by dn="cn=keycloak,dc=upeu,dc=edu,dc=pe" read by self read by * none

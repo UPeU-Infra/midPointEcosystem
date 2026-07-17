@@ -1,0 +1,42 @@
+# 11-fix-frontend-sizelimit-169.ldif — Corrige el drift de olcSizeLimit del nodo .169
+#
+# BUG LATENTE (verificado en vivo 2026-07-16, solo lectura):
+#   .168  olcDatabase={-1}frontend  olcSizeLimit: 10000
+#   .169  olcDatabase={-1}frontend  olcSizeLimit: 500     ← DRIFT
+#
+# `cn=config` NO SE REPLICA → el valor se puso a mano en .168 y nunca en .169.
+#
+# POR QUÉ IMPORTA (no es cosmético):
+#   `cn=rims-reader` NO tiene olcLimits propio (verificado: el único olcLimits de
+#   olcDatabase={1}mdb es el de `cn=midpoint`, size=unlimited). Al no tener límite
+#   propio, rims-reader HEREDA el límite del frontend. Consecuencia:
+#     - contra .168 → se corta en 10.000 resultados
+#     - contra .169 → se corta en    500 resultados
+#   Y se corta EN SILENCIO desde el punto de vista del consumidor: LDAP devuelve
+#   sizeLimitExceeded con resultados parciales. Un cliente que no inspeccione el
+#   result code cree que recibió el conjunto completo.
+#
+#   Afecta a los DOS consumidores que comparten la cuenta rims-reader:
+#     - RIMS  (motivo original del reporte)
+#     - InOut (aforo CRAI): padrón ou=people = 26.993 y ou=alumni ~26.800
+#   Ambos volúmenes superan 10.000 Y 500. Cualquier failover a .169 (el .169 está
+#   en `cfg:servers` del resource LDAP de MidPoint) rompe a ambos.
+#
+# ESTE FICHERO NO RESUELVE EL PROBLEMA DE FONDO — solo iguala los nodos.
+#   Con 10.000, un enumerado completo de ou=people (26.993) SIGUE cortándose.
+#   El fix real es `10-limits-rims-reader.ldif` (size=unlimited para rims-reader),
+#   que está diseñado y versionado pero NO aplicado: espera la ventana de sync que
+#   anunciará InOut. Este 11 elimina la ASIMETRÍA entre nodos (fallo no
+#   determinista, que es lo peor de diagnosticar); el 10 elimina el techo.
+#
+# ⚠️ APLICAR SOLO EN .169 (el .168 ya está en 10000; aplicarlo allí es no-op).
+#   ldapmodify -Y EXTERNAL -H ldapi:/// -f 11-fix-frontend-sizelimit-169.ldif
+#
+# VERIFICACIÓN (debe dar 10000 en AMBOS nodos):
+#   ldapsearch -x -H ldap://<nodo>:389 -D 'cn=admin,cn=config' -W \
+#     -b 'olcDatabase={-1}frontend,cn=config' olcSizeLimit
+
+dn: olcDatabase={-1}frontend,cn=config
+changetype: modify
+replace: olcSizeLimit
+olcSizeLimit: 10000

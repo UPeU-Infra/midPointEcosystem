@@ -1,0 +1,35 @@
+# 08-index-affiliation.ldif — Índice eq de eduPersonAffiliation
+#
+# CIERRE DE DRIFT (2026-07-16): este índice YA ESTABA APLICADO en PROD (.168 y .169,
+# verificado en vivo) pero NUNCA se versionó. Este fichero documenta el estado real.
+# Aplicarlo de nuevo sobre un nodo que ya lo tiene devuelve error 20 (Type or value
+# exists) — es idempotente en la práctica: si falla con 20, ya está.
+#
+# POR QUÉ ES CRÍTICO:
+#   El padrón de InOut (aforo CRAI) se define por el filtro
+#     (eduPersonAffiliation=member)     → 26.993 entries de las 47.527 de ou=people
+#   y el de la rama alumni por
+#     (eduPersonAffiliation=alum)       → ~26.800 entries de ou=alumni
+#   Sin índice `eq`, CADA consulta de InOut sería un full-scan.
+#
+# OJO — NO indexar eduPersonPrimaryAffiliation por costumbre:
+#   `eduPersonPrimaryAffiliation` NO está indexado y NO se usa en los filtros del
+#   contrato InOut, precisamente por eso. El contrato usa el multivalor
+#   `eduPersonAffiliation`, que sí lo está. Si alguien cambia el filtro de InOut a
+#   `Primary`, degrada a full-scan sin avisar. Documentado en
+#   docs/specs/inout-ldap-identity-map.md.
+#
+# ALCANCE — olcDbIndex es POR BASE DE DATOS, no por subtree:
+#   Cuelga de olcDatabase={1}mdb → cubre TODO dc=upeu,dc=edu,dc=pe, incluidas
+#   ou=people, ou=alumni y ou=org. Por eso la rama ou=alumni NO necesita índices
+#   propios: hereda éstos.
+#
+# ⚠️ DESPLIEGUE — cn=config NO SE REPLICA. APLICAR EN AMBOS NODOS (.168 y .169):
+#   ldapmodify -Y EXTERNAL -H ldapi:/// -f 08-index-affiliation.ldif
+#
+# ORDEN: después de 07-index-inout.ldif.
+
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: eduPersonAffiliation eq
