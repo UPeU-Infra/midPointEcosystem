@@ -1,5 +1,14 @@
 # Keycloak User Federation — OpenLDAP UPeU
-## Fase 6 — Instrucciones de configuración (implementar post-import piloto)
+
+> # ⛔ ARCHIVADO — NO IMPLEMENTAR (ADR-058, 17-jul-2026)
+>
+> **No se federa LDAP en Keycloak.** [ADR-058](../../../../../sciback/sciback-core-docs/docs/architecture/adrs/058-keycloak-solo-autentica.md): Keycloak solo autentica; los datos se leen del LDAP con el bind propio de cada aplicación, nunca de los claims.
+>
+> Estas instrucciones se llegaron a implementar (mayo 2026) y **se revirtieron**: medido en producción, la federación entregaba el claim `epuid` a **2 de las 32** personas que realmente entran, porque los espacios de username son disjuntos (LDAP importa carnés sin `@`; el IdP de Entra crea correos con `@`; intersección **0**). Se conserva como registro histórico.
+>
+> El SA `cn=keycloak,dc=upeu,dc=edu,dc=pe` queda **sin uso**. Las cuentas de lectura vigentes son las de las aplicaciones (`cn=rims-reader` y equivalentes).
+
+## Fase 6 — Instrucciones de configuración (histórico, ya no vigente)
 
 ### Prerrequisitos antes de implementar
 

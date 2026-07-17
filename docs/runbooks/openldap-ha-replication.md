@@ -339,9 +339,8 @@ con la configuración de failover cuando el conector lo soporte. Ver estado en
 
 ## Integración con Keycloak
 
-User Federation `OpenLDAP Identity Cache UPeU` en realm `upeu` apunta a `192.168.15.168`.
-Actualizar para agregar nodo 2 cuando ambos estén estables.
-Ver runbook `keycloak-ldap-federation.md`.
+⛔ **Obsoleto (ADR-058, 17-jul-2026).** La User Federation `OpenLDAP Identity Cache UPeU` está retirada: **no se federa LDAP en Keycloak**. **No hay que agregarle el nodo 2 ni mantenerla.**
+La HA de OpenLDAP (Node1 `.168` + Node2 `.169`) **sigue siendo crítica**, pero para las **aplicaciones que leen el directorio con bind propio** (RIMS, InOut), que son ahora los consumidores reales. Ver [ADR-058](../../../../../sciback/sciback-core-docs/docs/architecture/adrs/058-keycloak-solo-autentica.md) y el histórico en `keycloak-ldap-federation.md` (archivado).
 
 ---
 

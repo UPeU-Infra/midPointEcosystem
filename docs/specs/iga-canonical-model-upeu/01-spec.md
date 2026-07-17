@@ -1211,8 +1211,8 @@ Servicios extra se obtienen via **Positions** (decano, director, investigador RE
 - MidPoint es el **único** que escribe en OpenLDAP.
 - OpenLDAP solo contiene users con `lifecycleState=active` (los 100% válidos canónicos).
 - Users en `draft` o `suspended` NO existen en OpenLDAP.
-- Keycloak federa OpenLDAP via User Federation (NO accede a MidPoint directo).
-- Apps que requieren búsqueda (Indico, EZProxy, FreeRADIUS) leen OpenLDAP.
+- ~~Keycloak federa OpenLDAP via User Federation~~ → ⛔ **SUPERSEDED por [ADR-058](../../../../../../sciback/sciback-core-docs/docs/architecture/adrs/058-keycloak-solo-autentica.md) (2026-07-17): no se federa LDAP en Keycloak.** Keycloak solo autentica (vía IdP Entra ID). *(Sigue vigente: Keycloak NO accede a MidPoint directo.)*
+- Apps que requieren búsqueda **o datos de la persona** (Indico, EZProxy, FreeRADIUS, RIMS, InOut) leen OpenLDAP **con bind propio**. Ésta es la única vía de datos (ADR-058).
 
 **Esquema LDAP exportado:**
 

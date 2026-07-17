@@ -94,22 +94,34 @@ Target 3 — Entra ID UPeU (READ-ONLY por ahora)
   Permisos actuales: User.Read.All + Group.Read.All + Directory.Read.All
   Write bloqueado hasta Fase 12 (permisos pendientes con David Urquizo)
 
-Target 4 — OpenLDAP via Keycloak (SSO — Fase 13 pendiente)
-  Ver sección 3 para flujo completo
+Target 4 — Aplicaciones que leen OpenLDAP con bind propio (RIMS, InOut, ...)
+  NO via Keycloak. Ver sección 3 y ADR-058.
 
 ============================================================
-  SSO / FEDERACION
+  SSO / AUTENTICACION   (ADR-058 — las dos vias NO se cruzan)
 ============================================================
 
-Keycloak 26.6.1 (192.168.12.88, realm upeu)
-  User Federation LDAP: ACTIVA → lee Node1 OpenLDAP
-  Protocol mappers SAML: PENDIENTE (Fase 13)
+Autenticacion:      Entra ID -> Keycloak -> app     [solo QUIEN entro]
+Aprovisionamiento:  Oracle -> MidPoint -> OpenLDAP -> app  [los DATOS]
+
+Keycloak (realm upeu; hoy en AWS, keyid.upeu.edu.pe)
+  IdP MicrosoftUPeU (Entra ID) -> unica via de login
+  User Federation LDAP: NO SE USA (ADR-058). Ver nota abajo.
+  Protocol mappers de datos: NO. El token lleva identidad, no atributos.
       |
-      | SAML 2.0 (PENDIENTE configurar SPs)
+      | la app recibe: quien es la persona
       v
-Vendors académicos: Scopus · WoS · EBSCO · ProQuest · JSTOR · IEEE · ...
-  Atributos requeridos: ePPN + ePSA + mail + displayName + schacHomeOrganization
+La app lee sus datos del OpenLDAP Identity Cache con bind propio
+  (cn=rims-reader y equivalentes)
+
+Fase 13 (SPs de vendors academicos: Scopus, WoS, EBSCO, ProQuest, ...)
+  ⚠ SIN DISEÑO. Requeria eduPerson en la asercion SAML, que ADR-058
+  descarta emitir desde este Keycloak. NO se resuelve encendiendo la
+  federacion (ver ADR-058 §Consecuencias). Rediseño pendiente.
 ```
+
+> ⛔ **ADR-058 (17-jul-2026) — no encender la User Federation LDAP de Keycloak.**
+> Estuvo activa hasta la migración a AWS y **se apagó el 13-jul-2026**. Medido en producción: entregaba el claim `epuid` a **2 de las 32** personas que realmente entran, porque los espacios de username son disjuntos (LDAP importa carnés sin `@`; el IdP crea correos con `@`; correos con ambas cuentas: **0**). Los atributos `epuid`/`affiliation`/`eppn`/`eduperson_entitlement` que aún viven en el realm son un **snapshot congelado del 05-jul-2026**: nada los escribe. Ver [`ADR-058`](../../../../sciback/sciback-core-docs/docs/architecture/adrs/058-keycloak-solo-autentica.md).
 
 ---
 
@@ -151,7 +163,9 @@ Directorio: `upeu/`
 
 ## 3. Flujo SSO académico (estado y pendientes)
 
-### Flujo completo (cuando Fase 13 esté implementada)
+### Flujo que se diseñó para la Fase 13 — ⛔ **DESCARTADO (ADR-058, 17-jul-2026)**
+
+> El paso 2 de este diagrama (**Keycloak consulta OpenLDAP por User Federation**) **ya no existe**: no se federa LDAP en Keycloak. **La Fase 13 se queda sin diseño**, es un coste asumido, y **no se resuelve encendiendo la federación** — ver [`ADR-058`](../../../../sciback/sciback-core-docs/docs/architecture/adrs/058-keycloak-solo-autentica.md) §Consecuencias. Se conserva el diagrama como registro de lo que se pretendía.
 
 ```
 Usuario (browser)
@@ -160,7 +174,7 @@ Usuario (browser)
       v
 Keycloak 26.6.1 (IdP SAML 2.0)
       |
-      | 2. Consulta OpenLDAP (User Federation)
+      | 2. Consulta OpenLDAP (User Federation)   <-- ⛔ DESCARTADO (ADR-058)
       v
 OpenLDAP HA (Identity Cache)
       |  uid, mail, displayName, eduPersonAffiliation,
@@ -183,10 +197,11 @@ Oracle LAMB (fuente original)
 | Oracle LAMB → MidPoint (inbound) | OPERATIVO | 6 resources activos, reconcile 02:00 UTC |
 | MidPoint → OpenLDAP (outbound) | OPERATIVO | 37K+ sombras, resource activo |
 | OpenLDAP HA Multimaster | OPERATIVO | Node1 + Node2, replicación bidireccional |
-| Keycloak User Federation LDAP | ACTIVA | Lee de Node1 OpenLDAP |
-| Outbound mappings eduPerson en LDAP | PENDIENTE | ePPN, ePSA, schacHomeOrg no mapeados aún |
-| Protocol mappers SAML en Keycloak | PENDIENTE | Fase 13 |
-| Registro de SPs de vendors | PENDIENTE | Fase 13 |
+| Keycloak User Federation LDAP | **RETIRADA (ADR-058)** | Estuvo ACTIVA hasta la migración a AWS; apagada el 13-jul-2026. **No se vuelve a encender.** Las 6 federaciones del realm siguen presentes pero `enabled=false`; su **borrado** es B3, pendiente de ventana (borrar el provider borra los 54 322 usuarios que importó) |
+| Outbound mappings eduPerson en LDAP | PENDIENTE | ePPN, ePSA, schacHomeOrg no mapeados aún. **Sigue siendo necesario**: es la vía por la que las apps leen los datos (ADR-058) |
+| Protocol mappers SAML en Keycloak | **DESCARTADO (ADR-058)** | El scope `academic-databases-eduperson` (11 mappers) existe en el realm pero **no está asignado a ningún cliente**. Se queda así |
+| Registro de SPs de vendors | **SIN DISEÑO (Fase 13)** | Consecuencia asumida de ADR-058. **No se resuelve encendiendo la federación** |
+| Lectura de LDAP por las apps con bind propio | OPERATIVO | RIMS e InOut ya lo hacen. Es la vía correcta (ADR-058) |
 
 ---
 
@@ -235,7 +250,8 @@ Total: 199 OrgType activos — 1 institution + 3 campus + 5 faculty + 5 partner-
 
 | Decisión | Fecha | Detalle |
 |---|---|---|
-| Sin conector MidPoint→Keycloak | 2026-05-11 | Arquitectura: MidPoint→OpenLDAP←Keycloak. Conector HTTP custom archivado. |
+| **Keycloak solo autentica** | **2026-07-17** | **ADR-058.** Dos vías que no se cruzan: *autenticación* Entra ID→Keycloak→app (solo **quién** entró) y *aprovisionamiento* Oracle→MidPoint→OpenLDAP→app (los **datos**). **Los datos se leen del LDAP, nunca de los claims. No se federa LDAP en Keycloak.** Supersede ADR-034 §314/§319. Coste asumido: la Fase 13 se queda sin diseño |
+| Sin conector MidPoint→Keycloak | 2026-05-11 | Sigue vigente: no hay conector HTTP custom (archivado). ⚠️ **Corregida la arquitectura que citaba esta línea**: decía `MidPoint→OpenLDAP←Keycloak` (Keycloak leyendo el LDAP por federación). **Ya no.** Es `MidPoint→OpenLDAP→app`; Keycloak queda fuera de la vía de datos (ADR-058) |
 | AD UPeU fuera del alcance | 2026-05-11 | AD actual (192.168.13.150) mal estructurado, no global. Sin reads ni writes. Decisión sobre AD nuevo diferida a Fase 12. |
 | Entra ID read-only hasta Fase 12 | 2026-05-11 | Solo correlación e inventario. Write requiere permisos Graph API (pendiente David Urquizo). |
 | Oracle LAMB solo lectura | Siempre | Política absoluta. Nunca se escribe en Oracle. |
@@ -296,6 +312,6 @@ sshpass -p "$MIDPOINT_PROD_PASS" ssh -o StrictHostKeyChecking=no midpoint-prod "
 - `docs/canonical/eduperson-reference.md` — Diccionario de atributos eduPerson
 - `docs/ENTRA-ID-ESTRUCTURA-UPEU.md` — Diagnóstico Entra ID UPeU
 - `docs/runbooks/openldap-ha-replication.md` — Runbook OpenLDAP HA
-- `docs/runbooks/keycloak-ldap-federation.md` — Runbook Keycloak User Federation
+- `docs/runbooks/keycloak-ldap-federation.md` — ⛔ **ARCHIVADO (ADR-058)** — histórico de la User Federation retirada. No ejecutar
 - `docs/runbooks/upgrade-midpoint-docker.md` — Runbook upgrade MidPoint
 - `docs/specs/sciback-iga-blueprint/01-iga-blueprint-peru.md` — Blueprint IGA para universidades peruanas

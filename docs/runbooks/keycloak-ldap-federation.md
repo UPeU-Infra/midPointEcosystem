@@ -1,12 +1,25 @@
 # Runbook — Keycloak User Federation → OpenLDAP Identity Cache
 
-**Fecha de verificación:** 2026-05-19
-**Owner:** Alberto Sánchez (DTI/Infra)
-**Estado:** Funcional en producción
+> # ⛔ ARCHIVADO — NO EJECUTAR ESTE RUNBOOK
+>
+> **Estado:** **ARCHIVADO / SUPERSEDED por [ADR-058](../../../../../sciback/sciback-core-docs/docs/architecture/adrs/058-keycloak-solo-autentica.md)** (17-jul-2026).
+> **No se federa LDAP en Keycloak.** Keycloak solo autentica; los datos de la persona se leen del LDAP directamente, con el bind propio de cada aplicación, nunca de los claims.
+>
+> Se conserva **solo como registro histórico** de cómo estuvo configurada la federación entre mayo y julio de 2026. Seguir estos pasos hoy **viola el ADR-058**.
+>
+> **Por qué se retiró** (medido en producción el 17-jul-2026, solo lectura):
+> - El claim `epuid` llegaba a **2 de las 32** personas que realmente entran (el 94% lo recibía vacío).
+> - Causa estructural: los espacios de username son **disjuntos** — LDAP importaba carnés sin `@` (`9610165`), el IdP de Entra crea correos con `@` (`nombre@upeu.edu.pe`). Correos con cuenta LDAP **y** cuenta IdP a la vez: **0**. La federación no correlacionaba: producía dos poblaciones paralelas.
+> - Cobertura de `epuid` errática y no reparable con más mappers: `alum` 0,0% · `staff` 24,0% · `faculty` 66,1% · `student` 67,3%.
+> - Estado real: la federación se apagó el **13-jul-2026**; el último usuario importado es del **05-jul-2026 16:59:38**. Los atributos que quedan en el realm son un **snapshot congelado**: nada los escribe.
+>
+> **La afirmación "Estado: Funcional en producción" que este runbook sostuvo hasta hoy era falsa** — y es parte de por qué el equipo Pulso DTI ancló su diseño en un claim muerto. Se deja constancia.
+>
+> Las 6 User Federation siguen presentes en el realm con `enabled=false`. **Su borrado es la acción B3 del ADR-058 y está pendiente de ventana**: borrar un `UserStorageProvider` **borra los 54 322 usuarios que importó**.
 
 ---
 
-## Arquitectura actual
+## Arquitectura histórica (mayo-julio 2026 — ya no vigente)
 
 ```
 Keycloak (192.168.12.88)

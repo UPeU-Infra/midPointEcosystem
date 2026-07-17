@@ -4,7 +4,7 @@
 >
 > **Estándar base:** eduPerson 202208 v4.4.0 (REFEDS/Internet2). Solo se documentan los atributos que UPeU efectivamente usa o planea usar. No se inventan atributos fuera del estándar.
 >
-> **Fuente de atributos (2026-06-06):** MidPoint 4.10.2 provisiona atributos a OpenLDAP HA (Node1: 192.168.15.168:389, Node2: 192.168.15.169:389); Keycloak User Federation lee de OpenLDAP. Los atributos eduPerson derivados (ePPN, ePSA, eduPersonAffiliation, schacHomeOrganization) están **pendientes de mapear** en el outbound LDAP (Fase 13). Los campos fuente del schema canónico son `urn:sciback:midpoint:person` y overlay `urn:upeu:midpoint:local`.
+> **Fuente de atributos (2026-06-06):** MidPoint 4.10.2 provisiona atributos a OpenLDAP HA (Node1: 192.168.15.168:389, Node2: 192.168.15.169:389); ⛔ *(ADR-058, 17-jul-2026: la antigua nota "Keycloak User Federation lee de OpenLDAP" queda retirada — no se federa LDAP en Keycloak; las apps leen el LDAP con bind propio.)* Los atributos eduPerson derivados (ePPN, ePSA, eduPersonAffiliation, schacHomeOrganization) están **pendientes de mapear** en el outbound LDAP (Fase 13). Los campos fuente del schema canónico son `urn:sciback:midpoint:person` y overlay `urn:upeu:midpoint:local`.
 >
 > **Modelo de afiliación actual:** la afiliación se deriva del archetype estructural del usuario en MidPoint (no de `primaryAffiliationCode` — atributo deprecado). El mapeo archetype→eduPersonAffiliation se documenta en la sección correspondiente.
 

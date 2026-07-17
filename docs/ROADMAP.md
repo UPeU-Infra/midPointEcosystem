@@ -43,7 +43,7 @@
 2. **GitOps.** Configuración va a `UPeU-Infra/midPointEcosystem` con commit + push + `git pull` en server. NUNCA `scp`.
 3. **MidPoint UI Schemas, no XSD imports.** SchemaType se administra como objeto en repo (UI Admin / REST), no como archivos en `/var/schema/`.
 4. **STOP antes de producción.** Confirmación explícita de Alberto antes de cada deploy productivo.
-5. **Sin conector MidPoint→Keycloak.** Arquitectura: MidPoint→OpenLDAP→Keycloak User Federation.
+5. **Sin conector MidPoint→Keycloak.** *(Sigue vigente.)* ⚠️ **Corregido (ADR-058, 17-jul-2026):** decía `Arquitectura: MidPoint→OpenLDAP→Keycloak User Federation`. **No se federa LDAP en Keycloak.** Es **MidPoint→OpenLDAP→app** (bind propio de cada app); **Keycloak solo autentica**.
 6. **No tocar sistemas UPeU existentes.** Solo trabajamos en MidPoint + sistemas nuevos que implementemos (OpenLDAP, Keycloak nuestro). AD UPeU actual y Entra ID UPeU son **solo lectura** (correlación). Ningún write hasta decisión arquitectónica futura.
 7. **Decisión AD diferida.** El AD UPeU actual no se usa globalmente, está mal estructurado, queda fuera del alcance. AD nuevo solo se construye si validamos que Entra ID NO alcanza como destino único. Por defecto: target principal = OpenLDAP + Entra ID (read-only de momento).
 8. **Cuentas privilegiadas no las gestiona MidPoint.** Las maneja David Urquizo. Lo que MidPoint no puede hacer por API queda como ticket a David en [`david-urquizo-tasks.md`](./runbooks/tickets-david-urquizo.md).
@@ -116,7 +116,7 @@ Los 4 templates per-archetype (alumni, student, faculty, staff) existen en PROD 
 | Fase 3 — Object templates | ✅ **COMPLETA** | Base + 4 per-archetype (Alumni, Student, Faculty, Staff) activos en PROD — commits `77aad6e` + `85aaa19` |
 | Fase 4 — OpenLDAP HA | ✅ **COMPLETA** | N-Way mirrormode Node 1 (168) + Node 2 (169) ✅; replicación bidireccional verificada; ulimits 65536 ambos nodos ✅; cn=midpoint password sincronizado ✅; MidPoint cfg:servers failover activo ✅; phpldapadmin en ambos nodos ✅; resource test SUCCESS 2026-05-20 |
 | Fase 5 — Resources READ | ✅ **ACTIVA** | Oracle LAMB ×4 + Koha + Entra ID activos; todos con lifecycleState `active` |
-| Fase 6 — Resources WRITE → OpenLDAP | ✅ **VALIDADO** | 37.491 sombras LDAP ✅; Keycloak User Federation activa (P7 ✅); Keycloak lee de OpenLDAP correctamente |
+| Fase 6 — Resources WRITE → OpenLDAP | ✅ **VALIDADO** | 37.491 sombras LDAP ✅. ⛔ *La antigua nota "Keycloak User Federation activa (P7)" queda RETIRADA por ADR-058: no se federa LDAP en Keycloak. El outbound MidPoint→OpenLDAP sigue siendo lo validado y lo importante.* |
 | Fase 7 — RBAC | ✅ **COMPLETA** 2026-06-06 | 4 ARs versionados, 26 lifecycleState corregidos, D.3 split TC/TP/fallback, SoD GOV bidireccional (ISO 27001 A.8.2), role mining LAMB documentado — commits `43e1981`+`394fa73` |
 | Fase 8 — Documentación | ✅ **COMPLETA** 2026-06-06 | ARCHITECTURE.md, eduperson-reference.md, sso-academic-vendors.md actualizados — commit `03e49d9` |
 | Fase 9 — Validación E2E | ✅ **COMPLETA** 2026-06-06 | 3 pilotos validados (faculty/student/staff). 4 GAPs diagnosticados: GAP-1 en ejecución (recompute LDAP 1,945 docentes), GAP-2 email (cifra revisada 2026-07-10: **32,133 active sin emailAddress**, no 13,733 — ver detalle §Workstream), GAP-3 diferido Fase 12, GAP-4 no aplica. Pipeline IGA OPERATIVO. — commit `5394adc` |
@@ -238,13 +238,15 @@ El motor no podía resolver el focus item para correlación.
 - Tasks activos: Cleanup + Trigger Scanner (5 min) + Validity Scanner (15 min) + 3 crons LAMB 02:00 UTC
 - Tasks corriendo: solo `Cleanup` (sistema). Estudiantes y Trabajadores en RUNNABLE/READY esperando cron.
 
-### ✅ P7 — Keycloak→OpenLDAP User Federation — COMPLETADO 2026-05-19
+### ⛔ P7 — Keycloak→OpenLDAP User Federation — **REVERTIDO 2026-07-17 (ADR-058)**
 
-Conexión directa Keycloak (192.168.12.88) → OpenLDAP (192.168.15.168:389) funcionando.
-- Firewall TCP 389 abierto por Rudy
+> **Estuvo completado el 2026-05-19 y se retiró.** [ADR-058](../../../../sciback/sciback-core-docs/docs/architecture/adrs/058-keycloak-solo-autentica.md): **no se federa LDAP en Keycloak.** Medido en producción, la federación entregaba el claim `epuid` a **2 de las 32** personas que realmente entran (usernames disjuntos: LDAP importa carnés sin `@`, el IdP crea correos con `@`, intersección **0**). Apagada el 13-jul-2026; último usuario importado 05-jul-2026. **No re-ejecutar este paso.** El borrado de las 6 federaciones es la acción B3 del ADR-058, pendiente de ventana (borra los 54 322 usuarios importados).
+
+Registro histórico de lo que se hizo — conexión directa Keycloak (192.168.12.88) → OpenLDAP (192.168.15.168:389):
+- Firewall TCP 389 abierto por Rudy *(la apertura sigue siendo útil: otras apps leen el LDAP)*
 - `connectionUrl` corregido: `ldap://192.168.15.166:8080` → `ldap://192.168.15.168:389`
-- `bindCredential` corregido: password inválido → `Kc@Ldap2026!`
-- Runbook: `docs/runbooks/keycloak-ldap-federation.md`
+- `bindCredential` corregido
+- Runbook: `docs/runbooks/keycloak-ldap-federation.md` — **ARCHIVADO, no ejecutar**
 
 ### ✅ Limpieza branding — Referencias cosméticas eliminadas — 2026-05-20
 
@@ -284,7 +286,7 @@ Commit `70101c6` — 17 archivos actualizados. Eliminadas referencias a "SciBack
 
 ### P5 — Completar permisos Entra ID
 
-- **Keycloak User Federation contra OpenLDAP:** ✅ ACTIVA (ver P7 — completado)
+- **Keycloak User Federation contra OpenLDAP:** ⛔ **RETIRADA (ADR-058, 17-jul-2026)** — estuvo activa (P7), se apagó el 13-jul-2026. No se vuelve a encender
 - **Ticket David Urquizo (pendiente):** App `MidPoint-UPeU` (appId `94dd7b5b`) en tenant UPeU tiene 3/7 permisos read — le faltan:
 
 | Permiso | Para qué |
@@ -329,7 +331,7 @@ Fase 5 — Resources read (1 semana)              ACTIVO EN PROD / ENTRA ID INCO
 
 Fase 6 — Resources write controlled (3-4 dias)  ✅ VALIDADO 2026-05-20
    37.491 sombras LDAP en PROD
-   Keycloak User Federation activa contra OpenLDAP (P7)
+   Keycloak User Federation: ⛔ RETIRADA (ADR-058) — estuvo activa en P7, apagada el 13-jul-2026
 
 Fase 7 — RBAC bottom-up (1 semana)             ✅ COMPLETA 2026-06-06
    4 ARs faltantes versionados (DSpace-Editor, OJS-Author/Reader/Reviewer)
@@ -589,7 +591,7 @@ Fase 13 — Metricas COUNTER                      🔒 BLOQUEADA (Fase 12 + cred
 
 ## Decisiones doctrinales registradas (no negociables)
 
-1. **2026-05-11** — NO crear nuevo conector MidPoint→Keycloak. Tampoco usar `pe.upeu.connector.keycloak-http v1.0.0` ni `openstandia/connector-keycloak`. La arquitectura es **MidPoint → OpenLDAP ← Keycloak (User Federation)**.
+1. **2026-05-11** — NO crear nuevo conector MidPoint→Keycloak. Tampoco usar `pe.upeu.connector.keycloak-http v1.0.0` ni `openstandia/connector-keycloak`. *(Todo esto sigue vigente.)* ~~La arquitectura es **MidPoint → OpenLDAP ← Keycloak (User Federation)**.~~ → ⛔ **SUPERSEDED por [ADR-058](../../../../sciback/sciback-core-docs/docs/architecture/adrs/058-keycloak-solo-autentica.md) (2026-07-17):** la arquitectura es **MidPoint → OpenLDAP → app** (bind propio). **Keycloak solo autentica; no se federa LDAP en Keycloak; los datos nunca salen en los claims.**
 2. **2026-05-11** — UPeU NO usa Moodle ni Google Workspace. El stack es **Microsoft 365** (licencias A1/A3) + **Google Classroom** (SaaS externo integrado via URLs en Lamb).
 3. **2026-05-11** — Campus codes 3 letras: `C-LIM`, `C-JUL`, `C-TPP` (consistente con `ELISEO.ORG_SEDE.SIGLA`).
 4. **2026-05-11** — Cuentas privilegiadas las gestiona **David Urquizo**, no MidPoint. Tickets en `docs/runbooks/tickets-david-urquizo.md`.

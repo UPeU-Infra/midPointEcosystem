@@ -536,7 +536,7 @@ MidPoint 4.10.2 (192.168.15.166:8080)
     │  Validity Scanner — 15 min (lifecycles)
     │
     ├──► OpenLDAP Identity Cache (192.168.15.168:389) — 37.491 sombras
-    │       └──► Keycloak 26.6.1 (User Federation LDAP)
+    │       └──► [⛔ ADR-058: Keycloak NO federa el LDAP. Las apps leen con bind propio]
     │
     ├──► Entra ID (Graph API, solo lectura) — 37.304 sombras
     │       └── write pendiente (David Urquizo, DU-001a)

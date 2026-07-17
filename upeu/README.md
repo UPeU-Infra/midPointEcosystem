@@ -70,7 +70,7 @@ Kebab-case sin prefijo de tipo en filename donde sea limpio. Excepciones legíti
 
 ## Decisiones doctrinales reflejadas aquí
 
-1. **NO conector MidPoint→Keycloak.** Arquitectura: MidPoint→OpenLDAP←Keycloak User Federation (Fase 6 pendiente).
+1. **NO conector MidPoint→Keycloak.** *(Sigue vigente.)* ⚠️ **Corregida la arquitectura que citaba esta línea (ADR-058, 17-jul-2026):** decía `MidPoint→OpenLDAP←Keycloak User Federation`. **No se federa LDAP en Keycloak.** Es `MidPoint→OpenLDAP→app` (la app lee con bind propio); **Keycloak solo autentica** y queda fuera de la vía de datos. Ver [`ADR-058`](../../../../sciback/sciback-core-docs/docs/architecture/adrs/058-keycloak-solo-autentica.md).
 2. **UPeU usa Microsoft 365**, no Google Workspace.
 3. **AD UPeU** queda `lifecycle=draft` hasta Fase 12 (Entra ID gobierna primero).
 4. **Schemas como SchemaType objects en DB**, no XSDs físicos.

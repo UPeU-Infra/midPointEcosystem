@@ -1,6 +1,20 @@
 # SSO Académico — Mapeo Schema canónico → SAML eduPerson para vendors
 
-> **Contexto (2026-06-06)**: Keycloak UPeU (192.168.12.88, realm `upeu`) actúa como IdP SAML 2.0 para federar el acceso a bases de datos científicas (Scopus, WoS, EBSCO, ScienceDirect, etc.). MidPoint 4.10.2 **provisiona los atributos enriquecidos a OpenLDAP HA** (Identity Cache N-Way Multimaster: Node1 192.168.15.168:389 + Node2 192.168.15.169:389, 37K+ entradas), y Keycloak lee esos atributos vía **User Federation LDAP** — no hay conector directo MidPoint→Keycloak (decisión arquitectural 2026-05-11, el conector HTTP custom fue archivado). Este documento mapea el schema canónico a los atributos eduPerson que cada vendor espera.
+> # ⛔ EL PASO 3 DE ESTE DISEÑO ESTÁ DESCARTADO (ADR-058, 17-jul-2026)
+>
+> Este documento es **el diseño de la Fase 13** y describe la cadena `MidPoint → OpenLDAP → **Keycloak User Federation** → protocol mappers SAML → vendor`. **El eslabón "Keycloak User Federation" ya no existe**: [ADR-058](../../../../../sciback/sciback-core-docs/docs/architecture/adrs/058-keycloak-solo-autentica.md) prohíbe federar LDAP en Keycloak. Keycloak solo autentica.
+>
+> **La Fase 13 se queda sin diseño. Es un coste asumido conscientemente, no un descuido.**
+>
+> **Si has llegado aquí para retomar la Fase 13, lee esto antes de tocar Keycloak.** El camino corto es poner `enabled=true` en la federación y seis mappers, y aparentará funcionar en una demo. **No lo hagas**, por tres razones:
+>
+> 1. **No funcionaba.** Estuvo encendida hasta julio 2026 y entregaba el claim `epuid` a **2 de las 32** personas que realmente entran. La causa —los espacios de username disjuntos: LDAP importa carnés sin `@`, el IdP crea correos con `@`, intersección **0**— no la arregla la federación.
+> 2. **Falla en silencio.** Un claim ausente no da error: da string vacío. 14 clientes del realm llevan meses recibiendo vacíos sin que nadie se enterara. Una app que lee LDAP y no encuentra la entrada **falla y se ve**.
+> 3. **Son dos problemas distintos.** La aserción SAML a un vendor externo no se resuelve metiendo atributos en el JWT del Keycloak que autentica a toda la universidad.
+>
+> **Lo que sigue vigente de este documento:** los pasos 1 y 2 (Oracle LAMB → MidPoint → OpenLDAP con mapeos eduPerson/SCHAC) y **todo el mapeo de atributos por vendor**, que es el trabajo de valor y sigue siendo necesario. Lo que hay que rediseñar es **quién emite la aserción**. Opciones a evaluar, ninguna decidida: (a) IdP/proxy SAML dedicado a vendors alimentado del LDAP, **fuera** del Keycloak institucional; (b) Shibboleth IdP separado (la herramienta natural para eduGAIN); (c) reabrir el ADR-058 con datos. Si la conclusión es federar, **eso supersede el ADR-058 y se escribe** — no se hace con un cambio de configuración.
+
+> **Contexto histórico (2026-06-06, ya no vigente)**: Keycloak UPeU (192.168.12.88, realm `upeu`) actúa como IdP SAML 2.0 para federar el acceso a bases de datos científicas (Scopus, WoS, EBSCO, ScienceDirect, etc.). MidPoint 4.10.2 **provisiona los atributos enriquecidos a OpenLDAP HA** (Identity Cache N-Way Multimaster: Node1 192.168.15.168:389 + Node2 192.168.15.169:389, 37K+ entradas), y ~~Keycloak lee esos atributos vía **User Federation LDAP**~~ → **descartado por ADR-058** — no hay conector directo MidPoint→Keycloak (decisión arquitectural 2026-05-11, el conector HTTP custom fue archivado; **sigue vigente**). Este documento mapea el schema canónico a los atributos eduPerson que cada vendor espera.
 
 ## Resumen ejecutivo
 
@@ -8,12 +22,16 @@ El schema canónico (`urn:sciback:midpoint:person` + overlay `urn:upeu:midpoint:
 
 1. **Inbound desde Oracle LAMB** → atributos en MidPoint (affiliation, faculty, campus, programa) — OPERATIVO
 2. **Outbound desde MidPoint → OpenLDAP HA** (Identity Cache) con mapeos a eduPerson/SCHAC — OPERATIVO (37K+ sombras LDAP)
-3. **Keycloak User Federation** lee atributos del OpenLDAP — ACTIVA
-4. **Protocol mappers SAML** en Keycloak exponen esos atributos como eduPerson en SAML responses — PENDIENTE (Fase 13)
+3. ~~**Keycloak User Federation** lee atributos del OpenLDAP — ACTIVA~~ → 🔴 **DESCARTADO (ADR-058).** Apagada el 13-jul-2026, no se vuelve a encender
+4. ~~**Protocol mappers SAML** en Keycloak exponen esos atributos como eduPerson en SAML responses — PENDIENTE (Fase 13)~~ → 🔴 **SIN DISEÑO (ADR-058).** El scope `academic-databases-eduperson` (11 mappers) existe en el realm pero **no está asignado a ningún cliente**; se queda así
 
-**Estado actual (2026-06-06):** Los pasos 1-3 están operativos. MidPoint provisiona 50K+ usuarios a OpenLDAP; Keycloak User Federation está activa contra OpenLDAP. Los mapeos eduPerson derivados (ePPN, ePSA, eduPersonAffiliation, schacHomeOrganization) en el outbound LDAP están **pendientes de completar** — los usuarios están en OpenLDAP pero los atributos enriquecidos federable aún no están mapeados en los protocol mappers SAML de Keycloak.
+**Estado actual (17-jul-2026):** Los pasos **1 y 2 están operativos** y siguen siendo el camino correcto. Los **pasos 3 y 4 están descartados por [ADR-058](../../../../../sciback/sciback-core-docs/docs/architecture/adrs/058-keycloak-solo-autentica.md)**: la cadena se corta en el OpenLDAP, y quien necesite los datos los lee de ahí con bind propio. **La emisión de aserciones eduPerson a vendors necesita un componente nuevo, aún sin diseñar** — no este Keycloak.
 
-**Arquitectura sin conector MidPoint→Keycloak** — decisión 2026-05-11, no se revierte. El flujo es MidPoint→OpenLDAP←Keycloak(User Federation)→SAML→Vendor.
+Sigue pendiente y **sigue siendo necesario**: completar los mapeos eduPerson derivados (ePPN, ePSA, `eduPersonAffiliation`, `schacHomeOrganization`) en el **outbound MidPoint→LDAP**. Ese trabajo no depende de Keycloak y es prerrequisito de cualquier rediseño de la Fase 13.
+
+**Arquitectura sin conector MidPoint→Keycloak** — decisión 2026-05-11, **sigue vigente**: no hay conector directo.
+
+⛔ **Pero el flujo SÍ se revirtió (ADR-058, 2026-07-17).** Esta línea decía *"no se revierte. El flujo es MidPoint→OpenLDAP←Keycloak(User Federation)→SAML→Vendor"*. **Ese flujo ya no existe**: no se federa LDAP en Keycloak. El flujo de datos es **MidPoint→OpenLDAP→app** (bind propio); Keycloak solo autentica. **El tramo `→SAML→Vendor` queda sin diseño** (Fase 13, coste asumido) — ver el aviso al inicio de este documento y [`ADR-058`](../../../../../sciback/sciback-core-docs/docs/architecture/adrs/058-keycloak-solo-autentica.md).
 
 ## Mapeo completo: Schema v2.3 → eduPerson SAML
 
