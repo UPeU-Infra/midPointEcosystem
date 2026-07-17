@@ -56,7 +56,7 @@ MidPoint PROD (192.168.15.166)
 
 | Servidor | IP | Rol |
 |---|---|---|
-| `keycloak-prod` | ~~192.168.12.88~~ → **18.218.108.85 (AWS)** | SSO. El on-prem 26.6.1 está **retirado** (caído desde el 7-jul-2026); prod es Keycloak **26.7.0** en EC2 (`i-0a5ec78e87d2c39b8`) |
+| `keycloak-prod` | ~~192.168.12.88~~ → **18.218.108.85 (AWS)** | SSO. **PROD = AWS**: `keyid.upeu.edu.pe` → LB interno `192.168.12.199` → EC2 `18.218.108.85` (Caddy TLS) → Keycloak **26.7.0**. ⚠️ El Keycloak on-prem 26.6.1 quedó retirado (su BD se congeló el 7-jul-2026), **pero el host `.88` NO está caído**: hoy es un `nginx` que **proxya a AWS** (shim de transición, medido 17-jul — `:9000` cerrado, JWKS idéntico a AWS). **No configurar clientes nuevos contra `.88`**; cualquiera que aún le pegue directo sigue funcionando solo porque reenvía a AWS. |
 | `ldap-identity-trust` | 192.168.15.168 | Directorio centralizado (OpenLDAP, Docker) |
 | `midpoint-prod` | 192.168.15.166 | Orquestador IGA (MidPoint 4.10.x) |
 
