@@ -60,6 +60,18 @@ midPointEcosystem/
 
 Local → commit → push → en PROD `git pull` en `/home/juansanchez/midPointEcosystem/` → reaplicar selectivo vía REST API. **Nunca** `scp`. **Nunca** `git push --force` a `main`.
 
+### 🔴 Resources: NUNCA con `PUT`. Siempre `PATCH` del elemento concreto
+
+Un `PUT` sobre un `ResourceType` desplegado le **arranca a PROD el `<schema>` cacheado** (el repo no lo lleva, y es correcto que no lo lleve: el `<schema>` es *estado en runtime del conector*, no configuración) → `ConfigurationException` → resource **`broken` / 502**.
+
+**Medido 2026-07-17: afecta a 8 de los 11 resources desplegados** (los 7 Oracle LAMB ScriptedSQL + `UPEU-EntraID-Graph`). **No es un caso especial: es la forma normal del repo.**
+
+Precedentes: **`a776e5a`** (e21 `trabajadores`: schema stale → el reconcile de docentes abortaba con 502) · **`670b312`/`8ab4dc9`** (`ldap-identity-cache` quedó `broken` tras un PUT).
+
+Después de cualquier PATCH, **verifica** (no lo asumas): `<schema>` sigue con sus `xsd:element` · test connection todo `success` · `schemaHandling`/`capabilities`/`connectorRef` intactos.
+
+→ **Runbook: [`docs/runbooks/NUNCA-PUT-resources-schema-cache.md`](docs/runbooks/NUNCA-PUT-resources-schema-cache.md)**
+
 ClaudeFlow specs en `docs/specs/`.
 
 ## Convenciones

@@ -7,6 +7,34 @@
     xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21">
+    <!-- ==========================================================================================
+         🔴 NUNCA DESPLIEGUES ESTE FICHERO CON PUT. USA PATCH DEL ELEMENTO CONCRETO.
+         ==========================================================================================
+         QUE PASA: este fichero NO lleva <schema>, y PROD SI tiene un <schema> cacheado. Un PUT
+         reemplaza el objeto entero -> le ARRANCA a PROD el <schema> -> ConfigurationException ->
+         resource `broken` / 502.
+
+         POR QUE: el <schema> es ESTADO EN RUNTIME del conector (lo genera PROD desde el
+         schemaScript, con su retrievalTimestamp), NO configuracion. El repo es fuente de verdad de
+         la CONFIG; PROD lo es del <schema>. Que el repo no lo lleve es CORRECTO y deliberado:
+         versionar un cache garantiza que se quede stale.
+
+         PRECEDENTES REALES (no es teorico):
+           - a776e5a: EN ESTE MISMO RESOURCE. <schema> cacheado stale (sin TEACHING_PROGRAMS) ->
+             ConfigurationException "attribute TEACHING_PROGRAMS not found" -> el reconcile de foco
+             completo de DOCENTES abortaba con 502. Se curo con test connection.
+           - 670b312 / 8ab4dc9: ldap-identity-cache.xml (7b4e1c2d-...) quedo `broken` tras un PUT.
+
+         NO ES ESPECIFICO DE ESTE RESOURCE: medido 2026-07-17, afecta a 8 de los 11 resources
+         desplegados (los 7 Oracle LAMB ScriptedSQL + UPEU-EntraID-Graph).
+
+         EN SU LUGAR: PATCH con objectModification del elemento que cambia, y DESPUES verifica
+         (no lo asumas): (1) el <schema> sigue con sus xsd:element, (2) test connection todo
+         success, (3) schemaHandling/capabilities/connectorRef intactos.
+
+         RUNBOOK COMPLETO, con el PATCH de ejemplo ya aplicado y como recuperarte si lo rompes:
+           docs/runbooks/NUNCA-PUT-resources-schema-cache.md
+         ========================================================================================== -->
     <name>Oracle LAMB Trabajadores v3</name>
     <description>Inbound ScriptedSQL desde ELISEO.VW_APS_EMPLEADO + JOIN ENOC.CAT_DOCENTE + JOIN ENOC.VW_TRABAJADOR + JOIN ENOC.PLLA_PUESTO. Todas las sedes (Lima, Juliaca, Tarapoto). Lima (empresa=201) tiene prioridad en dedup por ID_PERSONA. Agrega telephoneNumber, emailAddress, title, gender, birthDate, externalSystemId, maritalStatus, ID_SEDEAREA→costCenter, DOCENTE_JORNADA, DOCENTE_CONDICION, DOCENTE_CATEGORIA para faculty. Fase 5c multi-sede. GOBERNANZA 2026-05-29: filtro ID_ENTIDAD=7124 aplicado post-dedup (RN=1) — solo permanece en el IGA quien tiene contrato RR.HH. de UPeU (ent=7124). Quien queda sin contrato UPeU activo sale del resultset → shadow deleted → reaction unlink (DESPROYECTA, no desactiva; ver comentario de la reaction deleted) → el object template decide el lifecycleState por afiliación viva restante. FIX __UID__ 2026-07-17 (tarea fix-uid-trabajadores): el __UID__/__NAME__ emitido es CANON_KEY = TO_CHAR(ID_PERSONA), y el dedup (ROW_NUMBER) particiona por ID_PERSONA. ANTES particionaba por (ID_TIPODOCUMENTO, NUM_DOCUMENTO canónico) mientras emitía una clave de grano distinto (COD_APS) — GRANO DE DEDUP ≠ GRANO DE CLAVE EMITIDA: el fan-out persona×documento de MOISES.VW_PERSONA_NATURAL (predicado de elección de documento COMENTADO en el DDL upstream) colaba 14.900 filas con 7.377 UID (5.572 duplicados) sin dar error. Post-fix: 7.414 filas / 7.414 UID / 0 duplicados. Orden de desempate: ent=7124 → contrato vivo → empresa 201 → tipo doc (DNI>CE>PP) → documento designado por MOISES.PERSONA_NATURAL → FEC_INICIO desc → orden total (ID_CONTRATO desc, COD_APS, tipo, número). El tipo de documento va ANTES del MDM: medido, baja los duplicados de correlación de 32 a 20. CAUSA RAÍZ AGUAS ARRIBA (no la arregla este resource): mientras VW_PERSONA_NATURAL siga a grano persona×documento, cualquier otro consumidor tiene el mismo fan-out. FIX ÁREA-DEL-CONTRATO 2026-05-30 (caso Flores 41970870): el costCenter/ID_AREA se deriva ahora PREFERENTEMENTE del departamento del contrato VIVO 7124 (VW_APS_EMPLEADO.ID_DEPTO de la fila ESTADO='A' y vigente FEC_TERMINO NULL|>=SYSDATE), resuelto 1:1 a ELISEO.ORG_SEDE_AREA→ORG_AREA.ID_AREA, vía LEFT JOIN 'ca'. COALESCE(ca.CONTRACT_AREA, osa.ID_AREA): si el ID_DEPTO no resuelve 1:1 (depto jerárquico ambiguo) se hace fallback al área histórica de VW_TRABAJADOR.ID_SEDEAREA (comportamiento previo, preserva 3894 casos correctos y jubilados). El endurecimiento de vigencia (ESTADO='A' + FEC_TERMINO vigente) vive SOLO dentro del resolutor 'ca' (deriva área), NO en el WHERE de inclusión de población (jubilados grace 730d intactos). Mata falsos activos (ej. DNI 73970305, 7124 vencido 2020 con flag 'A') para la derivación de área. IIA del área de empleo vivo = contrato 7124, NO VW_TRABAJADOR (nivel persona, STALE hacia misión origen). 109 trabajadores transferidos denominacional→UPeU resueltos. CURA DEPTO AMBIGUO 2026-05-30 (PM16, casos 76575561/48636923/72783226): cuando el ID_DEPTO mapea a >1 ID_AREA candidata (todas ent=7124), el resolutor 1:1 'dm' se abstiene (HAVING COUNT(DISTINCT)=1); se añade segundo nivel 'dm2' que intersecta las candidatas con el SET CANÓNICO IN-SCOPE (mismo CONNECT BY ent=7124 MINUS AGTU del resource org.xml) y, si quedan varias, elige la de MAX(ID_SEDEAREA) (mapeo más reciente = canónico vigente). COALESCE(dm, dm2) preserva 100% de los casos 1:1 previos (invariante verificada: 0 cambios en strict path). Resuelve 1593 ambiguos adicionales a su área canónica; 31 residuales sin candidata in-scope hacen fallback histórico (osa.ID_AREA). 76575561→AREA-789 (Dir. Marketing), 48636923→AREA-102 (EP Educación), 72783226→AREA-8232 (Subdir. Marketing y Comunicaciones).</description>
     <lifecycleState>active</lifecycleState>
