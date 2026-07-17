@@ -242,7 +242,7 @@ El motor no podía resolver el focus item para correlación.
 
 > **Estuvo completado el 2026-05-19 y se retiró.** [ADR-058](../../../../sciback/sciback-core-docs/docs/architecture/adrs/058-keycloak-solo-autentica.md): **no se federa LDAP en Keycloak.** Medido en producción, la federación entregaba el claim `epuid` a **2 de las 32** personas que realmente entran (usernames disjuntos: LDAP importa carnés sin `@`, el IdP crea correos con `@`, intersección **0**). Apagada el 13-jul-2026; último usuario importado 05-jul-2026. **No re-ejecutar este paso.** El borrado de las 6 federaciones es la acción B3 del ADR-058, pendiente de ventana (borra los 54 322 usuarios importados).
 
-Registro histórico de lo que se hizo — conexión directa Keycloak (192.168.12.88) → OpenLDAP (192.168.15.168:389):
+Registro histórico de lo que se hizo — conexión directa Keycloak (192.168.12.88 — host **retirado**, caído desde el 7-jul-2026; prod es hoy AWS `18.218.108.85`) → OpenLDAP (192.168.15.168:389):
 - Firewall TCP 389 abierto por Rudy *(la apertura sigue siendo útil: otras apps leen el LDAP)*
 - `connectionUrl` corregido: `ldap://192.168.15.166:8080` → `ldap://192.168.15.168:389`
 - `bindCredential` corregido
@@ -599,7 +599,7 @@ Fase 13 — Metricas COUNTER                      🔒 BLOQUEADA (Fase 12 + cred
 6. **2026-05-11** — **AD UPeU actual queda OUT del alcance.** No se lee, no se escribe. Mal estructurado, no es global. La decision sobre AD nuevo se difiere a Fase 12.
 7. **2026-05-11** — **Entra ID UPeU es solo lectura hasta Fase 12.** En Fase 5 se importa para correlacion. El gobierno completo (writes) comienza solo cuando el modelo IGA en MidPoint este maduro y validado end-to-end.
 8. **2026-05-11** — `msgraph.env` actual apunta al tenant **SciBack** (sandbox personal), NO al tenant UPeU real. Para tenant UPeU se necesita app registration separada (ver DU-001a).
-9. **2026-05-11** — **No se modifica ningun sistema UPeU existente.** Solo MidPoint + sistemas nuevos (OpenLDAP HA). Keycloak existente (`192.168.12.88`) si es nuestro y se reconfigura.
+9. **2026-05-11** — **No se modifica ningun sistema UPeU existente.** Solo MidPoint + sistemas nuevos (OpenLDAP HA). Keycloak existente (entonces `192.168.12.88`) si es nuestro y se reconfigura. *(Actualización 2026-07-17: ese host se migró a AWS el 10-jul y quedó **retirado** —caído desde el 7-jul—; prod = `18.218.108.85`.)*
 10. **2026-05-19** — **Repo consolidado a estructura `canonical/` + `upeu/`.** Repo padre `SciBack/midpoint` carpeta local eliminada; GitHub pendiente archivar (NO eliminar). Branch `consolidation-2026-05-19` pendiente merge a `main` post-OOM.
 11. **2026-05-19** — **PROD NO se toca hasta recuperacion OOM.** Los OIDs no cambiaron; PROD lee desde DB, no filesystem. Solo `git checkout` y validacion post-OOM.
 

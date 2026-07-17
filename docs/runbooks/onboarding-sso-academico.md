@@ -87,7 +87,9 @@ CONTEXTO ADICIONAL DISPONIBLE EN EL CODEBASE
 - OID SchemaType: b7d55017-599f-4f2f-9493-9f64bba62c5b
 - Namespace: urn:upeu:midpoint:person
 - MidPoint prod: 4.10.2 en 192.168.15.166
-- Keycloak prod: 26.6.1 en identity.upeu.edu.pe (192.168.12.88)
+- Keycloak prod: 26.7.0 en keyid.upeu.edu.pe → EC2 AWS 18.218.108.85 (cuenta upeu-research
+  874962955245, us-east-2). El on-prem 192.168.12.88 está retirado (caído desde el 7-jul-2026).
+  (Ojo: identity.upeu.edu.pe es MidPoint, NO Keycloak — eran dos errores en la misma línea.)
 - Acceso vía secrets en ~/.secrets/keycloak-prod.env y
   ~/.secrets/midpoint-upeu.env
 

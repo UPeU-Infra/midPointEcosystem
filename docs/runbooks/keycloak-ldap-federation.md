@@ -21,8 +21,14 @@
 
 ## Arquitectura histórica (mayo-julio 2026 — ya no vigente)
 
+> ⚠️ **Las IPs de este diagrama son históricas.** El Keycloak `192.168.12.88` que aparece aquí
+> **fue retirado y BORRADO el 2026-07-17**: ese host ya no existe. Desde el cutover del
+> 2026-07-10, `keyid.upeu.edu.pe` resuelve al LB interno `192.168.12.199` y de ahí a una
+> **EC2 en AWS** (`18.218.108.85`, cuenta `upeu-research` 874962955245, us-east-2).
+> Se conserva el diagrama tal cual porque describe una topología pasada, no la actual.
+
 ```
-Keycloak (192.168.12.88)
+Keycloak (192.168.12.88)   ← host RETIRADO (caído desde 7-jul); hoy prod es AWS 18.218.108.85
   keyid.upeu.edu.pe
         │
         │  TCP 389 (LDAP) — directo, sin proxy
@@ -50,7 +56,7 @@ MidPoint PROD (192.168.15.166)
 
 | Servidor | IP | Rol |
 |---|---|---|
-| `keycloak-prod` | 192.168.12.88 | SSO (Keycloak 26.6.1) |
+| `keycloak-prod` | ~~192.168.12.88~~ → **18.218.108.85 (AWS)** | SSO. El on-prem 26.6.1 está **retirado** (caído desde el 7-jul-2026); prod es Keycloak **26.7.0** en EC2 (`i-0a5ec78e87d2c39b8`) |
 | `ldap-identity-trust` | 192.168.15.168 | Directorio centralizado (OpenLDAP, Docker) |
 | `midpoint-prod` | 192.168.15.166 | Orquestador IGA (MidPoint 4.10.x) |
 
@@ -111,7 +117,7 @@ MidPoint PROD (192.168.15.166)
 | Problema | Valor incorrecto | Valor correcto |
 |---|---|---|
 | `connectionUrl` en Keycloak | `ldap://192.168.15.166:8080` (MidPoint HTTP) | `ldap://192.168.15.168:389` |
-| `bindCredential` en Keycloak | `keycloak2024` (inválida) | `Kc@Ldap2026!` |
+| `bindCredential` en Keycloak | `keycloak2024` (inválida) | *(redactado — `~/.secrets/ldap-upeu.env`)* |
 | Firewall TCP 389 (12.88→15.168) | Cerrado | Abierto por Rudy |
 
 No existía proxy de red. La conexión directa estaba bloqueada y la configuración apuntaba a una dirección incorrecta.

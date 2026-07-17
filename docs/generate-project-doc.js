@@ -765,7 +765,7 @@ const doc = new Document({
             ["Servidor MidPoint DEV", "192.168.15.230 | Ubuntu 22.04 | Docker", "Pruebas (pre-PROD)"],
             ["OpenLDAP Nodo 1", "192.168.15.168 | Ubuntu | Docker | ulimits 65536", "LDAP HA primario"],
             ["OpenLDAP Nodo 2", "192.168.15.169 | Ubuntu | Docker | ulimits 65536", "LDAP HA replica"],
-            ["Servidor Keycloak", "192.168.12.88 | Docker", "SSO institucional"],
+            ["Servidor Keycloak", "18.218.108.85 (AWS EC2) | Docker", "SSO institucional (keyid.upeu.edu.pe)"],
             ["Oracle LAMB (acceso lectura)", "Oracle 11g | schemas MOISES/DAVID/ELISEO/JOSUE", "Fuente autoritativa"],
           ].map(([r, s, a], i) => new TableRow({ children: [
             cell(r, { bg: i % 2 ? C.rowAlt : C.white, width: 3200, size: 18, bold: true }),

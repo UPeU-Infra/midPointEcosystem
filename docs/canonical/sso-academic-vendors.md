@@ -152,7 +152,7 @@ OpenLDAP HA Identity Cache
    37K+ entradas; replicacion bidireccional verificada
    │ User Federation LDAP (Keycloak lee en tiempo real)
    ▼
-Keycloak 26.6.1 (192.168.12.88, realm upeu)
+Keycloak 26.7.0 (AWS 18.218.108.85, realm upeu)   ← el on-prem .88 quedó retirado (caído 7-jul)
    │ User Federation LDAP: ACTIVA → lee de OpenLDAP Node1
    │ Client Scope SAML "academic-databases-eduperson"
    │ PENDIENTE Fase 13: protocol mappers eduPerson desde atributos LDAP

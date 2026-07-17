@@ -8,7 +8,10 @@ MidPoint PROD (192.168.15.166)
     ▼
 OpenLDAP Nodo 1 (192.168.15.168)  ←──syncrepl──→  OpenLDAP Nodo 2 (192.168.15.169)
     ▲                                                       ▲
-    └─── Keycloak (192.168.12.88) lee desde ambos ─────────┘
+    └─── (histórico) Keycloak leía desde ambos ────────────┘
+         ⚠️ YA NO: la federación LDAP→Keycloak se retiró (ADR-058, 17-jul-2026) y el host
+         on-prem 192.168.12.88 está retirado (caído desde el 7-jul). Keycloak hoy corre en AWS
+         (18.218.108.85) y SOLO autentica: cada app lee el LDAP con su propio bind.
 ```
 
 **Imagen:** `osixia/openldap:1.5.0` (OpenLDAP 2.4.57, backend mdb, cn=config OLC dinámico)  
@@ -363,7 +366,8 @@ La HA de OpenLDAP (Node1 `.168` + Node2 `.169`) **sigue siendo crítica**, pero 
 - Replicación bidireccional activa: rid=001 (169→168) y rid=002 (168→169) ✅
 - Sin errores de replicación en logs ✅
 - MidPoint (192.168.15.166) → Nodo 1:389 ✅
-- Keycloak (192.168.12.88) → Nodo 1:389 ✅
+- ~~Keycloak (192.168.12.88) → Nodo 1:389~~ ❌ **obsoleto**: federación retirada (ADR-058) y host
+  retirado (caído desde el 7-jul-2026). Keycloak (AWS 18.218.108.85) ya **no** consulta este LDAP.
 - Schemas en ambos nodos: core, cosine, nis, inetorgperson, ppolicy, kopano, openssh-lpk, postfix-book, samba, eduPerson, schac, midpointperson, **upeu** ✅
 
 ### Lecciones adicionales (L9–L11)

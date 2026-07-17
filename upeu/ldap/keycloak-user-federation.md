@@ -14,6 +14,7 @@
 
 1. Import piloto completado (al menos 50 usuarios activos en ou=people,dc=upeu,dc=edu,dc=pe)
 2. Verificar que Keycloak en 192.168.12.88 tiene conectividad a 192.168.15.168:389
+   *(obsoleto: `.88` está retirado y caído desde el 7-jul-2026; prod es AWS `18.218.108.85`, fuera de la LAN)*
 3. El SA `cn=keycloak,dc=upeu,dc=edu,dc=pe` tiene acceso read-only a ou=people
 
 ### Datos de conexión
@@ -22,7 +23,7 @@
 |---|---|
 | Connection URL | ldap://192.168.15.168:389 |
 | Bind DN | cn=keycloak,dc=upeu,dc=edu,dc=pe |
-| Bind Credential | Kc@Ldap2026! |
+| Bind Credential | *(redactado — ver `~/.secrets/ldap-upeu.env` `LDAP_KEYCLOAK_*`)* |
 | User DN | ou=people,dc=upeu,dc=edu,dc=pe |
 | User object classes | inetOrgPerson, eduPerson |
 | UUID LDAP attribute | uid |
