@@ -1228,12 +1228,20 @@ return code ? code : null
                        1. {"type":"STUDY_LEVEL","value":"pregrado|posgrado"} (solo students)
                           — gobernado destructivamente por intolerantValuePattern.
                        2. {"type":"DNI","value":"<dni>"} desde upeu:lambDocNum (2026-06-05)
-                          — imprescindible para el adopt-by-DNI del conector v1.3.10: ante
-                          un 409 (borrower legacy con cardnumber=DNI != cardnumber canónico
-                          =código), el conector lee este par DNI del payload, resuelve el
-                          borrower legacy por cardnumber=DNI con _match=exact y lo ADOPTA 1:1
-                          (idempotente, sin crear ni fusionar). NO intolerante → tolerado
-                          (MidPoint lo añade pero no lo gobierna destructivamente). -->
+                          — ⚠️ HISTÓRICO (v1.3.10, YA NO APLICA): este par era imprescindible
+                          para el adopt-by-DNI, donde ante un 409 el conector resolvía el
+                          borrower legacy por cardnumber=DNI con _match=exact y lo adoptaba.
+                          **El conector v1.3.13 (045500c3), al que apunta el connectorRef,
+                          RETIRÓ ese mecanismo en sus dos capas** (REST PatronService y JDBC
+                          KohaConnector, commit e384c82). El 409 se resuelve ahora solo por
+                          cardnumber → userid → email; si ninguno matchea, es irrecuperable.
+                          ESTADO ACTUAL DEL PAR DNI: se sigue proyectando pero es
+                          **INFORMATIVO** (coherente con la línea 29 de este archivo). Ningún
+                          camino del conector lo consume. NO intolerante → tolerado (MidPoint
+                          lo añade pero no lo gobierna destructivamente).
+                          Si se decide dejar de emitirlo, retirar este par del outbound —
+                          pero requiere confirmar antes que ningún consumidor de Koha
+                          (reportes, circulación) lo lea del lado biblioteca. -->
                 <outbound>
                     <name>extended-attributes-study-level-and-dni</name>
                     <strength>strong</strength>
