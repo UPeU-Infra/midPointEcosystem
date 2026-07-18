@@ -31,11 +31,14 @@
            - library_id: default seguro (campus desconocido NO cae a BUL).
          ============================================================ -->
     <lifecycleState>proposed</lifecycleState>
-    <!-- connectorRef → KohaConnector (bundle compartido; el conector NUEVO ya
-         retiró la lógica adopt-by-DNI legacy, D-14). Mantengo el mismo OID de
-         conector que koha-ils.xml; si el bundle .136 tuviera OID distinto,
-         actualizar aquí al desplegar. -->
-    <connectorRef oid="45b4f0e0-b905-49c4-9d10-f0af7c067a6a" relation="org:default" type="c:ConnectorType"/>
+    <!-- connectorRef → KohaConnector **v1.3.13** (OID 045500c3, discovered 2026-07-17).
+         Es la versión que EFECTIVAMENTE retiró el adopt-by-DNI legacy (D-14, commit
+         e384c82): el 409 se resuelve solo por cardnumber → userid → email, sin el
+         fallback por DNI ni el lookup JDBC en borrower_attributes.
+         ⚠️ YA NO comparte OID con koha-ils.xml: el Koha VIEJO (.135) se queda
+         deliberadamente en v1.3.11 (45b4f0e0) hasta que se jubile — no cambiar ese,
+         ni borrar su jar/ConnectorType, o se rompe el resource viejo. -->
+    <connectorRef oid="045500c3-bd33-4cba-ae73-97b239479e8e" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration>
         <ns1:configurationProperties>
             <ns2:serviceAddress>http://192.168.12.136:8001</ns2:serviceAddress>
