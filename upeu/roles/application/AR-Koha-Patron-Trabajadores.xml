@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+      oid="c5a63f02-6b30-4c1b-b3eb-94d526e23dd6">
+    <!-- ============================================================
+         ETAPA 1 del escalamiento de Koha (19-jul-2026), aprobada por
+         Alberto. Rol PUENTE de PRODUCCIÓN REAL — NO es el diseño final.
+
+         CONTEXTO: AR-Koha-Patron-DryRun (0af6e350-519e-4bf8-bf5a-9bcef8122f8a)
+         probó el patrón de provisioning PUSH hacia koha-upeu (e10a539a-
+         cb7f-4c72-a19f-60f7f62e4b96) con 4 focos nombrados y quedó
+         explícitamente "desechable, no se promueve a producción" (ver su
+         propio XML). Los 11 AR-Koha-Patron-*/Librarian de producción
+         (activos, 27.557+ holders en conjunto) siguen apuntando al Koha
+         viejo (9b5a7c81-47aa-42ac-9a08-4de8b64935af, en maintenance,
+         caído desde el 10-jul) — migrarlos es la Etapa 2, fuera de
+         alcance hoy.
+
+         Este rol NUEVO cierra el hueco entre ambos: es el mecanismo de
+         PRODUCCIÓN REAL para provisionar trabajadores activos
+         (employee-faculty + employee-staff) hacia koha-upeu MIENTRAS
+         dura la Etapa 1, con asignación MASIVA pero EXPLÍCITA (lotes de
+         población nombrada por consulta puntual, documentados en el
+         runbook de la sesión — NO una regla que crezca sola con el
+         tiempo, ver más abajo por qué no hay assignmentTargetSearch).
+
+         QUEDARÁ SUPERADO cuando la Etapa 2 repunte los roles de
+         producción reales (AR-Koha-Patron-Administrativo /
+         AR-Koha-Patron-Faculty, hoy apuntando al viejo) hacia koha-upeu
+         y se retire koha-ils.xml. En ese momento este rol se retira del
+         catálogo (mismo destino que se previó para el DryRun) — quien lo
+         lea en el futuro: si ves este comentario y la Etapa 2 ya cerró,
+         este rol es deuda a limpiar, no un patrón a copiar.
+         ============================================================ -->
+    <name>AR-Koha-Patron-Trabajadores</name>
+    <description>
+        Application Role de PRODUCCIÓN (Etapa 1 del escalamiento Koha, 19-jul-2026).
+        Birthright puro: UN solo inducement (construction sin overrides) hacia el
+        account default de koha-upeu, exactamente el mismo patrón validado por
+        AR-Koha-Patron-DryRun en el dry-run de 4 focos (6/6 campos exactos, 0/6
+        criterios de aborto, en cada uno). category_id/branchcode/extended_attributes
+        los deriva el RESOURCE por sus propios outbound mappings a partir de
+        atributos ya presentes en el foco (primaryAffiliation, campusWorker,
+        externalSystemId, institutionalCode, lambDocNum) — este rol no transporta
+        ningún dato, solo abre la ruta construction hacia el resource.
+
+        POBLACIÓN OBJETIVO (Etapa 1): trabajadores activos —
+        archetype employee-faculty (c93083ca-f4c5-4704-acf4-d53b97c9556e) o
+        employee-staff (6460facf-3abf-4851-966e-0c95aa1a6c46) — con
+        lifecycleState=active, administrativeStatus=ENABLED, y
+        extension/externalSystemId poblado. Universo medido en PROD el 19-jul:
+        2.793 activos con ambos archetypes; los 2.793 tienen externalSystemId
+        poblado (el hueco de 1 citado en el encargo, oid 763c5096-8010-427b-8c2b-
+        b993268d270c/nameorig 9610165, ya NO está vacío en PROD — esid=15922,
+        backfill posterior no documentado en esta sesión — se excluyó igual, por
+        disciplina, siguiendo el encargo literal en vez de reinterpretar el dato
+        nuevo sobre la marcha). Excluidos también los 4 focos ya provisionados
+        vía AR-Koha-Patron-DryRun (00903b54, 01f1d09b, 56cf446b, 77b7f67b).
+        Población real a procesar: 2.788.
+
+        ASIGNACIÓN: MASIVA pero EXPLÍCITA, en lotes, por PATCH puntual con la
+        lista de OIDs de cada lote (ver runbook de la sesión de despliegue) —
+        NUNCA vía búsqueda dinámica, autoassign, policy rule, ni inducement de
+        ningún archetype/business-role. Este rol NO existe en ningún
+        assignmentTargetSearch de ningún object template: precisamente porque es
+        un puente temporal, no debe autoasignarse ni sobrevivir por su cuenta a
+        cambios futuros en la población de trabajadores (altas nuevas post-Etapa
+        1 quedan fuera de este rol por diseño — se resuelven en la Etapa 2 con
+        los roles de producción reales, no extendiendo este puente).
+
+        RETIRO: al cerrar la Etapa 2 (roles de producción repuntados a koha-upeu
+        y koha-ils.xml retirado), este rol se retira del catálogo — no es el
+        diseño final, es el puente de la Etapa 1.
+    </description>
+    <!-- ============================================================
+         lifecycleState = proposed (NO active) al momento de crear este
+         objeto en PROD.
+
+         Mismo mecanismo confirmado empíricamente para AR-Koha-Patron-DryRun
+         (control positivo en .230, 18-jul): un Role con lifecycleState=
+         proposed, cuando es TARGET de una asignación, SUPRIME la evaluación
+         de sus inducement/construction — no se crea shadow, aunque la
+         asignación en sí (m_assignment) sí se procese. Ver memoria
+         "midpoint-role-proposed-como-target-confirmado".
+
+         Este rol es de PRODUCCIÓN REAL a escala (2.788 focos), a diferencia
+         del DryRun (4 focos manuales) — por eso, ANTES de asignar el primer
+         lote, se promueve explícitamente a active y se verifica 0 holders
+         (objeto recién creado, nadie asignado todavía) con el inducement
+         suprimido primero. Solo entonces arranca el Lote 1. La promoción
+         proposed->active se hace SOLA, en su propio cambio, nunca junto con
+         la primera asignación masiva — mismo principio que el DryRun.
+         ============================================================ -->
+    <lifecycleState>proposed</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application role (OID canónico PROD, mismo que los demás
+             AR-Koha-Patron-*/AR-Koha-Patron-DryRun). Tipifica el objeto para el
+             catálogo/reportes de gobernanza RBAC — NO otorga privilegios (eso lo
+             hace el inducement de abajo, el único que este rol declara). -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <!-- ============================================================
+         UN SOLO inducement, sin condiciones, sin overrides de atributos.
+         Idéntico en forma al de AR-Koha-Patron-DryRun (ver justificación
+         completa en ese XML) — la única diferencia de diseño entre ambos
+         roles es el ALCANCE de la asignación (4 focos manuales vs 2.788
+         explícitos por lote), no el mecanismo de provisioning.
+         ============================================================ -->
+    <inducement>
+        <construction>
+            <resourceRef oid="e10a539a-cb7f-4c72-a19f-60f7f62e4b96" type="ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+        </construction>
+    </inducement>
+</role>
