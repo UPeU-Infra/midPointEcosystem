@@ -1,22 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Task: Reconcile Oracle LAMB Trabajadores
-  Resource: Oracle LAMB Trabajadores v2 (OID 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21)
-  Estado: suspended — NO ejecutar automáticamente.
-  Activar manualmente desde la UI cuando el piloto de import esté aprobado.
-  Horario configurado: 02:00 UTC nightly (cronLikePattern) — inactivo mientras suspended.
-  Fase: I6 — IGA UPeU canónico 2026-05-17
-  Sintaxis: activity-based reconciliation MidPoint 4.9.5 (resourceObjects wrapper requerido)
+  Task: Reconciliacion diaria — Oracle LAMB Trabajadores v3
+  Resource: 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21
+  Estado: schedulingState=SUSPENDED explicito. NO se activa con este despliegue.
+  Diseño 2026-07-19 (reemplaza el borrador de mayo/2026, sintaxis MidPoint 4.9.5
+  executionStatus/recurrence, nunca desplegado en PROD; oid reutilizado).
+
+  POR QUE reconciliation y no import ni recompute masivo:
+  - Los 7 resources Oracle LAMB ScriptedSQL no soportan LiveSync (cfg:syncScript
+    retorna null explicitamente). Sin captura de cambios nativa, reconciliation
+    es el mecanismo recomendado por Evolveum para mantener el modelo convergente:
+    en cada corrida trae el universo VIVO completo (segun el searchScript del
+    resource, ya NO limitado a 267/279/283 fijos donde aplica) y lo compara
+    contra los shadows cacheados.
+  - NO se usa <recomputation> sobre UserType (recompute masivo de los ~61.520
+    usuarios sanos): el reconciliation aqui esta acotado a ESTE resource
+    (universo de Trabajadores, ~2.800 activos), no a la poblacion completa.
+    El recompute de foco solo se dispara para los shadows cuyo valor de
+    atributo cambio respecto al cache cacheado (reaction linked->synchronize,
+    ver <synchronization> del resource); los usuarios sin cambios no generan
+    trabajo downstream material.
+  - El propio reaction linked->synchronize ya empuja el pipeline completo
+    (inbound -> template -> role/construction) incluyendo el outbound hacia
+    koha-upeu si corresponde: NO hace falta una task aparte de "recompute batch"
+    para que Koha se entere de una alta/cambio en Trabajadores.
+
+  Horario: 06:00 UTC = 01:00 Lima (America/Lima, UTC-5). Ventana de bajo trafico
+  campus, antes de recon-entra-id-daily (02:00 UTC) y separado de Estudiantes/
+  Egresados/Koha (ver esos tasks) para no saturar la misma conexion Oracle
+  192.168.13.9 con 3 reconciliations simultaneas.
+
+  Riesgo Oracle caido esa noche: misfireAction=executeImmediately -> MidPoint
+  reintenta la corrida completa en cuanto el servidor vuelva a estar arriba
+  (no se salta el dia). Errores por registro individual (casos ya catalogados
+  19-jul: split-brain Entra/LDAP, duplicate-key, email con caracter invalido)
+  NO deben abortar la corrida completa -> controlFlow/errorHandling ignore.
+  Sin alerta automatica configurada todavia si Oracle esta caido TODA la
+  ventana (gap real, ver informe final; requiere webhook/telegram o
+  notificacion SMTP de MidPoint, no incluido en esta task).
 -->
 <task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       oid="23b9fde4-6a5f-4c84-9370-0971fb27be73">
-    <name>Reconcile Oracle LAMB Trabajadores</name>
+    <name>recon-oracle-lamb-trabajadores-daily</name>
+    <description>Reconciliacion diaria Oracle LAMB Trabajadores v3 (inbound-only, fuente autoritativa). Cron 06:00 UTC (01:00 Lima). Disenada 2026-07-19, SUSPENDED hasta aprobacion explicita de Alberto.</description>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
-    <executionStatus>suspended</executionStatus>
+    <executionState>runnable</executionState>
+    <schedulingState>suspended</schedulingState>
+    <binding>loose</binding>
     <schedule>
-        <recurrence>recurring</recurrence>
-        <cronLikePattern>0 0 2 * * ?</cronLikePattern>
+        <cronLikePattern>0 0 6 * * ?</cronLikePattern>
+        <misfireAction>executeImmediately</misfireAction>
     </schedule>
     <activity>
         <work>
@@ -28,5 +62,17 @@
                 </resourceObjects>
             </reconciliation>
         </work>
+        <controlFlow>
+            <errorHandling>
+                <entry>
+                    <reaction>
+                        <ignore/>
+                    </reaction>
+                </entry>
+            </errorHandling>
+        </controlFlow>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
     </activity>
 </task>

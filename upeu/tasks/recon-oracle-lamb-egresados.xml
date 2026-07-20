@@ -1,22 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Task: Reconcile Oracle LAMB Egresados
-  Resource: Oracle LAMB Egresados v2 (OID 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23)
-  Estado: suspended — NO ejecutar automáticamente.
-  Activar manualmente desde la UI cuando el piloto de import esté aprobado.
-  Horario configurado: 02:00 UTC nightly (cronLikePattern) — inactivo mientras suspended.
-  Fase: I6 — IGA UPeU canónico 2026-05-17
-  Sintaxis: activity-based reconciliation MidPoint 4.9.5 (resourceObjects wrapper requerido)
+  Task: Reconciliacion diaria — Oracle LAMB Egresados v3
+  Resource: 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23
+  Estado: schedulingState=SUSPENDED explicito. NO se activa con este despliegue.
+  Diseño 2026-07-19 (reemplaza el borrador de mayo/2026, sintaxis MidPoint 4.9.5
+  executionStatus/recurrence, nunca desplegado en PROD; oid reutilizado).
+
+  POR QUE reconciliation y no import ni recompute masivo: ver la nota
+  identica en recon-oracle-lamb-trabajadores.xml. Universo mas chico que
+  Estudiantes/Trabajadores -> workerThreads=2 (mas conservador, no hace
+  falta paralelismo alto).
+
+  Nota de alcance (19-jul): egresados alum puros SIN vinculo vivo NO reciben
+  cuenta Koha por diseno (activation/existence outbound de koha-upeu exige
+  liveAffiliationWorker/Student vivo o bibliotecario); esta reconciliation
+  no va a "destrabar" Koha para los 4.598 alumni ya medidos como inelegibles
+  hoy; eso es la regla de negocio funcionando, no algo que esta task deba
+  o pueda cambiar.
+
+  Horario: 06:45 UTC = 01:45 Lima. Despues de Trabajadores (06:00) y
+  Estudiantes (06:20), antes de recon-koha-upeu-daily (07:15 UTC).
+
+  Riesgos: identicos a Trabajadores/Estudiantes (Oracle caido ->
+  misfireAction=executeImmediately; errores por registro -> controlFlow
+  ignore). Sin alerta automatica si Oracle esta caido TODA la ventana.
 -->
 <task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       oid="86c3766a-77a6-4635-853c-998b26cad45c">
-    <name>Reconcile Oracle LAMB Egresados</name>
+    <name>recon-oracle-lamb-egresados-daily</name>
+    <description>Reconciliacion diaria Oracle LAMB Egresados v3 (inbound-only, fuente autoritativa). Cron 06:45 UTC (01:45 Lima). Disenada 2026-07-19, SUSPENDED hasta aprobacion explicita de Alberto.</description>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
-    <executionStatus>suspended</executionStatus>
+    <executionState>runnable</executionState>
+    <schedulingState>suspended</schedulingState>
+    <binding>loose</binding>
     <schedule>
-        <recurrence>recurring</recurrence>
-        <cronLikePattern>0 0 2 * * ?</cronLikePattern>
+        <cronLikePattern>0 45 6 * * ?</cronLikePattern>
+        <misfireAction>executeImmediately</misfireAction>
     </schedule>
     <activity>
         <work>
@@ -28,5 +48,17 @@
                 </resourceObjects>
             </reconciliation>
         </work>
+        <controlFlow>
+            <errorHandling>
+                <entry>
+                    <reaction>
+                        <ignore/>
+                    </reaction>
+                </entry>
+            </errorHandling>
+        </controlFlow>
+        <distribution>
+            <workerThreads>2</workerThreads>
+        </distribution>
     </activity>
 </task>

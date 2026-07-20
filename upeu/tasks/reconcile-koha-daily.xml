@@ -1,25 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: Reconciliacion diaria — koha-upeu (drift catch-up, NO driver primario)
+  Resource: koha-upeu (e10a539a-cb7f-4c72-a19f-60f7f62e4b96)
+  Estado: schedulingState=SUSPENDED explicito. NO se activa con este despliegue.
+
+  FIX 2026-07-19: este task apuntaba al resource Koha VIEJO (9b5a7c81-...),
+  formalmente archivado hoy mismo al cierre de la Etapa 4 de migracion
+  (retiro-koha-viejo). Repuntado a koha-upeu; el UNICO resource Koha activo
+  desde hoy. Si esta task se hubiera activado sin este fix, habria intentado
+  reconciliar contra un resource archivado y caido (administrativeAvailability
+  Status=maintenance, NoRouteToHostException real desde 10-jul).
+
+  POR QUE esta task es un catch-up de DRIFT, no el mecanismo principal de
+  provisioning hacia Koha:
+  El aprovisionamiento MidPoint->Koha ya ocurre como efecto lateral de las
+  3 reconciliations de Oracle LAMB (Trabajadores/Estudiantes/Egresados,
+  ver esos tasks): su reaction linked->synchronize dispara el pipeline
+  completo (inbound -> template -> role/construction -> outbound koha-upeu)
+  para cualquier persona cuyos datos de matricula/contrato cambiaron. Esta
+  task de aqui NO es necesaria para que una alta/cambio en Oracle llegue a
+  Koha; ya llega via las 3 tasks de arriba.
+  Lo que ESTA task SI cubre, que las otras 3 no pueden: drift del LADO Koha
+  (alguien edito un patron directamente en Koha, un pendingOperation que
+  quedo colgado tras un timeout de red, un cardnumber que cambio fuera de
+  MidPoint). Reconciliar koha-upeu mismo detecta y corrige esa clase de
+  deriva; complementaria, no sustituta, de las 3 reconciliations LAMB.
+
+  Horario: 07:15 UTC = 02:15 Lima. Corre DESPUES de las 3 reconciliations
+  LAMB (06:00/06:20/06:45 UTC) para no competir por trabajo con el mismo
+  foco a medio recomputar; para cuando arranca, el grueso de la
+  propagacion Oracle->MidPoint->Koha de esa noche ya debio completarse.
+
+  Riesgos: si Koha esta caido esa ventana (ha pasado: 10-jul a hoy con el
+  viejo), la reconciliation falla/reintenta segun controlFlow -> ignore
+  evita que aborte la corrida completa. Sin alerta automatica configurada
+  todavia (mismo gap que las 3 tasks LAMB, ver informe).
+-->
 <task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
       oid="58ef8e82-867e-432a-923e-98adcd7c57fa">
-    <name>Reconcile-Koha-ILS-Daily</name>
-    <description>Reconciliacion diaria Koha ILS — inbound sync de patrones a MidPoint. Cron 03:00 UTC. No solapar con Oracle LAMB (02:00 UTC). Ref: DT-6.</description>
+    <name>recon-koha-upeu-daily</name>
+    <description>Reconciliacion diaria koha-upeu — catch-up de drift (NO driver primario de provisioning, eso ya ocurre via las reconciliations LAMB). Cron 07:15 UTC (02:15 Lima). Repuntada 2026-07-19 del resource Koha viejo (archivado) a koha-upeu. SUSPENDED hasta aprobacion explicita de Alberto.</description>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="UserType"/>
     <executionState>runnable</executionState>
+    <schedulingState>suspended</schedulingState>
+    <binding>loose</binding>
     <schedule>
-        <cronLikePattern>0 0 3 * * ?</cronLikePattern>
+        <cronLikePattern>0 15 7 * * ?</cronLikePattern>
         <misfireAction>executeImmediately</misfireAction>
     </schedule>
     <activity>
         <work>
             <reconciliation>
                 <resourceObjects>
-                    <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
+                    <resourceRef oid="e10a539a-cb7f-4c72-a19f-60f7f62e4b96" type="ResourceType"/>
                     <kind>account</kind>
                     <intent>default</intent>
                 </resourceObjects>
             </reconciliation>
         </work>
+        <controlFlow>
+            <errorHandling>
+                <entry>
+                    <reaction>
+                        <ignore/>
+                    </reaction>
+                </entry>
+            </errorHandling>
+        </controlFlow>
         <distribution>
             <workerThreads>4</workerThreads>
         </distribution>

@@ -1,22 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Task: Reconcile Oracle LAMB Estudiantes
-  Resource: Oracle LAMB Estudiantes v2 (OID 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22)
-  Estado: suspended — NO ejecutar automáticamente.
-  Activar manualmente desde la UI cuando el piloto de import esté aprobado.
-  Horario configurado: 02:00 UTC nightly (cronLikePattern) — inactivo mientras suspended.
-  Fase: I6 — IGA UPeU canónico 2026-05-17
-  Sintaxis: activity-based reconciliation MidPoint 4.9.5 (resourceObjects wrapper requerido)
+  Task: Reconciliacion diaria — Oracle LAMB Estudiantes v3
+  Resource: 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22
+  Estado: schedulingState=SUSPENDED explicito. NO se activa con este despliegue.
+  Diseño 2026-07-19 (reemplaza el borrador de mayo/2026, sintaxis MidPoint 4.9.5
+  executionStatus/recurrence, nunca desplegado en PROD; oid reutilizado).
+
+  Depende del fix del filtro Idiomas aplicado hoy mismo (2026-07-19, ver
+  <description> del resource): el searchScript ya NO esta limitado a
+  ID_SEMESTRE IN (267,279,283) fijo; ahora incluye dinamicamente los ciclos
+  rotativos de Idiomas vigentes (285/286/288/289 hoy, y los que Oracle siga
+  generando). Sin ese fix, esta reconciliation recurrente habria quedado
+  ciega a Idiomas para siempre, no solo hoy; por eso el orden de las 4
+  tareas de esta sesion no es arbitrario.
+
+  POR QUE reconciliation y no import ni recompute masivo: ver la nota
+  identica en recon-oracle-lamb-trabajadores.xml (mismo razonamiento,
+  aplica igual: sin LiveSync nativo, reconciliation acotada a ESTE resource,
+  el reaction linked->synchronize ya empuja el pipeline downstream incluido
+  koha-upeu sin necesitar una task de recompute batch separada).
+
+  Es el resource con MAYOR volumen (Pregrado+Posgrado+CEPRE+Idiomas,
+  ~28.780 personas segun snapshot 19-jul) -> distribution workerThreads=4
+  y horario propio (no comparte franja con Trabajadores/Egresados) para no
+  competir por la misma conexion Oracle 192.168.13.9.
+
+  Horario: 06:20 UTC = 01:20 Lima. 20 min despues de Trabajadores (06:00 UTC),
+  antes de Egresados (06:45 UTC) y de recon-koha-upeu-daily (07:15 UTC).
+
+  Riesgos: identicos a Trabajadores (Oracle caido -> misfireAction=
+  executeImmediately; errores por registro -> controlFlow ignore, NO abortar
+  toda la corrida por los ~9-12 casos de excepcion ya catalogados por noche
+  tipica: split-brain Entra/LDAP, colision de shadow, doc-type no-DNI mal
+  normalizado). Sin alerta automatica si Oracle esta caido TODA la ventana.
 -->
 <task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       oid="9bcfb273-3d8e-4acb-84b0-e7c8b490975b">
-    <name>Reconcile Oracle LAMB Estudiantes</name>
+    <name>recon-oracle-lamb-estudiantes-daily</name>
+    <description>Reconciliacion diaria Oracle LAMB Estudiantes v3 (inbound-only, fuente autoritativa; incluye Idiomas dinamico desde el fix 2026-07-19). Cron 06:20 UTC (01:20 Lima). Disenada 2026-07-19, SUSPENDED hasta aprobacion explicita de Alberto.</description>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
-    <executionStatus>suspended</executionStatus>
+    <executionState>runnable</executionState>
+    <schedulingState>suspended</schedulingState>
+    <binding>loose</binding>
     <schedule>
-        <recurrence>recurring</recurrence>
-        <cronLikePattern>0 0 2 * * ?</cronLikePattern>
+        <cronLikePattern>0 20 6 * * ?</cronLikePattern>
+        <misfireAction>executeImmediately</misfireAction>
     </schedule>
     <activity>
         <work>
@@ -28,5 +57,17 @@
                 </resourceObjects>
             </reconciliation>
         </work>
+        <controlFlow>
+            <errorHandling>
+                <entry>
+                    <reaction>
+                        <ignore/>
+                    </reaction>
+                </entry>
+            </errorHandling>
+        </controlFlow>
+        <distribution>
+            <workerThreads>4</workerThreads>
+        </distribution>
     </activity>
 </task>
