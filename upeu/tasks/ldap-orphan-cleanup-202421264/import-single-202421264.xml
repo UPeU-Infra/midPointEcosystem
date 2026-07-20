@@ -12,7 +12,11 @@
   name=202421264 (esa identidad migro a DNI 03036796) -> situation=unmatched ->
   reaction=noReaction (ver <synchronization> del resource) -> el shadow queda UNLINKED,
   visible y gobernado, SIN ninguna accion de provisioning automatica. Verificado antes de
-  correr esta task que el reaction de unmatched es noReaction, no addFocus.
+  correr esta task que el reaction de unmatched es noReaction, no addFocus. NOTA: el filtro
+  usa attributes/icfs:name (DN completo) porque attributes/ri:uid (atributo especifico del
+  schema del resource) fallo con "Resource not defined in a search query" al no poder resolver
+  el QName ri:uid sin contexto de resource durante el parseo inicial via REST; icfs:name
+  (namespace del conector ICF, global) si se resuelve correctamente.
   NO se toca la cuenta LDAP real (la task solo LEE via el conector, no escribe).
   Paso 3 (borrar la cuenta LDAP vieja via MidPoint, unassign+delete) NO esta en esta task;
   queda pendiente de aprobacion explicita de Alberto (recurso sensible, alimenta RIMS/InOut/SSO).
@@ -39,8 +43,8 @@
                     <query>
                         <q:filter>
                             <q:equal>
-                                <q:path>attributes/ri:uid</q:path>
-                                <q:value>202421264</q:value>
+                                <q:path>attributes/icfs:name</q:path>
+                                <q:value>uid=202421264,ou=people,dc=upeu,dc=edu,dc=pe</q:value>
                             </q:equal>
                         </q:filter>
                     </query>
