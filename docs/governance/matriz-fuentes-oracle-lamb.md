@@ -82,6 +82,41 @@ Estructuras y relaciones confirmadas:
 2. **`ID_TIPO_TIEMPO_TRABAJO=3` es "Tiempo Parcial", no "hourly"**, y existe `4=Dedicación Exclusiva` → revisar el mapeo de jornada docente (`employeeType`) en `trabajadores.xml`.
 3. **`ID_MOTIVO_CESE=18` es "Límite de edad 70 años"**, distinto de jubilación (05) → ajustar el catálogo de `motivoCese`.
 4. **`VW_APS_EMPLEADO.ID_TIPODOCUMENTO` mete 97/98 (SNP/CUSPP de pensiones)** mezclados con identidad → el mapeo de documento del trabajador debe excluirlos (relacionado con P7).
+5. **`CANON_KEY` en `trabajadores.xml` no colapsaba a una fila por persona (2026-07-20, bug real
+   verificado en vivo contra Oracle, no hipotético).** El `baseQuery` del `searchScript` calcula
+   `CANON_KEY` para desambiguar cuando 2+ personas DISTINTAS comparten el mismo
+   `(ID_TIPODOCUMENTO, NUM_DOCUMENTO canonicalizado)` — pero el `ROW_NUMBER() AS RN` interno
+   particiona por documento, no por persona: si UNA MISMA persona tiene varias filas en
+   `ELISEO.VW_APS_EMPLEADO` con documentos distintos (típico: DNI tipo=1 + CE tipo=4 + código de
+   pensión 97/98 con `NUM_DOCUMENTO` corrupto — ver punto 4 de este mismo Anexo), todas esas filas
+   sobreviven el `RN=1` de su propia partición y terminan compartiendo el MISMO `CANON_KEY`
+   (=`COD_APS`, porque cada documento individual sí es único entre personas). El conector
+   devolvía 2-3 objetos ICF con el mismo `__UID__`/`__NAME__`, y sin `ORDER BY` en la query
+   externa la fila "ganadora" en el shadow cacheado de MidPoint no era determinística entre
+   corridas. **Medido en vivo: 5.573 de 7.379 `CANON_KEY` del universo completo (75%) tenían más
+   de una fila — no es un caso raro, es el comportamiento normal de la vista para cualquiera con
+   más de un documento registrado.**
+   **Fix (2026-07-20):** se agregó un desempate FINAL —`ROW_NUMBER() OVER (PARTITION BY
+   CANON_KEY ORDER BY [misma prioridad de ID_TIPODOCUMENTO que ya usa el ORDER BY interno] ASC,
+   FEC_INICIO DESC NULLS LAST) AS CANON_RN`, filtrando `CANON_RN = 1`— en una capa envolvente
+   adicional (no se puede fusionar en el mismo `SELECT` que calcula `CANON_KEY`: Oracle no
+   permite que un `ROW_NUMBER()` particione por el alias de otra función analítica calculada en
+   el mismo nivel). Validado: 5.573/5.573 colapsan a 1 fila; de 5.514 con DNI disponible entre
+   sus duplicados, 5.514 (100%) quedaron con el DNI.
+   **⚠️ Para quien edite este resource en el futuro: NO simplificar ni quitar la capa
+   `CANON_RN`** — sin ella reaparece el bug de arriba (duplicados con `__UID__`/`__NAME__`
+   repetido y selección no determinística). El comentario XML en `trabajadores.xml` (justo antes
+   de `<cfg:searchScript>`) explica el mismo razonamiento in situ.
+   **Riesgo colateral abierto (sin resolver, requiere decisión):** personas con un `User` MidPoint
+   ya anclado en una clave de documento de MENOR prioridad (p. ej. CE en vez de DNI, porque el
+   bug pre-fix eligió esa fila por azar en el pasado) dejan de correlacionar tras el fix — el
+   `lambDocNum` calculado cambia de clave y el `import`/reconcile puede crear un `User` duplicado
+   (`unmatched → addFocus`). Verificado en el canario de 2 casos: 2/2 tenían este patrón, ambos
+   remediados manualmente el mismo día. `recon-oracle-lamb-trabajadores-daily` quedó
+   **suspendida** hasta que se decida cómo reconciliar con seguridad el resto de la población en
+   riesgo (~5.573 `CANON_KEY`). Detalle completo en
+   `docs/runbooks/telegram-alertas-tasks-2026-07-20/tarea3-resultado-200610808-91-personas.md`
+   (sección "✅ FIX APLICADO").
 
 ---
 

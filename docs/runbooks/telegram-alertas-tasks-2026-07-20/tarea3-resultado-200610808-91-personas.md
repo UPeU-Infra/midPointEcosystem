@@ -210,3 +210,199 @@ CANON_KEY   COD_APS     NUM_DOCUMENTO      ID_TIPODOCUMENTO  ESTADO
   nuevas genuinas, y no debería tocar el Grupo A (ya `LINKED`) ni crear duplicados sobre el
   Grupo C si el correlador no cambia (mismo riesgo se aplicaría en la corrida automática —
   vale la pena verificar sus resultados en el Grupo C específicamente, sin intervenir).
+
+  **ACTUALIZACIÓN: esta task quedó SUSPENDIDA el 2026-07-20 — ver sección "✅ FIX APLICADO"
+  abajo, no dejarla correr sin decidir primero cómo reconciliar la población en riesgo.**
+
+---
+
+## ✅ FIX APLICADO (20-jul, misma sesión que la corrección de arriba)
+
+Alberto autorizó explícitamente diseñar y aplicar el fix de ingeniería identificado en la
+corrección: colapsar `CANON_KEY` a una sola fila por persona en el `baseQuery` del
+`searchScript` de `trabajadores.xml` (oid `6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21`).
+
+### Diff conceptual del SQL
+
+**Antes:** `baseQuery` terminaba en `SELECT w.*, CASE ... END AS CANON_KEY FROM (...) w` — sin
+ningún desempate posterior al cálculo de `CANON_KEY`. El `ROW_NUMBER() ... AS RN` interno
+particiona por `(ID_TIPODOCUMENTO, NUM_DOCUMENTO canonicalizado)`, es decir dedupea DENTRO de
+cada documento pero no ACROSS los documentos distintos que una misma persona puede tener.
+
+**Después:** se envuelve el `baseQuery` original (alias `y`) en una capa adicional que agrega
+
+```sql
+SELECT z.* FROM (
+  SELECT y.*, ROW_NUMBER() OVER (
+    PARTITION BY y.CANON_KEY
+    ORDER BY
+      CASE y.ID_TIPODOCUMENTO WHEN 1 THEN 1 WHEN 4 THEN 2 WHEN 7 THEN 3 WHEN 22 THEN 4 WHEN 24 THEN 5
+           WHEN 31 THEN 6 WHEN 23 THEN 7 WHEN 9 THEN 8 WHEN 6 THEN 9 WHEN 0 THEN 10 WHEN 97 THEN 11
+           WHEN 98 THEN 12 WHEN 99 THEN 13 ELSE 14 END ASC,
+      y.FEC_INICIO DESC NULLS LAST
+  ) AS CANON_RN
+  FROM ( /* baseQuery original, ya calcula CANON_KEY */ ) y
+) z
+WHERE z.CANON_RN = 1
+```
+
+Misma lista de prioridad de `ID_TIPODOCUMENTO` que ya usaba el `ORDER BY` interno del `RN`
+(DNI=1 primero, CE=4 segundo, ..., códigos de pensión 97/98 casi al final). No se puede fusionar
+en el mismo nivel de `SELECT` que calcula `CANON_KEY`: Oracle no permite que un `ROW_NUMBER()`
+particione por el alias de OTRA función analítica calculada en el mismo nivel — de ahí la capa
+extra `y`/`z`.
+
+### Validación en Oracle (solo lectura, ANTES de tocar MidPoint)
+
+Ejecutado en vivo contra `192.168.13.9:1521/UPEU` (`JUANSANCHEZ`), query real desplegada
+(pre-fix) vs. la versión con `CANON_RN` (post-fix):
+
+| Métrica | ANTES | DESPUÉS |
+|---|---|---|
+| Filas totales del universo (`ID_ENTIDAD=7124`, población completa) | 14.905 | 7.379 |
+| `CANON_KEY` distintos | 7.379 | 7.379 |
+| `CANON_KEY` con >1 fila (duplicados) | **5.573** | **0** |
+
+**Hallazgo clave: el bug NO afectaba a 70 personas aisladas — afectaba potencialmente a 5.573 de
+7.379 personas (75% del universo).** Los "70" de la corrección de arriba eran solo el
+subconjunto que Alberto pidió revisar manualmente (el Grupo C de la tarea original); la medición
+completa contra Oracle muestra que **cualquier trabajador con más de un documento registrado en
+`ELISEO.VW_APS_EMPLEADO`** (típicamente DNI + código de pensión 97/98, o DNI + CE + pensión)
+estaba expuesto al mismo no-determinismo, aunque solo una fracción tenía ya un shadow "roto" de
+forma visible en MidPoint (porque el orden de Oracle, aunque no garantizado, en la mayoría de los
+casos ya venía devolviendo el DNI primero por casualidad).
+
+Verificación adicional (sin `IN`-list por el límite `ORA-01795` de 1000 expresiones; se usó
+`JOIN` sobre CTEs en su lugar):
+
+| Métrica | Valor |
+|---|---|
+| `CANON_KEY` duplicados que colapsaron a exactamente 1 fila tras el fix | 5.573 / 5.573 (100%) |
+| De esos, cuántos tenían DNI (tipo=1) disponible entre sus filas duplicadas | 5.514 |
+| De esos 5.514, cuántos quedaron con el DNI como fila ganadora | 5.514 (100%) |
+| Casos con DNI disponible pero NO elegido (debía ser 0) | **0** |
+
+Casos puntuales verificados fila por fila:
+
+```
+Orlando (00534601)  ANTES: 3 filas (tipo 1, tipo 4, tipo 98) mismo CANON_KEY=00534601
+                     DESPUÉS: 1 fila (tipo 1, DNI 00000000534601)
+Luzirene (000614192) ANTES: 2 filas (tipo 1, tipo 98) mismo CANON_KEY=000614192
+                      DESPUÉS: 1 fila (tipo 1, DNI 000614192)
+```
+
+No se perdió gente: el universo de personas (`CANON_KEY` distintos) es idéntico antes y después
+(7.379 = 7.379); solo se colapsaron las filas duplicadas por persona.
+
+### PATCH a PROD (nunca PUT)
+
+1. Backup completo del resource vía `GET /resources/{oid}` antes de tocar nada
+   (`trabajadores-BACKUP-preFIX-2026-07-20.xml`, version 318).
+2. `PATCH` de `c:connectorConfiguration/icfc:configurationProperties/cfg:searchScript` con el
+   `baseQuery` corregido → **HTTP 204**, version 318→319.
+3. Verificación post-PATCH: `<schema>` cacheado con el mismo número de `xsd:element` que antes
+   (5=5), `connectorRef`/`schemaHandling`/`capabilities` intactos, **test connection 15/15
+   sub-resultados `success`**.
+4. `PATCH` adicional de `c:description` con la nota de gobernanza del fix → HTTP 204,
+   version 319→320.
+
+### Canario — resultado
+
+Import dirigido (`POST /shadows/{oid}/import`) sobre los 2 shadows conocidos:
+
+| Caso | Shadow OID | Antes (NUM_DOCUMENTO / TIPO) | Después (NUM_DOCUMENTO / TIPO) | Sync situation |
+|---|---|---|---|---|
+| Orlando 00534601 | `0c1660ee-b79f-48c3-abc8-5c852ad8226c` | `321931OCBTA0` / `98` (corrupto) | `00000000534601` / `1` (DNI) | UNMATCHED → LINKED (efímero, ver abajo) |
+| Luzirene 000614192 | `f3af8397-61f4-45f5-8c4e-0c286e339425` | `570370LGAEA5` / `98` (corrupto) | `000614192` / `1` (DNI) | UNMATCHED → LINKED (efímero, ver abajo) |
+
+El fix en sí funcionó exactamente como se diseñó: el shadow ahora trae la fila DNI, no la
+corrupta. **Pero el `import` reveló un riesgo colateral no anticipado** (ver siguiente sección).
+
+### 🔴 Riesgo colateral descubierto en el canario — remediado en la misma sesión
+
+Ambos casos (Orlando, Luzirene) tienen un **User pre-existente** en MidPoint cuyo
+`extension/upeu:lambDocNum` está anclado en su documento **CE**, no en su DNI:
+
+```
+Orlando real:  oid 2dba749b-...  name=200610808  lambDocNum=CE:000534601  (activo)
+Luzirene real: oid 49945169-...  name=00614192   lambDocNum=CE:000614192  (archivado)
+```
+
+Antes del fix, el shadow cacheado de ambos —por la suerte del orden no determinístico de
+Oracle— venía trayendo la fila **corrupta** (tipo 97/98), así que el correlador nunca los tocaba.
+Tras el fix, el shadow trae la fila **DNI** (tipo 1, prioridad más alta) — pero el `lambDocNum`
+calculado a partir del DNI (`00534601`, sin prefijo) **no coincide** con la clave `CE:000534601`
+que ya tiene el User real. El correlador, correctamente, no encontró match → la reacción
+`unmatched → addFocus` **creó un User nuevo y duplicado** para cada uno:
+
+```
+Orlando duplicado:  oid cb5e3a5e-...  name=00534601   lambDocNum=00534601   (activo)
+Luzirene duplicada: oid 0a3ada24-...  name=000614192  lambDocNum=00614192  (archivado, por template)
+```
+
+El duplicado de Orlando, al ser `active`, **se auto-aprovisionó en ~10 minutos** a 2 sistemas
+reales downstream (recompute automático del template):
+
+- **LDAP** (`LDAP-IdentityCache-UPeU`, oid `7b4e1c2d-...`): entrada real
+  `uid=00534601,ou=people,dc=upeu,dc=edu,dc=pe` con datos completos (eduPerson, email, etc.).
+- **Koha** (`Koha ILS UPeU (consolidado)`, oid `e10a539a-...`): patrón real, `cardnumber=00534601`,
+  `branchcode=BUL`, `borrowernumber≈16200`.
+
+**Remediación ejecutada de inmediato, misma sesión:**
+
+1. Se intentó `DELETE` directo de los 2 Users duplicados → `fatal_error` HTTP 500 porque
+   Trabajadores (fuente read-only) no tiene `DeleteCapabilityType` — como es correcto que no la
+   tenga. El modelo igual eliminó el `UserType` del repo (los `linkRef` a Trabajadores quedaron
+   huérfanos sin dañar nada, porque ese shadow no tiene ninguna operación de escritura pendiente).
+2. Los shadows huérfanos de **LDAP y Koha** (con delete deshabilitado por guardarraíl de
+   configuración, `capabilities/configured/delete/enabled=false`) se borraron con el **mismo
+   mecanismo gobernado usado ayer para el caso `202421264`**: backup → habilitar el guardarraíl
+   temporalmente (`PATCH`, nunca `PUT`) → `DELETE /shadows/{oid}` (204) → revertir el guardarraíl
+   a `false` de inmediato (204, verificado con schema intacto: LDAP 153/153 `xsd:element`, Koha
+   9/9).
+3. **Verificado con acceso real a los sistemas, no solo MidPoint:**
+   - `ldapsearch` directo contra `192.168.15.168` (`docker exec openldap ldapsearch`): `uid=00534601`
+     → **0 resultados** (borrado confirmado). `uid=200610808` (Orlando real) → **intacto**, con
+     su `cn` correcto.
+   - `mysql` directo contra la BD Koha consolidada (`koha-167`, `koha_upeu.borrowers`):
+     `cardnumber='00534601' OR borrowernumber=16200` → **0 filas**. Búsqueda adicional por
+     apellido "Cortez Bazantes" → 0 filas (Orlando nunca tuvo un patrón Koha real antes de este
+     incidente, así que no hay riesgo de haber tocado uno preexistente).
+4. Los 2 Users reales (`2dba749b` Orlando, `49945169` Luzirene) quedaron **verificados
+   intactos**, sin ningún cambio, con su `lambDocNum` original (`CE:...`) preservado.
+5. Los 2 shadows de Trabajadores del canario (`0c1660ee`, `f3af8397`) quedaron en estado
+   **huérfano seguro**: `synchronizationSituation` vacío (sin `linkRef` de ningún User), con los
+   datos ya corregidos (DNI, tipo=1) cacheados — no dañan nada, no crean nada, listos para que
+   una reconciliación DIRIGIDA (no masiva) los vincule manualmente al User correcto en una sesión
+   futura.
+6. Balance final del resource verificado: **7.532 shadows exactamente igual que antes del
+   canario** (0 perdidos, 0 huérfanos nuevos permanentes) — `LINKED` 7.397→7.399 (+2, los 2
+   canarios), `UNMATCHED` 92→90 (−2), `UNLINKED`/`DISPUTED` sin cambio.
+
+**Task `recon-oracle-lamb-trabajadores-daily` (oid `23b9fde4-6a5f-4c84-9370-0971fb27be73`)
+SUSPENDIDA de inmediato** (`executionState`/`schedulingState` verificados `suspended`) para
+evitar que la corrida nocturna programada para el 21-jul repita este patrón a escala sobre los
+~5.573 `CANON_KEY` en riesgo (cualquiera cuyo User existente esté anclado en un documento de
+menor prioridad que el que el fix ahora prefiere). **No reactivar sin decisión explícita de
+Alberto** sobre una de estas rutas (o una combinación):
+
+- Cambiar la reacción `unmatched` de este resource de `addFocus` automático a una cola de
+  revisión humana quando el `lambDocNum` calculado no matchea PERO `ID_PERSONA`/nombre+fecha de
+  nacimiento sí sugieren una persona ya existente (correlación secundaria).
+- Antes de reconciliar, correr un barrido de solo-lectura (como el de esta sesión) sobre los
+  ~5.573 `CANON_KEY` para separar: (a) shadows cuyo `lambDocNum` post-fix YA coincide con un User
+  existente (reconciliables sin riesgo), de (b) los que, como Orlando/Luzirene, tienen un User
+  anclado en una clave de menor prioridad (requieren re-anclaje manual del `lambDocNum` del User
+  existente ANTES de reconciliar, para que el `import` los encuentre).
+- Evaluar si el `lambDocNum` debería considerar TODAS las claves de documento de una persona
+  (no solo la de mayor prioridad) como alias de correlación, en vez de una sola clave ganadora.
+
+### Estado final verificado (resource + PROD)
+
+- `trabajadores.xml` PROD: version 320, `<schema>` cacheado intacto (5/5 `xsd:element`), test
+  connection 15/15 `success`, `connectorRef`/`schemaHandling`/`capabilities` intactos.
+- Guardarraíles de LDAP y Koha revertidos a `delete/enabled=false` (verificado post-revert en
+  ambos, schema intacto: LDAP 153 elementos, Koha 9 elementos).
+- `recon-oracle-lamb-trabajadores-daily`: **suspendida**, pendiente de decisión.
+- Repo: commit `ad2c626` (`fix: colapsa CANON_KEY duplicado en trabajadores.xml...`), pusheado y
+  ya en `main` en PROD (`git pull` fast-forward `9c8abef..ad2c626`).
