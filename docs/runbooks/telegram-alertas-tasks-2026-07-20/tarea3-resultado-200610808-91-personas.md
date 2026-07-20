@@ -177,6 +177,29 @@ Opciones para una sesión futura (ninguna ejecutada hoy, todas requieren decisi�
   sesión más allá del nuevo `linkRef` y (para 3/11) la materialización de `liveAffiliationWorker`
   según el guardarraíl `FEC_TERMINO` ya existente.
 
+## 🔴 CORRECCIÓN (20-jul, verificación manual de Alberto) — el diagnóstico del Grupo C estaba mal atribuido
+
+Alberto pidió la lista de los 70 para revisar manualmente y descartar mal-reporte o tabla incorrecta. **Se ejecutó el `baseQuery` REAL y desplegado de `trabajadores.xml` directamente contra Oracle en vivo** (no una aproximación) para los 70 COD_APS del Grupo C.
+
+**Resultado: los 70/70 SÍ tienen un documento válido (`ID_TIPODOCUMENTO=1`, DNI, `NUM_DOCUMENTO` = su propio `COD_APS`) en `ELISEO.VW_APS_EMPLEADO`.** No hay ni un solo caso de "documento corrupto sin alternativa" — la premisa central del análisis anterior era incorrecta. Ejemplo (Orlando, `00534601`):
+
+```
+CANON_KEY   COD_APS     NUM_DOCUMENTO      ID_TIPODOCUMENTO  ESTADO
+00534601    00534601    00000000534601     1  (DNI, válido)  A
+00534601    00534601    000534601          4  (CE)           A
+00534601    00534601    321931OCBTA0       98 (corrupto)     A
+```
+
+**Causa raíz real: el `baseQuery` de `trabajadores.xml` no colapsa a una sola fila por persona.** El `ROW_NUMBER()` que calcula `RN` particiona por `(ID_TIPODOCUMENTO, NUM_DOCUMENTO canonicalizado)` — dedupea DENTRO de cada documento, pero NO across los distintos documentos que una misma persona puede tener en `VW_APS_EMPLEADO` (DNI + CE + el código 97/98 de pensiones, todos como filas separadas). El cálculo de `CANON_KEY` asume que cada `COD_APS` ya llegó a una sola fila y solo desambigua colisiones ENTRE personas distintas (`w.COD_APS || '-' || w.ID_PERSONA` cuando el mismo documento lo comparten 2+ personas) — nunca contempla que una misma persona aporte 2-3 filas con el MISMO `CANON_KEY`. El `searchScript` del conector devuelve estas filas duplicadas con el **mismo `__UID__`/`__NAME__`** a MidPoint. Sin `ORDER BY` explícito en la query externa, el orden de retorno de Oracle no está garantizado — cuál de las 2-3 filas "gana" en el shadow cacheado de MidPoint es, en la práctica, no determinístico entre corridas.
+
+**Verificado sistemáticamente para los 70 (no solo la muestra), vía Cypher/SQL directo, no una extrapolación:** 70/70 tienen al menos un tipo de documento válido (1/4/6) coexistiendo con el 97/98. 0/70 son "sin documento real" como se había concluido.
+
+**Consecuencia:** las Opciones 1-3 propuestas arriba (fix del correlador, saneamiento de Oracle, vínculo manual) apuntaban al síntoma equivocado. **El fix correcto es en el `baseQuery` de `trabajadores.xml`: colapsar a UNA fila por `CANON_KEY`, prefiriendo el tipo de documento más confiable** (el propio `ORDER BY` interno ya tiene la lista de prioridad `CASE e.ID_TIPODOCUMENTO WHEN 1 THEN 1 WHEN 4 THEN 2 ... ELSE 14 END ASC` pensada para esto — solo falta aplicarla como desempate FINAL entre documentos de una misma persona, no solo dentro de un mismo documento). Fix no diseñado ni aplicado hoy — pendiente de autorización, dado que toca la query desplegada del resource completo (~7.532 shadows, blast radius real aunque el cambio en sí sea acotado).
+
+**Nota de proceso:** el agente de la tarde no estaba "mal reportando" en el sentido de inventar datos — los valores que citó (COD_APS, `NUM_DOCUMENTO` corrupto, `ID_TIPODOCUMENTO=98`) son reales y están efectivamente en el shadow. El error fue de **atribución causal**: concluyó "el dato de origen es malo" sin ejecutar el `baseQuery` completo para confirmar si existía una fila alternativa válida para la misma persona. Verificar la causa raíz contra la query real, no solo contra el shadow ya materializado, habría evitado la conclusión errónea.
+
+---
+
 ## Pendiente
 
 - Grupo B (10) y Grupo C (70, incluido Orlando) quedan sin resolver — requieren una decisión
