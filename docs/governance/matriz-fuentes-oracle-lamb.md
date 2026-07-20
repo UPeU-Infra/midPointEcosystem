@@ -145,4 +145,43 @@ Origen: Alberto reportó que MidPoint mostraba a **Elvira Mavel Brañes Juan De 
 
 ---
 
+## Anexo D — Duplicado de persona en Estudiantes: mismo DNI, dos códigos institucionales (2026-07-20)
+
+Origen: al investigar por qué un estudiante recién matriculado no llegaba a Koha (ver
+`docs/runbooks/telegram-alertas-tasks-2026-07-20/koha-estudiantes-nuevos-canario-refutado-20jul.md`
+para el diagnóstico completo), se encontró que el mecanismo de provisioning funciona bien y que
+el único caso real con shadow Koha faltante es un duplicado de persona en origen — misma clase de
+excepción que el caso `05436990` (Trabajadores, 19-jul, ver memoria
+`koha-escalamiento-produccion-diagnostico-2026-07-19.md`), ahora encontrado también del lado
+Estudiantes.
+
+**Verificado en vivo (REST + `m_shadow` solo lectura), 2026-07-20:**
+- DNI `72066573` (Ariana Alessandra Yance Ccesa) tiene **dos códigos institucionales** en
+  MidPoint (por tanto, en Oracle LAMB origen): `202613758` (User oid
+  `9ebf2292-acdd-4f36-9d05-91f7374d49ad`, LIMA, `terminationDateStudent=2026-07-03`, con un ciclo
+  disable(04-jul)→enable posterior) y `323200401` (User oid `9204c289-95da-47cb-b0f6-d8146144c5b3`,
+  LIMA, activo, sin fecha de término).
+- `323200401` ya tiene el patron Koha `borrowernumber=11129` legítimamente linkeado
+  (`shadow oid 606dd23e-d332-4bc3-b52a-addc62a93ca8`, `synchronizationSituation=linked`).
+- Al recomputar `202613758`, su construction Koha intenta crear un segundo shadow con el mismo
+  `primaryidentifiervalue=11129` → rechazado por el constraint de unicidad de `m_shadow`
+  (`m_shadow_default_primidval_objcls_resrefoid_key`). El guardarraíl funciona correctamente;
+  **no es un bug de MidPoint ni algo resoluble con recompute o reconciliación** — el dato origen
+  tiene la misma persona física matriculada dos veces con dos códigos distintos.
+
+**Pendiente para los DBAs / gestión académica (no para DTI/MidPoint):** confirmar cuál de los dos
+códigos institucionales (`202613758` o `323200401`) es el vigente para esta persona y depurar o
+mergear el otro en Oracle LAMB. Indicio (no confirmación): `202613758` tiene
+`terminationDateStudent` en el pasado (2026-07-03) y un ciclo disable→enable, lo que sugiere que
+es el código antiguo; `323200401` no tiene fecha de término. Hasta que se resuelva en origen,
+`202613758` seguirá sin cuenta Koha — comportamiento correcto (evita un patron duplicado para la
+misma persona), no requiere acción en MidPoint.
+
+**Riesgo de alcance:** esta calibración solo revisó campus Lima. No se buscaron duplicados
+similares en Posgrado/CEPRE/Idiomas ni en otros campus — si aparece un patrón parecido, repetir
+el mismo diagnóstico (colisión de `primaryidentifiervalue` en `m_shadow` sobre `koha-upeu`) antes
+de asumir un problema de orquestación IGA.
+
+---
+
 *La columna "Respuesta DBA" se deja vacía para que Barrantes y Carlomagno la completen. Gracias.*
