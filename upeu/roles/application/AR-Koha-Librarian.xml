@@ -18,7 +18,7 @@
     </assignment>
     <inducement>
         <construction>
-            <resourceRef oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af" type="ResourceType"/>
+            <resourceRef oid="e10a539a-cb7f-4c72-a19f-60f7f62e4b96" type="ResourceType"/>
             <kind>account</kind>
             <intent>default</intent>
             <!-- 2026-05-22: el override category_id=STAFF fue eliminado. STAFF se
