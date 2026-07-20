@@ -43,7 +43,7 @@
                     <query>
                         <q:filter>
                             <q:equal>
-                                <q:path>attributes/icfs:name</q:path>
+                                <q:path xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3">attributes/icfs:name</q:path>
                                 <q:value>uid=202421264,ou=people,dc=upeu,dc=edu,dc=pe</q:value>
                             </q:equal>
                         </q:filter>
