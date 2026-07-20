@@ -12,11 +12,19 @@
   name=202421264 (esa identidad migro a DNI 03036796) -> situation=unmatched ->
   reaction=noReaction (ver <synchronization> del resource) -> el shadow queda UNLINKED,
   visible y gobernado, SIN ninguna accion de provisioning automatica. Verificado antes de
-  correr esta task que el reaction de unmatched es noReaction, no addFocus. NOTA: el filtro
-  usa attributes/icfs:name (DN completo) porque attributes/ri:uid (atributo especifico del
-  schema del resource) fallo con "Resource not defined in a search query" al no poder resolver
-  el QName ri:uid sin contexto de resource durante el parseo inicial via REST; icfs:name
-  (namespace del conector ICF, global) si se resuelve correctamente.
+  correr esta task que el reaction de unmatched es noReaction, no addFocus. NOTA tecnica
+  (3 intentos): un filtro con SOLO attributes/ri:uid (o solo attributes/icfs:name) dentro de
+  resourceObjects/query fallaba con "Resource not defined in a search query" porque el filtro
+  no traia consigo el contexto de resource necesario para resolver un atributo dinamico del
+  schema. Fix real (probado primero contra /shadows/search antes de aplicarlo aqui): el filtro
+  debe incluir resourceRef + objectClass COMO PARTE DEL MISMO AND junto con attributes/ri:uid;
+  eso es lo que le da al parser el contexto de resource que necesita. Con esta forma, una
+  busqueda equivalente via /shadows/search SI trajo el objeto vivo (shadow ee5ebafc-76fc-48b1-
+  bfea-1e756fb42174, primaryIdentifierValue=entryUUID real, verificado 2026-07-19) pero sin
+  aplicar la determinacion de synchronizationSituation (no existe endpoint /synchronize para
+  shadows sueltos); por eso se corre TAMBIEN esta task de import, que si ejecuta el pipeline
+  completo de sincronizacion sobre el mismo shadow ya materializado (correlacion por
+  primaryIdentifierValue, no deberia duplicar).
   NO se toca la cuenta LDAP real (la task solo LEE via el conector, no escribe).
   Paso 3 (borrar la cuenta LDAP vieja via MidPoint, unassign+delete) NO esta en esta task;
   queda pendiente de aprobacion explicita de Alberto (recurso sensible, alimenta RIMS/InOut/SSO).
@@ -42,10 +50,22 @@
                     <objectclass>ri:inetOrgPerson</objectclass>
                     <query>
                         <q:filter>
-                            <q:equal>
-                                <q:path xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3">attributes/icfs:name</q:path>
-                                <q:value>uid=202421264,ou=people,dc=upeu,dc=edu,dc=pe</q:value>
-                            </q:equal>
+                            <q:and>
+                                <q:ref>
+                                    <q:path>resourceRef</q:path>
+                                    <q:value>
+                                        <oid xmlns="http://prism.evolveum.com/xml/ns/public/types-3">7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f</oid>
+                                    </q:value>
+                                </q:ref>
+                                <q:equal>
+                                    <q:path>objectClass</q:path>
+                                    <q:value>ri:inetOrgPerson</q:value>
+                                </q:equal>
+                                <q:equal>
+                                    <q:path>attributes/ri:uid</q:path>
+                                    <q:value>202421264</q:value>
+                                </q:equal>
+                            </q:and>
                         </q:filter>
                     </query>
                 </resourceObjects>
