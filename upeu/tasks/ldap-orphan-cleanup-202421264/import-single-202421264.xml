@@ -4,7 +4,7 @@
   Contexto: shadow huerfano 706ab4e2-3627-48f1-94f4-f2dd47d06ac3 (dead=true, sin dueño) fue
   borrado del repo de MidPoint via DELETE ?options=raw (2026-07-19) porque bloqueaba el indice
   unico. La entrada LDAP real (uid=202421264, entryUUID 860100b0-ed35-1040-9c96-efbbccbd9962)
-  sigue viva en 192.168.15.168 -- este import la redescubre como shadow NUEVO, gobernado por
+  sigue viva en 192.168.15.168; este import la redescubre como shadow NUEVO, gobernado por
   MidPoint, SIN dueno (UNLINKED). El dueno real de la persona (Daniel Pinango) ya esta
   correctamente enlazado via uid=03036796 (User 272596f6-b6da-4ec5-ae33-32357906330e).
   Resource: OpenLDAP Identity Cache UPeU (7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f)
@@ -14,7 +14,7 @@
   visible y gobernado, SIN ninguna accion de provisioning automatica. Verificado antes de
   correr esta task que el reaction de unmatched es noReaction, no addFocus.
   NO se toca la cuenta LDAP real (la task solo LEE via el conector, no escribe).
-  Paso 3 (borrar la cuenta LDAP vieja via MidPoint, unassign+delete) NO esta en esta task --
+  Paso 3 (borrar la cuenta LDAP vieja via MidPoint, unassign+delete) NO esta en esta task;
   queda pendiente de aprobacion explicita de Alberto (recurso sensible, alimenta RIMS/InOut/SSO).
   Estado: runnable (ejecutar UNA VEZ, luego queda en closed/suspended).
   Fecha: 2026-07-19.
