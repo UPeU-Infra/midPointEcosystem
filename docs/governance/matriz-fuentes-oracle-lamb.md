@@ -85,4 +85,29 @@ Estructuras y relaciones confirmadas:
 
 ---
 
+## Anexo C — Calibración puesto/área (2026-07-20): confirmado, sin cambios de código
+
+Origen: Alberto reportó que MidPoint mostraba a **Elvira Mavel Brañes Juan De Dios** (`ID_PERSONA=8525`, User `d57aada4-1139-4b44-93b7-032afb077e30`) con puesto "Dir. Proyección Social" cuando hace años trabaja en CRAI — sospecha de tabla Oracle desactualizada. Se calibró con datos reales, no se asumió nada.
+
+**Resultado: la fuente ya es la correcta. El label "Dir. Proyección Social" no existe en ningún resource, lookup table ni doc de este repo** (`grep` completo del repo: 0 coincidencias) — no se pudo determinar su origen, pero no es un bug de `midPointEcosystem`.
+
+**Verificado en vivo (solo lectura), 2026-07-20:**
+- `ENOC.PLLA_PUESTO.NOMBRE` para `ID_PUESTO=212` = **"Supervisor de Procesos Técnicos"**.
+- `MOISES.TRABAJADOR` (`ID_TRABAJADOR=282`) → `ID_SEDEAREA=97` → `ELISEO.ORG_SEDE_AREA.ID_AREA=93` → `ELISEO.ORG_AREA.NOMBRE` = **"Centro de Recursos del Aprendizaje e Investigación"** (CRAI). Contrato activo desde 2017-02-01, sin fecha fin.
+- User de Elvira en MidPoint: `lambPositionId=212`, `modifyTimestamp=2026-07-19` (fresco, del reconcile masivo de esa fecha — ver memoria de sesión `koha-escalamiento-produccion-diagnostico-2026-07-19`).
+- **Corroborado con un segundo caso independiente** (Alberto, `ID_PERSONA=15922`, puesto 477): Oracle (`Dirección de Tecnologías de Información` / `Analista Programador`, ingreso 2022-05-01, fin 2026-12-31) coincide EXACTO con lo que muestra el portal `lamb-talent.upeu.edu.pe`.
+
+**Reafirma y extiende P3 a puesto/área: "LAMB Talent" (el portal `lamb-talent.upeu.edu.pe` / `api-lamb-talent.upeu.edu.pe`) NO es una base de datos distinta — es una UI sobre las mismas tablas `ENOC.PLLA_*`/`MOISES.TRABAJADOR` de este mismo Oracle Academic.** No existe un "GTH más nuevo" en otro esquema — se buscó explícitamente (`JOSUE.GTH_TRABAJADOR` existe pero tiene 0 filas, es una tabla Django huérfana sin uso).
+
+**Conectores/lookup tables verificados, ambos correctos, sin cambios necesarios:**
+- `upeu/resources/oracle-lamb/trabajadores.xml` — JOIN vivo a `ENOC.PLLA_PUESTO`/`ELISEO.ORG_SEDE_AREA`/`ELISEO.ORG_AREA` en cada consulta (no hay tabla estática cacheada).
+- `upeu/resources/oracle-lamb/posiciones.xml` (resource `LAMB-Oracle-Posiciones`, PBAC Fase 5c) — JOIN vivo `ENOC.PLLA_PUESTO`+`ENOC.PLLA_PERFIL_PUESTO` (`ID_ENTIDAD=7124`, `VIGENCIA=1`), sincroniza `ServiceType` con archetype Position. `NOMBRE_PUESTO` se deriva de `p.NOMBRE` en vivo.
+- `upeu/lookup-tables/LT-CRAI-Puesto-Tier.xml` — fila `212 → supervision → "Supervisor de Procesos Técnicos"`, ya correcta.
+
+**Riesgo real (no de tabla, de cadencia):** el único vector de staleness genuino es la ausencia de reconciliación recurrente — un cambio en Oracle solo llega a MidPoint cuando alguien dispara un sync manual. Las 4 tasks diarias creadas el 2026-07-19 (`recon-oracle-lamb-{trabajadores,estudiantes,egresados}-daily`, `recon-koha-upeu-daily`) cierran este vector una vez activadas (`suspended` al momento de escribir esto).
+
+**Hallazgo lateral, NO resuelto hoy (fuera de alcance de esta calibración):** Elvira, siendo "Supervisor de Procesos Técnicos" en CRAI, **no tiene ningún rol `AR-Koha-Librarian*` asignado** en MidPoint hoy (`roleMembershipRef` sin ninguna coincidencia Librarian/CRAI). Podría ser un gap de provisioning (¿el mapeo puesto→rol Librarian no es automático?) o una exclusión legítima no documentada — requiere investigación aparte, no se tocó su asignación de roles en esta calibración.
+
+---
+
 *La columna "Respuesta DBA" se deja vacía para que Barrantes y Carlomagno la completen. Gracias.*
