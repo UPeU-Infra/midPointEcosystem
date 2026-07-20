@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: Import dirigido de UNA sola entrada LDAP — uid=202421264 (Daniel Piñango Hernandez)
+  Contexto: shadow huerfano 706ab4e2-3627-48f1-94f4-f2dd47d06ac3 (dead=true, sin dueño) fue
+  borrado del repo de MidPoint via DELETE ?options=raw (2026-07-19) porque bloqueaba el indice
+  unico. La entrada LDAP real (uid=202421264, entryUUID 860100b0-ed35-1040-9c96-efbbccbd9962)
+  sigue viva en 192.168.15.168 -- este import la redescubre como shadow NUEVO, gobernado por
+  MidPoint, SIN dueno (UNLINKED). El dueno real de la persona (Daniel Pinango) ya esta
+  correctamente enlazado via uid=03036796 (User 272596f6-b6da-4ec5-ae33-32357906330e).
+  Resource: OpenLDAP Identity Cache UPeU (7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f)
+  Correlacion del resource: name == $account/attributes/ri:uid -> NO existe User con
+  name=202421264 (esa identidad migro a DNI 03036796) -> situation=unmatched ->
+  reaction=noReaction (ver <synchronization> del resource) -> el shadow queda UNLINKED,
+  visible y gobernado, SIN ninguna accion de provisioning automatica. Verificado antes de
+  correr esta task que el reaction de unmatched es noReaction, no addFocus.
+  NO se toca la cuenta LDAP real (la task solo LEE via el conector, no escribe).
+  Paso 3 (borrar la cuenta LDAP vieja via MidPoint, unassign+delete) NO esta en esta task --
+  queda pendiente de aprobacion explicita de Alberto (recurso sensible, alimenta RIMS/InOut/SSO).
+  Estado: runnable (ejecutar UNA VEZ, luego queda en closed/suspended).
+  Fecha: 2026-07-19.
+-->
+<task oid="9c256f38-ea34-4313-8ade-92eb2abb6cb4"
+      xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+    <name>ldap-orphan-cleanup-import-single-202421264</name>
+    <description>Import dirigido de la entrada LDAP uid=202421264 tras borrar el shadow huerfano 706ab4e2 del repo de MidPoint. Redescubre la entrada como shadow UNLINKED (unmatched/noReaction, verificado en el resource). Ejecutar UNA VEZ.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>runnable</executionState>
+    <activity>
+        <work>
+            <import>
+                <resourceObjects>
+                    <resourceRef oid="7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f" type="ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
+                    <objectclass>ri:inetOrgPerson</objectclass>
+                    <query>
+                        <q:filter>
+                            <q:equal>
+                                <q:path>attributes/ri:uid</q:path>
+                                <q:value>202421264</q:value>
+                            </q:equal>
+                        </q:filter>
+                    </query>
+                </resourceObjects>
+            </import>
+        </work>
+    </activity>
+</task>
