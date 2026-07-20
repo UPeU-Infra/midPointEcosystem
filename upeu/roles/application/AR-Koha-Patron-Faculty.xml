@@ -19,33 +19,23 @@
                  category_id lo resuelve el resource koha-ils desde
                  extension/sciback:primaryAffiliation (mapping unico, deterministico). -->
         </construction>
-        <!-- GATE CAMPUS MULTI-CAMPUS — ENFORCEMENT EN POLICY (tarea #65, 2026-06-03).
-             Koha hoy = solo BUL (Lima). La condición sobre el INDUCEMENT (construction)
-             es el enforcement REAL del campus: si el holder no tiene vínculo VIVO Lima,
-             esta construction no aplica → NO se induce cuenta Koha, aunque el BR siga
-             asignando el AR (Semancik cap.7: la construction se aplica al holder solo si
-             su condición es true; existence es defensa-en-profundidad secundaria).
-             Elegible Koha-Lima = matrícula vigente Lima (campusStudent=='LIMA') O
-             contrato 7124 vivo Lima (campusWorker=='LIMA'). guest/bibliotecario = Lima
-             por naturaleza hoy (alineado con el gate existence). Egreso histórico NO
-             cuenta (sin campusAlum). campusStudent/campusWorker = slots per-IIA
-             single-valued single-writer, misma vigencia VIVA que liveAffiliation*.
-             API: basic.getExtensionPropertyValue (4.10: focus.extension.<item> rompe).
-             FUSIÓN 4 KOHA (mitad de año): para desactivar este gate, ELIMINAR este
-             bloque <condition> completo en los 5 AR Koha-Patron worker/student → vuelve
-             a provisionar por afiliación viva multi-campus. midpoint-best-practices §7. -->
-        <condition>
-            <expression>
-                <script>
-                    <code><![CDATA[
-def cs = (basic.getExtensionPropertyValue(focus, 'campusStudent') ?: '').toString().trim().toUpperCase()
-def cw = (basic.getExtensionPropertyValue(focus, 'campusWorker')  ?: '').toString().trim().toUpperCase()
-def guest = basic.getExtensionPropertyValue(focus, 'smartwifiGuest')
-def hasLib = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72e-b874b3c48fa6' }
-return (cs == 'LIMA') || (cw == 'LIMA') || (guest != null) || hasLib
-                    ]]></code>
-                </script>
-            </expression>
-        </condition>
+        <!-- GATE CAMPUS MULTI-CAMPUS — RETIRADO 2026-07-20 (FUSIÓN 4 KOHA).
+             Historia: el bloque <condition> Lima-only (tarea #65, 2026-06-03) existía
+             porque el resource koha-ils.xml (OID 9b5a7c81) era el Koha VIEJO —
+             4 instancias físicas separadas, una por biblioteca, y MidPoint solo
+             gobernaba la de Lima (BUL). Ese gate quedó obsoleto cuando este role se
+             repuntó (19-jul) al resource koha-upeu.xml (OID e10a539a, "Koha ILS UPeU
+             (consolidado)"): 1 instancia con 4 branches reales BUL/BUJ/BUT/CIA
+             (verificado en vivo 2026-07-20: branches activos, patrons ya existentes en
+             BUJ/BUT). El propio resource koha-upeu.xml YA es multi-campus puro desde
+             el diseño P1 4->1 (existence/administrativeStatus sin `hasLimaAffiliation`,
+             library-id-outbound mapea LIMA/JULIACA/TARAPOTO/CIA a BUL/BUJ/BUT/CIA) —
+             mantener este gate aquí solo bloqueaba de más, sin ningún propósito vigente.
+             Confirmado en caso real: Jahaziel (User 6bf6aba0…, campusStudent=JULIACA)
+             sin cuenta Koha únicamente por este bloque. Universo medido al momento del
+             fix: ~11.148 holders elegibles en Juliaca/Tarapoto sin shadow Koha entre
+             los 4 AR-Koha-Patron-{Pregrado,Posgrado,Faculty,Administrativo}. La
+             elegibilidad real (afiliación viva) la sigue gobernando el resource
+             (existence/administrativeStatus), no este role. midpoint-best-practices §7. -->
     </inducement>
 </role>

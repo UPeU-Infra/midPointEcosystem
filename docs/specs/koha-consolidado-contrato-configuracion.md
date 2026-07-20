@@ -1,6 +1,17 @@
 # Contrato de configuración — Koha nuevo consolidado (1 instancia, 4 bibliotecas)
 
 **Fecha:** 2026-07-16 · **Owner:** Alberto Sánchez · **Estado:** el resource del consolidado YA EXISTE en `lifecycleState=proposed` — ver §1
+
+> **⚠️ ACTUALIZACIÓN 2026-07-20.** `koha-upeu.xml` ya está en `lifecycleState=active` en PROD
+> (cutover Etapas 1-4, 19-jul: 11 roles Koha repuntados, Koha viejo `koha-ils.xml`/`9b5a7c81`
+> archivado, 15.914+ patrons migrados). Branches `BUL/BUJ/BUT/CIA` confirmados activos en vivo
+> con patrons reales en los 3 primeros (BUL 15.315, BUJ 655, BUT 262). **Gap encontrado y
+> cerrado el mismo 20-jul:** aunque el resource y los 11 roles ya apuntaban al consolidado, 4 de
+> los `AR-Koha-Patron-*` (Pregrado/Posgrado/Faculty/Administrativo) conservaban el `<condition>`
+> Lima-only heredado del Koha viejo (gate tarea #65) — bloqueaba ~11.148 holders reales en
+> Juliaca/Tarapoto. Gate retirado en los 4 roles (ver sus XML). El resto de este contrato (§4-9,
+> catálogo Bsort2/discriminador CIA) sigue siendo el pendiente real para el reporte consolidado
+> por branch.
 **Fuentes:** validado por `midpoint-expert` (lado proyección + verificación PROD), `koha-expert` (lado receptor + conector v1.3.12), `vocbench-expert` (catálogo tesauro real).
 
 > **⚠️ CORRECCIÓN 2026-07-16.** La primera versión de este contrato se redactó analizando `upeu/resources/koha-ils.xml` (el resource **viejo**, `.135`/`koha_bul`) y afirmaba que "el resource ya es único, solo hay que re-apuntar `serviceAddress`+`dbHost`". **Es falso.** Existe un resource **dedicado** para el consolidado — `upeu/resources/koha-upeu.xml` — creado y re-apuntado al `.136` en otra sesión (commit `300f6aa`, 15-jul). El re-apuntado **ya se hizo**. Las §1 y §10 quedan corregidas abajo; el resto del contrato (5 ejes, checklist receptor, reporte SQL, circulación, dedup INEI, discriminador CIA) **sigue siendo válido y es justo lo que falta** para promover `koha-upeu` de `proposed` a `active`.

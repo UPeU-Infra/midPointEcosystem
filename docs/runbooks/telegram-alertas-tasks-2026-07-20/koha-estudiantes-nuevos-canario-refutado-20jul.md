@@ -1,5 +1,20 @@
 # Koha para estudiantes nuevos: el "gap de recompute" NO existe — canario refutado (20-jul-2026)
 
+> **⚠️ CORRECCIÓN 2026-07-20 (misma tarde, sesión posterior).** La afirmación de este
+> documento *"Koha hoy es Lima-only por diseño, no por bug"* (línea 26-27) es **incorrecta**
+> y quedó **retirada del código**. Esa frase describe el Koha **VIEJO** (`koha-ils.xml`, OID
+> `9b5a7c81`, 4 instancias físicas separadas, MidPoint solo gobernaba Lima) — contexto que
+> ya no aplica desde el repunte del 19-jul al Koha **NUEVO** consolidado (`koha-upeu.xml`,
+> OID `e10a539a`, 1 instancia con 4 branches reales `BUL/BUJ/BUT/CIA`, multi-campus por
+> diseño desde P1 4->1). El gate Lima-only en el `<condition>` de `AR-Koha-Patron-Pregrado`
+> (y los otros 3 AR-Koha-Patron activos) era **deuda de la migración, no una decisión
+> vigente** — el propio comentario del rol ya decía *"FUSIÓN 4 KOHA: eliminar este bloque"*.
+> Se retiró el gate en los 4 roles (Pregrado/Posgrado/Faculty/Administrativo) el mismo
+> 2026-07-20. El caso Jahaziel analizado abajo **sí era un gap real**, solo que su causa
+> (gate obsoleto) no se cuestionó en el momento. Universo medido: ~11.148 holders en
+> Juliaca/Tarapoto quedaban bloqueados por este mismo gate. Detalle completo en el mismo
+> directorio de memoria del proyecto y en los propios XML de los 4 roles.
+
 ## Encargo original
 
 Se pidió diseñar una task recurrente de `recomputation` (acotada por filtro) que corriera poco

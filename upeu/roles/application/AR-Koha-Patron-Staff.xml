@@ -27,10 +27,15 @@
                  extension/sciback:primaryAffiliation (mapping unico, deterministico).
                  Construction vacia = no-op: el holder solo conserva el vinculo. -->
         </construction>
-        <!-- GATE CAMPUS MULTI-CAMPUS — ENFORCEMENT EN POLICY (tarea #65, 2026-06-03).
-             Rol deprecated/no-op, pero la construction aún referencia el resource Koha;
-             se gatea por consistencia con los demás AR-Koha-Patron. Solo aplica al holder
-             con vínculo VIVO Lima. FUSIÓN 4 KOHA: eliminar este bloque <condition>. -->
+        <!-- GATE CAMPUS MULTI-CAMPUS — NOTA 2026-07-20: en los 4 AR-Koha-Patron activos
+             (Pregrado/Posgrado/Faculty/Administrativo) este mismo bloque Lima-only se
+             RETIRÓ (ver sus XML) porque quedó obsoleto tras el repunte al resource
+             consolidado koha-upeu.xml (4 branches BUL/BUJ/BUT/CIA, ya multi-campus por
+             diseño). Este rol NO se toca igual: está deprecated, 0 holders, construction
+             vacía (no-op), y su resourceRef sigue apuntando al Koha VIEJO archivado
+             (9b5a7c81) — quitar el gate aquí activaría un intento de provisioning contra
+             un resource archived si algún día se le asigna a alguien por error. Se deja
+             intencionalmente intacto como parte de su propio archivado. -->
         <condition>
             <expression>
                 <script>

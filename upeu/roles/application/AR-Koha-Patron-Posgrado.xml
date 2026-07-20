@@ -20,24 +20,21 @@
                  el resource koha-ils desde extension/sciback:primaryAffiliation
                  + extension/sciback:studyLevel (mapping unico, deterministico). -->
         </construction>
-        <!-- GATE CAMPUS MULTI-CAMPUS — ENFORCEMENT EN POLICY (tarea #65, 2026-06-03).
-             Idéntico al de AR-Koha-Patron-Faculty: la construction Koha solo aplica al
-             holder con vínculo VIVO Lima (campusStudent=='LIMA' || campusWorker=='LIMA' ||
-             guest || bibliotecario). Sin él, el BR sigue asignando el AR pero NO se induce
-             cuenta Koha (Semancik cap.7). Egreso histórico NO cuenta. FUSIÓN 4 KOHA:
-             eliminar este bloque <condition> para reactivar provisioning multi-campus. -->
-        <condition>
-            <expression>
-                <script>
-                    <code><![CDATA[
-def cs = (basic.getExtensionPropertyValue(focus, 'campusStudent') ?: '').toString().trim().toUpperCase()
-def cw = (basic.getExtensionPropertyValue(focus, 'campusWorker')  ?: '').toString().trim().toUpperCase()
-def guest = basic.getExtensionPropertyValue(focus, 'smartwifiGuest')
-def hasLib = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72e-b874b3c48fa6' }
-return (cs == 'LIMA') || (cw == 'LIMA') || (guest != null) || hasLib
-                    ]]></code>
-                </script>
-            </expression>
-        </condition>
+        <!-- GATE CAMPUS MULTI-CAMPUS — RETIRADO 2026-07-20 (FUSIÓN 4 KOHA).
+             Historia: el bloque <condition> Lima-only (tarea #65, 2026-06-03) existía
+             porque el resource koha-ils.xml (OID 9b5a7c81) era el Koha VIEJO —
+             4 instancias físicas separadas, una por biblioteca, y MidPoint solo
+             gobernaba la de Lima (BUL). Ese gate quedó obsoleto cuando este role se
+             repuntó (19-jul) al resource koha-upeu.xml (OID e10a539a, "Koha ILS UPeU
+             (consolidado)"): 1 instancia con 4 branches reales BUL/BUJ/BUT/CIA
+             (verificado en vivo 2026-07-20: branches activos, patrons ya existentes en
+             BUJ/BUT). El propio resource koha-upeu.xml YA es multi-campus puro desde
+             el diseño P1 4->1 (existence/administrativeStatus sin `hasLimaAffiliation`,
+             library-id-outbound mapea LIMA/JULIACA/TARAPOTO/CIA a BUL/BUJ/BUT/CIA) —
+             mantener este gate aquí solo bloqueaba de más, sin ningún propósito vigente.
+             Posgrado en particular es hoy 100% Lima en la población real (2001/2001),
+             así que este retiro no cambia su comportamiento observable hoy — se retira
+             igual por consistencia con los otros 4 AR-Koha-Patron y para no reintroducir
+             el mismo gap si algún día hay posgrado fuera de Lima. -->
     </inducement>
 </role>
