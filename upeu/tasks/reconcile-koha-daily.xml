@@ -2,7 +2,7 @@
 <!--
   Task: Reconciliacion diaria — koha-upeu (drift catch-up, NO driver primario)
   Resource: koha-upeu (e10a539a-cb7f-4c72-a19f-60f7f62e4b96)
-  Estado: schedulingState=SUSPENDED explicito. NO se activa con este despliegue.
+  Estado: schedulingState=READY. Activada en PROD 2026-07-20 (autorizado por Alberto), tras desplegar la alerta Telegram sobre fallo de tasks -- ver docs/runbooks/telegram-alertas-tasks-2026-07-20/README.md.
 
   FIX 2026-07-19: este task apuntaba al resource Koha VIEJO (9b5a7c81-...),
   formalmente archivado hoy mismo al cierre de la Etapa 4 de migracion
@@ -43,7 +43,7 @@
     <description>Reconciliacion diaria koha-upeu — catch-up de drift (NO driver primario de provisioning, eso ya ocurre via las reconciliations LAMB). Cron 07:15 UTC (02:15 Lima). Repuntada 2026-07-19 del resource Koha viejo (archivado) a koha-upeu. SUSPENDED hasta aprobacion explicita de Alberto.</description>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="UserType"/>
     <executionState>runnable</executionState>
-    <schedulingState>suspended</schedulingState>
+    <schedulingState>ready</schedulingState>
     <binding>loose</binding>
     <schedule>
         <cronLikePattern>0 15 7 * * ?</cronLikePattern>

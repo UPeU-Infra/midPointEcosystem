@@ -2,7 +2,7 @@
 <!--
   Task: Reconciliacion diaria — Oracle LAMB Egresados v3
   Resource: 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23
-  Estado: schedulingState=SUSPENDED explicito. NO se activa con este despliegue.
+  Estado: schedulingState=READY. Activada en PROD 2026-07-20 (autorizado por Alberto), tras desplegar la alerta Telegram sobre fallo de tasks -- ver docs/runbooks/telegram-alertas-tasks-2026-07-20/README.md.
   Diseño 2026-07-19 (reemplaza el borrador de mayo/2026, sintaxis MidPoint 4.9.5
   executionStatus/recurrence, nunca desplegado en PROD; oid reutilizado).
 
@@ -32,7 +32,7 @@
     <description>Reconciliacion diaria Oracle LAMB Egresados v3 (inbound-only, fuente autoritativa). Cron 06:45 UTC (01:45 Lima). Disenada 2026-07-19, SUSPENDED hasta aprobacion explicita de Alberto.</description>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
     <executionState>runnable</executionState>
-    <schedulingState>suspended</schedulingState>
+    <schedulingState>ready</schedulingState>
     <binding>loose</binding>
     <schedule>
         <cronLikePattern>0 45 6 * * ?</cronLikePattern>

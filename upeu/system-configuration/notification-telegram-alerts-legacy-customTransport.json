@@ -1,0 +1,38 @@
+{
+  "_comment": "PATCH aplicado a SystemConfiguration (00000000-0000-0000-0000-000000000001) en PROD 2026-07-20. Valores reales de token/chat_id NUNCA en este repo -- ver ~/.secrets/telegram.env. Sustituir __TELEGRAM_BOT_TOKEN__ y __TELEGRAM_CHAT_ID__ antes de reaplicar (ej. en otro deployment SciBack).",
+  "objectModification": {
+    "itemDelta": [
+      {
+        "modificationType": "add",
+        "path": "notificationConfiguration/handler",
+        "value": [
+          {
+            "simpleTaskNotifier": {
+              "name": "alert-recon-tasks-failure-telegram",
+              "description": "Alerta Telegram cuando cualquier task de MidPoint (incluye las 4 reconciliations diarias Oracle LAMB/Koha) termina en fallo. Disenado 2026-07-20.",
+              "category": "taskEvent",
+              "status": ["failure", "onlyFailure"],
+              "subjectExpression": {
+                "script": {
+                  "code": "import com.evolveum.midpoint.notifications.api.events.TaskEvent\nTaskEvent te = (TaskEvent) event\ndef task = te.getTask()\ndef name = task?.getName()?.getOrig() ?: 'task desconocida'\n\"MidPoint PROD: fallo en \" + name\n"
+                }
+              },
+              "bodyExpression": {
+                "script": {
+                  "code": "import com.evolveum.midpoint.notifications.api.events.TaskEvent\nTaskEvent te = (TaskEvent) event\ndef task = te.getTask()\ndef name = task?.getName()?.getOrig() ?: 'task desconocida'\ndef oid = task?.getOid() ?: '(sin oid)'\ndef status = te.getOperationResultStatus()\ndef msg = te.getMessage()\ndef progress = te.getProgress()\n\"\"\"🔴 MidPoint PROD — task en fallo\n\nNombre: ${name}\nOID: ${oid}\nStatus: ${status}\nProgreso: ${progress}\nMensaje: ${msg ?: '(sin mensaje adicional, revisar Task GUI)'}\"\"\"\n"
+                }
+              },
+              "transport": "custom:telegram-alerts"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "_nota_legacy_customTransport": "IMPORTANTE (hallazgo empirico 2026-07-20, MidPoint 4.10.2): el prefijo 'custom:<name>' en <transport> SOLO resuelve contra notificationConfiguration/customTransport (LegacyCustomTransportConfigurationType, deprecated desde 4.5 con 'plannedRemoval 5.0' pero AUN es el codigo realmente invocado en 4.10.2 -- com.evolveum.midpoint.transport.impl.legacy.LegacyCustomTransport). Definir el customTransport SOLO bajo messageTransportConfiguration/customTransport (la forma nueva recomendada por los docs) NO es suficiente: produce 'Custom configuration X not found' en runtime porque ese bean no esta cableado a la resolucion de 'custom:' todavia en esta version. Aplicar el customTransport TAMBIEN (o unicamente, si se prioriza que funcione) bajo notificationConfiguration/customTransport. Ver patch XML companero en este mismo directorio.",
+  "path_correcto_customTransport": "notificationConfiguration/customTransport",
+  "value_correcto_customTransport": {
+    "_comment": "El atributo 'name' de LegacyCustomTransportConfigurationType es un XML attribute, no un elemento hijo -- en JSON REST se serializa junto al resto del value (ver XML companero).",
+    "expression_groovy_template": "import java.net.URI\nimport java.net.http.HttpClient\nimport java.net.http.HttpRequest\nimport java.net.http.HttpResponse\nimport groovy.json.JsonOutput\n\ndef token = '__TELEGRAM_BOT_TOKEN__'\ndef chatId = '__TELEGRAM_CHAT_ID__'\ndef subj = message.getSubject()\ndef body = message.getBody()\ndef text = (subj ? subj + \"\\n\\n\" : \"\") + (body ?: \"\")\nif (text.length() > 3900) {\n    text = text.substring(0, 3900) + \"\\n... (truncado)\"\n}\ndef payload = JsonOutput.toJson([chat_id: chatId, text: text])\ndef client = HttpClient.newHttpClient()\ndef request = HttpRequest.newBuilder()\n        .uri(URI.create(\"https://api.telegram.org/bot\" + token + \"/sendMessage\"))\n        .header(\"Content-Type\", \"application/json\")\n        .POST(HttpRequest.BodyPublishers.ofString(payload))\n        .build()\ndef response = client.send(request, HttpResponse.BodyHandlers.ofString())\nif (response.statusCode() != 200) {\n    throw new RuntimeException(\"Telegram notify failed HTTP \" + response.statusCode() + \": \" + response.body())\n}"
+  }
+}
