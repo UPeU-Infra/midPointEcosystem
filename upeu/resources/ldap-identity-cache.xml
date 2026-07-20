@@ -14789,8 +14789,17 @@ return result
                      es un edificio con biblioteca especializada DENTRO del campus Lima, al que se
                      le puede poner un lector InOut en sus puertas. El edificio es dimensión del
                      LECTOR de InOut, no atributo de la persona. Un alumno de Teología pertenece
-                     al campus LIMA. Por eso aquí NO va el discriminador CIA→Teología que sí tiene
-                     Koha (allí CIA es un branchcode de circulación, otra semántica).
+                     al campus LIMA. Por eso aquí NO va ningún discriminador CIA→Teología.
+
+                     ACTUALIZACIÓN 2026-07-20: el discriminador CIA→Teología planeado para Koha
+                     (docs/specs/koha-consolidado-contrato-configuracion.md §3.5/§5) quedó
+                     SUPERSEDIDO/descartado por decisión de Alberto — CIA es biblioteca de solo
+                     lectura en sala, extensión abierta a cualquier campus, NUNCA home
+                     library/branchcode de ningún patron. Koha ya NO tiene (ni tendrá) ese
+                     discriminador; el retiro de InOut de este campo sigue siendo correcto por
+                     su propia razón (CIA es dimensión del lector, no de la persona), ahora
+                     además consistente con el diseño vigente de Koha. Comentario informativo
+                     únicamente, sin PATCH a PROD (no altera comportamiento).
 
                      POR QUÉ SIN DEFAULT (diferencia deliberada con Koha): en Koha un branchcode
                      vacío ROMPE la creación de la cuenta, y por eso su mapping cierra con un

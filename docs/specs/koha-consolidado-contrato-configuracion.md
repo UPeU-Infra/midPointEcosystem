@@ -12,6 +12,20 @@
 > Juliaca/Tarapoto. Gate retirado en los 4 roles (ver sus XML). El resto de este contrato (§4-9,
 > catálogo Bsort2/discriminador CIA) sigue siendo el pendiente real para el reporte consolidado
 > por branch.
+> **🔴 SUPERSEDIDO 2026-07-20 — el plan Teología→CIA queda DESCARTADO.** Decisión explícita de
+> Alberto: CIA (Centro de Investigación Adventista) es una **biblioteca de solo lectura en sala**
+> (3.564 ítems, 100% `notforloan=1` en Koha, medido en vivo), accesible como **extensión abierta**
+> a cualquier persona de cualquier campus, y **NUNCA** debe ser home library/branchcode de ningún
+> patron. Esto supersede el diseño de §3.5 y §5 de este contrato (discriminador
+> `facultyName=='Facultad de Teología'` para estudiantes + `teachingProgram⊇'EP-TEO'` para
+> docentes → `library_id='CIA'`), y las tareas derivadas en §8.3, §10.3 y "Puntos abiertos" #1/#3
+> — ver notas inline en cada sección. Aplicado en PROD el mismo día: el parche legacy
+> `'CIA':'CIA','ICA':'CIA'` se **retiró** de `library-id-outbound` en `upeu/resources/koha-upeu.xml`
+> y su espejo en `upeu/resources/koha-ils.xml` (sin migración de patrons: 0 población afectada,
+> verificado 0 patrons branchcode=CIA en Koha y 0 Users locality=CIA en MidPoint). El personal y
+> alumnado de Teología se registra en su sede real (Lima → `BUL`); CIA sigue existiendo como
+> branch/edificio en Koha para circulación en sala, sin patrons propios.
+
 **Fuentes:** validado por `midpoint-expert` (lado proyección + verificación PROD), `koha-expert` (lado receptor + conector v1.3.12), `vocbench-expert` (catálogo tesauro real).
 
 > **⚠️ CORRECCIÓN 2026-07-16.** La primera versión de este contrato se redactó analizando `upeu/resources/koha-ils.xml` (el resource **viejo**, `.135`/`koha_bul`) y afirmaba que "el resource ya es único, solo hay que re-apuntar `serviceAddress`+`dbHost`". **Es falso.** Existe un resource **dedicado** para el consolidado — `upeu/resources/koha-upeu.xml` — creado y re-apuntado al `.136` en otra sesión (commit `300f6aa`, 15-jul). El re-apuntado **ya se hizo**. Las §1 y §10 quedan corregidas abajo; el resto del contrato (5 ejes, checklist receptor, reporte SQL, circulación, dedup INEI, discriminador CIA) **sigue siendo válido y es justo lo que falta** para promover `koha-upeu` de `proposed` a `active`.
@@ -99,11 +113,21 @@ Multivaluado, JSON `{"type":"CODE","value":"..."}` (conector v1.3.x). Gobierno p
 - **Preservados (emite pero no borra):** `DNI` (adopt-by-DNI del conector), `SEDE`, `TIPO_VINC`, `ORCID`, `COD_UPEU`, `SHOW_BCODE`.
 
 ### 3.5 Biblioteca home → `library_id` (branchcode)
-**Estado actual (verificado 2026-07-16):**
+
+> **🔴 SUPERSEDIDO 2026-07-20.** Esta sección documentaba (a) el estado del parche legacy
+> `locality=='CIA'/'ICA'` y (b) una **propuesta** de discriminador gobernado Teología→CIA que
+> nunca llegó a implementarse. Ambos quedan descartados por decisión de Alberto: **CIA es
+> biblioteca de solo lectura en sala, extensión abierta a cualquier campus, y NUNCA home
+> library de ningún patron.** El parche legacy `'CIA':'CIA','ICA':'CIA'` fue **retirado** (no
+> reemplazado por el discriminador de abajo) de `library-id-outbound` en `koha-upeu.xml` y su
+> espejo `koha-ils.xml`, aplicado en PROD el 2026-07-20. Contenido histórico preservado abajo
+> por contexto; **no representa el diseño vigente.**
+
+**Estado actual (verificado 2026-07-16, histórico):**
 - `koha-ils.xml` (viejo): `[...].getOrDefault(effective,'BUL')` — forzaba `BUL` por defecto.
 - **`koha-upeu.xml` (consolidado):** `['LIMA':'BUL','JULIACA':'BUJ','TARAPOTO':'BUT','CIA':'CIA','ICA':'CIA'].get(effective)` — ya **sin default** (null si no mapea; mejor). Pero **CIA sigue alcanzándose solo por el parche legacy** `locality=='CIA'/'ICA'` (frágil, no gobernado). **Este es el cambio que falta aplicar en `koha-upeu.xml`.**
 
-**Propuesta:** `library_id = f(campus, unidad-Teología)`. **Requiere DOS señales** (ver §5, verificado en PROD):
+**Propuesta (histórica, descartada):** `library_id = f(campus, unidad-Teología)`. **Requiere DOS señales** (ver §5, verificado en PROD):
 - **Estudiantes:** `facultyName == 'Facultad de Teología'` → `CIA`. ✅ ya materializado.
 - **Docentes:** `teachingProgram ⊇ 'EP-TEO'` → `CIA`. ✅ dato ya en el focus (los docentes **no** tienen `facultyName`).
 - Resto Lima → `BUL`; Juliaca → `BUJ`; Tarapoto → `BUT`.
@@ -133,7 +157,15 @@ Bug conocido **DT-11** (`Uid cannot be null` en search) presente en el conector 
 
 ## 5. Discriminador CIA — verificado en PROD (12-jul-2026)
 
-**Conclusión: `facultyName == 'Facultad de Teología'` NO alcanza para docentes.** Cobertura real de `facultyName` por afiliación:
+> **🔴 SUPERSEDIDO 2026-07-20.** Esta sección documentaba la investigación de cobertura de datos
+> (`facultyName`/`teachingProgram`) para un discriminador Teología→CIA que **nunca se
+> implementó** y que queda **descartado** por decisión de Alberto: CIA es biblioteca de solo
+> lectura en sala, extensión abierta a cualquier campus, NUNCA home library de ningún patron. La
+> conclusión técnica de abajo (`facultyName` insuficiente para docentes) sigue siendo correcta
+> como dato histórico, pero ya no motiva ningún cambio de diseño — no hay discriminador CIA que
+> construir. Ver nota superseded al inicio del documento y en §3.5.
+
+**Conclusión (histórica): `facultyName == 'Facultad de Teología'` NO alcanza para docentes.** Cobertura real de `facultyName` por afiliación:
 
 | afiliación | total | con `facultyName` | % |
 |---|---|---|---|
@@ -200,7 +232,7 @@ Ordenados por criticidad:
 
 1. **🟠 Poblar AV Bsort2 en Koha desde la `LT-Pcode-INEI` (42 rows), NO desde el tesauro en vivo.** El catálogo operativo de INEI ya existe en la LookupTable (pregrado cerrado). Generar los authorised_values Bsort2 del Koha nuevo **desde las filas de la LT, deduplicando por INEI** (`SELECT DISTINCT value` → ~37 INEI únicos). La LT tiene 4 INEI con múltiples P-codes (`11102086`=P19/P58; `12104952`=P14/P106/P57; `41101896`=P08/P120 Tarapoto; `91910681`=P69/P82 menciones Salud Pública) — **NO son bug**, son aliases N:1 intencionales (P-code=key única→INEI; varios códigos SUNEDU por mención/sede caen en el mismo programa, documentado en cada label). En Koha el código es el INEI y debe ser único → un AV por INEI. El reporte agrupa por INEI, consolidando menciones/sedes bajo el programa (deseable).
 2. **🟡 Cerrar el gap de posgrado** (documentado, "no es bug"): ~1.449 estudiantes Lima en 31 P-codes sin INEI validado (P178, P171, P75, P164, P159, P73, P78…). Sin esto esos patrons de posgrado salen con `Bsort2` vacío ("(sin programa)"). Requiere nueva ronda de validación INEI 2022 y agregar rows a la LT. **NO bloquea pregrado.**
-3. **🟠 Decidir discriminador CIA docentes** (§5): `teachingProgram⊇EP-TEO` (rápido) vs extender inbound `trabajadores.xml` (canónico). Confirmar cobertura de semestres de corte con Calidad.
+3. ~~🟠 Decidir discriminador CIA docentes~~ — **SUPERSEDIDO 2026-07-20**: decidido que NO hay discriminador CIA que construir (ver nota al inicio del documento y §3.5/§5). Ítem cerrado, no bloqueante.
 4. **🟠 Pre-crear el catálogo receptor** completo en el Koha nuevo (§4).
 5. **🟡 Confirmar** listas de valores AV para `AREA`/`CRAI_TIER`/`TIPO_VINC`/`SEDE`.
 6. **🟢 (Higiene VocBench, NO bloqueante Koha)** — el snapshot del tesauro en vivo tiene deuda de curación que afecta a *otros* consumidores (DSpace/Indico) y a futuras regeneraciones de la LT, pero NO a la proyección Koha actual: ~14 conceptos duplicados/legacy de pregrado sin `IneiCode8` (son gemelos de conceptos que sí lo tienen — p.ej. Medicina Humana proyecta bien vía `P30→91200267` en la LT), 82% de programas sin vínculo formal a facultad (solo `scopeNote`), 6 conceptos RIMS sin SKOS-XL, `ciencias-de-la-salud` con doble notation `FCS`/`FACISAL`. Deseable curar, sin urgencia para Koha.
@@ -229,7 +261,7 @@ Ordenados por criticidad:
 
 1. **Cumplir el checklist receptor §4** en la instancia `.136` (6 categories, AV Bsort1/Bsort2 **sin límite por branch**, 11 patron attribute types, 4 branches `BUL/CIA/BUJ/BUT`). El conector no crea nada de esto.
 2. **Poblar AV Bsort2 desde la LT** deduplicando por INEI (§8.1, ~37 únicos).
-3. **Actualizar `library-id-outbound` de `koha-upeu.xml`** al discriminador gobernado de Teología (§3.5: `facultyName` para students + `teachingProgram ⊇ EP-TEO` para faculty), retirando el parche `locality=='CIA'/'ICA'` solo cuando la cobertura lo permita.
+3. ~~Actualizar `library-id-outbound` de `koha-upeu.xml` al discriminador gobernado de Teología~~ — **SUPERSEDIDO Y EJECUTADO 2026-07-20 en sentido contrario**: no se implementó el discriminador; se **retiró** el parche `locality=='CIA'/'ICA'` sin reemplazo (CIA nunca es home library — ver nota al inicio del documento). Aplicado en PROD mediante PATCH a `koha-upeu.xml` y `koha-ils.xml`, 0 población afectada.
 4. **Desbloquear `dbEnabled`**: hoy `false` porque el FortiGate bloquea `.166→.136:3306` (canal de fotos). Depende de Redes — misma causa raíz que tumbó los LAMB el 08-jul.
 5. Commit → push → `git pull` en PROD → aplicar vía REST → Test Connection (`success`).
 6. **Promover `lifecycleState`: `proposed` → `active`.**
@@ -240,9 +272,9 @@ Ordenados por criticidad:
 
 ## Puntos abiertos
 
-1. **[CIA docentes]** ¿`teachingProgram⊇EP-TEO` cubre a todos los docentes vivos de Teología en los semestres de corte? (Calidad). Alternativa canónica: extender inbound `trabajadores.xml`.
+1. ~~[CIA docentes]~~ — **CERRADO 2026-07-20**: no aplica, no hay discriminador CIA (ver nota superseded al inicio del documento).
 2. **[Tesauro]** Curar INEI8 faltantes (14 pregrados) + duplicado (Maestría Salud Pública) + vínculos a facultad. Bloquea reporte consolidado confiable.
-3. **[Home Teología-Lima]** Convención home library A (CIA) vs B (BUL) — irrelevante para el reporte de uso, decidible por circulación.
+3. ~~[Home Teología-Lima]~~ — **CERRADO 2026-07-20**: decidido B (`BUL`, sede real) para toda persona de Teología en Lima. CIA nunca es home library, por decisión explícita de Alberto (extensión de solo lectura abierta a cualquier campus).
 4. **[AV valores]** Confirmar listas exactas AREA/CRAI_TIER/TIPO_VINC/SEDE.
 5. **[Circulation]** Valores de préstamo/multa por category×itemtype (área biblioteca).
 

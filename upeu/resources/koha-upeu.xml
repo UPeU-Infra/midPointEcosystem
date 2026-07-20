@@ -1416,8 +1416,15 @@ def cw = campusWorker?.toString()?.trim()?.toUpperCase()
 def loc = locality?.toString()?.trim()?.toUpperCase()
 // Precedencia: campus vivo académico → campus vivo laboral → locality (fallback).
 def effective = (cs != null &amp;&amp; cs != '') ? cs : ((cw != null &amp;&amp; cw != '') ? cw : (loc ?: ''))
-// P1 4->1: mapa campus → branch de la instancia consolidada (BUL/BUJ/BUT/CIA).
-def branch = ['LIMA':'BUL', 'JULIACA':'BUJ', 'TARAPOTO':'BUT', 'CIA':'CIA', 'ICA':'CIA'].get(effective)
+// P1 4->1: mapa campus → branch de la instancia consolidada (BUL/BUJ/BUT).
+// CIA RETIRADO (2026-07-20): decisión de Alberto — CIA (Centro de Investigación
+// Adventista) es biblioteca de solo lectura en sala (3.564 ítems, 100% notforloan=1
+// en Koha), extensión abierta a cualquier persona de cualquier campus, y NUNCA debe
+// ser home library/branchcode de ningún patron. Supersede el plan Teología→CIA de
+// docs/specs/koha-consolidado-contrato-configuracion.md §3.5/§5. Sin población
+// afectada (0 patrons branchcode=CIA en Koha, 0 Users locality=CIA en MidPoint al
+// momento del retiro), por lo que este cambio es de bajo riesgo.
+def branch = ['LIMA':'BUL', 'JULIACA':'BUJ', 'TARAPOTO':'BUT'].get(effective)
 if (branch == null) {
     // P1: campus desconocido/sin resolver → NO forzar BUL (evita misfiling silencioso de
     // toda sede no mapeada a Lima). Sin valor + warn para corrección de datos. El gate de

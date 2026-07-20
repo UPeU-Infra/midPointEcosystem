@@ -1368,8 +1368,16 @@ def cw = campusWorker?.toString()?.trim()?.toUpperCase()
 def loc = locality?.toString()?.trim()?.toUpperCase()
 // Precedencia: campus vivo académico → campus vivo laboral → locality (fallback).
 def effective = (cs != null &amp;&amp; cs != '') ? cs : ((cw != null &amp;&amp; cw != '') ? cw : (loc ?: ''))
-// Mapa por campus; locality legacy CIA/ICA preservado; default conservador BUL.
-['LIMA':'BUL', 'JULIACA':'BUJ', 'TARAPOTO':'BUT', 'CIA':'CIA', 'ICA':'CIA'].getOrDefault(effective, 'BUL')
+// Mapa por campus; default conservador BUL.
+// CIA RETIRADO (2026-07-20): decisión de Alberto — CIA (Centro de Investigación
+// Adventista) es biblioteca de solo lectura en sala, extensión abierta a cualquier
+// persona de cualquier campus, y NUNCA debe ser home library/branchcode de ningún
+// patron. Supersede el plan Teología→CIA de
+// docs/specs/koha-consolidado-contrato-configuracion.md §3.5/§5. Espejo del retiro
+// aplicado en koha-upeu.xml (resource activo); este resource (koha-ils, OID
+// 9b5a7c81) está archivado (delete=false) — cambio aplicado por consistencia
+// histórica, sin población afectada (0 patrons/Users con CIA).
+['LIMA':'BUL', 'JULIACA':'BUJ', 'TARAPOTO':'BUT'].getOrDefault(effective, 'BUL')
                             </code>
                         </script>
                     </expression>
