@@ -97,6 +97,7 @@ Ejemplos:
 | Elvira Mavel Brañes Juan de Dios | `AR-Koha-AdminBiblioteca` | `BUL` |
 | David | `AR-Koha-AdminBiblioteca` | `BUL` |
 | Walter Eloy Luque Condori | `AR-Koha-AdminBiblioteca` | `BUJ` |
+| Christiam Pool Castillo Cahuaza | `AR-Koha-AdminBiblioteca` | `BUT` |
 | Jaime | `AR-Koha-Catalogacion` | `BUL`, `CIA` |
 
 El alcance debe tener `validFrom`/`validTo` en la activación del assignment cuando sea temporal. Si cada biblioteca requiere fechas distintas, se usan assignments separados. La fuente RR. HH. puede asignar la función base; excepciones transversales, como Jaime en CIA o Elvira como TI, se asignan manualmente con auditoría y fecha de revisión.
