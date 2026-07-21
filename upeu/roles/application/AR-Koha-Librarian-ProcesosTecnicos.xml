@@ -40,20 +40,6 @@
                     </expression>
                 </outbound>
             </attribute>
-            <attribute>
-                <ref>ri:flags</ref>
-                <outbound><name>koha-staff-login</name><strength>strong</strength><expression><value>4</value></expression></outbound>
-            </attribute>
-            <attribute>
-                <ref>ri:user_permissions</ref>
-                <outbound>
-                    <name>koha-procesos-tecnicos-permissions</name>
-                    <strength>strong</strength>
-                    <expression><script><code><![CDATA[
-return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds','9:edit_catalogue','9:edit_items','13:label_creator','13:manage_staged_marc','13:stage_marc_import']
-                    ]]></code></script></expression>
-                </outbound>
-            </attribute>
         </construction>
     </inducement>
 </role>

@@ -1458,13 +1458,25 @@ return branch
                 <displayName>Permisos administrativos Koha</displayName>
                 <tolerant>false</tolerant>
                 <outbound>
-                    <name>flags-from-koha-superadmin-role</name>
+                    <name>flags-from-effective-koha-staff-role</name>
                     <strength>strong</strength>
                     <expression>
                         <script>
                             <code><![CDATA[
-def specialOid = 'd698dc99-1a8c-479c-9eec-2a0214fdbf04'
-return focus?.assignment?.any { it?.targetRef?.oid == specialOid } ? 1 : null
+def assigned = (focus?.assignment ?: []).collect { it?.targetRef?.oid }.findAll { it != null } as Set
+def admins = [
+    'd698dc99-1a8c-479c-9eec-2a0214fdbf04', // AR-Koha-Superadmin
+    'd3303cec-7b05-4415-a19d-84a1c899f4c4', // Direccion
+    '8d3daccf-a76b-41ed-a772-1ccc5d273329'  // Soporte/TI
+] as Set
+def staff = [
+    'dd74503c-7c12-4631-80ec-416aebc35319', // Circulacion
+    '337e8dc4-324e-454d-8c70-dcd50159af30', // Procesos tecnicos
+    '03a2fc51-cda6-49d6-82b0-a00499afaf24'  // Supervision
+] as Set
+if (!assigned.intersect(admins).isEmpty()) return 1
+if (!assigned.intersect(staff).isEmpty()) return 4
+return null
                             ]]></code>
                         </script>
                     </expression>
@@ -1474,6 +1486,34 @@ return focus?.assignment?.any { it?.targetRef?.oid == specialOid } ? 1 : null
                 <ref>ri:user_permissions</ref>
                 <displayName>Permisos granulares Koha</displayName>
                 <tolerant>false</tolerant>
+                <outbound>
+                    <name>user-permissions-from-effective-koha-staff-role</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def assigned = (focus?.assignment ?: []).collect { it?.targetRef?.oid }.findAll { it != null } as Set
+def admins = [
+    'd698dc99-1a8c-479c-9eec-2a0214fdbf04',
+    'd3303cec-7b05-4415-a19d-84a1c899f4c4',
+    '8d3daccf-a76b-41ed-a772-1ccc5d273329'
+] as Set
+if (!assigned.intersect(admins).isEmpty()) return []
+def technical = [
+    '337e8dc4-324e-454d-8c70-dcd50159af30',
+    '03a2fc51-cda6-49d6-82b0-a00499afaf24'
+] as Set
+if (!assigned.intersect(technical).isEmpty()) {
+    return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds','9:edit_catalogue','9:edit_items','13:label_creator','13:manage_staged_marc','13:stage_marc_import']
+}
+if (assigned.contains('dd74503c-7c12-4631-80ec-416aebc35319')) {
+    return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds']
+}
+return []
+                            ]]></code>
+                        </script>
+                    </expression>
+                </outbound>
             </attribute>
             <attribute>
                 <ref>ri:expiry_date</ref>

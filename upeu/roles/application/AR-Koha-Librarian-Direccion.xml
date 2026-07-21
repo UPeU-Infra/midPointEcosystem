@@ -46,10 +46,6 @@
                     </expression>
                 </outbound>
             </attribute>
-            <attribute>
-                <ref>ri:flags</ref>
-                <outbound><name>koha-admin</name><strength>strong</strength><expression><value>1</value></expression></outbound>
-            </attribute>
         </construction>
     </inducement>
 </role>
