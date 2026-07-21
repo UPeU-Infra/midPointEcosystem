@@ -66,8 +66,8 @@
     </row>
     <row>
         <key>339</key>
-        <value>circulacion</value>
-        <label>Asistente de Procesos Técnicos — mínimo por puesto; elevación técnica explícita en MidPoint</label>
+        <value>procesos-tecnicos</value>
+        <label>Asistente de Procesos Técnicos</label>
     </row>
     <row>
         <key>42</key>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="62bdad44-6ad9-4ef3-b11e-4df711571e9c">
+    <name>AR-Koha-Override-Circulacion</name>
+    <description>Excepción manual de mínimo privilegio: limita los permisos Koha efectivos a circulación y registro de usuarios cuando RR.HH. no distingue funciones dentro de un mismo ID_PUESTO. No contiene construction. El resource solo la aplica con liveAffiliationWorker vigente y costCenter=93.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+</role>

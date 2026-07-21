@@ -1507,6 +1507,7 @@ def admins = [
     '8d3daccf-a76b-41ed-a772-1ccc5d273329'
 ] as Set
 if (!assigned.intersect(admins).isEmpty()) return []
+if (assigned.contains('62bdad44-6ad9-4ef3-b11e-4df711571e9c')) return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds']
 def technical = [
     '337e8dc4-324e-454d-8c70-dcd50159af30',
     '03a2fc51-cda6-49d6-82b0-a00499afaf24'
