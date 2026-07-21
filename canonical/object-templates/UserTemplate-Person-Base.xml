@@ -2126,11 +2126,14 @@ return (ceased &amp;&amp; !anyLive) ? ActivationStatusType.DISABLED : Activation
     -->
     <mapping>
         <name>Q4-birthright-koha-librarian-crai</name>
-        <description>Auto-asigna AR-Koha-Librarian al personal del CRAI según costCenter (área de biblioteca). Fuente de verdad: ID_SEDEAREA de Oracle LAMB. Aplica a cualquier afiliación (faculty o staff). Movido al base template para cobertura universal.</description>
+        <description>Auto-asigna AR-Koha-Librarian al personal con contrato vivo y costCenter=93. Fuente de verdad: RR.HH. Oracle LAMB (ID_AREA + liveAffiliationWorker). Aplica a cualquier afiliación.</description>
         <lifecycleState>active</lifecycleState>
         <strength>strong</strength>
         <source>
             <path>costCenter</path>
+        </source>
+        <source>
+            <path>extension/sciback:liveAffiliationWorker</path>
         </source>
         <expression>
             <assignmentTargetSearch>
@@ -2152,7 +2155,8 @@ return (ceased &amp;&amp; !anyLive) ? ActivationStatusType.DISABLED : Activation
                 <code>// FIX 2026-05-31 (G1): costCenter = ID_AREA numérico puro (no 'area.NN').
 // ID_AREA 93 = CRAI institucional (ELISEO.ORG_AREA, validado vs Oracle).
 def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
-['93'].contains(cc)</code>
+def live = liveAffiliationWorker != null ? basic.stringify(liveAffiliationWorker).trim() : '';
+cc == '93' &amp;&amp; live != ''</code>
             </script>
         </condition>
     </mapping>
@@ -2173,7 +2177,7 @@ def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
     -->
     <mapping>
         <name>Q5-birthright-koha-crai-tier</name>
-        <description>Auto-asigna AR-Koha-Librarian-{tier} según cargo (ID_PUESTO) del personal CRAI, resuelto via LookupTable LT-CRAI-Puesto-Tier. Fallback al tier mínimo (circulacion) ante cargo desconocido. Aplica a cualquier afiliación. Movido al base template para cobertura universal.</description>
+        <description>Auto-asigna AR-Koha-Librarian-{tier} al personal CRAI con contrato vivo, según ID_PUESTO de RR.HH. resuelto via LT-CRAI-Puesto-Tier. Fallback al tier mínimo ante cargo desconocido.</description>
         <lifecycleState>active</lifecycleState>
         <strength>strong</strength>
         <source>
@@ -2181,6 +2185,9 @@ def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
         </source>
         <source>
             <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambPositionId</path>
+        </source>
+        <source>
+            <path>extension/sciback:liveAffiliationWorker</path>
         </source>
         <expression>
             <assignmentTargetSearch>
@@ -2248,7 +2255,8 @@ return roleName</code>
                 <code>// FIX 2026-05-31 (G1): costCenter = ID_AREA numérico puro (no 'area.NN').
 // ID_AREA 93 = CRAI institucional (ELISEO.ORG_AREA, validado vs Oracle).
 def cc = costCenter != null ? basic.stringify(costCenter).trim() : '';
-['93'].contains(cc)</code>
+def live = liveAffiliationWorker != null ? basic.stringify(liveAffiliationWorker).trim() : '';
+cc == '93' &amp;&amp; live != ''</code>
             </script>
         </condition>
     </mapping>

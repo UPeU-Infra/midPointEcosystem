@@ -390,6 +390,16 @@
                                 </xsd:appinfo>
                             </xsd:annotation>
                         </xsd:element>
+                        <xsd:element minOccurs="0" maxOccurs="unbounded" name="user_permissions" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>247</a:displayOrder>
+                                    <ra:nativeAttributeName>user_permissions</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>user_permissions</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>false</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
                         <xsd:element minOccurs="0" name="secondary_email" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
@@ -1459,6 +1469,11 @@ return focus?.assignment?.any { it?.targetRef?.oid == specialOid } ? 1 : null
                         </script>
                     </expression>
                 </outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:user_permissions</ref>
+                <displayName>Permisos granulares Koha</displayName>
+                <tolerant>false</tolerant>
             </attribute>
             <attribute>
                 <ref>ri:expiry_date</ref>

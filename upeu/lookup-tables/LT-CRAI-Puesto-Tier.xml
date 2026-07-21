@@ -28,7 +28,7 @@
   value = tier canónico
   label = nombre del cargo (inspección visual)
 
-  Total: 10 rows. Verificado en Oracle LAMB 2026-05-22.
+  Total: 11 rows. Matriz operativa aprobada 2026-07-21; RR.HH. es IIA.
 -->
 <lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
              oid="ebe291d2-6375-49f8-aa6f-5afeee959f4e">
@@ -46,22 +46,22 @@
     </row>
     <row>
         <key>128</key>
-        <value>supervision</value>
+        <value>circulacion</value>
         <label>Encargado de Circulación</label>
     </row>
     <row>
         <key>211</key>
-        <value>supervision</value>
+        <value>procesos-tecnicos</value>
         <label>Supervisor de la Gestión Documental</label>
     </row>
     <row>
         <key>212</key>
-        <value>supervision</value>
+        <value>procesos-tecnicos</value>
         <label>Supervisor de Procesos Técnicos</label>
     </row>
     <row>
         <key>216</key>
-        <value>supervision</value>
+        <value>circulacion</value>
         <label>Supervisor de Servicios</label>
     </row>
     <row>
@@ -78,6 +78,11 @@
         <key>292</key>
         <value>circulacion</value>
         <label>Auxiliar de CRAI</label>
+    </row>
+    <row>
+        <key>331</key>
+        <value>circulacion</value>
+        <label>Asistente</label>
     </row>
     <row>
         <key>257</key>

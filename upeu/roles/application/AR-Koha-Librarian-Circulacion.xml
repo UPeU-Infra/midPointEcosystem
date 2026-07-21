@@ -45,12 +45,20 @@
                     </expression>
                 </outbound>
             </attribute>
-            <!-- FASE B (conector Koha v1.4.0): cuando v1.4.0 exista, agregar aqui dos
-                 bloques attribute dentro de esta misma construction: uno para ri:flags
-                 (bitmask borrowers.flags del nivel circulacion) y otro para
-                 ri:user_permissions (lista de permisos granulares del nivel). Valores
-                 definitivos los fija koha-expert en Fase B. No incluir XML de ejemplo
-                 en este comentario para no romper el parseo. -->
+            <attribute>
+                <ref>ri:flags</ref>
+                <outbound><name>koha-staff-login</name><strength>strong</strength><expression><value>4</value></expression></outbound>
+            </attribute>
+            <attribute>
+                <ref>ri:user_permissions</ref>
+                <outbound>
+                    <name>koha-circulacion-permissions</name>
+                    <strength>strong</strength>
+                    <expression><script><code><![CDATA[
+return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds']
+                    ]]></code></script></expression>
+                </outbound>
+            </attribute>
         </construction>
     </inducement>
 </role>

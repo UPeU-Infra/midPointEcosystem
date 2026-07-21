@@ -8,8 +8,8 @@
         con el atributo extendido AREA=CRAI (extended_attributes), filtrable en la
         busqueda de usuarios del intranet de Koha. La categoria patron es ADMINIST
         (derivada por el resource desde primaryAffiliation=staff) — la categoria STAFF
-        fue eliminada 2026-05-22 y unificada en ADMINIST. En connector v1.4.0 este
-        mismo rol sumara la construction de borrowers.flags (permisos de intranet).
+        fue eliminada 2026-05-22 y unificada en ADMINIST. Los permisos de intranet
+        se materializan en los roles de tier derivados del puesto de RR.HH.
         Fuente de verdad unica para "es personal CRAI".</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
