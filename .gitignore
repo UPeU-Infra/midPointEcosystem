@@ -104,3 +104,6 @@ archive/backups-2026-06-prod-campus/
 
 # Exports crudos de config PROD (backups de rollback P0) — NUNCA commitear
 .backups-prod-p0/
+
+# Worktrees locales de planificación/implementación
+.worktrees/
