@@ -37,7 +37,7 @@ Toda orden Git usa `git -C <ruta>`. Cada repositorio se commitea, publica y etiq
 
 Dependencias obligatorias:
 
-1. PROD está bloqueado hasta obtener `PLUGIN_GATE=PASS`, `CONNECTOR_GATE=PASS`, `SVC_GATE=PASS`, `DEV_E2E=GO` y `ROLLBACK_DRILL=PASS`.
+1. PROD está bloqueado hasta obtener `PLUGIN_GATE=PASS`, `ADQUISITIONS_GATE=PASS`, `CONNECTOR_GATE=PASS`, `SVC_GATE=PASS`, `DEV_E2E=GO` y `ROLLBACK_DRILL=PASS`.
 2. Si el plugin no intercepta una ruta protegida, Tasks 7-10 quedan en `NO-GO`.
 3. Si `svc_midpoint` no funciona con `flags=0` y el conjunto exacto de permisos mínimos, no se toca ninguna cuenta humana.
 4. El JAR, plugin y objetos MidPoint se despliegan como una versión coordinada; no se activa un estado humano si alguno difiere.
@@ -51,6 +51,7 @@ Dependencias obligatorias:
 - Modify: `upeu/roles/application/AR-Koha-Superadmin.xml` — guard preventivo para el OID de Juan.
 - Modify: `upeu/roles/application/AR-Koha-Librarian-{Circulacion,ProcesosTecnicos,Direccion,Soporte,Supervision}.xml` — documentación y construction única si corresponde.
 - Create: `upeu/roles/application/AR-Koha-Librarian-RegistroUsuarios.xml` — función independiente si la matriz final la requiere.
+- Create: `upeu/roles/application/AR-Koha-Librarian-Adquisiciones.xml` — adquisiciones operativas con alcance por biblioteca.
 - Create: `upeu/tests/koha-scoped-access-static.sh` — pruebas XML y invariantes estáticas.
 - Create: `upeu/tests/koha-scoped-access-dev.sh` y `upeu/tests/fixtures/koha-scoped-access/*.xml` — pruebas conductuales individuales en DEV.
 - Create: `test-vectors/staff-authz-v1.json` — vector canónico compartido Java/Perl.
@@ -105,15 +106,16 @@ Juan Alberto Sánchez Condor / jsanchez@upeu.edu.pe -> SUPERADMIN / ALL
 Elvira Mavel Brañes Juan de Dios                 -> ADMIN_LOCAL / BUL
 David Leandro Orrego Granados                    -> ADMIN_LOCAL / BUL
 Walter Eloy Luque Condori                        -> ADMIN_LOCAL / BUJ
-Christiam Pool Castillo Cahuaza                  -> ADMIN_LOCAL / BUT
-Jaime                                             -> CATALOGACION / BUL,CIA
+Christiam Pool Castillo Cahuaza / christiam.castillo@upeu.edu.pe -> ADMIN_LOCAL / BUT
+Jaime Aurelio Vilcazán Quispe / jaimev@upeu.edu.pe              -> CATALOGACION+ADQUISICIONES+REGISTRO_USUARIO+CIRCULACION / BUL,CIA
+Joel Hugo Fernández Rojas / hugof@upeu.edu.pe                    -> CATALOGACION+ADQUISICIONES+REGISTRO_USUARIO+CIRCULACION / BUL
 ```
 
 Dejar `Juan Felipe Campos Adanaque` como “pendiente de función local” hasta confirmar si es Dirección, Soporte o Supervisión; no inferir el tier solo por `flags=1`.
 
 - [ ] **Step 3: Elegir fixtures DEV sin transacciones reales**
 
-Registrar un patron staff de prueba por `BUL`, `BUJ`, `BUT`, un catalogador `BUL+CIA`, un ejemplar prestable por sede y un ejemplar CIA `notforloan=1`.
+Registrar un patron staff de prueba por `BUL`, `BUJ`, `BUT`, un operador `CATALOGACION+ADQUISICIONES+REGISTRO_USUARIO+CIRCULACION` en `BUL`, otro en `BUL+CIA`, un ejemplar prestable por sede y un ejemplar CIA `notforloan=1`.
 
 - [ ] **Step 4: Guardar backups lógicos de objetos, no tablas completas**
 
@@ -220,6 +222,8 @@ Registrar el resultado en el runbook. Mantener los OID y mapearlos exactamente a
 | `8d3daccf-a76b-41ed-a772-1ccc5d273329` | Soporte | `ADMIN_LOCAL` |
 | `03a2fc51-cda6-49d6-82b0-a00499afaf24` | Supervision | `CIRCULACION+REGISTRO_USUARIO` |
 | `d698dc99-1a8c-479c-9eec-2a0214fdbf04` | Superadmin | `SUPERADMIN` solo Juan |
+| `2d5b862c-4371-4702-8255-fc988b2d1fdd` | RegistroUsuarios (nuevo) | `REGISTRO_USUARIO` |
+| `ab8078b6-d167-422e-be70-949e13b958df` | Adquisiciones (nuevo) | `ADQUISICIONES` |
 
 Cada rol funcional induce la misma construction `resource=koha-upeu`, `kind=account`, `intent=default`; la unión ocurre dentro de esa única construction y nunca crea una segunda proyección.
 
@@ -260,11 +264,14 @@ CIRCULACION      -> 1:circulate_remaining_permissions, 4:list_borrowers,
                     4:edit_borrowers
 CATALOGACION     -> 9:edit_catalogue, 9:edit_items, 13:label_creator
 REGISTRO_USUARIO -> 4:list_borrowers, 4:edit_borrowers
-ADMIN_LOCAL      -> unión aprobada de las tres funciones, sin parameters,
+ADQUISICIONES    -> 11:order_manage, 11:order_receive,
+                    11:edit_invoices
+ADMIN_LOCAL      -> CIRCULACION + CATALOGACION + REGISTRO_USUARIO,
+                    sin adquisiciones, parameters,
                     permissions, plugins, reports SQL ni staffaccess global
 ```
 
-Validar todos los pares contra `userflags` y `permissions` de Koha 26.05 antes de fijarlos. El primer rollout excluye explícitamente reservas, importación MARC, procesos batch, parámetros globales, gestión de permisos, plugins y reportes SQL. Añadir pruebas negativas para `place_holds`, `manage_staged_marc`, `stage_marc_import`, `parameters`, `permissions`, `plugins` y `reports`.
+Validar todos los pares contra `userflags` y `permissions` de Koha 26.05 antes de fijarlos. El primer rollout excluye explícitamente reservas, importación MARC, procesos batch, parámetros globales, gestión de permisos, plugins y reportes SQL. Adquisiciones excluye `vendors_manage`, `contracts_manage`, `budget_manage*`, `period_manage`, `planning_manage`, `order_manage_all`, borrado de baskets/invoices, EDI y MARC ordering. Añadir pruebas negativas para todos estos permisos, además de `place_holds`, `manage_staged_marc`, `stage_marc_import`, `parameters`, `permissions`, `plugins` y `reports`.
 
 - [ ] **Step 5: Materializar scope y estado de autorización**
 
@@ -427,9 +434,16 @@ ok !authorize($patron, 'edit_item', { homebranch => 'BUJ' });
 ok !authorize($patron, 'edit_item', { homebranch => undef });
 ok !authorize($patron, 'place_hold', { branchcode => 'BUL' });
 ok !authorize($patron, 'stage_marc_import', { branchcode => 'BUL' });
+ok authorize($patron, 'receive_order', { branchcode => 'BUL' });
+ok !authorize($patron, 'receive_order', { branchcode => 'BUJ' });
+ok !authorize($patron, 'receive_order', { branchcode => undef });
+ok !authorize($patron, 'vendors_manage', {});
+ok !authorize($admin_local_without_acquisitions, 'order_manage', { branchcode => 'BUT' });
+ok !authorize($admin_local_without_acquisitions, 'receive_order', { branchcode => 'BUT' });
+ok !authorize($admin_local_without_acquisitions, 'edit_invoice', { branchcode => 'BUT' });
 ```
 
-Repetir pruebas positivas y negativas por cada ruta CGI/REST incluida. Para jobs, batch, reservas e importación MARC del primer rollout, la única expectativa válida es denegación. Probar request directo sin UI y registrar status/redirect/body.
+Repetir pruebas positivas y negativas por cada ruta CGI/REST incluida. Para pedidos/recepción/invoices, derivar de forma inequívoca la biblioteca del basket/order/invoice; ausencia o mezcla de sedes deniega. Proveedores, contratos, presupuestos, jobs, batch, reservas e importación MARC tienen como única expectativa válida la denegación. Probar request directo sin UI y registrar status/redirect/body.
 
 Ejecutar RED antes del plugin y GREEN después:
 
@@ -449,7 +463,7 @@ Ejecutar pruebas directas CGI, REST, jobs y batch en Koha DEV. Si una ruta prote
 
 - [ ] **Step 6: Gate de decisión**
 
-Expected para continuar: todas las rutas del primer rollout tienen prueba negativa PASS.  
+Expected para continuar: todas las rutas del primer rollout tienen prueba negativa PASS. `ADQUISITIONS_GATE=PASS` exige biblioteca inequívoca y pruebas allow/deny para order/basket/receive/invoice, más denegación de proveedores, contratos y presupuestos.
 Si no: documentar la brecha y detener Tasks 7-10 hasta aprobar un plan de parche core.
 
 Crear `deploy/13-install-staff-scope-plugin.sh` con `--apply/--verify`, destino fijo por `--instance`, checksum origen/destino, instalación por `install_plugins.pl --include` y health HTTP. Probarlo primero contra un directorio temporal y luego en DEV.
@@ -588,15 +602,15 @@ Comprobar `flags=0`, permisos vacíos, denegación CGI/REST, SSO no privilegiado
 
 - [ ] **Step 5: Redesplegar el stack candidato y baseline técnico**
 
-Repetir Task 7 por los mismos tags/checksums, reaplicar a `svc_midpoint` `flags=0` + exactamente `list_borrowers/edit_borrowers`, y repetir CRUD, DELETE 403 y SSO denegado. Expected: `PLUGIN_GATE=PASS`, `CONNECTOR_GATE=PASS`, `SVC_GATE=PASS`.
+Repetir Task 7 por los mismos tags/checksums, reaplicar a `svc_midpoint` `flags=0` + exactamente `list_borrowers/edit_borrowers`, y repetir CRUD, DELETE 403 y SSO denegado. Expected: `PLUGIN_GATE=PASS`, `ADQUISITIONS_GATE=PASS`, `CONNECTOR_GATE=PASS`, `SVC_GATE=PASS`.
 
 - [ ] **Step 6: Ejecutar matriz E2E**
 
-Asignar scopes solo a fixtures. Probar allow/deny por CGI, REST, job y batch para BUL, BUL+CIA, BUJ y BUT; un único shadow; otro catalogador BUL no hereda CIA; el de BUL+CIA no accede BUJ/BUT; orden de assignments indiferente; expiración/retiro diferencial; recompute idempotente; SSO staff/OPAC; logs de denegación completos.
+Asignar scopes solo a fixtures. Probar allow/deny por CGI, REST, job y batch para BUL, BUL+CIA, BUJ y BUT; pedidos/recepción/invoices de una sede permitida y otra denegada; proveedores/presupuestos denegados; un único shadow; otro catalogador BUL no hereda CIA; el de BUL+CIA no accede BUJ/BUT; orden de assignments indiferente; expiración/retiro diferencial; recompute idempotente; SSO staff/OPAC; logs de denegación completos.
 
 - [ ] **Step 7: Registrar GO/NO-GO**
 
-Solo `DEV_E2E=GO` si `PLUGIN_GATE=PASS`, `CONNECTOR_GATE=PASS`, `SVC_GATE=PASS`, `ROLLBACK_DRILL=PASS` y toda la matriz anterior es PASS.
+Solo `DEV_E2E=GO` si `PLUGIN_GATE=PASS`, `ADQUISITIONS_GATE=PASS`, `CONNECTOR_GATE=PASS`, `SVC_GATE=PASS`, `ROLLBACK_DRILL=PASS` y toda la matriz anterior es PASS.
 
 ### Task 9: Preparar y ejecutar piloto PROD
 
@@ -676,7 +690,7 @@ Debe entrar por SSO, operar en su branch y recibir `403`/denegación directa fue
 
 - [ ] **Step 7: Ampliar de uno en uno**
 
-Orden sugerido: Elvira BUL → Walter BUJ → Christiam BUT → David BUL → Jaime BUL+CIA → Juan Felipe tras confirmar su tier.
+Orden sugerido: Elvira BUL → Walter BUJ → Christiam BUT → David BUL → Jaime BUL+CIA → Joel BUL → Juan Felipe tras confirmar su tier. Jaime y Joel solo avanzan después de `ADQUISITIONS_GATE=PASS` para pedidos, recepción e invoices.
 
 - [ ] **Step 8: Verificar invariante global**
 
@@ -719,8 +733,12 @@ git -C /Users/alberto/proyectos/productos/koha/instituciones/upeu/upeu-koha/.wor
 - `svc_midpoint` tiene `flags=0`, solamente `list_borrowers + edit_borrowers`, DELETE 403 y no puede iniciar sesión por SSO staff/OPAC.
 - Admins locales y Jaime están limitados a sus bibliotecas incluso por URL/API directa.
 - Christiam Pool Castillo es admin local de Tarapoto (`BUT`) y no accede administrativamente a `BUL`, `BUJ` ni `CIA`.
+- Christiam, Elvira, David y Walter no reciben adquisiciones mediante `ADMIN_LOCAL`.
 - Elvira y David son admin local solo `BUL`; Walter solo `BUJ`; ninguno accede a parámetros globales, permisos, plugins, reportes SQL, reservas ni importación/batch.
 - Jaime puede catalogar en `BUL+CIA`; otro catalogador `BUL` no hereda `CIA`.
+- Jaime (`jaimev@upeu.edu.pe`) tiene catalogación, adquisiciones operativas, atención al público/registro y circulación en `BUL+CIA`.
+- Joel (`hugof@upeu.edu.pe`) tiene las mismas cuatro funciones solo en `BUL`.
+- Ambos pueden operar pedidos, recepción e invoices únicamente en su scope; no administran proveedores, contratos, presupuestos, borrados, EDI ni MARC ordering.
 - Cada persona conserva un patrón y un shadow consolidado.
 - El login SSO staff funciona para cada empleado autorizado; OPAC sigue autenticando por SSO según su cuenta de patron, sin convertirlo en staff fuera de su rol.
 - Un recompute individual repetido no eleva privilegios, no revierte scopes y no crea shadows adicionales.

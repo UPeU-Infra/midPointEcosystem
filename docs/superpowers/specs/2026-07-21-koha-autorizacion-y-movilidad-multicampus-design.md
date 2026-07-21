@@ -74,10 +74,11 @@ Koha 26.05 declara en Swagger que la API usada por el conector requiere `borrowe
 | Rol | Capacidad |
 |---|---|
 | `AR-Koha-Superadmin` | Todas las funciones y bibliotecas; asignación manual y privilegiada. |
-| `AR-Koha-AdminBiblioteca` | Administración operativa de una o más bibliotecas, sin administración global del sistema. |
+| `AR-Koha-AdminBiblioteca` | Circulación, catalogación y registro de usuarios en una o más bibliotecas, sin adquisiciones ni administración global del sistema. |
 | `AR-Koha-Circulacion` | Préstamos, devoluciones y renovaciones; reservas se excluyen del primer rollout. |
-| `AR-Koha-Catalogacion` | Registros bibliográficos, ejemplares, autoridades e importación MARC según permisos aprobados. |
+| `AR-Koha-Catalogacion` | Registros bibliográficos y ejemplares; importación MARC/batch se excluye del primer rollout. |
 | `AR-Koha-RegistroUsuarios` | Buscar, crear y actualizar patrones dentro del alcance permitido. |
+| `AR-Koha-Adquisiciones` | Pedidos, recepción e invoices dentro del alcance; proveedores, presupuestos globales, borrados, EDI y administración transversal se excluyen del primer rollout. |
 
 Los roles existentes `AR-Koha-Librarian-*` podrán conservar sus OID y renombrarse solo si el análisis de fan-in confirma que no rompe templates ni lookup tables. La implementación debe evitar role explosion: el alcance no se codifica creando un rol distinto para cada combinación de bibliotecas.
 
@@ -97,8 +98,9 @@ Ejemplos:
 | Elvira Mavel Brañes Juan de Dios | `AR-Koha-AdminBiblioteca` | `BUL` |
 | David | `AR-Koha-AdminBiblioteca` | `BUL` |
 | Walter Eloy Luque Condori | `AR-Koha-AdminBiblioteca` | `BUJ` |
-| Christiam Pool Castillo Cahuaza | `AR-Koha-AdminBiblioteca` | `BUT` |
-| Jaime | `AR-Koha-Catalogacion` | `BUL`, `CIA` |
+| Christiam Pool Castillo Cahuaza (`christiam.castillo@upeu.edu.pe`) | `AR-Koha-AdminBiblioteca` | `BUT` |
+| Jaime Aurelio Vilcazán Quispe (`jaimev@upeu.edu.pe`) | `AR-Koha-Catalogacion` + `AR-Koha-Adquisiciones` + `AR-Koha-RegistroUsuarios` + `AR-Koha-Circulacion` | `BUL`, `CIA` |
+| Joel Hugo Fernández Rojas (`hugof@upeu.edu.pe`) | `AR-Koha-Catalogacion` + `AR-Koha-Adquisiciones` + `AR-Koha-RegistroUsuarios` + `AR-Koha-Circulacion` | `BUL` |
 
 El alcance debe tener `validFrom`/`validTo` en la activación del assignment cuando sea temporal. Si cada biblioteca requiere fechas distintas, se usan assignments separados. La fuente RR. HH. puede asignar la función base; excepciones transversales, como Jaime en CIA o Elvira como TI, se asignan manualmente con auditoría y fecha de revisión.
 
@@ -124,6 +126,17 @@ Resultado objetivo:
 - Ningún responsable local recibe permisos de administración global, plugins, configuración del sistema, SQL o asignación de superlibrarian salvo aprobación explícita.
 
 La lista final de `user_permissions` se validará contra las tablas `userflags` y `permissions` de Koha 26.05 antes del PATCH del resource; no se inferirán bits numéricos.
+
+Permisos mínimos aprobados para estas funciones:
+
+| Función | `user_permissions` |
+|---|---|
+| Circulación | `1:circulate_remaining_permissions` |
+| Atención al público / registro | `4:list_borrowers`, `4:edit_borrowers` |
+| Catalogación | `9:edit_catalogue`, `9:edit_items`, `13:label_creator` |
+| Adquisiciones | `11:order_manage`, `11:order_receive`, `11:edit_invoices` |
+
+Adquisiciones no incluye `vendors_manage`, `contracts_manage`, `budget_manage*`, `period_manage`, `planning_manage`, `order_manage_all`, `delete_baskets`, `delete_invoices`, `edi_manage`, `marc_order_manage` ni configuración global. Proveedores y contratos son objetos compartidos sin sede inequívoca y quedan bajo gestión central hasta diseñar su partición. Cualquier ampliación requiere evidencia funcional y una revisión separada de alcance.
 
 ### 5.2 Alcance por biblioteca
 
@@ -165,6 +178,8 @@ La biblioteca objetivo se determina normativamente así:
 | Editar registro bibliográfico global | Permitido por función; no autoriza holdings fuera del scope. |
 | Buscar/ver patrón | `branchcode` del patrón dentro del scope; los datos mínimos necesarios para circulación cruzada se exponen mediante una vista operacional limitada. |
 | Crear/modificar patrón | `branchcode` resultante dentro del scope. |
+| Crear/modificar/recibir pedido o invoice | La biblioteca derivada del basket/order/invoice debe pertenecer al scope; si falta, es múltiple o no puede determinarse de forma inequívoca, se deniega. |
+| Proveedores, contratos y presupuestos | Denegados en el primer rollout por ser objetos compartidos/globales. |
 | Reservas | Excluidas del primer rollout hasta aprobar §7. |
 | Importación/batch | Denegado en el primer rollout; requiere diseño específico de partición por branch. |
 | Administración sin objeto de branch | Denegada salvo superadmin. |
@@ -227,7 +242,7 @@ Hasta aprobar esa matriz, la circulación presencial multicampus puede funcionar
 
 1. Cambiar Dirección/Soporte de superlibrarian a permisos granulares y activar el scope en la misma ventana por piloto.
 2. Mantener una sola construction `account/default`.
-3. Pilotos: un usuario BUL, Jaime BUL+CIA, un usuario BUJ y un intento denegado fuera de scope.
+3. Pilotos: Joel BUL, Jaime BUL+CIA, un usuario BUJ y un intento denegado fuera de scope.
 4. Recomputar exclusivamente los pilotos aprobados.
 5. Verificar SSO, permisos positivos y negativos antes de ampliar la cohorte.
 6. Ningún usuario scoped pasa a producción con permisos funcionales globales mientras no exista enforcement efectivo.
@@ -243,7 +258,9 @@ Hasta aprobar esa matriz, la circulación presencial multicampus puede funcionar
 
 - Solo Juan tiene `flags=1` entre cuentas humanas SSO; la única cuenta adicional con `flags=1` es el break-glass local. `svc_midpoint` usa permisos API granulares.
 - Elvira, David y Walter administran únicamente su scope y no acceden a parámetros globales.
-- Jaime cataloga holdings de BUL y CIA, pero recibe denegación en BUJ/BUT.
+- Jaime tiene catalogación, adquisiciones operativas, atención al público/registro y circulación en BUL+CIA, pero recibe denegación en BUJ/BUT.
+- Joel tiene las mismas cuatro funciones únicamente en BUL.
+- Pedidos, recepción e invoices se limitan a la biblioteca inequívoca del objeto; proveedores, contratos y presupuestos permanecen denegados.
 - Otro catalogador BUL no obtiene CIA por compartir función.
 - Cada persona mantiene un solo patrón y un solo shadow Koha consolidado.
 - Un usuario de cualquier campus puede recibir un préstamo presencial en otra sede si la categoría y el material lo permiten.
