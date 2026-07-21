@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="d698dc99-1a8c-479c-9eec-2a0214fdbf04">
+    <name>AR-Koha-Superadmin</name>
+    <description>Application Role privilegiado y de asignación manual para una cuenta administrativa especial de Koha. Mantiene una única proyección account/default en el resource consolidado; el resource materializa category_id=LOCAL, library_id=BUL y flags=1. No modifica afiliación, archetype ni lifecycle del foco. No usar para la cuenta break-glass local SUPERADMIN.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+    <inducement>
+        <construction>
+            <resourceRef oid="e10a539a-cb7f-4c72-a19f-60f7f62e4b96" type="ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+        </construction>
+    </inducement>
+</role>

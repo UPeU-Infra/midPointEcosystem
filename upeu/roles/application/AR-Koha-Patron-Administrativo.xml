@@ -19,6 +19,20 @@
                  category_id lo resuelve el resource koha-ils desde
                  extension/sciback:primaryAffiliation (mapping unico, deterministico). -->
         </construction>
+        <!-- Exclusión puntual para cuentas administrativas especiales. El rol
+             AR-Koha-Superadmin aporta la única construction Koha efectiva mientras
+             esté asignado directamente al foco. Al retirarlo, esta construction
+             normal se reactiva y materializa nuevamente category_id=staff. -->
+        <condition>
+            <expression>
+                <script>
+                    <code><![CDATA[
+def specialOid = 'd698dc99-1a8c-479c-9eec-2a0214fdbf04'
+return !focus?.assignment?.any { it?.targetRef?.oid == specialOid }
+                    ]]></code>
+                </script>
+            </expression>
+        </condition>
         <!-- GATE CAMPUS MULTI-CAMPUS — RETIRADO 2026-07-20 (FUSIÓN 4 KOHA).
              Historia: el bloque <condition> Lima-only (tarea #65, 2026-06-03) existía
              porque el resource koha-ils.xml (OID 9b5a7c81) era el Koha VIEJO —
