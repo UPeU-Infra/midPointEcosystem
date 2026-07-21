@@ -117,6 +117,13 @@ Estructuras y relaciones confirmadas:
    riesgo (~5.573 `CANON_KEY`). Detalle completo en
    `docs/runbooks/telegram-alertas-tasks-2026-07-20/tarea3-resultado-200610808-91-personas.md`
    (sección "✅ FIX APLICADO").
+   **Diseño del guardarraíl (mismo día, no aplicado a PROD):**
+   `docs/specs/trabajadores-correlation-guardrail-2026-07-20.md` — correlator compuesto
+   (tier 1 `lambDocNum` definite + tier 2 `personalNumber` candidate) + reacción `disputed` →
+   `createCorrelationCase`. Medido contra datos reales: de los 97 shadows hoy expuestos al
+   riesgo (de los 5.573 totales, 5.474 ya están `LINKED` y no corren riesgo), 12 serían
+   atrapados por el guardarraíl; también reveló que el caso base (Orlando/Luzirene) tiene un
+   `ID_PERSONA` duplicado en MOISES (ver Anexo E) — no es solo reanclaje de documento.
 
 ---
 
@@ -181,6 +188,40 @@ misma persona), no requiere acción en MidPoint.
 similares en Posgrado/CEPRE/Idiomas ni en otros campus — si aparece un patrón parecido, repetir
 el mismo diagnóstico (colisión de `primaryidentifiervalue` en `m_shadow` sobre `koha-upeu`) antes
 de asumir un problema de orquestación IGA.
+
+---
+
+## Anexo E — Duplicado de persona en MOISES (Trabajadores): mismo COD_APS, dos `ID_PERSONA` (2026-07-20)
+
+Origen: al diseñar el guardarraíl de correlación para el resource Trabajadores tras el incidente
+de duplicados del canario `CANON_RN` (ver
+`docs/specs/trabajadores-correlation-guardrail-2026-07-20.md`), se investigó por qué el
+correlator no encontraba a Orlando (`00534601`) ni a Luzirene (`000614192`) incluso usando un
+identificador secundario estable. **Se encontró que no es solo un problema de reanclaje de
+documento (CE→DNI): el mismo `COD_APS` está asociado a DOS `ID_PERSONA` distintos en
+`ELISEO.VW_APS_EMPLEADO`, cada uno con su propio registro en `MOISES.PERSONA`** — misma clase de
+hallazgo que `05436990`/Ariana (Anexo D), ahora también en Trabajadores:
+
+```
+COD_APS 00534601  → ID_PERSONA 10041  (MOISES: "Orlando Gabriel Cortez Bazantes", CE 000534601)
+                     ID_PERSONA 202895 (MOISES: "ORLANDO GABRIEL CORTEZ BAZANTES", CE 0534601)
+COD_APS 000614192 → ID_PERSONA 11173  (MOISES: "Luzirene Gomes De Alcantara", CE 00614192)
+                     ID_PERSONA 192480 (MOISES: "Luzirene Gomes De Alcantara", CE 000614192)
+```
+
+Mismo nombre (variando solo mayúsculas en el caso de Orlando) y mismo documento salvo formato de
+padding — indicio fuerte de que es la MISMA persona física con un registro MOISES duplicado, no
+dos personas reales distintas. El `User` real de cada uno en MidPoint quedó anclado (vía
+`externalSystemId`/`lambIdPersona`) al `ID_PERSONA` "viejo" (10041 / 11173); el fix `CANON_RN` de
+hoy, al preferir el documento tipo DNI, terminó prefiriendo la fila que pertenece al `ID_PERSONA`
+"nuevo"/duplicado (202895 / 192480) en `ELISEO.VW_APS_EMPLEADO`.
+
+**Pendiente para los DBAs (no accionable desde MidPoint):** confirmar si `10041`/`202895` y
+`11173`/`192480` deben fusionarse en `MOISES.PERSONA` (y sus tablas dependientes, incl.
+`ELISEO.VW_APS_EMPLEADO`). Hasta que se resuelva en origen, el guardarraíl diseñado en
+`docs/specs/trabajadores-correlation-guardrail-2026-07-20.md` solo puede enviar estos casos a
+revisión humana (`disputed`) — no puede ni debe decidir por sí solo cuál `ID_PERSONA` es el
+correcto.
 
 ---
 
