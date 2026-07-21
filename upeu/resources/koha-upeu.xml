@@ -1464,8 +1464,12 @@ return branch
                         <script>
                             <code><![CDATA[
 def assigned = (focus?.assignment ?: []).collect { it?.targetRef?.oid }.findAll { it != null } as Set
+def superadmin = 'd698dc99-1a8c-479c-9eec-2a0214fdbf04'
+if (assigned.contains(superadmin)) return 1
+def live = basic.getExtensionPropertyValue(focus, 'liveAffiliationWorker')
+def cc = focus?.costCenter?.toString()?.trim()
+if (live == null || cc != '93') return null
 def admins = [
-    'd698dc99-1a8c-479c-9eec-2a0214fdbf04', // AR-Koha-Superadmin
     'd3303cec-7b05-4415-a19d-84a1c899f4c4', // Direccion
     '8d3daccf-a76b-41ed-a772-1ccc5d273329'  // Soporte/TI
 ] as Set
@@ -1493,8 +1497,12 @@ return null
                         <script>
                             <code><![CDATA[
 def assigned = (focus?.assignment ?: []).collect { it?.targetRef?.oid }.findAll { it != null } as Set
+def superadmin = 'd698dc99-1a8c-479c-9eec-2a0214fdbf04'
+if (assigned.contains(superadmin)) return []
+def live = basic.getExtensionPropertyValue(focus, 'liveAffiliationWorker')
+def cc = focus?.costCenter?.toString()?.trim()
+if (live == null || cc != '93') return []
 def admins = [
-    'd698dc99-1a8c-479c-9eec-2a0214fdbf04',
     'd3303cec-7b05-4415-a19d-84a1c899f4c4',
     '8d3daccf-a76b-41ed-a772-1ccc5d273329'
 ] as Set
