@@ -8,8 +8,8 @@
   Gestión Documental, Supervisor de Procesos Técnicos, Supervisor de Servicios.
   Overlay individual de tier por cargo. NO marca pertenencia CRAI: la
   pertenencia la marca AR-Koha-Librarian (AREA=CRAI), asignado por el bloque Q4
-  del template. Este rol solo escribe el par CRAI_TIER en extended_attributes
-  del patrón Koha.
+  del template. La autorización efectiva (flags y permisos granulares) se
+  calcula en el resource Koha a partir de este rol efectivo.
 
   Asignado por: UserTemplate-EmployeeStaff bloque Q5 (birthright cargo→tier)
   vía assignmentTargetSearch, resolviendo extension/upeu:lambPositionId contra
@@ -20,27 +20,10 @@
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="03a2fc51-cda6-49d6-82b0-a00499afaf24">
     <name>AR-Koha-Librarian-Supervision</name>
-    <description>Application Role: nivel de acceso CRAI "supervision" (Encargado de Circulación, Supervisores). Marca al patrón Koha con extended_attributes CRAI_TIER=supervision. Overlay individual por cargo, asignado por birthright Q5.</description>
+    <description>Application Role: nivel de acceso CRAI "supervision" (Encargado de Circulación, Supervisores). La autorización Koha se calcula en el resource desde este rol efectivo.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD) -->
         <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
     </assignment>
-    <inducement>
-        <construction>
-            <resourceRef oid="e10a539a-cb7f-4c72-a19f-60f7f62e4b96" type="ResourceType"/>
-            <kind>account</kind>
-            <intent>default</intent>
-            <attribute>
-                <ref>ri:extended_attributes</ref>
-                <outbound>
-                    <name>crai-tier-extended-attribute</name>
-                    <strength>strong</strength>
-                    <expression>
-                        <value>{"type":"CRAI_TIER","value":"supervision"}</value>
-                    </expression>
-                </outbound>
-            </attribute>
-        </construction>
-    </inducement>
 </role>
