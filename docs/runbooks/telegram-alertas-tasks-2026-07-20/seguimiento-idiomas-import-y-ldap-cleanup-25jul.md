@@ -39,7 +39,54 @@ objeto Task es un thread-dump histórico del 23-jul (no de hoy), por lo que no s
 evidencia de un cuelgue actual. No se tocó la task (ni restart ni suspend) — se deja para que
 Alberto decida si amerita seguimiento aparte.
 
-## Tarea 2 — Limpieza LDAP de "los 22": DETENIDA por desajuste de alcance (no ejecutada)
+## Tarea 2 (actualización, misma tarde 25-jul) — Limpieza LDAP ejecutada sobre el alcance real: 248/248 CERRADA
+
+**Autorización:** Alberto autorizó explícitamente ejecutar sobre el alcance real medido (248, no
+22) — ver decisión pendiente #1 de la sección original de Tarea 2 más abajo. Este es el 3er
+intento del encargo; los 2 anteriores fallaron por problemas de infraestructura (stream
+watchdog / conexión API cerrada) justo al confirmar el OID del resource, sin llegar a tocar
+nada — no hubo nada que revertir.
+
+**Reconfirmación del universo (UNA sola query dirigida, no full-dump):** se reutilizó la
+reconstrucción forense ya hecha (`ma_audit_event`/`ma_audit_delta`, 260 candidatos con firma
+`FATAL_ERROR`+`noSuchAttribute`+rename de `uid`) y se validó su estado LDAP actual con un único
+`ldapsearch` filtrado por los 260 `uid` exactos (no se repitió el full-dump de `ou=people`).
+Resultado: **248 siguen sucios, 12 ya limpios solos, 0 ambiguos, 0 casos borde** — coincide
+exactamente con la medición de la sesión anterior de hoy. Verificación adicional de seguridad:
+0 colisiones de `old_uid` entre personas, 0 renombramientos encadenados, y **0 casos donde el
+`old_uid` siga vivo como `uid=` de otra persona** (confirmado con un segundo `ldapsearch`
+dirigido a los 248 `old_uid`) — descarta el riesgo de borrar el valor vigente de alguien más.
+
+**Backup previo:** dump LDIF completo (todos los atributos) de las 260 personas antes de tocar
+nada, en `.backups-prod-p0/2026-07-25-ldap-cleanup-248/BACKUP-pre-cleanup-260-full.ldif`
+(gitignored, contiene PII — nunca a git).
+
+**Ejecución:** 10 lotes de 25 (9×25 + 1×23 = 248), cada uno con:
+1. PRE-check `ldapsearch` (confirma que el valor viejo sigue presente, `uid`/DN intactos).
+2. `ldapmodify` **acotado estrictamente** a `delete: eduPersonUniqueId`/`delete: mail` con el
+   valor literal exacto `<old_uid>@upeu.edu.pe` (nunca `uid` ni el DN) vía bind con la cuenta de
+   servicio `cn=midpoint` (la misma que usa el resource en producción).
+3. POST-check `ldapsearch` (confirma valor viejo ausente, valor nuevo correcto intacto,
+   `uid`/DN sin cambio).
+4. Checkpoint de conteo total `ou=people` (48.139 antes/durante/después, sin variación en
+   ningún lote).
+
+**Resultado: 10/10 lotes OK, 248/248 personas correctamente limpiadas, 0 residuales, 0 casos
+ambiguos separados.** Verificación final consolidada sobre las 260: 248 limpios (antes sucios)
++ 12 ya-limpios sin tocar = 260/260 coherente, `uid`/DN intactos en el 100% de los casos, total
+`ou=people` final = 48.139 (idéntico al baseline).
+
+Progreso incremental de cada lote quedó registrado en
+`.backups-prod-p0/2026-07-25-ldap-cleanup-248/progress.log` (gitignored) para permitir retomar
+si esta ejecución se hubiera caído a medio camino — no hizo falta, terminó en una sola sesión.
+
+**Nada más se tocó:** ni `uid`, ni el DN, ni ningún otro atributo, ni la configuración del
+resource `LDAP-IdentityCache-UPeU` (`7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f`) — solo `ldapmodify`
+directo contra el directorio, 0 PUT.
+
+**Sección original (antes de la autorización de esta tarde), preservada para trazabilidad:**
+
+### Tarea 2 (medición original, mañana 25-jul) — Limpieza LDAP de "los 22": DETENIDA por desajuste de alcance (no ejecutada)
 
 **No se encontró la lista exacta de los 22 en memoria/runbooks/scratchpad** (búsqueda
 exhaustiva en `~/.claude/projects/.../memory/*.md`, en el runbook del 20-jul, y en los
@@ -95,7 +142,7 @@ ancla de RIMS (`eduPersonUniqueId`) — excede el mandato de esta sesión y el c
    terminará cerrando más por su cuenta sin intervención manual, igual que ocurrió con
    Tarea 1.
 
-## Verificación real ejecutada (ambas tareas)
+## Verificación real ejecutada (sesión de la mañana, ambas tareas)
 
 - Oracle LAMB: consultas de solo lectura vía `oracledb` (thick mode, Instant Client ARM64),
   cero DML.
@@ -104,3 +151,13 @@ ancla de RIMS (`eduPersonUniqueId`) — excede el mandato de esta sesión y el c
 - LDAP `.168`: `ldapsearch` de solo lectura con la cuenta admin — cero `ldapmodify` ejecutado.
 - No se tocó ningún archivo de configuración del repo (`upeu/resources/*`, `upeu/roles/*`) —
   no aplica commit/push para esta sesión.
+
+## Cierre (sesión de la tarde, 25-jul): Tarea 2 completada 248/248
+
+- LDAP `.168`: 20 `ldapsearch` de verificación (pre/post por lote + reconfirmación de
+  universo + chequeo de colisión de `old_uid`) + 10 `ldapmodify` (uno por lote), bind con
+  `cn=midpoint`. Cero PUT, cero escritura en Oracle, cero cambio de `uid`/DN.
+- Backup pre-cambio y log de progreso incremental en
+  `.backups-prod-p0/2026-07-25-ldap-cleanup-248/` (gitignored — contiene PII real, nunca a
+  git).
+- Este archivo de runbook sí se commiteó/pusheó (no contiene PII, solo narrativa + conteos).
