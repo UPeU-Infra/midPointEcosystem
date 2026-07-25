@@ -30,16 +30,45 @@
            - 4->1: sin gate hasLimaAffiliation; adminStatus sin excepción JULIACA/TARAPOTO.
            - library_id: default seguro (campus desconocido NO cae a BUL).
          ============================================================ -->
-    <lifecycleState>proposed</lifecycleState>
-    <!-- connectorRef → KohaConnector **v1.4.0** (OID 02d503a0, descubierto 2026-07-20).
-         Es la versión que EFECTIVAMENTE retiró el adopt-by-DNI legacy (D-14, commit
-         e384c82): el 409 se resuelve solo por cardnumber → userid → email, sin el
-         fallback por DNI ni el lookup JDBC en borrower_attributes.
+    <lifecycleState>active</lifecycleState>
+    <!-- lifecycleState=active desde el dry-run de julio/2026 (ver upeu-koha/context/22).
+         El comentario original de arriba ("proposed... outbound NO se ejecutan") quedó
+         obsoleto — se conserva solo como registro histórico del diseño inicial. -->
+    <!-- connectorRef → KohaConnector **v1.6.0** (OID 16030383, descubierto 2026-07-25).
+         Implementa PoolableConnector (checkAlive()) y NO maneja fotos del patrón
+         (retiradas en v1.4.1→v1.5.0). Historial de versiones relevantes:
+           - v1.4.0 (02d503a0): retiró adopt-by-DNI legacy (D-14, commit e384c82).
+           - v1.4.1: fix crítico — poolName único por instancia del pool JDBC
+             (MariaDbPoolDataSource delega en el registro estático global
+             org.mariadb.jdbc.pool.Pools; sin poolName único, el dispose() de una
+             instancia del conector destruía el pool de las demás, produciendo
+             "No connection available" permanente — causó SUSPENDED de
+             recon-koha-upeu-daily del 22 al 24-jul-2026).
+           - v1.5.0: retira photo/photo_mimetype del esquema (decisión de Alberto:
+             MidPoint no gestiona fotos binarias en ningún aprovisionamiento).
+           - v1.6.0: implementa PoolableConnector — evita crear/destruir un pool
+             JDBC por cada operación de la API.
+         Ver upeu-koha/context/26 y github.com/UPeU-Infra/connector-koha releases.
          ⚠️ YA NO comparte OID con koha-ils.xml: el Koha VIEJO (.135) se queda
          deliberadamente en v1.3.11 (45b4f0e0) hasta que se jubile — no cambiar ese,
          ni borrar su jar/ConnectorType, o se rompe el resource viejo. -->
-    <connectorRef oid="02d503a0-6dc9-42fc-aa32-34ea4afcabef" relation="org:default" type="c:ConnectorType"/>
+    <connectorRef oid="16030383-b7aa-49c0-9310-72c96c4ffd0f" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration>
+        <!-- connectorPoolConfiguration (2026-07-25): solo tiene efecto real desde que
+             KohaConnector implementa PoolableConnector (v1.6.0) — antes MidPoint lo
+             aceptaba pero ConnId lo ignoraba silenciosamente al no ser este un conector
+             pooleable. Valores medidos en producción: con el recon de Koha corriendo,
+             el conector usa 1 sola conexión JDBC real (no dbPoolSize×instancias); estos
+             valores acotan el techo (maxObjects×dbPoolSize=16) muy por debajo del
+             max_connections=150 de MariaDB, que fue justamente lo que se agotó
+             (Max_used_connections llegó a 151) y disparó el incidente de julio/2026. -->
+        <ns1:connectorPoolConfiguration>
+            <ns1:minEvictableIdleTimeMillis>300000</ns1:minEvictableIdleTimeMillis>
+            <ns1:minIdle>1</ns1:minIdle>
+            <ns1:maxIdle>6</ns1:maxIdle>
+            <ns1:maxObjects>8</ns1:maxObjects>
+            <ns1:maxWait>30000</ns1:maxWait>
+        </ns1:connectorPoolConfiguration>
         <ns1:configurationProperties>
             <ns2:serviceAddress>http://192.168.12.136:8001</ns2:serviceAddress>
             <ns2:trustAllCertificates>false</ns2:trustAllCertificates>
@@ -54,18 +83,23 @@
                 <t:clearValue>__REPLACE_KOHA_PLUS_OAUTH_SECRET__</t:clearValue>
             </ns2:clientSecret>
             <!-- ============================================================
-                 Canal JDBC (conector Koha v1.4.0) — usado para foto y para
-                 borrowers.flags (ri:photo / ri:photo_mimetype / ri:flags). Las
-                 propiedades REST de arriba siguen siendo el canal primario.
-                 dbPassword va cifrado (encryptedData); NUNCA en clearValue
-                 en el repo.
+                 Canal JDBC (conector Koha v1.6.0) — EXCLUSIVO para autorización
+                 del patrón (ri:flags / ri:user_permissions), que Koha no expone
+                 por REST. Las propiedades REST de arriba siguen siendo el canal
+                 primario para el resto del patrón. dbPassword va cifrado
+                 (encryptedData); NUNCA en clearValue en el repo.
 
-                 ACTIVADO 2026-07-20: conectividad
-                 192.168.15.166 -> 192.168.12.136:3306 verificada en vivo.
-                 El usuario koha_connector tiene acceso a patronimage y permisos
-                 de columna SELECT/UPDATE sobre borrowers.flags. El REST sigue
-                 siendo el canal primario para el resto del patrón.
-                 ============================================================ -->
+                 Ya NO se usa para fotos (retiradas en v1.5.0, decisión de
+                 Alberto: MidPoint no gestiona fotos binarias en ningún
+                 aprovisionamiento — una foto viaja como URI/URL si hace falta).
+
+                 dbPoolSize baja de 32 a 2 (2026-07-25): con PoolableConnector
+                 (v1.6.0) las instancias del conector se reutilizan en vez de
+                 crearse por operación, y ConnId ejecuta cada instancia en un
+                 solo hilo — 1 conexión por instancia es la necesidad medida;
+                 2 deja un margen de seguro sin reintroducir el riesgo de
+                 agotar max_connections que causó el incidente de julio/2026
+                 (ver comentario de connectorPoolConfiguration arriba). -->
             <ns2:dbEnabled>true</ns2:dbEnabled>
             <ns2:dbHost>192.168.12.136</ns2:dbHost>
             <ns2:dbPort>3306</ns2:dbPort>
@@ -78,16 +112,16 @@
             <ns2:dbPassword>
                 <t:clearValue>__REPLACE_KOHA_PLUS_JDBC_PASS__</t:clearValue>
             </ns2:dbPassword>
-            <ns2:dbPoolSize>32</ns2:dbPoolSize>
+            <ns2:dbPoolSize>2</ns2:dbPoolSize>
         </ns1:configurationProperties>
     </connectorConfiguration>
     <schema>
         <cachingMetadata>
-            <retrievalTimestamp>2026-05-21T22:31:22.646Z</retrievalTimestamp>
-            <serialNumber>cea8d94cdd93c795-5f6e412b33312105</serialNumber>
+            <retrievalTimestamp>2026-07-20T19:59:24.818-05:00</retrievalTimestamp>
+            <serialNumber>18160161fd169e5f-e2123fbd6ed32acf</serialNumber>
         </cachingMetadata>
         <definition>
-            <xsd:schema xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:ra="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:tns="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+            <xsd:schema xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:api="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3" xmlns:ra="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:sb="urn:sciback:midpoint:person" xmlns:sciback="urn:sciback:midpoint:person" xmlns:tns="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:upeu="urn:upeu:midpoint:local" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xml:space="preserve">
                 <xsd:import namespace="http://prism.evolveum.com/xml/ns/public/annotation-3"/>
                 <xsd:import namespace="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3"/>
                 <xsd:complexType name="GroupObjectClass">
@@ -370,32 +404,22 @@
                                 </xsd:appinfo>
                             </xsd:annotation>
                         </xsd:element>
-                        <xsd:element minOccurs="0" name="photo" type="xsd:base64Binary">
-                            <xsd:annotation>
-                                <xsd:appinfo>
-                                    <a:displayOrder>240</a:displayOrder>
-                                    <ra:nativeAttributeName>photo</ra:nativeAttributeName>
-                                    <ra:frameworkAttributeName>photo</ra:frameworkAttributeName>
-                                    <ra:returnedByDefault>false</ra:returnedByDefault>
-                                </xsd:appinfo>
-                            </xsd:annotation>
-                        </xsd:element>
                         <xsd:element minOccurs="0" name="flags" type="xsd:int">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>245</a:displayOrder>
+                                    <a:displayOrder>240</a:displayOrder>
                                     <ra:nativeAttributeName>flags</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>flags</ra:frameworkAttributeName>
-                                    <ra:returnedByDefault>false</ra:returnedByDefault>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
                                 </xsd:appinfo>
                             </xsd:annotation>
-                        </xsd:element>
-                        <xsd:element minOccurs="0" maxOccurs="unbounded" name="user_permissions" type="xsd:string">
+                        </xsd:element><xsd:element maxOccurs="unbounded" minOccurs="0" name="user_permissions" type="xsd:string"><xsd:annotation><xsd:appinfo><a:displayOrder>247</a:displayOrder><ra:nativeAttributeName>user_permissions</ra:nativeAttributeName><ra:frameworkAttributeName>user_permissions</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation></xsd:element>
+                        <xsd:element minOccurs="0" name="photo" type="xsd:base64Binary">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>247</a:displayOrder>
-                                    <ra:nativeAttributeName>user_permissions</ra:nativeAttributeName>
-                                    <ra:frameworkAttributeName>user_permissions</ra:frameworkAttributeName>
+                                    <a:displayOrder>250</a:displayOrder>
+                                    <ra:nativeAttributeName>photo</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>photo</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>false</ra:returnedByDefault>
                                 </xsd:appinfo>
                             </xsd:annotation>
@@ -403,7 +427,7 @@
                         <xsd:element minOccurs="0" name="secondary_email" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>250</a:displayOrder>
+                                    <a:displayOrder>260</a:displayOrder>
                                     <ra:nativeAttributeName>secondary_email</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>secondary_email</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -413,7 +437,7 @@
                         <xsd:element minOccurs="0" name="opac_notes" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>260</a:displayOrder>
+                                    <a:displayOrder>270</a:displayOrder>
                                     <ra:nativeAttributeName>opac_notes</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>opac_notes</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -423,7 +447,7 @@
                         <xsd:element minOccurs="0" name="photo_mimetype" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>270</a:displayOrder>
+                                    <a:displayOrder>280</a:displayOrder>
                                     <ra:nativeAttributeName>photo_mimetype</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>photo_mimetype</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>false</ra:returnedByDefault>
@@ -433,7 +457,7 @@
                         <xsd:element minOccurs="0" name="altaddress_postal_code" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>280</a:displayOrder>
+                                    <a:displayOrder>290</a:displayOrder>
                                     <ra:nativeAttributeName>altaddress_postal_code</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>altaddress_postal_code</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -443,7 +467,7 @@
                         <xsd:element minOccurs="0" name="address" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>290</a:displayOrder>
+                                    <a:displayOrder>300</a:displayOrder>
                                     <ra:nativeAttributeName>address</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>address</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -453,7 +477,7 @@
                         <xsd:element minOccurs="0" name="other_name" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>300</a:displayOrder>
+                                    <a:displayOrder>310</a:displayOrder>
                                     <ra:nativeAttributeName>other_name</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>other_name</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -463,7 +487,7 @@
                         <xsd:element minOccurs="0" name="relationship_type" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>310</a:displayOrder>
+                                    <a:displayOrder>320</a:displayOrder>
                                     <ra:nativeAttributeName>relationship_type</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>relationship_type</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -473,7 +497,7 @@
                         <xsd:element minOccurs="0" name="altaddress_email" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>320</a:displayOrder>
+                                    <a:displayOrder>330</a:displayOrder>
                                     <ra:nativeAttributeName>altaddress_email</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>altaddress_email</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -483,7 +507,7 @@
                         <xsd:element minOccurs="0" name="patron_card_lost" type="xsd:boolean">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>330</a:displayOrder>
+                                    <a:displayOrder>340</a:displayOrder>
                                     <ra:nativeAttributeName>patron_card_lost</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>patron_card_lost</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -493,7 +517,7 @@
                         <xsd:element minOccurs="0" name="altaddress_state" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>340</a:displayOrder>
+                                    <a:displayOrder>350</a:displayOrder>
                                     <ra:nativeAttributeName>altaddress_state</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>altaddress_state</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -503,7 +527,7 @@
                         <xsd:element maxOccurs="unbounded" minOccurs="0" name="extended_attributes" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>350</a:displayOrder>
+                                    <a:displayOrder>360</a:displayOrder>
                                     <ra:nativeAttributeName>extended_attributes</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>extended_attributes</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -513,7 +537,7 @@
                         <xsd:element minOccurs="0" name="phone" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>360</a:displayOrder>
+                                    <a:displayOrder>370</a:displayOrder>
                                     <ra:nativeAttributeName>phone</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>phone</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -523,7 +547,7 @@
                         <xsd:element minOccurs="0" name="expired" type="xsd:boolean">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>370</a:displayOrder>
+                                    <a:displayOrder>380</a:displayOrder>
                                     <a:access>read</a:access>
                                     <ra:nativeAttributeName>expired</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>expired</ra:frameworkAttributeName>
@@ -534,7 +558,7 @@
                         <xsd:element minOccurs="0" name="state" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>380</a:displayOrder>
+                                    <a:displayOrder>390</a:displayOrder>
                                     <ra:nativeAttributeName>state</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>state</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -544,7 +568,7 @@
                         <xsd:element minOccurs="0" name="lang" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>390</a:displayOrder>
+                                    <a:displayOrder>400</a:displayOrder>
                                     <ra:nativeAttributeName>lang</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>lang</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -554,7 +578,7 @@
                         <xsd:element minOccurs="0" name="restricted" type="xsd:boolean">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>400</a:displayOrder>
+                                    <a:displayOrder>410</a:displayOrder>
                                     <a:access>read</a:access>
                                     <ra:nativeAttributeName>restricted</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>restricted</ra:frameworkAttributeName>
@@ -565,7 +589,7 @@
                         <xsd:element minOccurs="0" name="sms_number" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>410</a:displayOrder>
+                                    <a:displayOrder>420</a:displayOrder>
                                     <ra:nativeAttributeName>sms_number</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>sms_number</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -575,7 +599,7 @@
                         <xsd:element minOccurs="0" name="updated_on" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>420</a:displayOrder>
+                                    <a:displayOrder>430</a:displayOrder>
                                     <a:access>read</a:access>
                                     <ra:nativeAttributeName>updated_on</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>updated_on</ra:frameworkAttributeName>
@@ -586,7 +610,7 @@
                         <xsd:element minOccurs="0" name="expiry_date" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>430</a:displayOrder>
+                                    <a:displayOrder>440</a:displayOrder>
                                     <ra:nativeAttributeName>expiry_date</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>expiry_date</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -596,7 +620,7 @@
                         <xsd:element minOccurs="0" name="pronouns" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>440</a:displayOrder>
+                                    <a:displayOrder>450</a:displayOrder>
                                     <ra:nativeAttributeName>pronouns</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>pronouns</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -606,7 +630,7 @@
                         <xsd:element minOccurs="0" name="staff_notes" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>450</a:displayOrder>
+                                    <a:displayOrder>460</a:displayOrder>
                                     <ra:nativeAttributeName>staff_notes</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>staff_notes</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -616,7 +640,7 @@
                         <xsd:element minOccurs="0" name="altaddress_phone" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>460</a:displayOrder>
+                                    <a:displayOrder>470</a:displayOrder>
                                     <ra:nativeAttributeName>altaddress_phone</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>altaddress_phone</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -626,7 +650,7 @@
                         <xsd:element minOccurs="0" name="date_enrolled" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>470</a:displayOrder>
+                                    <a:displayOrder>480</a:displayOrder>
                                     <a:access>create</a:access>
                                     <a:access>read</a:access>
                                     <ra:nativeAttributeName>date_enrolled</ra:nativeAttributeName>
@@ -638,7 +662,7 @@
                         <xsd:element minOccurs="0" name="postal_code" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>480</a:displayOrder>
+                                    <a:displayOrder>490</a:displayOrder>
                                     <ra:nativeAttributeName>postal_code</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>postal_code</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -648,7 +672,7 @@
                         <xsd:element minOccurs="0" name="preferred_name" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>490</a:displayOrder>
+                                    <a:displayOrder>500</a:displayOrder>
                                     <ra:nativeAttributeName>preferred_name</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>preferred_name</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -658,7 +682,7 @@
                         <xsd:element minOccurs="0" name="altaddress_city" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>500</a:displayOrder>
+                                    <a:displayOrder>510</a:displayOrder>
                                     <ra:nativeAttributeName>altaddress_city</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>altaddress_city</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -668,7 +692,7 @@
                         <xsd:element minOccurs="0" name="gender" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>510</a:displayOrder>
+                                    <a:displayOrder>520</a:displayOrder>
                                     <ra:nativeAttributeName>gender</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>gender</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -678,7 +702,7 @@
                         <xsd:element minOccurs="0" name="primary_contact_method" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>520</a:displayOrder>
+                                    <a:displayOrder>530</a:displayOrder>
                                     <ra:nativeAttributeName>primary_contact_method</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>primary_contact_method</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -698,7 +722,7 @@
                         <xsd:element minOccurs="0" name="middle_name" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>530</a:displayOrder>
+                                    <a:displayOrder>540</a:displayOrder>
                                     <ra:nativeAttributeName>middle_name</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>middle_name</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -708,7 +732,7 @@
                         <xsd:element minOccurs="0" name="protected" type="xsd:boolean">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>540</a:displayOrder>
+                                    <a:displayOrder>550</a:displayOrder>
                                     <ra:nativeAttributeName>protected</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>protected</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -718,7 +742,7 @@
                         <xsd:element minOccurs="0" name="autorenew_checkouts" type="xsd:boolean">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>550</a:displayOrder>
+                                    <a:displayOrder>560</a:displayOrder>
                                     <ra:nativeAttributeName>autorenew_checkouts</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>autorenew_checkouts</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -728,7 +752,7 @@
                         <xsd:element minOccurs="0" name="altaddress_country" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>560</a:displayOrder>
+                                    <a:displayOrder>570</a:displayOrder>
                                     <ra:nativeAttributeName>altaddress_country</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>altaddress_country</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -738,7 +762,7 @@
                         <xsd:element minOccurs="0" name="date_of_birth" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>570</a:displayOrder>
+                                    <a:displayOrder>580</a:displayOrder>
                                     <ra:nativeAttributeName>date_of_birth</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>date_of_birth</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -748,7 +772,7 @@
                         <xsd:element minOccurs="0" name="last_seen" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>580</a:displayOrder>
+                                    <a:displayOrder>590</a:displayOrder>
                                     <a:access>read</a:access>
                                     <ra:nativeAttributeName>last_seen</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>last_seen</ra:frameworkAttributeName>
@@ -759,7 +783,7 @@
                         <xsd:element minOccurs="0" name="address2" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>590</a:displayOrder>
+                                    <a:displayOrder>600</a:displayOrder>
                                     <ra:nativeAttributeName>address2</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>address2</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -769,7 +793,7 @@
                         <xsd:element name="surname" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>600</a:displayOrder>
+                                    <a:displayOrder>610</a:displayOrder>
                                     <ra:nativeAttributeName>surname</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>surname</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -779,7 +803,7 @@
                         <xsd:element minOccurs="0" name="privacy" type="xsd:int">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>610</a:displayOrder>
+                                    <a:displayOrder>620</a:displayOrder>
                                     <ra:nativeAttributeName>privacy</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>privacy</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -789,7 +813,7 @@
                         <xsd:element minOccurs="0" name="city" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>620</a:displayOrder>
+                                    <a:displayOrder>630</a:displayOrder>
                                     <ra:nativeAttributeName>city</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>city</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -799,7 +823,7 @@
                         <xsd:element minOccurs="0" name="incorrect_address" type="xsd:boolean">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>630</a:displayOrder>
+                                    <a:displayOrder>640</a:displayOrder>
                                     <ra:nativeAttributeName>incorrect_address</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>incorrect_address</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -809,7 +833,7 @@
                         <xsd:element minOccurs="0" name="title" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>640</a:displayOrder>
+                                    <a:displayOrder>650</a:displayOrder>
                                     <ra:nativeAttributeName>title</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>title</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -819,7 +843,7 @@
                         <xsd:element minOccurs="0" name="login_attempts" type="xsd:int">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>650</a:displayOrder>
+                                    <a:displayOrder>660</a:displayOrder>
                                     <ra:nativeAttributeName>login_attempts</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>login_attempts</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -829,7 +853,7 @@
                         <xsd:element minOccurs="0" name="date_renewed" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>660</a:displayOrder>
+                                    <a:displayOrder>670</a:displayOrder>
                                     <a:access>read</a:access>
                                     <ra:nativeAttributeName>date_renewed</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>date_renewed</ra:frameworkAttributeName>
@@ -840,7 +864,7 @@
                         <xsd:element minOccurs="0" name="mobile" type="xsd:string">
                             <xsd:annotation>
                                 <xsd:appinfo>
-                                    <a:displayOrder>670</a:displayOrder>
+                                    <a:displayOrder>680</a:displayOrder>
                                     <ra:nativeAttributeName>mobile</ra:nativeAttributeName>
                                     <ra:frameworkAttributeName>mobile</ra:frameworkAttributeName>
                                     <ra:returnedByDefault>true</ra:returnedByDefault>
@@ -1687,46 +1711,15 @@ return realMax
                     </source>
                 </outbound>
             </attribute>
-            <attribute>
-                <ref>ri:photo</ref>
-                <displayName>Foto del Patrón</displayName>
-                <!-- ============================================================
-                     Conector Koha v1.3.0 — canal JDBC para fotos.
-                     Fuente: $focus/jpegPhoto (propiedad nativa UserType,
-                     base64Binary, poblada por el Bloque I del UserTemplate).
-                     strength=weak: NO-OP cuando jpegPhoto es null — nunca
-                     borrar una foto ya existente en Koha (MidPoint suma,
-                     nunca resta). Passthrough sin expression (el
-                     <expression>jpegPhoto == null ? null : jpegPhoto</expression>
-                     previo era no-op — Ola 1 fix 8.1, 2026-05-26).
-                     ============================================================ -->
-                <outbound>
-                    <name>photo-outbound</name>
-                    <strength>weak</strength>
-                    <source>
-                        <path>$focus/jpegPhoto</path>
-                    </source>
-                </outbound>
-            </attribute>
-            <attribute>
-                <ref>ri:photo_mimetype</ref>
-                <displayName>MIME Type de la Foto</displayName>
-                <!-- jpegPhoto siempre es JPEG (propiedad nativa MidPoint).
-                     Valor constante; weak para no producir delta si no
-                     aplica. -->
-                <outbound>
-                    <name>photo-mimetype-outbound</name>
-                    <strength>weak</strength>
-                    <source>
-                        <path>$focus/jpegPhoto</path>
-                    </source>
-                    <expression>
-                        <script>
-                            <code>jpegPhoto == null ? null : 'image/jpeg'</code>
-                        </script>
-                    </expression>
-                </outbound>
-            </attribute>
+            <!-- ri:photo / ri:photo_mimetype RETIRADOS (v1.5.0, 2026-07-24). Decisión de
+                 Alberto: MidPoint no gestiona fotos binarias en ningún aprovisionamiento
+                 (ni este conector ni ningún otro). Si una foto debe llegar a Koha, viaja
+                 como URI/URL en un atributo de texto, no como blob. El conector v1.5.0+
+                 ya no declara estos atributos en su esquema; conservarlos aquí mapearía
+                 hacia atributos que el conector rechazaría. Ver
+                 upeu-koha/context/26-fix-pool-jdbc-y-limpieza-koha-nuevo-2026-07-24.md
+                 y el test guardián en connector-koha (PatronMapperTest) que falla si se
+                 reintroduce un atributo byte[] en el esquema. -->
             <activation>
                 <!-- ================================================================
                      EXISTENCE — gobierno canónico de la existencia del patrón Koha
@@ -1763,6 +1756,9 @@ return realMax
                         <source>
                             <path>$focus/extension/sb:campusWorker</path>
                         </source>
+                        <source>
+                            <path>$focus/extension/sb:liveAffiliationAlum</path>
+                        </source>
                         <expression>
                             <script>
                                 <code><![CDATA[
@@ -1784,13 +1780,27 @@ return realMax
 // FUSIÓN 4 KOHA (mitad de año): cuando BUJ/BUT/BU-ISTAT entren a este IGA,
 // quitar la condición `&& hasLimaAffiliation` (1 línea) → vuelve a ser
 // gate puro por afiliación viva multi-campus. Diseñado para ese cambio.
+//
+// EGRESADOS HISTÓRICOS (2026-07-25, decisión de Alberto). Se retira la
+// exclusión de egreso histórico documentada arriba: cualquier persona con
+// liveAffiliationAlum poblado (graduó de al menos un programa; fuente
+// Oracle LAMB Egresados / DAVID.VW_PERSONA_EGRESADO, campo GRADUADO=1) es
+// elegible, sin vínculo vivo adicional. Alcance medido ANTES de aplicar:
+// 27.640 personas pasaron a ser elegibles (casi duplicó la población Koha).
+// Confirmado explícitamente por Alberto con esa cifra delante. El mecanismo
+// de activación real NO es reconciliar Koha (recon-koha-upeu-daily no crea
+// cuentas para focos sin vínculo previo) sino reconciliar el resource FUENTE
+// (Oracle LAMB Egresados, 6a91f7e1-...-0e23): su reacción synchronization
+// linked->synchronize recomputa el foco completo y recién ahí este gate
+// aplica. Ver upeu-koha/context/27-egresados-koha-2026-07-25.md.
 // ================================================================
 def worker  = liveAffiliationWorker
 def student = liveAffiliationStudent
 def guest   = smartwifiGuest
+def alum    = liveAffiliationAlum
 def hasLib  = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72e-b874b3c48fa6' }
-// hasLiveAff: tiene algún vínculo vivo elegible (worker|student|guest|bibliotecario).
-def hasLiveAff = (worker != null) || (student != null) || (guest != null) || hasLib
+// hasLiveAff: tiene algún vínculo vivo elegible (worker|student|guest|egresado|bibliotecario).
+def hasLiveAff = (worker != null) || (student != null) || (guest != null) || (alum != null) || hasLib
 // P1 4->1: gate PURO por afiliación viva MULTI-CAMPUS. Retirado `&& hasLimaAffiliation`
 // (la instancia consolidada koha_upeu sirve a BUL/BUJ/BUT/CIA; cualquier vínculo vivo
 // UPeU es elegible, sin importar sede). El branch concreto lo fija library_id.
@@ -1859,15 +1869,21 @@ return eligible || (existing != null)
                         <source>
                             <path>$focus/locality</path>
                         </source>
+                        <source>
+                            <path>$focus/extension/sb:liveAffiliationAlum</path>
+                        </source>
                         <expression>
                             <script>
                                 <code><![CDATA[
 import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+// EGRESADOS HISTÓRICOS (2026-07-25) — mismo criterio que existence arriba,
+// para que el patrón recién creado no nazca DISABLED. Ver ese comentario.
 def worker  = liveAffiliationWorker
 def student = liveAffiliationStudent
 def guest   = smartwifiGuest
+def alum    = liveAffiliationAlum
 def hasLib  = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72e-b874b3c48fa6' }
-def eligible = (worker != null) || (student != null) || (guest != null) || hasLib
+def eligible = (worker != null) || (student != null) || (guest != null) || (alum != null) || hasLib
 return eligible ? ActivationStatusType.ENABLED : ActivationStatusType.DISABLED
                                 ]]></code>
                             </script>
