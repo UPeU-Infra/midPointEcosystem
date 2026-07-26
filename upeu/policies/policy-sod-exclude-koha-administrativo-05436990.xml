@@ -20,7 +20,7 @@
 
   ESTE OBJETO SE ASIGNA EXCLUSIVAMENTE A f849578e-a629-4ec7-8549-993f3e1adbf0 (assignment
   DIRECTO sobre el User, ver despliegue en runbook). NO reutilizar para otros usuarios ni
-  asignarlo a ningun Role/Org compartido -- es un parche puntual, no un patron general.
+  asignarlo a ningun Role/Org compartido: es un parche puntual, no un patron general.
 
   NO se toco BR-Admin-Area ni AR-Koha-Patron-Administrativo (roles de produccion
   compartidos por todo el personal administrativo real) para llegar a este resultado.
@@ -33,7 +33,7 @@
   camino (directo o inducido via BR-Admin-Area u otro futuro).
 
   Reversion: eliminar el assignment de este policy oid en f849578e (o archivar/eliminar
-  este objeto PolicyType) -- operacion no destructiva, reversible en cualquier momento.
+  este objeto PolicyType): operacion no destructiva, reversible en cualquier momento.
 -->
 <policy xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
         oid="7d76eee5-3715-43b3-934e-44a3d2d1268f">
