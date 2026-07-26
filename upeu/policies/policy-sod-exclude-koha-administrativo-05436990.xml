@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Mitigación puntual — SoD Exclusion ACOTADA a un único User (2026-07-26)
+  ISO 27001 A.8.2 / NIST SP 800-53 AC-5
+
+  Contexto completo: docs/runbooks/koha-mitigacion-05436990-desprovision-2026-07-25.md
+
+  Caso: duplicado de persona en Oracle LAMB (ELISEO.VW_APS_EMPLEADO):
+    - ID_PERSONA=4031567, COD_APS='05436990', DNI 05436990 (INVALIDO en RENIEC)
+      -> User MidPoint f849578e-a629-4ec7-8549-993f3e1adbf0
+    - ID_PERSONA=254553,  COD_APS='005436990', DNI 49096530 (VALIDO en RENIEC, "Ruthy
+      Mamani Jacinto de Tafur") -> User MidPoint eda0f988-052e-4c69-9605-37431417169e
+      (cuenta Koha REAL y correcta, NO tocar)
+
+  El contrato erroneo de ID_PERSONA=4031567 sigue "ACTIVO" en Oracle hasta 2026-12-31,
+  por lo que UserTemplate-Person-Base sigue derivando primaryAffiliation=staff y
+  re-asignando BR-Admin-Area (oid e8ce3b1b-a53b-4090-b416-ab8d78399e17) cada recompute,
+  el cual induce AR-Koha-Patron-Administrativo (oid a1b2c3d4-e5f6-7890-abcd-ef1234567803)
+  -> intento repetido de crear cuenta Koha duplicada para una identidad invalida.
+
+  ESTE OBJETO SE ASIGNA EXCLUSIVAMENTE A f849578e-a629-4ec7-8549-993f3e1adbf0 (assignment
+  DIRECTO sobre el User, ver despliegue en runbook). NO reutilizar para otros usuarios ni
+  asignarlo a ningun Role/Org compartido -- es un parche puntual, no un patron general.
+
+  NO se toco BR-Admin-Area ni AR-Koha-Patron-Administrativo (roles de produccion
+  compartidos por todo el personal administrativo real) para llegar a este resultado.
+
+  Mecanismo: PolicyType es AbstractRoleType; su <inducement><policyRule> se aplica al
+  HOLDER de la asignacion DIRECTA (misma mecanica que un Archetype asignado directamente
+  a un User: "inducements in the archetype apply to all archetyped objects" aplicado aqui
+  a un unico User). Exclusion + enforcement bloquea la evaluacion de politica del User en
+  cuanto su set efectivo de roles incluya AR-Koha-Patron-Administrativo, sin importar el
+  camino (directo o inducido via BR-Admin-Area u otro futuro).
+
+  Reversion: eliminar el assignment de este policy oid en f849578e (o archivar/eliminar
+  este objeto PolicyType) -- operacion no destructiva, reversible en cualquier momento.
+-->
+<policy xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+        oid="7d76eee5-3715-43b3-934e-44a3d2d1268f">
+    <name>SoD-Excluye-Koha-Administrativo-05436990</name>
+    <description>
+        Mitigacion puntual y ACOTADA al User f849578e-a629-4ec7-8549-993f3e1adbf0 (DNI
+        05436990, duplicado invalido de ID_PERSONA=4031567 en Oracle LAMB). Bloquea la
+        construction hacia koha-upeu por cualquier camino (incl. via BR-Admin-Area ->
+        AR-Koha-Patron-Administrativo) sin modificar ningun rol de produccion compartido.
+        Ver docs/runbooks/koha-mitigacion-05436990-desprovision-2026-07-25.md.
+        Autorizado por Alberto Sanchez (2026-07-25/26).
+    </description>
+    <lifecycleState>active</lifecycleState>
+    <inducement>
+        <policyRule>
+            <name>excluye-koha-patron-administrativo-05436990</name>
+            <documentation>
+                Excluye AR-Koha-Patron-Administrativo (oid a1b2c3d4-e5f6-7890-abcd-ef1234567803)
+                para el unico holder directo de este PolicyType. No afecta a ningun otro
+                portador de AR-Koha-Patron-Administrativo / BR-Admin-Area.
+            </documentation>
+            <policyConstraints>
+                <exclusion>
+                    <name>excluye-koha-administrativo</name>
+                    <targetRef oid="a1b2c3d4-e5f6-7890-abcd-ef1234567803" type="RoleType"/>
+                </exclusion>
+            </policyConstraints>
+            <policyActions>
+                <enforcement/>
+            </policyActions>
+        </policyRule>
+    </inducement>
+</policy>
