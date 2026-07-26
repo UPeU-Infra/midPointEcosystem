@@ -113,3 +113,125 @@ manual adicional en MidPoint.
 - `user-f849578e-PRE-20260725.json` (estado completo antes de cualquier cambio, version 139)
 - `user-eda0f988-CONTROL-PRE-20260725.json` (control, version 52 — usado para confirmar cero
   cambios en el User válido)
+
+---
+
+## SESIÓN 2026-07-26 — Opción B probada empíricamente en PROD: NO FUNCIONA. Revertido limpio. Sin cierre definitivo (queda pendiente Opción A, con confirmación explícita antes de aplicar).
+
+Alberto autorizó explícitamente aplicar la opción B (SoD exclusion `policyConstraints/exclusion`,
+acotada a un único User, sin tocar `BR-Admin-Area` ni `AR-Koha-Patron-Administrativo`). Se probó
+en PROD con evidencia real. **Resultado: NO suprime la construction Koha.** Se revirtió todo de
+forma limpia. El sistema queda exactamente como al cierre del 25-jul (mismo estado descrito arriba).
+
+### Qué se probó (3 variantes, las 3 fallaron o resultaron inseguras)
+
+**Backup previo:** `/tmp/koha-mitigacion-check/f849578e-current.json` (version 151, snapshot
+inicio de sesión) + snapshot de 3 holders reales de `BR-Admin-Area` (`1b1023e1…`, `fbae2830…`,
+`0b15298d…`, versiones 117/105/152) usados como control adicional al `eda0f988` de siempre.
+
+**1. `PolicyType` con `inducement/policyRule/exclusion + enforcement`, asignado DIRECTAMENTE al
+User (nuevo objeto standalone `SoD-Excluye-Koha-Administrativo-05436990`, oid
+`7d76eee5-3715-43b3-934e-44a3d2d1268f`, en
+`upeu/policies/policy-sod-exclude-koha-administrativo-05436990.xml`, commits `994e0e5`/`b3761aa`):**
+- Import del objeto: limpio (201, cero referencias de nadie más).
+- PATCH assignment (`add`, sin `targetRef` propio, solo el PolicyType) en `f849578e`: **SÍ se
+  persistió** (version 151→152, assignment nuevo `@id=418`), sin rechazo por policy violation
+  (contrario a lo que se temía en la sesión anterior: la operación NO abortó por completo).
+  **Pero tampoco bloqueó nada** — un segundo trigger independiente (touch trivial de
+  `description`, forzando un recompute completo nuevo) reprodujo el **mismo
+  `AlreadyExistsException` de Koha de siempre**, verificado con evidencia de servidor
+  (`org.identityconnectors.framework.common.exceptions.AlreadyExistsException`, mismo endpoint
+  `POST http://192.168.12.136:8001/api/v1/patrons`).
+  **Conclusión empírica:** el exclusion+enforcement de midPoint 4.10 está diseñado para **prevenir
+  la incorporación de un NUEVO conflicto** (SoD dinámico contra un request nuevo), no para
+  **bloquear retroactivamente una construction ya inducida de forma estructural** por un rol
+  birthright que se re-evalúa igual en cada recompute. Coincide con la sospecha de la sesión
+  anterior ("no probado en vivo") — ahora queda refutada en la práctica, no solo como riesgo
+  teórico.
+- Limpieza: assignment `@id=418` removido de `f849578e` (DELETE `raw`, verificado en Postgres:
+  version 156, 6 assignments = exactamente el set original). El objeto `PolicyType` se dejó
+  **archivado** (`lifecycleState=archived`, no borrado, para dejar registro histórico del intento;
+  cero referencias activas, cero riesgo).
+
+**2. `assignment[1]/activation/administrativeStatus=disabled` vía path anidado
+(`"path":"assignment[1]/activation/administrativeStatus"` y variante `"assignment/1/..."`):**
+ambas sintaxis fallan con `HTTP 500` — bug/edge-case interno de midPoint 4.10
+(`NullPointerException: assignmentValueAfter is null` / "doesn't contain definition for path").
+No es un patrón soportado de forma fiable en este deployment. Descartado.
+
+**3. Reemplazo del valor COMPLETO de `assignment[id=1]` con `activation.administrativeStatus:
+disabled` (mismo patrón JSON que sí funciona para add/delete por `@id`):** el PATCH se aplicó
+(version→159), **pero con un efecto colateral serio**: el mapping `D-autoassign-br-admin-area` (y,
+al parecer, TODOS los demás autoassign de `UserTemplate-Person-Base`) no reconoció el assignment
+`@id=1` deshabilitado como "ya satisfecho" y **regeneró TODO el bloque de assignments con IDs
+nuevos** (462/464/466/468/470/472), incluyendo un **segundo assignment DUPLICADO y habilitado**
+hacia `BR-Admin-Area` (`@id=466`) — es decir, el intento de deshabilitar creó una ruta paralela
+viva hacia Koha en vez de cerrarla. Confirmado también con un segundo `AlreadyExistsException`.
+**Incidente menor autocontenido:** se detectó y remedió en la misma sesión (delete de los 6
+duplicados + restauración del `@id=1` original sin el override, ambos vía `raw`); verificado en
+Postgres que el estado final es **bit a bit igual al de antes de este experimento** (6 assignments,
+mismos oids/ids/tipos, mismos 2 `linkRef`). Cero impacto fuera de `f849578e` en todo momento
+(confirmado con los 3 controles + conteo total de holders `BR-Admin-Area`, que solo varió por
+crecimiento orgánico ajeno: 8.533→8.543).
+
+### Por qué las 3 variantes fallan (causa raíz común)
+
+El condicionamiento que dispara `BR-Admin-Area` (`primaryAffiliation=='staff'`) vive en
+`UserTemplate-Person-Base` (objeto **compartido globalmente**, no solo por este rol) y se
+re-evalúa completo en cada recompute a partir del dato de Oracle (que sigue diciendo `staff` para
+este `ID_PERSONA`). Cualquier contramedida a nivel de `assignment`/`policyRule` puesta SOLO en el
+User se pisa o se rodea en el mismo recompute, porque el template no razona en términos de
+"¿hay una exclusión declarada?" — solo en términos de "¿la condición de Oracle sigue siendo
+verdadera?". No existe, dentro de lo estrictamente acotado a este User, un mecanismo de
+midPoint 4.10 que sobreviva a esa re-evaluación sin tocar el template global (fuera de alcance,
+blast radius de TODOS los usuarios) o el rol compartido (prohibido explícitamente).
+
+### Estado final verificado (idéntico al cierre del 25-jul)
+
+- `f849578e`: version 163 (el número sube por el propio historial de cambios/reversiones de hoy,
+  pero el **contenido** es idéntico al pre-sesión) — `lifecycleState=active`, 6 assignments
+  (`1,2,3,4,111,295`, mismos targets), 2 `linkRef` (LDAP `04d6ca81…` + Oracle LAMB Trabajadores
+  `43f0101a…`), **cero shadow Koha** en cualquier momento (verificado exhaustivamente contra
+  `m_shadow`/`m_ref_projection` en Postgres, incluyendo búsqueda de huérfanos por cualquier
+  variante de DNI/`ID_PERSONA`).
+- `eda0f988` (Ruthy válida): **version 52, sin cambios**, byte-a-byte igual que el control
+  pre-sesión (4 `linkRef`, incluido el patron Koha real `50e86c3d…`).
+- 3 holders reales de `BR-Admin-Area` muestreados como control (`1b1023e1…` v117, `fbae2830…`
+  v105, `0b15298d…` v152): **sin cambios**, versiones idénticas antes/después.
+- Objeto `PolicyType` `7d76eee5-3715-43b3-934e-44a3d2d1268f`: queda **archivado** en PROD,
+  documentado en el repo (`upeu/policies/policy-sod-exclude-koha-administrativo-05436990.xml`),
+  sin ninguna asignación activa — inerte, no interfiere con nada.
+
+### Hallazgo operativo lateral (no atribuible a este trabajo)
+
+Uno de los PATCH de prueba tardó **~16 minutos** en responder (REQUEST 03:46:11, EXECUTION
+efectiva ~04:02 hora Lima) mientras el servidor mostraba, en paralelo, una tormenta de errores
+`HTTP 503 ErrorStoreServerUnavailable` del conector `UPEU-EntraID-Graph` (reconciliación de fondo
+contra Microsoft Graph) y al menos un `PolicyViolationException` de un User no relacionado
+(`ad239d55…`, conflicto de shadow LDAP duplicado, problema preexistente y distinto). No parece
+causado por este trabajo, pero es una anomalía de salud del servidor que Alberto debería revisar
+por separado (posible contención de hilos/recursos con RAM 7.5GB).
+
+### Pendiente real (sin cambios respecto al 25-jul, ahora con evidencia adicional)
+
+Con la opción B **descartada por evidencia** (no solo por riesgo teórico), la única ruta que
+detendría el ruido de forma duradera sin tocar `BR-Admin-Area`/`AR-Koha-Patron-Administrativo` es
+la **opción A**: excluir la fila `ID_PERSONA=4031567` en el propio query/task de origen
+(`recon-oracle-lamb-trabajadores-daily` / `upeu/resources/oracle-lamb/trabajadores.xml`), idealmente
+como un filtro `protected object` acotado por valor único (no editando el SQL embebido masivo del
+`searchScript`, que tiene historial de romperse — ver `docs/runbooks/NUNCA-PUT-resources-schema-cache.md`).
+**No se aplicó hoy**, por dos motivos: (1) toca un objeto compartido (el resource), lo cual
+requiere confirmación explícita de Alberto antes de tocar producción, igual que se dijo el 25-jul;
+(2) **la task `recon-oracle-lamb-trabajadores-daily` sigue `suspended`** (confirmado hoy) —
+es decir, **hoy no hay ruido activo real** (el intento fallido de Koha no se está repitiendo a
+diario mientras la task esté suspendida), por lo que no hay urgencia operativa que justifique un
+cambio apresurado sobre un recurso frágil.
+
+**La corrección definitiva sigue siendo la de Oracle/RRHH** (cerrar/fusionar `ID_PERSONA=4031567`
+contra `254553`) — sin cambios respecto al 25-jul.
+
+### Backups de esta sesión
+
+`/tmp/koha-mitigacion-check/` en `midpoint-prod` (no persistido en el repo, solo diagnóstico):
+`f849578e-current.json` (v151, inicio), `f849578e-FINAL.json` (v163, cierre),
+`br-admin-area-holders-BEFORE.json` (8.533 holders), snapshots de los 3 controles.
