@@ -3,7 +3,13 @@
 Fecha: 2026-06-04
 Resource LDAP (Identity Cache): `7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f` (`upeu/resources/ldap-identity-cache.xml`), base `ou=people,dc=upeu,dc=edu,dc=pe`, DN = `uid=<focus/name>,...`.
 
-## Estado: ✅ MASIVO EJECUTADO Y CERRADO — 267/267 saneados, dual-shadow = 0
+## 🔴 ADENDA (2026-07-26): el patrón REAPARECIÓ — 6 focos nuevos, NO es un caso cerrado para siempre
+
+El masivo de abajo limpió el BACKLOG (267→0), pero **no corrigió la causa raíz** (el outbound `dn`/`uid` de este resource sigue sin soportar rename in-place — LDAP no permite renombrar y `delete` está bloqueada por diseño — así que cada vez que el `name` de un foco cambia por una transición alum→empleado con doble llave DNI/código, MidPoint vuelve a crear una segunda entrada en vez de renombrar). Investigado el 26-jul (contexto: intento de destrabar Koha para Faculty/Administrativo, casos "James Mendoza"/"Mirian Calcina"): **6 focos nuevos con el mismo patrón exacto** (`PolicyViolationException` en `ProjectionsLoadOperation`, 2 shadows vivos linkeados al mismo kind+intent+resource), activos desde **2026-06-25** (3 semanas después de este mismo cierre), sin remediar desde entonces — bloquean el clockwork completo del foco (no solo LDAP: Koha, Entra, todo), 2 de los 6 sin ningún Koha ni M365 por ningún camino. Detalle completo en la memoria de sesión del proyecto (`koha-escalamiento-produccion-diagnostico-2026-07-19.md`, entrada del 26-jul) y en `fix-uid-trabajadores-abortado-2026-07-17` (mismo antecedente de doble llave).
+
+**Decisión de Alberto (26-jul): no hay suficiente dato todavía — solo documentar para retomar más adelante, no arreglar ahora.** Pendiente para una sesión futura: (a) fix quirúrgico por persona para estos 6 casos puntuales (retirar `linkRef` al shadow huérfano, mismo patrón que la Fase A/B de abajo), y (b) idealmente, corregir el mecanismo rename-vs-create del outbound para que esto deje de reaparecer con cada transición similar — sin eso, este runbook probablemente necesitará una 3ª adenda en el futuro.
+
+## Estado original (04-jun): ✅ MASIVO EJECUTADO Y CERRADO — 267/267 saneados, dual-shadow = 0 (ver adenda arriba — no permanente)
 
 ### Resumen ejecutivo del masivo (2026-06-04 PM12)
 - Bloqueo previo (import Estudiantes regenerando dual) RESUELTO: import `c1fe95c6` quedó SUSPENDED (paró en 1071). Universo estabilizado.
