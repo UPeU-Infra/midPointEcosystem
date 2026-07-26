@@ -224,6 +224,15 @@
                     <strength>strong</strength>
                     <source><path>$shadow/attributes/icfs:name</path></source>
                     <target><path>personalNumber</path></target>
+                    <!-- GUARDARRAIL 2026-07-26 (docs/specs/trabajadores-correlation-guardrail-2026-07-20.md
+                         §2.2): debe evaluarse tambien en beforeCorrelation para que el correlator
+                         tier2 (correlate-by-personalnumber-fallback, mas abajo) pueda leer el valor
+                         en el momento de correlar. Mismo patron ya usado para
+                         num-documento-to-lambDocNum en este mismo resource. -->
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
                 </inbound>
             </attribute>
             <attribute>
@@ -681,10 +690,24 @@
                      idéntica a liveAffiliationWorker: ESTADO='I' o FEC_TERMINO vencido → null (empleo
                      NO vivo → sin campusWorker). Así el gate Koha multi-campus solo cuenta el vínculo
                      laboral PRESENTE (campusWorker==LIMA → elegible BUL), nunca un cese histórico.
-                     NO toca locality (lugar físico, lo usan LDAP/Entra/M365). -->
+                     NO toca locality (lugar físico, lo usan LDAP/Entra/M365).
+                     FIX CIA 2026-07-25 (gap real: 0 patrons en branch CIA pese a tener trabajadores
+                     vivos vinculados): CIA (Centro de Investigación Adventista/Centro White) NO es una
+                     ELISEO.ORG_SEDE propia — es un ÁREA (ID_AREA=94) dentro de Sede Lima, así que sin
+                     este check cualquier trabajador de CIA heredaba SEDE_NOMBRE='Sede Lima' y se perdía
+                     en el mapa LIMA→BUL de Koha. ID_AREA ya viene expuesto por el conector (mismo campo
+                     que alimenta ri:ID_AREA→costCenter más arriba, sin tocar SQL) — se lee del shadow
+                     igual que ESTADO/FEC_TERMINO. Alcance verificado: 2 personas (Josué Agustín
+                     Llancachagua activo, Neyler Heredia Araujo cesado 2025-12-31 dentro de gracia 2a). -->
                 <inbound>
                     <name>sede-nombre-to-campusWorker</name>
                     <strength>strong</strength>
+                    <source>
+                        <path>$shadow/attributes/ri:SEDE_NOMBRE</path>
+                    </source>
+                    <source>
+                        <path>$shadow/attributes/ri:ID_AREA</path>
+                    </source>
                     <expression>
                         <script>
                             <code>
@@ -701,7 +724,10 @@ if (ft != null &amp;&amp; ft.toString().trim() != '') {
         if (fecTerm.isBefore(java.time.LocalDate.now())) return null
     } catch (Exception ex) { }
 }
-def v = (input ?: '').toString().trim(); ['Sede Lima':'LIMA','Filial Tarapoto':'TARAPOTO','Filial Juliaca':'JULIACA'].get(v)
+def area = ID_AREA?.toString()?.trim()
+if (area == '94') return 'CIA'
+def v = (SEDE_NOMBRE ?: '').toString().trim()
+['Sede Lima':'LIMA','Filial Tarapoto':'TARAPOTO','Filial Juliaca':'JULIACA'].get(v)
 </code>
                         </script>
                     </expression>
@@ -982,7 +1008,23 @@ return out.isEmpty() ? null : (out as java.util.List)
                  beforeCorrelation están en lifecycleState archived.
                  MidPoint busca UserType donde extension/upeu:lambDocNum == ri:NUM_DOCUMENTO del shadow.
                  El inbound activo num-documento-to-lambDocNum popula lambDocNum antes de correlación
-                 (evaluationPhases: beforeCorrelation). -->
+                 (evaluationPhases: beforeCorrelation).
+
+                 GUARDARRAIL 2026-07-26 (docs/specs/trabajadores-correlation-guardrail-2026-07-20.md):
+                 correlator compuesto 2-tier. Tier 1 (lambDocNum, peso 1.0) sin cambio de
+                 comportamiento: si matchea, confianza=1.0=definite -> vinculación automática igual
+                 que antes, y tier 2 NUNCA se evalúa (los tiers se detienen en el primer match
+                 definite). Tier 2 (personalNumber=CANON_KEY/COD_APS, peso 0.6, nuevo) solo entra si
+                 tier 1 no encontró nada: si personalNumber del shadow ya coincide con un User
+                 existente, la confianza agregada (0.6) cae en banda "candidate" -> situation=disputed
+                 -> createCorrelationCase (revisión humana), EN VEZ de unmatched->addFocus (que crea
+                 un User duplicado real, patrón Orlando/Luzirene 20-jul, y Orlando/Juan Elías/
+                 Evanilda 25-jul, ver docs/runbooks/trabajadores-incidente-reanudacion-25jul-2026-07-26.md).
+                 Aplicado a PROD vía PATCH (nunca PUT) 2026-07-26, version 321->322, verificado
+                 (schema/capabilities/connectorRef intactos, test connection 15/15 success).
+                 LIMITACIÓN CONOCIDA: no atrapa drift de padding en personalNumber (caso Luzirene) ni
+                 colisiones de la misma persona bajo IDENTIFICADORES UPeU distintos por afiliación
+                 (caso Evanilda, ver docs/specs/multi-profile-canonical/07-identity-lifecycle-design.md). -->
             <correlation>
                 <correlators>
                     <items>
@@ -990,8 +1032,27 @@ return out.isEmpty() ? null : (out as java.util.List)
                         <item>
                             <ref xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</ref>
                         </item>
+                        <composition>
+                            <tier>1</tier>
+                            <weight>1.0</weight>
+                        </composition>
+                    </items>
+                    <items>
+                        <name>correlate-by-personalnumber-fallback</name>
+                        <documentation>GUARDARRAIL 2026-07-26 (post-incidente CANON_RN 20-jul y reanudación no documentada 25-jul, ver docs/specs/trabajadores-correlation-guardrail-2026-07-20.md). Tier 2, peso 0.6: si el tier 1 (lambDocNum) no encuentra match pero SI existe un User cuyo personalNumber ya coincide con el CANON_KEY de este shadow (mismo COD_APS, anclado antes por este mismo resource o heredado de Estudiantes/Egresados), la confianza agregada (0.6) cae en banda "candidate" (menor al "definite"=1.0 de tier 1) -&gt; situation=disputed -&gt; createCorrelationCase (revision humana) EN VEZ de unmatched-&gt;addFocus (que crea un User duplicado real). Si tier 1 ya encontro match definite, este tier 2 NUNCA se evalua -&gt; cero cambio de comportamiento para los shadows ya LINKED. LIMITACION CONOCIDA: personalNumber puede tener drift de formato (ceros a la izquierda) respecto al CANON_KEY actual si fue anclado hace tiempo bajo una convencion de padding distinta (caso real: Luzirene, personalNumber="00614192" vs CANON_KEY actual "000614192" -- NO coincide, este tier2 NO la habria atrapado). Ver §4 del spec.</documentation>
+                        <item>
+                            <ref>personalNumber</ref>
+                        </item>
+                        <composition>
+                            <tier>2</tier>
+                            <weight>0.6</weight>
+                        </composition>
                     </items>
                 </correlators>
+                <thresholds>
+                    <definite>1.0</definite>
+                    <candidate>0.5</candidate>
+                </thresholds>
             </correlation>
             <synchronization>
                 <reaction>
@@ -1005,6 +1066,14 @@ return out.isEmpty() ? null : (out as java.util.List)
                 <reaction>
                     <situation>unmatched</situation>
                     <actions><addFocus/></actions>
+                </reaction>
+                <!-- GUARDARRAIL 2026-07-26: disputed = tier2 (personalNumber) encontró candidato pero
+                     tier1 (lambDocNum) no -> confianza "candidate", no "definite". No se auto-vincula
+                     ni se crea un User nuevo, se abre un caso de correlación para revisión humana.
+                     Mismo patrón ya en producción: koha-ils.xml reaction disputed -> createCorrelationCase. -->
+                <reaction>
+                    <situation>disputed</situation>
+                    <actions><createCorrelationCase/></actions>
                 </reaction>
                 <!-- GOBERNANZA 2026-05-29 (opción 1b aprobada): el reaction deleted NO desactiva
                      el focus de forma incondicional. Solo DESPROYECTA la cuenta de Trabajador (unlink

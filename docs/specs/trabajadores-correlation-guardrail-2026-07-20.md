@@ -1,8 +1,14 @@
 # Guardarraíl de correlación — Oracle LAMB Trabajadores v3 (diseño, 2026-07-20)
 
-**Estado: DISEÑADO Y VALIDADO OFFLINE. NO APLICADO A PROD.** `recon-oracle-lamb-trabajadores-daily`
-sigue **suspendida**. Este documento es el entregable de una sesión de diseño explícitamente
-autorizada por Alberto tras el incidente de duplicados del 20-jul (ver
+**Estado (actualizado 2026-07-26): APLICADO A PROD (version 322), verificado.** El canario de
+validación en vivo no se pudo completar como estaba diseñado porque, al verificar el estado real
+antes de tocar nada, se descubrió un **incidente crítico no documentado**: la tarea
+`recon-oracle-lamb-trabajadores-daily` fue reanudada y ejecutada manualmente el 2026-07-25 (sin
+decisión explícita registrada), recreando el patrón del incidente del 20-jul para 4 personas más,
+3 de ellas ya provisionadas a LDAP/Koha reales sin remediar. La tarea sigue **suspendida** (re-
+suspendida hoy como acción de protección). Ver §5b para el detalle completo y §6 para la
+recomendación actualizada. Este documento nació como el entregable de una sesión de diseño
+explícitamente autorizada por Alberto tras el incidente de duplicados del 20-jul (ver
 `docs/runbooks/telegram-alertas-tasks-2026-07-20/tarea3-resultado-200610808-91-personas.md`,
 sección "✅ FIX APLICADO" → "🔴 Riesgo colateral").
 
@@ -295,56 +301,197 @@ un import dirigido sobre el shadow de Orlando). Se decidió así deliberadamente
 
 ---
 
-## 6. Recomendación y próximo paso
+## 5b. Aplicación real en PROD y validación en vivo (2026-07-26)
 
-**No se aplicó nada a PROD en esta sesión.** `trabajadores.xml` en PROD queda exactamente como
-quedó tras el fix `CANON_RN` de esta tarde (version 320). `recon-oracle-lamb-trabajadores-daily`
-sigue **suspendida**.
+Alberto autorizó aplicar el diseño. Ejecutado con el protocolo de siempre: backup completo
+(`GET /resources/{oid}` → `/home/juansanchez/backups-e21/e21_pre-correlation-guardrail_20260726_033546.xml`,
+version 321), `PATCH` (nunca `PUT`) de los 3 elementos exactos del diseño (§2.2), verificación
+post-PATCH, y un intento de canario en vivo sobre el shadow de Orlando que **reveló un incidente
+crítico no documentado, independiente del guardarraíl mismo**.
 
-Razones para no aplicar hoy, explícitas:
+### 5b.1 PATCH aplicado y verificado — ✅ limpio
 
-1. Ya hubo un incidente real hoy en este mismo resource (2 duplicados provisionados a LDAP/Koha
-   real). Encadenar un segundo cambio en vivo sobre el mismo resource, en la misma sesión
-   maratónica, no es prudente aunque el diseño tenga buena base.
-2. La validación offline reveló una limitación real y no trivial (drift de padding en
-   `personalNumber`, §4) que sugiere que el diseño, aunque sólido, **no es la versión final** —
-   conviene decidir con margen si vale la pena cerrar esa brecha (backfill) antes o después de
-   desplegar el guardarraíl.
-3. El hallazgo de duplicado de persona en MOISES para Orlando Y Luzirene (§1) es información nueva
-   que Alberto no tenía y que amerita su propia decisión de escalamiento, independiente del
-   guardarraíl técnico.
+`version` 321→322. Los 3 `itemDelta` (XML, `objectModification`) aplicados en una sola llamada:
+
+1. `replace` de `schemaHandling/objectType[5464]/correlation` → correlator compuesto 2-tier
+   (`correlate-by-num-documento` tier=1/weight=1.0, `correlate-by-personalnumber-fallback`
+   tier=2/weight=0.6) + `thresholds` (`definite=1.0`, `candidate=0.5`), exactamente como en §2.2.
+2. `add` de una nueva `reaction` (`situation=disputed`, `actions/createCorrelationCase`) en
+   `schemaHandling/objectType[5464]/synchronization`, sin tocar las 4 reacciones existentes
+   (`linked`/`unlinked`/`unmatched`/`deleted`, mismos `@id` 5530/5532/5534/5536 preservados).
+3. `replace` de `schemaHandling/objectType[5464]/attribute[5465]/inbound[5467]/evaluationPhases`
+   (mapping `cod-aps-to-personalNumber`) → `include: [beforeCorrelation, clockwork]`.
+
+Verificación post-PATCH (todo confirmado vía REST GET + comparación JSON, no asumido):
+
+- `<schema>` cacheado **byte-idéntico** al pre-PATCH (comparación JSON completa, no solo conteo de
+  `xsd:element`).
+- `connectorRef`, `capabilities`, `connectorConfiguration` **idénticos** al pre-PATCH.
+- `correlation`, `synchronization/reaction` (ahora 5, con `disputed`/`createCorrelationCase`) e
+  `inbound[5467]/evaluationPhases` reflejan exactamente el diseño.
+- **Test connection: 15/15 sub-resultados `success`.**
+
+### 5b.2 Canario de Orlando — NO se pudo ejecutar como estaba diseñado (premisa invalidada)
+
+Antes de lanzar el `import` dirigido sobre el shadow `0c1660ee-b79f-48c3-abc8-5c852ad8226c`, se
+verificó su estado real en PROD (protocolo de esta sesión: nunca asumir, siempre consultar el
+sistema real primero). **El shadow YA NO está huérfano**: `synchronizationSituation=LINKED`,
+vinculado a un `User` (`3e756b31-...`, `name=00534601`, `personalNumber=00534601`,
+`lambIdPersona=202895`) que es un **`User` duplicado nuevo**, distinto del Orlando real
+(`2dba749b-...`, `name=200610808`, `lambDocNum=CE:000534601`, `lambIdPersona=10041`, verificado
+intacto). Es decir: **exactamente el mismo patrón de incidente del 20-jul volvió a ocurrir para
+Orlando**, esta vez fuera de esta sesión.
+
+Con la premisa del canario rota (el shadow ya no está en el estado `UNMATCHED`/huérfano que el
+guardarraíl debía interceptar), **se decidió NO ejecutar el `import` dirigido** — habría sido, en
+el mejor caso, un no-op (`linked → synchronize`, sin pasar por el correlator) y no habría validado
+nada; en el peor caso, una operación sobre un objeto cuyo estado real no coincidía con lo esperado,
+justo el escenario que exige detenerse según las reglas invariantes de esta tarea.
+
+### 5b.3 Causa raíz de la desviación — incidente crítico no documentado (2026-07-25)
+
+Investigación (100% lectura, `psql` + REST) de por qué el shadow de Orlando cambió de estado desde
+el 20-jul:
+
+**`recon-oracle-lamb-trabajadores-daily` (oid `23b9fde4-...`) fue reanudada y ejecutada
+manualmente el 2026-07-25, sin que quede registro de autorización explícita para hacerlo.**
+Evidencia de auditoría (`ma_audit_event`, `targetoid` del task):
+
+```
+2026-07-20 14:33:59 UTC  SUSPEND_TASK        administrator  (el cierre documentado del 20-jul)
+2026-07-25 14:18:37 UTC  RESUME_TASK         administrator  ← sin documentar en memoria/runbooks
+2026-07-25 14:18:40 UTC  RUN_TASK_IMMEDIATELY administrator
+```
+
+La ejecución corrió de **09:18:40 a 09:40:12 (hora servidor, -05:00)**. Coincide, al segundo, con
+la creación de shadows Koha/LDAP reales para los casos abajo (`createtimestamp` 09:19:02–09:19:08
+-05:00). El diff sin commitear encontrado al inicio de esta sesión en
+`upeu/resources/oracle-lamb/trabajadores.xml` (fix `CIA` fechado 2026-07-25, sobre el mapping
+`sede-nombre-to-campusWorker`, ver `git diff` de esa fecha) sitúa una sesión de trabajo sobre este
+mismo resource ese mismo día — es la hipótesis más probable del origen de la reanudación
+(reanudar la tarea para validar el fix CIA, sin registrar ni prever que correría la reconciliación
+completa del resource, no solo el alcance acotado de 2 personas que ese fix documentaba).
+
+**Impacto medido de esa corrida (100% lectura, sin escrituras adicionales de esta sesión):**
+
+| Métrica | Valor |
+|---|---|
+| `User` nuevos creados en la ventana 09:15–09:50 -05:00 | **97** |
+| ...de los cuales, duplicados exactos por `personalNumber` (mismo valor que un `User` más antiguo) | **2** (`001261673`/Juan Elías Mejía Coello, `00534601`/Orlando) |
+| ...de los cuales, duplicados por `fullName` exacto no capturados por el join anterior | **2 más**: `000614192`/Luzirene (recurrencia del caso ya conocido, §4 — `archived`, sin downstream) y **`001642451`/Evanilda Ruth Valeriano Tiñini (caso NUEVO, no identificado antes: en el Grupo B del 20-jul se había clasificado como "alta nueva genuina" — en realidad ya tenía un `User` con el mismo nombre bajo otro identificador, `201520024`)** |
+| Duplicados **activos y aprovisionados a sistemas reales** | **3 de 4**: Orlando → LDAP + Koha; Evanilda → LDAP + Koha; Juan Elías → LDAP (no Koha) |
+| Duplicado sin impacto downstream | Luzirene (`archived`, el guardarraíl `FEC_TERMINO` preexistente correctamente no la materializó hacia ningún resource) |
+| Balance agregado del resource (comparado con el cierre del 20-jul) | `UNMATCHED` 90→**2**, `UNLINKED` ~42→**0**, `LINKED` 7.399→**7.368**, total 7.532→**7.371** — consistente con que la corrida procesó legítimamente la gran mayoría del backlog (altas/bajas reales de 5 días), y solo estos 3-4 casos degeneraron en duplicado |
+
+Esta auditoría (`personalNumber` exacto + `fullName` exacto) **no es exhaustiva** — es la misma
+metodología de bajo costo usada para medir el impacto original del 20-jul, no un barrido
+case-by-case de los 97. Puede haber más colisiones no capturadas por estos dos criterios (nombres
+con variantes, apellidos de casada, etc.).
+
+**Acción de protección tomada de inmediato, dentro del alcance de "detente y no dañes más":**
+`recon-oracle-lamb-trabajadores-daily` tenía su próximo disparo programado (`cron 0 0 6 * * ?`,
+hora servidor) a menos de 2h15min del hallazgo. Se **re-suspendió la tarea** (`POST
+/tasks/{oid}/suspend` → 204, verificado `executionState=suspended` / `schedulingState=suspended`)
+para evitar que corriera de nuevo antes de que Alberto pueda decidir. Es la restauración del
+**último estado explícitamente autorizado** (suspendida, decisión del 20-jul), no una escalación de
+alcance — mismo principio que motivó la suspensión original.
+
+**No se tocó ningún dato de los 4 duplicados** (Orlando/Juan Elías/Evanilda/Luzirene) ni sus
+shadows downstream en esta sesión — la remediación (borrar duplicados, verificar contra LDAP/Koha
+reales, restaurar el guardarraíl de `delete` temporalmente como en el 20-jul) requiere el mismo
+protocolo cuidadoso caso-por-caso de esa sesión y una decisión explícita de Alberto, no una
+extensión unilateral del alcance de hoy.
+
+Nota importante para la lectura de este spec: el guardarraíl ya aplicado **sí habría evitado 2 de
+los 4 duplicados** de esta corrida — Orlando y Juan Elías, ambos con `personalNumber` **exacto**
+coincidente entre el `User` nuevo y el viejo (tier 2 los habría atrapado) — **si hubiera estado
+desplegado ANTES del 25-jul**. Verificado que **NO** habría atrapado a Evanilda: su `User` nuevo
+(`personalNumber=001642451`, el `COD_APS` de trabajador) y su `User` viejo
+(`personalNumber=201520024`, un código con pinta de matrícula estudiantil/alumni antiguo) tienen
+`personalNumber` **distinto** — es la misma persona física bajo dos identificadores UPeU distintos
+de dos afiliaciones distintas (worker vs. student/alumni), un problema de identidad más profundo
+(fuera del alcance de un correlator de un solo resource) que ya está señalado como tema abierto en
+`docs/specs/multi-profile-canonical/07-identity-lifecycle-design.md`. Luzirene tampoco habría sido
+atrapada (drift de padding, §4, limitación ya conocida). Como el guardarraíl se aplicó hoy (26-jul),
+después del hecho, no puede deshacer los duplicados ya creados — solo previene que el mismo patrón
+(tier 1 sin match + tier 2 con match exacto) se repita en la próxima corrida, una vez que Alberto
+decida reactivar la tarea.
+
+---
+
+## 6. Recomendación y próximo paso — actualizado 2026-07-26 tras la aplicación real
+
+**Estado real al cierre de esta sesión (2026-07-26):**
+
+- El guardarraíl (correlator compuesto 2-tier + reacción `disputed` + `evaluationPhases`) está
+  **aplicado y verificado en PROD**, `trabajadores.xml` version **322**. Ver §5b.1.
+- El canario de Orlando **no se pudo ejecutar como estaba diseñado**: al verificar el estado real
+  del shadow antes de tocar nada, se encontró que ya no está huérfano — fue absorbido por un
+  incidente distinto y no documentado (§5b.3).
+- Se descubrió y confirmó, con evidencia de auditoría, que **`recon-oracle-lamb-trabajadores-daily`
+  fue reanudada y ejecutada manualmente el 2026-07-25** (sin decisión explícita registrada),
+  recreando el patrón exacto del incidente del 20-jul para **4 personas** (Orlando, Juan Elías
+  Mejía Coello, Evanilda Ruth Valeriano Tiñini, Luzirene), **3 de ellas ya provisionadas a LDAP
+  y/o Koha reales**, sin remediar.
+- Acción de protección ya ejecutada: la tarea fue **re-suspendida** antes de su próximo disparo
+  programado (~2h15min de margen). `executionState=suspended` verificado.
+- **No se tocaron los 4 duplicados ni sus shadows downstream** — la remediación queda pendiente,
+  requiere el mismo protocolo caso-por-caso del 20-jul y decisión explícita de Alberto.
+- El hallazgo original de `ID_PERSONA` duplicado en MOISES (Orlando/Luzirene, §1) sigue sin
+  escalar a DBAs — pendiente, ver punto 2 de la lista de abajo.
+
+**Por qué NO se ejecutó ningún canario de reemplazo hoy (ni un segundo canario sobre los otros 10
+casos del bucket "atrapables"):** las reglas invariantes de esta tarea exigen detenerse y reportar
+ante cualquier desviación de lo esperado, **antes de escalar a cualquier otra acción**. El cambio
+de estado del shadow de Orlando (de huérfano a vinculado-a-duplicado) es exactamente esa
+desviación. Confirmado por lectura (no se ejecutó ningún `import`/`reconcile` adicional en esta
+sesión) que los **otros 10 de los 12 casos "atrapables" originales siguen intactos** (1 `User` cada
+uno, sin duplicar) — son candidatos viables para una validación futura, una vez que Alberto decida
+cómo proceder con los 4 duplicados ya existentes y con la reactivación de la tarea.
 
 **Próximos pasos recomendados, en orden:**
 
-1. Alberto revisa este diseño con margen (no en una sesión ya larga).
-2. Escalar a DBAs el hallazgo de `ID_PERSONA` duplicado en MOISES para Orlando (`10041`/`202895`)
+1. **Remediar los 3 duplicados activos aprovisionados** (Orlando, Juan Elías, Evanilda) con el
+   mismo protocolo gobernado del 20-jul: backup → habilitar temporalmente el guardarraíl de
+   `delete` en LDAP/Koha → `DELETE` de los shadows downstream huérfanos → `DELETE` de los `User`
+   duplicados → revertir el guardarraíl de `delete` a `false` → verificar con `ldapsearch`/`mysql`
+   reales (no solo MidPoint) que los usuarios reales (Orlando `200610808`, etc.) quedaron intactos.
+   Luzirene (`archived`, sin downstream) puede esperar o resolverse en la misma pasada.
+2. **Investigar y cerrar el proceso**, no solo el dato: entender por qué se reanudó la tarea el
+   25-jul sin dejar registro en memoria/runbooks (hipótesis más probable: sesión del fix `CIA` ese
+   mismo día sobre este mismo resource, ver §5b.3) y decidir si hace falta un guardarraíl de
+   proceso (p. ej. una nota más visible en el propio task, o una alerta Telegram al reanudar tareas
+   suspendidas por incidente) para que esto no vuelva a pasar silenciosamente.
+3. Escalar a DBAs el hallazgo de `ID_PERSONA` duplicado en MOISES para Orlando (`10041`/`202895`)
    y Luzirene (`11173`/`192480`) — mismo canal que `05436990`/Ariana. Ver Anexo E de
-   `docs/governance/matriz-fuentes-oracle-lamb.md` (agregado en este commit).
-3. Si Alberto autoriza aplicar: `PATCH` (nunca `PUT`) de los 3 elementos (`correlation`,
-   `synchronization/reaction` nueva, `evaluationPhases` de `cod-aps-to-personalNumber`), con
-   backup previo y verificación post-PATCH (`<schema>` intacto, test connection 15/15,
-   `schemaHandling`/`capabilities`/`connectorRef` intactos) — mismo protocolo ya usado hoy.
-4. Primer test en vivo: **un solo** import dirigido (`POST /shadows/{oid}/import`) sobre el shadow
-   ya huérfano y conocido de Orlando (`0c1660ee-b79f-48c3-abc8-5c852ad8226c`) — bajo riesgo
-   (shadow ya aislado, sin `linkRef`, resultado esperado conocido: `disputed`, no `addFocus`).
-   Verificar con `psql`/REST (no solo el código HTTP) que NO se creó ningún `User` nuevo y que SÍ
-   se creó un caso de correlación.
-5. Si sale limpio, considerar (no ejecutar automáticamente) un barrido dirigido sobre el resto de
-   los 96 casos restantes (11 más del bucket "atrapados" + los 85 "altas nuevas", estos últimos
-   ya cubiertos por el ciclo nocturno una vez reactivado).
-6. Solo después de (3)-(5) validados, evaluar backfill de `personalNumber` (§4) y, por separado,
-   la reactivación de `recon-oracle-lamb-trabajadores-daily` — decisión explícita de Alberto, no
-   automática.
+   `docs/governance/matriz-fuentes-oracle-lamb.md`. Con el hallazgo de Evanilda (§5b.3), este
+   patrón (mismo nombre, distintos `ID_PERSONA`/identificador UPeU) parece más frecuente de lo que
+   se pensaba — vale la pena ampliar el barrido más allá de los 2 casos originales.
+4. **Una vez remediados los duplicados**, ejecutar el canario que esta sesión no pudo completar,
+   sobre uno de los **10 casos aún intactos** (p. ej. `40652594` o `71459568`, ver tabla en §3) o
+   sobre Orlando/Juan Elías si se opta por re-orfanar sus shadows en vez de fusionar los `User`:
+   `import` dirigido, verificar `disputed`+`createCorrelationCase` (no `addFocus`), 0 `User`
+   nuevos.
+5. Solo después de (1)-(4), evaluar el backfill de `personalNumber` (§4, drift de padding — no
+   habría atrapado a Luzirene ni a Evanilda) y, por separado, la reactivación explícita y
+   **documentada** (con decisión de Alberto registrada, a diferencia de la reanudación del 25-jul)
+   de `recon-oracle-lamb-trabajadores-daily`.
 
 ---
 
 ## 7. Archivos y referencias
 
-- Resource: `upeu/resources/oracle-lamb/trabajadores.xml` (oid `6a91f7e1-...-0e21`, PROD version
-  320 al cierre de esta sesión — **sin cambios de este spec aplicados**).
+- Resource: `upeu/resources/oracle-lamb/trabajadores.xml` (oid `6a91f7e1-...-0e21`, PROD **version
+  322** al cierre de esta sesión — guardarraíl de correlación §2.2 **aplicado**).
+- Backup pre-PATCH: `/home/juansanchez/backups-e21/e21_pre-correlation-guardrail_20260726_033546.xml`
+  (PROD, version 321).
 - Precedente del patrón `disputed`+`createCorrelationCase`: `upeu/resources/koha-ils.xml` líneas
   ~1915-1919.
-- Incidente de origen: `docs/runbooks/telegram-alertas-tasks-2026-07-20/tarea3-resultado-200610808-91-personas.md`.
+- Incidente de origen (20-jul): `docs/runbooks/telegram-alertas-tasks-2026-07-20/tarea3-resultado-200610808-91-personas.md`.
+- Incidente nuevo (25-jul, descubierto 26-jul): ver runbook
+  `docs/runbooks/trabajadores-incidente-reanudacion-25jul-2026-07-26.md`.
 - Gobernanza: `docs/governance/matriz-fuentes-oracle-lamb.md` Anexo B punto 5 (fix `CANON_RN`) y
-  Anexo E (nuevo, duplicado de persona MOISES Orlando/Luzirene).
+  Anexo E (duplicado de persona MOISES Orlando/Luzirene).
 - Doctrina de despliegue: `docs/runbooks/NUNCA-PUT-resources-schema-cache.md`.
+- Identidad multi-perfil (persona con más de un identificador UPeU por afiliación distinta, caso
+  Evanilda): `docs/specs/multi-profile-canonical/07-identity-lifecycle-design.md`.
