@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Application Role: AR-Koha-Librarian-CIA-Admin
+  OID: 3e753452-dee7-4eee-822e-dd6a8c9539cb
+  Versión: 1.0 (2026-07-26)
+
+  Nivel de acceso staff del Koha de CIA (Centro de Investigación Adventista /
+  Centro White) — biblioteca propia dentro del campus Lima, ID_AREA=94 en
+  RR.HH. (ELISEO.ORG_AREA), sin ORG_SEDE propia. NO es un tier del CRAI de
+  Biblioteca Lima (costCenter=93) — es su propio bucket, gateado por
+  costCenter=94 en el resource Koha (flags-from-effective-koha-staff-role /
+  user-permissions-from-effective-koha-staff-role).
+
+  Permisos otorgados: paquete "técnico" (circulate_remaining_permissions,
+  edit_borrowers, list_borrowers, place_holds, edit_catalogue, edit_items,
+  label_creator, manage_staged_marc, stage_marc_import) — flags=4, NO
+  superlibrarian (flags=1). Deliberado: flags=1 en Koha es un bypass GLOBAL de
+  IndependentBranches (daría administración también sobre BUL/BUJ/BUT), lo que
+  rompería la separación de campus. El control de sede real lo da
+  IndependentBranches (activo, verificado en prod) atado a la biblioteca
+  activa de sesión del staff, no a este rol.
+
+  PILOTO (2026-07-26): un solo asignatario, Josué Moisés Agustín Llancachagua
+  (admin de facto del Koha de CIA — contrato 7124 vivo, ID_AREA=94). Asignado
+  MANUALMENTE (no vía birthright/Q5 del UserTemplate-EmployeeStaff, que solo
+  cubre AREA=CRAI/costCenter=93) — sin LookupTable ni bloque Q4/Q5 propio
+  todavía porque hoy es una sola persona. Si CIA contrata más staff de
+  biblioteca, generalizar siguiendo el mismo patrón que AR-Koha-Librarian-*
+  (LT-CRAI-Puesto-Tier equivalente para CIA) en vez de seguir asignando a mano.
+
+  Ver context/27-egresados-koha-2026-07-25.md y el doc de continuación del
+  26-jul en el repo upeu-koha para el detalle completo del caso.
+-->
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+      oid="3e753452-dee7-4eee-822e-dd6a8c9539cb">
+    <name>AR-Koha-Librarian-CIA-Admin</name>
+    <description>Application Role: acceso staff/intranet Koha de CIA (Centro de Investigación Adventista), paquete técnico (flags=4, sin superlibrarian). Asignación manual, piloto de 1 persona.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application role (OID canónico PROD, mismo que el resto de AR-Koha-Librarian-*) -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+</role>

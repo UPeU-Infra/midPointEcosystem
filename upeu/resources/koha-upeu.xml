@@ -1452,16 +1452,28 @@ def cw = campusWorker?.toString()?.trim()?.toUpperCase()
 def loc = locality?.toString()?.trim()?.toUpperCase()
 def specialOid = 'd698dc99-1a8c-479c-9eec-2a0214fdbf04'
 if (focus?.assignment?.any { it?.targetRef?.oid == specialOid }) return 'BUL'
+// FIX CIA 2026-07-26 (revisión del retiro 2026-07-20, ver nota abajo): un vínculo
+// laboral vivo con CIA (campusWorker=='CIA', ID_AREA=94) SIEMPRE gana, incluso sobre
+// un campusStudent histórico/no relacionado (ej. Josué: campusStudent='LIMA' de su
+// época de alumno + campusWorker='CIA' de su contrato vigente en el centro — sin este
+// check, la cascada normal (estudiante > trabajador) lo mandaría a BUL). Caso
+// deliberadamente distinto de la cascada general Lima/Juliaca/Tarapoto: CIA es un
+// centro con biblioteca y staff PROPIOS, no una sede alterna donde competir por
+// prioridad estudiante/trabajador tenga sentido.
+if (cw == 'CIA') return 'CIA'
 // Precedencia: campus vivo académico → campus vivo laboral → locality (fallback).
 def effective = (cs != null &amp;&amp; cs != '') ? cs : ((cw != null &amp;&amp; cw != '') ? cw : (loc ?: ''))
-// P1 4->1: mapa campus → branch de la instancia consolidada (BUL/BUJ/BUT).
-// CIA RETIRADO (2026-07-20): decisión de Alberto — CIA (Centro de Investigación
-// Adventista) es biblioteca de solo lectura en sala (3.564 ítems, 100% notforloan=1
-// en Koha), extensión abierta a cualquier persona de cualquier campus, y NUNCA debe
-// ser home library/branchcode de ningún patron. Supersede el plan Teología→CIA de
-// docs/specs/koha-consolidado-contrato-configuracion.md §3.5/§5. Sin población
-// afectada (0 patrons branchcode=CIA en Koha, 0 Users locality=CIA en MidPoint al
-// momento del retiro), por lo que este cambio es de bajo riesgo.
+// P1 4->1: mapa campus → branch de la instancia consolidada (BUL/BUJ/BUT/CIA).
+// CIA RETIRADO (2026-07-20) Y REINSTALADO (2026-07-26): la decisión del 20-jul decía
+// "CIA nunca debe ser home library de ningún patron" pensando en el caso rechazado
+// Teología→CIA (asignar ESTUDIANTES ahí porque es de solo lectura en sala, 3.564
+// ítems notforloan=1). Sigue vigente para ESE caso: ningún estudiante/trabajador
+// genérico debe caer en CIA solo por locality o fallback. Lo que cambia el 26-jul:
+// CIA SÍ tiene personal propio (staff intranet real, ver AR-Koha-Librarian-CIA-Admin
+// y el bucket costCenter=94 en flags/user_permissions más abajo) — para ESE staff
+// específico, branchcode=CIA es correcto y necesario (es su sede de trabajo real).
+// El check `if (cw == 'CIA') return 'CIA'` de arriba es la única vía de entrada:
+// nunca aparece en el mapa de abajo, así que nadie cae en CIA por defecto/fallback.
 def branch = ['LIMA':'BUL', 'JULIACA':'BUJ', 'TARAPOTO':'BUT'].get(effective)
 if (branch == null) {
     // P1: campus desconocido/sin resolver → NO forzar BUL (evita misfiling silencioso de
@@ -1492,7 +1504,15 @@ def superadmin = 'd698dc99-1a8c-479c-9eec-2a0214fdbf04'
 if (assigned.contains(superadmin)) return 1
 def live = basic.getExtensionPropertyValue(focus, 'liveAffiliationWorker')
 def cc = focus?.costCenter?.toString()?.trim()
-if (live == null || cc != '93') return null
+if (live == null) return null
+// FIX CIA 2026-07-26: bucket propio para costCenter=94 (CIA), independiente del
+// bucket Biblioteca Lima (costCenter=93) de abajo. Ver AR-Koha-Librarian-CIA-Admin.
+if (cc == '94') {
+    def ciaAdmin = '3e753452-dee7-4eee-822e-dd6a8c9539cb' // AR-Koha-Librarian-CIA-Admin
+    if (assigned.contains(ciaAdmin)) return 4
+    return null
+}
+if (cc != '93') return null
 def admins = [
     'd3303cec-7b05-4415-a19d-84a1c899f4c4', // Direccion
     '8d3daccf-a76b-41ed-a772-1ccc5d273329'  // Soporte/TI
@@ -1525,7 +1545,17 @@ def superadmin = 'd698dc99-1a8c-479c-9eec-2a0214fdbf04'
 if (assigned.contains(superadmin)) return []
 def live = basic.getExtensionPropertyValue(focus, 'liveAffiliationWorker')
 def cc = focus?.costCenter?.toString()?.trim()
-if (live == null || cc != '93') return []
+if (live == null) return []
+// FIX CIA 2026-07-26: mismo bucket técnico que Procesos técnicos/Supervisión de
+// Biblioteca Lima, pero para costCenter=94 (CIA). Ver AR-Koha-Librarian-CIA-Admin.
+if (cc == '94') {
+    def ciaAdmin = '3e753452-dee7-4eee-822e-dd6a8c9539cb' // AR-Koha-Librarian-CIA-Admin
+    if (assigned.contains(ciaAdmin)) {
+        return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds','9:edit_catalogue','9:edit_items','13:label_creator','13:manage_staged_marc','13:stage_marc_import']
+    }
+    return []
+}
+if (cc != '93') return []
 def admins = [
     'd3303cec-7b05-4415-a19d-84a1c899f4c4',
     '8d3daccf-a76b-41ed-a772-1ccc5d273329'
