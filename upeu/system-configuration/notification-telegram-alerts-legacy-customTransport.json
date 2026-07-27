@@ -1,5 +1,6 @@
 {
   "_comment": "PATCH aplicado a SystemConfiguration (00000000-0000-0000-0000-000000000001) en PROD 2026-07-20. Valores reales de token/chat_id NUNCA en este repo -- ver ~/.secrets/telegram.env. Sustituir __TELEGRAM_BOT_TOKEN__ y __TELEGRAM_CHAT_ID__ antes de reaplicar (ej. en otro deployment SciBack).",
+  "_estado_2026_07_27": "DESACTIVADO en PROD el 2026-07-27 a pedido (el monitoreo de fallos de task se llevara por otros medios). Causa del spam: MidPoint 4.10.2 sin subscriptionIdentifier degrada TODAS las tasks a partial_error e inyecta 'No active subscription...', y este notifier disparaba con cualquier fallo. Se elimino el handler (@id=321) con el patch companero notification-telegram-alerts-DISABLE-2026-07-27.json. Para REACTIVAR: reaplicar este mismo archivo (modificationType add) sustituyendo los placeholders de token/chat_id.",
   "objectModification": {
     "itemDelta": [
       {

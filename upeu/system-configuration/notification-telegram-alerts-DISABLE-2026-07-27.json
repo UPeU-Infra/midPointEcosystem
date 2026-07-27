@@ -1,0 +1,16 @@
+{
+  "_comment": "Patch de DESACTIVACION aplicado a SystemConfiguration (00000000-0000-0000-0000-000000000001) en PROD el 2026-07-27. Elimina el simpleTaskNotifier 'alert-recon-tasks-failure-telegram' (handler @id=321) creado el 2026-07-20 por notification-telegram-alerts-legacy-customTransport.json. Motivo: MidPoint 4.10.2 sin subscriptionIdentifier marca TODAS las tasks como partial_error (nag comercial de Evolveum), lo que hacia que este notifier spameara Telegram con falsos fallos. El monitoreo se llevara por otros medios. Aplicado con: PATCH /ws/rest/systemConfigurations/00000000-0000-0000-0000-000000000001 (HTTP 204).",
+  "_nota_id": "El @id=321 es especifico de esta instancia PROD. Si se reaplica el archivo 'add' original y luego se quiere volver a desactivar, verificar el @id real del handler con GET del systemConfiguration antes de usar este delete.",
+  "_reactivar": "Reaplicar notification-telegram-alerts-legacy-customTransport.json (bloque objectModification con modificationType 'add'), sustituyendo __TELEGRAM_BOT_TOKEN__ y __TELEGRAM_CHAT_ID__ desde ~/.secrets/telegram.env.",
+  "objectModification": {
+    "itemDelta": [
+      {
+        "modificationType": "delete",
+        "path": "notificationConfiguration/handler",
+        "value": [
+          { "@id": 321 }
+        ]
+      }
+    ]
+  }
+}
