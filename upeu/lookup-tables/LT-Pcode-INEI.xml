@@ -59,8 +59,13 @@
                          que tiene 41300011 "Administración Y Negocios Int.").
     P99 Doct. Ing.Sist.→ 61200058 CORRECTO (LT ya lo tenía; corregir el TESAURO,
                          que tiene 61203409 "Ingeniería de Sistemas" corto).
-  ⚠️ PROD: tras corregir P35 aquí, aplicar PATCH REST de la fila + recompute de
-  los ~5 estudiantes de Teología para actualizar su Bsort2 en Koha.
+  ✅ PROD: APLICADO 2026-07-28. PATCH REST de la fila P35 (@id=75) 22103063→22101180
+  + task de recompute sobre academicProgramSuneduCode=P35. Resultaron 176 focos
+  (no ~5 como se estimó: la estimación era de estudiantes ACTIVOS de Teología, el
+  filtro por P-code alcanza a toda la población con ese programa). Verificado en
+  koha_upeu.borrowers: 176 con sort2=22101180, 0 con el código viejo. La task cerró
+  con `partial_error` — ruido benigno conocido; lo que vale es el dato verificado
+  en la base, no el status de la task.
   Plan de curación: upeu/tasks/bsort2-inei-posgrado/curacion-tesauro-inei-2026-07-16.md
 
   COBERTURA: 19 rows = los 19 P-codes ÚNICOS existentes en Oracle LAMB

@@ -71,8 +71,17 @@ En P05 y P99 la LT tenía razón; en **P35 la LT estaba mal** y el tesauro bien 
 | 8 duplicados de slug | mergear (§A) | tesauro |
 | Educ. Ciencias Naturales / Matemática | ⏸ pilotos sin licenciar, 0 matrícula actual | Oracle |
 
-## G. Aplicar a PROD (pendiente de confirmación)
-La corrección P35 en la LT ya está en el repo. Falta: `git pull` en PROD + PATCH REST de la fila P35 de `LT-Pcode-INEI` + recompute de los ~5 estudiantes de Teología activos para que su `Bsort2` pase a `22101180`. Bajo riesgo (5 usuarios, dato corregido, reversible). El Koha viejo está en maintenance (caído) → sin urgencia; conviene hacerlo junto con el re-apuntado al Koha nuevo.
+## G. Aplicar a PROD — ✅ HECHO 2026-07-28
+PATCH REST de la fila P35 de `LT-Pcode-INEI` (`@id=75`, `22103063`→`22101180`) + task de
+recompute filtrando `academicProgramSuneduCode=P35`. **176 focos procesados** (la estimación de
+"~5 estudiantes activos" se quedó corta: el filtro por P-code alcanza a toda la población con
+ese programa, no solo a los activos del semestre). Verificado en `koha_upeu.borrowers`: **176
+con `sort2=22101180`, 0 con el código viejo**.
+
+> La task cerró con `partial_error` — ruido benigno ya conocido en este entorno. La verificación
+> válida es el dato en la base, no el status de la task.
+
+Detalle: `productos/koha/instituciones/upeu/upeu-koha/context/28-migracion-inei-526-y-correccion-diagnostico-2026-07-28.md` §4.
 
 ## E. Flags menores (verificar con Calidad, no bloqueantes)
 - `P152` Ingeniería Industrial (INEI `72200109`): programa nuevo (2026-07), solo existe como legacy `c_iii00716` sin tipar; su `editorialNote` dice sin licencia SUNEDU vigente. No tipar hasta confirmar.
