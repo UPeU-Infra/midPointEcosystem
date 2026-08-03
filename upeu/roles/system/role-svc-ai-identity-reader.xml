@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     Descargado de PROD y versionado el 2026-08-03 — M5.6 del plan
+     docs/specs/gobierno-iga-fase14/01-plan.md
+
+     🔴 Este rol vivía SOLO en PROD y NUNCA estuvo en el repo — siendo que
+     define CONTROL DE ACCESO real (authorizations con allow-list de atributos)
+     para el gateway de IA (ai-stack/GUIA). Un rol de autorización sin versionar
+     es exactamente lo que la certificación de accesos (ISO 27001 A.5.18) tiene
+     que poder auditar: si no está en el repo, no hay revisión posible de qué
+     puede leer ese servicio.
+
+     Ubicado en roles/system/ por ser un *authorization role* (libro cap. 7),
+     junto a SYS-IGA-SUPERUSER, pese a llevar el archetype application-role.
+
+     Metadata operacional retirada (_metadata, policySituation,
+     triggeredPolicyRule, roleMembershipRef, archetypeRef): es estado de runtime.
+     Holders en PROD al versionar: 1 (svc-ai-identity).
+     ================================================================ -->
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="fd083a83-d61c-4801-a57c-dd93928f9b50">
+    <name>role-svc-ai-identity-reader</name>
+    <description>Application role de SOLO LECTURA para el gateway de IA (ai-stack/GUIA). Permite exclusivamente search+get sobre UserType, con allow-list de atributos NO sensibles requeridos para enriquecer la identidad conversacional (title, organizationalUnit, fullName, givenName, familyName, emailAddress, name + extension canonica sciback: primaryAffiliation, affiliations, campusWorker, academicProgramCode, studyLevel). Cualquier otro atributo (taxId/DNI, birthDate, identityDocuments, personalEmail, telephoneNumber, jpegPhoto, credentials, activation, etc.) queda OCULTO por el modelo de item allow-list. NO permite escritura, ni lectura de roles/resources/otros tipos. iga-canonical §7 (A.8.3 need-to-know) + §11.4 (minimo privilegio). best-practices §2 (application role).</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment id="10">
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <authorization id="13">
+        <name>ai-identity-reader-read-users-allowlist</name>
+        <description>read (get+search) SOLO sobre UserType, restringido a los items del allow-list. Los items no listados no son legibles (positive item restriction).</description>
+        <action>http://midpoint.evolveum.com/xml/ns/public/security/authorization-model-3#read</action>
+        <object id="14">
+            <type>UserType</type>
+        </object>
+        <item>name</item>
+        <item>fullName</item>
+        <item>givenName</item>
+        <item>familyName</item>
+        <item>emailAddress</item>
+        <item>title</item>
+        <item>organizationalUnit</item>
+        <item xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:primaryAffiliation</item>
+        <item xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:affiliations</item>
+        <item xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:campusWorker</item>
+        <item xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:academicProgramCode</item>
+        <item xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:studyLevel</item>
+    </authorization>
+    <authorization id="15">
+        <name>ai-identity-reader-rest-endpoint-access</name>
+        <description>Primera linea de defensa: habilita el USO de la REST API (acceso al endpoint). Namespace authorization-rest-3. El #all aqui NO da acceso a datos: el acceso a datos sigue restringido por el authz #read del modelo con allow-list de items. Sin esta autorizacion, cualquier llamada REST (incluido /self) devuelve HTTP 403. docs.evolveum authorization/service.</description>
+        <action>http://midpoint.evolveum.com/xml/ns/public/security/authorization-rest-3#all</action>
+    </authorization>
+</role>

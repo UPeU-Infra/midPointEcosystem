@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     Descargado de PROD y versionado el 2026-08-03 — M5.6 del plan
+     docs/specs/gobierno-iga-fase14/01-plan.md
+
+     Vivía SOLO en PROD: nunca estuvo en el repo. Metadata operacional
+     retirada (_metadata, policySituation, triggeredPolicyRule,
+     roleMembershipRef, archetypeRef) — es estado de runtime.
+     ================================================================ -->
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+      oid="fec2aa25-b3ce-44dc-9201-0d4974e598b7">
+    <name>AR-RIMS-Admin</name>
+    <description>Application Role del RIMS (SciBack). Marca al usuario como administrador del RIMS (super-admin: comodin de todos los modulos). NO provee construction propia: el resource LDAP-IdentityCache-UPeU emite urn:sciback:research:role:rims-admin en eduPersonEntitlement al detectar identifier=rims-admin en roleMembershipRef. Multivaluado, coexiste con el programa academico y otros roles RIMS.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment id="1">
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <identifier>rims-admin</identifier>
+    <inducement id="7">
+        <description>Provisiona roles[]=rims-admin en la cuenta RIMS (SCIM) del holder.</description>
+        <construction>
+            <resourceRef oid="09a81691-37fe-4ffe-b00b-64186787895e" relation="org:default" type="c:ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+            <attribute id="8">
+                <ref>ri:roles</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>rims-admin</value>
+                    </expression>
+                </outbound>
+            </attribute>
+        </construction>
+    </inducement>
+</role>

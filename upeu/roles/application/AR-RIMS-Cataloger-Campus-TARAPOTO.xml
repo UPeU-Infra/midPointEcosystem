@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     Descargado de PROD y versionado el 2026-08-03 — M5.6 del plan
+     docs/specs/gobierno-iga-fase14/01-plan.md
+
+     Este rol vivía SOLO en PROD desde su creación: nunca estuvo en el repo.
+     Se retira metadata operacional (_metadata, policySituation,
+     triggeredPolicyRule, roleMembershipRef, archetypeRef) — es estado de
+     runtime, no configuración.
+
+     El <assignment> al archetype `archetype-role-application` se añadió el
+     2026-08-03 en M5.4 (antes el rol no tenía archetype estructural).
+     ================================================================ -->
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+      oid="ca115a03-0000-4000-a000-ca7a1ca11a03">
+    <name>AR-RIMS-Cataloger-Campus-TARAPOTO</name>
+    <description>Cobertura de catalogacion del campus TARAPOTO: induce campus[]=TARAPOTO en la cuenta RIMS.</description>
+    <assignment id="3">
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <inducement id="1">
+        <construction>
+            <resourceRef oid="09a81691-37fe-4ffe-b00b-64186787895e" relation="org:default" type="c:ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+            <attribute id="2">
+                <ref>ri:campus</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>TARAPOTO</value>
+                    </expression>
+                </outbound>
+            </attribute>
+        </construction>
+    </inducement>
+</role>
