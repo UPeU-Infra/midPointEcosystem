@@ -30,17 +30,22 @@
 <objectModification
         xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
         xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+        xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
+    <!-- xsi:type es OBLIGATORIO: sin él MidPoint no sabe que el <t:value> es un
+         ResourceObjectPatternType, no parsea el <filter> y devuelve HTTP 500 con
+         "parser ValueParser(DOM-less, …)". Medido 2026-08-03. -->
     <itemDelta>
         <t:modificationType>add</t:modificationType>
         <t:path>schemaHandling/objectType[2]/protected</t:path>
-        <t:value>
-            <filter>
+        <t:value xsi:type="c:ResourceObjectPatternType">
+            <c:filter>
                 <q:equal>
                     <q:path>attributes/ri:cardnumber</q:path>
                     <q:value>SVC-MIDPOINT</q:value>
                 </q:equal>
-            </filter>
+            </c:filter>
         </t:value>
     </itemDelta>
 </objectModification>
