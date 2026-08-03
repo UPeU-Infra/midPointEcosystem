@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     PURGA REAL de shadows huérfanos — EJECUCIÓN (mode=execute)
+     Fecha: 2026-08-03 · Plan: docs/specs/gobierno-iga-fase14/01-plan.md (M5.1)
+
+     Gemela de `purge-orphan-shadows-preview.xml` (OID be71c1a4-…), idéntica
+     salvo el <mode>. El preview se conserva como evidencia.
+
+     AUTORIZACIÓN Y SALVAGUARDAS (todas cumplidas antes de crear este archivo):
+       1. Preview ejecutado en PROD → progress=3898, resultStatus=success,
+          0 mensajes de error, y 0 objetos borrados (4.658 huérfanos intactos).
+       2. Verificado que NINGUNO de los 3.898 tiene linkRef desde ningún focus
+          ("linkeados en el lote: 0").
+       3. Backup CSV en el servidor:
+          ~/backups/m5-shadow-purge-2026-08-03/shadows-a-purgar.csv (3.898 filas)
+       4. OK explícito de Alberto (2026-08-03).
+
+     ALCANCE — solo 2 de los 4 resources borrados:
+       8c4f1a36  Oracle LAMB Investigadores Afiliacion   3.802 shadows, 0 linkRef
+       a7c4f219  CSV DGI Investigadores RENACYT             96 shadows, 0 linkRef
+
+     NO se tocan `3f8b2d61` (cris-dspace) ni `5a3d7e92` (LAMB Investigacion DGI):
+     sus 354 shadows SÍ están linkeados desde 354 OrgType. Segunda pasada, tras
+     quitar el linkRef del focus. Borrarlos ahora repetiría el error de
+     referencia rota que M1.1 acaba de reparar.
+
+     RESULTADO ESPERADO: shadows huérfanos 4.658 → 760.
+     ================================================================ -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="533b3cf3-1bc1-4fa5-9836-8453d98699b7">
+    <name>M5.1 PURGE shadows huerfanos sin linkRef (EXECUTE)</name>
+    <description>Purga real de los 3.898 shadows cuyo resource fue borrado en la retirada del CRIS y que no tienen linkRef. Preview validado (be71c1a4), backup CSV en servidor, 0 linkRefs verificados.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>suspended</executionState>
+    <activity>
+        <execution>
+            <mode>execute</mode>
+        </execution>
+        <work>
+            <deletion>
+                <objects>
+                    <type>ShadowType</type>
+                    <query>
+                        <q:filter>
+                            <q:or>
+                                <q:ref>
+                                    <q:path>resourceRef</q:path>
+                                    <q:value oid="8c4f1a36-9d27-4e58-bb03-1f6a2c7d3e95"/>
+                                </q:ref>
+                                <q:ref>
+                                    <q:path>resourceRef</q:path>
+                                    <q:value oid="a7c4f219-b3e8-4d6a-9f12-3e5a7c8b2d1f"/>
+                                </q:ref>
+                            </q:or>
+                        </q:filter>
+                    </query>
+                    <!-- MidPoint 4.10 safety check: raw en search Y execution, o en ninguno. -->
+                    <searchOptions>
+                        <option>
+                            <options>
+                                <raw>true</raw>
+                            </options>
+                        </option>
+                    </searchOptions>
+                </objects>
+                <executionOptions>
+                    <raw>true</raw>
+                </executionOptions>
+            </deletion>
+        </work>
+    </activity>
+</task>
