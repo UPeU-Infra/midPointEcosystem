@@ -69,6 +69,18 @@
                             </q:or>
                         </q:filter>
                     </query>
+                    <!-- MidPoint 4.10 safety check: raw debe estar en search Y en
+                         execution, o en ninguno. Medido 2026-08-03: con raw solo en
+                         executionOptions la task muere con
+                         "Neither both search and execution raw mode should be defined,
+                          or none (this is a safety check)". -->
+                    <searchOptions>
+                        <option>
+                            <options>
+                                <raw>true</raw>
+                            </options>
+                        </option>
+                    </searchOptions>
                 </objects>
                 <executionOptions>
                     <raw>true</raw>
