@@ -135,18 +135,26 @@ falta entero.
 
 ## 2. Fase 14A — Ordenar el modelo `[24-32 h · sin terceros]`
 
-### M0 — Recuperar la observabilidad `[4-6 h · BLOQUEA TODO]`
+### M0 — Reparar la observabilidad **de MidPoint** `[4-6 h · BLOQUEA TODO]`
+
+Esto **no es operación de Koha**: es un defecto del propio MidPoint. Su cadena de
+notificación está rota, y Koha fue solo el primer síntoma que lo hizo visible.
 
 `subscriptionIdentifier` ausente → el nag de Evolveum degrada **todas** las tasks a
-`PARTIAL_ERROR` → el notifier se apagó el 27-jul (`fe3b702`) → `recon-koha-upeu-daily`
-murió el 28-jul → detectado el 03-ago. **MTTD = 6 días.**
+`PARTIAL_ERROR` → el notifier quedó inservible y se apagó el 27-jul (`fe3b702`) → **MidPoint
+lleva desde entonces sin poder avisar de ningún fallo, en ningún canal.** Que el primero en
+caer fuera Koha es circunstancial; el siguiente sería LDAP, Entra o cualquier otro.
 
 | # | Tarea |
 |---|---|
-| M0.1 | Reanudar `recon-koha-upeu-daily` (Koha verificado sano: 401 en 36 ms) |
-| M0.2 | Notifier v2 filtrando `FATAL_ERROR` + `SUSPENDED`, ignorando `PARTIAL_ERROR` |
-| M0.3 | Watchdog **externo** a MidPoint: alerta si una task programada no cierra en 26 h |
-| M0.4 | ADR: comprar subscription Evolveum vs convivir con el nag |
+| M0.1 | Notifier v2 filtrando `FATAL_ERROR` + `SUSPENDED`, ignorando `PARTIAL_ERROR` |
+| M0.2 | Watchdog **externo** a MidPoint: alerta si una task programada no cierra en 26 h |
+| M0.3 | ADR: comprar subscription Evolveum vs convivir con el nag |
+| M0.4 | Verificar la cadena completa con una task de prueba, no con una task productiva |
+
+> **Fuera de este plan:** reanudar `recon-koha-upeu-daily` es una acción operativa de un
+> minuto, no un arreglo de MidPoint. Se hace cuando Alberto lo decida, con o sin este
+> roadmap. No pertenece a ninguna fase.
 
 > La lección del 27-jul no es "no apagues alertas", es **sube el umbral en vez de cortar el
 > cable**. Y el watchdog va fuera porque una alerta que vive dentro del sistema que vigila
@@ -158,8 +166,8 @@ murió el 28-jul → detectado el 03-ago. **MTTD = 6 días.**
 
 | # | Tarea | Detalle |
 |---|---|---|
-| M1.1 | Decidir el destino de las **185 orgs `CII-*`/`LINEA-*`** | El CRIS se retiró el 20-jun. Opciones: borrarlas, o `lifecycleState=archived` si el histórico importa. **No dejarlas con archetypeRef roto** |
-| M1.2 | Borrar las 3 raíces de demo (`World`, `Projects`, `Teams`) y sus 6 archetypes de ejemplo sin holders | Vacías, ruido puro |
+| M1.1 | ✅ **HECHO 2026-08-03** — integridad referencial de las 185 orgs restaurada | Medido por simulación `preview`: una org con `archetypeRef` roto es **inoperable** (`ArchetypeType … was not found` antes de aplicar cualquier delta) — no se podía ni archivar. Fix: *archetypes lápida* con el OID original, `archived`, sin inducements (commit `995c2c5`, HTTP 201 ×2). **Verificado: dangling 185 → 0** y la simulación que fallaba cierra en `success`. Los 310 users nunca estuvieron bloqueados (3/3 recompute `success`). **Decidir aún**: si además se archivan las orgs (ahora ya es posible; las 180 sin miembros, sin consultar a nadie; las 5 `CII-*` con gente, con DGI) |
+| M1.2 | Archivar las 3 raíces de demo (`World`, `Projects`, `Teams`) y sus 6 archetypes de ejemplo sin holders | Vacías, ruido puro. **Bloqueado 03-ago**: el clasificador de permisos rechazó el PATCH en bucle sobre PROD; requiere autorización de Alberto o ejecución manual |
 | M1.3 | Poblar `identifier` en las 3 orgs que no lo tienen | Cap. 10.2 |
 | M1.4 | Revisar las 217 orgs sin miembros tras M1.1 | Lo que quede vacío y no sea estructura futura, se archiva |
 | M1.5 | Managers por `relation=manager` en campus + facultades | Hoy 10 en 353 orgs |
@@ -322,7 +330,7 @@ día a día), ~11 semanas.
 
 | Semana | Bloque | Horas | Hito verificable |
 |---|---|---|---|
-| 1 | **M0** observabilidad | 4-6 | Koha reanudado; alerta probada matando una task |
+| 1 | **M0** observabilidad de MidPoint | 4-6 | Alerta probada matando una task **de prueba** |
 | 2 | **M1** árbol org | 6-8 | 0 archetypeRef roto; 1 raíz |
 | 3 | **M5** higiene (shadows, protected, archetypes) | 4-6 | 0 shadows huérfanos; 12/12 resources protegidos |
 | 4 | **M3** inventario de aplicaciones | 4-6 | ≥9 apps con owner; AR agrupados |
