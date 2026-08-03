@@ -34,8 +34,12 @@
     <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
     <executionState>suspended</executionState>
     <activity>
+        <!-- ExecutionModeType en MidPoint 4.10: full | preview | dryRun |
+             shadowManagementPreview | none | bucketAnalysis.
+             `execute` NO existe (medido: POST devuelve HTTP 400).
+             `full` es la ejecución real. -->
         <execution>
-            <mode>execute</mode>
+            <mode>full</mode>
         </execution>
         <work>
             <deletion>
