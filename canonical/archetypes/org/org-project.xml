@@ -1,7 +1,12 @@
 <archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="07ed171e-c9cc-44d2-81b4-1655e1420970">
     <name>archetype-org-project</name>
     <description>Agrupación transversal por proyecto (investigación, comité, task force). Ciclo de vida corto. Soporta relations: default, manager, owner.</description>
-    <lifecycleState>active</lifecycleState>
+    <!-- ARCHIVADO 2026-08-03 (M5.5): 0 holders en PROD desde su creacion.
+         Decision de Alberto: UPeU no tiene contratistas, visitantes ni personal
+         de instituciones asociadas modelados como identidades propias, ni
+         proyectos como OrgType. Se archiva en vez de borrar: si el dia de manana
+         aparece la necesidad, se reactiva sin rehacer el modelo. -->
+    <lifecycleState>archived</lifecycleState>
     <assignment>
         <assignmentRelation>
             <holderType>OrgType</holderType>

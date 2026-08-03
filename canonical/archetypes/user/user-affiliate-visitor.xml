@@ -4,7 +4,12 @@
            oid="c5cdc4b5-e14f-4b2f-b65e-0a3fee8f6bde">
     <name>archetype-user-affiliate-visitor</name>
     <description>Personas externas con acceso temporal a servicios UPeU: padres de familia, estudiantes del Instituto de Idiomas o Conservatorio, visitantes y comunidad adventista sin vínculo académico/laboral formal. eduPersonAffiliation: affiliate. Koha: categoría VISITA. OBLIGATORIO definir validTo al crear — no hay miembros externos permanentes.</description>
-    <lifecycleState>active</lifecycleState>
+    <!-- ARCHIVADO 2026-08-03 (M5.5): 0 holders en PROD desde su creacion.
+         Decision de Alberto: UPeU no tiene contratistas, visitantes ni personal
+         de instituciones asociadas modelados como identidades propias, ni
+         proyectos como OrgType. Se archiva en vez de borrar: si el dia de manana
+         aparece la necesidad, se reactiva sin rehacer el modelo. -->
+    <lifecycleState>archived</lifecycleState>
     <assignment>
         <assignmentRelation>
             <holderType>UserType</holderType>

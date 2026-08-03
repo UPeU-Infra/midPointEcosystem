@@ -1,7 +1,12 @@
 <archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="8f32f406-0d3d-4607-8406-9f1c494ab5fe">
     <name>archetype-user-affiliate-partner-institution</name>
     <description>Personas pertenecientes a instituciones afines de la red adventista (Colegio Unión, Clínica Good Hope, ISTAT, AGTU). eduPersonAffiliation: affiliate + member. Scope diferenciado por institución.</description>
-    <lifecycleState>active</lifecycleState>
+    <!-- ARCHIVADO 2026-08-03 (M5.5): 0 holders en PROD desde su creacion.
+         Decision de Alberto: UPeU no tiene contratistas, visitantes ni personal
+         de instituciones asociadas modelados como identidades propias, ni
+         proyectos como OrgType. Se archiva en vez de borrar: si el dia de manana
+         aparece la necesidad, se reactiva sin rehacer el modelo. -->
+    <lifecycleState>archived</lifecycleState>
     <assignment>
         <assignmentRelation>
             <holderType>UserType</holderType>

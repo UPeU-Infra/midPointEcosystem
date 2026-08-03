@@ -1,7 +1,12 @@
 <archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="18337126-27ad-421b-8860-59403c36f1b8">
     <name>archetype-user-contractor</name>
     <description>Personas con contrato temporal para servicios específicos (no incluye docentes contratados, que son employee-faculty). eduPersonAffiliation: affiliate. Requiere validTo obligatorio.</description>
-    <lifecycleState>active</lifecycleState>
+    <!-- ARCHIVADO 2026-08-03 (M5.5): 0 holders en PROD desde su creacion.
+         Decision de Alberto: UPeU no tiene contratistas, visitantes ni personal
+         de instituciones asociadas modelados como identidades propias, ni
+         proyectos como OrgType. Se archiva en vez de borrar: si el dia de manana
+         aparece la necesidad, se reactiva sin rehacer el modelo. -->
+    <lifecycleState>archived</lifecycleState>
     <assignment>
         <assignmentRelation>
             <holderType>UserType</holderType>
