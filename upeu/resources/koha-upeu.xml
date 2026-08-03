@@ -893,6 +893,31 @@
             <intent>default</intent>
             <displayName>Koha Patron</displayName>
             <default>true</default>
+            <!-- ============================================================
+                 CUENTA PROTEGIDA — M5.3 (2026-08-03)
+                 Plan: docs/specs/gobierno-iga-fase14/01-plan.md
+
+                 `svc_midpoint` (cardnumber SVC-MIDPOINT) es la CUENTA DE
+                 SERVICIO CON LA QUE EL CONECTOR ACCEDE A KOHA. Medido en PROD
+                 el 2026-08-03: tiene shadow bajo este mismo objectType
+                 (kind=account, intent=default) y `user_permissions=9:advanced_editor`.
+
+                 Sin esta protección, cualquier reconciliación, recompute o
+                 tarea de limpieza de cuentas sin owner podía deshabilitarla,
+                 modificarla o borrarla — y MidPoint habría perdido su propio
+                 acceso a Koha. `protected` hace que MidPoint la vea pero
+                 NUNCA la modifique.
+
+                 Libro cap. 7 / ISO 27001 A.8.2 (acceso privilegiado).
+                 ============================================================ -->
+            <protected>
+                <filter>
+                    <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
+                        <q:path>attributes/ri:cardnumber</q:path>
+                        <q:value>SVC-MIDPOINT</q:value>
+                    </q:equal>
+                </filter>
+            </protected>
             <!-- NOTA (2026-07-04, CORREGIDA 2026-07-10): NO existe un
                  <criticality> a nivel de <objectType>. En MidPoint 4.10
                  `criticality` NO es hijo válido de objectType.

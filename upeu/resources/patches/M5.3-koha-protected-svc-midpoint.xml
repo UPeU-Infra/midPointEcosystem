@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     PATCH M5.3 — proteger la cuenta de servicio del conector Koha
+     Fecha: 2026-08-03 · Plan: docs/specs/gobierno-iga-fase14/01-plan.md (M5.3)
+     Resource: Koha ILS UPeU (consolidado) — e10a539a-cb7f-4c72-a19f-60f7f62e4b96
+     Container: schemaHandling/objectType[2]  (kind=account, intent=default)
+
+     🔴 SE APLICA CON PATCH, NUNCA CON PUT.
+     Un PUT sobre un ResourceType desplegado le arranca a PROD el <schema>
+     cacheado → resource `broken`/502. Ver docs/runbooks/NUNCA-PUT-resources-schema-cache.md
+     y CLAUDE.md §Resources.
+
+     POR QUÉ
+     `svc_midpoint` (cardnumber SVC-MIDPOINT) es la cuenta con la que el
+     conector accede a Koha. Medido en PROD el 2026-08-03: tiene shadow bajo
+     este mismo objectType y user_permissions=9:advanced_editor. Hoy MidPoint
+     la gestiona como una cuenta más — una reconciliación, un recompute o una
+     tarea de limpieza de cuentas sin owner podía deshabilitarla o borrarla, y
+     MidPoint habría perdido su propio acceso a Koha.
+
+     Medido también: NINGUNO de los 12 resources tenía cuentas <protected>.
+     Este es el primero.
+
+     VERIFICACIÓN OBLIGATORIA DESPUÉS (no confiar en el HTTP 204):
+       1. version del resource en Postgres DEBE haber subido
+       2. <schema> sigue con sus xsd:element (no lo arrancó)
+       3. el bloque <protected> está presente en el objectType[2]
+       4. test connection: success
+     ================================================================ -->
+<objectModification
+        xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+        xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+        xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
+    <itemDelta>
+        <t:modificationType>add</t:modificationType>
+        <t:path>schemaHandling/objectType[2]/protected</t:path>
+        <t:value>
+            <filter>
+                <q:equal>
+                    <q:path>attributes/ri:cardnumber</q:path>
+                    <q:value>SVC-MIDPOINT</q:value>
+                </q:equal>
+            </filter>
+        </t:value>
+    </itemDelta>
+</objectModification>
