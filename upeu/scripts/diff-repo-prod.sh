@@ -80,9 +80,31 @@ docker exec "$PGC" psql -U midpoint -d midpoint -At -F'|' -c "
 
 cut -d'|' -f1 "$TMP/prod_full.txt" | sort -u > "$TMP/prod.txt"
 
+# --- 2b. Nombres presentes en el repo (respaldo del cotejo) ------------------
+# No todos los XML versionados declaran <oid> en el elemento raíz: p. ej. los 6
+# R-Affiliation-* se desplegaron sin OID y MidPoint les asignó uno. Comparar solo
+# por OID los marcaría como "solo en PROD" siendo falso. Se cotejan por nombre.
+grep -rhoE '<name>[^<]+</name>' "$REPO/upeu" "$REPO/canonical" 2>/dev/null \
+  | sed -E 's#</?name>##g' | LC_ALL=C sort -u > "$TMP/repo_names.txt"
+
 # --- 3. Diferencias ----------------------------------------------------------
-comm -23 "$TMP/prod.txt" "$TMP/repo.txt" > "$TMP/solo_prod.txt"
+comm -23 "$TMP/prod.txt" "$TMP/repo.txt" > "$TMP/solo_prod_oid.txt"
 comm -13 "$TMP/prod.txt" "$TMP/repo.txt" > "$TMP/solo_repo.txt"
+
+# Del lado PROD, descartar los que sí están en el repo por nombre (sin OID
+# declarado) y los sample objects que trae MidPoint de fábrica con OID propio.
+: > "$TMP/solo_prod.txt"
+: > "$TMP/sin_oid.txt"
+DEMO='^(Project|Team|Location|Organization|Organizational unit|Organization unit|Top-level organization)$'
+while read -r oid; do
+  nm=$(grep "^$oid|" "$TMP/prod_full.txt" | cut -d'|' -f3)
+  [[ "$nm" =~ $DEMO ]] && continue                       # sample object de MidPoint
+  if LC_ALL=C grep -qxF "$nm" "$TMP/repo_names.txt"; then
+    echo "$oid|$nm" >> "$TMP/sin_oid.txt"                # está versionado, sin OID
+  else
+    echo "$oid" >> "$TMP/solo_prod.txt"                  # drift real
+  fi
+done < "$TMP/solo_prod_oid.txt"
 
 N_PROD=$(wc -l < "$TMP/solo_prod.txt" | tr -d ' ')
 N_REPO=$(wc -l < "$TMP/solo_repo.txt" | tr -d ' ')
@@ -100,11 +122,28 @@ if [[ "$N_PROD" -gt 0 ]]; then
 fi
 
 if [[ "$N_REPO" -gt 0 ]]; then
-  say "\n🟡 EN EL REPO Y NO EN PROD ($N_REPO) — versionado sin desplegar, o borrado en PROD:"
+  # Se listan solo los que NO son tasks/orgs/positions: esos son ejecuciones y
+  # datos sincronizados, cuyo OID legítimamente no coincide o ya no existe.
+  : > "$TMP/solo_repo_rel.txt"
   while read -r oid; do
     f=$(grep -rl "$oid" "$REPO/upeu" "$REPO/canonical" --include='*.xml' 2>/dev/null | head -1)
-    say "   ${f#$REPO/}  [$oid]"
+    case "${f#$REPO/}" in
+      upeu/tasks/*|upeu/orgs/*|upeu/services/positions/*) continue ;;
+    esac
+    echo "${f#$REPO/}|$oid" >> "$TMP/solo_repo_rel.txt"
   done < "$TMP/solo_repo.txt"
+  N_REPO=$(wc -l < "$TMP/solo_repo_rel.txt" | tr -d ' ')
+  if [[ "$N_REPO" -gt 0 ]]; then
+    say "\n🟡 EN EL REPO Y NO EN PROD ($N_REPO) — versionado sin desplegar, o borrado en PROD:"
+    while IFS='|' read -r f oid; do say "   $f  [$oid]"; done < "$TMP/solo_repo_rel.txt"
+  fi
+fi
+
+N_SINOID=$(wc -l < "$TMP/sin_oid.txt" | tr -d ' ')
+if [[ "$N_SINOID" -gt 0 ]]; then
+  say "\nℹ️  VERSIONADOS PERO SIN <oid> EN EL REPO ($N_SINOID) — no es drift, pero"
+  say "    rompe la trazabilidad OID↔archivo (CLAUDE.md: «OIDs estables»):"
+  while IFS='|' read -r oid nm; do say "   $nm  [$oid]"; done < "$TMP/sin_oid.txt"
 fi
 
 if [[ "$N_PROD" -eq 0 && "$N_REPO" -eq 0 ]]; then
