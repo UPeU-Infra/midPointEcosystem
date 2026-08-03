@@ -32,6 +32,7 @@
         xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
         xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
         xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
     <!-- xsi:type es OBLIGATORIO: sin él MidPoint no sabe que el <t:value> es un
          ResourceObjectPatternType, no parsea el <filter> y devuelve HTTP 500 con
