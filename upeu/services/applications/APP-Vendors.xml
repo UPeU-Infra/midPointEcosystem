@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     APLICACIÓN: Vendors academicos   ·   M3 del plan docs/specs/gobierno-iga-fase14/01-plan.md
+     Creada 2026-08-03.
+
+     Antes de M3 UPeU no tenía NINGUNA aplicación modelada en MidPoint: los 43
+     application roles no colgaban de ningún activo. Sin este inventario no se
+     puede responder "¿qué aplicaciones hay y quién es dueño de cada una?", ni
+     certificar accesos POR APLICACIÓN, que es como lo pide un auditor.
+     Evidencia directa de ISO 27001 A.5.9 (inventario de activos) y cierra parte
+     del dominio 6 del CHARTER-DTI-GOVERNANCE (CMDB, hoy marcado como gap).
+
+     Application roles asociados en PROD al crearla: 1
+
+     PENDIENTE (G1): asignar owner de negocio y owner técnico con
+     relation=owner. Sin owner no hay a quién certificar ni a quién enrutar
+     aprobaciones.
+     ================================================================ -->
+<service xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+         xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+         oid="cddf126e-9c2d-4c99-8f9a-e7b98881c2ed">
+    <name>APP-Vendors</name>
+    <description>Bases de datos cientificas federadas (Scopus, EBSCO, Web of Science, Springer). Acceso via SAML con atributos eduPerson liberados segun REFEDS R&S.</description>
+    <lifecycleState>active</lifecycleState>
+    <identifier>Vendors</identifier>
+    <assignment>
+        <targetRef oid="00000000-0000-0000-0000-000000000329" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+</service>

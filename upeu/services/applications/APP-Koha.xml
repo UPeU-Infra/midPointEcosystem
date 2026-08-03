@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     APLICACIÓN: Koha ILS (CRAI)   ·   M3 del plan docs/specs/gobierno-iga-fase14/01-plan.md
+     Creada 2026-08-03.
+
+     Antes de M3 UPeU no tenía NINGUNA aplicación modelada en MidPoint: los 43
+     application roles no colgaban de ningún activo. Sin este inventario no se
+     puede responder "¿qué aplicaciones hay y quién es dueño de cada una?", ni
+     certificar accesos POR APLICACIÓN, que es como lo pide un auditor.
+     Evidencia directa de ISO 27001 A.5.9 (inventario de activos) y cierra parte
+     del dominio 6 del CHARTER-DTI-GOVERNANCE (CMDB, hoy marcado como gap).
+
+     Application roles asociados en PROD al crearla: 17
+    <!-- Resource que materializa esta aplicación: e10a539a-cb7f-4c72-a19f-60f7f62e4b96 -->
+
+     PENDIENTE (G1): asignar owner de negocio y owner técnico con
+     relation=owner. Sin owner no hay a quién certificar ni a quién enrutar
+     aprobaciones.
+     ================================================================ -->
+<service xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+         xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+         oid="c323986d-f123-4438-b9ae-8f2d5d2d886c">
+    <name>APP-Koha</name>
+    <description>Sistema integrado de biblioteca del CRAI. Instancia consolidada con 4 branches (BUL/BUJ/BUT/CIA). Consumido por 17 application roles: patrons por categoria, bibliotecarios por area y superadmin.</description>
+    <lifecycleState>active</lifecycleState>
+    <identifier>Koha</identifier>
+    <assignment>
+        <targetRef oid="00000000-0000-0000-0000-000000000329" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+</service>
