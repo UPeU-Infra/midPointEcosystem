@@ -44,11 +44,11 @@ say() { [[ $QUIET -eq 0 ]] && echo -e "$@"; return 0; }
 # de este repo abren con bloques largos de xmlns). Se resuelve leyendo el archivo
 # entero y tomando el primer oid= que aparece TRAS el tag raíz — nunca los oid de
 # targetRef/resourceRef, que son referencias a otros objetos.
-python3 - "$REPO" <<'PY' > "$TMP/repo.txt"
+python3 - "$REPO" <<'PY' > "$TMP/repo_map.txt"
 import re,sys,glob,os
 root=sys.argv[1]
 TAGS=r'(role|resource|archetype|objectTemplate|org|service|task|functionLibrary|lookupTable|policy|genericObject)'
-out=set()
+seen={}
 for base in ('upeu','canonical'):
     for f in glob.glob(os.path.join(root,base,'**','*.xml'),recursive=True):
         try: x=open(f,encoding='utf-8',errors='replace').read()
@@ -57,10 +57,10 @@ for base in ('upeu','canonical'):
         if not m: continue
         o=re.search(r'oid="([0-9a-f-]{36})"',x[m.start():])
         if o and not o.group(1).startswith('00000000-'):
-            out.add(o.group(1))
-for o in sorted(out): print(o)
+            seen.setdefault(o.group(1), os.path.relpath(f,root))
+for oid,f in sorted(seen.items()): print(f"{oid}|{f}")
 PY
-sort -u "$TMP/repo.txt" -o "$TMP/repo.txt"
+cut -d'|' -f1 "$TMP/repo_map.txt" | sort -u > "$TMP/repo.txt"
 
 # --- 2. OIDs desplegados en PROD --------------------------------------------
 # Se excluyen los ServiceType con archetype "Position": son las ~738 posiciones
@@ -126,11 +126,13 @@ if [[ "$N_REPO" -gt 0 ]]; then
   # datos sincronizados, cuyo OID legítimamente no coincide o ya no existe.
   : > "$TMP/solo_repo_rel.txt"
   while read -r oid; do
-    f=$(grep -rl "$oid" "$REPO/upeu" "$REPO/canonical" --include='*.xml' 2>/dev/null | head -1)
-    case "${f#$REPO/}" in
-      upeu/tasks/*|upeu/orgs/*|upeu/services/positions/*) continue ;;
+    # mapeo exacto OID→archivo (del extractor), no grep de texto: un OID citado
+    # en un comentario de otro XML causaba atribuciones erróneas.
+    f=$(grep "^$oid|" "$TMP/repo_map.txt" | cut -d'|' -f2)
+    case "$f" in
+      upeu/tasks/*|upeu/orgs/*|upeu/services/positions/*|upeu/resources/datasets/*|archive/*) continue ;;
     esac
-    echo "${f#$REPO/}|$oid" >> "$TMP/solo_repo_rel.txt"
+    echo "$f|$oid" >> "$TMP/solo_repo_rel.txt"
   done < "$TMP/solo_repo.txt"
   N_REPO=$(wc -l < "$TMP/solo_repo_rel.txt" | tr -d ' ')
   if [[ "$N_REPO" -gt 0 ]]; then
