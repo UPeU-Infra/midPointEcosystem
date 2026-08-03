@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     PURGA DE SHADOWS HUÉRFANOS — resources borrados en la retirada del CRIS
+     Fecha: 2026-08-03 · Plan: docs/specs/gobierno-iga-fase14/01-plan.md (M5.1)
+
+     QUÉ SON ESTOS SHADOWS
+     La retirada del CRIS (2026-06-20, ROADMAP.md §RETIRADO) borró varios
+     resources pero dejó sus shadows en m_shadow. Medido en PROD 2026-08-03:
+     4.658 shadows apuntan a un resourceRef que ya no existe.
+
+       resourceRef borrado                    shadows   intent              linkeados
+       8c4f1a36-9d27-4e58-bb03-1f6a2c7d3e95    3.802   research-affiliation      0
+       3f8b2d61-7c94-4a05-9e3b-6d1f8a2c5e70      575   person(406)/orgUnit(169) 169
+       5a3d7e92-4c61-4b8f-9a02-7e1c3d6b2f84      185   research-unit           185
+       a7c4f219-b3e8-4d6a-9f12-3e5a7c8b2d1f       96   default                   0
+
+     (OIDs correlacionados con ROADMAP.md §RETIRADO: 8c4f1a36 = Oracle LAMB
+      Investigadores Afiliacion · 3f8b2d61 = cris-dspace · 5a3d7e92 = Oracle
+      LAMB Investigacion DGI (Org) · a7c4f219 = CSV DGI Investigadores RENACYT)
+
+     ALCANCE DELIBERADO DE ESTA TASK — SOLO LOS NO LINKEADOS
+     Se purgan únicamente los shadows de `8c4f1a36` y `a7c4f219`: 3.898 shadows
+     que NO tienen linkRef desde ningún focus. Borrarlos no deja referencias
+     colgando en nadie.
+
+     Se EXCLUYEN a propósito `3f8b2d61` y `5a3d7e92`, cuyos 354 shadows SÍ están
+     linkeados desde 354 OrgType. Borrarlos dejaría linkRef huérfanos — el mismo
+     tipo de referencia rota que acabamos de reparar en M1.1 con los archetypes
+     lápida. Esos 354 requieren primero quitar el linkRef del focus, y van en
+     una segunda pasada.
+
+     POR QUÉ `deletion` + raw Y NO `shadowCleanup`
+     `shadowCleanup` (el patrón de upeu/tasks/shadow-cleanup-koha-*.xml) exige un
+     `resourceRef` resoluble; aquí el resource está BORRADO, así que MidPoint no
+     podría procesarlos (mismo fallo que impedía archivar las orgs en M1.1).
+     `executionOptions/raw=true` opera contra el repositorio sin invocar al
+     conector — que es justo lo que hace falta cuando el resource ya no existe.
+
+     mode=preview => NO borra nada. Sirve para confirmar el conteo exacto antes
+     de ejecutar la purga real. La purga real se hace cambiando <mode> a
+     `execute`, y SOLO tras backup y con OK explícito de Alberto.
+     ================================================================ -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="be71c1a4-0844-45f6-aa4e-36c9c6df63e7">
+    <name>M5.1 PURGE shadows huerfanos sin linkRef (preview)</name>
+    <description>Preview de la purga de 3.898 shadows cuyo resource fue borrado en la retirada del CRIS y que no tienen linkRef. Excluye los 354 linkeados a OrgType. NO borra en modo preview.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>suspended</executionState>
+    <activity>
+        <execution>
+            <mode>preview</mode>
+        </execution>
+        <work>
+            <deletion>
+                <objects>
+                    <type>ShadowType</type>
+                    <query>
+                        <q:filter>
+                            <q:or>
+                                <q:ref>
+                                    <q:path>resourceRef</q:path>
+                                    <q:value oid="8c4f1a36-9d27-4e58-bb03-1f6a2c7d3e95"/>
+                                </q:ref>
+                                <q:ref>
+                                    <q:path>resourceRef</q:path>
+                                    <q:value oid="a7c4f219-b3e8-4d6a-9f12-3e5a7c8b2d1f"/>
+                                </q:ref>
+                            </q:or>
+                        </q:filter>
+                    </query>
+                </objects>
+                <executionOptions>
+                    <raw>true</raw>
+                </executionOptions>
+            </deletion>
+        </work>
+    </activity>
+</task>
