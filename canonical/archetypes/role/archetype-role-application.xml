@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     Meta-role canónico: Application Role
+     Descargado de PROD y versionado el 2026-08-03 — M5.8 del plan
+     docs/specs/gobierno-iga-fase14/01-plan.md
+
+     🔴 POR QUÉ IMPORTA QUE FALTARA
+     Este archetype gobierna **37 de los 89 roles** de PROD y nunca estuvo en el
+     repo. Lo delató la primera ejecución de upeu/scripts/diff-repo-prod.sh.
+     Sin él versionado, una reconstrucción desde el repo recrea los roles pero
+     no el meta-role del que cuelgan: se pierde la clasificación entera
+     Business/Application sobre la que se apoya el modelo RBAC (cascada
+     Business → Application → Entitlement, INCITS 359 §6.4).
+
+     Metadata operacional retirada (_metadata, policySituation,
+     triggeredPolicyRule, archetypeRef): estado de runtime, no configuración.
+     ================================================================ -->
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+           xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+           oid="279ad5be-a892-4add-946f-8cb3740bfc31">
+    <name>archetype-role-application</name>
+    <description>Meta-role para Application Roles canónicos UPeU. Conecta a 1 Resource específico vía construction. Fase 4.0c — iga-canonical-standards §10.3, midpoint-best-practices §3.2/§2.3.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment id="1">
+        <identifier>holderType</identifier>
+        <assignmentRelation id="5">
+            <holderType>RoleType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Application Role</label>
+            <pluralLabel>Application Roles</pluralLabel>
+            <tooltip>Acceso técnico a 1 aplicación o resource específico.</tooltip>
+            <icon>
+                <cssClass>fa fa-plug</cssClass>
+                <color>#3498db</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+</archetype>

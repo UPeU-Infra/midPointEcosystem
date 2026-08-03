@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     Meta-role canónico: Business Role
+     Descargado de PROD y versionado el 2026-08-03 — M5.8 del plan
+     docs/specs/gobierno-iga-fase14/01-plan.md
+
+     Gemelo de archetype-role-application.xml — ver ese archivo para el
+     contexto completo. Gobierna **35 de los 89 roles** de PROD y tampoco
+     estaba versionado.
+
+     Metadata operacional retirada: estado de runtime, no configuración.
+     ================================================================ -->
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+           xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+           oid="af29bb55-f7c2-449a-ab67-ae3c819ebf5b">
+    <name>archetype-role-business</name>
+    <description>Meta-role para Business Roles canónicos UPeU. Fase 4.0c — iga-canonical-standards §10.3, midpoint-best-practices §3.2.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment id="1">
+        <identifier>holderType</identifier>
+        <assignmentRelation id="5">
+            <holderType>RoleType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Business Role</label>
+            <pluralLabel>Business Roles</pluralLabel>
+            <tooltip>Función de negocio canónica UPeU; compone Application Roles vía inducement.</tooltip>
+            <icon>
+                <cssClass>fa fa-briefcase</cssClass>
+                <color>#16a085</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+</archetype>

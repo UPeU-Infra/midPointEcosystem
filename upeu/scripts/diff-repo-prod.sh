@@ -95,7 +95,11 @@ comm -13 "$TMP/prod.txt" "$TMP/repo.txt" > "$TMP/solo_repo.txt"
 # declarado) y los sample objects que trae MidPoint de fábrica con OID propio.
 : > "$TMP/solo_prod.txt"
 : > "$TMP/sin_oid.txt"
-DEMO='^(Project|Team|Location|Organization|Organizational unit|Organization unit|Top-level organization)$'
+# Objetos que MidPoint 4.10 trae DE FÁBRICA con OID propio (no 00000000-…) y que
+# por tanto no se versionan: sample objects de org, y las policies del paquete de
+# compliance ISO27001 de Evolveum (documentación en inglés, targetArchetypeRef a
+# archetypes built-in). Versionarlas sería duplicar configuración del producto.
+DEMO='^(Project|Team|Location|Organization|Organizational unit|Organization unit|Top-level organization|Require classification|Privileged access)$'
 while read -r oid; do
   nm=$(grep "^$oid|" "$TMP/prod_full.txt" | cut -d'|' -f3)
   [[ "$nm" =~ $DEMO ]] && continue                       # sample object de MidPoint
