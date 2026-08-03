@@ -182,7 +182,7 @@ caer fuera Koha es circunstancial; el siguiente sería LDAP, Entra o cualquier o
 | M2.1 | Cuentas administrativas nominales (una por administrador real), separadas de la personal | Hoy todo es `administrator` compartido |
 | M2.2 | Asignar los 3 roles `GOV-*` a personas concretas | Hoy 0 holders los tres |
 | M2.3 | Autorizaciones acotadas por área: que CRAI administre lo suyo sin ser superusuario | *Delegated administration* del libro |
-| M2.4 | Revisar que las expresiones Groovy en roles delegados tengan `expressionProfile` | Anti-pattern explícito del libro (riesgo de seguridad) |
+| M2.4 | ✅ **AUDITADO 2026-08-03 — sin riesgo.** El anti-pattern del libro (*"permitir expresiones Groovy sin profile en delegated administration"*) **no está presente**: los 4 roles con `<authorization>` (`SYS-IGA-SUPERUSER` 1 authz, `GOV-APROBADOR-WORKITEMS` 7, `GOV-DELEGADOR-PRIVILEGIOS` 5, `GOV-REVISOR-CERTIFICACION` 7) **no usan Groovy en absoluto** — 0 `<script>`, 0 `groovy`. Además la SystemConfiguration ya define **3 `expressionProfile`** bajo `<expressions>`, así que el mecanismo existe si algún día hacen falta. Los roles GOV están **bien construidos**; el problema no es su diseño, es que nadie los tiene |
 | M2.5 | Reservar `administrator` para bootstrap/emergencia, con uso auditado | — |
 
 **Aceptación:** el audit trail atribuye los cambios a personas, no a `administrator`.
