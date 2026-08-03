@@ -214,7 +214,8 @@ caer fuera Koha es circunstancial; el siguiente sería LDAP, Entra o cualquier o
 
 | # | Tarea |
 |---|---|
-| M5.1 | Purgar los **4.658 shadows huérfanos** (resources borrados) tras verificar que ninguno está linkeado |
+| M5.1 | ✅ **PARCIAL 2026-08-03 — 3.898 de 4.658 purgados.** Task `533b3cf3` (`mode=full` + `raw` en search Y execution), `success`, progress 3.898, 0 mensajes. Shadows totales 383.523 → **379.625** (−3.898 exactos); huérfanos 4.658 → **760**; del lote quedan **0**. Backup CSV en `~/backups/m5-shadow-purge-2026-08-03/`. **Verificado que no rompió nada**: los `linkRef` rotos que aparecieron son **preexistentes** — intersección con lo purgado = **0**. Pendiente 2ª pasada: 406 `person` sueltos (`3f8b2d61`) borrables igual, y **354 linkeados desde OrgType** que exigen quitar antes el `linkRef` del focus |
+| M5.1b | 🔴 **HALLAZGO NUEVO (03-ago): 2.861 Users con `linkRef` apuntando a shadows inexistentes.** No lo causó la purga (intersección 0); es anterior — probablemente de la retirada del CRIS (20-jun) o del DELETE masivo de 90.973 shadows de mayo. Owner: `USER` en los 2.861 casos. Hay que medir si afecta su recompute antes de decidir la limpieza |
 | M5.2 | Clasificar o purgar los 20 shadows `UNKNOWN` de Entra ID |
 | M5.3 | Definir cuentas `<protected>` en los 12 resources (admin de Koha, `cn=admin` de LDAP, service accounts) |
 | M5.4 | Archetype a los 11 roles que no lo tienen |
