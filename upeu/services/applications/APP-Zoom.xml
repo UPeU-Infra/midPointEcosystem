@@ -1,23 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- ================================================================
-     APLICACIÓN: Zoom   ·   M3 del plan docs/specs/gobierno-iga-fase14/01-plan.md
+     APLICACION: Zoom   ·   M3 del plan docs/specs/gobierno-iga-fase14/01-plan.md
      Creada 2026-08-03.
 
-     Antes de M3 UPeU no tenía NINGUNA aplicación modelada en MidPoint: los 43
-     application roles no colgaban de ningún activo. Sin este inventario no se
-     puede responder "¿qué aplicaciones hay y quién es dueño de cada una?", ni
-     certificar accesos POR APLICACIÓN, que es como lo pide un auditor.
-     Evidencia directa de ISO 27001 A.5.9 (inventario de activos) y cierra parte
-     del dominio 6 del CHARTER-DTI-GOVERNANCE (CMDB, hoy marcado como gap).
+     Antes de M3 UPeU no tenia NINGUNA aplicacion modelada en MidPoint: los 43
+     application roles no colgaban de ningun activo. Sin este inventario no se
+     puede responder "que aplicaciones hay y quien es dueno de cada una", ni
+     certificar accesos POR APLICACION, que es como lo pide un auditor.
+     Evidencia de ISO 27001 A.5.9 (inventario de activos); cierra parte del
+     dominio 6 del CHARTER-DTI-GOVERNANCE (CMDB, hoy marcado como gap).
 
      Application roles asociados en PROD al crearla: 2
+     Resource: (ninguno desplegado todavia)
 
-     PENDIENTE (G1): asignar owner de negocio y owner técnico con
-     relation=owner. Sin owner no hay a quién certificar ni a quién enrutar
+     PENDIENTE (G1): asignar owner de negocio y owner tecnico con
+     relation=owner. Sin owner no hay a quien certificar ni a quien enrutar
      aprobaciones.
      ================================================================ -->
 <service xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
          xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+         xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
          oid="538f0533-a3c5-4ace-ae4b-7c54d04bcd1a">
     <name>APP-Zoom</name>
     <description>Videoconferencia institucional. Licencias Basic y Pro por perfil.</description>
