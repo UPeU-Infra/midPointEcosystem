@@ -191,12 +191,30 @@ caer fuera Koha es circunstancial; el siguiente sería LDAP, Entra o cualquier o
 
 | # | Tarea | Detalle |
 |---|---|---|
-| M3.1 | Crear un `Service` con archetype `Application` por cada app gobernada | Koha, LDAP, Entra ID/M365, OJS, Indico, DSpace, RIMS, Zoom, WiFi |
-| M3.2 | Colgar cada application role de su aplicación | Los 33 AR quedan agrupados por app |
-| M3.3 | Owner de negocio + owner técnico por aplicación | Insumo directo de 14B/G1 |
-| M3.4 | Reporte "aplicaciones y sus dueños" | Evidencia ISO 27001 A.5.9 · cierra parte del dominio 6 del charter |
+| M3.1 | ✅ **HECHO 2026-08-03** — 10 aplicaciones creadas (`Service` + archetype `Application` `…329`), versionadas en `upeu/services/applications/`, desplegadas con HTTP 201 ×10 |
+| M3.2 | ✅ **HECHO 2026-08-03** — los **42** application roles colgados de su aplicación. Mecanismo verificado con canario (rol de 0 holders): `assignment` del rol al `ServiceType`. Seguro porque las aplicaciones **no tienen inducements**: no pueden propagar nada a los holders |
+| M3.3 | ⬜ Owner de negocio + owner técnico por aplicación → es **G1** |
+| M3.4 | ⬜ Reporte "aplicaciones y sus dueños" — depende de M3.3 |
 
-**Aceptación:** `m_service` con archetype `Application` ≥ 9; cada AR con su `Application`.
+**Inventario resultante en PROD:**
+
+| Aplicación | Roles | | Aplicación | Roles |
+|---|---|---|---|---|
+| `APP-Koha` | 17 | | `APP-Zoom` | 2 |
+| `APP-RIMS` | 5 | | `APP-LDAP` | 2 |
+| `APP-M365` (fusiona M365 + EntraID) | 5 | | `APP-DSpace` | 2 |
+| `APP-OJS` | 3 | | `APP-Indico` | 2 |
+| `APP-WiFi` | 3 | | `APP-Vendors` | 1 |
+
+**Aceptación: cumplida.** `m_service` con archetype `Application` = **10**; application roles sin
+aplicación = **1**, y es correcto: `role-svc-ai-identity-reader` es un *authorization role*
+interno de MidPoint (libro cap. 7), no el acceso a una aplicación externa.
+
+**Dos errores de sintaxis que costaron un ciclo** (anotados para la próxima):
+`Undeclared namespace prefix 'org'` — hay que declarar `xmlns:org` en el propio XML aunque el
+`relation="org:default"` parezca universal; y `The string "--" is not permitted within comments`
+— un comentario XML anidado dentro de otro. **Validar con `minidom` antes de desplegar** evita
+ambos.
 
 ### M4 — Entitlements: grupos y licencias `[6-10 h]`
 
