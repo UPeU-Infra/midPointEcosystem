@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     ARCHETYPE LÁPIDA — Línea de Investigación (LINEA)  ·  RETIRADO
+
+     Fecha: 2026-08-03 · Plan: docs/specs/gobierno-iga-fase14/01-plan.md (M1.1)
+
+     Gemelo de `archetype-org-research-center.xml` — ver ese archivo para el
+     diagnóstico completo. Mismo origen: la retirada del CRIS del 2026-06-20
+     (ROADMAP.md §RETIRADO) borró el archetype `archetype-org-research-line`
+     (OID 7c2e0b5f-…) y dejó **178 orgs LINEA-*** con el archetypeRef ROTO.
+
+     Las 178 LINEA-* cuelgan de las 7 CII-* y, medido en PROD el 2026-08-03,
+     ninguna tiene users como miembros directos: los 310 users afectados
+     cuelgan todos de 5 orgs CII (CII-6=128, CII-3=69, CII-7=56, CII-5=54,
+     CII-8=3).
+
+     Sin inducements ni constructions: no provisiona nada. Solo restaura la
+     integridad referencial. NO reactiva el CRIS.
+
+     REVERSIBLE: borrar este objeto devuelve PROD al estado del 2026-08-03.
+     ================================================================ -->
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+           oid="7c2e0b5f-3a64-4d9b-c028-ae1d7f3b5c92">
+    <name>archetype-org-research-line</name>
+    <description>RETIRADO (2026-06-20). Archetype lápida para los 178 OrgType LINEA-* huérfanos. Sin inducements: no provisiona nada. Existe solo para restaurar la integridad referencial rota por la retirada del CRIS. Ver docs/specs/gobierno-iga-fase14/01-plan.md M1.1.</description>
+    <lifecycleState>archived</lifecycleState>
+    <archetypePolicy>
+        <display>
+            <label>Línea de Investigación (retirada)</label>
+            <pluralLabel>Líneas de Investigación (retiradas)</pluralLabel>
+        </display>
+    </archetypePolicy>
+</archetype>

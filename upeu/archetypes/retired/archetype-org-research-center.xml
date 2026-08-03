@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     ARCHETYPE LÁPIDA — Centro de Investigación (CII)  ·  RETIRADO
+
+     Fecha: 2026-08-03 · Plan: docs/specs/gobierno-iga-fase14/01-plan.md (M1.1)
+
+     POR QUÉ EXISTE ESTE ARCHIVO
+     El stack de investigación/CRIS se retiró de MidPoint el 2026-06-20
+     (ROADMAP.md §RETIRADO). En esa operación se borró el archetype
+     `archetype-org-research-center` (OID 6b1d9a4e-…), pero NO las 7 orgs
+     CII-* que lo referenciaban. Quedaron con el archetypeRef ROTO.
+
+     CONSECUENCIA MEDIDA EN PROD (simulación preview, 2026-08-03, task
+     e7d12fbf-7f79-4248-a522-c865fba4d8f5):
+       Intentar archivar CII-8 falla con
+         "Object of type 'ArchetypeType' with OID '6b1d9a4e-…' was not found."
+       MidPoint no puede procesar esas orgs en absoluto: falla al resolver el
+       archetype ANTES de aplicar cualquier cambio. No se pueden archivar ni
+       modificar mientras la referencia esté rota.
+
+       En cambio, los users miembros SÍ recomputan sin error (3/3 success en
+       preview sobre los miembros de CII-8) — el archetypeRef roto afecta a
+       las orgs, no a las 310 personas asignadas.
+
+     QUÉ HACE ESTE OBJETO
+     Restituye el archetype con su OID original, en lifecycleState=archived,
+     SIN inducements ni constructions: no provisiona absolutamente nada, no
+     asigna privilegios y no dispara ningún outbound. Su única función es
+     restaurar la integridad referencial para que las orgs vuelvan a ser
+     operables (y archivables, si se decide).
+
+     NO REACTIVA EL CRIS. El aprovisionamiento del CRIS lo asume el producto
+     "SciBack Research Project", que lee directo de Oracle Lamb. MidPoint sigue
+     desentendido de la investigación (ROADMAP.md §RETIRADO).
+
+     REVERSIBLE: borrar este objeto devuelve PROD al estado del 2026-08-03.
+     ================================================================ -->
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+           oid="6b1d9a4e-2f53-4c8a-bf17-9d0c6e2a4b81">
+    <name>archetype-org-research-center</name>
+    <description>RETIRADO (2026-06-20). Archetype lápida para los 7 OrgType CII-* huérfanos. Sin inducements: no provisiona nada. Existe solo para restaurar la integridad referencial rota por la retirada del CRIS. Ver docs/specs/gobierno-iga-fase14/01-plan.md M1.1.</description>
+    <lifecycleState>archived</lifecycleState>
+    <archetypePolicy>
+        <display>
+            <label>Centro de Investigación (retirado)</label>
+            <pluralLabel>Centros de Investigación (retirados)</pluralLabel>
+        </display>
+    </archetypePolicy>
+</archetype>
