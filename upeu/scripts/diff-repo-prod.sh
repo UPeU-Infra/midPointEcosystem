@@ -40,26 +40,42 @@ trap 'rm -rf "$TMP"' EXIT
 say() { [[ $QUIET -eq 0 ]] && echo -e "$@"; return 0; }
 
 # --- 1. OIDs presentes en el repo -------------------------------------------
-# Toma el oid="..." del elemento raíz de cada XML versionado.
-grep -rhoE '^\s*<(role|resource|archetype|objectTemplate|org|service|task|functionLibrary|lookupTable|policy)[^>]*oid="[0-9a-f-]{36}"' \
-  "$REPO/upeu" "$REPO/canonical" 2>/dev/null \
-  | grep -oE 'oid="[0-9a-f-]{36}"' | cut -d'"' -f2 \
-  | grep -v '^00000000-' | sort -u > "$TMP/repo.txt"
-
-# Algunos XML declaran el oid en una línea posterior al tag raíz: segunda pasada
-# por archivo, tomando el primer oid que aparezca.
-find "$REPO/upeu" "$REPO/canonical" -name '*.xml' 2>/dev/null | while read -r f; do
-  head -25 "$f" | grep -oE 'oid="[0-9a-f-]{36}"' | head -1 | cut -d'"' -f2
-done | grep -v '^00000000-' | sort -u >> "$TMP/repo.txt"
+# El oid del elemento RAÍZ puede estar varias líneas por debajo del tag (los XML
+# de este repo abren con bloques largos de xmlns). Se resuelve leyendo el archivo
+# entero y tomando el primer oid= que aparece TRAS el tag raíz — nunca los oid de
+# targetRef/resourceRef, que son referencias a otros objetos.
+python3 - "$REPO" <<'PY' > "$TMP/repo.txt"
+import re,sys,glob,os
+root=sys.argv[1]
+TAGS=r'(role|resource|archetype|objectTemplate|org|service|task|functionLibrary|lookupTable|policy|genericObject)'
+out=set()
+for base in ('upeu','canonical'):
+    for f in glob.glob(os.path.join(root,base,'**','*.xml'),recursive=True):
+        try: x=open(f,encoding='utf-8',errors='replace').read()
+        except Exception: continue
+        m=re.search(r'<'+TAGS+r'[\s>]',x)
+        if not m: continue
+        o=re.search(r'oid="([0-9a-f-]{36})"',x[m.start():])
+        if o and not o.group(1).startswith('00000000-'):
+            out.add(o.group(1))
+for o in sorted(out): print(o)
+PY
 sort -u "$TMP/repo.txt" -o "$TMP/repo.txt"
 
 # --- 2. OIDs desplegados en PROD --------------------------------------------
+# Se excluyen los ServiceType con archetype "Position": son las ~738 posiciones
+# sincronizadas desde LAMB-Oracle-Posiciones — DATOS, no configuración. Solo 13
+# están versionadas a propósito (upeu/services/positions/). Incluirlas ahogaría
+# el informe en ruido y volvería inútil la comprobación.
 docker exec "$PGC" psql -U midpoint -d midpoint -At -F'|' -c "
   SELECT o.oid, o.objecttype::text, o.nameorig
   FROM m_object o
   WHERE o.objecttype IN ('ROLE','RESOURCE','ARCHETYPE','OBJECT_TEMPLATE','SERVICE',
                          'FUNCTION_LIBRARY','LOOKUP_TABLE','POLICY')
     AND o.oid::text NOT LIKE '00000000-%'
+    AND NOT EXISTS (
+      SELECT 1 FROM m_ref_archetype ra JOIN m_archetype a ON a.oid=ra.targetoid
+      WHERE ra.ownerOid=o.oid AND a.nameorig IN ('Position'))
   ORDER BY 2,3;" > "$TMP/prod_full.txt" 2>/dev/null
 
 cut -d'|' -f1 "$TMP/prod_full.txt" | sort -u > "$TMP/prod.txt"
