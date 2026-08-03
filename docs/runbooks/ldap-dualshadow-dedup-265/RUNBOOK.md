@@ -3,6 +3,55 @@
 Fecha: 2026-06-04
 Resource LDAP (Identity Cache): `7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f` (`upeu/resources/ldap-identity-cache.xml`), base `ou=people,dc=upeu,dc=edu,dc=pe`, DN = `uid=<focus/name>,...`.
 
+## ✅ ADENDA 3 (2026-08-03): los 6 focos SANEADOS — y no eran "nuevos"
+
+**Ejecutado y verificado hoy.** Los 6 focos de la adenda del 26-jul quedaron saneados con
+el mismo procedimiento de este runbook (Fase A + Fase B; la Fase C no hizo falta: el
+recompute en `preview` ya cierra en `success`).
+
+| | |
+|---|---|
+| Focos saneados | **6/6** — `201322759` `201810194` `201820102` `201910528` `202010965` `202116492` (todos `employee-staff`, todos `active`) |
+| Clasificación | 6 keepers (`uid=código`) + 6 losers (`uid=DNI8`) — **0 anomalías**, igual que el masivo de junio |
+| Fase A (DELETE shadow loser `?options=raw`) | 6/6 → HTTP 204 |
+| Fase B (`ldapdelete` del DN físico) | 6/6 OK |
+| Verificación | focos con colisión: **6 → 0** · los 6 keepers LDAP **intactos** · recompute `preview` de los 6 → **`success`, progress 6, 0 mensajes** (antes: `partial_error`) |
+| Backups | `~/backups/dualshadow-6-2026-08-03/losers-6.ldif` (6 entradas) + `shadows-loser-6.csv` |
+
+### 🔴 Corrección a la adenda del 26-jul: NO eran 6 focos "nuevos"
+
+Los `createtimestamp` lo desmienten: los **shadows loser son del 20-may** y los keeper del
+**27-may** — es decir, **anteriores al masivo del 4-jun** que cerró este runbook en 0.
+No reaparecieron por transiciones posteriores: son **6 casos que el masivo no capturó**.
+(Candidato a explicación: los 10 focos que la Fase C cerró con HTTP 500 por conflicto de
+datos preexistente.) La conclusión práctica cambia: el mecanismo no se está regenerando
+al ritmo que temíamos — en 8 días desde el 26-jul no apareció ninguno más.
+
+### 📏 Alcance real medido (2026-08-03) — cuidado con el conteo ingenuo
+
+Contar "focos con 2+ shadows LDAP vivos" da **279**, y es engañoso. Al separar por `intent`:
+
+| Tipo | Focos | ¿Bloquea? |
+|---|---|---|
+| `alumni` + `default` (2 ramas del DIT, coordenadas distintas) | **273** | **No** — no colisionan |
+| **2 shadows con el MISMO intent (`default`)** | **6** | **Sí** — es este problema |
+
+Los 273 son personas con cuenta en `ou=people` y en `ou=alumni` a la vez (172 alumni +
+83 student + 15 staff + 9 faculty, todos `active`). Con `AR-LDAP-Person` y
+`AR-LDAP-Alumni` coexistiendo eso es plausiblemente diseño, pero **merece validación de
+negocio**: ¿debe un egresado conservar la entrada en `ou=people`? Pendiente, no es avería.
+
+**Al medir este problema, filtrar SIEMPRE por `count(DISTINCT intent)=1`.** Sin ese filtro
+el número se infla ×46 y parece una crisis que no existe.
+
+### La causa raíz sigue abierta
+
+Nada de lo anterior corrige el mecanismo: el outbound `dn`/`uid` sigue sin soportar rename
+in-place, así que una transición con doble llave DNI/código puede volver a crear una
+segunda entrada. Este runbook puede necesitar una 4ª adenda.
+
+---
+
 ## 🔴 ADENDA (2026-07-26): el patrón REAPARECIÓ — 6 focos nuevos, NO es un caso cerrado para siempre
 
 El masivo de abajo limpió el BACKLOG (267→0), pero **no corrigió la causa raíz** (el outbound `dn`/`uid` de este resource sigue sin soportar rename in-place — LDAP no permite renombrar y `delete` está bloqueada por diseño — así que cada vez que el `name` de un foco cambia por una transición alum→empleado con doble llave DNI/código, MidPoint vuelve a crear una segunda entrada en vez de renombrar). Investigado el 26-jul (contexto: intento de destrabar Koha para Faculty/Administrativo, casos "James Mendoza"/"Mirian Calcina"): **6 focos nuevos con el mismo patrón exacto** (`PolicyViolationException` en `ProjectionsLoadOperation`, 2 shadows vivos linkeados al mismo kind+intent+resource), activos desde **2026-06-25** (3 semanas después de este mismo cierre), sin remediar desde entonces — bloquean el clockwork completo del foco (no solo LDAP: Koha, Entra, todo), 2 de los 6 sin ningún Koha ni M365 por ningún camino. Detalle completo en la memoria de sesión del proyecto (`koha-escalamiento-produccion-diagnostico-2026-07-19.md`, entrada del 26-jul) y en `fix-uid-trabajadores-abortado-2026-07-17` (mismo antecedente de doble llave).
