@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     SIMULATION TASK (preview / dry-run) — M1.1 archivado de orgs de research
+     Fecha: 2026-08-03 · Plan: docs/specs/gobierno-iga-fase14/01-plan.md (M1.1)
+
+     CONTEXTO
+     El CRIS se retiró de MidPoint el 2026-06-20 (ROADMAP.md §RETIRADO): se
+     borraron los archetypes archetype-org-research-center / -line, pero NO las
+     185 orgs que los referenciaban. Hoy tienen el archetypeRef ROTO.
+
+     MEDIDO EN PROD 2026-08-03 (antes de tocar nada):
+       - 185 orgs con archetypeRef dangling: 7 CII-* + 178 LINEA-*
+       - 310 users son miembros, y TODOS cuelgan de solo 5 orgs:
+           CII-6=128 · CII-3=69 · CII-7=56 · CII-5=54 · CII-8=3
+         Las otras 180 orgs (178 LINEA + 2 CII) no tienen ningún miembro.
+       - 352 shadows asociados, TODOS de resources ya borrados
+         (research-unit 185 + orgUnit 167) => sin provisioning vivo a ningún
+         sistema externo por esta vía.
+       - Ningún mapping vigente asigna estas orgs: D6 asigna EP desde
+         academicProgramCode y E asigna área desde costCenter. Las CII/LINEA
+         venían del canal de research retirado.
+
+     PROPÓSITO DE ESTA TASK
+     Canario de simulación acotado a UNA org (CII-8, la más pequeña con
+     miembros: 3 users) para ver los deltas reales de archivarla ANTES de
+     tocar las 5 orgs que sí tienen gente.
+
+     mode=preview => NO escribe en MidPoint ni en ningún resource.
+     Produce un SimulationResult consultable.
+
+     Lección aplicada (20-jul-2026): canario SIEMPRE con OID explícito, nunca
+     con filtro amplio. Un canario mal acotado creó 2 Users duplicados que se
+     auto-aprovisionaron a LDAP y Koha reales en minutos.
+
+     Se crea SUSPENDED a propósito: hay que verificar en PROD que el
+     <mode>preview</mode> quedó persistido antes de darle resume.
+     ================================================================ -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+      oid="e7d12fbf-7f79-4248-a522-c865fba4d8f5">
+    <name>SIM M1 archivar org research CII-8 (preview)</name>
+    <description>Canario de simulación: archivar CII-8 (3 miembros) para medir el impacto real antes de archivar las 185 orgs con archetypeRef roto. NO escribe.</description>
+    <executionState>suspended</executionState>
+    <activity>
+        <execution>
+            <mode>preview</mode>
+        </execution>
+        <work>
+            <iterativeChangeExecution>
+                <objects>
+                    <type>OrgType</type>
+                    <query>
+                        <q:filter>
+                            <q:inOid>
+                                <!-- CII-8 · 3 users miembros -->
+                                <q:value>fa418f31-18fe-41f5-b9b5-77faf809e27f</q:value>
+                            </q:inOid>
+                        </q:filter>
+                    </query>
+                </objects>
+                <delta>
+                    <t:changeType>modify</t:changeType>
+                    <t:objectType>c:OrgType</t:objectType>
+                    <t:itemDelta>
+                        <t:modificationType>replace</t:modificationType>
+                        <t:path>lifecycleState</t:path>
+                        <t:value>archived</t:value>
+                    </t:itemDelta>
+                </delta>
+            </iterativeChangeExecution>
+        </work>
+    </activity>
+</task>
