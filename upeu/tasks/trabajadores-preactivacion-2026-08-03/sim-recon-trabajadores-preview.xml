@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     SIMULACIÓN pre-activación — recon-oracle-lamb-trabajadores-daily
+     Fecha: 2026-08-03 · mode=preview → NO ESCRIBE NADA
+
+     PARA QUÉ
+     `recon-oracle-lamb-trabajadores-daily` (23b9fde4-…) lleva SUSPENDIDA desde
+     el 25-jul. Antes de reactivarla hay que saber qué haría exactamente, no
+     suponerlo. Esta task procesa el universo real y produce el resultado sin
+     escribir.
+
+     LO QUE HAY QUE MIRAR EN EL RESULTADO
+       - cuántos `disputed` genera el guardarraíl 2-tier (que NUNCA se ha
+         validado con un caso real — es el riesgo principal)
+       - cuántas altas nuevas (`unmatched → addFocus`)
+       - cuántas bajas procesaría (medidas aparte: 165 personas, 161 activas
+         en MidPoint con accesos vivos)
+       - volumen del error conocido `Operation not supported` del leaver gap
+
+     CONTEXTO MEDIDO EL 03-ago (checklist de pre-activación):
+       - universo: 7.371 shadows vivos + 145 muertos
+       - 4.407 users activos con shadow de este resource se verían tocados
+       - el incidente del 25-jul creó 93 users, y NINGUNO es duplicado:
+         comparados por fullName normalizado (mayúsculas + acentos, que es como
+         se detectó el caso Orlando) no tienen gemelo. Son altas legítimas.
+       - dos mappings NUEVOS de hoy actuarían por primera vez en masa:
+           · employeeNumber ← externalSystemId (templates de empleado)
+           · activation → midPointAccountStatus en LDAP (cierra el leaver gap)
+
+     ⚠️ Esta simulación NO sustituye la validación del guardarraíl con un caso
+     real (paso 4 de los 5 del runbook del 26-jul). La complementa.
+     ================================================================ -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      oid="3cb0c47a-7f89-4f24-98fb-7b2723748b1a">
+    <name>SIM pre-activacion recon Trabajadores (preview, NO escribe)</name>
+    <description>Simulación del universo completo del resource Oracle LAMB Trabajadores v3 para decidir si se reactiva recon-oracle-lamb-trabajadores-daily. mode=preview.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <executionState>suspended</executionState>
+    <activity>
+        <execution>
+            <mode>preview</mode>
+        </execution>
+        <work>
+            <reconciliation>
+                <resourceObjects>
+                    <resourceRef oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21" type="c:ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
+                </resourceObjects>
+            </reconciliation>
+        </work>
+    </activity>
+</task>
