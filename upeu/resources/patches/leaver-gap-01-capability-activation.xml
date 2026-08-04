@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     PATCH — capability de ACTIVATION para LDAP-IdentityCache-UPeU
+     Cierra el "leaver gap": permite a MidPoint marcar una cuenta como
+     deshabilitada SIN mover la entrada de OU (que es lo que falla con
+     "Operation not supported").
+
+     Fecha: 2026-08-03 · Resource: 7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f
+     Analisis: docs/specs/ldap-leaver-gap/01-analisis.md
+     Peticion formal de 3 consumidores: Pulso DTI (P1 bloqueante), RIMS, InOut
+       → productos/devsupeu/canonico/docs/consultas/2026-08-03-contrato-atributos-ldap-pulso-dti.md
+
+     🔴 SE APLICA CON PATCH, NUNCA CON PUT (arranca el <schema> cacheado).
+
+     POR QUE ESTE ATRIBUTO Y NO pwdAccountLockedTime
+     El camino generico de Evolveum para OpenLDAP es el overlay ppolicy, que en
+     este directorio NO esta cargado (overlays: memberof, refint, sssvlv,
+     syncprov). Pero el schema propio YA define `midPointAccountStatus` dentro
+     del objectClass auxiliar `midPointPerson`, que las entradas ya llevan:
+
+       <xsd:element minOccurs="0" name="midPointAccountStatus" type="xsd:string"/>
+       auxiliaryObjectClass: ri:midPointPerson   (ya declarada en account/default)
+
+     Medido 2026-08-03: 0 registros poblados en todo el LDAP — el atributo existe
+     y el mapping nunca se escribio. No hace falta tocar OpenLDAP.
+
+     ALCANCE Y EFECTO
+     Con la capability declarada, MidPoint pasa a gestionar el estado de las
+     cuentas: en el proximo recompute/recon de cada persona escribira
+     `midPointAccountStatus` = enabled|disabled segun su activation efectiva.
+     Son ~48.436 entradas en ou=people: el efecto es masivo aunque el cambio sea
+     de una linea. Por eso se valida con canario antes de recomputar a nadie mas.
+
+     LO QUE ESTO **NO** RESUELVE (no confundir con "leaver gap cerrado")
+     - No corta WiFi 802.1X: EAP-TLS valida el CERTIFICADO, no el bind LDAP.
+       Para cortar WiFi hay que revocar el certificado en EJBCA.
+     - No mueve la entrada a ou=alumni (el rename sigue sin soportarse).
+     - Solo surte efecto si el consumidor LEE el atributo. Pulso DTI lo hara;
+       RIMS e InOut hay que confirmarlo.
+
+     VERIFICACION OBLIGATORIA DESPUES (no confiar en el 204):
+       1. version del resource DEBE subir
+       2. <schema> intacto (xsd:element > 0) y <native> intacto
+       3. test connection: success
+       4. canario: recomputar un foco cesado y comprobar con ldapsearch que
+          aparece midPointAccountStatus=disabled
+     ================================================================ -->
+<objectModification
+        xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+        xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+        xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3"
+        xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <itemDelta>
+        <t:modificationType>add</t:modificationType>
+        <t:path>capabilities/configured/activation</t:path>
+        <t:value xsi:type="cap:ActivationCapabilityType">
+            <cap:status>
+                <cap:attribute>ri:midPointAccountStatus</cap:attribute>
+                <cap:enableValue>enabled</cap:enableValue>
+                <cap:disableValue>disabled</cap:disableValue>
+            </cap:status>
+        </t:value>
+    </itemDelta>
+</objectModification>
