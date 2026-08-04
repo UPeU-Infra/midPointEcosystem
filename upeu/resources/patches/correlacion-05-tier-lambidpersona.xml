@@ -128,9 +128,12 @@
                 </c:items>
                 <c:items>
                     <c:name>guardarrail-homonimo-abre-caso</c:name>
-                    <c:documentation>TIER NUEVO 2026-08-04. NO sirve para vincular: su peso (0.55) queda deliberadamente por encima de `candidate` (0.5) y por debajo de `definite` (1.0), de modo que un homonimo exacto produce la situacion `disputed` y dispara `createCorrelationCase` en vez de crear un User en silencio. Es lo que falto en los 3 duplicados del 04-ago, donde hubo 0 marcas de correlacion frente a 3 duplicados reales. Volumen dimensionado: 33 fullName repetidos entre Users activos.</c:documentation>
+                    <c:documentation>TIER NUEVO 2026-08-04 (rev2). NO sirve para vincular: su peso (0.55) queda deliberadamente por encima de `candidate` (0.5) y por debajo de `definite` (1.0), de modo que un homonimo exacto produce la situacion `disputed` y dispara `createCorrelationCase` en vez de crear un User en silencio. Es lo que falto en los 3 duplicados del 04-ago, donde hubo 0 marcas de correlacion frente a 3 duplicados reales. Los dos items forman un AND: deben coincidir nombre Y apellido. IMPORTANTE: la rev1 usaba `fullName` y NO disparaba nunca — `fullName` se computa en el object template, que corre DESPUES de la correlacion, asi que no existe en el pre-focus. Solo sirven items poblados por inbound: `givenName` (ri:NOMBRE) y `familyName` (ri:PATERNO). Volumen dimensionado: 33 pares givenName+familyName repetidos entre Users activos.</c:documentation>
                     <c:item>
-                        <c:ref>fullName</c:ref>
+                        <c:ref>givenName</c:ref>
+                    </c:item>
+                    <c:item>
+                        <c:ref>familyName</c:ref>
                     </c:item>
                     <c:composition>
                         <c:tier>4</c:tier>
