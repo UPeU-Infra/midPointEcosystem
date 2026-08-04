@@ -7,6 +7,13 @@
 
 ## VEREDICTO: ❌ NO reactivar todavía
 
+> **⚠️ ACTUALIZACIÓN 04-ago (tarde):** los **tres bloqueantes de §5 están resueltos**
+> — correlación (resource Trabajadores v**324**) y política de baja en LDAP (resource LDAP
+> v**222**, `default` + `alumni`). Este veredicto refleja la corrida **anterior** a esos arreglos.
+> **Falta repetir la simulación completa** para confirmar los números finales antes de reactivar.
+> Ver [`correlacion-resuelta.md`](correlacion-resuelta.md) y
+> [`existence-ldap-resuelto.md`](existence-ldap-resuelto.md).
+
 La corrida es técnicamente sana (0 fallos, ningún `Operation not supported`), pero produciría
 **dos efectos inaceptables sin decisión previa**: 3 duplicados de persona y 114 borrados de
 entradas LDAP vivas.
@@ -157,9 +164,9 @@ Cortar el acceso es correcto; hacerlo por borrado es una decisión de diseño qu
 
 | # | Acción | Bloquea |
 |---|---|---|
-| 1 | **Resolver los 3 duplicados a mano** (`000614192`, `44528386f`, `001642451`): decidir si se relinkan al `User` existente o se corrige el dato en Oracle | Sí |
-| 2 | **Añadir un tier de correlación por `externalSystemId` / `lambIdPersona`** — atrapa a Evanilda de forma inequívoca. Normalizar padding NO sirve aquí (ver §2). Para los duplicados de origen (Luzirene, Katty) el guardarraíl debe al menos **abrir `disputed` ante un homónimo exacto**, en vez de crear en silencio | Sí |
-| 3 | ~~**Decidir la política de baja en LDAP**~~ → ✅ **RESUELTO 04-ago**: mapping `activation/existence` condicional en `account/default`, resource version **221**. La baja conserva la entrada y la deshabilita; las mudanzas entre OU siguen funcionando. Validado con canario de tres clases, 0 dual-shadows. Ver [`existence-ldap-resuelto.md`](existence-ldap-resuelto.md). **Queda abierto `account/alumni`**, que nunca tuvo `administrativeStatus` — el leaver gap sigue vivo para egresados | ~~Sí~~ → parcial |
+| 1 | ~~**Resolver los 3 duplicados a mano**~~ → ✅ **RESUELTO 04-ago** por el correlador: `001642451` vincula con el `User` existente; `000614192` y `44528386f` abren `disputed`. **0 Users creados** en preview. Ver [`correlacion-resuelta.md`](correlacion-resuelta.md) | ~~Sí~~ |
+| 2 | ~~**Añadir un tier de correlación**~~ → ✅ **RESUELTO 04-ago**: resource version **324**. Tier 2 por `lambIdPersona` (verificado: 0 colisiones entre personas distintas en 58.178 Users) + tier 4 `givenName`+`familyName` con peso 0.55 que fuerza `disputed` ante homónimo. Ver [`correlacion-resuelta.md`](correlacion-resuelta.md) | ~~Sí~~ |
+| 3 | ~~**Decidir la política de baja en LDAP**~~ → ✅ **RESUELTO 04-ago**: mapping `activation/existence` condicional en `account/default`, resource version **221**. La baja conserva la entrada y la deshabilita; las mudanzas entre OU siguen funcionando. Validado con canario de tres clases, 0 dual-shadows. Ver [`existence-ldap-resuelto.md`](existence-ldap-resuelto.md). `account/alumni` cerrado también (version **222**) | ~~Sí~~ |
 | 4 | Repetir esta simulación tras 1-3 y comprobar que `USER ADDED` baja a 15 y que los borrados son solo los 66 movimientos | Sí |
 | 5 | Resolver la colisión de proyección Entra del foco `76443853` / `james.raymundo` | No |
 
