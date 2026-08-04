@@ -163,3 +163,50 @@ asignar a mano roles antes derivados — y se habría deshecho solo en el siguie
 porque el dato de origen no cambió. **El estado actual es el correcto según los datos**; el
 anterior reflejaba un contrato ya terminado. Su acceso LDAP sigue vivo igual que el de los
 otros 160: ni mejor ni peor que antes de la prueba.
+
+---
+
+## 🔴 EL CANAL ESTÁ ROTO EN LAS DOS DIRECCIONES — 3.150 trabajadores vivos NO existen en el IGA
+
+Medido el 03-ago cruzando los **5.603** trabajadores con contrato vivo de
+`ELISEO.VW_APS_EMPLEADO` (`ID_ENTIDAD=7124`) contra MidPoint:
+
+| Situación en MidPoint | Personas |
+|---|---|
+| **NO están** | **3.180** (57 %) |
+| `employee-staff` / active | 1.463 |
+| `employee-faculty` / active | 852 |
+| sin archetype / archived | 49 |
+| `alumni` / active | 38 |
+| `employee-staff` / archived | 12 |
+| `student` / active | 9 |
+
+Y de esos 3.180, comprobado si existen por otra vía:
+
+| | Personas |
+|---|---|
+| **Sin rastro alguno** (ni User con ese name, ni shadow en ningún resource) | **3.150** |
+| Tienen shadow en **otro** resource (entraron como estudiante/egresado) | 26 |
+| Son User con `name` = DNI | 1 |
+
+**Es cobertura, no correlación.** No están mal vinculados: no existen. El IGA gobierna
+hoy al **43 %** de la plantilla viva.
+
+### Por qué
+
+El canal de Trabajadores lleva semanas sin funcionar en la práctica:
+
+1. `recon-oracle-lamb-trabajadores-daily` **suspendida desde el 25-jul**.
+2. Antes de eso arrastraba el bug de `CANON_KEY` duplicado que afectaba a
+   **5.573 de 7.379 (75 %)** — ver memoria del 20-jul.
+
+### Consecuencia para todo lo demás
+
+Cualquier control de gobierno construido sobre esta población —certificación de accesos,
+ownership, SoD, el outbound de bajas que se arregló hoy— **opera sobre menos de la mitad de
+las personas que debería**. No es un problema de diseño de esos controles: es que la
+población de entrada está incompleta.
+
+**Esto es lo primero que hay que arreglar del canal de Trabajadores**, antes que las bajas
+y antes que reactivar la reconciliación: si se reactiva tal cual, se procesarían bajas de
+una población que ya está incompleta.
