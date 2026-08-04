@@ -88,3 +88,64 @@ AND NOT EXISTS (SELECT 1 FROM ELISEO.VW_APS_EMPLEADO v
 
 Población de referencia (03-ago): **5.603** personas con contrato vivo; **7.541** incluyendo
 el grace de 730 días.
+
+---
+
+## 🔴 CANARIO EJECUTADO (03-ago) — el recompute NO corta el acceso real
+
+Canario: **William Gabriel Ubia Mendez** (`200410157`, DNI 42137188), contrato terminado el
+2026-07-31, dual trabajador+egresado. Recompute `full` sobre un único foco.
+
+### En MidPoint: correcto
+
+| Antes (11 roles) | Después (5 roles) |
+|---|---|
+| `AR-M365-Staff-A3`, `AR-WiFi-Staff`, `AR-Zoom-Pro`, `AR-EntraID-User`, `AR-Indico-User`, `AR-Koha-Patron-Administrativo`, `AR-LDAP-Person`, `BR-Admin-Area`, `BR-Personal-General`, `R-Affiliation-Staff`, `AR-Koha-Patron-Trabajadores` | `BR-Egresado`, `R-Affiliation-Alumni`, `AR-LDAP-Alumni`, `AR-Vendor-Academic-Access`, `AR-Koha-Patron-Trabajadores` |
+
+Cesó como trabajador y quedó como egresado — el comportamiento esperado para un dual.
+Version 54 → 56.
+
+### En LDAP: NO se materializó
+
+```
+resultStatus = partial_error
+"Operation not supported for COD(inetOrgPerson + eduPerson + schacPersonalCharacteristics
+ + upeuPerson + schacEntryMetadata + midPointPerson) in resource:7b4e1c2d…"
+```
+
+Verificado con `ldapsearch` contra el directorio real:
+
+```
+dn: uid=200410157,ou=people,dc=upeu,dc=edu,dc=pe     ← sigue en ou=people
+eduPersonPrimaryAffiliation: staff                    ← SIGUE COMO STAFF
+eduPersonAffiliation: staff, alum, member
+title: Asistente de Entornos Virtuales de Aprendizaje ← conserva el cargo
+```
+
+**El recompute cambia MidPoint pero no corta el acceso.** La persona sigue siendo `staff`
+en el directorio del que cuelgan WiFi 802.1X, InOut y RIMS.
+
+### Causa: la misma que el dual-shadow
+
+`AR-LDAP-Person` → `AR-LDAP-Alumni` implica mover la entrada de `ou=people` a `ou=alumni`, y
+**el outbound de este resource no soporta rename in-place** — exactamente la causa raíz que
+`docs/runbooks/ldap-dualshadow-dedup-265/RUNBOOK.md` documenta desde junio y que sigue sin
+corregir. El mismo defecto produce dos síntomas distintos: entradas duplicadas al promocionar,
+y bajas que no se materializan al cesar.
+
+### Consecuencia para el plan
+
+**La opción 1 (recompute acotado a los 161) queda invalidada como solución.** Aplicarla a los
+160 restantes produciría un cambio cosmético en MidPoint —roles retirados— sin cortar un solo
+acceso real, y dejaría 160 focos en estado inconsistente con LDAP.
+
+**No se ejecutó sobre nadie más.** El canario queda con los roles ya recalculados en MidPoint
+y su entrada LDAP intacta; conviene decidir si se revierte o se deja a la espera del fix.
+
+### Lo que sí cerraría el riesgo
+
+1. **Corregir el outbound `dn`/`uid` del resource LDAP** para que soporte el cambio de rama
+   (o modelar alumni sin mover de OU). Es la causa raíz común con el dual-shadow.
+2. Mientras tanto, **cortar el acceso donde sí se puede**: deshabilitar la cuenta LDAP
+   (`administrativeStatus=disabled`) en vez de moverla — hay que verificar si ese camino
+   también choca con `Operation not supported`.
