@@ -150,4 +150,40 @@ return costCenter</code>
     </item>
 
 
+
+    <!--
+      BLOQUE Q4-staff — employeeNumber DESDE externalSystemId (2026-08-03)
+      Petición formal de Pulso DTI (P5) — ver
+      productos/devsupeu/canonico/docs/consultas/2026-08-03-contrato-atributos-ldap-pulso-dti.md
+
+      Medido 03-ago: employeeNumber estaba a 0 en TODA la población (0 de 2.519
+      trabajadores activos), pese a ser atributo core de UserType y de estar el dato
+      ya dentro de MidPoint.
+
+      Fuente: extension/sb:externalSystemId = ID_PERSONA de Oracle (MDM MOISES.PERSONA),
+      poblado en 8.524 users por el backfill del 19-jul. Es único por persona y estable.
+
+      POR QUÉ ESTA FUENTE Y NO personalNumber/COD_APS: `personalNumber` lleva el CANON_KEY,
+      que a su vez alimenta `schacPersonalUniqueCode` en LDAP (dependencia verificada el
+      03-ago, ver docs/specs/canon-key-migracion/01-diseno.md §9). Derivar employeeNumber
+      de ahí lo acoplaría a la misma cadena. `externalSystemId` está desacoplado.
+
+      strong: es un identificador derivado, debe reflejar siempre el valor de origen.
+    -->
+    <item>
+        <ref>employeeNumber</ref>
+        <mapping>
+            <name>Q4-staff-employeeNumber-from-externalSystemId</name>
+            <description>employeeNumber = extension/sb:externalSystemId (ID_PERSONA de Oracle). Identificador estable por persona para consumidores del directorio (Pulso DTI P5). Desacoplado del CANON_KEY.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path>extension/sb:externalSystemId</path>
+            </source>
+            <expression>
+                <asIs/>
+            </expression>
+        </mapping>
+    </item>
+
 </objectTemplate>
