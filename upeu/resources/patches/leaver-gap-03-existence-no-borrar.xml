@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- ================================================================
-     PATCH 3/3 — mapping de EXISTENCIA en account/default
+     PATCH 3/3 — mapping de EXISTENCIA en account/default  (rev2, CONDICIONAL)
      Resource: LDAP-IdentityCache-UPeU (7b4e1c2d-…)
      Container: schemaHandling/objectType[62]  (kind=account, intent=default)
      Fecha: 2026-08-04
@@ -10,59 +10,68 @@
 
      QUE PROBLEMA CIERRA
      Los patches 01 y 02 (03-ago) hicieron que MidPoint sepa DESHABILITAR una
-     cuenta LDAP (`midPointAccountStatus`). Pero la simulación del 04-ago
-     descubrió que, en una baja real, la cuenta nunca llega a deshabilitarse:
-     **se BORRA antes**.
+     cuenta LDAP (`midPointAccountStatus`). Pero en una baja real la cuenta nunca
+     llegaba a deshabilitarse: **se BORRABA antes**. Al cesar la persona, el foco
+     pierde la asignación que otorgaba la cuenta, la proyección deja de ser
+     "legal" y MidPoint la deprovisiona borrando la entrada.
 
-     Al cesar la persona, el foco pierde la asignación que otorgaba la cuenta,
-     la proyección deja de ser "legal" y MidPoint la deprovisiona borrando la
-     entrada. Medido en la simulación: **180 SHADOW DELETED, de los cuales 114
-     dejan a la persona SIN ninguna entrada en el directorio** (los otros 66 son
-     movimientos ou=people <-> ou=alumni, que el conector implementa como
-     delete+add porque no soporta rename).
+     Medido en la simulación del 04-ago (sin este patch): 180 SHADOW DELETED, de
+     los cuales **114 dejaban a la persona SIN ninguna entrada en el directorio**.
 
-     Verificado en el resource antes de este patch:
-         "existence"            ocurrencias: 0   <- no habia mapping
-         "administrativeStatus" ocurrencias: 1   <- el patch 02, presente
+     ⚠️ POR QUE ES CONDICIONAL Y NO UN `true` FIJO  ← LA LECCION DE LA rev1
+     La rev1 de este patch usaba `<value>true</value>` incondicional. Se aplicó y
+     se midió. Resultado:
 
-     Sin mapping de existencia, el comportamiento por defecto es borrar.
+       | Borrados en ou=people (bajas)     | 141 -> 0   ✅ |
+       | Personas con DOS entradas a la vez|   0 -> 9   ❌ |  (9 en el 36% de la
+                                                             corrida; ~25 al final)
 
-     QUE HACE ESTE PATCH
-     Declara que la proyección debe existir SIEMPRE (valor fijo `true`). Con eso
-     la entrada nunca se borra, y el `administrativeStatus` del patch 02 —que ya
-     opera, verificado en el canario `uid=20894196`— la marca `disabled`.
+     Causa: las mudanzas `ou=people` <-> `ou=alumni` (26 + 21 en la corrida
+     completa) el conector las implementa como **delete + add**, porque no soporta
+     rename. Con existence=true incondicional el borrado del lado viejo no ocurre,
+     y la persona acaba con entrada en `ou=people` Y en `ou=alumni`: exactamente
+     el dual-shadow que se limpió a mano días antes.
 
-     Es lo que pidieron formalmente tres consumidores del directorio: Pulso DTI
-     (P1, bloqueante), RIMS e InOut. Una entrada borrada NO es una señal de baja:
-     deja un hueco, se pierde el ancla `eduPersonUniqueId`, y si la persona
-     regresa se le crea ficha nueva.
-       -> productos/devsupeu/canonico/docs/consultas/2026-08-03-contrato-atributos-ldap-pulso-dti.md
+     MidPoint recibe "baja" y "mudanza" con la misma señal —pérdida de legalidad—
+     así que el mapping tiene que distinguirlas por el estado del FOCO:
 
-     ⚠️ RIESGO QUE HAY QUE DESCARTAR MIDIENDO, NO RAZONANDO
-     Un mapping de existencia `true` incondicional podría, en teoría, hacer que
-     MidPoint intente CREAR cuenta LDAP para focos que hoy no la tienen. El
-     mapping solo debería evaluarse para proyecciones ya presentes en el contexto
-     del foco (linked o assigned) — pero eso NO se ha verificado en esta versión.
+       - foco de baja (disabled/archived)  -> existence=true  -> se conserva y el
+                                                                 patch 02 la deja
+                                                                 `disabled`
+       - foco activo (mudanza, cambio de   -> el mapping NO aporta valor y decide
+         afiliación, cualquier otro caso)     la legalidad normal -> mudanza OK
 
-     Por eso el orden de trabajo es: aplicar el PATCH -> lanzar una simulación
-     (`mode=preview`, no escribe nada) -> comprobar que `SHADOW ADDED` NO se
-     dispara. Si se disparara, se revierte con el patch de reversión gemelo.
-     El backup del resource previo está en PROD:
-         ~/backup-ldap-resource-preexistence-20260804.json   (version 219)
+     Verificado ademas en el canario del 04-ago (`9f2e1a55-…`, preview):
+       - control negativo: 3 users activos SIN cuenta LDAP -> **0 SHADOW ADDED**.
+         El mapping NO crea cuentas a quien no las tiene. Riesgo descartado.
+       - bajas: pasan de DELETED a `administrativeStatus: disabled` con
+         `disableReason#deprovision`.
+
+     ⚠️ TRAMPA DE MEDICION (documentada para que no se repita)
+     Al contar los shadows creados NO se puede hacer `JOIN` con `m_shadow`: un
+     shadow que *se crearía* aún no existe en esa tabla, y el join los descarta en
+     silencio -> da un falso "0 dual-shadows". Hay que leer el `fullobject` del
+     `m_simulation_result_processed_object` directamente.
 
      LO QUE ESTE PATCH **NO** RESUELVE
-     - No decide qué pasa con las 66 mudanzas ou=people <-> ou=alumni: esas
-       seguirán siendo delete+add mientras el conector no soporte rename.
+     - `account/alumni` (@id=461) no tiene NI existence NI administrativeStatus:
+       el leaver gap sigue abierto para egresados. Patch aparte.
+     - `generic/ou` (@id=447) tampoco. No aplica igual, pero conviene revisarlo.
      - No corta WiFi 802.1X (EAP-TLS valida el certificado, no el bind LDAP).
-     - No purga: las entradas deshabilitadas se conservan indefinidamente. Si se
-       quiere retención acotada, se diseña aparte.
+     - No purga: las entradas deshabilitadas se conservan indefinidamente.
+
+     REVERSION
+     Backup del resource previo en PROD:
+         ~/backup-ldap-resource-preexistence-20260804.json   (version 219)
 
      VERIFICACION OBLIGATORIA DESPUES (no confiar en el 204):
-       1. `version` del resource DEBE subir (219 -> 220)
+       1. `version` del resource DEBE subir
        2. `<schema>` intacto (xsd:element > 0) y `<native>` intacto
        3. test connection: success
-       4. simulación en preview: SHADOW DELETED baja de 180 a ~66,
-          y SHADOW ADDED NO crece respecto a los 189 de la corrida anterior
+       4. canario en preview con LAS TRES clases a la vez:
+            baja  -> MODIFIED con midPointAccountStatus=disabled
+            mudanza -> default DELETED + alumni ADDED (¡debe seguir borrando!)
+            control negativo -> 0 SHADOW ADDED
      ================================================================ -->
 <objectModification
         xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
@@ -70,12 +79,24 @@
         xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <itemDelta>
-        <t:modificationType>add</t:modificationType>
+        <t:modificationType>replace</t:modificationType>
         <t:path>schemaHandling/objectType[62]/activation/existence</t:path>
         <t:value xsi:type="c:ResourceBidirectionalMappingType">
             <c:outbound>
-                <c:name>leaver-gap-existence-nunca-borrar</c:name>
+                <c:name>leaver-gap-existence-conservar-solo-si-baja</c:name>
                 <c:strength>strong</c:strength>
+                <!-- Solo actua cuando la persona esta de baja. En cualquier otro
+                     caso el mapping no aporta valor y la legalidad normal decide,
+                     que es lo que mantiene funcionando las mudanzas entre OUs. -->
+                <c:condition>
+                    <c:script>
+                        <c:code><![CDATA[
+def st = focus?.activation?.effectiveStatus?.toString()?.toLowerCase()
+def lc = focus?.lifecycleState?.toString()?.toLowerCase()
+return (st in ['disabled', 'archived']) || (lc in ['archived', 'suspended'])
+]]></c:code>
+                    </c:script>
+                </c:condition>
                 <c:expression>
                     <c:value>true</c:value>
                 </c:expression>
