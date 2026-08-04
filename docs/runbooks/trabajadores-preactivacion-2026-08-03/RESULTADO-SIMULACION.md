@@ -54,13 +54,35 @@ De las 18 altas de `User`, **3 son personas que YA existen en MidPoint** (compar
 `fullName` normalizado — mayúsculas + acentos, el mismo método con el que se detectó el caso
 Orlando):
 
-| Alta que se crearía | Ya existe como | Estado del existente | Por qué no correlaciona |
-|---|---|---|---|
-| `000614192` Luzirene Gomes de Alcantara | **`00614192`** | archived | **padding de ceros** |
-| `44528386f` Katty Aracelly Porras Espinoza | **`44528386`** | archived | **sufijo `f`** en el documento |
-| `001642451` Evanilda Ruth Valeriano Tiñini | **`201520024`** | active | código de trabajador vs código de estudiante — misma persona, dos canales |
+| Alta que se crearía | Ya existe como | Estado | Documento existente → del alta | `lambIdPersona` |
+|---|---|---|---|---|
+| `000614192` Luzirene Gomes de Alcantara | **`00614192`** (`49945169-…`) | archived, cesó 28-feb-2026 | `CE:000614192` → `DNI 00614192` | 11173 ≠ **192480** |
+| `44528386f` Katty Aracelly Porras Espinoza | **`44528386`** (`daca140b-…`) | archived, cesó 31-may-2026 | `44528386f` → `DNI 44528386` | 3999385 ≠ **4055270** |
+| `001642451` Evanilda Ruth Valeriano Tiñini | **`201520024`** (`4799ae35-…`) | **active**, egresada en `ou=alumni` | `PP:9823732` → `CE:001642451` | **68833 = 68833** |
 
 Las otras 15 altas no tienen homónimo: son personas nuevas legítimas.
+
+### La causa NO es el formato del identificador
+
+En los tres casos **la persona cambió de documento** entre un registro y otro (CE→DNI,
+con-`f`→sin-`f`, pasaporte→CE). El tier 1 correlaciona por `lambDocNum` y falla porque compara
+documentos que ya no son el mismo. **Normalizar padding o sufijos no salvaría a ninguno de los
+tres** — es justo el riesgo «cambia al reanclar CE→DNI» que el propio diseño del `CANON_KEY`
+anticipó y que aquí se materializa.
+
+Eso parte el problema en dos clases con dueños distintos:
+
+- **Evanilda es resoluble desde el IGA.** Mismo `lambIdPersona` (68833) a ambos lados: un tier de
+  correlación por `externalSystemId` / `lambIdPersona` la atraparía sin ambigüedad. Es además el
+  caso más grave, porque el `User` existente está **activo** y con cuenta LDAP viva. Prueba
+  independiente de que es la misma persona: su foto en LAMB se llama
+  `038_0201520024001642451.jpg` — lleva los dos códigos concatenados.
+- **Luzirene y Katty son duplicado de origen en Oracle**, misma clase que el caso Orlando: **dos
+  `ID_PERSONA` distintos para el mismo humano**. El IGA no puede unirlas por identificador porque
+  en la fuente son dos personas. Corresponde a los DBAs. Lo que sí es defecto del IGA es que las
+  crearía **en silencio**, sin `disputed`.
+
+Las tres son **recontrataciones**: habían cesado y vuelven con contrato vivo.
 
 ### Por qué esto invalida la conclusión de la Fase 0 del 03-ago
 
@@ -136,7 +158,7 @@ Cortar el acceso es correcto; hacerlo por borrado es una decisión de diseño qu
 | # | Acción | Bloquea |
 |---|---|---|
 | 1 | **Resolver los 3 duplicados a mano** (`000614192`, `44528386f`, `001642451`): decidir si se relinkan al `User` existente o se corrige el dato en Oracle | Sí |
-| 2 | **Arreglar el guardarraíl** para que el tier 2 normalice padding y sufijos alfabéticos antes de comparar — hoy no atrapa ninguno de los 3 | Sí |
+| 2 | **Añadir un tier de correlación por `externalSystemId` / `lambIdPersona`** — atrapa a Evanilda de forma inequívoca. Normalizar padding NO sirve aquí (ver §2). Para los duplicados de origen (Luzirene, Katty) el guardarraíl debe al menos **abrir `disputed` ante un homónimo exacto**, en vez de crear en silencio | Sí |
 | 3 | **Decidir la política de baja en LDAP**: ¿borrar la entrada (comportamiento actual) o deshabilitarla y conservarla? Si es lo segundo, hay que cambiar el `objectType` de LDAP antes de correr nada. Afecta a 114 personas en la primera corrida | Sí |
 | 4 | Repetir esta simulación tras 1-3 y comprobar que `USER ADDED` baja a 15 y que los borrados son solo los 66 movimientos | Sí |
 | 5 | Resolver la colisión de proyección Entra del foco `76443853` / `james.raymundo` | No |
