@@ -219,3 +219,61 @@ No aparecen `unmatched` problemáticos: los que no correlacionan son personas nu
 3. Validar el guardarraíl (R4, Fase 2), que sigue pendiente desde el 26-jul.
 4. Decidir cómo escalonar 3.114 altas para no disparar provisioning masivo en un solo ciclo
    (p. ej. roles de aplicación en `proposed` durante la carga).
+
+---
+
+## 9. 🔴 CONDICIÓN 2 VERIFICADA (03-ago): **SÍ hay un consumidor que depende del `CANON_KEY`**
+
+Esta es la comprobación que abortó el intento del 17-jul. **Resultado: la dependencia existe.**
+
+### La cadena
+
+```
+searchScript: CANON_KEY  ──inbound(icfs:name)──►  User.personalNumber
+User.personalNumber      ──outbound──────────►  LDAP: schacPersonalUniqueCode
+                                                LDAP: eduPersonAssurance (condición)
+```
+
+### La evidencia
+
+| uid en LDAP | `schacPersonalUniqueCode` publicado | `personalNumber` en MidPoint |
+|---|---|---|
+| `200410157` | `urn:schac:personalUniqueCode:pe:institutionID:upeu.edu.pe:`**`42137188`** | **42137188** |
+| `20894196` | `urn:schac:personalUniqueCode:pe:institutionID:upeu.edu.pe:`**`20894196`** | **20894196** |
+
+El código del URN **es** el `CANON_KEY`. Volumen en el directorio: **48.551** entradas con
+`schacPersonalUniqueCode` (todas las poblaciones); de ellas, las de los **7.364** trabajadores
+linkados cambiarían de valor.
+
+`eduPersonAssurance` (28.232 entradas) usa `personalNumber` como condición, no como valor —
+sus valores son URIs de REFEDS, así que no cambia de contenido.
+
+Koha y Entra ID solo lo consumen por **inbound** (`ri:employeeId` en Entra): leen, no publican.
+No se ven afectados por el cambio de clave.
+
+### Consecuencia para el plan
+
+**La condición 2 NO se cumple limpiamente.** `schacPersonalUniqueCode` es un atributo SCHAC
+federado, parte del contrato de atributos con los consumidores del directorio (RIMS, InOut,
+Pulso DTI). Cambiarlo para 7.364 personas es un cambio **visible hacia fuera**, no una
+reorganización interna.
+
+Y hay un precedente explícito de que esto importa: el documento de contrato de Pulso DTI
+(`productos/devsupeu/.../2026-08-03-contrato-atributos-ldap-pulso-dti.md` §7) advierte que la
+migración pendiente de `eduPersonUniqueId` **debe avisarse antes** porque afecta a Pulso DTI y
+al RIMS. Aquí aplica lo mismo.
+
+### Opciones
+
+| # | Opción | Efecto |
+|---|---|---|
+| **1** | **Desacoplar `personalNumber` del `CANON_KEY`** antes de migrar: que `schacPersonalUniqueCode` se derive de un identificador estable (`employeeNumber`, hoy vacío, o el documento) | Rompe la cadena y deja la migración como cambio **interno**. **Recomendada** |
+| 2 | Migrar y aceptar el cambio del atributo, coordinando con RIMS, InOut y Pulso DTI | Requiere acuerdo de tres consumidores y ventana conjunta |
+| 3 | No migrar el `CANON_KEY`; resolver la cobertura por otra vía | No se ha identificado otra vía que resuelva la colisión de `COD_APS` |
+
+**Recomendación: opción 1.** Además tiene valor propio — `employeeNumber` está hoy a **0 %** en
+toda la población y es justo lo que pide Pulso DTI (P5). Poblarlo y usarlo como base del
+`schacPersonalUniqueCode` resuelve dos cosas a la vez y **convierte la migración del
+`CANON_KEY` en un cambio invisible para los consumidores**.
+
+**Estado: la Fase 3 NO debe ejecutarse hasta resolver esto.**
