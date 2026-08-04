@@ -7,12 +7,11 @@
 
 ## VEREDICTO: ❌ NO reactivar todavía
 
-> **⚠️ ACTUALIZACIÓN 04-ago (tarde):** los **tres bloqueantes de §5 están resueltos**
-> — correlación (resource Trabajadores v**324**) y política de baja en LDAP (resource LDAP
-> v**222**, `default` + `alumni`). Este veredicto refleja la corrida **anterior** a esos arreglos.
-> **Falta repetir la simulación completa** para confirmar los números finales antes de reactivar.
-> Ver [`correlacion-resuelta.md`](correlacion-resuelta.md) y
-> [`existence-ldap-resuelto.md`](existence-ldap-resuelto.md).
+> **⚠️ ESTE DOCUMENTO ESTÁ SUPERADO.** Los tres bloqueantes de §5 se resolvieron el 04-ago por la
+> tarde y la simulación se repitió con los tres arreglos actuando a la vez:
+> **`USER ADDED` 18 → 15, personas sin entrada LDAP 114 → 0, 0 Users creados.**
+> **→ Resultado vigente: [`SIMULACION-FINAL.md`](SIMULACION-FINAL.md)**
+> Lo de abajo se conserva porque documenta cómo se detectaron los tres problemas.
 
 La corrida es técnicamente sana (0 fallos, ningún `Operation not supported`), pero produciría
 **dos efectos inaceptables sin decisión previa**: 3 duplicados de persona y 114 borrados de
