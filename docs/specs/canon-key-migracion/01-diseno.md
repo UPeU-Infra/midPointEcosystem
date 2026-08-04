@@ -150,3 +150,72 @@ Ejecutar **Fase 0 y Fase 1 primero, como trabajo independiente**. Ambas son de s
 reversibles, y su resultado decide si la migración es viable o si hay que resolver antes la
 calidad del dato en Oracle. **No comprometerse con las Fases 3-5 hasta ver los números de la
 Fase 1.**
+
+---
+
+## 8. RESULTADOS — Fase 0 y Fase 1 ejecutadas (2026-08-03)
+
+### Fase 0 — `personalNumber`: **no requiere acción** ✅
+
+| Situación | Users |
+|---|---|
+| `personalNumber` = `CANON_KEY` **exacto** | **7.364** |
+| Nulo | 0 |
+| Difiere solo en padding de ceros | 0 |
+| Difiere de verdad | 0 |
+
+El drift de padding que documentó el spec del 20-jul (caso Luzirene, `00614192` vs
+`000614192`) **ya no existe en la población linkada**. R3 queda cerrado: el tier 2 del
+guardarraíl sí protegería. **No hay backfill que hacer.**
+
+### Fase 1.1 — Impacto del cambio de clave: **total**
+
+| Formato actual del `__NAME__` | Vivos | Muertos |
+|---|---|---|
+| Solo `COD_APS` → **CAMBIA** | **7.371** | 145 |
+| Ya `COD_APS-ID_PERSONA` → no cambia | 0 | 0 |
+
+**De los que cambian, 7.364 están LINKADOS a un `User`.**
+
+Dato relevante: hoy la rama `ELSE` del `CASE` **nunca se activa** — ningún shadow lleva el
+formato compuesto. Es decir, el `CANON_RN` ya colapsa las colisiones de documento antes de que
+la rama pueda dispararse. La generalización de la opción C es, en la práctica, un cambio de
+formato del 100 % de los identificadores.
+
+### Fase 1.2 — Las personas que entrarían: **son altas nuevas, no vinculaciones**
+
+Muestra de **30** trabajadores vivos (no aleatoria: 30 consecutivos del listado — sesgo
+reconocido, conviene repetir con muestreo aleatorio antes de ejecutar):
+
+| Situación | Personas |
+|---|---|
+| Ya tienen shadow de Trabajadores | 9 |
+| **Existen como `User` solo en la extensión** (`lambDocNum`) | **0** |
+| No aparecen de ninguna forma | 21 |
+
+**Ninguna de las personas ausentes existe en MidPoint por otro canal.** No entraron como
+estudiante ni como egresado. Por tanto la migración **no vincularía identidades existentes:
+daría de alta ~3.114 personas nuevas.**
+
+### Qué cambia esto en el análisis de riesgo
+
+| Riesgo previsto | Veredicto tras medir |
+|---|---|
+| Duplicación de `User` por correlación fallida | **Menor de lo temido**: las personas nuevas no tienen `User` previo con el que duplicarse. El guardarraíl sigue siendo necesario para los 7.364 renombrados, no para las altas |
+| Drift de `personalNumber` rompe el tier 2 | **Descartado** (Fase 0: 0 casos) |
+| **Renombrado de 7.364 shadows linkados** | **Confirmado, es el riesgo principal.** Es el mismo escenario que abortó el intento del 17-jul, ahora cuantificado |
+| **Provisioning masivo por 3.114 altas** | **Nuevo riesgo, ahora dimensionado**: cada alta dispara LDAP + Koha + M365 + WiFi. Es el efecto más visible y el que hay que escalonar |
+
+### Criterio de parada de la Fase 1: **superado, con condiciones**
+
+No aparecen `unmatched` problemáticos: los que no correlacionan son personas nuevas, y crear su
+`User` es el comportamiento correcto. La migración es **viable**.
+
+**Condiciones antes de la Fase 3:**
+
+1. Repetir la Fase 1.2 con **muestreo aleatorio** de ≥300 (la muestra actual es consecutiva).
+2. **Verificar que ningún consumidor depende del `__UID__` del shadow** — LDAP, Koha, InOut,
+   RIMS. Es lo que abortó el intento del 17-jul y sigue sin comprobarse.
+3. Validar el guardarraíl (R4, Fase 2), que sigue pendiente desde el 26-jul.
+4. Decidir cómo escalonar 3.114 altas para no disparar provisioning masivo en un solo ciclo
+   (p. ej. roles de aplicación en `proposed` durante la carga).
