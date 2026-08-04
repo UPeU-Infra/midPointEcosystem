@@ -258,3 +258,52 @@ exige plan de migración: es la misma clase de riesgo que abortó el "fix `__UID
 del 17-jul (habría renombrado a 4.097 personas).
 
 **No ejecutado.** Requiere diseño y ventana.
+
+---
+
+## ⛔ RETRACTACIÓN (03-ago, mismo día): la sección de cobertura y la "causa raíz `CANON_KEY`" son **FALSAS**
+
+**Las dos secciones anteriores están mal y no deben usarse.** El error: **conté documentos
+como si fueran personas**.
+
+`ELISEO.VW_APS_EMPLEADO` tiene **una fila por documento**, y una misma persona aporta varios:
+DNI (tipo 1), carné de extranjería (tipo 4) y **códigos de pensión (tipos 97 y 98)** — el
+propio spec del guardarraíl del 20-jul ya lo advertía y no lo tuve en cuenta.
+
+Medido en el universo de contratos vivos (`ID_ENTIDAD=7124`):
+
+| Métrica | Valor |
+|---|---|
+| Filas / documentos distintos (**lo que conté como "personas"**) | 5.603 |
+| **PERSONAS reales** (`ID_PERSONA` distintos) | **2.493** |
+| Personas con 3 documentos | 719 · con 4: 79 · con 5: 9 · con 6: 1 |
+| Documentos compartidos por >1 persona | **0** |
+
+### Lo que esto corrige
+
+| Afirmación previa | Realidad |
+|---|---|
+| "3.150 trabajadores vivos NO existen en el IGA" | **Falso.** No faltan |
+| "El IGA gobierna al 43 % de la plantilla" | **Falso: cubre el 97 %** (2.423 de 2.493) |
+| "`CANON_KEY` sobre `COD_APS` pierde ~3.114 personas" | **Falso.** 2.489 `COD_APS` para 2.493 personas = **99,8 % de cobertura**. El `CANON_KEY` **funciona** |
+| "Los 2.203 `COD_APS` compartidos son colisiones entre personas" | **Falso.** Son las varias filas-documento **de la misma persona** |
+
+**Consecuencia: la migración del `CANON_KEY` NO es necesaria.** Ver la retractación en
+`docs/specs/canon-key-migracion/01-diseno.md`.
+
+### Lo que SÍ sigue en pie
+
+**El hallazgo de las bajas es válido.** Recontado por `ID_PERSONA`: **165 bajas reales** desde
+el 25-jul (no 344 — esa cifra también estaba inflada por documentos). De ellas, **161 seguían
+`active` en MidPoint** con sus accesos — ese cruce se hizo contra `User`, que sí está a grano
+de persona, así que el número y el riesgo son correctos.
+
+También siguen en pie, sin relación con este error:
+- el **leaver gap** (MidPoint no podía retirar accesos en LDAP) y su arreglo de hoy;
+- el canario `200410157`, cuyo contrato terminó de verdad el 31-jul.
+
+### Lección
+
+Antes de comparar poblaciones entre dos sistemas, **verificar cuál es la unidad de cada tabla**.
+Aquí: MidPoint está a grano de **persona**; `VW_APS_EMPLEADO` está a grano de
+**documento-contrato**. Comparar sus conteos directamente produce una brecha ficticia del 57 %.
