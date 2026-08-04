@@ -1,0 +1,568 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fichas de persona duplicadas en LAMB — Informe para derivación</title>
+
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f7f7f5;
+    --surface-2: #f0f0ed;
+    --text: #1a1a17;
+    --text-2: #5c5c55;
+    --text-3: #8a8a80;
+    --line: #e3e3dd;
+    --line-2: #cfcfc7;
+    --accent: #1a4f8a;
+    --red: #a02020;
+    --red-bg: #fdf3f2;
+    --amber: #8a5a00;
+    --amber-bg: #fdf8ed;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14140f; --surface: #1c1c18; --surface-2: #232320;
+      --text: #ecece6; --text-2: #a8a89e; --text-3: #7a7a70;
+      --line: #2e2e28; --line-2: #3d3d36;
+      --accent: #7fb2e8; --red: #ef8f8f; --red-bg: #2a1a18;
+      --amber: #dcb264; --amber-bg: #262018;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14140f; --surface: #1c1c18; --surface-2: #232320;
+    --text: #ecece6; --text-2: #a8a89e; --text-3: #7a7a70;
+    --line: #2e2e28; --line-2: #3d3d36;
+    --accent: #7fb2e8; --red: #ef8f8f; --red-bg: #2a1a18;
+    --amber: #dcb264; --amber-bg: #262018;
+  }
+  :root[data-theme="light"] {
+    --bg: #ffffff; --surface: #f7f7f5; --surface-2: #f0f0ed;
+    --text: #1a1a17; --text-2: #5c5c55; --text-3: #8a8a80;
+    --line: #e3e3dd; --line-2: #cfcfc7;
+    --accent: #1a4f8a; --red: #a02020; --red-bg: #fdf3f2;
+    --amber: #8a5a00; --amber-bg: #fdf8ed;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .page {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 3.5rem 1.5rem 5rem;
+  }
+
+  /* ---------- encabezado ---------- */
+  .flag {
+    display: inline-block;
+    font-size: .688rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--red);
+    border: 1px solid currentColor;
+    border-radius: 3px;
+    padding: .15rem .5rem;
+    margin-bottom: 1.5rem;
+  }
+  h1 {
+    font-size: 1.75rem;
+    line-height: 1.25;
+    font-weight: 650;
+    letter-spacing: -.02em;
+    margin: 0 0 .75rem;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--text-2);
+    margin: 0 0 2rem;
+    text-wrap: pretty;
+  }
+
+  dl.meta {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: .3rem 1.25rem;
+    font-size: .8125rem;
+    margin: 0 0 2.5rem;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border-radius: 6px;
+    border: 1px solid var(--line);
+  }
+  dl.meta dt { color: var(--text-3); }
+  dl.meta dd { margin: 0; color: var(--text); }
+
+  /* ---------- estructura ---------- */
+  h2 {
+    font-size: 1.1875rem;
+    font-weight: 650;
+    letter-spacing: -.015em;
+    margin: 3rem 0 .875rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+    text-wrap: balance;
+  }
+  h3 {
+    font-size: .9375rem;
+    font-weight: 650;
+    margin: 2rem 0 .625rem;
+    letter-spacing: -.005em;
+  }
+  p { margin: 0 0 1rem; text-wrap: pretty; }
+  strong { font-weight: 620; }
+
+  code {
+    font-family: var(--mono);
+    font-size: .875em;
+    background: var(--surface-2);
+    padding: .1em .35em;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  /* ---------- bloque de derivación ---------- */
+  .routing {
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 1.5rem 0 2rem;
+  }
+  .routing-row {
+    display: grid;
+    grid-template-columns: 8.5rem 1fr;
+    gap: 1.25rem;
+    padding: 1.125rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .routing-row:last-child { border-bottom: 0; }
+  .routing-to {
+    font-weight: 650;
+    font-size: .875rem;
+    line-height: 1.45;
+  }
+  .routing-to span {
+    display: block;
+    font-weight: 400;
+    font-size: .75rem;
+    color: var(--text-3);
+    margin-top: .15rem;
+  }
+  .routing-what { font-size: .9375rem; }
+  .routing-what p { margin: 0 0 .4rem; }
+  .routing-what p:last-child { margin-bottom: 0; }
+  .tag {
+    display: inline-block;
+    font-size: .6875rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: .1rem .4rem;
+    border-radius: 3px;
+    vertical-align: .08em;
+    margin-right: .4rem;
+  }
+  .tag-urgent { background: var(--red-bg); color: var(--red); }
+  .tag-med { background: var(--amber-bg); color: var(--amber); }
+
+  /* ---------- cifras ---------- */
+  .figures {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 1.5rem 0 2rem;
+  }
+  .figure { background: var(--bg); padding: 1.125rem 1.25rem; }
+  .figure-n {
+    font-size: 1.75rem;
+    font-weight: 620;
+    letter-spacing: -.03em;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .figure-n.is-red { color: var(--red); }
+  .figure-l {
+    font-size: .75rem;
+    color: var(--text-2);
+    margin-top: .35rem;
+    line-height: 1.4;
+  }
+
+  /* ---------- tablas ---------- */
+  .scroll { overflow-x: auto; margin: 1.25rem 0 1.75rem; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: .8125rem;
+    line-height: 1.5;
+  }
+  caption {
+    text-align: left;
+    font-size: .8125rem;
+    color: var(--text-2);
+    margin-bottom: .5rem;
+  }
+  th, td {
+    text-align: left;
+    padding: .5rem .75rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  th {
+    font-weight: 620;
+    font-size: .6875rem;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    border-bottom: 1px solid var(--line-2);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num { font-family: var(--mono); font-size: .8125rem; white-space: nowrap; }
+  td .wrong { color: var(--red); font-weight: 620; }
+
+  /* ---------- avisos ---------- */
+  .note {
+    border-left: 2px solid var(--line-2);
+    padding: .125rem 0 .125rem 1.125rem;
+    margin: 1.5rem 0;
+    font-size: .875rem;
+    color: var(--text-2);
+  }
+  .note p:last-child { margin-bottom: 0; }
+  .note strong { color: var(--text); }
+  .note-alert { border-left-color: var(--red); }
+
+  .pull {
+    font-size: 1rem;
+    line-height: 1.55;
+    margin: 1.75rem 0;
+    padding: 1.125rem 1.25rem;
+    background: var(--surface);
+    border-radius: 6px;
+    border: 1px solid var(--line);
+  }
+  .pull p:last-child { margin-bottom: 0; }
+
+  ol, ul { margin: 0 0 1rem; padding-left: 1.25rem; }
+  li { margin-bottom: .4rem; text-wrap: pretty; }
+
+  footer {
+    margin-top: 3.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+    font-size: .8125rem;
+    color: var(--text-3);
+  }
+  footer p { margin: 0 0 .35rem; }
+
+  /* ---------- impresión ---------- */
+  @media print {
+    @page { margin: 16mm 14mm; }
+    :root {
+      --bg:#fff; --surface:#fafaf8; --surface-2:#f2f2ef; --text:#000; --text-2:#333;
+      --text-3:#666; --line:#ddd; --line-2:#bbb; --accent:#14406e; --red:#8a1a1a;
+      --red-bg:#fbf2f1; --amber:#6e4700; --amber-bg:#fcf8ee;
+    }
+    body { font-size: 10.5pt; line-height: 1.5; }
+    .page { padding: 0; max-width: none; }
+    h1 { font-size: 18pt; }
+    h2 { font-size: 12.5pt; margin-top: 1.5rem; padding-top: .875rem; break-after: avoid; }
+    h3 { break-after: avoid; }
+    table, .routing, .figures, .pull, .note { break-inside: avoid; }
+    tr { break-inside: avoid; }
+    .scroll { overflow: visible; }
+    footer { break-inside: avoid; }
+  }
+
+  @media (max-width: 34rem) {
+    .page { padding: 2.25rem 1.125rem 3rem; }
+    h1 { font-size: 1.5rem; }
+    .routing-row { grid-template-columns: 1fr; gap: .5rem; }
+    dl.meta { grid-template-columns: 1fr; gap: .1rem; }
+    dl.meta dt { margin-top: .5rem; }
+    dl.meta dt:first-child { margin-top: 0; }
+  }
+</style>
+
+<div class="page">
+
+  <span class="flag">Confidencial · contiene datos personales</span>
+
+  <h1>Fichas de persona duplicadas en el maestro de LAMB</h1>
+
+  <p class="standfirst">
+    544 trabajadores tienen dos fichas de persona en la base de datos de LAMB apuntando al mismo
+    expediente laboral. Dieciséis están hoy con contrato vigente y cuatro de ellos figuran con un
+    número de documento equivocado. No es un problema de Recursos Humanos ni de MidPoint: es un
+    defecto en el maestro de personas de LAMB.
+  </p>
+
+  <dl class="meta">
+    <dt>Para</dt>          <dd>David Barrantes — Dirección de Tecnologías de Información</dd>
+    <dt>De</dt>            <dd>Juan Alberto Sánchez — DTI / Infraestructura TI</dd>
+    <dt>Fecha</dt>         <dd>4 de agosto de 2026</dd>
+    <dt>Asunto</dt>        <dd>Solicitud de derivación a las áreas responsables</dd>
+    <dt>Origen del dato</dt><dd>Medición en vivo sobre <code>ELISEO.VW_APS_EMPLEADO</code> (LAMB Académico)</dd>
+  </dl>
+
+  <h2>Qué se solicita derivar</h2>
+
+  <p>
+    El hallazgo se reparte entre dos áreas. Ninguna de las acciones se puede resolver desde la
+    plataforma de gestión de identidades: el dato está mal en el origen.
+  </p>
+
+  <div class="routing">
+    <div class="routing-row">
+      <div class="routing-to">Recursos Humanos<span>Gestión del Potencial Humano</span></div>
+      <div class="routing-what">
+        <p>
+          <span class="tag tag-urgent">Urgente</span>
+          Corregir el número de documento de <strong>cuatro trabajadores activos</strong> que figura
+          equivocado en el sistema (detalle en el apartado 3).
+        </p>
+        <p>
+          <span class="tag tag-med">Preventivo</span>
+          Al corregir un documento o registrar la afiliación a AFP, <strong>editar la ficha
+          existente</strong> en lugar de crear una nueva. Esa práctica es la que origina los duplicados.
+        </p>
+        <p>
+          <span class="tag tag-med">Verificación</span>
+          Confirmar en el sistema de remuneraciones que ninguno de los 16 casos genera doble pago.
+          Desde la vista consultada no es comprobable.
+        </p>
+      </div>
+    </div>
+    <div class="routing-row">
+      <div class="routing-to">Administración de Base de Datos<span>Responsables de LAMB</span></div>
+      <div class="routing-what">
+        <p>
+          <span class="tag tag-urgent">Urgente</span>
+          Resolver las <strong>64 fechas de término y 124 estados de contrato incoherentes</strong>,
+          que hoy hacen que la fecha de cese de un trabajador dependa de cuál de sus dos fichas se lea
+          (apartado 4).
+        </p>
+        <p>
+          <span class="tag tag-med">Saneamiento</span>
+          Fusionar las fichas duplicadas de los 16 trabajadores con contrato vigente, conservando la
+          que contiene el código CUSPP. Las 528 restantes, sin contrato vigente, no son urgentes.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <h2>1 · Por qué se afirma que el defecto es de la base de datos</h2>
+
+  <p>
+    En todos los casos, <strong>el mismo contrato figura bajo las dos fichas de persona</strong>, con
+    idéntica entidad, puesto, departamento y fechas de inicio. También coincide el
+    <strong>código de asistencia</strong>, que es el identificador operativo de marcación y planilla.
+  </p>
+
+  <div class="scroll">
+    <table>
+      <caption>Ejemplo: contratos que aparecen simultáneamente bajo dos fichas</caption>
+      <thead>
+        <tr><th>Trabajador</th><th>Contratos compartidos</th><th>Fichas (ID&nbsp;persona)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Luzirene Gomes de Alcantara</td>
+          <td class="num">17192, 23899, 25932, 28770, 29553, 34006, 34931, 36338, 38675, 39223, 41078, 43369, 45067, 46366, 48108, 48218</td>
+          <td class="num">11173 · 192480</td>
+        </tr>
+        <tr>
+          <td>Katty Porras Espinoza</td>
+          <td class="num">57431, 62064, 62406</td>
+          <td class="num">3999385 · 4055270</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pull">
+    <p>
+      Un contrato se firma una sola vez. Si el mismo contrato cuelga de dos fichas, lo que está
+      duplicado es <strong>la ficha de persona</strong>, no el vínculo laboral.
+      <strong>Recursos Humanos tiene un expediente por trabajador; el maestro de LAMB guarda dos
+      registros apuntando a él.</strong>
+    </p>
+  </div>
+
+  <p>
+    <strong>Causa aparente.</strong> En todos los pares, la ficha más reciente incluye el código
+    CUSPP y la antigua no. El duplicado se origina al volver a registrar a la persona —por afiliación
+    a AFP o por corrección de documento— creando una ficha nueva en vez de modificar la existente.
+  </p>
+
+  <h2>2 · Alcance</h2>
+
+  <div class="figures">
+    <div class="figure">
+      <div class="figure-n">35 270</div>
+      <div class="figure-l">Personas en la vista de empleados</div>
+    </div>
+    <div class="figure">
+      <div class="figure-n">544</div>
+      <div class="figure-l">Con ficha duplicada (1,5 %)</div>
+    </div>
+    <div class="figure">
+      <div class="figure-n is-red">16</div>
+      <div class="figure-l">Con contrato vigente</div>
+    </div>
+    <div class="figure">
+      <div class="figure-n is-red">4</div>
+      <div class="figure-l">Con el documento equivocado</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <p>
+      <strong>Nota metodológica.</strong> Las cifras están controladas por entidad. El identificador
+      de contrato no es único de forma global —se reutiliza entre entidades—, y sin ese control el
+      conteo se dispara de 1.199 a 5.689 casos aparentes. Se descartaron además 138 registros que
+      corresponden a homonimia real y no a duplicación.
+    </p>
+  </div>
+
+  <h2>3 · Los cuatro casos que corresponden a Recursos Humanos</h2>
+
+  <p>
+    Estos no son un problema de duplicación ni de formato: <strong>una de las dos fichas contiene un
+    número de documento que no es el de la persona.</strong> Es un dato de expediente incorrecto en
+    un trabajador activo, y solo Recursos Humanos puede determinar cuál es el válido.
+  </p>
+
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>Trabajador</th><th>Cód. asistencia</th><th>Documento en una ficha</th><th>Documento en la otra</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Chura Muñuico, Ruth Yenny</td><td class="num">41538729</td><td class="num">41538729</td><td class="num"><span class="wrong">40538729</span></td></tr>
+        <tr><td>Tipo Mamani, Noe Wilber</td><td class="num">47259697</td><td class="num">47259697</td><td class="num"><span class="wrong">47259698</span></td></tr>
+        <tr><td>Choque Mamani, Anderson</td><td class="num">70405908</td><td class="num">70405908</td><td class="num"><span class="wrong">23926979</span></td></tr>
+        <tr><td>Apaza Calla, Emanuel Humberto</td><td class="num">29602459</td><td class="num">29602459</td><td class="num"><span class="wrong">71459568</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>4 · El efecto sobre los accesos institucionales</h2>
+
+  <p>
+    Hay <strong>64 contratos con dos fechas de término distintas</strong> y
+    <strong>124 con dos estados distintos</strong>, según cuál de las dos fichas se consulte.
+  </p>
+
+  <div class="scroll">
+    <table>
+      <caption>Contrato 48218 — Luzirene Gomes de Alcantara</caption>
+      <thead>
+        <tr><th>Ficha consultada</th><th>Fecha de término</th><th>Estado</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">11173</td><td class="num">28-02-<strong>2026</strong></td><td>Activo</td></tr>
+        <tr><td class="num">192480</td><td class="num">28-02-<strong>2025</strong></td><td>Inactivo</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note note-alert">
+    <p>
+      <strong>Por qué importa ahora.</strong> Desde el 3 de agosto la plataforma de identidades ya es
+      capaz de deshabilitar automáticamente las cuentas del directorio institucional cuando un
+      trabajador cesa —una corrección solicitada formalmente por tres sistemas consumidores—. Con
+      estas incoherencias, <strong>la fecha en que se cortan los accesos de una persona depende de
+      cuál de sus dos fichas lea el sistema</strong>, con desfases de hasta un año en cualquiera de
+      los dos sentidos: mantener accesos de quien ya cesó, o retirárselos a quien sigue trabajando.
+    </p>
+    <p>
+      Mientras esto no se resuelva, la reconciliación automática del canal de trabajadores permanece
+      desactivada de forma preventiva.
+    </p>
+  </div>
+
+  <h2>5 · Anexo — los 16 trabajadores con contrato vigente</h2>
+
+  <p>Agrupados por el patrón que originó la duplicación.</p>
+
+  <h3>5.1 · Documento equivocado <span style="font-weight:400;color:var(--text-3)">— ver apartado 3</span></h3>
+  <p style="font-size:.875rem;color:var(--text-2)">
+    Chura Muñuico, Ruth Yenny · Tipo Mamani, Noe Wilber · Choque Mamani, Anderson ·
+    Apaza Calla, Emanuel Humberto
+  </p>
+
+  <h3>5.2 · Cambio de documento (carné de extranjería → DNI)</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Trabajador</th><th>Cód. asistencia</th><th>Ficha antigua</th><th>Ficha nueva</th></tr></thead>
+      <tbody>
+        <tr><td>Gomes de Alcantara, Luzirene</td><td class="num">614192</td><td class="num">11173 · CE 00614192</td><td class="num">192480 · DNI 000614192</td></tr>
+        <tr><td>Jordan Chirino, Candy Isabel</td><td class="num">1794507</td><td class="num">74156 · CE 001794507</td><td class="num">412415 · DNI 01794507</td></tr>
+        <tr><td>Carmona Bello, Carlos Javier</td><td class="num">3012465</td><td class="num">385145 · CE 003012465</td><td class="num">3945028 · DNI 03012465</td></tr>
+        <tr><td>Balderas López, Juan Carlos</td><td class="num">4204048</td><td class="num">211002 · CE 004204048</td><td class="num">3945027 · DNI 04204048</td></tr>
+        <tr><td>Merchán Urdaneta, Isai David</td><td class="num">1777564</td><td class="num">22021 · DNI 01777564</td><td class="num">3932677 · CE 001777564</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>5.3 · Diferencia de ceros a la izquierda</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Trabajador</th><th>Cód. asistencia</th><th>Variantes registradas</th></tr></thead>
+      <tbody>
+        <tr><td>Cortez Bazantes, Orlando Gabriel</td><td class="num">534601</td><td class="num">000534601 · 00000000534601 · 0534601</td></tr>
+        <tr><td>Tovar Galarcio, Andrés Alfonso</td><td class="num">1574315</td><td class="num">01574315 · 001574315</td></tr>
+        <tr><td>López Ávila, Juan Alexander</td><td class="num">4082096</td><td class="num">04082096 · 004082096</td></tr>
+        <tr><td>Rojas Hernández, Eliasib Nemecio</td><td class="num">4680920</td><td class="num">04680920 · 004680920</td></tr>
+        <tr><td>Pereira Pinzón, Adrián Alberto</td><td class="num">6158248</td><td class="num">06158248 · 006158248</td></tr>
+        <tr><td>Velásquez Calvo, Ana Cristina</td><td class="num">6645032</td><td class="num">06645032 · 006645032</td></tr>
+        <tr><td>Berrocal Rojas, Jimena Milagros</td><td class="num">60774337</td><td class="num">60774337 · 060774337</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>6 · Límites de esta medición</h2>
+
+  <ul>
+    <li>
+      <strong>No se revisó el sistema de remuneraciones.</strong> Que el contrato y el código de
+      asistencia sean únicos hace improbable un pago duplicado, pero la comprobación corresponde a
+      planillas y no puede hacerse desde la vista consultada.
+    </li>
+    <li>
+      <strong>No se determinó cuál ficha es la correcta</strong> en los cuatro casos de documento
+      equivocado. Esa decisión requiere el expediente físico.
+    </li>
+    <li>
+      Las 528 personas duplicadas sin contrato vigente no se analizaron caso por caso; explican parte
+      del ruido histórico de correlación de identidades.
+    </li>
+  </ul>
+
+  <footer>
+    <p>Documento interno de la Dirección de Tecnologías de Información — Universidad Peruana Unión.</p>
+    <p>
+      Contiene datos personales de trabajadores. Su tratamiento y distribución se rigen por la
+      Ley&nbsp;29733 de Protección de Datos Personales. No difundir fuera de las áreas destinatarias.
+    </p>
+    <p>Respaldo técnico completo, consultas ejecutadas y trazabilidad: repositorio de gobierno de identidades, DTI/Infraestructura.</p>
+  </footer>
+
+</div>
