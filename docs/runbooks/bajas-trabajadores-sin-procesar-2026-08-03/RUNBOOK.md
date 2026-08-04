@@ -149,3 +149,17 @@ y su entrada LDAP intacta; conviene decidir si se revierte o se deja a la espera
 2. Mientras tanto, **cortar el acceso donde sí se puede**: deshabilitar la cuenta LDAP
    (`administrativeStatus=disabled`) en vez de moverla — hay que verificar si ese camino
    también choca con `Operation not supported`.
+
+### Decisión sobre el canario (Alberto, 03-ago): **se deja como está**
+
+No se revierte. Los 11 roles de staff que tenía no eran assignments directos sino derivados
+del object template desde su afiliación de trabajador; el recompute recalculó su archetype
+estructural a `alumni` porque el contrato terminó el 31-jul. Assignments directos actuales:
+`archetype-user-alumni`, `AuxAff-Alum`, `BR-Egresado`, `R-Affiliation-Alumni`,
+`AR-Koha-Patron-Alumni`, `AR-Koha-Patron-Trabajadores`.
+
+Revertir habría exigido cambiar el archetype estructural (destructivo, libro cap. 8) y
+asignar a mano roles antes derivados — y se habría deshecho solo en el siguiente recompute,
+porque el dato de origen no cambió. **El estado actual es el correcto según los datos**; el
+anterior reflejaba un contrato ya terminado. Su acceso LDAP sigue vivo igual que el de los
+otros 160: ni mejor ni peor que antes de la prueba.
