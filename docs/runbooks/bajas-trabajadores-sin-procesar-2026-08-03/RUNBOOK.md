@@ -210,3 +210,51 @@ población de entrada está incompleta.
 **Esto es lo primero que hay que arreglar del canal de Trabajadores**, antes que las bajas
 y antes que reactivar la reconciliación: si se reactiva tal cual, se procesarían bajas de
 una población que ya está incompleta.
+
+### 🔴 CAUSA RAÍZ (corrige la sección anterior): el `CANON_KEY` se apoya en `COD_APS`, que NO es único por persona
+
+La sección de arriba dice que 3.150 trabajadores "no existen en MidPoint" e insinúa que la
+causa es la reconciliación suspendida. **La causa es otra y está en el `searchScript`.**
+
+Medido en Oracle sobre los 5.603 con contrato vivo:
+
+| | |
+|---|---|
+| Personas (por `NUM_DOCUMENTO`) | **5.603** |
+| Con `COD_APS` nulo | 0 |
+| Con `COD_APS` todo ceros | 0 |
+| **`COD_APS` DISTINTOS** | **2.489** |
+| **`COD_APS` compartidos por >1 persona** | **2.203** |
+
+Peores casos: `005567508` → **6 personas distintas**; `02437360`, `10224089`, `005705811`,
+`03036796` → 5 cada uno.
+
+**El mecanismo de la pérdida:**
+
+```sql
+CANON_KEY = CASE WHEN COUNT(*) OVER (PARTITION BY ID_TIPODOCUMENTO, <num canonicalizado>) = 1
+                 THEN COD_APS                       -- ← documento único ⇒ la clave es COD_APS
+                 ELSE COD_APS || '-' || ID_PERSONA  -- ← solo desambigua si colisiona el DOCUMENTO
+            END
+...
+WHERE z.CANON_RN = 1                                 -- ← una sola fila por CANON_KEY
+```
+
+La lógica asume que la colisión posible es **de documento**. Pero cuando dos personas con
+documentos **distintos** comparten `COD_APS`, ambas caen en la rama "documento único",
+reciben el **mismo** `CANON_KEY`, y `CANON_RN = 1` **descarta a todas menos una**.
+
+Resultado: el conector emite ~2.489 objetos para 5.603 personas vivas. MidPoint tiene 2.423.
+**~3.114 personas no se pierden en MidPoint: nunca salen de la consulta.**
+
+Esto también explica el bug del 20-jul ("`CANON_KEY` duplicado afectaba a 5.573/7.379"): se
+corrigió el colapso de filas de **una misma persona**, pero no la colisión **entre personas**.
+
+**Implicación para la reparación:** reactivar la reconciliación NO recupera a esas 3.114
+personas — seguirían sin aparecer en el resultado del `searchScript`. El fix es cambiar la
+base del `CANON_KEY` a algo único por persona (`ID_PERSONA`, o `NUM_DOCUMENTO`
+canonicalizado), lo que **cambia el `__UID__` de todos los shadows existentes** y por tanto
+exige plan de migración: es la misma clase de riesgo que abortó el "fix `__UID__` trabajadores"
+del 17-jul (habría renombrado a 4.097 personas).
+
+**No ejecutado.** Requiere diseño y ventana.
