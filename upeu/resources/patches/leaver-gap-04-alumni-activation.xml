@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     PATCH 4 — activation completa para account/alumni
+     Resource: LDAP-IdentityCache-UPeU (7b4e1c2d-…)
+     Container: schemaHandling/objectType[461]  (kind=account, intent=alumni)
+     Fecha: 2026-08-04
+     Motivo: docs/runbooks/trabajadores-preactivacion-2026-08-03/existence-ldap-resuelto.md §5
+
+     🔴 PATCH, NUNCA PUT.
+
+     QUE PROBLEMA CIERRA
+     El patch 02 del 03-ago, que se dio por "leaver gap cerrado", **solo cubrió
+     `account/default`**. El canario de aquel día era una cuenta de `ou=people`,
+     así que el hueco no se vio.
+
+     Verificado el 04-ago sobre el XML real del resource (no por regex sobre el
+     JSON — esa lectura daba un falso positivo):
+
+         @id=62   account/default   activation -> [existence, administrativeStatus]
+         @id=461  account/alumni    activation -> NO EXISTE
+         @id=447  generic/ou        activation -> NO EXISTE
+
+     Consecuencia: **las cuentas de egresados nunca han podido deshabilitarse.**
+     En una baja se borran, igual que pasaba con `ou=people` antes de hoy. No es
+     una regresión: viene de antes y nadie lo había medido.
+
+     QUE HACE
+     Replica en `alumni` exactamente lo validado en `default`:
+
+       - `administrativeStatus` outbound strong -> propaga el estado del foco al
+         atributo `midPointAccountStatus` (la capability ya está declarada a nivel
+         de resource por el patch 01, así que aplica a todos los objectType).
+
+       - `existence` outbound **CONDICIONAL** -> conserva la entrada solo cuando la
+         persona está de baja. Un `true` fijo NO sirve: se midió el 04-ago y crea
+         dual-shadows en las mudanzas, porque el conector implementa el cambio de
+         OU como delete+add (no soporta rename). Aquí importa igual: hay 21
+         mudanzas `ou=alumni` -> `ou=people` en la corrida completa.
+
+     ⚠️ EFECTO MASIVO ESPERADO
+     Al declarar `administrativeStatus` strong, el próximo recompute escribirá
+     `midPointAccountStatus` en TODAS las entradas de `ou=alumni`. Es el mismo
+     backfill que ya ocurrió con `ou=people`: correcto y deseado, pero masivo.
+     Dimensionarlo antes de cualquier corrida real.
+
+     VERIFICACION OBLIGATORIA DESPUES (no confiar en el 204):
+       1. `version` del resource DEBE subir (221 -> 222)
+       2. `<schema>` intacto (xsd:element = 2288) y `<native>` intacto
+       3. test connection: success
+       4. releer el XML por REST y confirmar
+          @id=461 activation -> [existence, administrativeStatus]
+       5. canario en preview con LAS TRES clases sobre alumni:
+            baja de alumni     -> MODIFIED con midPointAccountStatus=disabled
+            mudanza alumni->people -> alumni DELETED + default ADDED
+            control negativo   -> 0 SHADOW ADDED
+
+     REVERSION
+     ~/backup-ldap-resource-preexistence-20260804.json  (version 219)
+     ================================================================ -->
+<objectModification
+        xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+        xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+        xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <itemDelta>
+        <t:modificationType>add</t:modificationType>
+        <t:path>schemaHandling/objectType[461]/activation</t:path>
+        <t:value xsi:type="c:ResourceActivationDefinitionType">
+            <c:existence>
+                <c:outbound>
+                    <c:name>leaver-gap-alumni-existence-conservar-solo-si-baja</c:name>
+                    <c:strength>strong</c:strength>
+                    <c:condition>
+                        <c:script>
+                            <c:code><![CDATA[
+def st = focus?.activation?.effectiveStatus?.toString()?.toLowerCase()
+def lc = focus?.lifecycleState?.toString()?.toLowerCase()
+return (st in ['disabled', 'archived']) || (lc in ['archived', 'suspended'])
+]]></c:code>
+                        </c:script>
+                    </c:condition>
+                    <c:expression>
+                        <c:value>true</c:value>
+                    </c:expression>
+                </c:outbound>
+            </c:existence>
+            <c:administrativeStatus>
+                <c:outbound>
+                    <c:strength>strong</c:strength>
+                </c:outbound>
+            </c:administrativeStatus>
+        </t:value>
+    </itemDelta>
+</objectModification>
