@@ -30,7 +30,7 @@ Los tres, con nombre:
 | Conflicto | Nº | Observación |
 |---|---|---|
 | **Dual-shadow LDAP** (`ou=people` + `ou=alumni`) | **283** | **todos con el `User` ACTIVO**. Ninguno tiene dos entradas en la misma OU (eso sí sería peor) |
-| Casos de correlación **abiertos** | **105** | **102 abiertos desde mayo**, sin atender en 3 meses. Solo 3 son de hoy |
+| Casos abiertos | 105 | ⚠️ **corregido** — no son 102 decisiones de identidad pendientes. Ver §2.bis |
 | `DISPUTED` en Entra ID | **32** | **NO los generó la corrida de hoy** (todos entre 07:31 y 15:42; la corrida fue 21:25). Los produce `recon-entra-id-daily`. Todos son cuentas **sin foco** en MidPoint → mismo gap de cobertura del 18-jul |
 | Dual-shadow en **Koha** | 28 | |
 | Dual-shadow en Entra ID | 9 | |
@@ -42,6 +42,24 @@ Los tres, con nombre:
 Contexto: `UNMATCHED` = 182.411 y `UNLINKED` = 580, casi todo del lado de Entra ID — es el gap de
 cobertura documentado el 18-jul, no conflictos de identidad propiamente dichos.
 
+## 2.bis ⚠️ CORRECCIÓN — los 105 casos abiertos no son lo que parecían
+
+Una primera lectura los contó como «102 casos de correlación sin atender desde mayo». **Es falso.**
+Desglosados por naturaleza:
+
+| Tipo | Nº | Qué son |
+|---|---|---|
+| **Aprobaciones de rol colgadas** | **82** | `Approving and executing creation of role "BR-…"` del 17-19 de mayo. Workflows del **bootstrap** que quedaron abiertos al crear los roles de negocio. No son identidades |
+| **Correlación sobre `Koha ILS`** | **20** | Del 23-25 de mayo, sobre el resource **`archived`** (`9b5a7c81-…`), el Koha viejo retirado el 19-jul. Cola muerta |
+| **Correlación VIVA** | **3** | Los de hoy: Luzirene, Katty y Natalia, en Oracle LAMB Trabajadores |
+
+**Decisiones de identidad realmente pendientes: 3, todas de hoy.** El riesgo de «buzón que se llena»
+estaba sobrevalorado.
+
+Lo que sí conviene: **cerrar los 102 residuales**, porque una cola con 105 elementos de los que 102
+son ruido esconde los 3 que importan — y esconderá los que produzca el guardarraíl a partir de
+mañana.
+
 ## 3. Lectura
 
 **El canal de Trabajadores quedó limpio y con guardarraíl operativo.** Los tres conflictos vivos
@@ -52,9 +70,8 @@ están contenidos, con caso abierto y sin haber creado ningún duplicado.
 1. **283 personas activas con doble entrada en el directorio.** Los consumidores (RIMS, InOut,
    Pulso DTI) las ven dos veces. La reconciliación de Trabajadores consolidó las que pasan por su
    canal; el resto son estudiantes y egresados, que van por otros.
-2. **102 casos de correlación abiertos desde mayo.** Un caso abierto es una decisión pendiente que
-   nadie ha tomado. Si nadie los mira, el mecanismo de `disputed` que acabamos de desplegar acabará
-   siendo un buzón que se llena.
+2. **La cola de casos está llena de residuo** (82 aprobaciones del bootstrap + 20 sobre un resource
+   archivado). No es urgente por contenido, sí por visibilidad: tapa los casos vivos.
 3. **22 grupos de `User` duplicados por documento**, un eje que no se había medido y que no coincide
    con los 14 de `lambIdPersona`.
 
@@ -62,8 +79,7 @@ están contenidos, con caso abierto y sin haber creado ningún duplicado.
 
 | # | Qué | Por qué primero |
 |---|---|---|
-| 1 | **Notificador de tareas** | El canal ya corre solo a las 06:00 y **nadie se entera si falla**. Es la lección del 25-jul |
-| 2 | **Los 105 casos abiertos** | Decidir si se atienden o se cierran en bloque; sin eso, `disputed` no sirve de nada |
-| 3 | **Los 283 dual-shadow LDAP** | Son personas activas y afecta a tres consumidores del directorio |
-| 4 | Los 14 + 22 `User` duplicados | Ya identificados; requieren regla de negocio sobre cuál conservar |
-| 5 | Los 32 `DISPUTED` de Entra | Ligado al gap de cobertura, no al canal de Trabajadores |
+| 1 | **Los 283 dual-shadow LDAP** | Personas **activas** vistas por duplicado por RIMS, InOut y Pulso DTI |
+| 2 | **Limpiar los 102 casos residuales** | Barato, y deja visible la cola real de `disputed` |
+| 3 | Los 14 + 22 `User` duplicados | Ya identificados; requieren regla de negocio sobre cuál conservar |
+| 4 | Los 32 `DISPUTED` de Entra | Ligado al gap de cobertura, no al canal de Trabajadores |
