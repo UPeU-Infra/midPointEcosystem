@@ -277,3 +277,42 @@ toda la población y es justo lo que pide Pulso DTI (P5). Poblarlo y usarlo como
 `CANON_KEY` en un cambio invisible para los consumidores**.
 
 **Estado: la Fase 3 NO debe ejecutarse hasta resolver esto.**
+
+---
+
+## 10. ⛔ RETRACTADO (03-ago, mismo día): **esta migración NO es necesaria**
+
+**El problema que motiva este documento no existe.** Ver la retractación completa en
+`docs/runbooks/bajas-trabajadores-sin-procesar-2026-08-03/RUNBOOK.md`.
+
+El error: conté **documentos** como **personas**. `ELISEO.VW_APS_EMPLEADO` tiene una fila por
+documento y una persona aporta varios (DNI, CE, códigos de pensión 97/98).
+
+| Afirmación del §1 | Realidad |
+|---|---|
+| 5.603 personas | **5.603 documentos → 2.493 personas** |
+| 2.489 `COD_APS` para 5.603 personas ⇒ colisión masiva | 2.489 `COD_APS` para **2.493 personas** ⇒ **99,8 % de cobertura** |
+| 2.203 `COD_APS` "compartidos por >1 persona" | Son las varias filas-**documento** de la **misma** persona |
+| ~3.114 personas nunca salen del `searchScript` | **No falta nadie** |
+
+**El `CANON_KEY` sobre `COD_APS` es correcto** y hace exactamente lo que debe: emitir un objeto
+por persona-contrato. El `CANON_RN=1` no descarta personas: colapsa las filas-documento de una
+misma persona, que es su propósito declarado y validado el 20-jul.
+
+### Qué se conserva de este documento
+
+Nada de las Fases 3-5 debe ejecutarse. Pero tres cosas siguen siendo válidas y útiles:
+
+1. **Fase 0 (ejecutada):** `personalNumber` está alineado con el `CANON_KEY` en los 7.364
+   linkados — 0 drift de padding. Cierra R3 del guardarraíl.
+2. **§9 (ejecutada):** la dependencia `CANON_KEY → personalNumber → schacPersonalUniqueCode`
+   en LDAP **es real y está verificada**. Sigue siendo una restricción a tener en cuenta ante
+   *cualquier* cambio futuro de identificador — incluida la migración pendiente de
+   `eduPersonUniqueId` que menciona el contrato de Pulso DTI §7.
+3. **El método**: medir la unidad de cada tabla antes de comparar poblaciones entre sistemas.
+
+### Y `employeeNumber`
+
+Poblarlo **sigue teniendo sentido** —está al 0 %, lo pide Pulso DTI (P5) y daría al directorio
+un identificador estable— pero **ya no es prerequisito de nada**. Pasa de bloqueante a mejora
+independiente.
