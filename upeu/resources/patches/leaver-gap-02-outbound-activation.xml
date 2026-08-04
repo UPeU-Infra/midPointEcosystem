@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     PATCH 2/2 — mapping OUTBOUND de activation en account/default
+     Resource: LDAP-IdentityCache-UPeU (7b4e1c2d-…)
+     Container: schemaHandling/objectType[62]  (kind=account, intent=default)
+     Fecha: 2026-08-03 · Analisis: docs/specs/ldap-leaver-gap/01-analisis.md
+
+     🔴 PATCH, NUNCA PUT.
+
+     POR QUE HACEN FALTA DOS PATCHES
+     El 01 declara la CAPABILITY: le dice a MidPoint *como* representar el estado
+     en este directorio (atributo `midPointAccountStatus`, valores
+     enabled/disabled, y el vacio = habilitado). Con eso solo, el recompute pasa
+     a `success` pero NO escribe nada — medido: 0 entradas tras el canario.
+
+     Este 02 declara el MAPPING: *que* propagar. Sin
+     `activation/administrativeStatus/outbound` en el objectType, MidPoint no
+     tiene ningun mapping de activation que evaluar, asi que no genera delta.
+
+     Verificado en el canario `20894196` (usuario archivado):
+       foco → lifecycleState=archived, administrativeStatus=DISABLED
+       LDAP → sin `midPointAccountStatus` (0 en todo el arbol)
+     El dato existe en el foco; solo faltaba el puente.
+
+     strength=strong: el estado de la cuenta debe reflejar SIEMPRE el del foco,
+     no solo en la creacion. Es lo que hace que una baja posterior se materialice.
+     ================================================================ -->
+<objectModification
+        xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+        xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+        xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <itemDelta>
+        <t:modificationType>add</t:modificationType>
+        <t:path>schemaHandling/objectType[62]/activation</t:path>
+        <t:value xsi:type="c:ResourceActivationDefinitionType">
+            <c:administrativeStatus>
+                <c:outbound>
+                    <c:strength>strong</c:strength>
+                </c:outbound>
+            </c:administrativeStatus>
+        </t:value>
+    </itemDelta>
+</objectModification>
