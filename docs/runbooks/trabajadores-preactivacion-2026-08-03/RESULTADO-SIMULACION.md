@@ -159,7 +159,7 @@ Cortar el acceso es correcto; hacerlo por borrado es una decisión de diseño qu
 |---|---|---|
 | 1 | **Resolver los 3 duplicados a mano** (`000614192`, `44528386f`, `001642451`): decidir si se relinkan al `User` existente o se corrige el dato en Oracle | Sí |
 | 2 | **Añadir un tier de correlación por `externalSystemId` / `lambIdPersona`** — atrapa a Evanilda de forma inequívoca. Normalizar padding NO sirve aquí (ver §2). Para los duplicados de origen (Luzirene, Katty) el guardarraíl debe al menos **abrir `disputed` ante un homónimo exacto**, en vez de crear en silencio | Sí |
-| 3 | **Decidir la política de baja en LDAP**: ¿borrar la entrada (comportamiento actual) o deshabilitarla y conservarla? Si es lo segundo, hay que cambiar el `objectType` de LDAP antes de correr nada. Afecta a 114 personas en la primera corrida | Sí |
+| 3 | ~~**Decidir la política de baja en LDAP**~~ → ✅ **RESUELTO 04-ago**: mapping `activation/existence` condicional en `account/default`, resource version **221**. La baja conserva la entrada y la deshabilita; las mudanzas entre OU siguen funcionando. Validado con canario de tres clases, 0 dual-shadows. Ver [`existence-ldap-resuelto.md`](existence-ldap-resuelto.md). **Queda abierto `account/alumni`**, que nunca tuvo `administrativeStatus` — el leaver gap sigue vivo para egresados | ~~Sí~~ → parcial |
 | 4 | Repetir esta simulación tras 1-3 y comprobar que `USER ADDED` baja a 15 y que los borrados son solo los 66 movimientos | Sí |
 | 5 | Resolver la colisión de proyección Entra del foco `76443853` / `james.raymundo` | No |
 
