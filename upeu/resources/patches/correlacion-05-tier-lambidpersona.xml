@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     PATCH 5 — tier de correlación por lambIdPersona + guardarraíl de homónimo
+     Resource: Oracle LAMB Trabajadores v3 (6a91f7e1-…)  version previa: 322
+     Container: schemaHandling/objectType[5464]/correlation  (account/default)
+     Fecha: 2026-08-04
+     Motivo: docs/runbooks/trabajadores-preactivacion-2026-08-03/RESULTADO-SIMULACION.md §5 acción 2
+
+     🔴 PATCH, NUNCA PUT.
+
+     QUE PROBLEMA CIERRA
+     La simulación del 04-ago demostró que la reconciliación crearía 3 duplicados
+     de persona **sin emitir una sola señal**: 0 marcas `Shadow correlation state
+     changed` frente a 3 duplicados reales. El guardarraíl 2-tier del 26-jul quedó
+     así REFUTADO empíricamente.
+
+     Configuración anterior (medida en vivo):
+         tier 1  extension/upeu:lambDocNum   weight 1.0
+         tier 2  personalNumber              weight 0.6
+         thresholds: definite 1.0 / candidate 0.5
+         reacción `unmatched` -> addFocus   (crea en silencio)
+
+     Por qué fallaba en los 3 casos: **la persona había cambiado de documento**
+     (CE->DNI, con-`f`->sin-`f`, pasaporte->CE), así que el tier 1 compara
+     documentos que ya no son el mismo; y el tier 2 (`personalNumber` = CANON_KEY)
+     tampoco coincide porque el CANON_KEY cambia con el documento. Resultado: 0
+     candidatos -> `unmatched` -> `addFocus`.
+
+     QUE AÑADE ESTE PATCH
+
+     1) TIER 2 NUEVO — `extension/upeu:lambIdPersona` (weight 1.0, definitivo)
+        Es la clave de persona en la fuente (ID_PERSONA de Oracle LAMB). No cambia
+        cuando cambia el documento, que es justo el modo de fallo observado.
+
+        ⚠️ VERIFICADO ANTES DE APLICAR, no asumido. Se midió si el valor colisiona
+        entre Users distintos, porque un tier definitivo sobre un identificador
+        ambiguo fusionaría personas diferentes:
+
+            Users con lambIdPersona ......................... 58.178
+            valores distintos .............................. 58.164
+            valores compartidos por 2 Users ..................... 14
+            de esos 14, ¿misma persona? ..... **14 de 14** (fullName normalizado)
+            colisiones entre personas distintas ................... 0
+
+        Los 14 son el MISMO patrón que el caso Evanilda: una persona con `User` de
+        estudiante/egresado (código `2024…`) y otro de trabajador (código `007…`),
+        mismo nombre y mismo `lambIdPersona`. Es decir: **son 14 duplicados que ya
+        existen en MidPoint**, no colisiones. Este tier los habría evitado.
+
+        Nota: NO resuelve Luzirene ni Katty — esas tienen **dos ID_PERSONA
+        distintos en Oracle** (duplicado de origen, ver
+        `HALLAZGO-DUPLICADOS-ORACLE.md`). Para ellas actúa el tier 4.
+
+     2) TIER 4 NUEVO — guardarraíl de homónimo (`fullName`, weight 0.55)
+        Con `definite=1.0` y `candidate=0.5`, un acierto solo por nombre puntúa
+        0.55: cae en la banda [candidate, definite) -> situación **`disputed`** ->
+        `createCorrelationCase`, que YA está declarada en las reacciones y hasta
+        hoy nunca llegaba a dispararse.
+
+        Efecto: ante un homónimo exacto MidPoint **abre un caso en vez de crear en
+        silencio**. Es exactamente lo que faltó en los 3 duplicados.
+
+        Volumen dimensionado: **33** `fullName` repetidos entre Users activos. Es
+        el techo de casos manuales que puede generar, y es asumible.
+
+     3) `personalNumber` baja de tier 2 a tier 3. Se conserva: sigue siendo útil
+        cuando el CANON_KEY no ha cambiado.
+
+     LO QUE **NO** HACE
+     - No fusiona los 14 duplicados ya existentes: el correlator actúa sobre
+       shadows por vincular, no sobre Users ya creados. Su saneamiento es trabajo
+       aparte.
+     - No arregla los duplicados de origen en Oracle (544 fichas, 16 vivas).
+     - No cambia la reacción `unmatched` -> `addFocus`: crear un `User` para una
+       persona realmente nueva sigue siendo lo correcto. Lo que cambia es que un
+       homónimo ya no llega a `unmatched`.
+
+     VERIFICACION OBLIGATORIA DESPUES (no confiar en el 204):
+       1. `version` del resource DEBE subir (322 -> 323)
+       2. `<schema>` intacto (xsd:element > 0) y `<native>` intacto
+       3. test connection: success
+       4. releer por REST en XML y confirmar los 4 tiers
+       5. simulación en preview: `USER ADDED` debe bajar de 18 a 15, y deben
+          aparecer marcas `Shadow correlation state changed` (hoy: 0)
+     ================================================================ -->
+<objectModification
+        xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+        xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+        xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+        xmlns:upeu="urn:upeu:midpoint:local"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <itemDelta>
+        <t:modificationType>replace</t:modificationType>
+        <t:path>schemaHandling/objectType[5464]/correlation</t:path>
+        <t:value xsi:type="c:CorrelationDefinitionType">
+            <c:correlators>
+                <c:items>
+                    <c:name>correlate-by-num-documento</c:name>
+                    <c:item>
+                        <c:ref>extension/upeu:lambDocNum</c:ref>
+                    </c:item>
+                    <c:composition>
+                        <c:tier>1</c:tier>
+                        <c:weight>1.0</c:weight>
+                    </c:composition>
+                </c:items>
+                <c:items>
+                    <c:name>correlate-by-lamb-id-persona</c:name>
+                    <c:documentation>TIER NUEVO 2026-08-04. Clave de persona en Oracle LAMB (ID_PERSONA): no cambia cuando cambia el documento, que es el modo de fallo que produjo los 3 duplicados de la simulacion del 04-ago. Verificado antes de aplicar: de 58.178 Users con este valor, solo 14 lo comparten, y en 14 de 14 se trata de la MISMA persona (duplicados estudiante/trabajador ya existentes). Cero colisiones entre personas distintas.</c:documentation>
+                    <c:item>
+                        <c:ref>extension/upeu:lambIdPersona</c:ref>
+                    </c:item>
+                    <c:composition>
+                        <c:tier>2</c:tier>
+                        <c:weight>1.0</c:weight>
+                    </c:composition>
+                </c:items>
+                <c:items>
+                    <c:name>correlate-by-personalnumber-fallback</c:name>
+                    <c:documentation>GUARDARRAIL 2026-07-26 (post-incidente CANON_RN 20-jul, ver docs/specs/trabajadores-correlation-guardrail-2026-07-20.md). Baja de tier 2 a tier 3 el 04-ago al insertarse el tier de lambIdPersona; se conserva porque sigue sirviendo cuando el CANON_KEY no ha cambiado.</c:documentation>
+                    <c:item>
+                        <c:ref>personalNumber</c:ref>
+                    </c:item>
+                    <c:composition>
+                        <c:tier>3</c:tier>
+                        <c:weight>0.6</c:weight>
+                    </c:composition>
+                </c:items>
+                <c:items>
+                    <c:name>guardarrail-homonimo-abre-caso</c:name>
+                    <c:documentation>TIER NUEVO 2026-08-04. NO sirve para vincular: su peso (0.55) queda deliberadamente por encima de `candidate` (0.5) y por debajo de `definite` (1.0), de modo que un homonimo exacto produce la situacion `disputed` y dispara `createCorrelationCase` en vez de crear un User en silencio. Es lo que falto en los 3 duplicados del 04-ago, donde hubo 0 marcas de correlacion frente a 3 duplicados reales. Volumen dimensionado: 33 fullName repetidos entre Users activos.</c:documentation>
+                    <c:item>
+                        <c:ref>fullName</c:ref>
+                    </c:item>
+                    <c:composition>
+                        <c:tier>4</c:tier>
+                        <c:weight>0.55</c:weight>
+                    </c:composition>
+                </c:items>
+            </c:correlators>
+            <c:thresholds>
+                <c:definite>1.0</c:definite>
+                <c:candidate>0.5</c:candidate>
+            </c:thresholds>
+        </t:value>
+    </itemDelta>
+</objectModification>
