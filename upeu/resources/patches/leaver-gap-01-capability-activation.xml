@@ -52,12 +52,18 @@
         xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <itemDelta>
-        <t:modificationType>add</t:modificationType>
+        <t:modificationType>replace</t:modificationType>
         <t:path>capabilities/configured/activation</t:path>
         <t:value xsi:type="cap:ActivationCapabilityType">
             <cap:status>
                 <cap:attribute>ri:midPointAccountStatus</cap:attribute>
+                <!-- El PRIMER enableValue es el que se ESCRIBE. El segundo, vacío, declara
+                     que un atributo ausente/null se INTERPRETA como habilitado — sin él,
+                     MidPoint falla al leer las 48.436 entradas que hoy no tienen el atributo:
+                     "does not provide definition for null value of simulated 'activation
+                     status' attribute" (medido 2026-08-03). -->
                 <cap:enableValue>enabled</cap:enableValue>
+                <cap:enableValue/>
                 <cap:disableValue>disabled</cap:disableValue>
             </cap:status>
         </t:value>
