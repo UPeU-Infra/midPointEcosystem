@@ -362,20 +362,21 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
             </attribute>
             <attribute>
                 <ref>ri:PROGRAM_CODES</ref>
-                <!-- PROGRAM_CODES contiene IDs numéricos Oracle (ej: "327") — no usar como academicProgramCode canónico.
-                     academicProgramCode canónico EP-XXX se resuelve desde SCHOOL_NAME via resolveProgramCode. -->
-            </attribute>
-            <attribute>
-                <ref>ri:SCHOOL_NAME</ref>
+                <!-- 2026-08-05: PROGRAM_CODES pasa de estar sin uso a ser la FUENTE del programa.
+                     Contiene ID_PROGRAMA_ESTUDIO (DAVID.ACAD_PROGRAMA_ESTUDIO), identificador
+                     inmutable de Oracle. Sustituye a la resolución por SCHOOL_NAME (por nombre),
+                     que cubría el 40,9 % y enganchaba al concepto sin P-code cuando el tesauro
+                     tiene pares — ver docs/HALLAZGO-programas-academicos-vocbench-2026-08-05.md.
+                     Multivalor: soporta las múltiples matrículas de una persona. -->
                 <inbound>
-                    <name>school-name-to-academicProgramUri</name>
+                    <name>program-id-to-academicProgramUri</name>
                     <strength>strong</strength>
                     <expression>
                         <function>
-                            <libraryRef oid="6a99f9de-5db6-43d5-9b20-0cfd2b79ecf9" type="FunctionLibraryType"/>
-                            <name>resolveProgramUri</name>
+                            <libraryRef oid="3f8b6c04-91a7-4d52-b8e3-2c50f9a1d7b6" type="FunctionLibraryType"/>
+                            <name>resolveProgramUriById</name>
                             <parameter>
-                                <name>programText</name>
+                                <name>programId</name>
                                 <expression><path>$input</path></expression>
                             </parameter>
                         </function>
@@ -384,6 +385,33 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramUri</path>
                     </target>
                 </inbound>
+                <inbound>
+                    <name>program-id-to-academicProgramCode</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <function>
+                            <libraryRef oid="3f8b6c04-91a7-4d52-b8e3-2c50f9a1d7b6" type="FunctionLibraryType"/>
+                            <name>resolveProgramCodeById</name>
+                            <parameter>
+                                <name>programId</name>
+                                <expression><path>$input</path></expression>
+                            </parameter>
+                        </function>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramCode</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:SCHOOL_NAME</ref>
+                <!-- RETIRADO 2026-08-05 (PROD v182): `school-name-to-academicProgramUri`.
+                     Resolvía el programa por NOMBRE del área. Sustituido por
+                     `program-id-to-academicProgramUri` sobre PROGRAM_CODES (arriba), que usa
+                     ID_PROGRAMA_ESTUDIO. El nombre no es identificador: arrastra sede y modalidad,
+                     varios programas comparten nombre, y ante pares de conceptos en el tesauro
+                     enganchaba al que NO lleva P-code del A4 (68,1 % de lo publicado en LDAP). -->
+
                 <inbound>
                     <name>school-name-to-academicProgramRole</name>
                     <strength>weak</strength>
@@ -425,23 +453,9 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                          egresados.xml (afiliacion-to-liveAffiliationAlum): beforeCorrelation empuja
                          el valor al zero-set y no materializa el item vacío. -->
                 </inbound>
-                <inbound>
-                    <name>school-name-to-academicProgramCode</name>
-                    <strength>strong</strength>
-                    <expression>
-                        <function>
-                            <libraryRef oid="6a99f9de-5db6-43d5-9b20-0cfd2b79ecf9" type="FunctionLibraryType"/>
-                            <name>resolveProgramCode</name>
-                            <parameter>
-                                <name>programText</name>
-                                <expression><path>$input</path></expression>
-                            </parameter>
-                        </function>
-                    </expression>
-                    <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramCode</path>
-                    </target>
-                </inbound>
+                <!-- RETIRADO 2026-08-05 (PROD v182): `school-name-to-academicProgramCode`.
+                     Sustituido por `program-id-to-academicProgramCode` sobre PROGRAM_CODES. -->
+
                 <!-- SCHOOL_NAME → organizationalUnit
                      IIA: ELISEO.ORG_AREA.NOMBRE (via MAX en subquery, nombre de EP/facultad del semestre activo).
                      Koha outbound usa $focus/organizationalUnit para poblar statistics_1 (campo libre Koha).
