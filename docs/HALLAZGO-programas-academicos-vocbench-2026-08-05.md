@@ -179,11 +179,28 @@ lleva.**
 publica 20 → **11,2 % del catálogo**. Del A4 (121 P-codes oficiales), **70 conceptos** del tesauro
 llevan P-code como `altLabel`.
 
-**Consecuencia para el diseño del puente (§5.2):** la tabla `ID_PROGRAMA_ESTUDIO → URI` **no puede
-generarse contra el estado actual del tesauro** sin arrastrar el mismo error. El orden correcto es
-**primero resolver los pares en VocBench** (aplicar los 6 `isReplacedBy` del grupo A y decidir los
-6 del grupo B), y **después** generar la tabla. Generarla antes fijaría en el IGA una elección que
-el tesauro ya declaró obsoleta.
+**Consecuencia para el diseño del puente (§5.2):** el generador de la tabla
+`ID_PROGRAMA_ESTUDIO → URI` **debe seguir `dct:isReplacedBy`** en vez de tomar la URI tal cual.
+Con esa regla, el grupo A se resuelve solo. El grupo B necesita que VocBench declare la
+sustitución primero (prompt en
+`productos/vocbench/instituciones/upeu/docs/PROMPT-cerrar-pares-sin-declarar-2026-08-05.md`),
+pero **no bloquea** empezar a construir el puente en paralelo.
+
+**Reparto de responsabilidad — tres defectos, un solo dueño por cada uno:**
+
+1. **VocBench:** dejó 6 de 12 pares sin declarar la sustitución. Es deuda de higiene, no de datos
+   — su contenido está verificado exacto contra el A4, el A8 y el INEI (§4.bis).
+2. **MidPoint:** `program-resolver-lamb` es una LookupTable **estática, escrita a mano y con clave
+   por nombre**. Se congeló con las URIs del día que se escribió y, al resolver por texto, engancha
+   al gemelo cuya etiqueta corta coincide con la de Oracle. Aquí está el defecto de diseño.
+3. **El proceso:** VocBench marcó correctamente 6 sustituciones con `dct:isReplacedBy` —el
+   mecanismo estándar para avisar a un consumidor— y **nadie las consumió**. La `editorialNote` de
+   esos conceptos lo dice literalmente: *«Se conserva para no romper a consumidores que aún
+   referencien esta URI»*. No existe nada que propague el tesauro al IGA.
+
+**Corolario operativo:** arreglar VocBench **no cambia nada en LDAP por sí solo**. Mientras la
+LookupTable siga siendo estática y por nombre, publicará lo mismo con un tesauro impecable. El
+paso que cierra el problema es el 2.
 
 **Método:** consultas y salidas reproducibles con
 `source ~/.secrets/vocbench-upeu.env` + login `Auth/login` + POST a `SPARQL/evaluateQuery` con
