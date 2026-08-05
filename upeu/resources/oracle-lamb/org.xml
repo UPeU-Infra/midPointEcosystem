@@ -334,10 +334,16 @@
                                             <code>
 // partner-institution -> campus canonico (ID_AREA -> campus identifier directo).
 // 760 (ISTAT) tiene ID_SEDE=4 (sede propia sin OrgType campus) pero geograficamente
-// pertenece a Juliaca/Titicaca (igual que CAT=695) -> se ancla a SEDE-JULIACA.
+// pertenece a Juliaca/Titicaca (igual que CAT=695) -> se ancla a SEDE-2 (Juliaca).
+// 2026-08-05 (DR arbol-sedes, Fase 1): los identifiers de campus pasan de semanticos
+// (SEDE-LIMA/JULIACA/TARAPOTO, atados al NOMBRE) a SEDE-{ID_SEDE} (atados a la clave
+// inmutable de ELISEO.ORG_SEDE). Prefijo 'SEDE-' OBLIGATORIO: el identifier desnudo
+// (1/2/3) colisiona con ID_AREA 1/2/3 = Asamblea Universitaria / Consejo Universitario /
+// Rectorado, y este mismo filtro busca 'identifier = ID_PARENT' numerico -> matchearia
+// dos orgs. Verificado en PROD 2026-08-05.
 // Anclaje DIRECTO por ID_AREA (no por ID_SEDE) para evitar dependencia del ID_SEDE
 // del resultset, que para 760 apunta a sede 4 sin campus.
-def partnerCampus = ['97':'SEDE-LIMA', '695':'SEDE-JULIACA', '8208':'SEDE-TARAPOTO', '760':'SEDE-JULIACA']
+def partnerCampus = ['97':'SEDE-1', '695':'SEDE-2', '8208':'SEDE-3', '760':'SEDE-2']
 def area = idArea != null ? idArea.toString().trim() : ''
 if (partnerCampus.containsKey(area)) {
     return partnerCampus[area]   // partner-institution: campus es parent UNICO
