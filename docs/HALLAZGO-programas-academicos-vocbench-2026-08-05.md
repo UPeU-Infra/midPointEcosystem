@@ -77,6 +77,58 @@ semipresencial / P95 a distancia). MidPoint clasifica lo mismo por `TIPO_PROGRAM
 **Son la misma información por duplicado** → se pueden contrastar, y una discordancia es un
 hallazgo de cumplimiento (matrícula en modalidad no licenciada), no un bug de datos.
 
+## 4.bis VocBench está alineado al 100 % con las fuentes oficiales (verificado)
+
+Contrastado contra los originales de SUNEDU e INEI (`~/Downloads/programas pxx upeu` y
+`~/Downloads/clasificador_de_carreras_inei`):
+
+| Fuente oficial | Contenido | vocbench | Veredicto |
+|---|---|---|---|
+| **A4 2026-1** | 121 P-codes | 121 | ✅ conjuntos **idénticos** |
+| **A4 2025-2** | 121 P-codes | 121 | ✅ **sin altas ni bajas** entre periodos |
+| **A8 2026-1** | 62 SEG-codes | 62 | ✅ |
+| **A8 2025-2** | 57 SEG-codes | 57 (CSV propio) | ✅ conserva ambos periodos |
+| **INEI programas** | 7.812 (todos los niveles) | 5.794 | ✅ ver desglose |
+
+Desglose INEI por nivel: `profesional_universidad` 1.477 → 1.477 · `maestría_universidad`
+2.426 → 2.426 · `segunda especialidad_universidad` 1.601 → 1.601 · `doctorado_universidad`
+290 → 290. **Suma exacta = 5.794.** Lo no importado son niveles no universitarios (IEST, IESP,
+CETPRO, EEST, ESFA), correctamente descartados. **Códigos en vocbench que no existan en el
+oficial: 0.**
+
+**Conclusión: el problema no está en vocbench.** La fuente canónica está construida, verificada y
+al día con 2026-1. El defecto está en que MidPoint no la usa.
+
+Cambio detectado a registrar: el A8 pasó de **57 a 62 SEG-codes** en 2026-1 (5 segundas
+especialidades nuevas). El A4 no movió ningún código.
+
+## 4.ter Qué llega realmente a LDAP (medido en el directorio)
+
+`academicProgramSuneduCode` —el atributo con los 9.367 valores inválidos— **NO se publica a LDAP**.
+Eso acota el daño: la basura de P-codes vive en el repositorio de MidPoint y en Koha
+(vía `LT-Pcode-INEI`), no en el directorio.
+
+Lo que sí viaja al directorio es la **URI del programa**, por `eduPersonEntitlement`:
+
+| Medida en LDAP | Valor |
+|---|---|
+| Personas (`inetOrgPerson`) | 75.690 |
+| Entradas con `eduPersonEntitlement` | 30.535 |
+| Valores de programa publicados | **30.674** |
+| **URIs de programa distintas** | **20** |
+| `scibackAcademicProgramUri` / `…Code` | **0 entradas** — el mapping existe en el resource pero no está poblando |
+
+Las 20 URIs son de **dos generaciones**: 14 en formato slug (`…/programa/administracion`) y 6 en
+UUID (`…/c_e399e0aa`). Rastreadas en el repo de vocbench, aparecen en archivos **seed**
+(`seed/programas-academicos-v2.ttl`, `seed/upeu-programas-pregrado.ttl`) — es decir, generaciones
+**anteriores** del tesauro. Una no aparece en ninguna parte:
+`…/programa/ingenieria-informatica-y-estadistica` (3 identidades).
+
+🔴 **Pendiente de verificar antes de tocar nada:** si esas 20 URIs siguen resolviendo en el tesauro
+**v3 actual** (VocBench migró a UUID — su ADR-003). Requiere consultar GraphDB autenticado; el
+endpoint REST anónimo devuelve vacío. **Si no resuelven, LDAP está publicando identificadores
+muertos a 30.674 personas** y los consumidores (RIMS, InOut, Pulso DTI) no pueden cruzarlos.
+
 ## 5. Propuesta
 
 ### 5.1 Dejar de fabricar códigos (corrección inmediata, alto impacto)
