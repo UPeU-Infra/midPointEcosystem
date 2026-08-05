@@ -124,10 +124,70 @@ UUID (`…/c_e399e0aa`). Rastreadas en el repo de vocbench, aparecen en archivos
 **anteriores** del tesauro. Una no aparece en ninguna parte:
 `…/programa/ingenieria-informatica-y-estadistica` (3 identidades).
 
-🔴 **Pendiente de verificar antes de tocar nada:** si esas 20 URIs siguen resolviendo en el tesauro
-**v3 actual** (VocBench migró a UUID — su ADR-003). Requiere consultar GraphDB autenticado; el
-endpoint REST anónimo devuelve vacío. **Si no resuelven, LDAP está publicando identificadores
-muertos a 30.674 personas** y los consumidores (RIMS, InOut, Pulso DTI) no pueden cruzarlos.
+✅ **Verificado por SPARQL — ver §4.quater.** Las 20 URIs **sí resuelven**; el problema es otro y
+peor de lo previsto: 13 de ellas apuntan al concepto **equivocado** del par.
+
+## 4.quater Verificación SPARQL contra el tesauro vivo (5-ago, cerrada)
+
+Ejecutada contra Semantic Turkey (`Tesauro_Institucional_UPeU`, endpoint
+`SPARQL/evaluateQuery`, **POST** — el GET devuelve `HttpRequestMethodNotSupportedException`).
+El almacén es el nativo de Semantic Turkey; GraphDB sigue vacío y no interviene.
+
+**Las 20 URIs resuelven: las 20 son `skos:Concept` vivos, en
+`scheme/programas-academicos`, con tripletas y etiquetas.** La hipótesis «LDAP publica
+identificadores muertos» queda **REFUTADA**.
+
+Pero la comprobación destapó un defecto distinto y mayor: **LDAP publica sistemáticamente el
+concepto equivocado del par.** El tesauro contiene pares de conceptos para el mismo programa, y
+en cada par uno lleva el P-code oficial y el otro no. **La URI publicada es siempre la que NO lo
+lleva.**
+
+| Grupo | URIs | Publicaciones | Estado |
+|---|---|---|---|
+| **A — sustituidas, con enlace declarado** | 6 (todas UUID) | **12.734** | 🔴 el tesauro declara `dct:isReplacedBy` + `skos:exactMatch` al gemelo con P-code |
+| **B — gemelo con P-code, sin enlace declarado** | 6 | **8.142** | 🔴 duplicado no resuelto en el tesauro |
+| **C — correctas** | 7 | 9.795 | ✅ concepto con P-code oficial |
+| **D — concepto incompleto** | 1 | 3 | ⚠️ sin P-code, sin gemelo, sin `xl:prefLabel` |
+| | **20** | **30.674** | **68,1 % apunta a un concepto sin P-code** |
+
+**Grupo A** (corrección mecánica — el propio tesauro dice a dónde ir):
+
+| Publicada en LDAP | `isReplacedBy` | P-code del sustituto | Identidades |
+|---|---|---|---|
+| `c_b48bff58` | `programa/psicologia` | P33, P131, P101 | 3.590 |
+| `c_c5f87ee9` | `programa/enfermeria` | P22 | 2.608 |
+| `c_be8b346d` | `programa/ingenieria-civil` | P25 | 2.513 |
+| `c_bbf436cf` | `programa/ingenieria-de-sistemas` | P27 | 1.843 |
+| `c_e399e0aa` | `programa/arquitectura-y-urbanismo` | P06 | 1.097 |
+| `c_353ae8f7` | `programa/medicina-humana` | P30 | 1.083 |
+
+**Grupo B** (requiere decisión: no hay enlace, hay que declarar cuál es canónico):
+
+| Publicada en LDAP | Gemelo con P-code | P-code | Identidades |
+|---|---|---|---|
+| `programa/contabilidad-gestion-tributaria` | `…-y-aduanera` | P08, P96, P09 | 5.236 |
+| `programa/educacion-inicial` | `…-y-puericultura` | P19, P128, P98 | 2.245 |
+| `programa/educacion-ingles-espanol` | `educacion-especialidad-ingles-y-espanol` | P97 | 293 |
+| `programa/educacion-educacion-fisica` | `…-recreacion-y-deportes` | P12 | 217 |
+| `programa/educacion-primaria` | `…-y-pedagogia-terapeutica` | P20, P129, P99 | 123 |
+| `programa/educacion-musica-artes` | `…-musica-y-artes-visuales` | P17 | 28 |
+
+**Grupo D:** `programa/ingenieria-informatica-y-estadistica` (3 identidades) — 9 tripletas, un
+`skos:broader` a la facultad, `skos:prefLabel` plano en vez de SKOS-XL. Concepto a medio crear.
+
+**Corrección de cifra:** el scheme `programas-academicos` tiene **179 conceptos**, no 108. LDAP
+publica 20 → **11,2 % del catálogo**. Del A4 (121 P-codes oficiales), **70 conceptos** del tesauro
+llevan P-code como `altLabel`.
+
+**Consecuencia para el diseño del puente (§5.2):** la tabla `ID_PROGRAMA_ESTUDIO → URI` **no puede
+generarse contra el estado actual del tesauro** sin arrastrar el mismo error. El orden correcto es
+**primero resolver los pares en VocBench** (aplicar los 6 `isReplacedBy` del grupo A y decidir los
+6 del grupo B), y **después** generar la tabla. Generarla antes fijaría en el IGA una elección que
+el tesauro ya declaró obsoleta.
+
+**Método:** consultas y salidas reproducibles con
+`source ~/.secrets/vocbench-upeu.env` + login `Auth/login` + POST a `SPARQL/evaluateQuery` con
+`ctx_project=$VOCBENCH_PROJECT`.
 
 ## 5. Propuesta
 
@@ -169,8 +229,9 @@ si se publica, el valor debe ser **la URI del tesauro**, no un nombre ni un cód
 | # | Qué | Por qué primero |
 |---|---|---|
 | 1 | Quitar `'P'||CODIGO_SUNEDU` del searchScript | 9.367 identidades afirmando un código falso ante un dato regulatorio |
-| 2 | Verificar qué URIs de las 20 siguen vigentes tras la migración a UUID (ADR-003) | barato; evita construir sobre URIs muertas |
-| 3 | Generar el puente `ID_PROGRAMA_ESTUDIO → URI` desde VocBench | desbloquea el 41 % sin cobertura |
+| ~~2~~ | ~~Verificar qué URIs siguen vigentes~~ | ✅ **HECHO** (§4.quater): resuelven las 20, pero 13 apuntan al concepto equivocado |
+| 2.bis | **Resolver los pares en VocBench** (6 del grupo A por `isReplacedBy`, 6 del grupo B por decisión) | sin esto, el puente hereda el error en 20.879 publicaciones |
+| 3 | Generar el puente `ID_PROGRAMA_ESTUDIO → URI` desde VocBench, **después de 2.bis** | desbloquea el 41 % sin cobertura |
 | 4 | Contraste modalidad `TIPO_PROGRAMA` ↔ P-code del A4 | detecta matrícula en modalidad no licenciada |
 
 **Nada de esto se ha ejecutado.** Los cambios 1 y 3 tocan decenas de miles de identidades y exigen
