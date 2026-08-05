@@ -343,7 +343,7 @@
 // dos orgs. Verificado en PROD 2026-08-05.
 // Anclaje DIRECTO por ID_AREA (no por ID_SEDE) para evitar dependencia del ID_SEDE
 // del resultset, que para 760 apunta a sede 4 sin campus.
-def partnerCampus = ['97':'SEDE-1', '695':'SEDE-2', '8208':'SEDE-3', '760':'SEDE-2']
+def partnerCampus = ['97':'SEDE-LIMA', '695':'SEDE-JULIACA', '8208':'SEDE-TARAPOTO', '760':'SEDE-JULIACA']
 def area = idArea != null ? idArea.toString().trim() : ''
 if (partnerCampus.containsKey(area)) {
     return partnerCampus[area]   // partner-institution: campus es parent UNICO

@@ -108,6 +108,34 @@ Cada trabajador termina con **dos pertenencias**: su área (árbol funcional) y 
 
 ---
 
+## 5.bis 🔴 CORRECCIÓN tras el intento de ejecución de Fase 1 (2026-08-05)
+
+**La especificación de la clave en §1 está REFUTADA por la ejecución. No aplicar tal cual.**
+
+Al cambiar `identifier` de los 3 campus (`SEDE-LIMA` → `SEDE-1`) se descubrió en vivo que:
+
+1. **El `identifier` de un OrgType está acoplado al DN de su OU en LDAP.** El DN se deriva de él:
+   `identifier=SEDE-LIMA` → `ou=sede-lima,ou=org,dc=upeu,dc=edu,dc=pe`. Cambiar el identifier
+   **no es un cambio de metadato: es un renombrado en el directorio**.
+2. **El conector LDAP no soporta rename** (ya conocido para `ou=people`/`ou=alumni`; aplica igual
+   a `ou=org`). MidPoint no renombró: **creó `ou=sede-1` nueva** y dejó `ou=sede-lima` con sus
+   7 hijos (`ou=cu-admin`, `cu-admin-sec`, `cu-admin-tes`…). Juliaca y Tarapoto fallaron con
+   `FATAL_ERROR` y sus OUs originales quedaron intactas.
+3. **Toda org proyecta OU a LDAP**: crear la raíz `SEDES-UPEU` generó `ou=sedes-root` sin que se
+   hubiera previsto. Una raíz meramente organizativa no debería proyectarse.
+4. Colisión ya evitada antes de ejecutar: `identifier` desnudo (1/2/3) choca con `ID_AREA` 1/2/3
+   (Asamblea / Consejo / Rectorado) en el filtro `identifier = ID_PARENT`. Por eso NO se usó.
+
+**Rediseño correcto de la Fase 1:** la clave inmutable de correlación va en
+**`extension/upeu:sedeId` (= `ID_SEDE`)**, y el correlator del resource `Oracle LAMB Sedes`
+apunta a ese ítem. **`identifier` NO se toca** — queda con su valor semántico actual, porque
+gobierna el DN de una OU que ya está poblada y consumida por RIMS. Se cumple igual la regla
+"clave sobre el identificador inmutable": solo cambia dónde vive esa clave.
+
+Corolario general, más allá de las sedes: **en este despliegue, `identifier` de OrgType es un
+dato de provisioning, no una etiqueta libre.** Cualquier cambio sobre él es una operación de
+directorio y exige simulación previa.
+
 ## 6. Qué NO se decidió aquí (pendientes conexos)
 
 1. Los 63 shadows congelados del 25-jul: causa sin determinar; ver memoria `trabajadores-73-vigentes-sin-afiliacion-2026-08-04`.
