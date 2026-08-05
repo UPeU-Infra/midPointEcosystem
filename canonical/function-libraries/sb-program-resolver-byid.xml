@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FunctionLibrary: sb-program-resolver-byid
+  OID: 3f8b6c04-91a7-4d52-b8e3-2c50f9a1d7b6
+
+  Sustituye a sb-program-resolver (OID 6a99f9de-...), que resolvia por NOMBRE del
+  programa contra la LookupTable program-resolver-lamb.
+
+  Por que se cambia (medido 2026-08-05, docs/HALLAZGO-programas-academicos-vocbench-2026-08-05.md):
+    - El nombre no es identificador: los nombres de Oracle arrastran sede y modalidad,
+      y varios programas distintos comparten nombre. Cobertura por nombre: 40,9 %.
+    - Peor: cuando el tesauro tiene pares de conceptos, el emparejamiento por texto
+      engancha al que NO lleva P-code oficial del A4. 68,1 % de lo publicado en LDAP
+      apuntaba al concepto equivocado.
+    - La clave correcta es DAVID.ACAD_PROGRAMA_ESTUDIO.ID_PROGRAMA_ESTUDIO, inmutable,
+      que ya viaja en el atributo PROGRAM_CODES del resource Estudiantes.
+
+  Funciones:
+    - resolveProgramUriById(programId): String?
+        ID de Oracle -> URI canonica del concepto. La LookupTable ya trae la URI
+        resuelta por dct:isReplacedBy, asi que aqui no hay que seguir el enlace.
+    - resolveProgramCodeById(programId): String?
+        ID de Oracle -> notation EP-XXX (label de la row), cuando existe.
+
+  Politica strict import: devuelve null si no hay match. Un programa sin anclaje en
+  el tesauro NO recibe URI — es preferible el vacio a afirmar un programa que no cursa.
+-->
+<functionLibrary xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                 xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                 xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 oid="3f8b6c04-91a7-4d52-b8e3-2c50f9a1d7b6">
+    <name>sb-program-resolver-byid</name>
+    <description>Resuelve ID_PROGRAMA_ESTUDIO de Oracle LAMB a URI canonica del tesauro via LookupTable program-resolver-lamb-byid (generada desde VocBench). Devuelve null si no hay match.</description>
+
+    <function>
+        <name>resolveProgramUriById</name>
+        <parameter>
+            <name>programId</name>
+            <type>xsd:string</type>
+        </parameter>
+        <returnType>xsd:string</returnType>
+        <script>
+            <code>
+if (programId == null) return null
+def key = programId.toString().trim()
+if (key.isEmpty()) return null
+
+def tableOid = '7c3f2a91-4e8d-4b16-9a52-6d0e1f7b3c48'
+
+try {
+    def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(
+        prismContext.toUniformPath(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.F_ROW),
+        com.evolveum.midpoint.schema.GetOperationOptions.createRetrieve()
+    )
+    def tableObj = midpoint.getObject(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.class, tableOid, options)
+    if (tableObj == null) {
+        log.warn('sb-program-resolver-byid: LookupTable {} not found', tableOid)
+        return null
+    }
+    def rows = tableObj.getRow()
+    if (rows == null || rows.isEmpty()) {
+        log.warn('sb-program-resolver-byid: LookupTable {} has no rows', tableOid)
+        return null
+    }
+
+    for (def row : rows) {
+        if (row.getKey() != null &amp;&amp; row.getKey().trim() == key) {
+            return row.getValue()
+        }
+    }
+
+    log.debug('sb-program-resolver-byid: no anchor in thesaurus for ID_PROGRAMA_ESTUDIO={}', key)
+    return null
+} catch (Exception e) {
+    log.warn('sb-program-resolver-byid: error resolving id "{}": {}', key, e.getMessage())
+    return null
+}
+            </code>
+        </script>
+    </function>
+
+    <function>
+        <name>resolveProgramCodeById</name>
+        <parameter>
+            <name>programId</name>
+            <type>xsd:string</type>
+        </parameter>
+        <returnType>xsd:string</returnType>
+        <script>
+            <code>
+if (programId == null) return null
+def key = programId.toString().trim()
+if (key.isEmpty()) return null
+
+def tableOid = '7c3f2a91-4e8d-4b16-9a52-6d0e1f7b3c48'
+
+try {
+    def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(
+        prismContext.toUniformPath(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.F_ROW),
+        com.evolveum.midpoint.schema.GetOperationOptions.createRetrieve()
+    )
+    def tableObj = midpoint.getObject(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.class, tableOid, options)
+    if (tableObj == null) return null
+    def rows = tableObj.getRow()
+    if (rows == null) return null
+
+    for (def row : rows) {
+        if (row.getKey() != null &amp;&amp; row.getKey().trim() == key) {
+            def lab = row.getLabel()
+            if (lab != null) return lab.getOrig()
+            return null
+        }
+    }
+    return null
+} catch (Exception e) {
+    log.warn('sb-program-resolver-byid.resolveProgramCodeById: error "{}" -&gt; {}', key, e.getMessage())
+    return null
+}
+            </code>
+        </script>
+    </function>
+</functionLibrary>
