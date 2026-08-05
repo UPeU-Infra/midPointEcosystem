@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SIMULACIÓN (preview, NO persiste) — import del catálogo de sedes.
+     DR: docs/DECISION-arbol-sedes-organization-tree.md (Fase 1, verificación).
+
+     Resultado esperado: 3 objetos, los 3 correlacionados por identifier con los OrgType
+     campus existentes (OU-CAMPUS-LIMA=SEDE-1, JULIACA=SEDE-2, TARAPOTO=SEDE-3).
+     CERO objetos creados. Si aparece algún ADD de OrgType, la correlación por identifier
+     falló y hay que parar: crearía 3 orgs duplicados.
+
+     Leer resultados desde m_simulation_result_processed_object.fullobject.
+     NUNCA contar con JOIN a m_shadow: descarta silenciosamente las filas ADDED. -->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3">
+  <name>SIM sedes import (preview, NO escribe) - DR arbol-sedes Fase 1</name>
+  <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+  <executionState>runnable</executionState>
+  <activity>
+    <work>
+      <import>
+        <resourceObjects>
+          <resourceRef oid="f21edcac-d151-4d48-a357-e6b3cfdcf736" type="c:ResourceType"/>
+          <kind>generic</kind>
+          <intent>sede</intent>
+        </resourceObjects>
+      </import>
+    </work>
+    <execution>
+      <mode>preview</mode>
+    </execution>
+  </activity>
+</task>
