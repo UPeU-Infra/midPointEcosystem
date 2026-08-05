@@ -222,3 +222,43 @@ Nada de lo anterior se afirma de memoria. Todo tiene documento detrás:
    silencio ni la corrijas por tu cuenta en la fuente.
 6. Cambios en PROD: pedir confirmación antes de reiniciar servicios o de
    cualquier operación no reversible.
+
+---
+
+## Addendum 2026-08-05 — el puente ya existe a medias, y otras dos correcciones
+
+Tres cosas cambiaron después de escribir este prompt, medidas contra el tesauro vivo.
+
+### 1. `ID_PROGRAMA_ESTUDIO` ya está en el tesauro
+
+El §"Puntos de contacto" decía que el puente `PE.CODIGO → URI` no existe. **Existe a
+medias, y con la clave correcta:** 62 conceptos llevan el `ID_PROGRAMA_ESTUDIO` de
+Oracle como `skos:notation` con datatype `urn:esther:id_programa_estudio`.
+
+Es exactamente la clave que propone el §5.2 del hallazgo del IGA —interna, inmutable—
+y ya está en el sitio correcto. Lo que falta no es diseñarla: es **completarla** para
+los conceptos que no la tienen y **generar desde ahí** la LookupTable, en vez de
+mantenerla a mano. Se lee del export:
+
+```
+data/thesaurus-export.json → programs[].id_programa_estudio_lamb
+```
+
+### 2. Los pares duplicados están cerrados
+
+Los 17 pares que hacían que MidPoint enganchara al gemelo sin P-code ya declaran
+`dct:isReplacedBy` hacia su canónico. El generador del puente **debe seguir ese enlace**
+en vez de tomar la URI tal cual; con esa regla, las URIs obsoletas que hoy publica LDAP
+se resuelven solas. El export lo expone en `programs[].replaced_by`.
+
+Sigue en pie el corolario del hallazgo: esto **no cambia LDAP por sí solo**. Mientras
+`program-resolver-lamb` sea estática y resuelva por nombre, publicará lo mismo.
+
+### 3. Dos trampas del almacén, que costaron un día
+
+- **El tesauro vive repartido entre el named graph `<…/programas/>` y el default graph.**
+  Enumerar grafos con `GRAPH ?g` deja fuera ~2.900 triples y 20 conceptos. Cualquier
+  consulta de inventario debe ir **sin filtrar por grafo**; cualquier borrado, a los dos.
+- **Las notaciones usan datatypes propios**, no `xsd:string`: `ns/IneiCode8`,
+  `ns/KohaCode`, `urn:esther:id_programa_estudio`. Un `DELETE` sin el datatype exacto
+  no borra nada y no da error.
