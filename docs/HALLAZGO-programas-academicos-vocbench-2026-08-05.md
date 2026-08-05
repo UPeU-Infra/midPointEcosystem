@@ -263,6 +263,46 @@ nombre igual que a las demás. Lo correcto es que **no publiquen `academicProgra
 estudiante de Inglés Online no cursa un programa licenciado, y afirmarlo ante ALICIA/SUNEDU es el
 mismo tipo de error que el `'P'` fabricado.
 
+## 4.sexies Puente COMPLETO del lado del tesauro (5-ago, cierre)
+
+VocBench ancló los 22 programas restantes. **Verificado en vivo contra el tesauro y contra Oracle:**
+
+| Comprobación | Resultado |
+|---|---|
+| Notations `urn:esther:id_programa_estudio` | **157** (135 + 22 exactos) |
+| IDs de Oracle distintos | **157** — relación 1:1, **0 colisiones** ✅ |
+| Conceptos destino | 64 (no se crearon programas: se añadieron notations) |
+| **Programas evaluados por el Estado anclados** | **73 de 73 — 100 %** ✅ |
+| **Identidades cubiertas** | **15.307 de 15.307 — 100 %** ✅ |
+| URIs publicadas en LDAP que siguen resolviendo | **20 de 20** ✅ |
+
+**El puente `ID_PROGRAMA_ESTUDIO → URI` está completo y es utilizable.** Cumple las dos
+condiciones que exige un correlator: cobertura total del universo relevante y unicidad
+(un ID de Oracle → un solo concepto).
+
+**Alcance deliberado:** las 13.020 matrículas de Idiomas, Educación Contínua, CEPRE, TESIS,
+Conservatorio y Diplomatura quedan **fuera a propósito** — no son programas licenciados por
+SUNEDU y su cobertura correcta es 0 %. No son un gap y no deben contarse como tal.
+
+⚠️ **Requisito para el generador:** **18 anclajes apuntan a conceptos deprecados**. La tabla que
+consuma MidPoint **debe resolver `dct:isReplacedBy`** y guardar la URI del sustituto, no la del
+concepto anclado. Sin eso, el puente reintroduce exactamente el defecto que §4.quater documentó.
+
+### Estado de los 4 pasos
+
+| # | Paso | Estado |
+|---|---|---|
+| 1 | Quitar `'P'||CODIGO_SUNEDU` del searchScript | 🔴 pendiente — 9.367 identidades |
+| 2 | Verificar vigencia de las URIs | ✅ hecho (§4.quater) |
+| 2.bis | Resolver los pares en VocBench | ✅ hecho (§4.quinquies) |
+| 2.ter | Anclar `ID_PROGRAMA_ESTUDIO` en el tesauro | ✅ **hecho — 100 %** |
+| 3 | **Reemplazar `program-resolver-lamb`** por una tabla generada desde VocBench | 🔴 **desbloqueado, sin impedimentos** |
+| 4 | Contraste modalidad `TIPO_PROGRAMA` ↔ P-code del A4 | 🔴 pendiente |
+
+**Decisión de producto que el paso 3 debe resolver:** qué publica MidPoint para las 13.020
+matrículas de niveles no licenciados. Hoy el resolver por nombre les asigna URI igual que al
+resto; lo correcto es que **no publiquen `academicProgramUri`**.
+
 ## 5. Propuesta
 
 ### 5.1 Dejar de fabricar códigos (corrección inmediata, alto impacto)
