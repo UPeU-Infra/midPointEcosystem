@@ -206,6 +206,63 @@ paso que cierra el problema es el 2.
 `source ~/.secrets/vocbench-upeu.env` + login `Auth/login` + POST a `SPARQL/evaluateQuery` con
 `ctx_project=$VOCBENCH_PROJECT`.
 
+## 4.quinquies VocBench cerró los pares — verificación posterior (5-ago, tarde)
+
+La sesión de VocBench ejecutó el prompt. **Verificado en vivo contra el tesauro:**
+
+| Comprobación | Resultado |
+|---|---|
+| URIs publicadas en LDAP que dejaron de resolver | **0** ✅ (la restricción se respetó) |
+| Conceptos con `dct:isReplacedBy` entre las 20 | **12** (antes 6) ✅ los 6 del grupo B declarados |
+| Pares programa↔programa sin declarar | **0** ✅ |
+| Anclaje a Oracle | **135 notations `urn:esther:id_programa_estudio` sobre 63 conceptos** — nuevo |
+
+**Dos discrepancias aparentes con el reporte de esa sesión resultaron ser defectos de mis
+consultas, no de su trabajo:**
+
+1. *«179 conceptos en el scheme» vs «128 de programa»* — no se contradicen: el scheme contiene
+   **99 programas vigentes + 24 deprecados + 56 conceptos del clasificador INEI**
+   (`campoDetallado/`, `claseN2/`). Mi cifra contaba los conceptos INEI como programas.
+2. *«24 pares sin declarar» vs «0 duplicados»* — mi consulta de cierre (la que yo mismo puse en
+   el prompt) era **demasiado laxa**: emparejaba por etiqueta sin excluir el clasificador INEI, y
+   marcaba como «duplicado» cosas como `campoDetallado/731` ↔ `programa/arquitectura-y-urbanismo`,
+   que son conceptos de naturaleza distinta con el mismo nombre. Filtrando el clasificador,
+   **pares programa↔programa sin declarar = 0**. El reporte era correcto.
+
+### Cobertura real del puente `ID_PROGRAMA_ESTUDIO → URI` (medida contra Oracle)
+
+Cruce de las 135 notations contra las matrículas vigentes (mismo filtro que el `searchScript`
+canónico de estudiantes):
+
+| Nivel de enseñanza | Cubierto | Sin anclar | % | ¿Debe tener URI? |
+|---|---|---|---|---|
+| **Pregrado** | 12.360 | 3.912 | **76,0 %** | sí |
+| **Posgrado** | 2.274 | 318 | **87,7 %** | sí |
+| Idiomas | 0 | 5.922 | 0 % | **no** — no licenciado |
+| Educación Contínua | 0 | 5.239 | 0 % | **no** |
+| CEPRE | 0 | 1.217 | 0 % | **no** |
+| TESIS | 0 | 328 | 0 % | **no** |
+| Conservatorio de música | 0 | 273 | 0 % | **no** |
+| Diplomatura | 0 | 41 | 0 % | **no** |
+| **TOTAL** | **14.634** | **17.250** | 45,9 % | |
+
+**El «54 % sin cubrir» es engañoso y no debe usarse como métrica.** De esas 17.250 matrículas,
+**13.020 son de niveles que no son programas licenciados por SUNEDU** (idiomas, CEPRE, formación
+continua, tesis, conservatorio): no tienen ni deben tener P-code ni URI de programa académico.
+Su cobertura correcta es 0 %.
+
+**El gap real y accionable son 22 programas de Oracle que SÍ tienen `CODIGO_SUNEDU2` oficial y no
+están anclados en el tesauro → 2.950 identidades.** Casi todos son variantes por sede o modalidad
+de un programa ya presente (Enfermería `id=619`, Ingeniería Civil `id=618`, Arquitectura `id=887`
+`id=888` `id=860`, Administración `id=872` `id=5` `id=874`…). No hay que crear conceptos: hay que
+**añadir notations `urn:esther:id_programa_estudio` a conceptos que ya existen**.
+
+**Decisión de producto que esto abre (para el IGA, no para VocBench):** qué publica MidPoint para
+las 13.020 matrículas de niveles no licenciados. Hoy el `program-resolver-lamb` les asigna URI por
+nombre igual que a las demás. Lo correcto es que **no publiquen `academicProgramUri`** — un
+estudiante de Inglés Online no cursa un programa licenciado, y afirmarlo ante ALICIA/SUNEDU es el
+mismo tipo de error que el `'P'` fabricado.
+
 ## 5. Propuesta
 
 ### 5.1 Dejar de fabricar códigos (corrección inmediata, alto impacto)
