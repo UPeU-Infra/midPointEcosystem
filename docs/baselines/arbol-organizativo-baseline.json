@@ -1,0 +1,365 @@
+{
+ "generado": "2026-08-06",
+ "fuente": "PROD 192.168.15.166 (snapshot inventario)",
+ "raices_permitidas": [
+  "Projects",
+  "Teams",
+  "UPeU",
+  "World"
+ ],
+ "nota": "Snapshot de los nodos ESTRUCTURALES del arbol. El verificador compara PROD contra esto. Las AREA-NNN sincronizadas desde Oracle NO se blindan aqui: son datos.",
+ "nodos": {
+  "5c0e4c13-66e3-46fd-bc49-ff5a2361e178": {
+   "name": "EP-CON",
+   "identifier": "EP-CON",
+   "parents": [
+    "2899369e-b405-431a-9489-186bdbcdc5ce"
+   ],
+   "subtype": "academic-program"
+  },
+  "d8ee148a-a573-4f15-9171-604c4339f57c": {
+   "name": "EP-EDU-CIN",
+   "identifier": "EP-EDU-CIN",
+   "parents": [
+    "141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9"
+   ],
+   "subtype": "academic-program"
+  },
+  "0cda5d94-3c2d-4fc6-a53d-00abb0e6dc67": {
+   "name": "EP-TEO",
+   "identifier": "EP-TEO",
+   "parents": [
+    "23e944c6-57ca-4ca8-bdcb-3bac5b31a1cd"
+   ],
+   "subtype": "academic-program"
+  },
+  "1472f480-cc3a-4345-bf89-93172d36e663": {
+   "name": "EP-NUT",
+   "identifier": "EP-NUT",
+   "parents": [
+    "a72bbde6-c689-4ef0-81d5-f293e78c26fe"
+   ],
+   "subtype": "academic-program"
+  },
+  "332fe477-32e5-4683-a6ca-bf6e9c9e4b78": {
+   "name": "EP-EDU-IES",
+   "identifier": "EP-EDU-IES",
+   "parents": [
+    "141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9"
+   ],
+   "subtype": "academic-program"
+  },
+  "82793d2b-29d0-48a4-b885-edcc1f87accb": {
+   "name": "EP-EDU-MUA",
+   "identifier": "EP-EDU-MUA",
+   "parents": [
+    "141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9"
+   ],
+   "subtype": "academic-program"
+  },
+  "7b1031d3-cafc-4ef7-887e-1e8fa15fae1d": {
+   "name": "EP-EDU-PRI",
+   "identifier": "EP-EDU-PRI",
+   "parents": [
+    "141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9"
+   ],
+   "subtype": "academic-program"
+  },
+  "00000000-0000-0000-0000-019204771296": {
+   "name": "VICERRECTORADO-ACADEMICO",
+   "identifier": "5",
+   "parents": [
+    "00000000-0000-0000-0000-481102126730"
+   ],
+   "subtype": null
+  },
+  "00000000-0000-0000-0000-518851964441": {
+   "name": "VICERRECTORADO-ADMINISTRATIVO",
+   "identifier": "6",
+   "parents": [
+    "00000000-0000-0000-0000-481102126730"
+   ],
+   "subtype": null
+  },
+  "90cc2089-6f00-4fd9-9394-10debdd019eb": {
+   "name": "Projects",
+   "identifier": null,
+   "parents": [],
+   "subtype": null
+  },
+  "2328b6ae-f30b-4701-a1d7-92fb617c9e59": {
+   "name": "Teams",
+   "identifier": null,
+   "parents": [],
+   "subtype": null
+  },
+  "435d2edb-ee6a-46c2-ad59-f994aadf8c90": {
+   "name": "EP-ICIV",
+   "identifier": "EP-ICIV",
+   "parents": [
+    "86968a5a-7d41-4eb3-a545-244df5b700c1"
+   ],
+   "subtype": "academic-program"
+  },
+  "52c0c516-eaae-4f80-a206-3bbe48c16906": {
+   "name": "EP-MED",
+   "identifier": "EP-MED",
+   "parents": [
+    "a72bbde6-c689-4ef0-81d5-f293e78c26fe"
+   ],
+   "subtype": "academic-program"
+  },
+  "466091e8-5b17-41b8-ba34-7cadcb334955": {
+   "name": "ASAMBLEA-UNIVERSITARIA",
+   "identifier": "1",
+   "parents": [
+    "e9dce150-b649-4646-b4ab-c0ce2a3c7330"
+   ],
+   "subtype": null
+  },
+  "1d0ce5fc-cf45-4c0f-b1d6-781476242a6e": {
+   "name": "World",
+   "identifier": null,
+   "parents": [],
+   "subtype": null
+  },
+  "18c30d7b-1e6b-42d8-8fbf-f549c06f13b3": {
+   "name": "CONSEJO-UNIVERSITARIO",
+   "identifier": "2",
+   "parents": [
+    "466091e8-5b17-41b8-ba34-7cadcb334955"
+   ],
+   "subtype": null
+  },
+  "00000000-0000-0000-0000-481102126730": {
+   "name": "RECTORADO",
+   "identifier": "3",
+   "parents": [
+    "18c30d7b-1e6b-42d8-8fbf-f549c06f13b3"
+   ],
+   "subtype": null
+  },
+  "00000000-0000-0000-0000-352736936167": {
+   "name": "VICERRECTORADO-BIENESTAR-UNIVERSITARIO",
+   "identifier": "4",
+   "parents": [
+    "00000000-0000-0000-0000-481102126730"
+   ],
+   "subtype": null
+  },
+  "07a7a8cc-118c-4c84-9f9e-e580ae5dab58": {
+   "name": "EP-DER",
+   "identifier": "EP-DER",
+   "parents": [
+    "141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9"
+   ],
+   "subtype": "academic-program"
+  },
+  "7ae7cc60-b14b-43c6-b384-ab00b713ea43": {
+   "name": "EP-EDU-INI",
+   "identifier": "EP-EDU-INI",
+   "parents": [
+    "141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9"
+   ],
+   "subtype": "academic-program"
+  },
+  "aa049ea8-54ef-4cca-8ac0-38bd75de34db": {
+   "name": "EP-ISW",
+   "identifier": "EP-ISW",
+   "parents": [
+    "86968a5a-7d41-4eb3-a545-244df5b700c1"
+   ],
+   "subtype": "academic-program"
+  },
+  "9d7a2343-f02e-431c-8525-912644d78bbb": {
+   "name": "EP-SIS",
+   "identifier": "EP-SIS",
+   "parents": [
+    "86968a5a-7d41-4eb3-a545-244df5b700c1"
+   ],
+   "subtype": "academic-program"
+  },
+  "76b32416-a5ba-4c03-b01e-4d8dbc8ad197": {
+   "name": "EP-ADM",
+   "identifier": "EP-ADM",
+   "parents": [
+    "2899369e-b405-431a-9489-186bdbcdc5ce"
+   ],
+   "subtype": "academic-program"
+  },
+  "367c55b3-ba94-4220-8d24-8ee442eb1ed2": {
+   "name": "EP-COM",
+   "identifier": "EP-COM",
+   "parents": [
+    "141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9"
+   ],
+   "subtype": "academic-program"
+  },
+  "a83ed1eb-5fea-40fc-9526-ca5a8e684a77": {
+   "name": "EP-EDU-MAT",
+   "identifier": "EP-EDU-MAT",
+   "parents": [
+    "141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9"
+   ],
+   "subtype": "academic-program"
+  },
+  "97d548fc-e99b-4025-b489-50b7593ff475": {
+   "name": "EP-ENF",
+   "identifier": "EP-ENF",
+   "parents": [
+    "a72bbde6-c689-4ef0-81d5-f293e78c26fe"
+   ],
+   "subtype": "academic-program"
+  },
+  "202f54f0-cefe-45e3-9e1a-e151b5619e7f": {
+   "name": "EP-PSI-FCS",
+   "identifier": "EP-PSI-FCS",
+   "parents": [
+    "a72bbde6-c689-4ef0-81d5-f293e78c26fe"
+   ],
+   "subtype": "academic-program"
+  },
+  "8b1b93b4-6da6-4744-ab8a-da4402317706": {
+   "name": "EP-III",
+   "identifier": "EP-III",
+   "parents": [
+    "86968a5a-7d41-4eb3-a545-244df5b700c1"
+   ],
+   "subtype": "academic-program"
+  },
+  "e05981c5-a1d6-4a50-ae06-b6627b577d43": {
+   "name": "EP-PSI-FCHE",
+   "identifier": "EP-PSI-FCHE",
+   "parents": [
+    "141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9"
+   ],
+   "subtype": "academic-program"
+  },
+  "e636ed6f-b354-4756-ac3d-eed440ac7975": {
+   "name": "EP-IIE",
+   "identifier": "EP-IIE",
+   "parents": [
+    "86968a5a-7d41-4eb3-a545-244df5b700c1"
+   ],
+   "subtype": "academic-program"
+  },
+  "00000000-0000-0000-0000-497211782216": {
+   "name": "UPeU",
+   "identifier": "upeu.edu.pe",
+   "parents": [],
+   "subtype": null
+  },
+  "141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9": {
+   "name": "FACULTAD-EDUCACION",
+   "identifier": "8",
+   "parents": [
+    "00000000-0000-0000-0000-019204771296"
+   ],
+   "subtype": null
+  },
+  "2899369e-b405-431a-9489-186bdbcdc5ce": {
+   "name": "FACULTAD-EMPRESARIALES",
+   "identifier": "12",
+   "parents": [
+    "00000000-0000-0000-0000-019204771296"
+   ],
+   "subtype": null
+  },
+  "86968a5a-7d41-4eb3-a545-244df5b700c1": {
+   "name": "FACULTAD-INGENIERIA",
+   "identifier": "9",
+   "parents": [
+    "00000000-0000-0000-0000-019204771296"
+   ],
+   "subtype": null
+  },
+  "a72bbde6-c689-4ef0-81d5-f293e78c26fe": {
+   "name": "FACULTAD-SALUD",
+   "identifier": "10",
+   "parents": [
+    "00000000-0000-0000-0000-019204771296"
+   ],
+   "subtype": null
+  },
+  "23e944c6-57ca-4ca8-bdcb-3bac5b31a1cd": {
+   "name": "FACULTAD-TEOLOGIA",
+   "identifier": "11",
+   "parents": [
+    "00000000-0000-0000-0000-019204771296"
+   ],
+   "subtype": null
+  },
+  "4358f580-c30e-4a35-95d1-5424a96ded3c": {
+   "name": "EP-ARQ",
+   "identifier": "EP-ARQ",
+   "parents": [
+    "86968a5a-7d41-4eb3-a545-244df5b700c1"
+   ],
+   "subtype": "academic-program"
+  },
+  "25484bfe-ce95-42a9-8112-96bdb66338dd": {
+   "name": "EP-EDU-EFI",
+   "identifier": "EP-EDU-EFI",
+   "parents": [
+    "141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9"
+   ],
+   "subtype": "academic-program"
+  },
+  "faab1be3-3b5a-4d56-9ee0-97e8c45d2322": {
+   "name": "EP-IAMB",
+   "identifier": "EP-IAMB",
+   "parents": [
+    "86968a5a-7d41-4eb3-a545-244df5b700c1"
+   ],
+   "subtype": "academic-program"
+  },
+  "b46a185a-be0f-45da-a6b3-1399247146c9": {
+   "name": "EP-MKT",
+   "identifier": "EP-MKT",
+   "parents": [
+    "2899369e-b405-431a-9489-186bdbcdc5ce"
+   ],
+   "subtype": "academic-program"
+  },
+  "c4f355bb-903a-4aff-9871-6a302492a69b": {
+   "name": "EP-IIA",
+   "identifier": "EP-IIA",
+   "parents": [
+    "86968a5a-7d41-4eb3-a545-244df5b700c1"
+   ],
+   "subtype": "academic-program"
+  },
+  "5c28f614-72af-4e8f-b19b-e4cbae29720b": {
+   "name": "AREA-430",
+   "identifier": "430",
+   "parents": [
+    "00000000-0000-0000-0000-481102126730"
+   ],
+   "subtype": null
+  },
+  "0262b695-3b27-4011-b70f-97629d7688e9": {
+   "name": "OU-CAMPUS-JULIACA",
+   "identifier": "SEDE-JULIACA",
+   "parents": [
+    "00000000-0000-0000-0000-497211782216"
+   ],
+   "subtype": null
+  },
+  "5e7bb68a-b6ae-477e-be70-809a37fc2711": {
+   "name": "OU-CAMPUS-TARAPOTO",
+   "identifier": "SEDE-TARAPOTO",
+   "parents": [
+    "00000000-0000-0000-0000-497211782216"
+   ],
+   "subtype": null
+  },
+  "ec37f248-9276-4886-86ff-c84fb0754ab8": {
+   "name": "OU-CAMPUS-LIMA",
+   "identifier": "SEDE-LIMA",
+   "parents": [
+    "00000000-0000-0000-0000-497211782216"
+   ],
+   "subtype": null
+  }
+ }
+}
