@@ -85,8 +85,15 @@ por área y certificaciones por manager sin volver a tocar el modelo.
 
 **Libro:** *"MidPoint assigns managers to organizational units. That is the right way to do it."*
 El cargo viene del organigrama (política); el titular, de `posiciones.xml`/Oracle (realidad); se
-materializa como assignment con `relation=org:manager`. Gap actual medido: 342/353 orgs sin
-manager. Es requisito para certificaciones y aprobaciones por jefe (cap. 1 y 11).
+materializa como assignment con `relation=org:manager`. Es requisito para certificaciones y
+aprobaciones por jefe (cap. 1 y 11).
+
+🔴 **Medido el 2026-08-06 — D5 DEPENDE DE D1, y falta una regla de negocio.** La fuente es
+`ELISEO.ORG_AREA_RESPONSABLE`, pero **no es una jefatura única**: 421 grupos
+`(ID_SEDEAREA, ID_NIVEL)` tienen más de un responsable (Imprenta Unión: 123). Y su grano es
+**`ID_SEDEAREA`**, no `ID_AREA` — el jefe de Contabilidad en Juliaca y el de Lima colapsan hoy
+sobre la misma org. **Primero la rama de sedes, después los managers.** Detalle:
+[`HALLAZGO-managers-org-fuente-oracle-2026-08-06.md`](HALLAZGO-managers-org-fuente-oracle-2026-08-06.md).
 
 ### D6.bis — Las raíces `Projects` / `Teams` / `World` son del PRODUCTO, no vestigios
 
@@ -162,6 +169,6 @@ personas, pendientes de decisión de reubicación.
 |---|---|---|
 | 1 | ✅ **HECHO 2026-08-06** — Limpieza CRIS 2ª pasada: 16 linkRefs desenganchados (raw), **763 shadows huérfanos y 178 LINEA-\* borrados** (backup validado en `backup-cris-20260806`). PROD: 353→175 orgs. Queda SOLO la decisión CII-\* (310 personas) | purga 2026-08-03 + memoria `lineas-investigacion-no-son-de-oracle` |
 | 2 | ✅ **HECHO 2026-08-06** — 32 orgs no desplegadas retiradas a `archive/…-RETIRADAS.xml`; **`KNOWN_PENDING` VACÍA**: el repo ya no describe ninguna org inexistente | archivado 2026-08-06 |
-| 3 | Rama de sedes (Fase 1 rediseñada: `extension/sedeId`, simulación, exclusión del outbound ou) | ADR sedes §5.bis + este doc D1/D4 |
-| 4 | Managers `org:manager` desde posiciones | este doc D5 |
+| 3 | **Rama de sedes** (Fase 1 rediseñada: `extension/sedeId`, simulación, exclusión del outbound ou) — **bloquea el punto 4** | ADR sedes §5.bis + este doc D1/D4 |
+| 4 | Managers `org:manager` — **BLOQUEADO por el 3** y por una regla de negocio de Talento Humano sobre quién es el titular | D5 + `HALLAZGO-managers-org-fuente-oracle-2026-08-06.md` |
 | 5 | Decisión sobre los 16 `EP *` funcionales (546 docentes) vs las 26 EP académicas | medición 2026-08-06 |
