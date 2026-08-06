@@ -125,12 +125,49 @@ lo correcto al no asignarle URI. Su `c_bbf436cf` es residuo del viejo resolver p
 niveles no licenciados. La clasificación interna de los 12.727 tiene errores de agregación
 propios; **el total y la causa raíz sí están bien medidos**.
 
+## 6.ter CORRECCIÓN — clasificación rehecha: los «393 sin explicar» NO existen
+
+La clasificación de §4 estaba **mal construida**. Rehecha con el criterio correcto:
+
+| Grupo | Personas | Naturaleza |
+|---|---|---|
+| **URI correcta + deprecada residual** | **8.234** | ya tienen su canónica; solo sobra la vieja |
+| Egresados sin matrícula vigente | **4.336** | valor congelado; nadie los recomputa |
+| Activos de niveles NO licenciados | **156** | TESIS 101 · Idiomas 41 · Diplomatura 6 · Ed. Contínua 5 · CEPRE 4 |
+| Activo licenciado con id fuera del puente | 1 | caso aislado |
+| | **12.727** | |
+
+### El error de método
+
+Comprobaba «¿tiene la canónica?» contra una **tabla fija de seis pares de pregrado**
+(`c_b48bff58 → programa/psicologia`). Pero los afectados de posgrado publican
+`c_b48bff58` **junto a la URI de su maestría**:
+
+```
+201521028  →  c_b48bff58  +  programa/maestria-en-educacion-psicologia-educativa   ✅ correcta
+202013547  →  c_b48bff58  +  programa/maestria-en-psicologia-clinica-y-de-la-salud ✅ correcta
+```
+
+Como su canónica **no era** `programa/psicologia`, el emparejamiento fallaba y los contaba como
+«sin canónica». La pregunta correcta era **«¿tiene alguna URI que esté en el puente?»**, no
+«¿tiene la pareja que yo espero para esta deprecada?».
+
+🔴 **Consecuencia: la cifra «393 activos sin URI canónica» era FALSA.** Podría haber motivado
+trabajo innecesario en VocBench buscando anclajes que no faltan.
+
+### Lo que queda tras la corrección
+
+**No hay ningún grupo sin explicar.** Los 12.727 son una sola cosa con tres orígenes: **residuo
+del viejo resolver por nombre que nunca se retiró**. Ni el puente falla, ni el inbound falla, ni
+faltan anclajes en el tesauro. Y el remedio es más simple de lo que parecía: a **8.234 solo hay
+que quitarles la URI vieja** (ya tienen la buena).
+
 ## 7. Qué falta
 
 1. ~~Testigo `202612155`~~ — ✅ **RESUELTO** (§6.bis): es un CEPRE, el sistema actúa
    correctamente. Y una recon completa ya demostró que no limpia nada.
-   **Rehacer la clasificación de los 12.727** con una consulta que no confunda los ejes de
-   agregación (cuántos son niveles no licenciados, cuántos egresados, cuántos activos reales).
+   ~~Rehacer la clasificación~~ — ✅ **HECHA** (§6.ter): 8.234 con URI correcta + residual,
+   4.336 egresados, 156 no licenciados, 1 aislado. **Los «393 sin explicar» no existían.**
 2. 🔴 **Retirar los valores obsoletos** — lo de fondo, y **ninguna reconciliación lo arregla**:
    afecta a las 12.727 (7.841 duplicados + 4.336 egresados + los que queden). Opciones a evaluar:
    hacer que el outbound de `eduPersonEntitlement` retire lo que ya no corresponde (patrón PM10),
