@@ -385,23 +385,16 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramUri</path>
                     </target>
                 </inbound>
-                <inbound>
-                    <name>program-id-to-academicProgramCode</name>
-                    <strength>strong</strength>
-                    <expression>
-                        <function>
-                            <libraryRef oid="3f8b6c04-91a7-4d52-b8e3-2c50f9a1d7b6" type="FunctionLibraryType"/>
-                            <name>resolveProgramCodeById</name>
-                            <parameter>
-                                <name>programId</name>
-                                <expression><path>$input</path></expression>
-                            </parameter>
-                        </function>
-                    </expression>
-                    <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramCode</path>
-                    </target>
-                </inbound>
+                <!-- RETIRADO el mismo día (PROD v184): `program-id-to-academicProgramCode`.
+                     Resolver el EP-XXX por ID hace CAER la cobertura de 40,9 % a 17,0 %
+                     (7.268 estudiantes lo pierden) porque **15 de los 23 EP-codes viven en
+                     conceptos DEPRECADOS del tesauro** y no se migraron al vigente: al seguir
+                     `dct:isReplacedBy` se llega al canónico, que no los lleva.
+                     No es cosmético: el bloque D6 de `user-template-student` asigna la ORG del
+                     programa desde `academicProgramCode`, así que esos 7.268 se quedaban sin su
+                     organización. `academicProgramCode` vuelve a resolverse por SCHOOL_NAME
+                     (abajo). Rehacer por ID solo cuando VocBench migre los 15 EP-codes. -->
+
             </attribute>
             <attribute>
                 <ref>ri:SCHOOL_NAME</ref>
@@ -453,8 +446,26 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                          egresados.xml (afiliacion-to-liveAffiliationAlum): beforeCorrelation empuja
                          el valor al zero-set y no materializa el item vacío. -->
                 </inbound>
-                <!-- RETIRADO 2026-08-05 (PROD v182): `school-name-to-academicProgramCode`.
-                     Sustituido por `program-id-to-academicProgramCode` sobre PROGRAM_CODES. -->
+                <!-- MANTENIDO por nombre (PROD v184, inbound id 3362): el EP-XXX no se puede
+                     resolver por ID mientras 15 de los 23 EP-codes sigan en conceptos deprecados
+                     del tesauro. Gobierna la org del programa (bloque D6 del template). -->
+                <inbound>
+                    <name>school-name-to-academicProgramCode</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <function>
+                            <libraryRef oid="6a99f9de-5db6-43d5-9b20-0cfd2b79ecf9" type="FunctionLibraryType"/>
+                            <name>resolveProgramCode</name>
+                            <parameter>
+                                <name>programText</name>
+                                <expression><path>$input</path></expression>
+                            </parameter>
+                        </function>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramCode</path>
+                    </target>
+                </inbound>
 
                 <!-- SCHOOL_NAME → organizationalUnit
                      IIA: ELISEO.ORG_AREA.NOMBRE (via MAX en subquery, nombre de EP/facultad del semestre activo).
