@@ -76,6 +76,7 @@ ClaudeFlow specs en `docs/specs/`.
 
 ## Convenciones
 
+- 🔴 **Antes de CUALQUIER ejecución en PROD: [`docs/runbooks/PROTOCOLO-PRE-EJECUCION-PROD.md`](docs/runbooks/PROTOCOLO-PRE-EJECUCION-PROD.md)** — 9 reglas destiladas de incidentes reales (leer el mecanismo, no muestrear; contrastar contra los docs rectores; leer la lista del lote; anclar filtros de DN; toda predicción de riesgo lleva medición previa).
 - Passwords de PROD NUNCA en el repo — van en `~/.secrets/`.
 - Cambios destructivos requieren backup previo (tag git + `pg_dump` si toca datos).
 - Oracle LAMB solo lectura. Política absoluta.
