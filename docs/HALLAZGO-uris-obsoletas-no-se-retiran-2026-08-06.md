@@ -162,16 +162,56 @@ del viejo resolver por nombre que nunca se retiró**. Ni el puente falla, ni el 
 faltan anclajes en el tesauro. Y el remedio es más simple de lo que parecía: a **8.234 solo hay
 que quitarles la URI vieja** (ya tienen la buena).
 
+## 6.quater ✅ LIMPIEZA EJECUTADA — 8.243 valores obsoletos retirados
+
+| Medida | Antes | Después |
+|---|---|---|
+| Valores **deprecados** | **12.737** | **4.494** |
+| Valores canónicos | 33.442 | **33.442 — INTACTOS** ✅ |
+| Personas con URI | 34.646 | 34.646 |
+| Personas sin ninguna URI | — | **0** ✅ |
+
+**8.243 valores retirados de 8.233 personas**, sin tocar un solo valor correcto. Nadie perdió su
+identificador de programa: todos conservan la URI canónica que ya tenían.
+
+### Procedimiento
+
+1. **Selección**: personas con alguna URI deprecada **Y** alguna URI que esté en el puente —es
+   decir, las que ya tienen la buena y solo les sobra la vieja. (No «la pareja esperada de esta
+   deprecada»: ese fue el error de §6.ter.)
+2. **Backup**: 8.243 pares `dn → URI` en
+   `backups/backup-cris-20260806/backup_uris_borradas.txt`. Reversible entrada por entrada.
+3. **Canario**: `uid=202513335` — verificado que pierde `c_c5f87ee9` y **conserva**
+   `programa/enfermeria`.
+4. **Lote**: `ldapmodify -c` con LDIF de `delete` por valor exacto (nunca `replace` del atributo,
+   que habría borrado también las canónicas).
+5. **Verificación**: recuento completo antes/después en LDAP.
+
+### Por qué no vuelven
+
+El mapping **no produce** esos valores: el puente resuelve `dct:isReplacedBy` y devuelve siempre
+el concepto canónico. Y como en multivalor solo **añade** sin eliminar, una vez retirados no se
+reponen. **Verificar tras la recon del 7-ago** — es la comprobación que cierra el asunto.
+
+### Los 4.494 que quedan (fuera de alcance a propósito)
+
+- **4.336 egresados** sin matrícula vigente: valor congelado, nadie los recomputa. Limpiarlos
+  exige antes una decisión: ¿debe el directorio conservar la afiliación académica histórica de un
+  egresado, y con qué identificador?
+- **157 activos de niveles NO licenciados** (TESIS, Idiomas, CEPRE…) que arrastran una URI que
+  nunca debieron recibir.
+
 ## 7. Qué falta
 
 1. ~~Testigo `202612155`~~ — ✅ **RESUELTO** (§6.bis): es un CEPRE, el sistema actúa
    correctamente. Y una recon completa ya demostró que no limpia nada.
    ~~Rehacer la clasificación~~ — ✅ **HECHA** (§6.ter): 8.234 con URI correcta + residual,
    4.336 egresados, 156 no licenciados, 1 aislado. **Los «393 sin explicar» no existían.**
-2. 🔴 **Retirar los valores obsoletos** — lo de fondo, y **ninguna reconciliación lo arregla**:
-   afecta a las 12.727 (7.841 duplicados + 4.336 egresados + los que queden). Opciones a evaluar:
-   hacer que el outbound de `eduPersonEntitlement` retire lo que ya no corresponde (patrón PM10),
-   o una limpieza puntual del atributo en LDAP. **Ambas tocan decenas de miles de entradas y
-   exigen simulación propia.**
+2. ~~Retirar los valores obsoletos~~ — ✅ **HECHO para 8.243** (§6.quater). Quedan **4.494**:
+   4.336 egresados y 157 activos no licenciados, ambos pendientes de **decisión de producto**, no
+   de técnica. Si se decide que tampoco deben publicarlos, el mismo procedimiento sirve.
+   ⚠️ Nota: la limpieza es **sintomática**. La causa (el outbound no materializa el zero-set)
+   sigue viva: cualquier futuro cambio de URI volverá a dejar residuo. El arreglo de raíz es el
+   patrón PM10 en el outbound.
 3. **Los 157 de niveles no licenciados**: decisión de producto ya abierta — no deben publicar URI
    de programa académico en absoluto.
