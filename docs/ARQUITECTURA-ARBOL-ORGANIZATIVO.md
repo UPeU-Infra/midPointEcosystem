@@ -140,9 +140,9 @@ python3 upeu/scripts/verificar-arbol-organizativo.py
 
 Corre **antes y después de cualquier cambio estructural** y en cada auditoría. Protege 6
 invariantes (raíces exactas, identifiers intactos, espina intacta, anti-drift repo→PROD y
-PROD→repo, restos del CRIS sin crecer). Estado al aprobar este documento: **6/6 ✅** con dos
-avisos esperados (32 orgs de archivos mixtos pendientes de limpieza quirúrgica; CRIS pendiente de
-segunda pasada) — al cerrarse ambos, `KNOWN_PENDING` debe quedar vacío.
+PROD→repo, restos del CRIS sin crecer). Estado 2026-08-06 tras las limpiezas: **6/6 ✅**, `KNOWN_PENDING` **vacía**, `LINEA-*` en **0**
+(I6 endurecida: ahora FALLA si reaparece alguna). Único aviso vivo: las 7 `CII-*` con 310
+personas, pendientes de decisión de reubicación.
 
 ### Prohibiciones permanentes (lecciones pagadas)
 
@@ -161,7 +161,7 @@ segunda pasada) — al cerrarse ambos, `KNOWN_PENDING` debe quedar vacío.
 | # | Qué | Ampara |
 |---|---|---|
 | 1 | ✅ **HECHO 2026-08-06** — Limpieza CRIS 2ª pasada: 16 linkRefs desenganchados (raw), **763 shadows huérfanos y 178 LINEA-\* borrados** (backup validado en `backup-cris-20260806`). PROD: 353→175 orgs. Queda SOLO la decisión CII-\* (310 personas) | purga 2026-08-03 + memoria `lineas-investigacion-no-son-de-oracle` |
-| 2 | Edición quirúrgica de los 2 archivos mixtos (retirar 32 orgs no desplegadas) → `KNOWN_PENDING` vacío | archivado 2026-08-06 |
+| 2 | ✅ **HECHO 2026-08-06** — 32 orgs no desplegadas retiradas a `archive/…-RETIRADAS.xml`; **`KNOWN_PENDING` VACÍA**: el repo ya no describe ninguna org inexistente | archivado 2026-08-06 |
 | 3 | Rama de sedes (Fase 1 rediseñada: `extension/sedeId`, simulación, exclusión del outbound ou) | ADR sedes §5.bis + este doc D1/D4 |
 | 4 | Managers `org:manager` desde posiciones | este doc D5 |
 | 5 | Decisión sobre los 16 `EP *` funcionales (546 docentes) vs las 26 EP académicas | medición 2026-08-06 |

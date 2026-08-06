@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ================================================================
+     RETIRADAS de upeu/orgs/campus/org-campus-lima-units.xml el 2026-08-06 — NO importar a PROD.
+     8 orgs que estaban versionadas pero NUNCA existieron en produccion.
+     Decision: la fuente de verdad del arbol organizativo es Oracle LAMB
+     (docs/ARQUITECTURA-ARBOL-ORGANIZATIVO.md, D2). Estas cajas del organigrama
+     no tienen area correspondiente en ORG_AREA: son gap que se REPORTA a
+     Planificacion/GTH, no estructura que MidPoint deba fabricar.
+     Se conservan aqui como historico del intento de modelar el organigrama a mano.
+     ================================================================ -->
+<objects xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+         xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+         xmlns:sb="urn:sciback:midpoint:person">
+  <!-- Unidades con archetype academic-unit (04c304d1) -->
+
+  <org oid="8a818f68-a6ed-44f6-8d61-018ba9a12951">
+    <name>CENTRO-IDIOMAS-LIMA</name>
+    <displayName>Centro de Idiomas</displayName>
+    <identifier>ENGLISH-LIMA</identifier>
+    <assignment>
+      <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="ec37f248-9276-4886-86ff-c84fb0754ab8" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+  <org oid="a51563c1-7a0b-4f35-a390-4ba233985669">
+    <name>CONSERV-MUSICA-LIMA</name>
+    <displayName>Conservatorio de Música</displayName>
+    <identifier>conserv.music.lima</identifier>
+    <assignment>
+      <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="ec37f248-9276-4886-86ff-c84fb0754ab8" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+  <org oid="5814ef75-41d8-49ae-885e-12044cbf4ec8">
+    <name>COORD-CEPRE-LIMA</name>
+    <displayName>Coordinación CEPRE</displayName>
+    <identifier>CEPRE-LIMA</identifier>
+    <assignment>
+      <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="ec37f248-9276-4886-86ff-c84fb0754ab8" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+  <!-- DIR-INST-SUP-LIMA: único nodo de Instituto Superior (DIR-INSTITUTO-SUPERIOR eliminado en R2-A como duplicado) -->
+  <org oid="bd564abd-1cc9-4583-9368-c34c48a6cd29">
+    <name>DIR-INST-SUP-LIMA</name>
+    <displayName>Dirección de Instituto Superior</displayName>
+    <identifier>dir.inst.superior.lima</identifier>
+    <assignment>
+      <targetRef oid="04c304d1-9205-4097-9c1d-6dce6ba98c7f" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="ec37f248-9276-4886-86ff-c84fb0754ab8" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+  <!-- Unidades con archetype department (73795c10) -->
+
+  <org oid="07c48bb0-a348-4776-be8e-4c3213c2f060">
+    <name>COORDINACION-COMUNIC-LIMA</name>
+    <displayName>Coordinación de Comunicaciones</displayName>
+    <identifier>coord.comunicaciones.lima</identifier>
+    <assignment>
+      <targetRef oid="73795c10-2417-4323-b6fa-b88449a8bba4" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="ec37f248-9276-4886-86ff-c84fb0754ab8" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+  <org oid="9f30eb08-5ee7-46d3-bda0-f0cc62204d87">
+    <name>COORDINACION-TI-LIMA</name>
+    <displayName>Coordinación Tecnologías de Información - Lima</displayName>
+    <!-- identifier = ID_AREA de ELISEO.ORG_AREA (18 = "Dirección de Tecnologías de Información", ent=7124).
+         Regla de oro iga-canonical #10 + Semančík ("always use org unit identifiers"): el identifier debe
+         ser el ID_AREA numérico de LAMB para que Bloque E (costCenter=ID_AREA → OrgType.identifier) vincule
+         a los 72 trabajadores activos de Dirección de TI. Antes era 'DTI' (semántico) → Bloque E nunca matcheaba
+         → 0 trabajadores colgaban. Fix PM19/PASO5 (2026-05-30). -->
+    <identifier>18</identifier>
+    <assignment>
+      <targetRef oid="73795c10-2417-4323-b6fa-b88449a8bba4" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="ec37f248-9276-4886-86ff-c84fb0754ab8" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+  <org oid="00000000-0000-0000-0000-887788067800">
+    <name>IGLESIA-UNIV-LIMA</name>
+    <displayName>Iglesia Universitaria</displayName>
+    <identifier>iglesia.univ.lima</identifier>
+    <assignment>
+      <targetRef oid="73795c10-2417-4323-b6fa-b88449a8bba4" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="ec37f248-9276-4886-86ff-c84fb0754ab8" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+  <org oid="00000000-0000-0000-0000-651696723673">
+    <name>SOS-AMBIENTAL-LIMA</name>
+    <displayName>Sostenibilidad Ambiental</displayName>
+    <identifier>sostenibilidad.ambiental.lima</identifier>
+    <assignment>
+      <targetRef oid="73795c10-2417-4323-b6fa-b88449a8bba4" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="ec37f248-9276-4886-86ff-c84fb0754ab8" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+</objects>

@@ -28,15 +28,22 @@ analizar el árbol de sedes. Ver memoria `medir-no-razonar`.
 estructura que ya viene de Oracle, duplicando el árbol. Lección del incidente de
 sedes del 5-ago (`identifier-org-gobierna-dn-ldap-2026-08-05`).
 
-## Pendiente: dos archivos MIXTOS que NO se archivaron
+## ✅ Edición quirúrgica de los dos archivos MIXTOS — HECHA el 2026-08-06
 
-Contienen orgs vivas en PROD junto a las ausentes, así que archivarlos enteros
-habría borrado configuración en uso:
+Contenían orgs vivas en PROD junto a las ausentes, así que archivarlos enteros habría
+borrado configuración en uso. Se retiraron **solo las ausentes**, conservando las vivas:
 
-| Archivo | En PROD | Ausentes |
+| Archivo original | Conserva (en PROD) | Retiradas → aquí |
 |---|---|---|
-| `upeu/orgs/050-GobiernoAdmin.xml` | **26** | 24 |
-| `upeu/orgs/campus/org-campus-lima-units.xml` | **6** | 8 |
+| `upeu/orgs/050-GobiernoAdmin.xml` | **26** | 24 → `050-GobiernoAdmin-RETIRADAS.xml` |
+| `upeu/orgs/campus/org-campus-lima-units.xml` | **6** | 8 → `org-campus-lima-units-RETIRADAS.xml` |
 
-Requieren edición quirúrgica: retirar solo las 32 orgs ausentes y conservar las 32
-vivas. No se hizo aquí por ser una operación más delicada que un `git mv`.
+Sin pérdidas: 26+24=50 y 6+8=14, los totales originales.
+
+Las 32 retiradas son cajas del organigrama oficial **sin área correspondiente en
+`ELISEO.ORG_AREA`** (Defensoría, PRODAC, Misión, Gestión Curricular, Centro de Idiomas,
+Conservatorio, CEPRE…). Por D2 del documento rector, ese hueco es un **gap que se reporta a
+Planificación/GTH**, no estructura que MidPoint deba fabricar.
+
+Con esto, `KNOWN_PENDING_FILES` del verificador queda **VACÍA**: el repo ya no describe
+ninguna org que no exista en producción.

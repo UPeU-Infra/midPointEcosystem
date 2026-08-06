@@ -17,10 +17,11 @@ Invariantes que protege (con su porqué, ver docs/ARQUITECTURA-ARBOL-ORGANIZATIV
   I3  Ningún nodo estructural cambió de padre ni desapareció. La espina del árbol
       (Asamblea→Rectorado→VRs→DG Campus, facultades, campus, 26 EP) es fija.
   I4  Toda org versionada en upeu/orgs/ (fuera de archive/) EXISTE en PROD — anti-drift
-      repo→PROD. Excepciones conocidas en KNOWN_PENDING (limpieza quirúrgica pendiente).
+      repo→PROD. KNOWN_PENDING está VACÍA desde 2026-08-06: el repo ya no describe
+      ninguna org inexistente.
   I5  Toda org academic-program de PROD está versionada en el repo — anti-drift PROD→repo
       (así aparecieron EP-DER/EP-III/EP-ISW el 2026-08-06).
-  I6  Los restos del CRIS no crecen: LINEA-* ≤ 178 y CII-* ≤ 7. Solo pueden bajar.
+  I6  Los restos del CRIS no reaparecen: LINEA-* == 0 (limpiadas 2026-08-06) y CII-* ≤ 7.
 
 Cambiar la estructura NO es editar la baseline a mano: exige ADR + simulación preview +
 regenerar la baseline en el mismo commit que el cambio. Ver la sección "Blindaje" del doc.
@@ -31,12 +32,11 @@ import xml.etree.ElementTree as ET
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BASELINE = os.path.join(REPO, 'docs/baselines/arbol-organizativo-baseline.json')
 
-# Orgs del repo aún no desplegadas/limpiadas — cada entrada debe tener ticket o doc que la ampare.
-# Al cerrar la limpieza de los 2 archivos mixtos, esta lista debe quedar VACÍA.
-KNOWN_PENDING_FILES = [
-    'upeu/orgs/050-GobiernoAdmin.xml',          # 24 orgs sin desplegar (arbol manual, mixto)
-    'upeu/orgs/campus/org-campus-lima-units.xml' # 8 orgs sin desplegar (mixto)
-]
+# Orgs del repo aún no desplegadas — cada entrada debe tener ticket o doc que la ampare.
+# VACÍA desde 2026-08-06: las 32 orgs de los 2 archivos mixtos se retiraron a
+# archive/orgs-arbol-manual-2026-08-06/*-RETIRADAS.xml. El repo ya no describe
+# ninguna org que no exista en PROD. Volver a llenar esta lista exige justificación escrita.
+KNOWN_PENDING_FILES = []
 
 def loc(t): return t.split('}')[-1]
 
@@ -114,11 +114,12 @@ def main():
     # I6 — los restos del CRIS no crecen
     n_linea = sum(1 for v in prod.values() if (v['identifier'] or '').startswith('LINEA-'))
     n_cii = sum(1 for v in prod.values() if (v['identifier'] or '').startswith('CII-'))
-    if n_linea > 178:
-        fails.append(f"I6 LINEA-* creció: {n_linea} > 178")
+    if n_linea > 0:
+        fails.append(f"I6 LINEA-* REAPARECIÓ: {n_linea} (deben ser 0 desde la limpieza 2026-08-06)")
     if n_cii > 7:
         fails.append(f"I6 CII-* creció: {n_cii} > 7")
-    warns.append(f"I6 restos del CRIS presentes: {n_linea} LINEA-* + {n_cii} CII-* (segunda pasada pendiente)")
+    if n_cii:
+        warns.append(f"I6 quedan {n_cii} CII-* del CRIS (310 personas — decisión de reubicación pendiente)")
 
     print(f"Árbol organizativo — PROD: {len(prod)} orgs · baseline: {len(base['nodos'])} nodos estructurales")
     for w in warns:
