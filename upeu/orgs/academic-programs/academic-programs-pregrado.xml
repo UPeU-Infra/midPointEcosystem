@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   F3 - Programas Academicos (Escuelas Profesionales) UPeU
-  23 OrgType con archetype Academic-Program (9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73).
+  26 OrgType con archetype Academic-Program (9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73).
   Cada Org enlaza al concepto SKOS canonico del Tesauro Institucional VocBench via
   extension/sb:academicProgramUri (schema sciback v1.0 - OrgExtensionType).
 
@@ -504,6 +504,72 @@
     </assignment>
     <assignment>
       <targetRef oid="23e944c6-57ca-4ca8-bdcb-3bac5b31a1cd" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- ================================================================
+       Programas en implementacion — incorporados al repo 2026-08-06.
+       Existian SOLO en PROD (drift): el repo tenia 23 orgs y PROD 26.
+       Creados fuera de este repo; se versionan aqui tal como estan en
+       PROD, con la URI canonica ya corregida (f5ceb72).
+       Sin studyLevel ni iscedFCode: no los tenian en PROD y no se
+       inventan aqui — completar cuando se confirmen contra el A4.
+       ================================================================ -->
+
+  <!-- FCE: Derecho -->
+  <org oid="07a7a8cc-118c-4c84-9f9e-e580ae5dab58">
+    <name>EP-DER</name>
+    <displayName>Derecho</displayName>
+    <identifier>EP-DER</identifier>
+    <description>Escuela Profesional de Derecho - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/derecho</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/derecho</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-DER</sb:academicProgramCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="141cd2b3-01b6-4ae7-a4de-c0db66d3bdd9" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FIA: Ingenieria Industrial -->
+  <org oid="8b1b93b4-6da6-4744-ab8a-da4402317706">
+    <name>EP-III</name>
+    <displayName>Ingenier&#237;a Industrial</displayName>
+    <identifier>EP-III</identifier>
+    <description>Escuela Profesional de Ingenieria Industrial - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/ingenieria-industrial</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/ingenieria-industrial</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-III</sb:academicProgramCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="86968a5a-7d41-4eb3-a545-244df5b700c1" type="OrgType" relation="org:default"/>
+    </assignment>
+  </org>
+
+  <!-- FIA: Ingenieria de Software -->
+  <org oid="aa049ea8-54ef-4cca-8ac0-38bd75de34db">
+    <name>EP-ISW</name>
+    <displayName>Ingenier&#237;a de Software</displayName>
+    <identifier>EP-ISW</identifier>
+    <description>Escuela Profesional de Ingenieria de Software - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/ingenieria-de-software</description>
+    <subtype>academic-program</subtype>
+    <extension>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/ingenieria-de-software</sb:academicProgramUri>
+      <sb:academicProgramCode>EP-ISW</sb:academicProgramCode>
+    </extension>
+    <assignment>
+      <targetRef oid="9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73" type="ArchetypeType"/>
+    </assignment>
+    <assignment>
+      <targetRef oid="86968a5a-7d41-4eb3-a545-244df5b700c1" type="OrgType" relation="org:default"/>
     </assignment>
   </org>
 
