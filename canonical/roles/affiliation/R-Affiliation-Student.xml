@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  R-Affiliation-Student
+  OID: 79ad22c7-b828-4b8c-a562-2ee01b214d7f
+
+  EXPORTADO DESDE PROD el 2026-08-06. Este rol gobernaba produccion SIN estar
+  versionado: el inventario repo<->PROD (parsing XML real) encontro 6 roles
+  R-Affiliation-* solo en PROD. Drift ya detectado el 3-ago y no cerrado hasta hoy.
+
+  Exportado tal cual, retirando unicamente lo que es estado de runtime y no
+  configuracion: atributo version y bloque <metadata>.
+-->
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="79ad22c7-b828-4b8c-a562-2ee01b214d7f">
+    <_metadata id="2">
+        <storage>
+            <createTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-05-14T22:40:07.672Z</createTimestamp>
+            <creatorRef>
+                <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+            </creatorRef>
+            <createChannel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</createChannel>
+        </storage>
+        <process>
+            <requestTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-05-14T22:40:07.639Z</requestTimestamp>
+            <requestorRef>
+                <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+            </requestorRef>
+        </process>
+    </_metadata>
+    <name>R-Affiliation-Student</name>
+    <description>Afiliacion birthright — estudiante activo en programa UPeU (cualquier campus, pregrado o posgrado)</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment id="1">
+        <_metadata id="3">
+            <storage>
+                <createTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-05-14T22:40:07.672Z</createTimestamp>
+                <creatorRef>
+                    <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                    <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                    <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+                </creatorRef>
+                <createChannel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</createChannel>
+            </storage>
+            <process>
+                <requestTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-05-14T22:40:07.639Z</requestTimestamp>
+                <requestorRef>
+                    <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                    <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                    <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+                </requestorRef>
+            </process>
+            <provenance>
+                <acquisition id="4">
+                    <actorRef>
+                        <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                        <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                        <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+                    </actorRef>
+                    <channel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</channel>
+                    <timestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-05-14T22:40:07.639Z</timestamp>
+                </acquisition>
+            </provenance>
+        </_metadata>
+        <targetRef oid="a1c40fd6-24e0-4bb0-b809-080edff6f9b0" relation="org:default" type="c:ArchetypeType"/>
+        <activation>
+            <effectiveStatus>enabled</effectiveStatus>
+        </activation>
+    </assignment>
+    <iteration>0</iteration>
+    <iterationToken/>
+    <archetypeRef oid="a1c40fd6-24e0-4bb0-b809-080edff6f9b0" relation="org:default" type="c:ArchetypeType"/>
+    <roleMembershipRef oid="a1c40fd6-24e0-4bb0-b809-080edff6f9b0" relation="org:default" type="c:ArchetypeType">
+        <_metadata id="5">
+            <storage>
+                <createTimestamp>2026-05-14T22:40:07.652Z</createTimestamp>
+            </storage>
+            <provenance>
+                <assignmentPath>
+                    <sourceRef oid="79ad22c7-b828-4b8c-a562-2ee01b214d7f" relation="org:default" type="c:RoleType"/>
+                    <segment id="6">
+                        <segmentOrder>1</segmentOrder>
+                        <assignmentId>1</assignmentId>
+                        <targetRef oid="a1c40fd6-24e0-4bb0-b809-080edff6f9b0" relation="org:default" type="c:ArchetypeType"/>
+                        <matchingOrder>true</matchingOrder>
+                    </segment>
+                </assignmentPath>
+            </provenance>
+        </_metadata>
+    </roleMembershipRef>
+    <activation>
+        <effectiveStatus>enabled</effectiveStatus>
+        <enableTimestamp>2026-05-14T22:40:07.642Z</enableTimestamp>
+    </activation>
+</role>
