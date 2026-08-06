@@ -32,7 +32,7 @@
     <description>Escuela Profesional de Arquitectura y Urbanismo - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/c_e399e0aa</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/c_e399e0aa</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/arquitectura-y-urbanismo</sb:academicProgramUri>
       <sb:academicProgramCode>EP-ARQ</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0731</sb:iscedFCode>
@@ -74,7 +74,7 @@
     <description>Escuela Profesional de Ingeniería Civil - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/c_be8b346d</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/c_be8b346d</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/ingenieria-civil</sb:academicProgramUri>
       <sb:academicProgramCode>EP-ICIV</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0732</sb:iscedFCode>
@@ -137,7 +137,7 @@
     <description>Escuela Profesional de Ingeniería de Sistemas - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/c_bbf436cf</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/c_bbf436cf</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/ingenieria-de-sistemas</sb:academicProgramUri>
       <sb:academicProgramCode>EP-SIS</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0613</sb:iscedFCode>
@@ -179,7 +179,7 @@
     <description>Escuela Profesional de Contabilidad - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</sb:academicProgramUri>
       <sb:academicProgramCode>EP-CON</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0411</sb:iscedFCode>
@@ -242,7 +242,7 @@
     <description>Escuela Profesional de Educación, Especialidad Ciencias Naturales - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/educacion-ciencias-naturales</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-ciencias-naturales</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-ciencias-naturales-y-tecnologia</sb:academicProgramUri>
       <sb:academicProgramCode>EP-EDU-CIN</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0114</sb:iscedFCode>
@@ -263,7 +263,7 @@
     <description>Escuela Profesional de Educación, Especialidad Educación Física, Recreación y Deportes - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/educacion-educacion-fisica</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-educacion-fisica</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-educacion-fisica-recreacion-y-deportes</sb:academicProgramUri>
       <sb:academicProgramCode>EP-EDU-EFI</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0114</sb:iscedFCode>
@@ -284,7 +284,7 @@
     <description>Escuela Profesional de Educación, Especialidad Inglés y Español - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/educacion-ingles-espanol</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-ingles-espanol</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-ingles-y-espanol</sb:academicProgramUri>
       <sb:academicProgramCode>EP-EDU-IES</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0114</sb:iscedFCode>
@@ -305,7 +305,7 @@
     <description>Escuela Profesional de Educación Inicial - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/educacion-inicial</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-inicial</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-inicial-y-puericultura</sb:academicProgramUri>
       <sb:academicProgramCode>EP-EDU-INI</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0112</sb:iscedFCode>
@@ -326,7 +326,7 @@
     <description>Escuela Profesional de Educación, Especialidad Matemática - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/educacion-matematica</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-matematica</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-matematica-analisis-datos-y-computacion</sb:academicProgramUri>
       <sb:academicProgramCode>EP-EDU-MAT</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0114</sb:iscedFCode>
@@ -347,7 +347,7 @@
     <description>Escuela Profesional de Educación, Especialidad Música y Artes Visuales - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/educacion-musica-artes</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-musica-artes</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-musica-y-artes-visuales</sb:academicProgramUri>
       <sb:academicProgramCode>EP-EDU-MUA</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0114</sb:iscedFCode>
@@ -368,7 +368,7 @@
     <description>Escuela Profesional de Educación Primaria y Pedagogía Terapéutica - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/educacion-primaria</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-primaria</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/educacion-primaria-y-pedagogia-terapeutica</sb:academicProgramUri>
       <sb:academicProgramCode>EP-EDU-PRI</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0113</sb:iscedFCode>
@@ -389,7 +389,7 @@
     <description>Escuela Profesional de Psicología — Facultad de Ciencias Humanas y Educación - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/programa/psicologia-fche</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/psicologia-fche</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/psicologia</sb:academicProgramUri>
       <sb:academicProgramCode>EP-PSI-FCHE</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0313</sb:iscedFCode>
@@ -410,7 +410,7 @@
     <description>Escuela Profesional de Enfermería - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/c_c5f87ee9</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/c_c5f87ee9</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/enfermeria</sb:academicProgramUri>
       <sb:academicProgramCode>EP-ENF</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0913</sb:iscedFCode>
@@ -431,7 +431,7 @@
     <description>Escuela Profesional de Medicina Humana - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/c_353ae8f7</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/c_353ae8f7</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/medicina-humana</sb:academicProgramUri>
       <sb:academicProgramCode>EP-MED</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0912</sb:iscedFCode>
@@ -473,7 +473,7 @@
     <description>Escuela Profesional de Psicología — Facultad de Ciencias de la Salud - UPeU. Concepto SKOS canonico: http://upeu.edu.pe/sys/programas/c_b48bff58</description>
     <subtype>academic-program</subtype>
     <extension>
-      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/c_b48bff58</sb:academicProgramUri>
+      <sb:academicProgramUri>http://upeu.edu.pe/sys/programas/programa/psicologia</sb:academicProgramUri>
       <sb:academicProgramCode>EP-PSI-FCS</sb:academicProgramCode>
       <sb:studyLevel>pregrado</sb:studyLevel>
       <sb:iscedFCode>0313</sb:iscedFCode>
