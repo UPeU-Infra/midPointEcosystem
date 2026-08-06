@@ -95,11 +95,42 @@ Esto es simétrico a lo comprobado el mismo día con las OUs: **la reconciliaci�
 NO recalcula el DN** (solo sincroniza shadow↔recurso), mientras que el recompute sí evalúa el
 foco. Son operaciones complementarias y **cada problema exige la suya**.
 
+## 6.bis CONFIRMADO: una reconciliación completa NO los limpia (6-ago, 22:30 UTC)
+
+Se lanzó por error una **reconciliación completa** del canal Estudiantes (el filtro
+`attributes/icfs:name` no acotó; ver R4 del protocolo de pre-ejecución). Procesó **25.794
+objetos**, cerró `partial_error` (timeouts de Koha, ajenos a este canal).
+
+**Diff real en LDAP: CERO.**
+
+| | Antes | Después |
+|---|---|---|
+| Personas con URI | 34.646 | 34.646 |
+| Valores totales | 46.179 | 46.179 |
+| URIs distintas | 84 | 84 |
+| **Valores deprecados** | **12.737** | **12.737** |
+| Con deprecada **y** canónica | 7.841 | 7.841 |
+
+Nadie ganó URI, nadie la perdió, ningún valor cambió. El estado ya era **convergente**.
+
+**Confirmación empírica y definitiva:** ninguna reconciliación limpiará los 12.737. No es
+cuestión de esperar ni de forzar pasadas — el mapping no puede retirar un valor que ya no
+produce. La corrección exige tocar el outbound (materializar el zero-set, patrón PM10) o limpiar
+el atributo directamente en LDAP.
+
+**Corolario sobre el testigo `202612155`:** su `ID_PROGRAMA_ESTUDIO` es **893 = «Cepre Regular»**,
+que **no está en el puente y no debe estarlo** (preuniversitario, no licenciado). El inbound hace
+lo correcto al no asignarle URI. Su `c_bbf436cf` es residuo del viejo resolver por nombre.
+⚠️ Estaba **mal clasificado** en el grupo de «393 con id en el puente»: pertenece a los 157 de
+niveles no licenciados. La clasificación interna de los 12.727 tiene errores de agregación
+propios; **el total y la causa raíz sí están bien medidos**.
+
 ## 7. Qué falta
 
-1. **Testigo `202612155`**: tras la recon del 7-ago 11:20 UTC, comprobar si aparece
-   `academicProgramUri` y si LDAP deja de publicar `c_bbf436cf`. Confirma o refuta que un
-   reconcile basta para los 393.
+1. ~~Testigo `202612155`~~ — ✅ **RESUELTO** (§6.bis): es un CEPRE, el sistema actúa
+   correctamente. Y una recon completa ya demostró que no limpia nada.
+   **Rehacer la clasificación de los 12.727** con una consulta que no confunda los ejes de
+   agregación (cuántos son niveles no licenciados, cuántos egresados, cuántos activos reales).
 2. 🔴 **Retirar los valores obsoletos** — lo de fondo, y **ninguna reconciliación lo arregla**:
    afecta a las 12.727 (7.841 duplicados + 4.336 egresados + los que queden). Opciones a evaluar:
    hacer que el outbound de `eduPersonEntitlement` retire lo que ya no corresponde (patrón PM10),
