@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PREPARADO 2026-08-06 — NO DESPLEGADO.
+
+  Repuebla academicProgramSuneduCode desde ID_PROGRAMA_ESTUDIO, tras retirar la
+  fabricacion 'P'||CODIGO_SUNEDU del searchScript (resource v185, commit db859ce).
+
+  REQUISITO PREVIO: desplegar upeu/lookup-tables/program-sunedu-byid.xml
+  (OID 9d4e7f21-8a63-4c50-b7e9-3f1a6c8d2b04, 177 filas, 0 colisiones).
+
+  Destino: resource Oracle LAMB Estudiantes 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22
+           objectType 3297 / attribute 3323 (ri:PROGRAM_CODES)
+  ⚠️ Verificar que esos ids siguen vigentes antes de aplicar (cambian si se
+     reescribe el schemaHandling).
+
+  Cobertura medida contra Oracle (25.765 estudiantes con matricula vigente):
+    hoy tras el fix : 59,4 %
+    con este inbound: 72,9 %   (+3.478 estudiantes)
+    los 6.970 que siguen sin codigo son niveles NO licenciados (Idiomas, CEPRE,
+    Educacion Continua...) que NO deben tener P-code — su cobertura correcta es 0.
+
+  🔴 PROGRAM_CODES es MULTIVALOR: se usa <script>, NUNCA <function>.
+     Una <function> recibe el conjunto y falla con
+     "Expression returned more than one value" (regresion del 2026-08-05).
+
+  ⚠️ academicProgramSuneduCode es SINGLE-VALUE en el schema. Este script devuelve
+     UN valor: si la persona tiene doble matricula licenciada, gana el menor
+     P-code de forma determinista. Pendiente de diseno: pasarlo a multivalor
+     (como ya es academicProgramUri) o documentar que refleja la matricula
+     principal. Ver docs/HALLAZGO-programas-academicos-vocbench-2026-08-05.md
+-->
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+                    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+                    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>schemaHandling/objectType[3297]/attribute[3323]/inbound</t:path>
+    <t:value xsi:type="c:InboundMappingType" xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
+      <name>program-id-to-academicProgramSuneduCode</name>
+      <strength>strong</strength>
+      <expression>
+        <script>
+          <code>
+// PROGRAM_CODES es multivalor (varias matriculas por persona).
+// academicProgramSuneduCode es single-value -> se devuelve UN P-code, el menor,
+// para que el resultado sea determinista y no dependa del orden de la fuente.
+if (input == null) return null
+def ids = (input instanceof Collection) ? input : [input]
+def tableOid = '9d4e7f21-8a63-4c50-b7e9-3f1a6c8d2b04'
+try {
+    def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(
+        prismContext.toUniformPath(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.F_ROW),
+        com.evolveum.midpoint.schema.GetOperationOptions.createRetrieve()
+    )
+    def tableObj = midpoint.getObject(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.class, tableOid, options)
+    if (tableObj == null || tableObj.getRow() == null) {
+        log.warn('program-id-to-suneduCode: LookupTable {} vacia o ausente', tableOid)
+        return null
+    }
+    def byKey = [:]
+    for (def row : tableObj.getRow()) {
+        if (row.getKey() != null) byKey[row.getKey().trim()] = row.getValue()
+    }
+    def out = [] as Set
+    for (def id : ids) {
+        if (id == null) continue
+        def v = byKey[id.toString().trim()]
+        if (v != null) out &lt;&lt; v
+    }
+    if (out.isEmpty()) return null
+    return out.sort()[0]
+} catch (Exception e) {
+    log.warn('program-id-to-suneduCode: error {}', e.getMessage())
+    return null
+}
+          </code>
+        </script>
+      </expression>
+      <target>
+        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramSuneduCode</path>
+      </target>
+    </t:value>
+  </itemDelta>
+</objectModification>

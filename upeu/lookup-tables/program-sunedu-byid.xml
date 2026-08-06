@@ -1,0 +1,907 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  LookupTable: program-sunedu-byid
+  OID: 9d4e7f21-8a63-4c50-b7e9-3f1a6c8d2b04
+
+  ARTEFACTO GENERADO — no editar a mano.  PREPARADO 2026-08-06, NO DESPLEGADO.
+  Fuente: VocBench, notation urn:esther:id_programa_estudio -> altLabel P-code/SEG-code
+  del concepto destino (resolviendo dct:isReplacedBy).
+
+  key   = ID_PROGRAMA_ESTUDIO (Oracle)
+  value = P-code oficial del Formato A4 (o SEG-code del A8)
+  label = denominacion del programa en el tesauro
+
+  Proposito: repoblar academicProgramSuneduCode desde el identificador, tras retirar
+  la fabricacion 'P'||CODIGO_SUNEDU del searchScript (resource v185, commit db859ce).
+  Recupera 3.478 estudiantes de los 10.448 que quedan sin codigo; el resto (6.970) son
+  niveles NO licenciados que NO deben tener P-code.
+-->
+<lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="9d4e7f21-8a63-4c50-b7e9-3f1a6c8d2b04">
+    <name>program-sunedu-byid</name>
+    <description>ID_PROGRAMA_ESTUDIO -> P-code oficial SUNEDU (Formato A4 / SEG-code A8). Generado desde VocBench, resuelve dct:isReplacedBy. NO editar a mano.</description>
+    <row>
+        <key>1</key>
+        <value>P30</value>
+        <label>MEDICINA HUMANA</label>
+    </row>
+    <row>
+        <key>2</key>
+        <value>P31</value>
+        <label>NUTRICIÓN HUMANA</label>
+    </row>
+    <row>
+        <key>3</key>
+        <value>P22</value>
+        <label>ENFERMERÍA</label>
+    </row>
+    <row>
+        <key>4</key>
+        <value>P101</value>
+        <label>PSICOLOGÍA</label>
+    </row>
+    <row>
+        <key>5</key>
+        <value>P95</value>
+        <label>Administración</label>
+    </row>
+    <row>
+        <key>8</key>
+        <value>P09</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>11</key>
+        <value>P96</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>13</key>
+        <value>P09</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>16</key>
+        <value>P07</value>
+        <label>Ciencias de la Comunicación</label>
+    </row>
+    <row>
+        <key>17</key>
+        <value>P27</value>
+        <label>INGENIERÍA DE SISTEMAS</label>
+    </row>
+    <row>
+        <key>18</key>
+        <value>P25</value>
+        <label>INGENIERÍA CIVIL</label>
+    </row>
+    <row>
+        <key>19</key>
+        <value>P130</value>
+        <label>INGENIERÍA AMBIENTAL</label>
+    </row>
+    <row>
+        <key>20</key>
+        <value>P06</value>
+        <label>ARQUITECTURA Y URBANISMO</label>
+    </row>
+    <row>
+        <key>21</key>
+        <value>P35</value>
+        <label>TEOLOGÍA</label>
+    </row>
+    <row>
+        <key>22</key>
+        <value>P26</value>
+        <label>INGENIERÍA DE INDUSTRIAS ALIMENTARIAS</label>
+    </row>
+    <row>
+        <key>41</key>
+        <value>P26</value>
+        <label>INGENIERÍA DE INDUSTRIAS ALIMENTARIAS</label>
+    </row>
+    <row>
+        <key>56</key>
+        <value>P76</value>
+        <label>MAESTRÍA EN LIDERAZGO ECLESIÁSTICO</label>
+    </row>
+    <row>
+        <key>92</key>
+        <value>P96</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>93</key>
+        <value>P09</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>94</key>
+        <value>P96</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>98</key>
+        <value>P96</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>100</key>
+        <value>P08</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>143</key>
+        <value>P20</value>
+        <label>EDUCACIÓN PRIMARIA Y PEDAGOGÍA TERAPÉUTICA</label>
+    </row>
+    <row>
+        <key>146</key>
+        <value>P97</value>
+        <label>EDUCACIÓN, ESPECIALIDAD INGLÉS Y ESPAÑOL</label>
+    </row>
+    <row>
+        <key>149</key>
+        <value>P17</value>
+        <label>EDUCACIÓN, ESPECIALIDAD MÚSICA Y ARTES VISUALES</label>
+    </row>
+    <row>
+        <key>151</key>
+        <value>P98</value>
+        <label>EDUCACIÓN INICIAL Y PUERICULTURA</label>
+    </row>
+    <row>
+        <key>152</key>
+        <value>P12</value>
+        <label>EDUCACIÓN, ESPECIALIDAD EDUCACIÓN FÍSICA, RECREACIÓN Y DEPORTES</label>
+    </row>
+    <row>
+        <key>163</key>
+        <value>P141</value>
+        <label>MAESTRÍA EN ADMINISTRACIÓN DE NEGOCIOS CON MENCIÓN EN ADMINISTRACIÓN DE RECURSOS HUMANOS</label>
+    </row>
+    <row>
+        <key>165</key>
+        <value>P111</value>
+        <label>MAESTRÍA EN ENFERMERÍA CON MENCIÓN EN ADMINISTRACIÓN Y GESTIÓN</label>
+    </row>
+    <row>
+        <key>169</key>
+        <value>P140</value>
+        <label>DOCTORADO EN ADMINISTRACIÓN DE NEGOCIOS</label>
+    </row>
+    <row>
+        <key>170</key>
+        <value>SEG23</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN NEUROLOGÍA Y NEUROCIRUGÍA</label>
+    </row>
+    <row>
+        <key>174</key>
+        <value>P85</value>
+        <label>MAESTRÍA EN TEOLOGÍA</label>
+    </row>
+    <row>
+        <key>175</key>
+        <value>SEG53</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN CUIDADOS INTENSIVOS PEDIÁTRICOS</label>
+    </row>
+    <row>
+        <key>176</key>
+        <value>P48</value>
+        <label>MAESTRÍA EN ADMINISTRACIÓN DE NEGOCIOS CON MENCIÓN EN FINANZAS</label>
+    </row>
+    <row>
+        <key>178</key>
+        <value>P157</value>
+        <label>DOCTORADO EN ENFERMERÍA</label>
+    </row>
+    <row>
+        <key>179</key>
+        <value>P123</value>
+        <label>MAESTRÍA EN SALUD PÚBLICA CON MENCIÓN EN GESTIÓN DE LOS SERVICIOS DE SALUD</label>
+    </row>
+    <row>
+        <key>181</key>
+        <value>P94</value>
+        <label>DOCTORADO EN TEOLOGÍA</label>
+    </row>
+    <row>
+        <key>187</key>
+        <value>P125</value>
+        <label>MAESTRÍA EN INGENIERÍA DE SISTEMAS CON MENCIÓN EN DIRECCIÓN Y GESTIÓN DE TECNOLOGÍAS DE INFORMACIÓN</label>
+    </row>
+    <row>
+        <key>200</key>
+        <value>P141</value>
+        <label>MAESTRÍA EN ADMINISTRACIÓN DE NEGOCIOS CON MENCIÓN EN ADMINISTRACIÓN DE RECURSOS HUMANOS</label>
+    </row>
+    <row>
+        <key>202</key>
+        <value>P120</value>
+        <label>MAESTRÍA EN EDUCACIÓN CON MENCIÓN EN PSICOLOGÍA EDUCATIVA</label>
+    </row>
+    <row>
+        <key>207</key>
+        <value>P109</value>
+        <label>MAESTRÍA EN EDUCACIÓN CON MENCIÓN EN INVESTIGACIÓN Y DOCENCIA UNIVERSITARIA</label>
+    </row>
+    <row>
+        <key>208</key>
+        <value>SEG24</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN ONCOLOGÍA</label>
+    </row>
+    <row>
+        <key>210</key>
+        <value>P77</value>
+        <label>MAESTRÍA EN MISIONOLOGÍA</label>
+    </row>
+    <row>
+        <key>212</key>
+        <value>P108</value>
+        <label>MAESTRÍA EN EDUCACIÓN CON MENCIÓN EN ADMINISTRACIÓN EDUCATIVA</label>
+    </row>
+    <row>
+        <key>213</key>
+        <value>SEG09</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN CUIDADO INTEGRAL INFANTIL</label>
+    </row>
+    <row>
+        <key>214</key>
+        <value>SEG26</value>
+        <label>SEGUNDA ESPECIALIDAD EN ESTADÍSTICA APLICADA PARA INVESTIGACIÓN</label>
+    </row>
+    <row>
+        <key>215</key>
+        <value>SEG17</value>
+        <label>SEGUNDA ESPECIALIDAD DE ENFERMERÍA EN CUIDADOS INTENSIVOS</label>
+    </row>
+    <row>
+        <key>221</key>
+        <value>SEG19</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN CENTRO QUIRÚRGICO</label>
+    </row>
+    <row>
+        <key>227</key>
+        <value>SEG52</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN CUIDADOS INTENSIVOS NEONATALES</label>
+    </row>
+    <row>
+        <key>228</key>
+        <value>P137</value>
+        <label>MAESTRÍA EN AUDITORÍA CON MENCIÓN EN AUDITORÍA INTEGRAL</label>
+    </row>
+    <row>
+        <key>229</key>
+        <value>P82</value>
+        <label>MAESTRÍA EN SALUD PÚBLICA CON MENCIÓN EN GESTIÓN DE LOS SERVICIOS DE SALUD</label>
+    </row>
+    <row>
+        <key>233</key>
+        <value>P112</value>
+        <label>MAESTRÍA EN PSICOLOGÍA CLÍNICA Y DE LA SALUD</label>
+    </row>
+    <row>
+        <key>245</key>
+        <value>P135</value>
+        <label>DOCTORADO EN EDUCACIÓN CON MENCIÓN EN CURRÍCULO Y DOCENCIA</label>
+    </row>
+    <row>
+        <key>247</key>
+        <value>P117</value>
+        <label>MAESTRÍA EN TERAPIA FAMILIAR Y DE PAREJA</label>
+    </row>
+    <row>
+        <key>250</key>
+        <value>P133</value>
+        <label>DOCTORADO EN EDUCACIÓN CON MENCIÓN EN GESTIÓN EDUCATIVA</label>
+    </row>
+    <row>
+        <key>256</key>
+        <value>SEG56</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN PEDIATRÍA</label>
+    </row>
+    <row>
+        <key>266</key>
+        <value>SEG04</value>
+        <label>SEGUNDA ESPECIALIDAD DE ENFERMERÍA EN EMERGENCIAS Y DESASTRES</label>
+    </row>
+    <row>
+        <key>275</key>
+        <value>SEG45</value>
+        <label>SEGUNDA ESPECIALIDAD DE ENFERMERÍA EN ADMINISTRACIÓN Y GESTIÓN</label>
+    </row>
+    <row>
+        <key>276</key>
+        <value>P22</value>
+        <label>ENFERMERÍA</label>
+    </row>
+    <row>
+        <key>277</key>
+        <value>P101</value>
+        <label>PSICOLOGÍA</label>
+    </row>
+    <row>
+        <key>278</key>
+        <value>P09</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>279</key>
+        <value>P09</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>280</key>
+        <value>P27</value>
+        <label>INGENIERÍA DE SISTEMAS</label>
+    </row>
+    <row>
+        <key>281</key>
+        <value>P25</value>
+        <label>INGENIERÍA CIVIL</label>
+    </row>
+    <row>
+        <key>282</key>
+        <value>P130</value>
+        <label>INGENIERÍA AMBIENTAL</label>
+    </row>
+    <row>
+        <key>283</key>
+        <value>P26</value>
+        <label>INGENIERÍA DE INDUSTRIAS ALIMENTARIAS</label>
+    </row>
+    <row>
+        <key>308</key>
+        <value>P26</value>
+        <label>INGENIERÍA DE INDUSTRIAS ALIMENTARIAS</label>
+    </row>
+    <row>
+        <key>311</key>
+        <value>P95</value>
+        <label>ADMINISTRACIÓN</label>
+    </row>
+    <row>
+        <key>314</key>
+        <value>P09</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>315</key>
+        <value>P09</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>319</key>
+        <value>P129</value>
+        <label>EDUCACIÓN PRIMARIA Y PEDAGOGÍA TERAPÉUTICA</label>
+    </row>
+    <row>
+        <key>320</key>
+        <value>P97</value>
+        <label>EDUCACIÓN, ESPECIALIDAD INGLÉS Y ESPAÑOL</label>
+    </row>
+    <row>
+        <key>321</key>
+        <value>P97</value>
+        <label>EDUCACIÓN, ESPECIALIDAD INGLÉS Y ESPAÑOL</label>
+    </row>
+    <row>
+        <key>322</key>
+        <value>P98</value>
+        <label>EDUCACIÓN INICIAL Y PUERICULTURA</label>
+    </row>
+    <row>
+        <key>325</key>
+        <value>P101</value>
+        <label>PSICOLOGÍA</label>
+    </row>
+    <row>
+        <key>327</key>
+        <value>P27</value>
+        <label>INGENIERÍA DE SISTEMAS</label>
+    </row>
+    <row>
+        <key>328</key>
+        <value>P100</value>
+        <label>INGENIERÍA AMBIENTAL</label>
+    </row>
+    <row>
+        <key>329</key>
+        <value>P06</value>
+        <label>ARQUITECTURA Y URBANISMO</label>
+    </row>
+    <row>
+        <key>333</key>
+        <value>P95</value>
+        <label>ADMINISTRACIÓN</label>
+    </row>
+    <row>
+        <key>335</key>
+        <value>P09</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>336</key>
+        <value>P09</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>338</key>
+        <value>P29</value>
+        <label>Marketing y Negocios Internacionales</label>
+    </row>
+    <row>
+        <key>343</key>
+        <value>P08</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>529</key>
+        <value>P95</value>
+        <label>ADMINISTRACIÓN</label>
+    </row>
+    <row>
+        <key>530</key>
+        <value>P95</value>
+        <label>Administración</label>
+    </row>
+    <row>
+        <key>539</key>
+        <value>P95</value>
+        <label>ADMINISTRACIÓN</label>
+    </row>
+    <row>
+        <key>558</key>
+        <value>P95</value>
+        <label>ADMINISTRACIÓN</label>
+    </row>
+    <row>
+        <key>570</key>
+        <value>P29</value>
+        <label>Marketing y Negocios Internacionales</label>
+    </row>
+    <row>
+        <key>574</key>
+        <value>P117</value>
+        <label>MAESTRÍA EN TERAPIA FAMILIAR Y DE PAREJA</label>
+    </row>
+    <row>
+        <key>618</key>
+        <value>P25</value>
+        <label>INGENIERÍA CIVIL</label>
+    </row>
+    <row>
+        <key>619</key>
+        <value>P22</value>
+        <label>ENFERMERÍA</label>
+    </row>
+    <row>
+        <key>620</key>
+        <value>P06</value>
+        <label>ARQUITECTURA Y URBANISMO</label>
+    </row>
+    <row>
+        <key>621</key>
+        <value>P31</value>
+        <label>NUTRICIÓN HUMANA</label>
+    </row>
+    <row>
+        <key>626</key>
+        <value>P121</value>
+        <label>MAESTRÍA EN ENFERMERÍA CON MENCIÓN EN ADMINISTRACIÓN Y GESTIÓN</label>
+    </row>
+    <row>
+        <key>628</key>
+        <value>SEG60</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN CENTRO QUIRÚRGICO</label>
+    </row>
+    <row>
+        <key>633</key>
+        <value>SEG63</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN GINECO OBSTETRICIA</label>
+    </row>
+    <row>
+        <key>634</key>
+        <value>SEG17</value>
+        <label>SEGUNDA ESPECIALIDAD DE ENFERMERÍA EN CUIDADOS INTENSIVOS</label>
+    </row>
+    <row>
+        <key>635</key>
+        <value>SEG04</value>
+        <label>SEGUNDA ESPECIALIDAD DE ENFERMERÍA EN EMERGENCIAS Y DESASTRES</label>
+    </row>
+    <row>
+        <key>636</key>
+        <value>SEG11</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN CUIDADOS INTENSIVOS PEDIÁTRICOS</label>
+    </row>
+    <row>
+        <key>638</key>
+        <value>SEG64</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN NEUROLOGÍA Y NEUROCIRUGÍA</label>
+    </row>
+    <row>
+        <key>660</key>
+        <value>P118</value>
+        <label>MAESTRÍA EN EDUCACIÓN CON MENCIÓN EN ADMINISTRACIÓN EDUCATIVA</label>
+    </row>
+    <row>
+        <key>661</key>
+        <value>P106</value>
+        <label>MAESTRÍA EN TERAPIA FAMILIAR Y DE PAREJA</label>
+    </row>
+    <row>
+        <key>662</key>
+        <value>P122</value>
+        <label>MAESTRÍA EN PSICOLOGÍA CLÍNICA Y DE LA SALUD</label>
+    </row>
+    <row>
+        <key>663</key>
+        <value>P58</value>
+        <label>MAESTRÍA EN EDUCACIÓN CON MENCIÓN EN INVESTIGACIÓN Y DOCENCIA UNIVERSITARIA</label>
+    </row>
+    <row>
+        <key>665</key>
+        <value>P47</value>
+        <label>MAESTRÍA EN ADMINISTRACIÓN DE NEGOCIOS CON MENCIÓN EN ADMINISTRACIÓN DE RECURSOS HUMANOS</label>
+    </row>
+    <row>
+        <key>669</key>
+        <value>SEG26</value>
+        <label>SEGUNDA ESPECIALIDAD EN ESTADÍSTICA APLICADA PARA INVESTIGACIÓN</label>
+    </row>
+    <row>
+        <key>688</key>
+        <value>SEG67</value>
+        <label>SEGUNDA ESPECIALIDAD EN PSICOLOGÍA CLÍNICA Y DE LA SALUD</label>
+    </row>
+    <row>
+        <key>691</key>
+        <value>P139</value>
+        <label>DOCTORADO EN ADMINISTRACIÓN DE NEGOCIOS</label>
+    </row>
+    <row>
+        <key>716</key>
+        <value>P131</value>
+        <label>PSICOLOGÍA</label>
+    </row>
+    <row>
+        <key>720</key>
+        <value>P98</value>
+        <label>EDUCACIÓN INICIAL Y PUERICULTURA</label>
+    </row>
+    <row>
+        <key>725</key>
+        <value>SEG45</value>
+        <label>SEGUNDA ESPECIALIDAD DE ENFERMERÍA EN ADMINISTRACIÓN Y GESTIÓN</label>
+    </row>
+    <row>
+        <key>726</key>
+        <value>SEG24</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN ONCOLOGÍA</label>
+    </row>
+    <row>
+        <key>727</key>
+        <value>SEG52</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN CUIDADOS INTENSIVOS NEONATALES</label>
+    </row>
+    <row>
+        <key>729</key>
+        <value>SEG02</value>
+        <label>SEGUNDA ESPECIALIDAD DE ENFERMERÍA EN CARDIOLOGÍA</label>
+    </row>
+    <row>
+        <key>730</key>
+        <value>SEG16</value>
+        <label>SEGUNDA ESPECIALIDAD EN SALUD OCUPACIONAL</label>
+    </row>
+    <row>
+        <key>734</key>
+        <value>SEG54</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN CUIDADOS QUIRÚRGICOS</label>
+    </row>
+    <row>
+        <key>746</key>
+        <value>P48</value>
+        <label>MAESTRÍA EN ADMINISTRACIÓN DE NEGOCIOS CON MENCIÓN EN FINANZAS</label>
+    </row>
+    <row>
+        <key>763</key>
+        <value>P71</value>
+        <label>MAESTRÍA EN INGENIERÍA AMBIENTAL</label>
+    </row>
+    <row>
+        <key>766</key>
+        <value>P123</value>
+        <label>MAESTRÍA EN SALUD PÚBLICA CON MENCIÓN EN GESTIÓN DE LOS SERVICIOS DE SALUD</label>
+    </row>
+    <row>
+        <key>768</key>
+        <value>P141</value>
+        <label>MAESTRÍA EN ADMINISTRACIÓN DE NEGOCIOS CON MENCIÓN EN ADMINISTRACIÓN DE RECURSOS HUMANOS</label>
+    </row>
+    <row>
+        <key>769</key>
+        <value>P137</value>
+        <label>MAESTRÍA EN AUDITORÍA CON MENCIÓN EN AUDITORÍA INTEGRAL</label>
+    </row>
+    <row>
+        <key>774</key>
+        <value>P58</value>
+        <label>MAESTRÍA EN EDUCACIÓN CON MENCIÓN EN INVESTIGACIÓN Y DOCENCIA UNIVERSITARIA</label>
+    </row>
+    <row>
+        <key>775</key>
+        <value>P59</value>
+        <label>MAESTRÍA EN EDUCACIÓN CON MENCIÓN EN PSICOLOGÍA EDUCATIVA</label>
+    </row>
+    <row>
+        <key>776</key>
+        <value>P108</value>
+        <label>MAESTRÍA EN EDUCACIÓN CON MENCIÓN EN ADMINISTRACIÓN EDUCATIVA</label>
+    </row>
+    <row>
+        <key>778</key>
+        <value>P123</value>
+        <label>MAESTRÍA EN SALUD PÚBLICA CON MENCIÓN EN GESTIÓN DE LOS SERVICIOS DE SALUD</label>
+    </row>
+    <row>
+        <key>782</key>
+        <value>SEG61</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN CUIDADOS QUIRÚRGICOS CON MENCIÓN EN RECUPERACIÓN POSANESTÉSICA</label>
+    </row>
+    <row>
+        <key>784</key>
+        <value>P74</value>
+        <label>MAESTRÍA EN INGENIERÍA DE SISTEMAS CON MENCIÓN EN DIRECCIÓN Y GESTIÓN DE TECNOLOGÍAS DE INFORMACIÓN</label>
+    </row>
+    <row>
+        <key>831</key>
+        <value>SEG09</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN CUIDADO INTEGRAL INFANTIL</label>
+    </row>
+    <row>
+        <key>833</key>
+        <value>P164</value>
+        <label>DOCTORADO EN SALUD PÚBLICA</label>
+    </row>
+    <row>
+        <key>836</key>
+        <value>P144</value>
+        <label>DERECHO</label>
+    </row>
+    <row>
+        <key>840</key>
+        <value>P09</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>859</key>
+        <value>P09</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>860</key>
+        <value>P06</value>
+        <label>ARQUITECTURA Y URBANISMO</label>
+    </row>
+    <row>
+        <key>863</key>
+        <value>P98</value>
+        <label>EDUCACIÓN INICIAL Y PUERICULTURA</label>
+    </row>
+    <row>
+        <key>864</key>
+        <value>P99</value>
+        <label>EDUCACIÓN PRIMARIA Y PEDAGOGÍA TERAPÉUTICA</label>
+    </row>
+    <row>
+        <key>865</key>
+        <value>P99</value>
+        <label>EDUCACIÓN PRIMARIA Y PEDAGOGÍA TERAPÉUTICA</label>
+    </row>
+    <row>
+        <key>866</key>
+        <value>P14</value>
+        <label>EDUCACIÓN, ESPECIALIDAD LINGÜÍSTICA E INGLÉS</label>
+    </row>
+    <row>
+        <key>867</key>
+        <value>P127</value>
+        <label>EDUCACIÓN, ESPECIALIDAD LINGÜÍSTICA E INGLÉS</label>
+    </row>
+    <row>
+        <key>868</key>
+        <value>P12</value>
+        <label>EDUCACIÓN, ESPECIALIDAD EDUCACIÓN FÍSICA, RECREACIÓN Y DEPORTES</label>
+    </row>
+    <row>
+        <key>869</key>
+        <value>P17</value>
+        <label>EDUCACIÓN, ESPECIALIDAD MÚSICA Y ARTES VISUALES</label>
+    </row>
+    <row>
+        <key>872</key>
+        <value>P95</value>
+        <label>Administración</label>
+    </row>
+    <row>
+        <key>874</key>
+        <value>P95</value>
+        <label>ADMINISTRACIÓN</label>
+    </row>
+    <row>
+        <key>875</key>
+        <value>P09</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>884</key>
+        <value>P99</value>
+        <label>EDUCACIÓN PRIMARIA Y PEDAGOGÍA TERAPÉUTICA</label>
+    </row>
+    <row>
+        <key>885</key>
+        <value>P127</value>
+        <label>EDUCACIÓN, ESPECIALIDAD LINGÜÍSTICA E INGLÉS</label>
+    </row>
+    <row>
+        <key>886</key>
+        <value>P09</value>
+        <label>CONTABILIDAD, GESTIÓN TRIBUTARIA Y ADUANERA</label>
+    </row>
+    <row>
+        <key>887</key>
+        <value>P06</value>
+        <label>ARQUITECTURA Y URBANISMO</label>
+    </row>
+    <row>
+        <key>888</key>
+        <value>P06</value>
+        <label>ARQUITECTURA Y URBANISMO</label>
+    </row>
+    <row>
+        <key>962</key>
+        <value>SEG12</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN CUIDADOS QUIRÚRGICOS</label>
+    </row>
+    <row>
+        <key>964</key>
+        <value>SEG49</value>
+        <label>SEGUNDA ESPECIALIDAD DE ENFERMERÍA EN GERIATRÍA</label>
+    </row>
+    <row>
+        <key>965</key>
+        <value>SEG21</value>
+        <label>SEGUNDA ESPECIALIDAD EN ENFERMERÍA EN GESTIÓN DE CENTRAL DE ESTERILIZACIÓN</label>
+    </row>
+    <row>
+        <key>1068</key>
+        <value>P133</value>
+        <label>DOCTORADO EN EDUCACIÓN CON MENCIÓN EN GESTIÓN EDUCATIVA</label>
+    </row>
+    <row>
+        <key>1070</key>
+        <value>P142</value>
+        <label>MAESTRÍA EN ADMINISTRACIÓN DE NEGOCIOS CON MENCIÓN EN ADMINISTRACIÓN DE RECURSOS HUMANOS</label>
+    </row>
+    <row>
+        <key>1101</key>
+        <value>P149</value>
+        <label>Ingeniería de Software</label>
+    </row>
+    <row>
+        <key>1102</key>
+        <value>P151</value>
+        <label>INGENIERÍA DE CIBERSEGURIDAD</label>
+    </row>
+    <row>
+        <key>1103</key>
+        <value>P152</value>
+        <label>Ingeniería Industrial</label>
+    </row>
+    <row>
+        <key>1107</key>
+        <value>P146</value>
+        <label>COMUNICACIÓN AUDIOVISUAL Y MEDIOS INTERACTIVOS</label>
+    </row>
+    <row>
+        <key>1124</key>
+        <value>P153</value>
+        <label>TECNOLOGÍA MÉDICA, ESPECIALIDAD DE LABORATORIO CLÍNICO Y ANATOMÍA PATOLÓGICA</label>
+    </row>
+    <row>
+        <key>1125</key>
+        <value>P155</value>
+        <label>TECNOLOGÍA MÉDICA, ESPECIALIDAD DE TERAPIA FÍSICA Y REHABILITACIÓN</label>
+    </row>
+    <row>
+        <key>1138</key>
+        <value>P78</value>
+        <label>MAESTRÍA EN NUTRICIÓN HUMANA CON MENCIÓN EN NUTRICIÓN CLÍNICA</label>
+    </row>
+    <row>
+        <key>1140</key>
+        <value>SEG69</value>
+        <label>SEGUNDA ESPECIALIDAD EN PSICOONCOLOGÍA Y CUIDADOS PALIATIVOS</label>
+    </row>
+    <row>
+        <key>1141</key>
+        <value>SEG70</value>
+        <label>SEGUNDA ESPECIALIDAD EN NEUROPSICOLOGÍA</label>
+    </row>
+    <row>
+        <key>1146</key>
+        <value>P157</value>
+        <label>DOCTORADO EN ENFERMERÍA</label>
+    </row>
+    <row>
+        <key>1150</key>
+        <value>SEG68</value>
+        <label>SEGUNDA ESPECIALIDAD DE EN FERMERÍA EN CUIDADO DE LA PERSONA CON DIABETES CON MENCIÓN EN EDUCACIÓN EN DIABETES</label>
+    </row>
+    <row>
+        <key>1156</key>
+        <value>P12</value>
+        <label>EDUCACIÓN, ESPECIALIDAD EDUCACIÓN FÍSICA, RECREACIÓN Y DEPORTES</label>
+    </row>
+    <row>
+        <key>1168</key>
+        <value>P99</value>
+        <label>EDUCACIÓN PRIMARIA Y PEDAGOGÍA TERAPÉUTICA</label>
+    </row>
+    <row>
+        <key>1170</key>
+        <value>P98</value>
+        <label>EDUCACIÓN INICIAL Y PUERICULTURA</label>
+    </row>
+    <row>
+        <key>1208</key>
+        <value>P127</value>
+        <label>EDUCACIÓN, ESPECIALIDAD LINGÜÍSTICA E INGLÉS</label>
+    </row>
+    <row>
+        <key>1209</key>
+        <value>P99</value>
+        <label>EDUCACIÓN PRIMARIA Y PEDAGOGÍA TERAPÉUTICA</label>
+    </row>
+    <row>
+        <key>1210</key>
+        <value>P98</value>
+        <label>EDUCACIÓN INICIAL Y PUERICULTURA</label>
+    </row>
+    <row>
+        <key>1260</key>
+        <value>P143</value>
+        <label>Derecho</label>
+    </row>
+    <row>
+        <key>1261</key>
+        <value>P143</value>
+        <label>Derecho</label>
+    </row>
+    <row>
+        <key>1262</key>
+        <value>P14</value>
+        <label>EDUCACIÓN, ESPECIALIDAD LINGÜÍSTICA E INGLÉS</label>
+    </row>
+    <row>
+        <key>1264</key>
+        <value>SEG71</value>
+        <label>SEGUNDA ESPECIALIDAD DE ENFERMERÍA EN GESTIÓN EN INMUNIZACIONES</label>
+    </row>
+    <row>
+        <key>1266</key>
+        <value>P160</value>
+        <label>NEGOCIOS INTERNACIONALES Y GESTIÓN PORTUARIA</label>
+    </row>
+    <row>
+        <key>1268</key>
+        <value>P158</value>
+        <label>MAESTRÍA BIM FACILITY MANAGEMENT</label>
+    </row>
+    <row>
+        <key>1270</key>
+        <value>SEG72</value>
+        <label>SEGUNDA ESPECIALIDAD DE INGENIERÍA CON MENCIÓN EN CIENCIA DE DATOS</label>
+    </row>
+</lookupTable>
