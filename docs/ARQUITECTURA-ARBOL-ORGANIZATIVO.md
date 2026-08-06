@@ -88,13 +88,19 @@ El cargo viene del organigrama (política); el titular, de `posiciones.xml`/Orac
 materializa como assignment con `relation=org:manager`. Gap actual medido: 342/353 orgs sin
 manager. Es requisito para certificaciones y aprobaciones por jefe (cap. 1 y 11).
 
+### D6.bis — Las raíces `Projects` / `Teams` / `World` son del PRODUCTO, no vestigios
+
+Intentar borrarlas devuelve `Attempt to delete indestructible object`: son **objetos iniciales de
+MidPoint 4.10** (`indestructible=true`, «Root object of all projects»), creados por el upgrade.
+Se conservan en `raices_permitidas` de la baseline y no se tocan — MidPoint las recrearía.
+
 ### D6 — Qué NO pertenece al árbol
 
-- **Líneas de investigación** (`LINEA-*`, 178) y **centros CII-*** (7): restos del CRIS retirado
-  el 2026-06-20 — sus resources de origen están borrados, sus 354 shadows son huérfanos. No
-  vienen de Oracle (verificado: no existen en `ORG_AREA`). Destino: la "segunda pasada" de
-  limpieza que la purga del 2026-08-03 dejó aplazada. ⚠️ 310 personas cuelgan de 5 CII-*:
-  reubicación antes de tocar.
+- **Líneas de investigación** (`LINEA-*`) y **centros CII-***: restos del CRIS retirado el
+  2026-06-20. **Limpieza ejecutada el 2026-08-06**: 763 shadows huérfanos y las 178 LINEA-*
+  borrados (raw, con backup). ⚠️ Quedan las 7 CII-* con 310 personas: reubicación antes de tocar.
+  Hallazgo lateral de la limpieza: **2.854 linkRefs rotos en USUARIOS** (previos, de purgas
+  anteriores) — pendiente medir origen antes de limpiar.
 - **Conceptos del tesauro** (programas, temas): viven en VocBench; el IGA los referencia por URI.
 - **Cajas del organigrama sin realidad en RRHH**: no se fabrican orgs para complacer la política.
 
@@ -154,7 +160,7 @@ segunda pasada) — al cerrarse ambos, `KNOWN_PENDING` debe quedar vacío.
 
 | # | Qué | Ampara |
 |---|---|---|
-| 1 | Limpieza CRIS "segunda pasada": linkRefs → shadows raw → 178 LINEA-*; decisión CII-* (310 personas) | purga 2026-08-03 + memoria `lineas-investigacion-no-son-de-oracle` |
+| 1 | ✅ **HECHO 2026-08-06** — Limpieza CRIS 2ª pasada: 16 linkRefs desenganchados (raw), **763 shadows huérfanos y 178 LINEA-\* borrados** (backup validado en `backup-cris-20260806`). PROD: 353→175 orgs. Queda SOLO la decisión CII-\* (310 personas) | purga 2026-08-03 + memoria `lineas-investigacion-no-son-de-oracle` |
 | 2 | Edición quirúrgica de los 2 archivos mixtos (retirar 32 orgs no desplegadas) → `KNOWN_PENDING` vacío | archivado 2026-08-06 |
 | 3 | Rama de sedes (Fase 1 rediseñada: `extension/sedeId`, simulación, exclusión del outbound ou) | ADR sedes §5.bis + este doc D1/D4 |
 | 4 | Managers `org:manager` desde posiciones | este doc D5 |
