@@ -4,20 +4,18 @@
   OID: 7c3f2a91-4e8d-4b16-9a52-6d0e1f7b3c48
 
   ARTEFACTO GENERADO — no editar a mano.
-  Fuente: VocBench (Tesauro_Institucional_UPeU), notation urn:esther:id_programa_estudio.
-  Generado: 2026-08-05 · 157 filas · 61 URIs distintas.
+  Fuente: VocBench, notation urn:esther:id_programa_estudio.
+  Regenerado: 2026-08-05 (2a version) · 186 filas · 76 URIs.
+  La consulta NO filtra por named graph: el tesauro vive repartido entre el grafo
+  <.../programas/> y el default graph, y filtrar dejaba fuera ~2.900 triples (157 -> 186).
 
-  key   = DAVID.ACAD_PROGRAMA_ESTUDIO.ID_PROGRAMA_ESTUDIO (identificador inmutable de Oracle)
-  value = URI canonica del concepto, YA RESUELTA por dct:isReplacedBy
-          (18 anclajes apuntaban a conceptos deprecados; aqui se guarda el sustituto)
-  label = notation EP-XXX del programa, cuando existe (23 de 157)
-
-  Sustituye a program-resolver-lamb (OID d9b1e0c2-...), que emparejaba por NOMBRE.
-  Regenerar con: docs/scripts/gen-program-lookup.sh
+  key   = ID_PROGRAMA_ESTUDIO (Oracle, inmutable)
+  value = URI canonica, YA resuelta por dct:isReplacedBy
+  label = notation EP-XXX cuando existe
 -->
 <lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="7c3f2a91-4e8d-4b16-9a52-6d0e1f7b3c48">
     <name>program-resolver-lamb-byid</name>
-    <description>ID_PROGRAMA_ESTUDIO de Oracle LAMB -> URI canonica del tesauro UPeU. Generado desde VocBench, resuelve dct:isReplacedBy. NO editar a mano.</description>
+    <description>ID_PROGRAMA_ESTUDIO -> URI canonica del tesauro UPeU. Generado desde VocBench, resuelve dct:isReplacedBy. NO editar a mano.</description>
     <row>
         <key>1</key>
         <value>http://upeu.edu.pe/sys/programas/programa/medicina-humana</value>
@@ -31,10 +29,12 @@
     <row>
         <key>3</key>
         <value>http://upeu.edu.pe/sys/programas/programa/enfermeria</value>
+        <label>EP-ENF</label>
     </row>
     <row>
         <key>4</key>
         <value>http://upeu.edu.pe/sys/programas/programa/psicologia</value>
+        <label>EP-PSI-FCS</label>
     </row>
     <row>
         <key>5</key>
@@ -44,14 +44,17 @@
     <row>
         <key>8</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>11</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>13</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>16</key>
@@ -61,10 +64,12 @@
     <row>
         <key>17</key>
         <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-de-sistemas</value>
+        <label>EP-SIS</label>
     </row>
     <row>
         <key>18</key>
         <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-civil</value>
+        <label>EP-ICIV</label>
     </row>
     <row>
         <key>19</key>
@@ -74,6 +79,7 @@
     <row>
         <key>20</key>
         <value>http://upeu.edu.pe/sys/programas/programa/arquitectura-y-urbanismo</value>
+        <label>EP-ARQ</label>
     </row>
     <row>
         <key>21</key>
@@ -121,42 +127,52 @@
     <row>
         <key>92</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>93</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>94</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>98</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>100</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>143</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-primaria-y-pedagogia-terapeutica</value>
+        <label>EP-EDU-PRI</label>
     </row>
     <row>
         <key>146</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-ingles-y-espanol</value>
+        <label>EP-EDU-IES</label>
     </row>
     <row>
         <key>149</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-musica-y-artes-visuales</value>
+        <label>EP-EDU-MUA</label>
     </row>
     <row>
         <key>151</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-inicial-y-puericultura</value>
+        <label>EP-EDU-INI</label>
     </row>
     <row>
         <key>152</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-educacion-fisica-recreacion-y-deportes</value>
+        <label>EP-EDU-EFI</label>
     </row>
     <row>
         <key>163</key>
@@ -247,8 +263,16 @@
         <value>http://upeu.edu.pe/sys/programas/programa/seg-enfermeria-cuidados-intensivos-neonatales</value>
     </row>
     <row>
+        <key>228</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/maestria-en-auditoria-con-mencion-auditoria-integral</value>
+    </row>
+    <row>
         <key>229</key>
         <value>http://upeu.edu.pe/sys/programas/programa/maestria-en-salud-publica-gestion-servicios</value>
+    </row>
+    <row>
+        <key>233</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/maestria-en-psicologia-clinica-y-de-la-salud</value>
     </row>
     <row>
         <key>245</key>
@@ -277,26 +301,32 @@
     <row>
         <key>276</key>
         <value>http://upeu.edu.pe/sys/programas/programa/enfermeria</value>
+        <label>EP-ENF</label>
     </row>
     <row>
         <key>277</key>
         <value>http://upeu.edu.pe/sys/programas/programa/psicologia</value>
+        <label>EP-PSI-FCS</label>
     </row>
     <row>
         <key>278</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>279</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>280</key>
         <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-de-sistemas</value>
+        <label>EP-SIS</label>
     </row>
     <row>
         <key>281</key>
         <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-civil</value>
+        <label>EP-ICIV</label>
     </row>
     <row>
         <key>282</key>
@@ -329,34 +359,42 @@
     <row>
         <key>314</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>315</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>319</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-primaria-y-pedagogia-terapeutica</value>
+        <label>EP-EDU-PRI</label>
     </row>
     <row>
         <key>320</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-ingles-y-espanol</value>
+        <label>EP-EDU-IES</label>
     </row>
     <row>
         <key>321</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-ingles-y-espanol</value>
+        <label>EP-EDU-IES</label>
     </row>
     <row>
         <key>322</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-inicial-y-puericultura</value>
+        <label>EP-EDU-INI</label>
     </row>
     <row>
         <key>325</key>
         <value>http://upeu.edu.pe/sys/programas/programa/psicologia</value>
+        <label>EP-PSI-FCS</label>
     </row>
     <row>
         <key>327</key>
         <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-de-sistemas</value>
+        <label>EP-SIS</label>
     </row>
     <row>
         <key>328</key>
@@ -366,6 +404,7 @@
     <row>
         <key>329</key>
         <value>http://upeu.edu.pe/sys/programas/programa/arquitectura-y-urbanismo</value>
+        <label>EP-ARQ</label>
     </row>
     <row>
         <key>333</key>
@@ -379,10 +418,12 @@
     <row>
         <key>335</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>336</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>338</key>
@@ -392,6 +433,7 @@
     <row>
         <key>343</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>529</key>
@@ -425,14 +467,17 @@
     <row>
         <key>618</key>
         <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-civil</value>
+        <label>EP-ICIV</label>
     </row>
     <row>
         <key>619</key>
         <value>http://upeu.edu.pe/sys/programas/programa/enfermeria</value>
+        <label>EP-ENF</label>
     </row>
     <row>
         <key>620</key>
         <value>http://upeu.edu.pe/sys/programas/programa/arquitectura-y-urbanismo</value>
+        <label>EP-ARQ</label>
     </row>
     <row>
         <key>621</key>
@@ -496,8 +541,18 @@
         <value>http://upeu.edu.pe/sys/programas/programa/seg-psicologia-clinica-y-de-la-salud</value>
     </row>
     <row>
+        <key>691</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/doctorado-en-administracion-de-negocios</value>
+    </row>
+    <row>
+        <key>716</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/psicologia</value>
+        <label>EP-PSI-FCS</label>
+    </row>
+    <row>
         <key>720</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-inicial-y-puericultura</value>
+        <label>EP-EDU-INI</label>
     </row>
     <row>
         <key>725</key>
@@ -510,6 +565,10 @@
     <row>
         <key>727</key>
         <value>http://upeu.edu.pe/sys/programas/programa/seg-enfermeria-cuidados-intensivos-neonatales</value>
+    </row>
+    <row>
+        <key>729</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/seg-enfermeria-cardiologia</value>
     </row>
     <row>
         <key>730</key>
@@ -564,6 +623,10 @@
         <value>http://upeu.edu.pe/sys/programas/programa/maestria-en-ingenieria-de-sistemas-direccion-tic</value>
     </row>
     <row>
+        <key>831</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/seg-enfermeria-cuidado-integral-infantil</value>
+    </row>
+    <row>
         <key>833</key>
         <value>http://upeu.edu.pe/sys/programas/programa/doctorado-en-salud-publica</value>
     </row>
@@ -574,26 +637,32 @@
     <row>
         <key>840</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>859</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>860</key>
         <value>http://upeu.edu.pe/sys/programas/programa/arquitectura-y-urbanismo</value>
+        <label>EP-ARQ</label>
     </row>
     <row>
         <key>863</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-inicial-y-puericultura</value>
+        <label>EP-EDU-INI</label>
     </row>
     <row>
         <key>864</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-primaria-y-pedagogia-terapeutica</value>
+        <label>EP-EDU-PRI</label>
     </row>
     <row>
         <key>865</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-primaria-y-pedagogia-terapeutica</value>
+        <label>EP-EDU-PRI</label>
     </row>
     <row>
         <key>866</key>
@@ -606,10 +675,12 @@
     <row>
         <key>868</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-educacion-fisica-recreacion-y-deportes</value>
+        <label>EP-EDU-EFI</label>
     </row>
     <row>
         <key>869</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-musica-y-artes-visuales</value>
+        <label>EP-EDU-MUA</label>
     </row>
     <row>
         <key>872</key>
@@ -624,10 +695,12 @@
     <row>
         <key>875</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>884</key>
         <value>http://upeu.edu.pe/sys/programas/programa/educacion-primaria-y-pedagogia-terapeutica</value>
+        <label>EP-EDU-PRI</label>
     </row>
     <row>
         <key>885</key>
@@ -636,18 +709,25 @@
     <row>
         <key>886</key>
         <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria-y-aduanera</value>
+        <label>EP-CON</label>
     </row>
     <row>
         <key>887</key>
         <value>http://upeu.edu.pe/sys/programas/programa/arquitectura-y-urbanismo</value>
+        <label>EP-ARQ</label>
     </row>
     <row>
         <key>888</key>
         <value>http://upeu.edu.pe/sys/programas/programa/arquitectura-y-urbanismo</value>
+        <label>EP-ARQ</label>
     </row>
     <row>
         <key>962</key>
         <value>http://upeu.edu.pe/sys/programas/programa/seg-enfermeria-cuidados-quirurgicos</value>
+    </row>
+    <row>
+        <key>964</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/seg-enfermeria-geriatria</value>
     </row>
     <row>
         <key>965</key>
@@ -662,11 +742,104 @@
         <value>http://upeu.edu.pe/sys/programas/programa/maestria-en-administracion-de-negocios-rrhh</value>
     </row>
     <row>
+        <key>1101</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-de-software</value>
+    </row>
+    <row>
+        <key>1102</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-de-ciberseguridad</value>
+    </row>
+    <row>
+        <key>1103</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/ingenieria-industrial</value>
+    </row>
+    <row>
+        <key>1107</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/comunicacion-audiovisual-y-medios-interactivos</value>
+    </row>
+    <row>
+        <key>1124</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/tecnologia-medica-especialidad-de-laboratorio-clinico-y-anatomia-patol</value>
+    </row>
+    <row>
+        <key>1125</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/tecnologia-medica-especialidad-de-terapia-fisica-y-rehabilitacion</value>
+    </row>
+    <row>
         <key>1138</key>
         <value>http://upeu.edu.pe/sys/programas/programa/maestria-en-nutricion-humana-nutricion-clinica</value>
     </row>
     <row>
+        <key>1140</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/segunda-especialidad-en-psicooncologia-y-cuidados-paliativos</value>
+    </row>
+    <row>
+        <key>1141</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/segunda-especialidad-en-neuropsicologia</value>
+    </row>
+    <row>
         <key>1146</key>
         <value>http://upeu.edu.pe/sys/programas/programa/doctorado-en-enfermeria</value>
+    </row>
+    <row>
+        <key>1150</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/segunda-especialidad-de-en-fermeria-en-cuidado-de-la-persona-con-diabe</value>
+    </row>
+    <row>
+        <key>1156</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-educacion-fisica-recreacion-y-deportes</value>
+        <label>EP-EDU-EFI</label>
+    </row>
+    <row>
+        <key>1168</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/educacion-primaria-y-pedagogia-terapeutica</value>
+        <label>EP-EDU-PRI</label>
+    </row>
+    <row>
+        <key>1170</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/educacion-inicial-y-puericultura</value>
+        <label>EP-EDU-INI</label>
+    </row>
+    <row>
+        <key>1208</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-linguistica-e-ingles</value>
+    </row>
+    <row>
+        <key>1209</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/educacion-primaria-y-pedagogia-terapeutica</value>
+        <label>EP-EDU-PRI</label>
+    </row>
+    <row>
+        <key>1210</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/educacion-inicial-y-puericultura</value>
+        <label>EP-EDU-INI</label>
+    </row>
+    <row>
+        <key>1260</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/derecho</value>
+    </row>
+    <row>
+        <key>1261</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/derecho</value>
+    </row>
+    <row>
+        <key>1262</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/educacion-especialidad-linguistica-e-ingles</value>
+    </row>
+    <row>
+        <key>1264</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/segunda-especialidad-de-enfermeria-en-gestion-en-inmunizaciones</value>
+    </row>
+    <row>
+        <key>1266</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/negocios-internacionales-y-gestion-portuaria</value>
+    </row>
+    <row>
+        <key>1268</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/maestria-bim-facility-management</value>
+    </row>
+    <row>
+        <key>1270</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/segunda-especialidad-de-ingenieria-con-mencion-en-ciencia-de-datos</value>
     </row>
 </lookupTable>
