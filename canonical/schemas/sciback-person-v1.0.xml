@@ -145,10 +145,10 @@
                          (bloque J3c). Motivo: escrito por 2 inbounds (Estudiantes + Egresados), caia en
                          zero-set multi-source y NO retiraba los valores obsoletos -> 14.139 users
                          publicaban URIs de conceptos deprecados. Mismo patron que liveAffiliation*. -->
-                    <xsd:element name="liveProgramUriStudent" type="xsd:string" minOccurs="0" maxOccurs="1">
+                    <xsd:element name="liveProgramUriStudent" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
                         <xsd:annotation><xsd:appinfo><a:displayName>URI de programa viva — estudiante (IIA Estudiantes)</a:displayName><a:help>URI canonica del concepto SKOS del programa, presente SOLO mientras hay matricula vigente. IIA unica: resource Estudiantes. Single-source: el inbound strong la materializa/retira con la matricula. Se resuelve desde ID_PROGRAMA_ESTUDIO via el puente generado de VocBench (resuelve dct:isReplacedBy). Ausente = sin matricula vigente o programa no licenciado.</a:help><a:indexed>true</a:indexed><a:displayOrder>561</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
-                    <xsd:element name="liveProgramUriAlum" type="xsd:string" minOccurs="0" maxOccurs="1">
+                    <xsd:element name="liveProgramUriAlum" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
                         <xsd:annotation><xsd:appinfo><a:displayName>URI de programa viva — egresado (IIA Egresados)</a:displayName><a:help>URI canonica del programa del que la persona egreso. IIA unica: resource Egresados. Single-source: el inbound strong la materializa/retira con la proyeccion Egresado. La condicion de egresado es permanente.</a:help><a:indexed>true</a:indexed><a:displayOrder>562</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
                     <xsd:element name="liveAffiliationStudent" type="xsd:string" minOccurs="0" maxOccurs="1">

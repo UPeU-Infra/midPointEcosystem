@@ -2394,8 +2394,16 @@ cc == '93' &amp;&amp; live != ''</code>
             </source>
             <expression>
                 <script>
-                    <code>def out = [] as Set;
-[student, alum].each { def v = it != null ? basic.stringify(it).trim() : ''; if (v) out &lt;&lt; v };
+                    <code>// Ambos sources son MULTIVALOR (medido 2026-08-07: 43 estudiantes cursan 2 programas
+// a la vez, y la via Egresados es multivalor de forma masiva). Por eso se aplana cada
+// source en vez de tratarlo como escalar: basic.stringify() sobre una coleccion no
+// devuelve la URI, devuelve la representacion de la lista.
+def out = [] as Set;
+[student, alum].each { s -&gt;
+    if (s == null) return;
+    def vals = (s instanceof Collection) ? s : [s];
+    vals.each { def v = it != null ? basic.stringify(it).trim() : ''; if (v) out &lt;&lt; v };
+};
 return new ArrayList(out)</code>
                 </script>
             </expression>
