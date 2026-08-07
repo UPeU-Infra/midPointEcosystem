@@ -2365,6 +2365,47 @@ cc == '93' &amp;&amp; live != ''</code>
          ============================================================ -->
 
     <!-- ============================================================
+         BLOQUE J3c — academicProgramUri DERIVADO de los items por IIA
+         PM10 aplicado (2026-08-07). Mismo patron y misma causa raiz que J3b: `academicProgramUri`
+         (multivalor, consumido por LDAP via eduPersonEntitlement) lo escribian DOS inbounds
+         —Estudiantes y Egresados— cayendo en zero-set multi-source: ANADIAN el valor nuevo pero
+         NUNCA retiraban el viejo. Resultado medido el 2026-08-07: 14.139 users publicando URIs de
+         conceptos DEPRECADOS del tesauro, 8.227 de ellos con la deprecada Y la canonica a la vez.
+         Limpiar LDAP no sirvio: la recon lo repuso desde MidPoint (ver
+         docs/HALLAZGO-uris-obsoletas-no-se-retiran-2026-08-06.md).
+         Ahora se DERIVA como union de los items single-source, que SI se materializan/retiran.
+         strong: reconstruye el multivalor COMPLETO en cada recompute -> lo que ya no esta en
+         ningun item vivo, desaparece. Es la fuente unica y fiable downstream.
+         ============================================================ -->
+    <item>
+        <ref>extension/sciback:academicProgramUri</ref>
+        <mapping>
+            <name>J3c-academicProgramUri-from-live-items</name>
+            <description>Deriva el multivalor academicProgramUri como union de los items per-IIA (liveProgramUriStudent/Alum). strong. Reemplaza la materializacion por inbounds de recurso, que caia en zero-set y no retiraba los valores obsoletos. Downstream (LDAP eduPersonEntitlement) lee esto.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>student</name>
+                <path>extension/sciback:liveProgramUriStudent</path>
+            </source>
+            <source>
+                <name>alum</name>
+                <path>extension/sciback:liveProgramUriAlum</path>
+            </source>
+            <expression>
+                <script>
+                    <code>def out = [] as Set;
+[student, alum].each { def v = it != null ? basic.stringify(it).trim() : ''; if (v) out &lt;&lt; v };
+return new ArrayList(out)</code>
+                </script>
+            </expression>
+            <target>
+                <path>extension/sciback:academicProgramUri</path>
+            </target>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
          BLOQUE J3b — affiliations (eduPerson, downstream) DERIVADO de los items por IIA
          FIX OPCIÓN 2 (runbook PM10, 2026-05-30): `affiliations` (multivalor eduPerson, consumido
          por Koha/LDAP/Keycloak) deja de depender de los inbounds de recurso (que caían en zero-set

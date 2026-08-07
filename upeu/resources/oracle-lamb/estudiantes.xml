@@ -369,7 +369,7 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                      tiene pares — ver docs/HALLAZGO-programas-academicos-vocbench-2026-08-05.md.
                      Multivalor: soporta las múltiples matrículas de una persona. -->
                 <inbound>
-                    <name>program-id-to-academicProgramUri</name>
+                    <name>program-id-to-liveProgramUriStudent</name>
                     <strength>strong</strength>
                     <expression>
                         <function>
@@ -382,7 +382,7 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                         </function>
                     </expression>
                     <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramUri</path>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveProgramUriStudent</path>
                     </target>
                 </inbound>
                 <!-- RETIRADO el mismo día (PROD v184): `program-id-to-academicProgramCode`.

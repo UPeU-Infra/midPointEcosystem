@@ -318,7 +318,7 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
             <attribute>
                 <ref>ri:ESCUELA_PROFESIONAL</ref>
                 <inbound>
-                    <name>escuela-to-academicProgramUri</name>
+                    <name>escuela-to-liveProgramUriAlum</name>
                     <strength>strong</strength>
                     <expression>
                         <function>
@@ -331,7 +331,7 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                         </function>
                     </expression>
                     <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramUri</path>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveProgramUriAlum</path>
                     </target>
                 </inbound>
                 <inbound>
