@@ -162,7 +162,15 @@ del viejo resolver por nombre que nunca se retiró**. Ni el puente falla, ni el 
 faltan anclajes en el tesauro. Y el remedio es más simple de lo que parecía: a **8.234 solo hay
 que quitarles la URI vieja** (ya tienen la buena).
 
-## 6.quater ✅ LIMPIEZA EJECUTADA — 8.243 valores obsoletos retirados
+## 6.quater ❌ LIMPIEZA REVERTIDA POR LA RECON — fue inútil (corregido 2026-08-07)
+
+> 🔴 **AVISO: esta sección describía la limpieza como resuelta. ERA FALSO.**
+> La recon del 7-ago 11:20 UTC **repuso los 8.243 valores**: deprecados 4.494 → **12.730**.
+> Ver §6.quinquies para el diagnóstico correcto. Se conserva el relato original abajo porque el
+> **procedimiento LDAP sí funcionó** — lo que falló fue el razonamiento sobre dónde estaba el
+> origen.
+
+### Lo que se hizo (y se deshizo solo)
 
 | Medida | Antes | Después |
 |---|---|---|
@@ -187,11 +195,17 @@ identificador de programa: todos conservan la URI canónica que ya tenían.
    que habría borrado también las canónicas).
 5. **Verificación**: recuento completo antes/después en LDAP.
 
-### Por qué no vuelven
+### ❌ «Por qué no vuelven» — razonamiento ERRÓNEO, refutado el 7-ago
 
-El mapping **no produce** esos valores: el puente resuelve `dct:isReplacedBy` y devuelve siempre
-el concepto canónico. Y como en multivalor solo **añade** sin eliminar, una vez retirados no se
-reponen. **Verificar tras la recon del 7-ago** — es la comprobación que cierra el asunto.
+> *Texto original:* «El mapping no produce esos valores… una vez retirados no se reponen.»
+
+**Falso.** La primera mitad es cierta (el mapping no los produce); la segunda estaba aplicada al
+revés: **si el mapping solo AÑADE y nunca ELIMINA, el valor que persiste en MidPoint se reescribe
+en LDAP en cada pasada.** Limpiar LDAP sin limpiar MidPoint garantizaba que volvieran.
+
+Se documentó como resuelto **sin haber esperado la comprobación** —que existía y era la recon de
+la mañana siguiente—. Es exactamente la regla **R5** del protocolo de pre-ejecución: *toda
+predicción lleva su medición previa*.
 
 ### Los 4.494 que quedan (fuera de alcance a propósito)
 
@@ -201,17 +215,39 @@ reponen. **Verificar tras la recon del 7-ago** — es la comprobación que cierr
 - **157 activos de niveles NO licenciados** (TESIS, Idiomas, CEPRE…) que arrastran una URI que
   nunca debieron recibir.
 
+## 6.quinquies 🔴 EL ORIGEN ESTÁ EN MIDPOINT, NO EN LDAP (medido 7-ago)
+
+| | MidPoint | LDAP (antes de limpiar) |
+|---|---|---|
+| **Usuarios con URI deprecada** | **14.139** | 12.727 |
+| Con deprecada **y** canónica | **8.227** | 7.841 |
+| Solo deprecada | **5.912** | 4.886 |
+
+Por estado: **14.124 activos**, 12 `draft`, 3 archivados.
+
+**MidPoint es el origen; LDAP solo el reflejo.** Ayer se limpiaron 12.727 valores del reflejo
+mientras **14.139 seguían intactos en el origen**; la recon volvió a proyectarlos. No fue mala
+suerte: era inevitable.
+
+⚠️ **Los valores llevan metadato `provenance` apuntando al resource de Estudiantes**
+(`6a91f7e1-…`). No son residuo suelto: MidPoint los tiene registrados **como si vinieran de ese
+origen**, aunque el mapping actual ya no los produzca. Borrarlos del `User` sin tocar el mapping
+deja la puerta abierta a que un recompute los reponga.
+
+**Conclusión: perseguir valores a mano —en LDAP o en MidPoint— es tratar el síntoma.** El único
+arreglo que se sostiene es que **el mapping materialice el zero-set** (patrón PM10, ya resuelto
+en este repo para `affiliations` el 2026-05-30).
+
 ## 7. Qué falta
 
 1. ~~Testigo `202612155`~~ — ✅ **RESUELTO** (§6.bis): es un CEPRE, el sistema actúa
    correctamente. Y una recon completa ya demostró que no limpia nada.
    ~~Rehacer la clasificación~~ — ✅ **HECHA** (§6.ter): 8.234 con URI correcta + residual,
    4.336 egresados, 156 no licenciados, 1 aislado. **Los «393 sin explicar» no existían.**
-2. ~~Retirar los valores obsoletos~~ — ✅ **HECHO para 8.243** (§6.quater). Quedan **4.494**:
-   4.336 egresados y 157 activos no licenciados, ambos pendientes de **decisión de producto**, no
-   de técnica. Si se decide que tampoco deben publicarlos, el mismo procedimiento sirve.
-   ⚠️ Nota: la limpieza es **sintomática**. La causa (el outbound no materializa el zero-set)
-   sigue viva: cualquier futuro cambio de URI volverá a dejar residuo. El arreglo de raíz es el
-   patrón PM10 en el outbound.
+2. 🔴 **Retirar los valores obsoletos — SIGUE ABIERTO Y ES LO PRINCIPAL.** La limpieza del 6-ago
+   sobre LDAP **fue revertida por la recon** (§6.quater/§6.quinquies). Alcance real: **14.139
+   usuarios en MidPoint**. **No repetir la limpieza sobre LDAP**: volvería a deshacerse.
+   El arreglo debe ser **el zero-set en el mapping** (patrón PM10). Solo después —o a la vez—
+   tiene sentido purgar los valores ya persistidos.
 3. **Los 157 de niveles no licenciados**: decisión de producto ya abierta — no deben publicar URI
    de programa académico en absoluto.
