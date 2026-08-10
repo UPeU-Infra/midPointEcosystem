@@ -31,10 +31,19 @@ Además Oracle deja el campo vacío en 2.972 identidades que el tesauro sí resu
 
 Cuando un concepto lleva varios P-codes
 ---------------------------------------
-52 conceptos tienen dos códigos oficiales por recodificación vía resolución
-(`SEG20`→`SEG61`). La tabla publica **el que aparece en los Formatos A4/A8
-2026-1**; si aparecen los dos, gana el de numeración más alta, que es el de la
-resolución más reciente. Los históricos siguen resolubles en el tesauro.
+El A4 lista **una fila por modalidad**: Administración es `P04` presencial,
+`P05` semipresencial y `P95` a distancia — tres programas distintos ante SUNEDU.
+El tesauro los agrupa en un concepto y guarda cada código en
+`upeu:codigoSunedu{Presencial,Semipresencial,Distancia}`.
+
+Por eso el P-code **no se elige por concepto sino por modalidad**: se cruza con
+`DAVID.ACAD_PROGRAMA_ESTUDIO.ID_MODALIDAD_ESTUDIO` (1=Presencial,
+2=Semipresencial, 13=A Distancia; el resto —Ecuador, PAE, sedes— se tratan como
+presencial salvo que el concepto no lo tenga). Emitir un único código por
+concepto declararía a un alumno de la modalidad equivocada.
+
+Si tras eso quedan varios candidatos (recodificación vía resolución,
+`SEG20`→`SEG61`), gana el de numeración más alta: el de la resolución reciente.
 
 Uso:
     python3 scripts/generar-lookup-programas.py [--dry-run]
@@ -102,13 +111,19 @@ def main():
     # <.../programas/> y el default, y filtrar dejaba fuera ~2.900 triples.
     filas = consultar(vb, """PREFIX skos:<http://www.w3.org/2004/02/skos/core#>
         PREFIX owl:<http://www.w3.org/2002/07/owl#>
-        SELECT ?id ?c ?ep ?px WHERE {
+        SELECT ?id ?c ?ep ?px ?mp ?ms ?md WHERE {
           ?c skos:notation ?v .
           FILTER(DATATYPE(?v)=<urn:esther:id_programa_estudio>) BIND(STR(?v) AS ?id)
           FILTER NOT EXISTS { ?c owl:deprecated true }
           OPTIONAL { ?c skos:notation ?e . FILTER(REGEX(STR(?e),"^EP-")) BIND(STR(?e) AS ?ep) }
           OPTIONAL { ?c skos:altLabel ?p . FILTER(REGEX(STR(?p),"^(P|SEG)[0-9]+$"))
-                     BIND(STR(?p) AS ?px) } }""")
+                     BIND(STR(?p) AS ?px) }
+          OPTIONAL { ?c <http://upeu.edu.pe/sys/ontologia#codigoSuneduPresencial> ?mp }
+          OPTIONAL { ?c <http://upeu.edu.pe/sys/ontologia#codigoSuneduSemipresencial> ?ms }
+          OPTIONAL { ?c <http://upeu.edu.pe/sys/ontologia#codigoSuneduDistancia> ?md } }""")
+
+    # Oracle: ID_PROGRAMA_ESTUDIO -> ID_MODALIDAD_ESTUDIO (1=Presencial, 2=Semi, 13=Distancia)
+    modalidad = json.load(open(os.path.join(AQUI, "..", "datasets", "id-modalidad-lamb.json")))
 
     datos = {}
     for b in filas:
@@ -118,21 +133,31 @@ def main():
             d["ep"].add(b["ep"]["value"])
         if "px" in b:
             d["px"].add(b["px"]["value"])
+        for clave, var in (("presencial", "mp"), ("semipresencial", "ms"), ("distancia", "md")):
+            if var in b:
+                d.setdefault("mod", {})[clave] = b[var]["value"]
 
     orden = sorted(datos, key=lambda k: int(k))
     f_uri = [(k, datos[k]["uri"], sorted(datos[k]["ep"])[0] if datos[k]["ep"] else None)
              for k in orden]
-    f_pxx = []
+    f_pxx, por_modalidad = [], 0
     for k in orden:
-        px = sorted(datos[k]["px"], key=orden_pcode)
-        if px:
-            elegido = px[-1]          # el de resolución más reciente
+        mod = datos[k].get("mod", {})
+        clave = {"2": "semipresencial", "13": "distancia"}.get(str(modalidad.get(k, "")), "presencial")
+        elegido = mod.get(clave)
+        if elegido:
+            por_modalidad += 1
+        else:
+            px = sorted(datos[k]["px"], key=orden_pcode)
+            elegido = px[-1] if px else None
+        if elegido:
             f_pxx.append((k, elegido, elegido))
 
     con_ep = sum(1 for _, _, l in f_uri if l)
     print(f"IDs resueltos a concepto vigente : {len(f_uri)}")
     print(f"  con EP-code                    : {con_ep}")
     print(f"  con P-code                     : {len(f_pxx)}")
+    print(f"    de ellos, elegido por modalidad: {por_modalidad}")
 
     salidas = [
         (os.path.join(IGA, "upeu", "lookup-tables", "program-resolver-lamb-byid.xml"),
