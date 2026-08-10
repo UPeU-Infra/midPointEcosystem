@@ -1,0 +1,25 @@
+# scibackAcademicProgramSuneduCode — P-code / SEG-code oficial del programa academico
+# ADR-005 (09-ago-2026): el P-code identifica el programa en TODOS los sistemas UPeU;
+# el codigo INEI queda reservado al repositorio de tesis (renati.discipline).
+#
+# Fuente de verdad: Formatos de Licenciamiento SUNEDU A4 y A8 2026-1, via el tesauro
+# VocBench -> LookupTable program-pxx-byid -> MidPoint -> este atributo.
+#
+# MULTI-VALUE a proposito: una persona puede cursar dos programas a la vez.
+# El codigo depende de la MODALIDAD (Administracion = P04 presencial, P05
+# semipresencial, P95 a distancia): son programas distintos ante SUNEDU.
+#
+# 🔴 cn=config NO replica: aplicar en .168 Y .169. Los datos si replican.
+# 🔴 Tras anadirlo hay que purgar el schema cacheado del resource en MidPoint
+#    (accion 'purge-schema' + test connection) o el outbound falla con
+#    "Definition of attribute not found in object class".
+dn: cn={12}upeu,cn=schema,cn=config
+changetype: modify
+add: olcAttributeTypes
+olcAttributeTypes: ( 1.3.6.1.4.1.47378.1.12 NAME 'scibackAcademicProgramSuneduCode' DESC 'P-code / SEG-code oficial del programa academico segun los Formatos de Licenciamiento SUNEDU A4 y A8 (fuente: tesauro VocBench, ADR-005 2026-08-09). MULTI-VALUE: una persona puede cursar dos programas a la vez. El codigo depende de la MODALIDAD. Sin default: si el programa no mapea, el atributo queda ausente y el consumidor reporta -sin programa-, nunca imputa. Solo estudiantes. El codigo INEI queda reservado al repositorio de tesis. Contrato InOut-IGA.' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+
+# indice eq — sin el, el filtro de aforo por programa hace scan completo
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: scibackAcademicProgramSuneduCode eq
