@@ -1,0 +1,929 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Tabla de PRESENTACION: P-code -> nombre legible del programa.
+     La consume la ficha de usuario de MidPoint via valueEnumerationRef en
+     extension/academicProgramSuneduCode: sin ella la UI solo puede mostrar el
+     codigo crudo (P25) porque es lo unico que guarda el atributo.
+     Fuente: Formatos de Licenciamiento SUNEDU A4 y A8 2026-1 (183 programas).
+     La etiqueta incluye grado y MODALIDAD porque P04/P05/P95 son los tres
+     "Administracion" y sin distinguirlos la ficha muestra entradas identicas.
+     NO confundir con LT-Pcode-INEI (e129d9e4-...), que es el puente al codigo
+     INEI 2022 y cuyas etiquetas estan escritas para documentar ese puente. -->
+<lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="4e7a9b13-5c26-4d80-91af-3b6e2c8d5017">
+    <name>LT-Pcode-Nombre</name>
+    <description>P-code/SEG-code oficial (A4/A8 2026-1) hacia el nombre legible del programa. Tabla de presentacion para la ficha de usuario. 183 filas.</description>
+    <row>
+        <key>P01</key>
+        <value>P01</value>
+        <label>Bachiller en Administración Con Mención En Gestión Empresarial (Presencial)</label>
+    </row>
+    <row>
+        <key>P04</key>
+        <value>P04</value>
+        <label>Bachiller en Administración (Presencial)</label>
+    </row>
+    <row>
+        <key>P05</key>
+        <value>P05</value>
+        <label>Bachiller en Administración (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P06</key>
+        <value>P06</value>
+        <label>Bachiller en Arquitectura Y Urbanismo (Presencial)</label>
+    </row>
+    <row>
+        <key>P07</key>
+        <value>P07</value>
+        <label>Bachiller en Ciencias De La Comunicación (Presencial)</label>
+    </row>
+    <row>
+        <key>P08</key>
+        <value>P08</value>
+        <label>Bachiller en Contabilidad, Gestión Tributaria Y Aduanera (Presencial)</label>
+    </row>
+    <row>
+        <key>P09</key>
+        <value>P09</value>
+        <label>Bachiller en Contabilidad, Gestión Tributaria Y Aduanera (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P10</key>
+        <value>P10</value>
+        <label>Bachiller en Educación, Especialidad Ciencias Naturales Y Tecnología (Presencial)</label>
+    </row>
+    <row>
+        <key>P12</key>
+        <value>P12</value>
+        <label>Bachiller en Educación,_X000D_Especialidad_X000D_ Educación_X000D_ Física,_X000D_ Recreación  Y_X000D_ Deportes (Presencial)</label>
+    </row>
+    <row>
+        <key>P14</key>
+        <value>P14</value>
+        <label>Bachiller en Educación, Especialidad Lingüística E Inglés (Presencial)</label>
+    </row>
+    <row>
+        <key>P15</key>
+        <value>P15</value>
+        <label>Bachiller en Educación, Especialidad Matemática, Análisis De Datos Y Computación (Presencial)</label>
+    </row>
+    <row>
+        <key>P17</key>
+        <value>P17</value>
+        <label>Bachiller en Educación, Especialidad Música Y Artes Visuales (Presencial)</label>
+    </row>
+    <row>
+        <key>P19</key>
+        <value>P19</value>
+        <label>Bachiller en Educación Inicial Y Puericultura (Presencial)</label>
+    </row>
+    <row>
+        <key>P20</key>
+        <value>P20</value>
+        <label>Bachiller en Educación, Especialidad Primaria Y Pedagogía Terapéutica (Presencial)</label>
+    </row>
+    <row>
+        <key>P22</key>
+        <value>P22</value>
+        <label>Bachiller en Enfermería (Presencial)</label>
+    </row>
+    <row>
+        <key>P24</key>
+        <value>P24</value>
+        <label>Bachiller en Ingeniería Ambiental (Presencial)</label>
+    </row>
+    <row>
+        <key>P25</key>
+        <value>P25</value>
+        <label>Bachiller en Ingeniería Civil (Presencial)</label>
+    </row>
+    <row>
+        <key>P26</key>
+        <value>P26</value>
+        <label>Bachiller en Ingeniería De Industrias Alimentarias (Presencial)</label>
+    </row>
+    <row>
+        <key>P27</key>
+        <value>P27</value>
+        <label>Bachiller en Ingeniería De Sistemas (Presencial)</label>
+    </row>
+    <row>
+        <key>P29</key>
+        <value>P29</value>
+        <label>Bachiller en Marketing Y Negocios Internacionales (Presencial)</label>
+    </row>
+    <row>
+        <key>P30</key>
+        <value>P30</value>
+        <label>Bachiller en Medicina Humana (Presencial)</label>
+    </row>
+    <row>
+        <key>P31</key>
+        <value>P31</value>
+        <label>Bachiller en Nutrición Humana (Presencial)</label>
+    </row>
+    <row>
+        <key>P33</key>
+        <value>P33</value>
+        <label>Bachiller en Psicología (Presencial)</label>
+    </row>
+    <row>
+        <key>P35</key>
+        <value>P35</value>
+        <label>Bachiller en Teología (Presencial)</label>
+    </row>
+    <row>
+        <key>P47</key>
+        <value>P47</value>
+        <label>Maestro en Maestría En Administración De Negocios Con Mención En Administración De Recursos Humanos (Presencial)</label>
+    </row>
+    <row>
+        <key>P48</key>
+        <value>P48</value>
+        <label>Maestro en Maestría En Administración De Negocios Con Mención En Finanzas (Presencial)</label>
+    </row>
+    <row>
+        <key>P49</key>
+        <value>P49</value>
+        <label>Maestro en Maestría En Administración De Negocios Con Mención En Liderazgo Y Gestión Organizacional (Presencial)</label>
+    </row>
+    <row>
+        <key>P51</key>
+        <value>P51</value>
+        <label>Maestro en Maestría En Auditoría Con Mención En Auditoría Integral (Presencial)</label>
+    </row>
+    <row>
+        <key>P54</key>
+        <value>P54</value>
+        <label>Maestro en Maestría En Terapia Familiar Y De Pareja (Presencial)</label>
+    </row>
+    <row>
+        <key>P57</key>
+        <value>P57</value>
+        <label>Maestro en Maestría En Educación Con Mención En Administración Educativa (Presencial)</label>
+    </row>
+    <row>
+        <key>P58</key>
+        <value>P58</value>
+        <label>Maestro en Maestría En Educación Con Mención En Investigación Y Docencia Universitaria (Presencial)</label>
+    </row>
+    <row>
+        <key>P59</key>
+        <value>P59</value>
+        <label>Maestro en Maestría En Educación Con Mención En Psicología Educativa (Presencial)</label>
+    </row>
+    <row>
+        <key>P62</key>
+        <value>P62</value>
+        <label>Maestro en Maestría En Educación Con Mención En Currículo (Presencial)</label>
+    </row>
+    <row>
+        <key>P69</key>
+        <value>P69</value>
+        <label>Maestro en Maestría En Enfermería Con Mención En Administración Y Gestión (Presencial)</label>
+    </row>
+    <row>
+        <key>P71</key>
+        <value>P71</value>
+        <label>Maestro en Maestría En Ingeniería Ambiental (Presencial)</label>
+    </row>
+    <row>
+        <key>P74</key>
+        <value>P74</value>
+        <label>Maestro en Maestría En Ingeniería De Sistemas Con Mención En Dirección Y Gestión De Tecnologías De Información (Presencial)</label>
+    </row>
+    <row>
+        <key>P75</key>
+        <value>P75</value>
+        <label>Maestro en Maestría En Ingeniería De Sistemas Con Mención En Ingeniería De Software (Presencial)</label>
+    </row>
+    <row>
+        <key>P76</key>
+        <value>P76</value>
+        <label>Maestro en Maestría En Liderazgo Eclesiástico (Presencial)</label>
+    </row>
+    <row>
+        <key>P77</key>
+        <value>P77</value>
+        <label>Maestro en Maestría En Misionología (Presencial)</label>
+    </row>
+    <row>
+        <key>P78</key>
+        <value>P78</value>
+        <label>Maestro en Maestría En Nutrición Humana Con Mención En Nutrición Clínica (Presencial)</label>
+    </row>
+    <row>
+        <key>P79</key>
+        <value>P79</value>
+        <label>Maestro en Maestría En Nutrición Humana Con Mención En Nutrición Vegetariana (Presencial)</label>
+    </row>
+    <row>
+        <key>P80</key>
+        <value>P80</value>
+        <label>Maestro en Maestría En Psicología Clínica Y De La Salud (Presencial)</label>
+    </row>
+    <row>
+        <key>P82</key>
+        <value>P82</value>
+        <label>Maestro en Maestría En Salud Pública Con Mención En Gestión De Los Servicios De Salud (Presencial)</label>
+    </row>
+    <row>
+        <key>P83</key>
+        <value>P83</value>
+        <label>Maestro en Maestría En Salud Pública Con Mención En  Salud Colectiva Y Promoción De La Salud (Presencial)</label>
+    </row>
+    <row>
+        <key>P85</key>
+        <value>P85</value>
+        <label>Maestro en Maestría En Teología (Presencial)</label>
+    </row>
+    <row>
+        <key>P86</key>
+        <value>P86</value>
+        <label>Maestro en Maestría En Teología Bíblica (Presencial)</label>
+    </row>
+    <row>
+        <key>P87</key>
+        <value>P87</value>
+        <label>Maestro en Maestría En Teología Histórica (Presencial)</label>
+    </row>
+    <row>
+        <key>P88</key>
+        <value>P88</value>
+        <label>Doctorado En Administración De Negocios (Presencial)</label>
+    </row>
+    <row>
+        <key>P89</key>
+        <value>P89</value>
+        <label>Doctorado En Educación Con Mención En Currículo Y Docencia (Presencial)</label>
+    </row>
+    <row>
+        <key>P90</key>
+        <value>P90</value>
+        <label>Doctorado En Educación Con Mención En Gestión Educativa (Presencial)</label>
+    </row>
+    <row>
+        <key>P91</key>
+        <value>P91</value>
+        <label>Doctorado En Enfermería (Presencial)</label>
+    </row>
+    <row>
+        <key>P92</key>
+        <value>P92</value>
+        <label>Doctorado En Ingeniería De Sistemas (Presencial)</label>
+    </row>
+    <row>
+        <key>P93</key>
+        <value>P93</value>
+        <label>Doctorado En Salud Pública (Presencial)</label>
+    </row>
+    <row>
+        <key>P94</key>
+        <value>P94</value>
+        <label>Doctorado En Teología (Presencial)</label>
+    </row>
+    <row>
+        <key>P95</key>
+        <value>P95</value>
+        <label>Bachiller en Administración (A Distancia)</label>
+    </row>
+    <row>
+        <key>P96</key>
+        <value>P96</value>
+        <label>Bachiller en Contabilidad, Gestión Tributaria Y Aduanera (A Distancia)</label>
+    </row>
+    <row>
+        <key>P97</key>
+        <value>P97</value>
+        <label>Bachiller en Educación, Especialidad Inglés Y Español (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P98</key>
+        <value>P98</value>
+        <label>Bachiller en Educación Inicial Y Puericultura (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P99</key>
+        <value>P99</value>
+        <label>Bachiller en Educación, Especialidad Primaria Y Pedagogía Terapéutica (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P100</key>
+        <value>P100</value>
+        <label>Bachiller en Ingeniería Ambiental (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P101</key>
+        <value>P101</value>
+        <label>Bachiller en Psicología (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P102</key>
+        <value>P102</value>
+        <label>Maestro en Maestría En Administración De Negocios Con Mención En Finanzas (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P103</key>
+        <value>P103</value>
+        <label>Maestro en Maestría En Administración De Negocios Con Mención En Finanzas (A Distancia)</label>
+    </row>
+    <row>
+        <key>P104</key>
+        <value>P104</value>
+        <label>Maestro en Maestría En Administración De Negocios Con Mención En Liderazgo Y Gestión Organizacional (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P106</key>
+        <value>P106</value>
+        <label>Maestro en Maestría En Terapia Familiar Y De Pareja (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P108</key>
+        <value>P108</value>
+        <label>Maestro en Maestría En Educación Con Mención En Administración Educativa (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P109</key>
+        <value>P109</value>
+        <label>Maestro en Maestría En Educación Con Mención En Investigación Y Docencia Universitaria (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P110</key>
+        <value>P110</value>
+        <label>Maestro en Maestría En Educación Con Mención En Psicología Educativa (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P111</key>
+        <value>P111</value>
+        <label>Maestro en Maestría En Enfermería Con Mención En Administración Y Gestión (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P112</key>
+        <value>P112</value>
+        <label>Maestro en Maestría En Psicología Clínica Y De La Salud (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P114</key>
+        <value>P114</value>
+        <label>Maestro en Maestría En Salud Pública Con Mención En Gestión De Los Servicios De Salud (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P115</key>
+        <value>P115</value>
+        <label>Maestro en Maestría En Salud Pública Con Mención En  Salud Colectiva Y Promoción De La Salud (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P116</key>
+        <value>P116</value>
+        <label>Maestro en Maestría En Administración De Negocios Con Mención En Liderazgo Y Gestión Organizacional (A Distancia)</label>
+    </row>
+    <row>
+        <key>P117</key>
+        <value>P117</value>
+        <label>Maestro en Maestría En Terapia Familiar Y De Pareja (A Distancia)</label>
+    </row>
+    <row>
+        <key>P118</key>
+        <value>P118</value>
+        <label>Maestro en Maestría En Educación Con Mención En Administración Educativa (A Distancia)</label>
+    </row>
+    <row>
+        <key>P119</key>
+        <value>P119</value>
+        <label>Maestro en Maestría En Educación Con Mención En Investigación Y Docencia Universitaria (A Distancia)</label>
+    </row>
+    <row>
+        <key>P120</key>
+        <value>P120</value>
+        <label>Maestro en Maestría En Educación Con Mención En Psicología Educativa (A Distancia)</label>
+    </row>
+    <row>
+        <key>P121</key>
+        <value>P121</value>
+        <label>Maestro en Maestría En Enfermería Con Mención En Administración Y Gestión (A Distancia)</label>
+    </row>
+    <row>
+        <key>P122</key>
+        <value>P122</value>
+        <label>Maestro en Maestría En Psicología Clínica Y De La Salud (A Distancia)</label>
+    </row>
+    <row>
+        <key>P123</key>
+        <value>P123</value>
+        <label>Maestro en Maestría En Salud Pública Con Mención En Gestión De Los Servicios De Salud (A Distancia)</label>
+    </row>
+    <row>
+        <key>P124</key>
+        <value>P124</value>
+        <label>Maestro en Maestría En Salud Pública Con Mención En  Salud Colectiva Y Promoción De La Salud (A Distancia)</label>
+    </row>
+    <row>
+        <key>P125</key>
+        <value>P125</value>
+        <label>Maestro en Maestría En Ingeniería De Sistemas Con Mención En Dirección Y Gestión De Tecnologías De Información (A Distancia)</label>
+    </row>
+    <row>
+        <key>P126</key>
+        <value>P126</value>
+        <label>Maestro en Maestría En Ingeniería De Sistemas Con Mención En Dirección Y Gestión De Tecnologías De Información (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P127</key>
+        <value>P127</value>
+        <label>Bachiller en Educación, Especialidad Lingüística E Inglés (A Distancia)</label>
+    </row>
+    <row>
+        <key>P128</key>
+        <value>P128</value>
+        <label>Bachiller en Educación Inicial Y Puericultura (A Distancia)</label>
+    </row>
+    <row>
+        <key>P129</key>
+        <value>P129</value>
+        <label>Bachiller en Educación, Especialidad Primaria Y Pedagogía Terapéutica (A Distancia)</label>
+    </row>
+    <row>
+        <key>P130</key>
+        <value>P130</value>
+        <label>Bachiller en Ingeniería Ambiental (A Distancia)</label>
+    </row>
+    <row>
+        <key>P131</key>
+        <value>P131</value>
+        <label>Bachiller en Psicología (A Distancia)</label>
+    </row>
+    <row>
+        <key>P132</key>
+        <value>P132</value>
+        <label>Maestro en Maestría En Ingeniería Ambiental Y Desarrollo Sostenible (A Distancia)</label>
+    </row>
+    <row>
+        <key>P133</key>
+        <value>P133</value>
+        <label>Doctorado En Educación Con Mención En Gestión Educativa (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P134</key>
+        <value>P134</value>
+        <label>Doctorado En Educación Con Mención En Gestión Educativa (A Distancia)</label>
+    </row>
+    <row>
+        <key>P135</key>
+        <value>P135</value>
+        <label>Doctorado En Educación Con Mención En Currículo Y Docencia (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P136</key>
+        <value>P136</value>
+        <label>Doctorado En Educación Con Mención En Currículo Y Docencia (A Distancia)</label>
+    </row>
+    <row>
+        <key>P137</key>
+        <value>P137</value>
+        <label>Maestro en Maestría En Auditoría Con Mención En Auditoría Integral (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P138</key>
+        <value>P138</value>
+        <label>Maestro en Maestría En Auditoría Con Mención En Auditoría Integral (A Distancia)</label>
+    </row>
+    <row>
+        <key>P139</key>
+        <value>P139</value>
+        <label>Doctorado En Administración De Negocios (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P140</key>
+        <value>P140</value>
+        <label>Doctorado En Administración De Negocios (A Distancia)</label>
+    </row>
+    <row>
+        <key>P141</key>
+        <value>P141</value>
+        <label>Maestro en Maestría En Administración De Negocios Con Mención En Administración De Recursos Humanos (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P142</key>
+        <value>P142</value>
+        <label>Maestro en Maestría En Administración De Negocios Con Mención En Administración De Recursos Humanos (A Distancia)</label>
+    </row>
+    <row>
+        <key>P143</key>
+        <value>P143</value>
+        <label>Bachiller en Derecho (Presencial)</label>
+    </row>
+    <row>
+        <key>P144</key>
+        <value>P144</value>
+        <label>Bachiller en Derecho (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P145</key>
+        <value>P145</value>
+        <label>Bachiller en Comunicación Y Periodismo (Presencial)</label>
+    </row>
+    <row>
+        <key>P146</key>
+        <value>P146</value>
+        <label>Bachiller en Comunicación Audiovisual Y Medios Interactivos (Presencial)</label>
+    </row>
+    <row>
+        <key>P147</key>
+        <value>P147</value>
+        <label>Bachiller en Comunicación Organizacional (Presencial)</label>
+    </row>
+    <row>
+        <key>P148</key>
+        <value>P148</value>
+        <label>Bachiller en Comunicación Y Publicidad (Presencial)</label>
+    </row>
+    <row>
+        <key>P149</key>
+        <value>P149</value>
+        <label>Bachiller en Ingeniería De Software (Presencial)</label>
+    </row>
+    <row>
+        <key>P150</key>
+        <value>P150</value>
+        <label>Bachiller en Ingeniería De Ciencia De Datos E Inteligencia Artificial (Presencial)</label>
+    </row>
+    <row>
+        <key>P151</key>
+        <value>P151</value>
+        <label>Bachiller en Ingeniería De Ciberseguridad (Presencial)</label>
+    </row>
+    <row>
+        <key>P152</key>
+        <value>P152</value>
+        <label>Bachiller en Ingeniería Industrial (Presencial)</label>
+    </row>
+    <row>
+        <key>P153</key>
+        <value>P153</value>
+        <label>Bachiller en Tecnología Médica, Especialidad De Laboratorio Clínico Y Anatomía Patológica (Presencial)</label>
+    </row>
+    <row>
+        <key>P154</key>
+        <value>P154</value>
+        <label>Bachiller en Tecnología Médica, Especialidad De Terapia Física Y Rehabilitación (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P155</key>
+        <value>P155</value>
+        <label>Bachiller en Tecnología Médica, Especialidad De Terapia Física Y Rehabilitación (Presencial)</label>
+    </row>
+    <row>
+        <key>P156</key>
+        <value>P156</value>
+        <label>Maestro en Maestría En _X000D_Nutrición_X000D_ Humana Con_X000D_ Mención En_X000D_ Alimentación _X000D_Basada En_X000D_ Plantas (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P157</key>
+        <value>P157</value>
+        <label>Doctorado En Enfermería (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P158</key>
+        <value>P158</value>
+        <label>Maestro en Maestría Bim Facility Management (A Distancia)</label>
+    </row>
+    <row>
+        <key>P159</key>
+        <value>P159</value>
+        <label>Bachiller en Odontología (Presencial)</label>
+    </row>
+    <row>
+        <key>P160</key>
+        <value>P160</value>
+        <label>Bachiller en Negocios Internacionales Y Gestión Portuaria (Presencial)</label>
+    </row>
+    <row>
+        <key>P161</key>
+        <value>P161</value>
+        <label>Doctorado En Ciencias Contables Y Financieras (Presencial)</label>
+    </row>
+    <row>
+        <key>P162</key>
+        <value>P162</value>
+        <label>Doctorado En Ciencias Contables Y Financieras (Semipresencial)</label>
+    </row>
+    <row>
+        <key>P163</key>
+        <value>P163</value>
+        <label>Doctorado En Ciencias Contables Y Financieras (A Distancia)</label>
+    </row>
+    <row>
+        <key>P164</key>
+        <value>P164</value>
+        <label>Doctorado En Salud Pública (A Distancia)</label>
+    </row>
+    <row>
+        <key>SEG01</key>
+        <value>SEG01</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Administración Y Gestión</label>
+    </row>
+    <row>
+        <key>SEG02</key>
+        <value>SEG02</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Cardiología</label>
+    </row>
+    <row>
+        <key>SEG03</key>
+        <value>SEG03</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Cirugía Cardiovascular</label>
+    </row>
+    <row>
+        <key>SEG04</key>
+        <value>SEG04</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Emergencias Y Desastres</label>
+    </row>
+    <row>
+        <key>SEG05</key>
+        <value>SEG05</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Geriatría</label>
+    </row>
+    <row>
+        <key>SEG06</key>
+        <value>SEG06</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Nefrología</label>
+    </row>
+    <row>
+        <key>SEG09</key>
+        <value>SEG09</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Cuidado Integral Infantil</label>
+    </row>
+    <row>
+        <key>SEG10</key>
+        <value>SEG10</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Cuidados Intensivos Neonatales</label>
+    </row>
+    <row>
+        <key>SEG11</key>
+        <value>SEG11</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Cuidados Intensivos Pediátricos</label>
+    </row>
+    <row>
+        <key>SEG12</key>
+        <value>SEG12</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Cuidados Quirúrgicos</label>
+    </row>
+    <row>
+        <key>SEG13</key>
+        <value>SEG13</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Cuidados Quirúrgicos Con Mención En Traumatología Y Ortopedia</label>
+    </row>
+    <row>
+        <key>SEG14</key>
+        <value>SEG14</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Pediatría</label>
+    </row>
+    <row>
+        <key>SEG16</key>
+        <value>SEG16</value>
+        <label>2da Esp. Segunda Especialidad En Salud Ocupacional</label>
+    </row>
+    <row>
+        <key>SEG17</key>
+        <value>SEG17</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Cuidados Intensivos</label>
+    </row>
+    <row>
+        <key>SEG18</key>
+        <value>SEG18</value>
+        <label>2da Esp. Segunda Especialidad En Asesoría Genética En Enfermería Oncológica</label>
+    </row>
+    <row>
+        <key>SEG19</key>
+        <value>SEG19</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Centro Quirúrgico</label>
+    </row>
+    <row>
+        <key>SEG20</key>
+        <value>SEG20</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Cuidados Quirúrgicos Con Mención En Recuperación Posanestésica</label>
+    </row>
+    <row>
+        <key>SEG21</key>
+        <value>SEG21</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Gestión De Central De Esterilización</label>
+    </row>
+    <row>
+        <key>SEG22</key>
+        <value>SEG22</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Gíneco Obstetricia</label>
+    </row>
+    <row>
+        <key>SEG23</key>
+        <value>SEG23</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Neurología Y Neurocirugía</label>
+    </row>
+    <row>
+        <key>SEG24</key>
+        <value>SEG24</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Oncología</label>
+    </row>
+    <row>
+        <key>SEG25</key>
+        <value>SEG25</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Perfusión Extracorpórea Y Asistencia Circulatoria</label>
+    </row>
+    <row>
+        <key>SEG26</key>
+        <value>SEG26</value>
+        <label>2da Esp. Segunda Especialidad En Estadística Aplicada Para Investigación</label>
+    </row>
+    <row>
+        <key>SEG39</key>
+        <value>SEG39</value>
+        <label>2da Esp. Segunda Especialidad En Estudios Adventistas</label>
+    </row>
+    <row>
+        <key>SEG40</key>
+        <value>SEG40</value>
+        <label>2da Esp. Segunda Especialidad En Antiguo Testamento</label>
+    </row>
+    <row>
+        <key>SEG41</key>
+        <value>SEG41</value>
+        <label>2da Esp. Segunda Especialidad En Nuevo Testamento</label>
+    </row>
+    <row>
+        <key>SEG42</key>
+        <value>SEG42</value>
+        <label>2da Esp. Segunda Especialidad En Profecías Bíblicas</label>
+    </row>
+    <row>
+        <key>SEG43</key>
+        <value>SEG43</value>
+        <label>2da Esp. Segunda Especialidad En Psicología Clínica Y De La Salud</label>
+    </row>
+    <row>
+        <key>SEG44</key>
+        <value>SEG44</value>
+        <label>2da Esp. Segunda Especialidad En Estadística Aplicada Para Investigación</label>
+    </row>
+    <row>
+        <key>SEG45</key>
+        <value>SEG45</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Administración Y Gestión</label>
+    </row>
+    <row>
+        <key>SEG46</key>
+        <value>SEG46</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Cardiología</label>
+    </row>
+    <row>
+        <key>SEG47</key>
+        <value>SEG47</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Cirugía Cardiovascular</label>
+    </row>
+    <row>
+        <key>SEG48</key>
+        <value>SEG48</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Emergencias Y Desastres</label>
+    </row>
+    <row>
+        <key>SEG49</key>
+        <value>SEG49</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Geriatría</label>
+    </row>
+    <row>
+        <key>SEG50</key>
+        <value>SEG50</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Nefrología</label>
+    </row>
+    <row>
+        <key>SEG51</key>
+        <value>SEG51</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Cuidado Integral Infantil</label>
+    </row>
+    <row>
+        <key>SEG52</key>
+        <value>SEG52</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Cuidados Intensivos Neonatales</label>
+    </row>
+    <row>
+        <key>SEG53</key>
+        <value>SEG53</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Cuidados Intensivos Pediátricos</label>
+    </row>
+    <row>
+        <key>SEG54</key>
+        <value>SEG54</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Cuidados Quirúrgicos</label>
+    </row>
+    <row>
+        <key>SEG55</key>
+        <value>SEG55</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Cuidados Quirúrgicos Con Mención En Traumatología Y Ortopedia</label>
+    </row>
+    <row>
+        <key>SEG56</key>
+        <value>SEG56</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Pediatría</label>
+    </row>
+    <row>
+        <key>SEG57</key>
+        <value>SEG57</value>
+        <label>2da Esp. Segunda Especialidad En Salud Ocupacional</label>
+    </row>
+    <row>
+        <key>SEG58</key>
+        <value>SEG58</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Cuidados Intensivos</label>
+    </row>
+    <row>
+        <key>SEG59</key>
+        <value>SEG59</value>
+        <label>2da Esp. Segunda Especialidad En Asesoría Genética En Enfermería Oncológica</label>
+    </row>
+    <row>
+        <key>SEG60</key>
+        <value>SEG60</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Centro Quirúrgico</label>
+    </row>
+    <row>
+        <key>SEG61</key>
+        <value>SEG61</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Cuidados Quirúrgicos Con Mención En Recuperación Posanestésica</label>
+    </row>
+    <row>
+        <key>SEG62</key>
+        <value>SEG62</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Gestión De Central De Esterilización</label>
+    </row>
+    <row>
+        <key>SEG63</key>
+        <value>SEG63</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Gíneco Obstetricia</label>
+    </row>
+    <row>
+        <key>SEG64</key>
+        <value>SEG64</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Neurología Y Neurocirugía</label>
+    </row>
+    <row>
+        <key>SEG65</key>
+        <value>SEG65</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Oncología</label>
+    </row>
+    <row>
+        <key>SEG66</key>
+        <value>SEG66</value>
+        <label>2da Esp. Segunda Especialidad En Enfermería En Perfusión Extracorpórea Y Asistencia Circulatoria</label>
+    </row>
+    <row>
+        <key>SEG67</key>
+        <value>SEG67</value>
+        <label>2da Esp. Segunda Especialidad En Psicología Clínica Y De La Salud</label>
+    </row>
+    <row>
+        <key>SEG68</key>
+        <value>SEG68</value>
+        <label>2da Esp. Segunda Especialidad De En Fermería En Cuidado De La Persona Con Diabetes Con Mención En Educación En Diabetes</label>
+    </row>
+    <row>
+        <key>SEG69</key>
+        <value>SEG69</value>
+        <label>2da Esp. Segunda Especialidad En Psicooncología Y Cuidados Paliativos</label>
+    </row>
+    <row>
+        <key>SEG70</key>
+        <value>SEG70</value>
+        <label>2da Esp. Segunda Especialidad En Neuropsicología</label>
+    </row>
+    <row>
+        <key>SEG71</key>
+        <value>SEG71</value>
+        <label>2da Esp. Segunda Especialidad De Enfermería En Gestión En Inmunizaciones</label>
+    </row>
+    <row>
+        <key>SEG72</key>
+        <value>SEG72</value>
+        <label>2da Esp. Segunda Especialidad De Ingeniería Con Mención En Ciencia De Datos</label>
+    </row>
+    <row>
+        <key>SEG73</key>
+        <value>SEG73</value>
+        <label>2da Esp. Segunda Especialidad En Epidemiología</label>
+    </row>
+    <row>
+        <key>SEG74</key>
+        <value>SEG74</value>
+        <label>2da Esp. Segunda Especialidad  En Gestión De Proyectos De  Inversión En Nutrición Y Desarrollo  Social</label>
+    </row>
+    <row>
+        <key>SEG75</key>
+        <value>SEG75</value>
+        <label>2da Esp. Segunda Especialidad En Educación Con Mención En Robótica Y Computación</label>
+    </row>
+    <row>
+        <key>SEG76</key>
+        <value>SEG76</value>
+        <label>2da Esp. Segunda Especialidad En Educación  Con Mención En Inglés Como Lengua  Extranjera</label>
+    </row>
+    <row>
+        <key>SEG77</key>
+        <value>SEG77</value>
+        <label>2da Esp. Segunda Especialidad En  Educación Con Mención En  Español</label>
+    </row>
+</lookupTable>
