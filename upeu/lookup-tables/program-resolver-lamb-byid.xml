@@ -3,19 +3,17 @@
   LookupTable: program-resolver-lamb-byid
   OID: 7c3f2a91-4e8d-4b16-9a52-6d0e1f7b3c48
 
-  ARTEFACTO GENERADO — no editar a mano.
+  ARTEFACTO GENERADO por scripts/generar-lookup-programas.py — no editar a mano.
   Fuente: VocBench, notation urn:esther:id_programa_estudio.
-  Regenerado: 2026-08-05 (2a version) · 186 filas · 76 URIs.
-  La consulta NO filtra por named graph: el tesauro vive repartido entre el grafo
-  <.../programas/> y el default graph, y filtrar dejaba fuera ~2.900 triples (157 -> 186).
+  188 filas · 91 con EP-code.
 
   key   = ID_PROGRAMA_ESTUDIO (Oracle, inmutable)
-  value = URI canonica, YA resuelta por dct:isReplacedBy
+  value = URI canonica del concepto VIGENTE
   label = notation EP-XXX cuando existe
 -->
 <lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="7c3f2a91-4e8d-4b16-9a52-6d0e1f7b3c48">
     <name>program-resolver-lamb-byid</name>
-    <description>ID_PROGRAMA_ESTUDIO -> URI canonica del tesauro UPeU. Generado desde VocBench, resuelve dct:isReplacedBy. NO editar a mano.</description>
+    <description>ID_PROGRAMA_ESTUDIO -&gt; URI canonica del tesauro UPeU. Generado desde VocBench, resuelve dct:isReplacedBy. NO editar a mano.</description>
     <row>
         <key>1</key>
         <value>http://upeu.edu.pe/sys/programas/programa/medicina-humana</value>
@@ -34,7 +32,7 @@
     <row>
         <key>4</key>
         <value>http://upeu.edu.pe/sys/programas/programa/psicologia</value>
-        <label>EP-PSI-FCS</label>
+        <label>EP-PSI-FCHE</label>
     </row>
     <row>
         <key>5</key>
@@ -102,27 +100,33 @@
     </row>
     <row>
         <key>78</key>
-        <value>http://upeu.edu.pe/sys/programas/programa/administracion-de-negocios-internacionales</value>
+        <value>http://upeu.edu.pe/sys/programas/programa/administracion</value>
+        <label>EP-ADM</label>
     </row>
     <row>
         <key>80</key>
-        <value>http://upeu.edu.pe/sys/programas/programa/administracion-de-negocios-internacionales</value>
+        <value>http://upeu.edu.pe/sys/programas/programa/administracion</value>
+        <label>EP-ADM</label>
     </row>
     <row>
         <key>84</key>
-        <value>http://upeu.edu.pe/sys/programas/programa/administracion-de-negocios-internacionales</value>
+        <value>http://upeu.edu.pe/sys/programas/programa/administracion</value>
+        <label>EP-ADM</label>
     </row>
     <row>
         <key>85</key>
-        <value>http://upeu.edu.pe/sys/programas/programa/administracion-de-negocios-internacionales</value>
+        <value>http://upeu.edu.pe/sys/programas/programa/administracion</value>
+        <label>EP-ADM</label>
     </row>
     <row>
         <key>86</key>
-        <value>http://upeu.edu.pe/sys/programas/programa/administracion-de-negocios-internacionales</value>
+        <value>http://upeu.edu.pe/sys/programas/programa/administracion</value>
+        <label>EP-ADM</label>
     </row>
     <row>
         <key>87</key>
-        <value>http://upeu.edu.pe/sys/programas/programa/administracion-de-negocios-internacionales</value>
+        <value>http://upeu.edu.pe/sys/programas/programa/administracion</value>
+        <label>EP-ADM</label>
     </row>
     <row>
         <key>92</key>
@@ -255,6 +259,10 @@
         <value>http://upeu.edu.pe/sys/programas/programa/seg-enfermeria-cuidados-intensivos</value>
     </row>
     <row>
+        <key>216</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/maestria-en-terapia-familiar-y-de-pareja</value>
+    </row>
+    <row>
         <key>221</key>
         <value>http://upeu.edu.pe/sys/programas/programa/seg-enfermeria-centro-quirurgico</value>
     </row>
@@ -306,7 +314,7 @@
     <row>
         <key>277</key>
         <value>http://upeu.edu.pe/sys/programas/programa/psicologia</value>
-        <label>EP-PSI-FCS</label>
+        <label>EP-PSI-FCHE</label>
     </row>
     <row>
         <key>278</key>
@@ -350,11 +358,13 @@
     </row>
     <row>
         <key>312</key>
-        <value>http://upeu.edu.pe/sys/programas/programa/administracion-de-negocios-internacionales</value>
+        <value>http://upeu.edu.pe/sys/programas/programa/administracion</value>
+        <label>EP-ADM</label>
     </row>
     <row>
         <key>313</key>
-        <value>http://upeu.edu.pe/sys/programas/programa/administracion-de-negocios-internacionales</value>
+        <value>http://upeu.edu.pe/sys/programas/programa/administracion</value>
+        <label>EP-ADM</label>
     </row>
     <row>
         <key>314</key>
@@ -389,7 +399,7 @@
     <row>
         <key>325</key>
         <value>http://upeu.edu.pe/sys/programas/programa/psicologia</value>
-        <label>EP-PSI-FCS</label>
+        <label>EP-PSI-FCHE</label>
     </row>
     <row>
         <key>327</key>
@@ -413,7 +423,8 @@
     </row>
     <row>
         <key>334</key>
-        <value>http://upeu.edu.pe/sys/programas/programa/administracion-de-negocios-internacionales</value>
+        <value>http://upeu.edu.pe/sys/programas/programa/administracion</value>
+        <label>EP-ADM</label>
     </row>
     <row>
         <key>335</key>
@@ -547,7 +558,7 @@
     <row>
         <key>716</key>
         <value>http://upeu.edu.pe/sys/programas/programa/psicologia</value>
-        <label>EP-PSI-FCS</label>
+        <label>EP-PSI-FCHE</label>
     </row>
     <row>
         <key>720</key>
@@ -841,5 +852,9 @@
     <row>
         <key>1270</key>
         <value>http://upeu.edu.pe/sys/programas/programa/segunda-especialidad-de-ingenieria-con-mencion-en-ciencia-de-datos</value>
+    </row>
+    <row>
+        <key>1317</key>
+        <value>http://upeu.edu.pe/sys/programas/programa/segunda-especialidad-en-epidemiologia</value>
     </row>
 </lookupTable>
