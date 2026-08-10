@@ -145,6 +145,14 @@
                          (bloque J3c). Motivo: escrito por 2 inbounds (Estudiantes + Egresados), caia en
                          zero-set multi-source y NO retiraba los valores obsoletos -> 14.139 users
                          publicaban URIs de conceptos deprecados. Mismo patron que liveAffiliation*. -->
+                    <!-- PM10 aplicado al P-code (2026-08-10): item per-IIA MULTIVALOR, single-source.
+                         academicProgramSuneduCode es el derivado; la eleccion NO puede hacerse en el
+                         mapping porque MidPoint evalua la expresion una vez por cada valor del source
+                         multivalor (en inbound y en template). Ver bloque J3d. -->
+                    <xsd:element name="liveProgramSuneduCodeStudent" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>P-code de programa — estudiante (IIA Estudiantes)</a:displayName><a:help>P-code/SEG-code oficial (A4/A8 2026-1) de cada programa con matricula vigente, resuelto por ID_PROGRAMA_ESTUDIO contra program-pxx-byid (generada de VocBench). Multivalor: se puede cursar dos programas.</a:help><a:indexed>true</a:indexed><a:displayOrder>563</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
                     <xsd:element name="liveProgramUriStudent" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
                         <xsd:annotation><xsd:appinfo><a:displayName>URI de programa viva — estudiante (IIA Estudiantes)</a:displayName><a:help>URI canonica del concepto SKOS del programa, presente SOLO mientras hay matricula vigente. IIA unica: resource Estudiantes. Single-source: el inbound strong la materializa/retira con la matricula. Se resuelve desde ID_PROGRAMA_ESTUDIO via el puente generado de VocBench (resuelve dct:isReplacedBy). Ausente = sin matricula vigente o programa no licenciado.</a:help><a:indexed>true</a:indexed><a:displayOrder>561</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
@@ -196,7 +204,7 @@
                          (Bsort2) — el código se emite tal cual (separación: el resource Koha consume el
                          dato canónico SUNEDU sin transformación). NO confundir con academicProgramCode
                          (EP-XXX, código corto interno SciBack/VocBench, solo pregrado). -->
-                    <xsd:element name="academicProgramSuneduCode" type="xsd:string" minOccurs="0" maxOccurs="1">
+                    <xsd:element name="academicProgramSuneduCode" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
                         <xsd:annotation><xsd:appinfo><a:displayName>Código SUNEDU del programa (P-code)</a:displayName><a:help>Código oficial del programa en el Registro Nacional de Grados y Títulos SUNEDU (ej. P30, P31, P143). IIA: Oracle LAMB DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_SUNEDU2. Single-value (programa de la matrícula vigente). PRINCIPAL desde 2026-08-09 (ADR-005 del tesauro): es el código con el que UPeU identifica el programa en TODOS sus sistemas — MidPoint, LDAP, Koha, Indico, InOut, RIMS, DW, SGC. Es el código que UPeU declaró ante SUNEDU en sus Formatos de Licenciamiento A4/A8. FUENTE: LookupTable program-pxx-byid (tesauro VocBench), NO DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_SUNEDU2 — ese campo es un correlativo interno que diverge del oficial en el posgrado (ADR-004). Medido sobre la matrícula 2026-2: Oracle da 73,18 % con 139 códigos equivocados; el tesauro da 88,44 % sin errores. OJO: el P-code NO es llave de unión entre sistemas (52 conceptos llevan dos códigos oficiales por recodificación vía resolución) — para empalmar se usa academicProgramUri.</a:help><a:indexed>true</a:indexed><a:displayOrder>515</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
                     <!-- academicProgramIneiCode: código INEI 2022 de 8 dígitos del programa de
@@ -213,7 +221,7 @@
                          LookupTable (posgrado/2da-especialidad sin P-code, o P-code nuevo no cargado)
                          → atributo vacío → Koha sin Bsort2 (mismo comportamiento previo, no regresión).
                          Coexiste con academicProgramSuneduCode (P-code legacy = altLabel). -->
-                    <xsd:element name="academicProgramIneiCode" type="xsd:string" minOccurs="0" maxOccurs="1">
+                    <xsd:element name="academicProgramIneiCode" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
                         <xsd:annotation><xsd:appinfo><a:displayName>Código INEI del programa (8 díg)</a:displayName><a:help>Código nacional INEI 2022 de 8 dígitos del programa de estudio (ej. 31300211=Psicología). ALCANCE ACOTADO desde 2026-08-09 (ADR-005): metadato de DISCIPLINA para el repositorio institucional de tesis, donde la normativa SUNEDU/RENATI lo exige como renati.discipline. NO es el identificador del programa en los sistemas internos de UPeU — ese papel es del P-code (academicProgramSuneduCode). DERIVADO de academicProgramSuneduCode vía LookupTable LT-Pcode-INEI (fuente: tesauro VocBench-UPeU, skos:notation). Single-value. Null-safe. 14 programas no tienen código INEI porque no existen en el Clasificador Nacional 2022 (corte 31-12-2022); para agregación por disciplina úsese el campo detallado, que sí está completo.</a:help><a:indexed>true</a:indexed><a:displayOrder>516</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
                     <!-- facultyName: nombre crudo de la facultad a la que pertenece el programa de la
