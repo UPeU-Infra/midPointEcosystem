@@ -1,6 +1,11 @@
-# MARC 526 de Koha → P-code: medido y BLOQUEADO por un gap del tesauro
+# MARC 526 de Koha → P-code: medido y detenido — decision de BIBLIOTECA, no de tesauro
 
-**Fecha:** 2026-08-10 · **Estado:** no ejecutado, a la espera de VocBench
+**Fecha:** 2026-08-10 · **Estado:** no ejecutado, a la espera de una decision sobre el catalogo historico
+
+> **Correccion (misma fecha):** una version previa de este documento atribuia el bloqueo a un
+> "gap del tesauro". **Es incorrecto.** VocBench esta completo respecto de su alcance —los 183
+> programas vigentes del A4/A8 2026-1— y no hay trabajo pendiente ahi. Lo que ocurre es que la
+> catalogacion usa codigos INEI de programas que YA NO EXISTEN en el A4/A8 vigente.
 
 ## Qué es el campo 526
 
@@ -20,14 +25,22 @@ los cubre**: por la regla general les tocaría el P-code.
 Migrar ahora dejaría al **55 %** de los registros con **P-codes e INEI mezclados en el mismo
 campo**. El estado actual es homogéneo (todo INEI); el resultado sería peor que no tocar nada.
 
-## La causa: 16 códigos que el tesauro no puede resolver
+## La causa: 11 códigos de programas que ya no existen
 
 De los 101 códigos INEI usados en la catalogación, **85 mapean** y **16 no**:
 
-- **14 NO EXISTEN en el tesauro** — entre ellos `73210077` (Ingeniería Civil, 8.087 registros)
-  y `12102051` (13.868). No es que falte el P-code: **el concepto no está**.
-- **2 están deprecados con `dct:isReplacedBy`** (`41600562`, `91301068`): resolubles siguiendo
-  el enlace, como ya hace `generar-lookup-programas.py`.
+De los 16 sin mapeo directo, **5 se resuelven cruzando por el nombre** que Koha guarda en
+`authorised_values` contra las etiquetas del tesauro — entre ellos `73210077` → **P25**
+(Ingeniería Civil), que se valida contra estudiantes reales que ya publican P25.
+
+Los **11 restantes son denominaciones que no estan en el A4/A8 2026-1**: por ejemplo
+*Maestría en Gobernabilidad y Gestión Pública*, *Educación Especialidad Ambiental, Biología y
+Química* o *Tecnología Médica en Terapia Física y Rehabilitación* (con dos codigos INEI
+distintos para lo mismo). Son programas extintos o denominaciones antiguas: **no tienen —ni
+deben tener— un P-code vigente**.
+
+**Añadir los 5 resueltos por nombre no mejora nada**: 44,6 % antes y 44,6 % despues. Los 11
+irresolubles estan repartidos por practicamente todos los registros mixtos.
 
 Lista completa con volumen y denominación: [`gap-tesauro-marc526-2026-08-10.csv`](gap-tesauro-marc526-2026-08-10.csv).
 
@@ -46,12 +59,21 @@ razonable, pero no una decisión del tesauro**, y por eso no se aplicó sola.
 
 ## Qué desbloquea esto
 
-1. **En VocBench**: anclar los 14 INEI ausentes a su concepto, o declarar que son programas
-   extintos y decidir qué código llevan en el catálogo histórico.
-2. **En VocBench**: extender `KohaCode` a los 46 conceptos multi-modalidad, para que la elección
-   la haga el tesauro y no un script.
-3. Solo entonces migrar el 526, **de una sola vez**, con backup de `biblio_metadata` y
-   reindexado posterior.
+**La decision es de biblioteca, no de tesauro:** que hacer con los titulos catalogados bajo
+programas que ya no se ofertan. Tres opciones:
+
+- **(a) Dejarlos con su INEI historico.** El 526 quedaria mixto a proposito: P-code para los
+  programas vigentes, INEI para los extintos. Requiere asumir un campo con dos vocabularios.
+- **(b) Mapearlos al programa sucesor** (p. ej. las dos Tecnologia Medica → P154/P155). Exige
+  que alguien de biblioteca declare cada equivalencia; no es deducible del A4/A8.
+- **(c) Retirarles el 526** a los registros de programas extintos.
+
+Y, en paralelo, una mejora que si corresponde al tesauro y es opcional: extender `KohaCode` a
+los 46 conceptos multi-modalidad (hoy solo 7 lo tienen), para que la eleccion del representante
+la haga el tesauro y no una heuristica del script.
+
+Solo con (a), (b) o (c) decidido se migra el 526 **de una sola vez**, con backup de
+`biblio_metadata` y reindexado posterior.
 
 ## Verificación previa a cualquier migración
 
