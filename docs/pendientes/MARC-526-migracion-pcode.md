@@ -138,3 +138,54 @@ habrian quedado con el mismo P-code repetido. El script elimina el `datafield` 5
 ### Backup
 
 `biblio_metadata` completa en el servidor: `/tmp/biblio_metadata-antes-526.sql.gz` (28 MB).
+
+
+---
+
+## Segunda pasada: PURGA de los INEI historicos (2026-08-10)
+
+**Decision de Alberto:** *«no quiero ni tener rastro de codigos INEI, pues para mis reportes me
+va a estar molestando»*. Se elimina el rastro **sin inventar equivalencias**.
+
+### Por que no se les asigno un P-code
+
+Se probo el mapeo automatico de los 11 historicos contra el A4/A8 y **no es viable**:
+
+| Historico | Propuesta automatica | |
+|---|---|---|
+| `41310737` **Maestria** en Administracion de Negocios | `P01` **Bachiller** en Administracion | cambia el nivel |
+| `61110044` **Maestria** en Ingenieria de Sistemas | `P27` **Bachiller** en Ingenieria de Sistemas | cambia el nivel |
+| `31302383` Ciencias de la **Familia** | `P07` Ciencias de la **Comunicacion** | sin relacion |
+| `41910511` Emprendimiento e Innovacion | `SEG71` 2da Esp. **Enfermeria** | sin relacion |
+
+Solo 3 de 11 eran defendibles. Y varios programas **no tienen sucesor**: *Maestria en
+Gobernabilidad y Gestion Publica* y *Maestria en Ciencias de la Familia* no existen en el A4/A8
+bajo ninguna forma. Asignarles un P-code habria metido afirmaciones falsas en entre 1.400 y
+13.800 registros cada una.
+
+### Lo ejecutado
+
+Se elimina el **datafield 526 completo** cuando todos sus `$a` son codigos historicos.
+Medido antes: **ningun registro se queda sin 526** (los afectados conservan entre 8 y 61
+P-codes vigentes).
+
+| | |
+|---|---|
+| Registros modificados | **19.137** |
+| Datafields 526 eliminados | **94.870** |
+| Codigos INEI restantes en el catalogo | **0** |
+| Registros sin ningun 526 | **0** |
+| Codigos distintos ahora | 92, todos P-code |
+| Fuera del A4/A8 | 1 (`P203`, preexistente: pendiente de licencia) |
+
+`authorised_values` de Bsort2 queda en **184** entradas (183 del A4/A8 + `P203`), sin ningun
+codigo INEI.
+
+**Backup previo a esta pasada:** `/tmp/biblio_metadata-antes-purga-inei.sql.gz` en el servidor.
+Script: `upeu/scripts/purgar-marc526-inei-historicos.py`.
+
+### Lo que se pierde, dicho explicitamente
+
+Los registros ya no declaran haber servido a esos 11 programas retirados. Es informacion
+historica de catalogacion que **no se puede reconstruir** desde el 526 (si desde el backup).
+Se acepto a cambio de tener reportes limpios.
