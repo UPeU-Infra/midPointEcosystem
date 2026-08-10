@@ -1,6 +1,6 @@
 # MARC 526 de Koha → P-code: medido y detenido — decision de BIBLIOTECA, no de tesauro
 
-**Fecha:** 2026-08-10 · **Estado:** no ejecutado, a la espera de una decision sobre el catalogo historico
+**Fecha:** 2026-08-10 · **Estado:** ✅ EJECUTADO — decision de Alberto: dejar los INEI historicos y migrar los vigentes
 
 > **Correccion (misma fecha):** una version previa de este documento atribuia el bloqueo a un
 > "gap del tesauro". **Es incorrecto.** VocBench esta completo respecto de su alcance —los 183
@@ -79,3 +79,62 @@ Solo con (a), (b) o (c) decidido se migra el 526 **de una sola vez**, con backup
 
 Todo valor emitido debe existir en el A4/A8 2026-1 (183 P-codes). Si aparece uno que no esté,
 el mapeo está mal: **no inventarle equivalencia**.
+
+
+---
+
+## ✅ EJECUTADO (2026-08-10)
+
+**Decision de Alberto:** dejar los INEI historicos y migrar solo los vigentes. El campo 526
+queda **mixto a proposito**: P-code donde hay programa vigente, INEI donde el programa ya no
+se oferta.
+
+### Resultado
+
+| | |
+|---|---|
+| Registros modificados | **34.531** de 34.537 |
+| Valores 526 migrados | **748.806** |
+| Codigos distintos ahora | 103 — 92 P-code + 11 INEI historicos |
+| INEI que aun eran migrables | **0** |
+| P-codes fuera del A4/A8 | 1 (`P203`, **preexistente**: pendiente de licencia SUNEDU) |
+| Registros con valores repetidos | **0** |
+
+Los 11 INEI que se quedan, con su denominacion oficial del Clasificador Nacional 2022:
+`12102051` `12102128` `31302383` `41101897` `41310737` `41600562` `41709097` `41910511`
+`61110044` `91605478` `91605517`.
+
+### Que desbloqueo la migracion
+
+El **Clasificador Nacional de Programas 2022 del INEI**
+(`~/Downloads/clasificador_de_carreras_inei`) confirmo que **los 16 codigos sin mapeo son
+validos**: el codigo de 8 digitos es *campo detallado (3) + programa (5)*. No eran basura de
+catalogacion. De ellos, 5 se resolvieron cruzando por denominacion contra el tesauro
+(`73210077` → **P25** Ingenieria Civil, validado contra estudiantes reales) y 11 corresponden a
+programas que ya no figuran en el A4/A8 2026-1.
+
+### Deduplicacion
+
+Dos INEI distintos podian mapear al mismo P-code (`P29` ← 41400200 y 41600207; `P80` ←
+31302652 y 31302933): son modalidades del mismo programa. Sin deduplicar, **12.232 registros**
+habrian quedado con el mismo P-code repetido. El script elimina el `datafield` 526 duplicado.
+
+### authorised_values
+
+`526$a` **usa la lista `Bsort2`** (verificado en `marc_subfield_structure`). Se repoblo con los
+183 P-codes del A4/A8 **y** se anadieron los 11 INEI historicos y `P203`, etiquetados
+`[histórico INEI]` / `[pendiente licencia SUNEDU]`. Total: **195**.
+
+### Trampas del script (`upeu/scripts/migrar-marc526-a-pcode.py`)
+
+- **Nunca hacer un REPLACE global del numero**: solo dentro de `<datafield tag="526">`, o se
+  pisan ISBN, fechas y codigos de otros esquemas.
+- **`koha-mysql --raw` parte el marcxml**: lleva saltos de linea reales y el parseo por lineas
+  falla en silencio (dry-run daba 0 cambios). Sin `--raw`, mysql escapa `\n`/`\t`/`\\` y hay
+  que desescapar al leer.
+- **Los UPDATE van por STDIN**: un lote con marcxml completo desborda `ARG_MAX`
+  (*Argument list too long*).
+
+### Backup
+
+`biblio_metadata` completa en el servidor: `/tmp/biblio_metadata-antes-526.sql.gz` (28 MB).
