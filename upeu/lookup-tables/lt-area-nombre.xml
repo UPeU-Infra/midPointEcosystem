@@ -1,0 +1,1384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Tabla de PRESENTACION: costCenter (ID_AREA) -> nombre del area.
+     La consume la ficha de usuario via valueEnumerationRef declarado en el
+     object template (costCenter es propiedad NATIVA de UserType, no de
+     extension, asi que la referencia NO puede ir en el schema de extension).
+     Fuente: ELISEO.ORG_AREA (Oracle LAMB, solo lectura).
+     Alcance: los 274 ID_AREA REALMENTE EN USO por los 3.323 users con
+     costCenter. ORG_AREA tiene 8.037 filas (7.886 activas) y volcarlas todas
+     haria el desplegable inmanejable. REGENERAR cuando aparezcan areas nuevas:
+     los codigos sin fila se muestran crudos, no dan error. -->
+<lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="9c4e1f28-7b53-4a06-8d19-2f5a7e0c3b64">
+    <name>LT-Area-Nombre</name>
+    <description>ID_AREA (costCenter) hacia el nombre del area organizativa. Fuente ELISEO.ORG_AREA. 274 areas en uso.</description>
+    <row>
+        <key>3</key>
+        <value>3</value>
+        <label>Rectorado</label>
+    </row>
+    <row>
+        <key>4</key>
+        <value>4</value>
+        <label>Vicerrectorado de Bienestar Universitario</label>
+    </row>
+    <row>
+        <key>5</key>
+        <value>5</value>
+        <label>Vicerrectorado Académico</label>
+    </row>
+    <row>
+        <key>6</key>
+        <value>6</value>
+        <label>Vicerrectorado Administrativo</label>
+    </row>
+    <row>
+        <key>7</key>
+        <value>7</value>
+        <label>Escuela General de Posgrado (EPG)</label>
+    </row>
+    <row>
+        <key>8</key>
+        <value>8</value>
+        <label>Facultad de Ciencias Humanas y Educación (FACIHED)</label>
+    </row>
+    <row>
+        <key>9</key>
+        <value>9</value>
+        <label>Facultad de Ingeniería y Arquitectura (FIA)</label>
+    </row>
+    <row>
+        <key>10</key>
+        <value>10</value>
+        <label>Facultad de Ciencias de la Salud (FCS)</label>
+    </row>
+    <row>
+        <key>11</key>
+        <value>11</value>
+        <label>Facultad de Teología (FACTEO)</label>
+    </row>
+    <row>
+        <key>12</key>
+        <value>12</value>
+        <label>Facultad de Ciencias Empresariales (FCE)</label>
+    </row>
+    <row>
+        <key>13</key>
+        <value>13</value>
+        <label>Dirección Financiero Contable</label>
+    </row>
+    <row>
+        <key>14</key>
+        <value>14</value>
+        <label>Dirección del Talento Humano</label>
+    </row>
+    <row>
+        <key>15</key>
+        <value>15</value>
+        <label>Dirección de Activos y Adquisiciones</label>
+    </row>
+    <row>
+        <key>16</key>
+        <value>16</value>
+        <label>Dirección de Servicios Generales</label>
+    </row>
+    <row>
+        <key>17</key>
+        <value>17</value>
+        <label>Dirección de Infraestructura</label>
+    </row>
+    <row>
+        <key>18</key>
+        <value>18</value>
+        <label>Dirección de Tecnologías de Información</label>
+    </row>
+    <row>
+        <key>20</key>
+        <value>20</value>
+        <label>IDEC</label>
+    </row>
+    <row>
+        <key>23</key>
+        <value>23</value>
+        <label>Secretaría General</label>
+    </row>
+    <row>
+        <key>24</key>
+        <value>24</value>
+        <label>Dirección de Planíficación y Gestión de la Calidad</label>
+    </row>
+    <row>
+        <key>26</key>
+        <value>26</value>
+        <label>CAFETIN</label>
+    </row>
+    <row>
+        <key>27</key>
+        <value>27</value>
+        <label>Servicio de Alimentación</label>
+    </row>
+    <row>
+        <key>47</key>
+        <value>47</value>
+        <label>Tesorería General</label>
+    </row>
+    <row>
+        <key>48</key>
+        <value>48</value>
+        <label>Dirección Contable</label>
+    </row>
+    <row>
+        <key>49</key>
+        <value>49</value>
+        <label>Caja Central</label>
+    </row>
+    <row>
+        <key>50</key>
+        <value>50</value>
+        <label>Lavandería</label>
+    </row>
+    <row>
+        <key>51</key>
+        <value>51</value>
+        <label>Seguridad</label>
+    </row>
+    <row>
+        <key>52</key>
+        <value>52</value>
+        <label>Recursos Naturales</label>
+    </row>
+    <row>
+        <key>53</key>
+        <value>53</value>
+        <label>Limpieza</label>
+    </row>
+    <row>
+        <key>54</key>
+        <value>54</value>
+        <label>Mantenimiento</label>
+    </row>
+    <row>
+        <key>55</key>
+        <value>55</value>
+        <label>Servicio de movilidad</label>
+    </row>
+    <row>
+        <key>58</key>
+        <value>58</value>
+        <label>Coordinación de Comunicaciones Campus</label>
+    </row>
+    <row>
+        <key>65</key>
+        <value>65</value>
+        <label>Asesoría Legal</label>
+    </row>
+    <row>
+        <key>66</key>
+        <value>66</value>
+        <label>Auditoría Interna</label>
+    </row>
+    <row>
+        <key>67</key>
+        <value>67</value>
+        <label>Coordinación Comercial Campus</label>
+    </row>
+    <row>
+        <key>68</key>
+        <value>68</value>
+        <label>Educación Continua EAD</label>
+    </row>
+    <row>
+        <key>69</key>
+        <value>69</value>
+        <label>Dirección General de Investigación</label>
+    </row>
+    <row>
+        <key>70</key>
+        <value>70</value>
+        <label>Dirección Académico-Universitario</label>
+    </row>
+    <row>
+        <key>72</key>
+        <value>72</value>
+        <label>Centro de Idiomas</label>
+    </row>
+    <row>
+        <key>73</key>
+        <value>73</value>
+        <label>Conservatorio de Música</label>
+    </row>
+    <row>
+        <key>77</key>
+        <value>77</value>
+        <label>Unidad de Posgrado de Educación</label>
+    </row>
+    <row>
+        <key>79</key>
+        <value>79</value>
+        <label>Unidad de Posgrado de Administración</label>
+    </row>
+    <row>
+        <key>80</key>
+        <value>80</value>
+        <label>Unidad de Posgrado de Ciencias de la Salud</label>
+    </row>
+    <row>
+        <key>82</key>
+        <value>82</value>
+        <label>Unidad de Posgrado Teología - SALT</label>
+    </row>
+    <row>
+        <key>83</key>
+        <value>83</value>
+        <label>EP Medicina</label>
+    </row>
+    <row>
+        <key>84</key>
+        <value>84</value>
+        <label>EP Nutrición Humana</label>
+    </row>
+    <row>
+        <key>85</key>
+        <value>85</value>
+        <label>EP Enfermería</label>
+    </row>
+    <row>
+        <key>86</key>
+        <value>86</value>
+        <label>EP Psicología</label>
+    </row>
+    <row>
+        <key>91</key>
+        <value>91</value>
+        <label>EP Administración</label>
+    </row>
+    <row>
+        <key>92</key>
+        <value>92</value>
+        <label>EP Contabilidad</label>
+    </row>
+    <row>
+        <key>93</key>
+        <value>93</value>
+        <label>Centro de Recursos del Aprendizaje e Investigación</label>
+    </row>
+    <row>
+        <key>94</key>
+        <value>94</value>
+        <label>Centro de Investigación Adventista (Centro de Investigación White)</label>
+    </row>
+    <row>
+        <key>97</key>
+        <value>97</value>
+        <label>Colegio Unión</label>
+    </row>
+    <row>
+        <key>99</key>
+        <value>99</value>
+        <label>Nivel Inicial</label>
+    </row>
+    <row>
+        <key>100</key>
+        <value>100</value>
+        <label>Nivel Primaría</label>
+    </row>
+    <row>
+        <key>101</key>
+        <value>101</value>
+        <label>Nivel Secundaría</label>
+    </row>
+    <row>
+        <key>102</key>
+        <value>102</value>
+        <label>EP Educación</label>
+    </row>
+    <row>
+        <key>103</key>
+        <value>103</value>
+        <label>EP Ciencias de la Comunicación</label>
+    </row>
+    <row>
+        <key>104</key>
+        <value>104</value>
+        <label>EP Ingeniería de Sistemas</label>
+    </row>
+    <row>
+        <key>105</key>
+        <value>105</value>
+        <label>EP Ingeniería Civil</label>
+    </row>
+    <row>
+        <key>106</key>
+        <value>106</value>
+        <label>EP Ingeniería Ambiental</label>
+    </row>
+    <row>
+        <key>107</key>
+        <value>107</value>
+        <label>EP Arquitectura</label>
+    </row>
+    <row>
+        <key>112</key>
+        <value>112</value>
+        <label>EP Teología</label>
+    </row>
+    <row>
+        <key>113</key>
+        <value>113</value>
+        <label>Imprenta Unión</label>
+    </row>
+    <row>
+        <key>117</key>
+        <value>117</value>
+        <label>Gerencia Financiera</label>
+    </row>
+    <row>
+        <key>119</key>
+        <value>119</value>
+        <label>Gerencia Comercial</label>
+    </row>
+    <row>
+        <key>131</key>
+        <value>131</value>
+        <label>Semipresencial Contabilidad</label>
+    </row>
+    <row>
+        <key>132</key>
+        <value>132</value>
+        <label>Semipresencial Administración</label>
+    </row>
+    <row>
+        <key>133</key>
+        <value>133</value>
+        <label>Administración Unión (PU)</label>
+    </row>
+    <row>
+        <key>135</key>
+        <value>135</value>
+        <label>Residencia Forga</label>
+    </row>
+    <row>
+        <key>136</key>
+        <value>136</value>
+        <label>Residencia Fernando Stalh</label>
+    </row>
+    <row>
+        <key>137</key>
+        <value>137</value>
+        <label>Residencia Ana Stalh</label>
+    </row>
+    <row>
+        <key>139</key>
+        <value>139</value>
+        <label>Educación Religiosa</label>
+    </row>
+    <row>
+        <key>142</key>
+        <value>142</value>
+        <label>EP Ingeniería de Alimentos</label>
+    </row>
+    <row>
+        <key>143</key>
+        <value>143</value>
+        <label>Unidad de Posgrado Psicología</label>
+    </row>
+    <row>
+        <key>145</key>
+        <value>145</value>
+        <label>Piscina</label>
+    </row>
+    <row>
+        <key>147</key>
+        <value>147</value>
+        <label>Educación para la VIda</label>
+    </row>
+    <row>
+        <key>160</key>
+        <value>160</value>
+        <label>Asoc Educ</label>
+    </row>
+    <row>
+        <key>161</key>
+        <value>161</value>
+        <label>Unidad de Posgrado de Salud Pública</label>
+    </row>
+    <row>
+        <key>239</key>
+        <value>239</value>
+        <label>EP Administración y Negocios Internacionales</label>
+    </row>
+    <row>
+        <key>251</key>
+        <value>251</value>
+        <label>EP Marketing y Negocios Internacionales</label>
+    </row>
+    <row>
+        <key>297</key>
+        <value>297</value>
+        <label>Educación Inicial y Puericultura</label>
+    </row>
+    <row>
+        <key>430</key>
+        <value>430</value>
+        <label>Dirección General de Campus</label>
+    </row>
+    <row>
+        <key>536</key>
+        <value>536</value>
+        <label>Asoc Educ Anop</label>
+    </row>
+    <row>
+        <key>537</key>
+        <value>537</value>
+        <label>Asoc Educ Mpn</label>
+    </row>
+    <row>
+        <key>681</key>
+        <value>681</value>
+        <label>Curso Taller - UPG Ingeniería</label>
+    </row>
+    <row>
+        <key>695</key>
+        <value>695</value>
+        <label>Colegio Adventista del Titicaca - CAT</label>
+    </row>
+    <row>
+        <key>704</key>
+        <value>704</value>
+        <label>Semipresencial</label>
+    </row>
+    <row>
+        <key>709</key>
+        <value>709</value>
+        <label>Finanzas Alumnos</label>
+    </row>
+    <row>
+        <key>710</key>
+        <value>710</value>
+        <label>Gerencia Financiera</label>
+    </row>
+    <row>
+        <key>712</key>
+        <value>712</value>
+        <label>Gerencia Comercial</label>
+    </row>
+    <row>
+        <key>713</key>
+        <value>713</value>
+        <label>Gerencia de Producción</label>
+    </row>
+    <row>
+        <key>717</key>
+        <value>717</value>
+        <label>Cat secundaria</label>
+    </row>
+    <row>
+        <key>718</key>
+        <value>718</value>
+        <label>Cat Primaria</label>
+    </row>
+    <row>
+        <key>719</key>
+        <value>719</value>
+        <label>CAT Inicial</label>
+    </row>
+    <row>
+        <key>734</key>
+        <value>734</value>
+        <label>Secretaría</label>
+    </row>
+    <row>
+        <key>737</key>
+        <value>737</value>
+        <label>Departamentales</label>
+    </row>
+    <row>
+        <key>738</key>
+        <value>738</value>
+        <label>Asesoría Legal</label>
+    </row>
+    <row>
+        <key>739</key>
+        <value>739</value>
+        <label>Gestión del Talento Humano</label>
+    </row>
+    <row>
+        <key>740</key>
+        <value>740</value>
+        <label>Tecnología de Sistemas</label>
+    </row>
+    <row>
+        <key>741</key>
+        <value>741</value>
+        <label>Auditoría Interna</label>
+    </row>
+    <row>
+        <key>745</key>
+        <value>745</value>
+        <label>Comunicaciones</label>
+    </row>
+    <row>
+        <key>760</key>
+        <value>760</value>
+        <label>INSTITUTO SUPERIOR NO ESTATAL ADVENTISTA DEL TITICACA</label>
+    </row>
+    <row>
+        <key>787</key>
+        <value>787</value>
+        <label>Área Financiera Contable</label>
+    </row>
+    <row>
+        <key>788</key>
+        <value>788</value>
+        <label>Servicios diversos de apoyo</label>
+    </row>
+    <row>
+        <key>789</key>
+        <value>789</value>
+        <label>Dirección de Marketing</label>
+    </row>
+    <row>
+        <key>810</key>
+        <value>810</value>
+        <label>Secretaría</label>
+    </row>
+    <row>
+        <key>818</key>
+        <value>818</value>
+        <label>Secretaría</label>
+    </row>
+    <row>
+        <key>2219</key>
+        <value>2219</value>
+        <label>Oulet Juliaca</label>
+    </row>
+    <row>
+        <key>4336</key>
+        <value>4336</value>
+        <label>Secretaria</label>
+    </row>
+    <row>
+        <key>4342</key>
+        <value>4342</value>
+        <label>Secretaría</label>
+    </row>
+    <row>
+        <key>4380</key>
+        <value>4380</value>
+        <label>Recursos Humanos</label>
+    </row>
+    <row>
+        <key>4383</key>
+        <value>4383</value>
+        <label>Contabilidad</label>
+    </row>
+    <row>
+        <key>4386</key>
+        <value>4386</value>
+        <label>Arquitectura</label>
+    </row>
+    <row>
+        <key>4391</key>
+        <value>4391</value>
+        <label>Tesorería Iglesias</label>
+    </row>
+    <row>
+        <key>4416</key>
+        <value>4416</value>
+        <label>Secretaría</label>
+    </row>
+    <row>
+        <key>4427</key>
+        <value>4427</value>
+        <label>Departamentales</label>
+    </row>
+    <row>
+        <key>4428</key>
+        <value>4428</value>
+        <label>Tesorería Iglesias</label>
+    </row>
+    <row>
+        <key>4438</key>
+        <value>4438</value>
+        <label>Distritales - Planilla</label>
+    </row>
+    <row>
+        <key>4439</key>
+        <value>4439</value>
+        <label>Departamentales Planilla</label>
+    </row>
+    <row>
+        <key>4467</key>
+        <value>4467</value>
+        <label>TI - Desarrollo Sistemas</label>
+    </row>
+    <row>
+        <key>4474</key>
+        <value>4474</value>
+        <label>I.E CHICLAYO - ADM</label>
+    </row>
+    <row>
+        <key>4475</key>
+        <value>4475</value>
+        <label>IE CHICLAYO - INICIAL</label>
+    </row>
+    <row>
+        <key>4476</key>
+        <value>4476</value>
+        <label>IE CHICLAYO - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4512</key>
+        <value>4512</value>
+        <label>IE EDUARDO FORGA - ADM</label>
+    </row>
+    <row>
+        <key>4513</key>
+        <value>4513</value>
+        <label>IE BUEN PASTOR ÑAÑA - ADM</label>
+    </row>
+    <row>
+        <key>4515</key>
+        <value>4515</value>
+        <label>I.E BPÑ - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4517</key>
+        <value>4517</value>
+        <label>I.E BPÑ - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4519</key>
+        <value>4519</value>
+        <label>I.E ALBORADA - ADM</label>
+    </row>
+    <row>
+        <key>4520</key>
+        <value>4520</value>
+        <label>I.E EL SANTA - ADM</label>
+    </row>
+    <row>
+        <key>4521</key>
+        <value>4521</value>
+        <label>I.E JESÚS EL SEMBRADOR - ADM</label>
+    </row>
+    <row>
+        <key>4522</key>
+        <value>4522</value>
+        <label>IE BUEN PASTOR CANTO REY - ADM</label>
+    </row>
+    <row>
+        <key>4523</key>
+        <value>4523</value>
+        <label>I.E RICARDO PALMA - ADM</label>
+    </row>
+    <row>
+        <key>4524</key>
+        <value>4524</value>
+        <label>I.E ALBORADA - INICIAL</label>
+    </row>
+    <row>
+        <key>4525</key>
+        <value>4525</value>
+        <label>I.E TUMBES - ADM</label>
+    </row>
+    <row>
+        <key>4526</key>
+        <value>4526</value>
+        <label>I.E PIURA - ADM</label>
+    </row>
+    <row>
+        <key>4527</key>
+        <value>4527</value>
+        <label>I.E BAGUA - ADM</label>
+    </row>
+    <row>
+        <key>4528</key>
+        <value>4528</value>
+        <label>I.E JAEN - ADM</label>
+    </row>
+    <row>
+        <key>4529</key>
+        <value>4529</value>
+        <label>I.E SULLANA - ADM</label>
+    </row>
+    <row>
+        <key>4530</key>
+        <value>4530</value>
+        <label>I.E BPCR - INICIAL</label>
+    </row>
+    <row>
+        <key>4531</key>
+        <value>4531</value>
+        <label>I.E UTCUBAMBA - ADM</label>
+    </row>
+    <row>
+        <key>4532</key>
+        <value>4532</value>
+        <label>I.E BPCR - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4533</key>
+        <value>4533</value>
+        <label>I.E BPCR - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4534</key>
+        <value>4534</value>
+        <label>I.E UNIÓN LOS OLIVOS - ADM</label>
+    </row>
+    <row>
+        <key>4535</key>
+        <value>4535</value>
+        <label>I.E PIMENTEL - ADM</label>
+    </row>
+    <row>
+        <key>4536</key>
+        <value>4536</value>
+        <label>I.E BAGUA - INICIAL</label>
+    </row>
+    <row>
+        <key>4537</key>
+        <value>4537</value>
+        <label>I.E BAGUA - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4538</key>
+        <value>4538</value>
+        <label>I.E ALBORADA - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4539</key>
+        <value>4539</value>
+        <label>I.E ALBORADA - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4540</key>
+        <value>4540</value>
+        <label>I.E BAGUA - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4541</key>
+        <value>4541</value>
+        <label>I.E EL SANTA - INICIAL</label>
+    </row>
+    <row>
+        <key>4542</key>
+        <value>4542</value>
+        <label>I.E EL SANTA - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4543</key>
+        <value>4543</value>
+        <label>I.E JAEN - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4544</key>
+        <value>4544</value>
+        <label>I.E EL SANTA - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4545</key>
+        <value>4545</value>
+        <label>I.E JAEN - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4547</key>
+        <value>4547</value>
+        <label>I.E JS - INICIAL</label>
+    </row>
+    <row>
+        <key>4548</key>
+        <value>4548</value>
+        <label>I.E JS - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4549</key>
+        <value>4549</value>
+        <label>I.E FORGA - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4550</key>
+        <value>4550</value>
+        <label>I.E PIMENTEL - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4551</key>
+        <value>4551</value>
+        <label>I.E JS - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4552</key>
+        <value>4552</value>
+        <label>I.E FORGA - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4553</key>
+        <value>4553</value>
+        <label>I.E PIMENTEL - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4555</key>
+        <value>4555</value>
+        <label>I.E PIURA - INICIAL</label>
+    </row>
+    <row>
+        <key>4556</key>
+        <value>4556</value>
+        <label>I.E RICARDO PALMA - INICIAL</label>
+    </row>
+    <row>
+        <key>4557</key>
+        <value>4557</value>
+        <label>I.E PIURA - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4558</key>
+        <value>4558</value>
+        <label>I.E RICARDO PALMA - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4559</key>
+        <value>4559</value>
+        <label>I.E RICARDO PALMA - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4560</key>
+        <value>4560</value>
+        <label>I.E UNION LOS OLIVOS - INICIAL</label>
+    </row>
+    <row>
+        <key>4561</key>
+        <value>4561</value>
+        <label>I.E UNION LOS OLIVOS - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4562</key>
+        <value>4562</value>
+        <label>I.E UNION LOS OLIVOS - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4564</key>
+        <value>4564</value>
+        <label>IE ESPAÑA - ADM</label>
+    </row>
+    <row>
+        <key>4565</key>
+        <value>4565</value>
+        <label>I.E PIURA - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4569</key>
+        <value>4569</value>
+        <label>I.E SULLANA - INICIAL</label>
+    </row>
+    <row>
+        <key>4571</key>
+        <value>4571</value>
+        <label>I.E SULLANA - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4572</key>
+        <value>4572</value>
+        <label>I.E SULLANA - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4573</key>
+        <value>4573</value>
+        <label>I.E ESPAÑA - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4574</key>
+        <value>4574</value>
+        <label>I.E TUMBES - INICIAL</label>
+    </row>
+    <row>
+        <key>4575</key>
+        <value>4575</value>
+        <label>I.E TUMBES - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4576</key>
+        <value>4576</value>
+        <label>I.E ESPAÑA - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4577</key>
+        <value>4577</value>
+        <label>I.E TUMBES - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4578</key>
+        <value>4578</value>
+        <label>I.E UTCUBAMBA - INICIAL</label>
+    </row>
+    <row>
+        <key>4579</key>
+        <value>4579</value>
+        <label>I.E UTCUBAMBA - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4580</key>
+        <value>4580</value>
+        <label>I.E UTCUBAMBA - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4582</key>
+        <value>4582</value>
+        <label>I.E JSM - INICIAL</label>
+    </row>
+    <row>
+        <key>4583</key>
+        <value>4583</value>
+        <label>I.E JSM - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4584</key>
+        <value>4584</value>
+        <label>I.E JSM - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4586</key>
+        <value>4586</value>
+        <label>I.E MOYOBAMBA - ADM</label>
+    </row>
+    <row>
+        <key>4587</key>
+        <value>4587</value>
+        <label>I.E MOYOBAMBA - INICIAL</label>
+    </row>
+    <row>
+        <key>4588</key>
+        <value>4588</value>
+        <label>I.E MOYOBAMBA - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4589</key>
+        <value>4589</value>
+        <label>I.E MOYOBAMBA - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4590</key>
+        <value>4590</value>
+        <label>I.E ALTO MAYO - ADM</label>
+    </row>
+    <row>
+        <key>4591</key>
+        <value>4591</value>
+        <label>I.E ALTO MAYO - INICIAL</label>
+    </row>
+    <row>
+        <key>4592</key>
+        <value>4592</value>
+        <label>I.E ALTO MAYO - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4593</key>
+        <value>4593</value>
+        <label>I.E ALTO MAYO - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>4594</key>
+        <value>4594</value>
+        <label>I.E NUEVA CAJAMARCA - ADM</label>
+    </row>
+    <row>
+        <key>4595</key>
+        <value>4595</value>
+        <label>I.E NUEVA CAJAMARCA - INICIAL</label>
+    </row>
+    <row>
+        <key>4596</key>
+        <value>4596</value>
+        <label>I.E NUEVA CAJAMARCA - PRIMARIA</label>
+    </row>
+    <row>
+        <key>4597</key>
+        <value>4597</value>
+        <label>I.E NUEVA CAJAMARCA - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>7763</key>
+        <value>7763</value>
+        <label>Centro Cultural</label>
+    </row>
+    <row>
+        <key>7786</key>
+        <value>7786</value>
+        <label>Departamentales</label>
+    </row>
+    <row>
+        <key>7788</key>
+        <value>7788</value>
+        <label>Comunicaciones</label>
+    </row>
+    <row>
+        <key>7789</key>
+        <value>7789</value>
+        <label>Area legal</label>
+    </row>
+    <row>
+        <key>7790</key>
+        <value>7790</value>
+        <label>Pastor distrital</label>
+    </row>
+    <row>
+        <key>7791</key>
+        <value>7791</value>
+        <label>Servicios de apoyo</label>
+    </row>
+    <row>
+        <key>7792</key>
+        <value>7792</value>
+        <label>Capellanía</label>
+    </row>
+    <row>
+        <key>7794</key>
+        <value>7794</value>
+        <label>Comunicaciones</label>
+    </row>
+    <row>
+        <key>7795</key>
+        <value>7795</value>
+        <label>Pastor distrital</label>
+    </row>
+    <row>
+        <key>7797</key>
+        <value>7797</value>
+        <label>Area legal</label>
+    </row>
+    <row>
+        <key>7798</key>
+        <value>7798</value>
+        <label>Servicios de apoyo</label>
+    </row>
+    <row>
+        <key>7799</key>
+        <value>7799</value>
+        <label>Tesorería Iglesias</label>
+    </row>
+    <row>
+        <key>7802</key>
+        <value>7802</value>
+        <label>Departamentales</label>
+    </row>
+    <row>
+        <key>7803</key>
+        <value>7803</value>
+        <label>Comunicaciones</label>
+    </row>
+    <row>
+        <key>7804</key>
+        <value>7804</value>
+        <label>Pastor distrital</label>
+    </row>
+    <row>
+        <key>7805</key>
+        <value>7805</value>
+        <label>Capellanía</label>
+    </row>
+    <row>
+        <key>7815</key>
+        <value>7815</value>
+        <label>Tesorería Iglesias</label>
+    </row>
+    <row>
+        <key>7816</key>
+        <value>7816</value>
+        <label>Area legal</label>
+    </row>
+    <row>
+        <key>7817</key>
+        <value>7817</value>
+        <label>Servicios de apoyo</label>
+    </row>
+    <row>
+        <key>7818</key>
+        <value>7818</value>
+        <label>Area legal</label>
+    </row>
+    <row>
+        <key>7823</key>
+        <value>7823</value>
+        <label>Pastor distrital</label>
+    </row>
+    <row>
+        <key>7825</key>
+        <value>7825</value>
+        <label>Departamentales</label>
+    </row>
+    <row>
+        <key>7826</key>
+        <value>7826</value>
+        <label>Comunicaciones</label>
+    </row>
+    <row>
+        <key>7829</key>
+        <value>7829</value>
+        <label>Comunicaciones</label>
+    </row>
+    <row>
+        <key>7833</key>
+        <value>7833</value>
+        <label>Servicios de apoyo</label>
+    </row>
+    <row>
+        <key>7835</key>
+        <value>7835</value>
+        <label>I.E PIMENTEL - INICIAL</label>
+    </row>
+    <row>
+        <key>7837</key>
+        <value>7837</value>
+        <label>I.E JOSE DE SAN MARTIN - ADM</label>
+    </row>
+    <row>
+        <key>7838</key>
+        <value>7838</value>
+        <label>I.E JSM - INICIAL</label>
+    </row>
+    <row>
+        <key>7839</key>
+        <value>7839</value>
+        <label>I.E JSM- SECUNDARIA</label>
+    </row>
+    <row>
+        <key>7841</key>
+        <value>7841</value>
+        <label>I.E JSM - PRIMARIA</label>
+    </row>
+    <row>
+        <key>7842</key>
+        <value>7842</value>
+        <label>I.E EL PORVENIR - ADM</label>
+    </row>
+    <row>
+        <key>7843</key>
+        <value>7843</value>
+        <label>I.E EL PORVENIR- SECUNDARIA</label>
+    </row>
+    <row>
+        <key>7844</key>
+        <value>7844</value>
+        <label>I.E EL PORVENIR - INICIAL</label>
+    </row>
+    <row>
+        <key>7845</key>
+        <value>7845</value>
+        <label>I.E EL PORVENIR - PRIMARIA</label>
+    </row>
+    <row>
+        <key>7846</key>
+        <value>7846</value>
+        <label>I.E DANIEL ALCIDES CARRION - ADM</label>
+    </row>
+    <row>
+        <key>7847</key>
+        <value>7847</value>
+        <label>I.E DAC - INICIAL</label>
+    </row>
+    <row>
+        <key>7848</key>
+        <value>7848</value>
+        <label>I.E DAC - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>7849</key>
+        <value>7849</value>
+        <label>I.E DAC - PRIMARIA</label>
+    </row>
+    <row>
+        <key>7850</key>
+        <value>7850</value>
+        <label>I.E JESUS DE NAZARETH - ADM</label>
+    </row>
+    <row>
+        <key>7851</key>
+        <value>7851</value>
+        <label>I.E JN - INICIAL</label>
+    </row>
+    <row>
+        <key>7852</key>
+        <value>7852</value>
+        <label>I.E JN - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>7853</key>
+        <value>7853</value>
+        <label>I.E JN - PRIMARIA</label>
+    </row>
+    <row>
+        <key>7854</key>
+        <value>7854</value>
+        <label>I.E CAJAMARCA - ADM</label>
+    </row>
+    <row>
+        <key>7855</key>
+        <value>7855</value>
+        <label>I.E CAJAMARCA - INICIAL</label>
+    </row>
+    <row>
+        <key>7856</key>
+        <value>7856</value>
+        <label>I.E CAJAMARCA - SECUNDARIA</label>
+    </row>
+    <row>
+        <key>7860</key>
+        <value>7860</value>
+        <label>Sede - Operacional</label>
+    </row>
+    <row>
+        <key>7867</key>
+        <value>7867</value>
+        <label>Posgrado de Maestría en Administración de Negocios con mención en Recursos Humanos</label>
+    </row>
+    <row>
+        <key>7871</key>
+        <value>7871</value>
+        <label>Gerencia General</label>
+    </row>
+    <row>
+        <key>7902</key>
+        <value>7902</value>
+        <label>Dirección de Misión</label>
+    </row>
+    <row>
+        <key>7920</key>
+        <value>7920</value>
+        <label>Dirección de Cooperación y Desarrollo</label>
+    </row>
+    <row>
+        <key>7948</key>
+        <value>7948</value>
+        <label>EP Derecho</label>
+    </row>
+    <row>
+        <key>7987</key>
+        <value>7987</value>
+        <label>Coordinación de Admisión Campus</label>
+    </row>
+    <row>
+        <key>7995</key>
+        <value>7995</value>
+        <label>Directores de Departamentos</label>
+    </row>
+    <row>
+        <key>7996</key>
+        <value>7996</value>
+        <label>Coordinadores de Areas</label>
+    </row>
+    <row>
+        <key>7997</key>
+        <value>7997</value>
+        <label>Area Tecnica</label>
+    </row>
+    <row>
+        <key>8001</key>
+        <value>8001</value>
+        <label>Area Legal</label>
+    </row>
+    <row>
+        <key>8004</key>
+        <value>8004</value>
+        <label>Area Tecnica</label>
+    </row>
+    <row>
+        <key>8005</key>
+        <value>8005</value>
+        <label>Area de Suministros</label>
+    </row>
+    <row>
+        <key>8006</key>
+        <value>8006</value>
+        <label>Area de Ventas</label>
+    </row>
+    <row>
+        <key>8007</key>
+        <value>8007</value>
+        <label>Area Contable</label>
+    </row>
+    <row>
+        <key>8010</key>
+        <value>8010</value>
+        <label>Area de Analistas</label>
+    </row>
+    <row>
+        <key>8019</key>
+        <value>8019</value>
+        <label>Imagen Institucional</label>
+    </row>
+    <row>
+        <key>8027</key>
+        <value>8027</value>
+        <label>Comité de Integración Corporativa</label>
+    </row>
+    <row>
+        <key>8080</key>
+        <value>8080</value>
+        <label>Operaciones</label>
+    </row>
+    <row>
+        <key>8081</key>
+        <value>8081</value>
+        <label>Comercial</label>
+    </row>
+    <row>
+        <key>8085</key>
+        <value>8085</value>
+        <label>Finanzas</label>
+    </row>
+    <row>
+        <key>8088</key>
+        <value>8088</value>
+        <label>Marketing - Unión</label>
+    </row>
+    <row>
+        <key>8110</key>
+        <value>8110</value>
+        <label>Control Patrimonial</label>
+    </row>
+    <row>
+        <key>8112</key>
+        <value>8112</value>
+        <label>Logística</label>
+    </row>
+    <row>
+        <key>8115</key>
+        <value>8115</value>
+        <label>I.E JAEN - INICIAL</label>
+    </row>
+    <row>
+        <key>8138</key>
+        <value>8138</value>
+        <label>EP Ingeniería Industrial</label>
+    </row>
+    <row>
+        <key>8153</key>
+        <value>8153</value>
+        <label>Tecnología Médica en Laboratorio Clínico y Anatomía Patológica</label>
+    </row>
+    <row>
+        <key>8177</key>
+        <value>8177</value>
+        <label>Dirección de Operaciones de Campus</label>
+    </row>
+    <row>
+        <key>8208</key>
+        <value>8208</value>
+        <label>Colegio Unión - Tarapoto</label>
+    </row>
+    <row>
+        <key>8232</key>
+        <value>8232</value>
+        <label>Subdirección de Marketing y Comunicaciones</label>
+    </row>
+    <row>
+        <key>8242</key>
+        <value>8242</value>
+        <label>Carrera a Distancia de Educación</label>
+    </row>
+    <row>
+        <key>8266</key>
+        <value>8266</value>
+        <label>Coordinación de Logistica</label>
+    </row>
+</lookupTable>

@@ -1324,6 +1324,8 @@ return (relP == null &amp;&amp; perP == null)
          (La membership de org ya la retrae el Bloque E; esto limpia el valor pegado en el foco.) -->
     <item>
         <ref>costCenter</ref>
+        <displayName>Área de trabajo</displayName>
+        <valueEnumerationRef oid="9c4e1f28-7b53-4a06-8d19-2f5a7e0c3b64" type="c:LookupTableType"/>
         <mapping>
             <name>E2-retract-orphan-costCenter</name>
             <description>Retrae costCenter (ID_AREA laboral, IIA Trabajadores) cuando liveAffiliationWorker==null. Complementa el guard del Bloque E (que retira la membership de org) limpiando además el valor en el foco. Solo abarca valores numéricos (ID_AREA LAMB).</description>
