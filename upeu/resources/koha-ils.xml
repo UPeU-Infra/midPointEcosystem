@@ -1063,38 +1063,53 @@ return result
                 <outbound>
                     <name>statistics2-outbound</name>
                     <strength>normal</strength>
-                    <!-- Koha statistics_2 = Bsort2: código INEI 2022 de 8 dígitos del programa.
-                         Fuente CANÓNICA: extension/sciback:academicProgramIneiCode (INEI 8 díg),
-                         derivado en el object template base (bloque D.1c) desde
-                         academicProgramSuneduCode (P-code) vía LookupTable LT-Pcode-INEI
-                         (fuente: tesauro VocBench-UPeU skos:notation). Es el identificador
-                         NACIONAL canónico del programa (clasificador INEI 2022) — se emite TAL
-                         CUAL a Koha, sin transformación: el resource consume el dato ya canónico.
+                    <!-- Koha statistics_2 = Bsort2: P-code / SEG-code del programa académico
+                         (P30, P31, SEG61...), el código de los Formatos de Licenciamiento A4/A8
+                         que UPeU tiene validados ante SUNEDU.
+                         Fuente CANÓNICA: extension/sciback:academicProgramSuneduCode — se emite
+                         TAL CUAL, sin transformación. El P-code depende de la MODALIDAD (el A4
+                         lista una fila por modalidad: Administración es P04 presencial, P05
+                         semipresencial y P95 a distancia); esa resolución la hace MidPoint vía
+                         la LookupTable program-pxx-byid, y Koha solo refleja lo que recibe.
 
-                         MIGRACIÓN 2026-06-13 (aprobada): Bsort2 pasa de P-code → INEI 8 díg.
-                         ANTES leía extension/sciback:academicProgramSuneduCode (P30/P31/P33/...).
-                         AHORA lee extension/sciback:academicProgramIneiCode (31300211/91300071/...).
-                         El P-code (academicProgramSuneduCode) se conserva como legacy (no se borra).
+                         REVERSIÓN 2026-08-09: Bsort2 vuelve de INEI 8 díg → P-code.
+                         ANTES leía extension/sciback:academicProgramIneiCode (31300211/...).
+                         AHORA lee extension/sciback:academicProgramSuneduCode (P30/P31/SEG61/...).
+                         Decisión: ADR-005 del tesauro (vocbench/instituciones/upeu) — el PXX es
+                         el identificador institucional de programa en TODOS los sistemas; el
+                         código INEI queda solo para el repositorio de tesis, donde SUNEDU/RENATI
+                         lo exige como renati.discipline. Invierte la migración del 2026-06-13.
+                         academicProgramIneiCode se conserva: pasa de identificador a metadato de
+                         disciplina para tesis (no se borra).
 
-                         PRERREQUISITOS de deploy de este outbound (en este orden):
-                           1. LT-Pcode-INEI desplegado (objeto inerte).
-                           2. academicProgramIneiCode presente en el schema sciback-person.
-                           3. Object template base con bloque D.1c desplegado + recompute masivo
-                              estudiantes Lima (materializa el INEI en el focus).
-                           4. authorised_values Bsort2 en Koha pobladas con los 19 INEI 8-díg.
-                         Desplegar este outbound ANTES de (3) emitiría INEI vacío → borraría Bsort2
-                         en cada reconcile. NO desplegar durante el backfill de fotos.
+                         🔴 NO DESPLEGADO — este mapping está preparado, no cargado a MidPoint.
+                         PRERREQUISITOS de deploy (en este orden, ver
+                         iga/canonico/docs/PROMPT-pxx-midpoint-ldap.md):
+                           1. LookupTable program-pxx-byid cargada
+                              (OID 5d1c8a47-2b93-4f60-8e1a-7c4d9f0e6a25).
+                              Verificado 2026-08-09 en PROD: NO existe (REST devuelve 404).
+                           2. academicProgramSuneduCode alimentado desde esa LookupTable y NO
+                              desde la columna SUNEDU_CODE (Oracle CODIGO_SUNEDU2): Oracle da
+                              73,18 % con 139 alumnos mal codificados; el tesauro da 88,44 % con 0.
+                           3. Recompute masivo que materialice el P-code en el focus.
+                           4. authorised_values Bsort2 en Koha repobladas con los 183 P-codes del
+                              A4/A8 — script listo en
+                              koha/instituciones/upeu/upeu-koha/deploy/15-bsort2-repoblar-pcodes.sql
+                         Desplegar este outbound ANTES de (2)+(3) emitiría vacío → BORRARÍA Bsort2
+                         en cada reconcile (hoy hay 15.215 patrons con sort2 poblado y ~16.000
+                         actualizaciones cada 24 h: el daño se propaga en horas).
+                         NO desplegar durante el backfill de fotos.
 
-                         Null-safe: programa sin INEI (P-code ausente o no mapeado: posgrado/
-                         2da-especialidad) → atributo vacío → null → Koha sin Bsort2 (igual que
-                         hoy con P-code null; no regresión). -->
+                         Null-safe: programa sin P-code → atributo vacío → null → Koha sin Bsort2
+                         (mismo comportamiento que con INEI null; no es regresión). La cobertura
+                         SUBE respecto de hoy: habrá lectores que ganen Bsort2. -->
                     <expression>
                         <script>
                             <code><![CDATA[
 if (focus == null) return null
-def inei = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'academicProgramIneiCode'))
-if (inei == null) return null
-def code = inei.toString().trim()
+def pcode = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'academicProgramSuneduCode'))
+if (pcode == null) return null
+def code = pcode.toString().trim()
 return code ? code : null
                             ]]></code>
                         </script>
