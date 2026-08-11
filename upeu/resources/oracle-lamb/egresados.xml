@@ -377,7 +377,46 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                     <strength>weak</strength>
                     <expression>
                         <script>
-                            <code>(input ?: '').toString().trim() ?: null</code>
+                            <code>
+// Normaliza el nivel de estudios a una forma canonica unica (2026-08-10).
+// Antes convivian 17 valores para 11 conceptos porque las dos IIAs aplicaban
+// criterios opuestos: Estudiantes hacia .toLowerCase() ("pregrado") y Egresados
+// no transformaba nada ("Pregrado"). Los reportes agrupaban por dos valores.
+// Criterio: mayuscula inicial. Excepciones deliberadas:
+//   - CEPRE en mayusculas: es un acronimo (Centro Preuniversitario), no una palabra.
+//   - "Segunda Especialidad": se retira el guion del slug 'segunda-especialidad'.
+//   - "de" en minuscula en "Conservatorio de Musica".
+// Se conserva la grafia "Contínua" de la fuente Oracle pese a ser incorrecta
+// (seria "Continua"): corregirla es un cambio de contenido, no de formato.
+// Un valor no previsto se devuelve con mayuscula inicial simple, nunca se descarta.
+if (input == null) return null
+def v = input.toString().trim()
+if (!v) return null
+def k = v.toLowerCase()
+def canon = [
+    'pregrado'                : 'Pregrado',
+    'posgrado'                : 'Posgrado',
+    'doctorado'               : 'Doctorado',
+    'diplomatura'             : 'Diplomatura',
+    'tesis'                   : 'Tesis',
+    'idiomas'                 : 'Idiomas',
+    'tecnica'                 : 'Técnica',
+    'técnica'                 : 'Técnica',
+    'cepre'                   : 'CEPRE',
+    'segunda-especialidad'    : 'Segunda Especialidad',
+    'segunda especialidad'    : 'Segunda Especialidad',
+    'educacion continua'      : 'Educación Contínua',
+    'educación contínua'      : 'Educación Contínua',
+    'educación continua'      : 'Educación Contínua',
+    'educacion contínua'      : 'Educación Contínua',
+    'conservatorio de musica' : 'Conservatorio de Música',
+    'conservatorio de música' : 'Conservatorio de Música'
+]
+def r = canon[k]
+if (r != null) return r
+log.warn('studyLevel: valor no previsto "{}" — se normaliza por defecto', v)
+return k.length() &gt; 1 ? k.substring(0,1).toUpperCase() + k.substring(1) : k.toUpperCase()
+</code>
                         </script>
                     </expression>
                     <target>
