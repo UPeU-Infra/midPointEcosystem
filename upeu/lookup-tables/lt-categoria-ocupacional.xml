@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Tabla de PRESENTACION: ID_CATEGORIAOCUPACIONAL -> nombre.
+     Fuente: ELISEO.APS_CATEGORIA_OCUPACIONAL (Oracle LAMB, solo lectura).
+     Hoy los 14.827 trabajadores llevan el valor '3' (Empleado); las otras dos
+     filas se incluyen porque la fuente las define y pueden aparecer. -->
+<lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="2b8d4f61-9e07-4c35-a1d8-6f3b5e90c7a2">
+    <name>LT-CategoriaOcupacional</name>
+    <description>ID_CATEGORIAOCUPACIONAL hacia su nombre. Fuente ELISEO.APS_CATEGORIA_OCUPACIONAL.</description>
+    <row><key>1</key><value>1</value><label>Ejecutivo</label></row>
+    <row><key>2</key><value>2</value><label>Obrero</label></row>
+    <row><key>3</key><value>3</value><label>Empleado</label></row>
+</lookupTable>

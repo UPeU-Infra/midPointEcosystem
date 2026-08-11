@@ -330,7 +330,7 @@
 
                     <!-- S6 — LABORAL -->
                     <xsd:element name="employeeCategory" type="xsd:string" minOccurs="0" maxOccurs="1">
-                        <xsd:annotation><xsd:appinfo><a:displayName>Categoría ocupacional</a:displayName><a:displayOrder>600</a:displayOrder></xsd:appinfo></xsd:annotation>
+                        <xsd:annotation><xsd:appinfo><a:displayName>Categoría ocupacional</a:displayName><a:displayOrder>600</a:displayOrder><a:valueEnumerationRef oid="2b8d4f61-9e07-4c35-a1d8-6f3b5e90c7a2" type="c:LookupTableType"/></xsd:appinfo></xsd:annotation>
                     </xsd:element>
                     <xsd:element name="employeeType" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
                         <xsd:annotation><xsd:appinfo><a:displayName>Tipo de empleo</a:displayName><a:displayOrder>610</a:displayOrder></xsd:appinfo></xsd:annotation>
@@ -342,7 +342,7 @@
                         <xsd:annotation><xsd:appinfo><a:displayName>Fecha de término</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>630</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
                     <xsd:element name="contractType" type="xsd:string" minOccurs="0" maxOccurs="1">
-                        <xsd:annotation><xsd:appinfo><a:displayName>Tipo de contrato</a:displayName><a:displayOrder>640</a:displayOrder></xsd:appinfo></xsd:annotation>
+                        <xsd:annotation><xsd:appinfo><a:displayName>Tipo de contrato</a:displayName><a:displayOrder>640</a:displayOrder><a:valueEnumerationRef oid="7f2c6a94-3d15-4e88-b072-9a4e1c8f5d63" type="c:LookupTableType"/></xsd:appinfo></xsd:annotation>
                     </xsd:element>
 
                     <!-- S7 — INVESTIGACIÓN -->

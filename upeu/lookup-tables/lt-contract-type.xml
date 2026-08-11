@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Tabla de PRESENTACION: contractType -> etiqueta en espanol.
+     Origen: ENOC.CAT_DOCENTE.ID_CONDICION_LABORAL (E/M/C), que el resource
+     Trabajadores ya traduce a permanent/missionary/contracted.
+     'missionary' es especifico de universidades adventistas (personal de mision).
+     Solo presente para faculty; NULL para staff. -->
+<lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="7f2c6a94-3d15-4e88-b072-9a4e1c8f5d63">
+    <name>LT-ContractType</name>
+    <description>Condicion contractual docente hacia su etiqueta en espanol.</description>
+    <row><key>permanent</key><value>permanent</value><label>Nombrado (permanente)</label></row>
+    <row><key>missionary</key><value>missionary</value><label>Misionero</label></row>
+    <row><key>contracted</key><value>contracted</value><label>Contratado</label></row>
+</lookupTable>
