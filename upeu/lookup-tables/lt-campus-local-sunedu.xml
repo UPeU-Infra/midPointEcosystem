@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Campus canonico -> codigo de local SUNEDU.
+     FUENTE: RCD N° 054-2018-SUNEDU/CD, Anexo 01, Tabla N° 01 "Locales para ofrecer
+     el servicio educativo superior". Confirmada vigente por la RCD N° 140-2022-SUNEDU/CD,
+     que sigue nombrando los mismos tres locales.
+     Solo cambia por resolucion del Consejo Directivo de SUNEDU: NO es configuracion
+     interna y no se edita para reflejar reorganizaciones de UPeU. -->
+<lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" oid="5a3d8e97-4c12-4b6f-9e08-7d1a2f6c4b53">
+    <name>LT-Campus-LocalSunedu</name>
+    <description>Campus canonico hacia el codigo de local oficial ante SUNEDU (RCD 054-2018, Anexo 01, Tabla 01).</description>
+    <row><key>LIMA</key><value>SL01</value><label>SL01 — Sede Lima (Lurigancho-Chosica)</label></row>
+    <row><key>JULIACA</key><value>F01L01</value><label>F01L01 — Filial Juliaca (San Román, Puno)</label></row>
+    <row><key>TARAPOTO</key><value>F02L01</value><label>F02L01 — Filial Tarapoto (Morales, San Martín)</label></row>
+</lookupTable>
