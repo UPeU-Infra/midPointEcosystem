@@ -386,8 +386,8 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
 //   - CEPRE en mayusculas: es un acronimo (Centro Preuniversitario), no una palabra.
 //   - "Segunda Especialidad": se retira el guion del slug 'segunda-especialidad'.
 //   - "de" en minuscula en "Conservatorio de Musica".
-// Se conserva la grafia "Contínua" de la fuente Oracle pese a ser incorrecta
-// (seria "Continua"): corregirla es un cambio de contenido, no de formato.
+// Se CORRIGE la grafia de la fuente Oracle: "contínua" es incorrecto, se
+// escribe "continua" (decision de Alberto, 2026-08-10).
 // Un valor no previsto se devuelve con mayuscula inicial simple, nunca se descarta.
 if (input == null) return null
 def v = input.toString().trim()
@@ -405,10 +405,10 @@ def canon = [
     'cepre'                   : 'CEPRE',
     'segunda-especialidad'    : 'Segunda Especialidad',
     'segunda especialidad'    : 'Segunda Especialidad',
-    'educacion continua'      : 'Educación Contínua',
-    'educación contínua'      : 'Educación Contínua',
-    'educación continua'      : 'Educación Contínua',
-    'educacion contínua'      : 'Educación Contínua',
+    'educacion continua'      : 'Educación Continua',
+    'educación contínua'      : 'Educación Continua',
+    'educación continua'      : 'Educación Continua',
+    'educacion contínua'      : 'Educación Continua',
     'conservatorio de musica' : 'Conservatorio de Música',
     'conservatorio de música' : 'Conservatorio de Música'
 ]
