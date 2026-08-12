@@ -345,6 +345,22 @@
                         <xsd:annotation><xsd:appinfo><a:displayName>Tipo de contrato</a:displayName><a:displayOrder>640</a:displayOrder><a:valueEnumerationRef oid="7f2c6a94-3d15-4e88-b072-9a4e1c8f5d63" type="c:LookupTableType"/></xsd:appinfo></xsd:annotation>
                     </xsd:element>
 
+                    <!-- Codigo oficial del tipo de contrato en RR.HH. (ELISEO.TIPO_CONTRATO).
+                         '01' = A Plazo Indeterminado (permanente, SIN fecha de fin por diseno).
+                         Distingue "permanente" de "falta el dato": ambos llegan como FEC_TERMINO
+                         nulo y sin este codigo son indistinguibles. Medido 12-ago-2026 sobre las
+                         7.416 personas del IGA: 1.084 permanentes sin fecha (correctos) y 12
+                         contratos a plazo sin fecha (huecos de captura en el origen). -->
+                    <xsd:element name="employmentContractCode" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código de tipo de contrato</a:displayName><a:help>Catálogo ELISEO.TIPO_CONTRATO; 01 = A Plazo Indeterminado</a:help><a:displayOrder>645</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- Tipo de cese declarado en RR.HH. (ELISEO.VW_APS_EMPLEADO.ID_TIPOCESE).
+                         Presente = el vinculo termino, aunque no se haya cerrado la fecha. -->
+                    <xsd:element name="employmentTerminationCode" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código de tipo de cese</a:displayName><a:displayOrder>646</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
                     <!-- S7 — INVESTIGACIÓN -->
                     <!-- orcid: ORCID iD canónico (https://orcid.org/0000-0000-0000-0000).
                          IIA futura: CTI Vitae / ORCID Public API. -->

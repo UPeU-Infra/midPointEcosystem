@@ -405,6 +405,44 @@
                 </inbound>
             </attribute>
             <attribute>
+                <ref>ri:TIPO_CONTRATO</ref>
+                <displayName>Código de tipo de contrato (RR.HH.)</displayName>
+                <inbound>
+                    <name>tipo-contrato-to-employmentContractCode</name>
+                    <description>Codigo oficial de ELISEO.TIPO_CONTRATO, tomado de VW_APS_EMPLEADO
+                        (la tabla de CONTRATOS) y no de VW_TRABAJADOR (nivel persona, stale).
+                        '01' = A Plazo Indeterminado: permanente, sin fecha de fin POR DISENO.
+                        Sin este codigo, "permanente" y "falta la fecha" son indistinguibles.</description>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>input == null ? null : basic.stringify(input).trim().padLeft(2,'0')</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:employmentContractCode</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:TIPO_CESE</ref>
+                <displayName>Código de tipo de cese (RR.HH.)</displayName>
+                <inbound>
+                    <name>tipo-cese-to-employmentTerminationCode</name>
+                    <description>Presente = el vinculo laboral termino, aunque la fecha no se haya
+                        cerrado. Complementa a MOTIVO_CESE_RAW.</description>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>input == null ? null : basic.stringify(input).trim()</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:employmentTerminationCode</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
                 <ref>ri:FEC_TERMINO</ref>
                 <inbound>
                     <name>fec-termino-to-terminationDate</name>
