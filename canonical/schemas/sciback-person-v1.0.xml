@@ -169,6 +169,18 @@
                     <xsd:element name="campusWorker" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>Campus — contrato vivo (IIA Trabajadores)</a:displayName><a:help>Sede (LIMA|JULIACA|TARAPOTO|ISTAT) del contrato UPeU vigente (ID_ENTIDAD=7124, ESTADO≠'I'). IIA única: resource Trabajadores. Single-source: el inbound strong lo materializa/retira con la cuenta laboral (mismo origen que liveAffiliationWorker). Ausente = sin empleo vigente. Entra al gate Koha multi-campus como vínculo VIVO de trabajador.</a:help><a:indexed>true</a:indexed><a:displayOrder>425</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
+
+                    <!-- RESTAURADO 2026-08-12: existia SOLO en PROD (creado el 11-ago) y el repo
+                         no lo reflejaba; un despliegue del schema desde el repo lo borro. Los datos
+                         nunca se perdieron (31.289 personas lo conservan en m_user.ext).
+                         Campus de EGRESO: hecho consumado, a diferencia de campusStudent, que se
+                         vacia al perder la matricula. Si una filial deja de ofertar un programa,
+                         quien egreso de el alli sigue siendo de esa filial. Sin este dato la API de
+                         Koha rechaza el alta con "Missing property: library_id".
+                         IIA: DAVID.VW_PERSONA_EGRESADO.SEDE. -->
+                    <xsd:element name="campusEgreso" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Campus — de egreso (IIA Egresados)</a:displayName><a:help>Sede (LIMA|JULIACA|TARAPOTO) donde la persona egreso. Hecho consumado: no caduca. Alimenta library_id en Koha cuando no hay campus vivo.</a:help><a:indexed>true</a:indexed><a:displayOrder>426</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
                     <xsd:element name="entitlements" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
                         <xsd:annotation><xsd:appinfo><a:displayName>Derechos (entitlements)</a:displayName><a:displayOrder>430</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
@@ -574,7 +586,17 @@
                     <xsd:element name="orgRuc" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>RUC</a:displayName><a:help>RUC de la organización (SUNAT), 11 dígitos, dígito verificador módulo 11. IIA: SUNAT. Normalmente solo en el nodo institution. Destino: LDAP scibackOrgRuc. Contrato RIMS←IGA O4.</a:help><a:indexed>true</a:indexed><a:displayOrder>150</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
-                </xsd:sequence>
+                
+                    <!-- RESTAURADO 2026-08-12: mismo caso que campusEgreso — solo existia en PROD.
+                         Codigo de LOCAL oficial SUNEDU de la sede (SL01 Lima, F01L01 Juliaca,
+                         F02L01 Tarapoto). Va en la ORG del campus, no en la persona: el local es
+                         de la sede. Los P-code son agnosticos a la sede -son el contrato con el
+                         Estado- pero los reportes exigen vincular que programas gestiona cada
+                         campus. Fuente autoritativa: resolucion de licenciamiento SUNEDU. -->
+                    <xsd:element name="suneduLocalCode" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código de local SUNEDU</a:displayName><a:help>SL01 (Lima) | F01L01 (Juliaca) | F02L01 (Tarapoto)</a:help><a:indexed>true</a:indexed></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+</xsd:sequence>
             </xsd:complexType>
 
         </xsd:schema>
