@@ -14215,6 +14215,14 @@
             <attribute id="72">
                 <ref>ri:eduPersonAffiliation</ref>
                 <displayName>eduPersonAffiliation (multivalor)</displayName>
+                <!-- 2026-08-12: tolerant=false. Por defecto es TRUE, y con strength=strong el
+                     mapping AÑADIA sus valores calculados pero NUNCA retiraba los ajenos: quien
+                     dejaba de ser docente o administrativo conservaba faculty/staff en el
+                     directorio indefinidamente. Medido: 1.210 personas sin vinculo laboral vivo
+                     con afiliacion de vigente. OJO: tolerant=false solo actua cuando MidPoint
+                     REESCRIBE el atributo; si el valor calculado ya esta, no hay delta y no se
+                     aplica -hace falta un reconcile del resource, no un recompute-. -->
+                <tolerant>false</tolerant>
                 <!-- 2026-07-16: se añade la derivación de `member`.
                      eduPerson 202208: `member` es afiliación derivada — la tiene
                      quien sea faculty/student/staff/employee. `alum` NO implica

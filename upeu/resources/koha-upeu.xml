@@ -1245,7 +1245,19 @@ return code ? code : null
                             </code>
                         </script>
                     </expression>
-                </outbound>
+                                    <condition>
+                        <script>
+                            <code>
+// 2026-08-12: sin esta condicion, quien pierde TODOS sus vinculos hace que el mapping
+// devuelva null y Koha rechace el PUT con 400 "Expected string - got null" en
+// /body/category_id. Cada baja generaba un error y un reintento. La categoria NO es la
+// forma de retirar el acceso: si no hay afiliacion no se toca el atributo, y la baja se
+// materializa via expiry_date.
+primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim() != ''
+                            </code>
+                        </script>
+                    </condition>
+</outbound>
             </attribute>
             <attribute>
                 <ref>ri:extended_attributes</ref>
@@ -1647,28 +1659,39 @@ return []
                     <source>
                         <path>$focus/extension/sb:liveAffiliationStudent</path>
                     </source>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationAlum</path>
+                    </source>
                     <expression>
                         <script>
                             <code>
-// Expiry efectivo = MAX de las fechas de término reales por-IIA de las afiliaciones vivas.
+// Expiry efectivo del carnet de biblioteca.
+//
+// 2026-08-12 — SIN VINCULO, EL CARNET EXPIRA.
+// Antes llevaba una condition (liveAffiliationWorker != null || liveAffiliationStudent
+// != null) que desactivaba el mapping justo cuando la persona causaba baja: la ultima
+// fecha calculada -hoy+12 meses- quedaba congelada y el carnet seguia vivo un anho mas.
+// Medido: 702 personas sin ninguno de los tres vinculos con cuenta en Koha.
+//
+// Ahora se evalua SIEMPRE y decide:
+//   sin ningun vinculo -> expira con su ultima fecha real (o hoy si no hay)
+//   con algun vinculo  -> comportamiento previo, con holgura de 12 meses
+//
+// Se usa dateexpiry, el mecanismo NATIVO de Koha: el patron conserva historial de
+// prestamos y multas pero no puede prestar. No se borra nada.
+def vivo = (liveAffiliationWorker != null) || (liveAffiliationStudent != null) || (liveAffiliationAlum != null)
 def w = terminationDate?.toString()?.take(10)
 def s = terminationDateStudent?.toString()?.take(10)
 def realMax = null
-if (w != null &amp;&amp; s != null) { realMax = (w.compareTo(s) >= 0) ? w : s }
+if (w != null &amp;&amp; s != null) { realMax = (w.compareTo(s) &gt;= 0) ? w : s }
 else if (w != null) { realMax = w }
 else if (s != null) { realMax = s }
-
 def today = java.time.LocalDate.now()
 
-// FALLBACK (2026-06-02, tarea expiry): este mapping SOLO corre con afiliación viva
-// (condition liveAffiliationWorker||liveAffiliationStudent). Casos sin fecha real futura:
-//   (a) realMax == null  -> trabajador permanente FEC_TERMINO NULL (77 casos): nunca hubo fecha.
-//   (b) realMax vencido  -> matrícula/contrato con fecha pasada pero afiliación AUN viva.
-// En ambos, una afiliación VIVA no debe expirar la cuenta Koha. Computamos today + P12M.
-// ANCLAJE canónico: liveAffiliation* ya retorna null cuando contrato/matrícula vence (IIA);
-// al cesar, la condition false -> el mapping no participa -> el archivado leaver gana
-// (DISABLED -> expiry=ayer). No sobre-extiende. eduPerson/SCHAC schacExpiryDate deriva del
-// lifecycle desde la IIA (iga-canonical-standards §1.2).
+if (!vivo) {
+    return realMax != null ? realMax : today.toString()
+}
+
 if (realMax == null) {
     return today.plusMonths(12).toString()
 }
@@ -1676,18 +1699,12 @@ def realMaxDate = java.time.LocalDate.parse(realMax)
 if (realMaxDate.isBefore(today)) {
     return today.plusMonths(12).toString()
 }
-// Fecha real futura: comportamiento existente intacto (no se degrada).
 return realMax
                             </code>
                         </script>
                     </expression>
                     <!-- GUARD #2: solo cuentas con afiliación viva. Leaver (sin afiliación viva)
                          queda fuera => el archivado (DISABLED -> expiry=ayer) gana sin colisión. -->
-                    <condition>
-                        <script>
-                            <code>liveAffiliationWorker != null || liveAffiliationStudent != null</code>
-                        </script>
-                    </condition>
                 </outbound>
             </attribute>
             <attribute>
