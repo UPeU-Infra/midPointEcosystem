@@ -13,6 +13,25 @@ Estudiantes del IGA. Se pidió a Redes filtrar en el proxy; Rudy respondió que 
 no se puede** —«es el proxy externo, se bloquea y ni una app funcionaría»— así que **el filtro
 tiene que vivir en el propio servidor de Koha**. Eso es lo que se montó, y lo que queda.
 
+## 🔴 CORRECCIÓN (14-ago, tarde): hay DOS Koha, y este prompt trata el viejo
+
+Al diagnosticar un fallo del IGA se descubrió que **`192.168.12.135` no es el Koha que
+gobierna MidPoint**:
+
+| Host | Qué es | Estado |
+|---|---|---|
+| **`.136`** `koha-plus-prod` | Instancia **consolidada** `koha_upeu`, una sola, 4 branches (BUL/BUJ/BUT/CIA), **33.582 patrons, 32.892 vigentes**, categorías nuevas (`student`, `alum`, `staff`, `faculty`) | **el vivo — lo que MidPoint aprovisiona** |
+| **`.135`** `koha-app-prod-nodo1` + BD en **`.130`** | Las **4 bases viejas** separadas (`koha_bul`, `koha_buj`, `koha_but`, `koha_cia`), categorías antiguas (`ESTUDI`, `DOCEN`), **casi todos los patrons expirados** | **el viejo, en retirada** |
+
+**Todo lo que describe este prompt —Apache, fail2ban, mod_remoteip, el escáner de WordPress—
+ocurre en `.135`, el viejo.** Sigue siendo trabajo válido (ese OPAC está publicado y recibe
+tráfico), pero **la prioridad debe revisarse**: si `.135` está en retirada, quizá la respuesta
+correcta no es blindarlo sino apagarlo. Y lo que sí hay que verificar es si **`.136` tiene la
+misma exposición** — no se ha mirado.
+
+Dato que lo prueba: los 33.582 patrons de `koha_upeu` cuadran con los 33.578 shadows de Koha
+que MidPoint tiene registrados. Las bases de `.130` no cuadran con nada del IGA.
+
 ## Acceso
 
 ```bash
