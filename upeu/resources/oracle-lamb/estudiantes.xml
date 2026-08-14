@@ -362,6 +362,25 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
             </attribute>
             <attribute>
                 <ref>ri:PROGRAM_CODES</ref>
+                <!-- ADR-062: publicar SIEMPRE el ID_PROGRAMA_ESTUDIO, resuelva o no a P-code.
+                     Sin esto, 6.706 estudiantes activos (Ingles, Conservatorio, CEPRE,
+                     diplomaturas) no tienen NINGUN identificador de programa en el IGA, porque
+                     la tabla program-pxx-byid solo cubre los 188 licenciados. El dato ya viaja
+                     en el shadow: solo faltaba publicarlo.
+                     <script> y no <function>: PROGRAM_CODES es MULTIVALOR y una function solo
+                     acepta single-value (regresion del 5-ago). -->
+                <inbound>
+                    <name>program-id-to-academicProgramSourceId</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>input == null ? null : basic.stringify(input).trim() ?: null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramSourceId</path>
+                    </target>
+                </inbound>
                 <!-- 2026-08-05: PROGRAM_CODES pasa de estar sin uso a ser la FUENTE del programa.
                      Contiene ID_PROGRAMA_ESTUDIO (DAVID.ACAD_PROGRAMA_ESTUDIO), identificador
                      inmutable de Oracle. Sustituye a la resolución por SCHOOL_NAME (por nombre),

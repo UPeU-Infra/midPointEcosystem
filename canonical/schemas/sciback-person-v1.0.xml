@@ -219,6 +219,24 @@
                     <xsd:element name="academicProgramSuneduCode" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
                         <xsd:annotation><xsd:appinfo><a:displayName>Código SUNEDU del programa (P-code)</a:displayName><a:help>Código oficial del programa en el Registro Nacional de Grados y Títulos SUNEDU (ej. P30, P31, P143). IIA: Oracle LAMB DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_SUNEDU2. Single-value (programa de la matrícula vigente). PRINCIPAL desde 2026-08-09 (ADR-005 del tesauro): es el código con el que UPeU identifica el programa en TODOS sus sistemas — MidPoint, LDAP, Koha, Indico, InOut, RIMS, DW, SGC. Es el código que UPeU declaró ante SUNEDU en sus Formatos de Licenciamiento A4/A8. FUENTE: LookupTable program-pxx-byid (tesauro VocBench), NO DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_SUNEDU2 — ese campo es un correlativo interno que diverge del oficial en el posgrado (ADR-004). Medido sobre la matrícula 2026-2: Oracle da 73,18 % con 139 códigos equivocados; el tesauro da 88,44 % sin errores. OJO: el P-code NO es llave de unión entre sistemas (52 conceptos llevan dos códigos oficiales por recodificación vía resolución) — para empalmar se usa academicProgramUri.</a:help><a:indexed>true</a:indexed><a:displayOrder>515</a:displayOrder><a:valueEnumerationRef oid="4e7a9b13-5c26-4d80-91af-3b6e2c8d5017" type="c:LookupTableType"/></xsd:appinfo></xsd:annotation>
                     </xsd:element>
+
+                    <!-- ADR-062 (14-ago-2026): el IGA identifica el programa de TODO estudiante,
+                         este licenciado o no. 6.706 activos no tenian NINGUN identificador de
+                         programa -ni P-code ni URI- porque la tabla program-pxx-byid solo cubre
+                         los 188 programas licenciados. Ingles, Conservatorio, CEPRE y las
+                         diplomaturas quedaban invisibles para el sistema de identidad aunque
+                         Oracle si sabe en que programa estan.
+                         Que no necesiten P-code (Ley 30220 art. 46) no implica que el IGA pueda
+                         no saber nombrarlos: ese razonamiento es el que produjo el hueco de
+                         ou=org que dejo a 899 personas sin area en el aforo del CRAI.
+                         UNBOUNDED desde el principio: 90 estudiantes tienen doble matricula, y
+                         cambiar la cardinalidad despues crea un id nuevo en m_ext_item que PARTE
+                         los datos (paso con academicProgramSuneduCode: 29 personas ancladas al
+                         id viejo, 4 con el valor basura 'P' publicandose en LDAP).
+                         IIA: DAVID.ACAD_PROGRAMA_ESTUDIO.ID_PROGRAMA_ESTUDIO, via PROGRAM_CODES. -->
+                    <xsd:element name="academicProgramSourceId" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>ID de programa en la fuente</a:displayName><a:help>ID_PROGRAMA_ESTUDIO de Oracle LAMB. Presente para TODO estudiante con matrícula, tenga o no código SUNEDU. Multivalor: dobles matrículas.</a:help><a:indexed>true</a:indexed><a:displayOrder>437</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
                     <!-- academicProgramIneiCode: código INEI 2022 de 8 dígitos del programa de
                          estudio (ej. 31300211=Psicología, 91300071=Enfermería, 41300270=Administración).
                          Es el identificador NACIONAL canónico del programa según el clasificador
