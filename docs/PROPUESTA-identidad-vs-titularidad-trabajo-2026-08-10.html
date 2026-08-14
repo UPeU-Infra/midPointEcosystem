@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identidad de la persona vs. titularidad del trabajo — DTI UPeU</title>
+<style>
+  :root {
+    --paper: #f6f7f9;
+    --surface: #ffffff;
+    --surface-2: #eef1f5;
+    --ink: #11161d;
+    --ink-2: #4d5866;
+    --line: #dde2e9;
+    --accent: #15556f;
+    --accent-soft: #e6eef2;
+    --ok: #2c6b4f;
+    --warn: #8a5a12;
+    --danger: #9b3226;
+    --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0f1319;
+      --surface: #161c24;
+      --surface-2: #1c242e;
+      --ink: #e6eaf0;
+      --ink-2: #9aa6b5;
+      --line: #27303b;
+      --accent: #74b8d4;
+      --accent-soft: #14303d;
+      --ok: #6fb897;
+      --warn: #d9a441;
+      --danger: #e28579;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #0f1319;
+    --surface: #161c24;
+    --surface-2: #1c242e;
+    --ink: #e6eaf0;
+    --ink-2: #9aa6b5;
+    --line: #27303b;
+    --accent: #74b8d4;
+    --accent-soft: #14303d;
+    --ok: #6fb897;
+    --warn: #d9a441;
+    --danger: #e28579;
+  }
+  :root[data-theme="light"] {
+    --paper: #f6f7f9;
+    --surface: #ffffff;
+    --surface-2: #eef1f5;
+    --ink: #11161d;
+    --ink-2: #4d5866;
+    --line: #dde2e9;
+    --accent: #15556f;
+    --accent-soft: #e6eef2;
+    --ok: #2c6b4f;
+    --warn: #8a5a12;
+    --danger: #9b3226;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 1rem;
+    line-height: 1.65;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .page {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.25rem;
+  }
+
+  /* ---------- encabezado ---------- */
+  .doc-head { display: flex; flex-direction: column; gap: 1rem; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(1.75rem, 5.5vw, 2.4rem);
+    line-height: 1.15;
+    text-wrap: balance;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .meta {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.25rem 1rem;
+    font-size: 0.875rem;
+    color: var(--ink-2);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    padding: 0.9rem 0;
+  }
+  .meta dt { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; padding-top: 0.2rem; }
+  .meta dd { margin: 0; color: var(--ink); }
+
+  /* ---------- bloques ---------- */
+  section { display: flex; flex-direction: column; gap: 0.9rem; }
+  h2 {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-weight: 600;
+    line-height: 1.25;
+    margin: 0;
+    text-wrap: balance;
+    display: flex;
+    gap: 0.6rem;
+    align-items: baseline;
+  }
+  h2 .num {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    flex: none;
+  }
+  h3 {
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    font-weight: 650;
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+  p { margin: 0; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+  strong { font-weight: 650; }
+  code { font-family: var(--mono); font-size: 0.85em; background: var(--surface-2); padding: 0.1em 0.35em; border-radius: 3px; }
+
+  ol, ul { margin: 0; padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  li { padding-left: 0.15rem; }
+
+  /* ---------- veredicto ---------- */
+  .verdict {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .verdict .lede {
+    font-family: var(--serif);
+    font-size: 1.15rem;
+    line-height: 1.45;
+    margin: 0;
+  }
+  .quote {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--ink-2);
+    border-left: 2px solid var(--line);
+    padding-left: 1rem;
+    margin: 0;
+  }
+
+  /* ---------- fichas de evidencia ---------- */
+  .evidence { display: flex; flex-direction: column; gap: 0.75rem; }
+  .item {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .item .src {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--ink-2);
+    letter-spacing: 0.03em;
+    border-top: 1px dashed var(--line);
+    padding-top: 0.45rem;
+  }
+  .item .src b { color: var(--accent); font-weight: 600; }
+
+  /* ---------- capas ---------- */
+  .layers { display: flex; flex-direction: column; gap: 0.6rem; }
+  .layer {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.85rem 1rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.3rem 0.75rem;
+    align-items: start;
+  }
+  .layer h3 { grid-column: 1; }
+  .layer p { grid-column: 1 / -1; font-size: 0.9rem; color: var(--ink-2); }
+  .chip {
+    grid-column: 2; grid-row: 1;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    border: 1px solid currentColor;
+  }
+  .chip.stays { color: var(--ok); }
+  .chip.goes { color: var(--danger); }
+
+  /* ---------- riesgos ---------- */
+  .risks { display: flex; flex-direction: column; gap: 0.6rem; counter-reset: risk; }
+  .risk {
+    display: grid;
+    grid-template-columns: 1.6rem 1fr;
+    gap: 0.1rem 0.6rem;
+    border-left: 2px solid var(--danger);
+    padding: 0.5rem 0 0.5rem 0.85rem;
+  }
+  .risk::before {
+    counter-increment: risk;
+    content: counter(risk);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--danger);
+    padding-top: 0.15rem;
+  }
+  .risk h3 { grid-column: 2; }
+  .risk p { grid-column: 2; font-size: 0.92rem; color: var(--ink-2); }
+
+  /* ---------- pendiente ---------- */
+  .pending {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .pending .flag {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--warn);
+  }
+
+  /* ---------- fuentes ---------- */
+  .sources { font-size: 0.875rem; color: var(--ink-2); display: flex; flex-direction: column; gap: 0.7rem; }
+  .sources p { line-height: 1.55; }
+  .sources .label { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 1rem;
+    font-size: 0.8rem;
+    color: var(--ink-2);
+  }
+
+  @media (min-width: 40rem) {
+    .page { padding: 3.5rem 2rem 5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="doc-head">
+    <p class="eyebrow">DTI UPeU · Nota técnica</p>
+    <h1>Identidad de la persona frente a titularidad del trabajo</h1>
+    <dl class="meta">
+      <dt>Para</dt><dd>David Urquizo — DTI UPeU</dd>
+      <dt>De</dt><dd>Ing. Juan Alberto Sánchez — DTI / Infraestructura TI</dd>
+      <dt>Fecha</dt><dd>10 de agosto de 2026</dd>
+      <dt>Asunto</dt><dd>Cómo tratar puesto, rol, función y credencial de acceso en las plataformas institucionales (caso GLPI)</dd>
+    </dl>
+  </header>
+
+  <section>
+    <h2><span class="num">1</span> La preocupación planteada</h2>
+    <p class="quote">Si en la plataforma de un área se asignan tareas o procesos a una persona y esa persona cambia de área, no debería llevarse esas tareas o proyectos. Por eso convendría que el usuario se loguee con el correo de cargo: el correo es permanente y quien cambia es la persona.</p>
+    <p>La preocupación es correcta y el riesgo es real. La solución propuesta, sin embargo, resuelve el problema en la capa equivocada.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">2</span> Respuesta</h2>
+    <div class="verdict">
+      <p class="lede">La identidad y la credencial son siempre de la persona; el trabajo se asigna al <strong>grupo o equipo</strong>, no al individuo. Así nada se va con quien rota, y no se pierde trazabilidad.</p>
+      <p>El problema «si la persona se va, se lleva las tareas» solo se produce cuando el ticket se asigna únicamente a una persona. La causa no es la identidad: es una práctica de asignación mal configurada. GLPI e ITIL ya lo resuelven sin tocar el inicio de sesión.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">3</span> Evidencia — ITIL 4</h2>
+    <p>Fuente: <em>Incident Management — ITIL 4 Practice Guide</em>, AXELOS, 11 de enero de 2020. Documento de consulta, no redistribuible; se parafrasea su contenido.</p>
+    <div class="evidence">
+
+      <article class="item">
+        <h3>La propiedad se transfiere, y eso es parte del proceso</h3>
+        <p>Debe asegurarse la propiedad de cada incidente. Esa propiedad puede transferirse durante el manejo y la resolución, pero en todo momento debe existir una persona responsable.</p>
+        <p class="src"><b>§3</b> — proceso de manejo y resolución · <em>ITIL no exige un titular permanente: exige que el trabajo nunca quede huérfano y que la transferencia sea explícita.</em></p>
+      </article>
+
+      <article class="item">
+        <h3>El rol no es el puesto ni la persona</h3>
+        <p>Los roles no son cargos. Una persona puede asumir varios roles y un mismo rol puede estar asignado a varias personas.</p>
+        <p class="src"><b>§4.1</b> — roles y competencias · <em>Son tres capas distintas y deben modelarse por separado.</em></p>
+      </article>
+
+      <article class="item">
+        <h3>La permanencia se ancla al servicio, no a un buzón</h3>
+        <p>Cuando no existe un incident manager dedicado, la responsabilidad la asume la persona o el equipo responsable del elemento de configuración, servicio o producto: resource owner, service owner o product owner.</p>
+        <p class="src"><b>§4.1.1</b> — rol de incident manager · <em>Ese es el ancla estable que se busca.</em></p>
+      </article>
+
+      <article class="item">
+        <h3>Las reasignaciones son esperadas y se miden</h3>
+        <p>«Number of reassignments» figura como métrica oficial del factor de éxito «resolver incidentes rápida y eficientemente».</p>
+        <p class="src"><b>Tabla 2.2</b> — métricas de la práctica · <em>Se miden; no se evitan congelando la identidad.</em></p>
+      </article>
+
+      <article class="item">
+        <h3>Estructuras planas antes que escalado rígido</h3>
+        <p>Recomienda sustituir la estructura por niveles (L1/L2/L3) con colaboración horizontal, por ejemplo swarming, para acelerar la resolución y el flujo de información.</p>
+        <p class="src"><b>§4.2.1</b> — tiered versus flat team structures</p>
+      </article>
+
+      <article class="item">
+        <h3>Advertencia explícita contra el «héroe» individual</h3>
+        <p>Señala como disfunción recurrente la cultura donde se premia a quien resuelve solo: degrada la moral, la confianza del equipo y la propia práctica.</p>
+        <p class="src"><b>§4.2.2</b> — dinámica de equipo · <em>Anclar el trabajo a la persona produce exactamente ese efecto.</em></p>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">4</span> Evidencia — GLPI</h2>
+    <p>Verificado contra la documentación oficial del proyecto y su código fuente, agosto de 2026.</p>
+    <div class="evidence">
+
+      <article class="item">
+        <h3>Un ticket admite usuario, grupo y proveedor a la vez como «Assigned to»</h3>
+        <p>Los tres se cuentan de forma independiente sobre el mismo tipo de actor, de modo que un ticket puede tener al área como titular y al técnico como ejecutor simultáneamente.</p>
+        <p class="src"><b>Código</b> <code>src/CommonITILActor.php</code> — <code>REQUESTER=1</code>, <code>ASSIGN=2</code>, <code>OBSERVER=3</code>; <code>countUsers()</code> / <code>countGroups()</code> / <code>countSuppliers()</code></p>
+      </article>
+
+      <article class="item">
+        <h3>Los grupos tienen banderas de rol, incluida la de hacerse cargo de tareas</h3>
+        <p><code>is_assign</code> («Assigned to»), <code>is_task</code> («Can be in charge of a task»), <code>is_requester</code>, <code>is_watcher</code>, <code>is_manager</code>, <code>is_notify</code>.</p>
+        <p class="src"><b>Código</b> <code>src/Group.php</code> · <em>La tarea puede pertenecer al grupo, no solo al técnico.</em></p>
+      </article>
+
+      <article class="item">
+        <h3>Las tareas se asignan a un técnico, a un grupo, o quedan sin asignar</h3>
+        <p>La interfaz distingue el usuario asignado a la tarea del grupo asignado a la tarea.</p>
+        <p class="src"><b>Doc. oficial</b> — Task</p>
+      </article>
+
+      <article class="item">
+        <h3>Asignación automática al área, sin intervención del técnico</h3>
+        <p>Primero por el grupo técnico del activo asociado; si no lo hay, por el grupo técnico de la categoría del ticket. Las reglas de negocio pueden además fijar el grupo asignado según cualquier atributo del ticket.</p>
+        <p class="src"><b>Doc. oficial</b> — Business rules for tickets · Entities</p>
+      </article>
+
+      <article class="item">
+        <h3>En Proyectos, el equipo se compone también de grupos</h3>
+        <p>El equipo de un proyecto y el de cada tarea admite usuarios, grupos, proveedores y contactos.</p>
+        <p class="src"><b>Doc. oficial</b> — Projects</p>
+      </article>
+
+      <article class="item">
+        <h3>Al eliminar un usuario, los tickets se conservan</h3>
+        <p>Se retira la asociación del usuario, pero el registro del ticket permanece.</p>
+        <p class="src"><b>Doc. oficial</b> — Users</p>
+      </article>
+
+      <article class="item">
+        <h3>Existen mecanismos de reasignación y de suplencia</h3>
+        <p>Acción masiva «Add an actor» sobre tickets, cambios y problemas, sujeta al permiso de actualización; reglas de negocio; plugin Escalade. Para validaciones existen además los <em>sustitutos autorizados</em>, con rango de fechas configurable.</p>
+        <p class="src"><b>Código</b> <code>src/Ticket.php</code> (acción masiva <code>add_actor</code>) · <b>Doc. oficial</b> — Authorized substitutes</p>
+      </article>
+
+    </div>
+    <p><strong>Lectura:</strong> GLPI ya trae de fábrica todos los mecanismos para que el trabajo no dependa de la persona. No hace falta modificar el esquema de identidad.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">5</span> Evidencia — estándares de identidad y normativa</h2>
+    <div class="evidence">
+
+      <article class="item">
+        <h3>El identificador debe ser estable e independiente del negocio</h3>
+        <p>El <em>identifier</em> distingue unívocamente a la entidad dentro de un dominio; el correo es un atributo de contacto, no un identificador.</p>
+        <p class="src"><b>ISO/IEC 24760-1</b> §3.1.3</p>
+      </article>
+
+      <article class="item">
+        <h3>El identificador federado no es reasignable</h3>
+        <p><code>eduPersonPrincipalName</code> es de valor único y no reasignable. Un buzón que hereda el siguiente titular del cargo viola esa regla.</p>
+        <p class="src"><b>eduPerson 202208</b> — REFEDS / Internet2</p>
+      </article>
+
+      <article class="item">
+        <h3>Identidad única por persona y acceso trazable</h3>
+        <p>Una cuenta compartida por cargo elimina el no repudio y deja sin evidencia el control de accesos privilegiados.</p>
+        <p class="src"><b>ISO/IEC 27001:2022</b> — controles A.5.16 y A.8.2</p>
+      </article>
+
+      <article class="item">
+        <h3>En el modelo de identidad, el usuario es la persona física</h3>
+        <p>El usuario representa a una persona física; los roles pueden representar puestos de trabajo y responsabilidades. El cargo se modela como rol u organización, nunca como usuario.</p>
+        <p class="src"><b>R. Semančík et al.</b>, <em>Practical Identity Management with MidPoint</em> v2.3, Evolveum</p>
+      </article>
+
+      <article class="item">
+        <h3>El Estado autentica personas naturales, no buzones</h3>
+        <p>La plataforma nacional autentica a una persona natural identificada por su código único; el correo figura entre los atributos de contacto, no como identificador.</p>
+        <p class="src"><b>DS 029-2021-PCM</b> arts. 14.1 y 17 · <em>Obliga a entidades públicas; para UPeU es referencia de buena práctica.</em></p>
+      </article>
+
+      <article class="item">
+        <h3>El patrón correcto del buzón institucional ya está normado</h3>
+        <p>En la casilla electrónica de una persona jurídica accede el representante legal previa autenticación de <em>su</em> identidad personal, y puede delegar el acceso en otros representantes.</p>
+        <p class="src"><b>DS 029-2021-PCM</b> art. 57.2 · <em>Buzón institucional permanente, acceso con identidad personal delegada.</em></p>
+      </article>
+
+      <article class="item">
+        <h3>El tratamiento de datos personales exige trazabilidad individual</h3>
+        <p>Dato personal es toda información que identifica o hace identificable a una persona natural.</p>
+        <p class="src"><b>Ley 29733</b> art. 2.4</p>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">6</span> Qué se rompería con el inicio de sesión por correo de cargo</h2>
+    <div class="risks">
+      <div class="risk">
+        <h3>Auditoría</h3>
+        <p>El historial de GLPI registra el identificador de usuario. Con una cuenta compartida el registro diría «soporte@ cerró el ticket», nunca quién lo hizo. Se pierde el no repudio.</p>
+      </div>
+      <div class="risk">
+        <h3>Métricas ITIL inutilizables</h3>
+        <p>Tasa de resolución al primer contacto, carga por técnico, número de reasignaciones y planificación colapsan sobre un único usuario ficticio.</p>
+      </div>
+      <div class="risk">
+        <h3>Credenciales</h3>
+        <p>Contraseña compartida y sin segundo factor individual. La salida de una sola persona obliga a rotar la clave de toda el área.</p>
+      </div>
+      <div class="risk">
+        <h3>Gobierno de identidad</h3>
+        <p>Un cargo no tiene ciclo de vida —no ingresa ni egresa— ni correlaciona con Oracle LAMB. En el modelo canónico del IGA un cargo es una organización o un rol, nunca un usuario.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">7</span> Modelo propuesto: cuatro capas separadas</h2>
+    <div class="layers">
+
+      <article class="layer">
+        <h3>Persona</h3>
+        <span class="chip goes">Se va con la persona</span>
+        <p>Identidad y credencial. Usuario en MidPoint, con el código institucional como identificador e inicio de sesión por correo nominativo. Que se vaya es el comportamiento correcto.</p>
+      </article>
+
+      <article class="layer">
+        <h3>Puesto</h3>
+        <span class="chip stays">Permanece</span>
+        <p>El cargo formal. Organización en MidPoint con el titular vinculado como responsable; se apoya en el catálogo de posiciones ya levantado.</p>
+      </article>
+
+      <article class="layer">
+        <h3>Función o equipo</h3>
+        <span class="chip stays">Permanece</span>
+        <p>El grupo de trabajo operativo. Rol de negocio en MidPoint que se aprovisiona como grupo de GLPI.</p>
+      </article>
+
+      <article class="layer">
+        <h3>Trabajo</h3>
+        <span class="chip stays">Permanece</span>
+        <p>Tickets, tareas y proyectos. Asignados siempre al grupo como titular, con el técnico como ejecutor opcional. Al rotar la persona, el trabajo se queda en el grupo.</p>
+      </article>
+
+      <article class="layer">
+        <h3>Buzón de cargo</h3>
+        <span class="chip stays">Permanece</span>
+        <p>Buzones como soporte@ o admision@: se conservan como buzón compartido de la organización, con acceso delegado a sus titulares. Sirven para la comunicación externa estable, pero nunca son credencial de acceso.</p>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">8</span> Reglas operativas propuestas para GLPI</h2>
+    <ol>
+      <li><strong>Invariante:</strong> ningún ticket sin grupo asignado. El técnico individual es adicional, nunca sustituto del grupo.</li>
+      <li>Configurar grupo técnico por categoría y por activo, para que la asignación al área ocurra automáticamente.</li>
+      <li>Los grupos de GLPI se aprovisionan desde MidPoint como espejo de los roles de negocio; no se crean a mano.</li>
+      <li><strong>Procedimiento de rotación de área:</strong> MidPoint retira el rol de negocio y la persona sale del grupo; los tickets del grupo no se mueven. Paso complementario obligatorio: barrer los tickets donde figure como técnico individual y reasignarlos.</li>
+      <li>Configurar sustitutos autorizados durante la transición, para no bloquear validaciones pendientes.</li>
+      <li>Proyectos y tareas de proyecto: equipo por grupo, nunca por persona sola.</li>
+      <li>Indicadores de control: tickets con técnico pero sin grupo, que debe tender a cero, y número de reasignaciones.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2><span class="num">9</span> Pendiente de medición antes de implementar</h2>
+    <div class="pending">
+      <p class="flag">No medido todavía</p>
+      <p>No se pudo medir el estado actual: la API de GLPI DEV rechaza la conexión con <code>ERROR_NOT_ALLOWED_IP</code> —ve la dirección <code>192.168.15.166</code>—. Debe registrarse ese cliente API o ejecutarse la consulta desde la red interna. Con acceso corresponde medir tres cifras:</p>
+      <ul>
+        <li>porcentaje de tickets abiertos con grupo asignado frente a los que solo tienen técnico;</li>
+        <li>cuántos grupos tienen activas las banderas <code>is_assign</code> e <code>is_task</code>;</li>
+        <li>cuántas categorías tienen grupo técnico definido: si son pocas, la asignación automática hoy no está operando.</li>
+      </ul>
+      <p>Esas tres cifras determinan el tamaño real del problema y el esfuerzo de la corrección.</p>
+    </div>
+  </section>
+
+  <section class="sources">
+    <h2><span class="num">10</span> Fuentes</h2>
+    <p><span class="label">ITIL</span><br><em>Incident Management — ITIL 4 Practice Guide</em>, AXELOS, 2020: §3, §4.1, §4.1.1, §4.2.1, §4.2.2 y Tabla 2.2.</p>
+    <p><span class="label">GLPI · documentación oficial</span><br>
+      <a href="https://help.glpi-project.org/documentation/modules/assistance/actors">Defining actors and roles</a> ·
+      <a href="https://help.glpi-project.org/documentation/modules/administration/groups">Groups</a> ·
+      <a href="https://help.glpi-project.org/documentation/modules/administration/rules/ticketbusinessrules">Business rules for tickets</a> ·
+      <a href="https://help.glpi-project.org/documentation/modules/assistance/tabs/task">Task</a> ·
+      <a href="https://help.glpi-project.org/documentation/modules/tools/projects">Projects</a> ·
+      <a href="https://help.glpi-project.org/documentation/modules/administration/users">Users</a> ·
+      <a href="https://glpi-user-documentation.readthedocs.io/fr/master/modules/user-settings/authorized-substitutes.html">Authorized substitutes</a>
+    </p>
+    <p><span class="label">GLPI · código fuente</span><br>
+      <a href="https://github.com/glpi-project/glpi/blob/main/src/CommonITILActor.php">src/CommonITILActor.php</a> ·
+      <a href="https://github.com/glpi-project/glpi/blob/main/src/Group.php">src/Group.php</a> ·
+      <a href="https://github.com/glpi-project/glpi/blob/main/src/Ticket.php">src/Ticket.php</a>
+    </p>
+    <p><span class="label">Estándares</span><br>ISO/IEC 24760-1:2019 · ISO/IEC 27001:2022 (A.5.16, A.8.2) · eduPerson 202208, REFEDS/Internet2 · R. Semančík et al., <em>Practical Identity Management with MidPoint</em> v2.3, Evolveum.</p>
+    <p><span class="label">Normativa peruana</span><br>DS 029-2021-PCM, Reglamento de la Ley de Gobierno Digital, arts. 14, 17, 53 y 57 · Ley 29733, Ley de Protección de Datos Personales, art. 2.4.</p>
+    <p><span class="label">Decisiones internas concordantes</span><br>Gobernanza de correo institucional §1.2 e Identificador canónico de persona, repositorio <code>midPointEcosystem</code>.</p>
+  </section>
+
+  <footer>
+    Documento interno de trabajo — DTI / Infraestructura TI, Universidad Peruana Unión. Preparado para discusión técnica; no constituye una decisión aprobada.
+  </footer>
+
+</div>
+</body>
+</html>
