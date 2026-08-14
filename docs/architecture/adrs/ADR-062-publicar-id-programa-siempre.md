@@ -92,6 +92,28 @@ publica el programa").
 Tampoco resuelve que esos 106 programas tengan **URI en el tesauro**: eso es trabajo de
 VocBench, y ahora con el criterio correcto —cubrir el catálogo entero, no solo el A4/A8.
 
+### Qué le cambia esto a VocBench
+
+**No lo sustituye.** `academicProgramSourceId` es un número interno de Oracle: no tiene
+semántica, ni jerarquía, ni enlace al código SUNEDU. La URI del tesauro sigue siendo lo único
+que da significado. Este ADR llena el hueco de **identidad**, no el de **vocabulario**.
+
+Le cambia tres cosas:
+
+1. **Le da su lista de trabajo real, completa, por primera vez.** El tesauro se pobló con el
+   criterio de Calidad —los 188 licenciados—. Con el ID publicado se puede medir exactamente
+   qué programas de la fuente no tienen concepto: hoy son **106**.
+2. **Deja de ser un punto único de fallo.** Hoy, si un programa no está en el tesauro, la
+   persona se queda sin **nada**. Después se queda sin URI, pero con identificador.
+3. **No le añade trabajo nuevo por este cambio.** El vínculo programa↔concepto vive en la
+   LookupTable de MidPoint, no en el tesauro —InOut lo verificó: ninguno de los 440 conceptos
+   declara un predicado con el id de LAMB—. Un concepto nuevo se engancha por ID, como quedó
+   tras la corrección del 5-ago.
+
+Queda una **decisión de producto, no técnica**: si el tesauro institucional debe incluir
+programas no licenciados (Idiomas, CEPRE, Conservatorio, diplomaturas). Este ADR no la fuerza
+— funciona igual con o sin ellos.
+
 ## ⚠️ Posible drift repo↔PROD que hay que comprobar antes de aplicar
 
 En el repo, el inbound vecino `program-id-to-liveProgramUriStudent` **sigue usando
