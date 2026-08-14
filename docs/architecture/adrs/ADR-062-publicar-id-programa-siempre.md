@@ -1,7 +1,7 @@
 # ADR-062 — El IGA identifica el programa de TODO estudiante, esté licenciado o no
 
 **Fecha:** 14-ago-2026
-**Estado:** propuesto — preparado, pendiente de simulación y canario
+**Estado:** **APLICADO Y VERIFICADO EN PROD** (14-ago-2026) — schema v32, resource v199
 **Ámbito:** schema canónico + resource Estudiantes
 **Relacionado:** [`ADR-005`](../../HALLAZGO-programas-academicos-vocbench-2026-08-05.md) (P-code al lado de la URI)
 
@@ -206,3 +206,51 @@ Sin este invariante, dar identificador a los 6.706 **quita la presión de arregl
 vocabulario**: es la forma más común en que un workaround se vuelve permanente. El propio libro
 llama *workaround* —no solución— a arreglar en MidPoint lo que falta en la fuente
 (*HR Feed Recommendations*, p. 175).
+
+
+---
+
+## Resultado de la ejecución (14-ago-2026)
+
+**Schema canónico** `e800335c-9ca1-4a2d-b4ca-e06f6db42693`: **v31 → v32**, **96 → 97
+elementos**. `PATCH replace` de `c:definition` construido **desde el XML de PROD**, no desde el
+repo — la precaución funcionó: `campusEgreso`, `suneduLocalCode`, `academicProgramSuneduCode`,
+`academicProgramUri` y `externalSystemId` siguen los cinco en su sitio. El item nació
+`maxOccurs="unbounded"`, verificado en el objeto ya desplegado.
+
+**Resource Estudiantes** `6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22`: **v198 → v199** por
+`PATCH add` del `<inbound>` en `schemaHandling/objectType[3297]/attribute[3323]`. Invariantes
+antes/después: schema cacheado **25 = 25** `xsd:element`, `schemaHandling` 2 = 2,
+`connectorRef` 1 = 1, `capabilities` 4 = 4. **Test connection: todo `success`.**
+
+### Los tres canarios
+
+| | Sujeto | `academicProgramSourceId` | `academicProgramSuneduCode` | Veredicto |
+|---|---|---|---|---|
+| **A** — sin P-code | `324111728` | **`1296`** | — | ✅ gana identificador donde no tenía **nada** |
+| **B** — doble matrícula | `202612723` | **`['320','893']`** | `['P14','P97']` | ✅ el multivalor funciona |
+| **C** — control negativo | `202614474` | `['893','1260']` | `P143` **sin cambio** | ✅ no pierde nada |
+
+El canario C trae además una confirmación no buscada: tiene **dos** programas en la fuente y
+**un solo** P-code. Su segunda matrícula era invisible para el IGA hasta hoy — que es
+exactamente lo que este ADR existe para corregir.
+
+**No se ha lanzado recompute masivo.** El item queda poblándose por la reconciliación diaria.
+Motivo añadido al ya previsto: la corrida de hoy cerró con **9.962 fallos de aprovisionamiento
+a Koha** (`ConnectorException`, HTTP 400/409 del conector), y no procede añadir carga hasta
+que eso se entienda.
+
+## Drift repo↔PROD: CONFIRMADO y aún sin resolver
+
+Lo que el ADR marcaba como sospecha quedó medido al descargar el resource:
+
+| | Repo | PROD (v199) |
+|---|---|---|
+| id del `<attribute>` de `PROGRAM_CODES` | 3324 | **3323** |
+| Nombre del inbound de la URI | `program-id-to-liveProgramUriStudent` | **`program-id-to-academicProgramUri`** |
+| Expresión de ese inbound | **`<function>`** | **`<script>`** |
+
+PROD lleva la corrección del 5-ago; **el repo conserva la versión que revienta con source
+multivalor**. Este despliegue no lo tocó (fue un `add` de un inbound nuevo), pero **cualquier
+despliegue del atributo entero desde el repo reintroduciría la regresión**. Pendiente:
+sincronizar el repo con PROD.
