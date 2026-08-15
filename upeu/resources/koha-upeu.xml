@@ -1304,11 +1304,14 @@ if (aff == 'student') {
     def lvl = level.replaceAll('[\\s_-]+', '');
     if (lvl == 'posgrado' || lvl == 'maestria' || lvl == 'maestr\u00eda' || lvl == 'doctorado' || lvl == 'segundaespecialidad' || lvl == 'especializacion' || lvl == 'especializaci\u00f3n') {
         out &lt;&lt; '{"type":"STUDY_LEVEL","value":"posgrado"}';
-    } else if (lvl == 'pregrado' || lvl == 'idiomas') {
-        // 2026-08-15: IDIOMAS ES PREGRADO, por decision de producto. Antes caia al else y
-        // acababa en pregrado igual, pero por accidente: un default, no una decision. Se
-        // declara aqui para que nadie lo "arregle" mas adelante y mueva a 35 personas sin
-        // saberlo. Koha solo admite dos casillas, y esta es la que le corresponde.
+    } else if (lvl == 'pregrado' || lvl == 'idiomas' || lvl == 'cepre' || lvl == 'tesis' || lvl.startsWith('conservatorio')) {
+        // 2026-08-15: los NIVELES NO-GRADO SON PREGRADO en Koha, por decision de producto.
+        // Antes caian al else y acababan en pregrado igual, pero por accidente: un default,
+        // no una decision. Se declaran aqui para que nadie lo "arregle" mas adelante y mueva
+        // a 642 personas sin saberlo -Idiomas 210, CEPRE 248, Conservatorio 108, Tesis 41
+        // (medido el 15-ago-2026)-. Koha solo admite dos casillas y esta es la que les toca.
+        // startsWith para Conservatorio: el valor real es 'Conservatorio de Musica' y la
+        // tilde de 'Musica' sobrevive a la normalizacion de espacios.
         out &lt;&lt; '{"type":"STUDY_LEVEL","value":"pregrado"}';
     } else {
         // SIN DECIDIR: CEPRE (248), Conservatorio de Musica (108), Tesis (41). Caen aqui y
