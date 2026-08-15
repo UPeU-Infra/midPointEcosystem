@@ -1187,162 +1187,87 @@ return code ? code : null
                     </expression>
                 </outbound>
             </attribute>
-            <attribute>
+            <attribute id="15">
                 <ref>ri:category_id</ref>
                 <displayName>Categoría Patrón Koha</displayName>
-                <!-- ============================================================
-                     GOBIERNO IGA → KOHA — Diseño B (eduPerson 202208 literal)
-                     Decisión APROBADA: docs/DECISION-eduperson-koha-categorycodes.md
-                     Implementada 2026-05-30 (reactivación Koha+LDAP).
-
-                     category_id = primaryAffiliation MidPoint, literal lowercase,
-                     vocabulario eduPerson 202208:
-                       faculty | staff | student | alum | affiliate | local
-
-                     MidPoint es la ÚNICA fuente de verdad. Koha es una PROYECCIÓN,
-                     no un eje paralelo de gobernanza. Si MidPoint dice 'faculty',
-                     Koha dice 'faculty'. Las 6 categorías ya existen en Koha
-                     (verificado 2026-05-30: faculty/staff/student/alum/affiliate/local).
-
-                     EJES ORTOGONALES — NO van en category_id:
-                       - Nivel académico (pregrado/posgrado) → extended_attribute STUDY_LEVEL
-                       - Investigador DGI/RENACYT             → extended_attribute RESEARCHER=Y
-                                                                 (rol AR-Koha-Investigador)
-                       - Lifecycle jubilado                   → primaryAffiliation=alum,
-                                                                 derivado por el template (J3)
-                                                                 cuando motivoCese=jubilacion y
-                                                                 no hay afiliación viva mayor.
-                                                                 NO es categoría Koha.
-                       - Área CRAI bibliotecario              → extended_attribute AREA=CRAI
-                                                                 (rol AR-Koha-Librarian)
-
-                     Mapeo employee→staff: 'employee' no es categoría Koha; eduPerson
-                     trata staff/employee como personal → 'staff'.
-
-                     strength=strong: re-evalúa en cada recompute, fuente única.
-                     NO hay overrides por-rol de category_id (Diseño B los eliminó:
-                     INVESTI→extended_attribute, JUBILADO→alum vía template).
-                     ============================================================ -->
                 <outbound>
                     <name>category-id-from-primary-affiliation</name>
                     <strength>strong</strength>
                     <source>
-                        <path>$focus/extension/sb:primaryAffiliation</path>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:primaryAffiliation</path>
                     </source>
                     <expression>
                         <script>
                             <code>
-                                def specialOid = 'd698dc99-1a8c-479c-9eec-2a0214fdbf04';
-                                def isSuperadmin = focus?.assignment?.any { it?.targetRef?.oid == specialOid };
-                                if (isSuperadmin) return 'LOCAL';
-                                def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : '';
-                                if (aff == '') return null;
-                                if (aff == 'employee') return 'staff';
-                                // vocabulario eduPerson 202208 literal: faculty/staff/student/alum/affiliate
-                                if (aff == 'faculty' || aff == 'staff' || aff == 'student' || aff == 'alum' || aff == 'affiliate') return aff;
-                                // cuentas sistema u otros → local (convención local explícita)
-                                return 'local';
-                            </code>
+// 2026-08-14 - LA CONDICION NO PODIA FUNCIONAR; SE RETIRA.
+//
+// El 12-ago se puso aqui una condition con la intencion de "no tocar el atributo cuando
+// la persona pierde todos sus vinculos". Con ESTE conector eso es imposible: actualiza
+// con PUT (reemplazo total del recurso, 87.621 PUT en un solo log), asi que SIEMPRE tiene
+// que enviar category_id. Si el mapping no le da valor, envia null y Koha responde 400
+// con "Expected string - got null." en /body/category_id. La condicion, pensada para
+// evitar el null, lo garantizaba.
+//
+// Medido el 14-ago: 10.954 de 11.223 errores de la reconciliacion eran ESE error, y 8.057
+// personas SIN NINGUN VINCULO conservaban carnet vigente -7.869 de ellas hasta 2027-08-12-
+// porque el PUT que debia expirarlas fallaba entero. El expiry_date correcto ya estaba
+// calculado: viajaba en el mismo PUT y se perdia con el.
+//
+// Regla: NUNCA devolver null. Sin afiliacion viva se conserva la categoria que el patron
+// ya tiene, de modo que el PUT sale valido y la baja la materializa expiry_date, que es la
+// via correcta - la categoria nunca fue la forma de retirar el acceso.
+def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''
+if (aff != '') {
+    if (aff == 'employee') return 'staff'
+    if (aff == 'faculty' || aff == 'staff' || aff == 'student' || aff == 'alum' || aff == 'affiliate') return aff
+    return 'local'
+}
+def actual = null
+try { actual = basic.getAttributeValue(shadow, 'category_id') } catch (Exception e) { }
+if (actual == null) {
+    try { actual = basic.getAttributeValue(projection, 'category_id') } catch (Exception e) { }
+}
+if (actual == null) return null
+def s = actual.toString().trim()
+return s ? s : null
+          </code>
                         </script>
                     </expression>
-                                    <condition>
-                        <script>
-                            <code>
-// 2026-08-12: sin esta condicion, quien pierde TODOS sus vinculos hace que el mapping
-// devuelva null y Koha rechace el PUT con 400 "Expected string - got null" en
-// /body/category_id. Cada baja generaba un error y un reintento. La categoria NO es la
-// forma de retirar el acceso: si no hay afiliacion no se toca el atributo, y la baja se
-// materializa via expiry_date.
-primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim() != ''
-                            </code>
-                        </script>
-                    </condition>
-</outbound>
+                </outbound>
             </attribute>
-            <attribute>
+            <attribute id="16">
                 <ref>ri:extended_attributes</ref>
                 <displayName>Atributos extendidos de patrón (pares JSON)</displayName>
-                <!-- ============================================================
-                     GOBIERNO IGA → KOHA — extended_attributes
-                     Atributo multivaluado. Cada valor es un string JSON
-                     {"type":"CODE","value":"..."} (formato del conector v1.3.0,
-                     PatronMapper.convertExtendedAttributes*).
-
-                     MidPoint NO es dueño del atributo completo: es dueño SOLO de
-                     los pares gobernados (AREA, CRAI_TIER, RESEARCHER,
-                     STUDY_LEVEL, STUDYCYCLE).
-
-                     Mecanismo (FIX 2026-06-10, ver nota junto a <tolerant>):
-                     tolerant=false           → pares gobernados: los producidos
-                                                por mappings/constructions se
-                                                añaden y conservan; los stale se
-                                                borran granularmente (range).
-                     tolerantValuePattern     → WHITELIST: todo par cuyo type NO
-                                                sea gobernado (DNI, SEDE,
-                                                TIPO_VINC, ORCID, COD_UPEU,
-                                                SHOW_BCODE, etc.) se preserva
-                                                intacto: MidPoint nunca lo borra.
-                                                CRAI_TIER añadido 2026-05-22
-                                                (niveles de acceso CRAI, Fase A).
-
-                     El conector declara addRemoveAttributeValues=true → los deltas
-                     se aplican como add/remove-value, nunca como replace total.
-
-                     La construction que PRODUCE el par AREA vive en el Application
-                     Role AR-Koha-Librarian (no aquí). El par RESEARCHER lo produce
-                     AR-Koha-Investigador. El par STUDY_LEVEL lo produce el outbound
-                     de abajo (Diseño B: nivel académico fuera de category_id).
-                     ============================================================ -->
-                <!-- Diseño B (2026-05-30): nivel académico pregrado/posgrado como par
-                     {"type":"STUDY_LEVEL","value":"pregrado|posgrado"}. Solo students;
-                     null para el resto. Gobernado por intolerantValuePattern STUDY_LEVEL. -->
-                <!-- outbound ÚNICO (single-valued en MidPoint) que produce una LISTA
-                     de pares JSON para este atributo multivalor:
-                       1. {"type":"STUDY_LEVEL","value":"pregrado|posgrado"} (solo students)
-                          — gobernado destructivamente por intolerantValuePattern.
-                       2. {"type":"DNI","value":"<dni>"} desde upeu:lambDocNum (2026-06-05)
-                          — ⚠️ HISTÓRICO (v1.3.10, YA NO APLICA): este par era imprescindible
-                          para el adopt-by-DNI, donde ante un 409 el conector resolvía el
-                          borrower legacy por cardnumber=DNI con _match=exact y lo adoptaba.
-                          **El conector v1.3.13 (045500c3), al que apunta el connectorRef,
-                          RETIRÓ ese mecanismo en sus dos capas** (REST PatronService y JDBC
-                          KohaConnector, commit e384c82). El 409 se resuelve ahora solo por
-                          cardnumber → userid → email; si ninguno matchea, es irrecuperable.
-                          ESTADO ACTUAL DEL PAR DNI: se sigue proyectando pero es
-                          **INFORMATIVO** (coherente con la línea 29 de este archivo). Ningún
-                          camino del conector lo consume. NO intolerante → tolerado (MidPoint
-                          lo añade pero no lo gobierna destructivamente).
-                          Si se decide dejar de emitirlo, retirar este par del outbound —
-                          pero requiere confirmar antes que ningún consumidor de Koha
-                          (reportes, circulación) lo lea del lado biblioteca. -->
+                <tolerant>false</tolerant>
+                <tolerantValuePattern>.*"type"\s*:\s*"(?!(AREA|CRAI_TIER|RESEARCHER|STUDY_LEVEL|STUDYCYCLE|COD_UPEU)").*</tolerantValuePattern>
                 <outbound>
                     <name>extended-attributes-study-level-and-dni</name>
                     <strength>strong</strength>
                     <source>
-                        <path>$focus/extension/sb:primaryAffiliation</path>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:primaryAffiliation</path>
                     </source>
                     <source>
-                        <path>$focus/extension/sb:studyLevel</path>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:studyLevel</path>
                     </source>
                     <source>
-                        <path>$focus/extension/sb:studentCycle</path>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:studentCycle</path>
                     </source>
                     <source>
-                        <path>$focus/extension/upeu:lambDocNum</path>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:lambDocNum</path>
                     </source>
                     <source>
-                        <path>$focus/extension/sb:institutionalCode</path>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:institutionalCode</path>
                     </source>
                     <expression>
                         <script>
-                            <code><![CDATA[
+                            <code>
 // ===================================================================
 // FIX 2026-06-09 (provenance-binding): leer primaryAffiliation,
 // studyLevel y studentCycle vía basic.getExtensionPropertyValue(s)
 // en vez de las variables-source.
 //
 // CAUSA RAÍZ: estos items del foco llevan value-metadata/provenance
-// (se serializan con <_value>...</_value><_metadata><provenance>...).
+// (se serializan con &lt;_value&gt;...&lt;/_value&gt;&lt;_metadata&gt;&lt;provenance&gt;...).
 // La binding de la variable-source en el script entrega el contenedor
 // metadata-aware, NO la String plana → basic.stringify(primaryAffiliation)
 // no daba 'student' → el guard aff=='student' fallaba → bloque vacío
@@ -1351,16 +1276,16 @@ primaryAffiliation != null &amp;&amp; basic.stringify(primaryAffiliation).trim()
 // basic.getExtensionPropertyValue(focus, QName) SÍ dereferencia el valor
 // real plano aunque tenga provenance — mismo patrón que los outbounds
 // statistics1/statistics2 que SÍ funcionan (FCS/P33 escritos a 24k).
-// Las <source> se conservan declaradas (no estorban; documentan deps).
+// Las &lt;source&gt; se conservan declaradas (no estorban; documentan deps).
 // ===================================================================
 def NS_SB = 'urn:sciback:midpoint:person';
-def qn = { n -> new javax.xml.namespace.QName(NS_SB, n) };
+def qn = { n -&gt; new javax.xml.namespace.QName(NS_SB, n) };
 def out = [];
 if (focus == null) return out;
 
 // par STUDY_LEVEL (solo students). Resuelve por studyLevel GRANULAR
 // (fuente única de nivel, derivada de la carrera principal). 2026-06-09:
-// ELIMINADO el fallback maxCycle>=7 (proxy frágil que marcaba posgrado a
+// ELIMINADO el fallback maxCycle&gt;=7 (proxy frágil que marcaba posgrado a
 // pregrados de ciclo alto). Koha colapsa el nivel granular a 2 buckets:
 // posgrado | pregrado.
 def affRaw = basic.getExtensionPropertyValue(focus, qn('primaryAffiliation'));
@@ -1368,16 +1293,31 @@ def aff = affRaw != null ? affRaw.toString().trim().toLowerCase() : '';
 if (aff == 'student') {
     def levelRaw = basic.getExtensionPropertyValue(focus, qn('studyLevel'));
     def level = levelRaw != null ? levelRaw.toString().trim().toLowerCase() : '';
-    if (level == 'posgrado' || level == 'maestria' || level == 'doctorado' || level == 'segunda-especialidad' || level == 'especializacion') {
-        out << '{"type":"STUDY_LEVEL","value":"posgrado"}';
-    } else if (level == 'pregrado') {
-        out << '{"type":"STUDY_LEVEL","value":"pregrado"}';
+    // 2026-08-14 - NORMALIZAR ANTES DE COMPARAR.
+    // El valor real del item es 'Segunda Especialidad' (con ESPACIO); aqui se comparaba
+    // con 'segunda-especialidad' (con GUION), asi que no matcheaba y caia al else, cuyo
+    // default es 'pregrado'. Resultado: 762 personas de Segunda Especialidad -que es
+    // posgrado por definicion- clasificadas como pregrado. 74 ya estaban degradadas en
+    // Koha; a las otras 1.252 las salvo por accidente el 409 del conector, que rechaza
+    // "more than one non-repeatable attribute" cuando el valor cambia. Un guion.
+    // Se normalizan espacios, guiones y guiones bajos, de modo que ambas grafias entran.
+    def lvl = level.replaceAll('[\\s_-]+', '');
+    if (lvl == 'posgrado' || lvl == 'maestria' || lvl == 'maestr\u00eda' || lvl == 'doctorado' || lvl == 'segundaespecialidad' || lvl == 'especializacion' || lvl == 'especializaci\u00f3n') {
+        out &lt;&lt; '{"type":"STUDY_LEVEL","value":"posgrado"}';
+    } else if (lvl == 'pregrado' || lvl == 'idiomas') {
+        // 2026-08-15: IDIOMAS ES PREGRADO, por decision de producto. Antes caia al else y
+        // acababa en pregrado igual, pero por accidente: un default, no una decision. Se
+        // declara aqui para que nadie lo "arregle" mas adelante y mueva a 35 personas sin
+        // saberlo. Koha solo admite dos casillas, y esta es la que le corresponde.
+        out &lt;&lt; '{"type":"STUDY_LEVEL","value":"pregrado"}';
     } else {
-        // niveles no-grado (idiomas, cepre, diplomatura, etc.) o vacío:
+        // SIN DECIDIR: CEPRE (248), Conservatorio de Musica (108), Tesis (41). Caen aqui y
+        // se les escribe pregrado por defecto. Mientras no se decidan, cada vez que su valor
+        // cambie en Koha el conector chocara con el 409 de atributo no repetible.
         // default conservador pregrado + log para visibilidad de datos.
-        if (level) log.warn("Koha STUDY_LEVEL: studyLevel no-grado '{}' en {} -> default pregrado", level, focus?.name);
-        else log.warn("Koha STUDY_LEVEL: studyLevel vacio en student {} -> default pregrado", focus?.name);
-        out << '{"type":"STUDY_LEVEL","value":"pregrado"}';
+        if (level) log.warn("Koha STUDY_LEVEL: studyLevel no-grado '{}' en {} -&gt; default pregrado", level, focus?.name);
+        else log.warn("Koha STUDY_LEVEL: studyLevel vacio en student {} -&gt; default pregrado", focus?.name);
+        out &lt;&lt; '{"type":"STUDY_LEVEL","value":"pregrado"}';
     }
     // pares STUDYCYCLE (uno por ciclo vigente, multivalor). 2026-06-09:
     // ciclo de estudio canónico (sb:studentCycle, multivalor: regular=1
@@ -1387,9 +1327,9 @@ if (aff == 'student') {
     // añade los vigentes y remueve los viejos. Solo students.
     def cyclesRaw = basic.getExtensionPropertyValues(focus, qn('studentCycle'));
     def cycles = (cyclesRaw instanceof Collection) ? cyclesRaw : (cyclesRaw != null ? [cyclesRaw] : []);
-    cycles.each { c ->
+    cycles.each { c -&gt;
         def cyc = c != null ? c.toString().trim() : '';
-        if (cyc) out << '{"type":"STUDYCYCLE","value":"' + cyc + '"}';
+        if (cyc) out &lt;&lt; '{"type":"STUDYCYCLE","value":"' + cyc + '"}';
     }
 }
 // par COD_UPEU (P1 D-11.bis): código universitario legible. Fuente
@@ -1398,48 +1338,17 @@ if (aff == 'student') {
 // GOBERNADO (ver tolerantValuePattern): MidPoint lo mantiene en sync.
 def codRaw = basic.getExtensionPropertyValue(focus, qn('institutionalCode'));
 def cod = codRaw != null ? codRaw.toString().trim() : (focus?.name != null ? focus.name.toString().trim() : '');
-if (cod) out << '{"type":"COD_UPEU","value":"' + cod + '"}';
+if (cod) out &lt;&lt; '{"type":"COD_UPEU","value":"' + cod + '"}';
 // par DNI (P1): AHORA INFORMATIVO. El conector nuevo retiró el adopt-by-DNI
 // (D-14: instancia consolidada arranca sin borrowers legacy; la correlación
 // es cardnumber==externalSystemId). upeu:lambDocNum es valor plano.
 def dni = lambDocNum != null ? basic.stringify(lambDocNum).trim() : '';
-if (dni ==~ /^\d{8}$/) out << '{"type":"DNI","value":"' + dni + '"}';
+if (dni ==~ /^\d{8}$/) out &lt;&lt; '{"type":"DNI","value":"' + dni + '"}';
 return out;
-                            ]]></code>
+                            </code>
                         </script>
                     </expression>
                 </outbound>
-                <!-- ============================================================
-                     FIX 2026-06-10 (causa raíz delta-tragado, TRACE projector):
-                     tolerant=true + intolerantValuePattern ROMPÍA el provisioning
-                     de los pares gobernados. ReconciliationProcessor evalúa sobre
-                     el objeto NEW (que ya incluye el ADD pendiente del strong
-                     mapping): la fase de tolerancia marca DELETE de TODO valor
-                     que matchee el patrón intolerante SIN eximir los valores
-                     producidos por los propios mappings ("reconciliation will
-                     DELETE value ... because it has matched with intolerant
-                     pattern"). El DELETE se traga contra el ADD pendiente →
-                     delta neto VACÍO → STUDY_LEVEL/STUDYCYCLE jamás llegaban a
-                     Koha (también cancelaba deltas explícitos vía REST).
-
-                     Mecanismo correcto (canónico): tolerant=false +
-                     tolerantValuePattern WHITELIST de los tipos NO gobernados.
-                     La ruta non-tolerant del ReconciliationProcessor SÍ exime
-                     los valores presentes en las salidas de mappings (shouldBe):
-                       - pares gobernados vigentes (AREA/CRAI_TIER/RESEARCHER/
-                         STUDY_LEVEL/STUDYCYCLE producidos por mappings) → se
-                         AÑADEN y se conservan;
-                       - pares gobernados stale (no producidos ya por ningún
-                         mapping/construction) → DELETE granular (range);
-                       - cualquier otro type (DNI, SEDE, TIPO_VINC, ORCID,
-                         COD_UPEU, SHOW_BCODE, futuros) → tolerado por el
-                         patrón whitelist, MidPoint nunca los borra.
-                     ============================================================ -->
-                <tolerant>false</tolerant>
-                <!-- P1: COD_UPEU añadido al grupo GOBERNADO (negative lookahead) → MidPoint
-                     lo mantiene en sync (añade el vigente, remueve stale). DNI NO se gobierna
-                     (queda tolerado/preservado, informativo). -->
-                <tolerantValuePattern>.*"type"\s*:\s*"(?!(AREA|CRAI_TIER|RESEARCHER|STUDY_LEVEL|STUDYCYCLE|COD_UPEU)").*</tolerantValuePattern>
             </attribute>
             <attribute>
                 <ref>ri:library_id</ref>
@@ -1615,49 +1524,24 @@ return []
                     </expression>
                 </outbound>
             </attribute>
-            <attribute>
+            <attribute id="18">
                 <ref>ri:expiry_date</ref>
                 <displayName>Fecha de Expiración</displayName>
-                <!-- GUARD #1 (null-guard contra blanqueo): tolerant=true.
-                     Con strength=strong, un mapping cuyo output set es VACIO (return null,
-                     ambas termination ausentes) seria autoritativo sobre su rango y BORRARIA
-                     el expiry_date existente. tolerant=true hace que valores fuera del rango
-                     emitido NO se eliminen => si no hay valor calculado, no se toca el expiry
-                     vigente de la cuenta. El script ademas retorna null (no cadena vacia). -->
                 <tolerant>true</tolerant>
                 <outbound>
                     <name>expiry-date-outbound</name>
                     <strength>strong</strength>
-                    <!-- Expiry efectivo = MAX de las fechas de término por-IIA de las afiliaciones vivas.
-                         terminationDate          = IIA Trabajadores (FEC_TERMINO del contrato UPeU).
-                         terminationDateStudent   = IIA Estudiantes  (MAX FECHA_FIN matrícula vigente).
-                         Cada uno es single-writer (canónico §1.3) -> sin colisión dual-strong en focos
-                         employee+student. Tomamos el mayor: una persona con empleo y matrícula vigentes
-                         debe expirar en la cuenta Koha por la afiliación que dure más. Fechas YYYY-MM-DD
-                         comparan lexicográfico == cronológico. null si ninguna afiliación viva.
-
-                         strong (2026-06-01d): el delta-based 'normal' no empujaba el expiry
-                         vencido cuando el shadow ya tenia un valor stale. strong fuerza recompute
-                         del atributo para imponer la fecha de politica correcta. Aprobado con 2 guards.
-
-                         GUARD #2 (no colisión con archivado leaver): condition exige afiliación
-                         VIVA (worker o student). Para leavers (sin afiliación viva) este mapping
-                         NO participa => el path de archivado gobierna: administrativeStatus=DISABLED
-                         que el conector v1.3.x traduce a expiry_date=ayer + card_lost=true. Asi el
-                         archivado GANA inequivocamente sobre expiry_date y no hay dos writers strong
-                         colisionando sobre el mismo campo Koha. Para cuentas con afiliación viva,
-                         manda el MAX(termination). suma-nunca-resta intacto. -->
                     <source>
-                        <path>$focus/extension/sb:terminationDate</path>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:terminationDate</path>
                     </source>
                     <source>
-                        <path>$focus/extension/sb:terminationDateStudent</path>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:terminationDateStudent</path>
                     </source>
                     <source>
-                        <path>$focus/extension/sb:liveAffiliationWorker</path>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationWorker</path>
                     </source>
                     <source>
-                        <path>$focus/extension/sb:liveAffiliationStudent</path>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationStudent</path>
                     </source>
                     <source>
                         <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationAlum</path>
@@ -1668,17 +1552,18 @@ return []
 // Expiry efectivo del carnet de biblioteca.
 //
 // 2026-08-12 — SIN VINCULO, EL CARNET EXPIRA.
-// Antes llevaba una condition (liveAffiliationWorker != null || liveAffiliationStudent
-// != null) que desactivaba el mapping justo cuando la persona causaba baja: la ultima
-// fecha calculada -hoy+12 meses- quedaba congelada y el carnet seguia vivo un anho mas.
+// Antes este mapping llevaba una condition (liveAffiliationWorker != null ||
+// liveAffiliationStudent != null) que lo desactivaba justo cuando la persona
+// causaba baja: la ultima fecha calculada -hoy+12 meses- quedaba congelada y
+// el carnet seguia vivo un anho mas sin vinculo que lo sostuviera.
 // Medido: 702 personas sin ninguno de los tres vinculos con cuenta en Koha.
 //
-// Ahora se evalua SIEMPRE y decide:
-//   sin ningun vinculo -> expira con su ultima fecha real (o hoy si no hay)
-//   con algun vinculo  -> comportamiento previo, con holgura de 12 meses
+// Ahora el mapping se evalua SIEMPRE y decide:
+//   sin ningun vinculo  -&gt; expira con su ultima fecha real (o hoy si no hay)
+//   con algun vinculo   -&gt; comportamiento previo, con holgura de 12 meses
 //
-// Se usa dateexpiry, el mecanismo NATIVO de Koha: el patron conserva historial de
-// prestamos y multas pero no puede prestar. No se borra nada.
+// Se usa dateexpiry, el mecanismo NATIVO de Koha: el patron conserva su
+// historial de prestamos y multas, pero no puede prestar. No se borra nada.
 def vivo = (liveAffiliationWorker != null) || (liveAffiliationStudent != null) || (liveAffiliationAlum != null)
 def w = terminationDate?.toString()?.take(10)
 def s = terminationDateStudent?.toString()?.take(10)
@@ -1700,11 +1585,9 @@ if (realMaxDate.isBefore(today)) {
     return today.plusMonths(12).toString()
 }
 return realMax
-                            </code>
+        </code>
                         </script>
                     </expression>
-                    <!-- GUARD #2: solo cuentas con afiliación viva. Leaver (sin afiliación viva)
-                         queda fuera => el archivado (DISABLED -> expiry=ayer) gana sin colisión. -->
                 </outbound>
             </attribute>
             <attribute>

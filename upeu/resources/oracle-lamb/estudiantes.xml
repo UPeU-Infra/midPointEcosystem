@@ -360,60 +360,116 @@ return 'urn:schac:personalUniqueID:pe:' + sub + ':PE:' + d</code>
                     </target>
                 </inbound>
             </attribute>
-            <attribute>
+            <attribute id="3323">
                 <ref>ri:PROGRAM_CODES</ref>
-                <!-- ADR-062: publicar SIEMPRE el ID_PROGRAMA_ESTUDIO, resuelva o no a P-code.
-                     Sin esto, 6.706 estudiantes activos (Ingles, Conservatorio, CEPRE,
-                     diplomaturas) no tienen NINGUN identificador de programa en el IGA, porque
-                     la tabla program-pxx-byid solo cubre los 188 licenciados. El dato ya viaja
-                     en el shadow: solo faltaba publicarlo.
-                     <script> y no <function>: PROGRAM_CODES es MULTIVALOR y una function solo
-                     acepta single-value (regresion del 5-ago). -->
-                <inbound>
-                    <name>program-id-to-academicProgramSourceId</name>
+                <inbound id="3360">
+                    <name>program-id-to-academicProgramUri</name>
                     <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>input == null ? null : basic.stringify(input).trim() ?: null</code>
+                            <code>
+// PROGRAM_CODES es multivalor: una persona puede tener varias matriculas.
+// Una &lt;function&gt; de MidPoint solo acepta argumentos single-value, por eso
+// aqui se resuelve en Groovy iterando. Devuelve lista de URIs distintas.
+if (input == null) return null
+def ids = (input instanceof Collection) ? input : [input]
+def tableOid = '7c3f2a91-4e8d-4b16-9a52-6d0e1f7b3c48'
+try {
+    def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(
+        prismContext.toUniformPath(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.F_ROW),
+        com.evolveum.midpoint.schema.GetOperationOptions.createRetrieve()
+    )
+    def tableObj = midpoint.getObject(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.class, tableOid, options)
+    if (tableObj == null || tableObj.getRow() == null) {
+        log.warn('program-id-to-academicProgramUri: LookupTable {} vacia o ausente', tableOid)
+        return null
+    }
+    def byKey = [:]
+    for (def row : tableObj.getRow()) {
+        if (row.getKey() != null) byKey[row.getKey().trim()] = row.getValue()
+    }
+    def out = [] as Set
+    for (def id : ids) {
+        if (id == null) continue
+        def v = byKey[id.toString().trim()]
+        if (v != null) out &lt;&lt; v
+    }
+    return out.isEmpty() ? null : (out as List)
+} catch (Exception e) {
+    log.warn('program-id-to-academicProgramUri: error {}', e.getMessage())
+    return null
+}
+        </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveProgramUriStudent</path>
+                    </target>
+                </inbound>
+                <inbound id="3365">
+                    <name>program-id-to-liveProgramSuneduCodeStudent</name>
+                    <description>P-code oficial por ID de programa (LookupTable del tesauro, ADR-005). Item per-IIA multivalor; el template deriva de aqui academicProgramSuneduCode.</description>
+                    <lifecycleState>active</lifecycleState>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+// P-code / SEG-code oficial (A4/A8 2026-1) por ID_PROGRAMA_ESTUDIO, contra la LookupTable
+// program-pxx-byid generada desde VocBench (ADR-005). VocBench es la fuente de verdad.
+// Sustituye a CODIGO_SUNEDU2 de Oracle: 73,18% de cobertura con 139 estudiantes mal
+// codificados, frente a 88,44% y 0 errores por esta via.
+// OJO: MidPoint evalua esta expresion UNA VEZ POR CADA VALOR de PROGRAM_CODES, asi que
+// aqui NO se itera: se resuelve el id que llega y se devuelve su P-code. El target es
+// MULTIVALOR y recoge uno por matricula; la eleccion del principal se hace en el template.
+if (input == null) return null
+def key = input.toString().trim()
+if (key.isEmpty()) return null
+def tableOid = '5d1c8a47-2b93-4f60-8e1a-7c4d9f0e6a25'
+try {
+    def options = com.evolveum.midpoint.schema.SelectorOptions.createCollection(
+        prismContext.toUniformPath(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.F_ROW),
+        com.evolveum.midpoint.schema.GetOperationOptions.createRetrieve()
+    )
+    def tableObj = midpoint.getObject(com.evolveum.midpoint.xml.ns._public.common.common_3.LookupTableType.class, tableOid, options)
+    if (tableObj == null || tableObj.getRow() == null) return null
+    for (def row : tableObj.getRow()) {
+        if (row.getKey() != null &amp;&amp; row.getKey().trim() == key) {
+            def v = row.getValue()
+            return (v != null &amp;&amp; !v.toString().trim().isEmpty()) ? v.toString().trim() : null
+        }
+    }
+    return null
+} catch (Exception e) {
+    log.warn('program-id-to-liveProgramSuneduCodeStudent: error "{}" -&gt; {}', key, e.getMessage())
+    return null
+}
+</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveProgramSuneduCodeStudent</path>
+                    </target>
+                </inbound>
+                <inbound id="3366">
+                    <name>program-id-to-academicProgramSourceId</name>
+                    <description>ADR-062 (14-ago-2026): publicar SIEMPRE el ID_PROGRAMA_ESTUDIO, resuelva o no a P-code. Sin esto, 6.706 estudiantes activos (Ingles, Conservatorio, CEPRE, diplomaturas) no tienen NINGUN identificador de programa en el IGA, porque program-pxx-byid solo cubre los 188 licenciados. El dato ya viaja en el shadow de los 25.136: solo faltaba publicarlo. IDENTIFICADOR DE CORRELACION, no de publicacion: no sale del hub sin URI (ver ADR-063).</description>
+                    <lifecycleState>active</lifecycleState>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+// OJO: MidPoint evalua esta expresion UNA VEZ POR CADA VALOR de PROGRAM_CODES, que es
+// multivalor (90 estudiantes con doble matricula). Por eso &lt;script&gt; y NUNCA &lt;function&gt;:
+// una function solo acepta single-value y revienta en masa (regresion del 5-ago-2026).
+// El item destino nace unbounded, asi que los multiples valores se acumulan sin conflicto.
+input == null ? null : (basic.stringify(input).trim() ?: null)
+          </code>
                         </script>
                     </expression>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramSourceId</path>
                     </target>
                 </inbound>
-                <!-- 2026-08-05: PROGRAM_CODES pasa de estar sin uso a ser la FUENTE del programa.
-                     Contiene ID_PROGRAMA_ESTUDIO (DAVID.ACAD_PROGRAMA_ESTUDIO), identificador
-                     inmutable de Oracle. Sustituye a la resolución por SCHOOL_NAME (por nombre),
-                     que cubría el 40,9 % y enganchaba al concepto sin P-code cuando el tesauro
-                     tiene pares — ver docs/HALLAZGO-programas-academicos-vocbench-2026-08-05.md.
-                     Multivalor: soporta las múltiples matrículas de una persona. -->
-                <inbound>
-                    <name>program-id-to-liveProgramUriStudent</name>
-                    <strength>strong</strength>
-                    <expression>
-                        <function>
-                            <libraryRef oid="3f8b6c04-91a7-4d52-b8e3-2c50f9a1d7b6" type="FunctionLibraryType"/>
-                            <name>resolveProgramUriById</name>
-                            <parameter>
-                                <name>programId</name>
-                                <expression><path>$input</path></expression>
-                            </parameter>
-                        </function>
-                    </expression>
-                    <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveProgramUriStudent</path>
-                    </target>
-                </inbound>
-                <!-- RETIRADO el mismo día (PROD v184): `program-id-to-academicProgramCode`.
-                     Resolver el EP-XXX por ID hace CAER la cobertura de 40,9 % a 17,0 %
-                     (7.268 estudiantes lo pierden) porque **15 de los 23 EP-codes viven en
-                     conceptos DEPRECADOS del tesauro** y no se migraron al vigente: al seguir
-                     `dct:isReplacedBy` se llega al canónico, que no los lleva.
-                     No es cosmético: el bloque D6 de `user-template-student` asigna la ORG del
-                     programa desde `academicProgramCode`, así que esos 7.268 se quedaban sin su
-                     organización. `academicProgramCode` vuelve a resolverse por SCHOOL_NAME
-                     (abajo). Rehacer por ID solo cuando VocBench migre los 15 EP-codes. -->
-
             </attribute>
             <attribute>
                 <ref>ri:SCHOOL_NAME</ref>
