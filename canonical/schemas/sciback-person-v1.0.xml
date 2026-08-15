@@ -237,6 +237,21 @@
                     <xsd:element name="academicProgramSourceId" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
                         <xsd:annotation><xsd:appinfo><a:displayName>ID de programa en la fuente</a:displayName><a:help>ID_PROGRAMA_ESTUDIO de Oracle LAMB. Presente para TODO estudiante con matrícula, tenga o no código SUNEDU. Multivalor: dobles matrículas.</a:help><a:indexed>true</a:indexed><a:displayOrder>437</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
+
+                    <!-- 2026-08-15: item que el mapping teaching-programs-to-teachingProgram
+                         (resource Trabajadores, inbound 5527, F5-prep del 4-jul-2026) llevaba un
+                         mes esperando. El mapping se escribio y el item NUNCA se creo: al ser
+                         strong y apuntar a un path inexistente lanzaba SchemaException y ABORTABA
+                         el procesamiento de la persona entera -con sus tres proyecciones-, no solo
+                         de este atributo. Cazado el 15-ago al recomputar a un docente; era tambien
+                         la causa del unico caso que no acepto el STUDY_LEVEL en el lote de 74.
+                         UNBOUNDED: el mapping devuelve una LISTA de codigos EP- (un docente ensena
+                         en varias escuelas profesionales).
+                         IIA: ENOC.VW_CARGA_DOCENTE via TEACHING_PROGRAMS, resuelto contra la
+                         LookupTable d9b1e0c2-e036-4c6a-9753-c732a83bbf0a. Alimenta D6b. -->
+                    <xsd:element name="teachingProgram" type="xsd:string" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Escuela profesional en la que ensena</a:displayName><a:help>Codigos EP- de las escuelas profesionales donde el docente tiene carga en el semestre vigente. Multivalor. IIA: ENOC.VW_CARGA_DOCENTE.</a:help><a:indexed>true</a:indexed><a:displayOrder>438</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
                     <!-- academicProgramIneiCode: código INEI 2022 de 8 dígitos del programa de
                          estudio (ej. 31300211=Psicología, 91300071=Enfermería, 41300270=Administración).
                          Es el identificador NACIONAL canónico del programa según el clasificador
