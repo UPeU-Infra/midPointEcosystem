@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cuentas M365 activas de personal cesado — IGA UPeU</title>
+<style>
+  :root {
+    --tinta: #16181d;
+    --tinta-2: #4a5160;
+    --tinta-3: #79808f;
+    --linea: #e4e7ec;
+    --fondo: #ffffff;
+    --panel: #f7f8fa;
+    --acento: #1d4ed8;
+    --alerta: #b42318;
+    --alerta-suave: #fef3f2;
+    --medio: #b54708;
+    --medio-suave: #fffaeb;
+    --bajo: #475467;
+    --bajo-suave: #f2f4f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 48px 24px 96px;
+    background: var(--fondo); color: var(--tinta);
+    font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .hoja { max-width: 940px; margin: 0 auto; }
+  header { border-bottom: 1px solid var(--linea); padding-bottom: 28px; margin-bottom: 36px; }
+  .kicker { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-3); margin: 0 0 10px; }
+  h1 { font-size: 30px; line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 16px; font-weight: 640; }
+  .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px 28px; margin-top: 22px; }
+  .meta div { font-size: 13px; }
+  .meta dt { color: var(--tinta-3); margin: 0 0 2px; }
+  .meta dd { margin: 0; font-weight: 550; }
+  h2 { font-size: 18px; letter-spacing: -0.01em; margin: 40px 0 14px; font-weight: 620; }
+  p { margin: 0 0 14px; color: var(--tinta-2); max-width: 68ch; }
+  strong { color: var(--tinta); font-weight: 620; }
+  .destacado {
+    background: var(--alerta-suave); border: 1px solid #fecdca; border-left: 3px solid var(--alerta);
+    border-radius: 8px; padding: 18px 20px; margin: 0 0 28px;
+  }
+  .destacado p:last-child { margin-bottom: 0; }
+  .destacado h2 { margin: 0 0 8px; font-size: 16px; color: var(--alerta); }
+  .cifra { display: flex; align-items: baseline; gap: 14px; background: var(--panel); border: 1px solid var(--linea);
+           border-radius: 10px; padding: 22px 24px; margin: 0 0 8px; }
+  .cifra b { font-size: 44px; line-height: 1; letter-spacing: -0.03em; font-weight: 660; }
+  .cifra span { color: var(--tinta-2); font-size: 15px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 6px 0 10px; }
+  caption { text-align: left; color: var(--tinta-3); font-size: 13px; padding-bottom: 8px; }
+  th { text-align: left; font-weight: 600; font-size: 12px; letter-spacing: .04em; text-transform: uppercase;
+       color: var(--tinta-3); border-bottom: 1px solid var(--linea); padding: 0 10px 8px; }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--linea); vertical-align: baseline; }
+  tbody tr:nth-child(even) { background: #fcfcfd; }
+  .fecha, .cod, .mail { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; font-size: 12.5px; }
+  .fecha, .dias, .est { white-space: nowrap; }
+  @media (max-width: 720px) { .hoja { font-size: 14px; } table { display: block; overflow-x: auto; } }
+  .mail { color: var(--tinta-2); }
+  .num { font-weight: 620; }
+  .est { color: var(--tinta-3); font-size: 12.5px; }
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
+          font-variant-numeric: tabular-nums; }
+  .chip.alto { background: var(--alerta-suave); color: var(--alerta); }
+  .chip.medio { background: var(--medio-suave); color: var(--medio); }
+  .chip.bajo { background: var(--bajo-suave); color: var(--bajo); }
+  ol { color: var(--tinta-2); max-width: 68ch; padding-left: 20px; }
+  ol li { margin-bottom: 10px; }
+  .nota { border-left: 2px solid var(--linea); padding-left: 16px; color: var(--tinta-2); font-size: 14px; margin: 20px 0; }
+  footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--linea); color: var(--tinta-3); font-size: 12.5px; }
+  @media print {
+    body { padding: 0; font-size: 10.5pt; }
+    .destacado { break-inside: avoid; }
+    tr { break-inside: avoid; }
+    thead { display: table-header-group; }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --tinta:#e8eaee; --tinta-2:#a9b1c0; --tinta-3:#7c8497; --linea:#282c34; --fondo:#111317; --panel:#181b21;
+             --alerta:#f97066; --alerta-suave:#2a1512; --medio:#fdb022; --medio-suave:#2a1f0e; --bajo:#a9b1c0; --bajo-suave:#22262d; }
+    tbody tr:nth-child(even) { background: #14171c; }
+    .destacado { border-color:#5b1d18; }
+  }
+</style>
+</head>
+<body>
+<div class="hoja">
+
+<header>
+  <p class="kicker">Gobierno de identidades · MidPoint</p>
+  <h1>Personal cesado que conserva su cuenta de Microsoft&nbsp;365 activa</h1>
+  <p>Informe de control emitido por el sistema de gobierno de identidades (IGA). Requiere
+     verificación de RR.HH. y acción de DTI sobre Entra&nbsp;ID.</p>
+  <dl class="meta">
+    <div><dt>Para</dt><dd>David Uquizo — DTI</dd></div>
+    <div><dt>De</dt><dd>Ing. Juan Alberto Sánchez — Infraestructura TI</dd></div>
+    <div><dt>Fecha de medición</dt><dd>16 de agosto de 2026</dd></div>
+    <div><dt>Entorno</dt><dd>Producción</dd></div>
+  </dl>
+</header>
+
+<div class="cifra">
+  <b>98</b>
+  <span>personas dadas de baja mantienen <strong>correo, Teams, OneDrive y SharePoint</strong> operativos</span>
+</div>
+
+<div class="destacado">
+  <h2>Sustituye al informe anterior</h2>
+  <p>Una versión previa de este documento indicaba <strong>34 personas</strong>. Al repetir la medición
+     con un criterio más amplio aparecieron <strong>98</strong>. Las 64 adicionales <strong>no son casos
+     nuevos</strong>: ya estaban dadas de baja cuando se emitió aquel informe y no fueron detectadas.</p>
+  <p>Si la lista de 34 ya se recibió, debe reemplazarse por esta.</p>
+</div>
+
+<h2>Antigüedad de las bajas</h2>
+<table>
+  <caption>Días transcurridos desde que el sistema registró la baja, al 16 de agosto.</caption>
+  <thead><tr><th>Baja registrada</th><th>Personas</th><th>Días con la cuenta abierta</th></tr></thead>
+  <tbody>
+<tr><td class="fecha">2026-06-25</td><td class="num">21</td><td class="dias-txt">52</td></tr>
+<tr><td class="fecha">2026-06-26</td><td class="num">4</td><td class="dias-txt">51</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="num">34</td><td class="dias-txt">22</td></tr>
+<tr><td class="fecha">2026-08-04</td><td class="num">5</td><td class="dias-txt">12</td></tr>
+<tr><td class="fecha">2026-08-08</td><td class="num">1</td><td class="dias-txt">8</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="num">33</td><td class="dias-txt">—</td></tr>
+  </tbody>
+</table>
+
+<h2>En qué se basa</h2>
+<p>Para cada una de las 98 personas se comprobaron cuatro señales en producción. Las tres primeras
+   coinciden en que la baja está consumada; la cuarta es la que no acompaña.</p>
+<table>
+  <thead><tr><th>Señal verificada</th><th>Resultado</th></tr></thead>
+  <tbody>
+    <tr><td>Presencia en el feed de personal (Oracle LAMB)</td><td><strong>Ninguna</strong>, en las 98</td></tr>
+    <tr><td>Situación en el sistema de identidad</td><td>Fuera de servicio, en las 98</td></tr>
+    <tr><td>Cuenta en el directorio LDAP</td><td>No, en 97 de 98</td></tr>
+    <tr><td>Cuenta en Entra ID</td><td><strong>Sí, y habilitada, en las 98</strong> — verificada una por una</td></tr>
+  </tbody>
+</table>
+
+<h2>Qué se solicita</h2>
+<ol>
+  <li><strong>RR.HH. confirma</strong> que estas 98 personas no mantienen vínculo laboral vigente.</li>
+  <li>Con esa confirmación, <strong>DTI cierra las cuentas</strong> según el procedimiento institucional:
+      bloqueo de acceso, retención del buzón durante el plazo previsto y liberación de la licencia.</li>
+  <li>Si alguna <strong>sí</strong> tiene vínculo vigente, conviene avisarnos: significaría que la fuente de
+      RR.HH. no la está reportando, y el fallo estaría en el origen, no en el cierre.</li>
+</ol>
+
+<div class="nota">
+  <p><strong>Por qué el IGA no lo resuelve solo.</strong> Entra ID está configurado como destino de
+     <em>solo lectura</em>: el sistema de identidad lee de ahí para reconocer a las personas, pero no
+     escribe. Mientras siga así, el cierre de cuentas de personal cesado es necesariamente un paso manual
+     de DTI. Este informe es una fotografía de un momento concreto, no un control continuo: conviene
+     acordar cada cuánto se repite.</p>
+</div>
+
+<h2>Detalle</h2>
+<table>
+  <caption>Ordenado por fecha de baja, de la más antigua a la más reciente.</caption>
+  <thead>
+    <tr><th>Baja</th><th>Antigüedad</th><th>Código</th><th>Nombre</th><th>Cuenta M365</th><th>Situación</th></tr>
+  </thead>
+  <tbody>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">05399987</td><td>Moises Caira Huanca</td><td class="mail">moises.caira@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">16775250</td><td>Jackeline Ayde Muguerza Garcia</td><td class="mail">jackeline.muguerza.g@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">40401800</td><td>Edward Amilcar Mallqui Montalvo</td><td class="mail">edward.mallqui@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">40953340</td><td>William John Oliva Salas</td><td class="mail">40953340@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">42446177</td><td>Jose Moises Olortegui Reyna</td><td class="mail">42446177@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">44704828</td><td>Reyna Amalia Rojas Garcia</td><td class="mail">44704828@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">46824830</td><td>Carlos Alberto Velez Calderon</td><td class="mail">carlos.velez@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">47924780</td><td>Angie Elizabeth Muñoz Paredes</td><td class="mail">angie.munoz@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">48819381</td><td>Elias Daniel Aguirre Paredes</td><td class="mail">Elias.Daniel.Aguirre.Pa@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">49089518</td><td>Milena Aguirre Garrido</td><td class="mail">milena.aguirre@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">548644005</td><td>Michael Thomas White</td><td class="mail">michaelwhite@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">70004723</td><td>Abigail Paola Ipanaque Zarate</td><td class="mail">abigail.ipanaque@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">71937970</td><td>Nury Roxana Cari Turpo</td><td class="mail">71937970@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">72121114</td><td>Katty Bexavet Castillo Palmadera</td><td class="mail">katty.castillo@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">734472422</td><td>Fabiola Mecedes Melgar Vaca</td><td class="mail">fabiola.melgar.m@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">73877807</td><td>Lucita Aurora Araujo Cercado</td><td class="mail">lucita.araujo@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">73903954</td><td>Osmar Alex Vasquez Urbina</td><td class="mail">osmar.vasquez@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">73986840</td><td>Joseph Valentin Ramirez Ramos</td><td class="mail">joseph.ramirez@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">74242597</td><td>Nory Maribel Cabanillas Vasquez</td><td class="mail">nory.cabanillas@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">74969546</td><td>Willy Abner Ocaña Alvarado</td><td class="mail">willyocana@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-25</td><td class="dias"><span class="chip alto">52 d</span></td><td class="cod">76809824</td><td>Gerardo Andres Cordova Castillo</td><td class="mail">76809824@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-26</td><td class="dias"><span class="chip alto">51 d</span></td><td class="cod">16481376</td><td>Rosa Luz Lopez Martinez</td><td class="mail">rosa.lopezm@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-26</td><td class="dias"><span class="chip alto">51 d</span></td><td class="cod">42130024</td><td>Edson Leonel Mandujano Romero</td><td class="mail">edsonmandujano@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-26</td><td class="dias"><span class="chip alto">51 d</span></td><td class="cod">43148480</td><td>Hernán Diaz Osorio</td><td class="mail">hernan.diaz@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-06-26</td><td class="dias"><span class="chip alto">51 d</span></td><td class="cod">70376659</td><td>Luz Vanessa Panca Humpiri</td><td class="mail">luz.panca@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">01127359</td><td>Luis Armando Cuzco Trigozo</td><td class="mail">luis.cuzco@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">01188959</td><td>Delia Esperanza Portella Melgarejo</td><td class="mail">delia.portella@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">01325501</td><td>Jorge Luis Quiñonez Ticona</td><td class="mail">jorge.quinonez@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">01329298</td><td>Moises Araca Chile</td><td class="mail">moises.araca@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">02167357</td><td>Yury Añazco Supo</td><td class="mail">yury.supo@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">02410349</td><td>Gladis Nimia Chayña Vilcapaza</td><td class="mail">gladis.chayna@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">02412015</td><td>Judith Valeriana Yanqui Ortiz</td><td class="mail">yudith.yanqui@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">02413573</td><td>Thania Armida Valencia Maquera</td><td class="mail">thania.valencia@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">02434910</td><td>Bertha Viza Quispe</td><td class="mail">bertha.viza@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">02555563</td><td>Luz Angelica Ccopa Turpo</td><td class="mail">luz.ccopa@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">06636199</td><td>José Carlos Gastelu Guzman</td><td class="mail">jose.gastelu@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">09336056</td><td>Ivan Nicolas Figueroa Gonzalez</td><td class="mail">ivanfigueroa@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">16670476</td><td>Elsa Lizet Idrogo Arrascue</td><td class="mail">elsaidrogo@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">21407461</td><td>María Cecilia Girao Araujo</td><td class="mail">mariagirao@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">22997723</td><td>Lucinda Vela Vargas</td><td class="mail">lucindavela@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">29394949</td><td>Nancy Margarita Ortiz Rodriguez</td><td class="mail">nancy.ortiz@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">31663735</td><td>Kiko Felix Depaz Celi</td><td class="mail">kiko.depaz@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">40192228</td><td>Renny Daniel Diaz Aguilar</td><td class="mail">rennydaniel@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">40408206</td><td>Edgar Alfonso Garcia Oporto</td><td class="mail">edgar.garcia@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">40796888</td><td>William Apaza Mamani</td><td class="mail">william.apaza@istat.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">41168562</td><td>Larry Steve Pachari Centeno</td><td class="mail">steve.pachari@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">41169423</td><td>Guillermo Carlos Contreras Nogales</td><td class="mail">guillermo.contreras@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">41782913</td><td>Nestor Alejandro Cruz Calapuja</td><td class="mail">nestor.cruz@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">42361774</td><td>Jade Sheil Perez Tenazoa</td><td class="mail">jade.perez@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">43537049</td><td>Liliana Elizabeth Puma Maron</td><td class="mail">liliana.puma@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">43960192</td><td>Luis Angello Coarite Asencio</td><td class="mail">angellocoarite@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">46530134</td><td>Liz Rubi Blaz Vilchez</td><td class="mail">liz.blaz@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">46555229</td><td>Annie Eshel Jaimes Duarte</td><td class="mail">anniejaimes@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">46815141</td><td>Christian Michel Cunya Pardo</td><td class="mail">michelcunya@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">46819549</td><td>Dario Ccaccya Ccaccya</td><td class="mail">darioccaccya@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">71057807</td><td>Aileen Pilar Pacompia Calsin</td><td class="mail">aileen.pacompia@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">71318245</td><td>Ricky Bray Saavedra Mego</td><td class="mail">ricky.saavedra@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">75914610</td><td>Moisés Lucio Talavera Antazu</td><td class="mail">moises.talavera@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-07-25</td><td class="dias"><span class="chip medio">22 d</span></td><td class="cod">77176693</td><td>Ruth Zaida Esteba Valencia</td><td class="mail">ruthesteba@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-08-04</td><td class="dias"><span class="chip bajo">12 d</span></td><td class="cod">01157608</td><td>Jose Reategui Vega</td><td class="mail">jose.reategui@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-08-04</td><td class="dias"><span class="chip bajo">12 d</span></td><td class="cod">01291373</td><td>Litza Santos Damasceno</td><td class="mail">asistente.eventos@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-08-04</td><td class="dias"><span class="chip bajo">12 d</span></td><td class="cod">18022154</td><td>Luis Armando Garcia Hidalgo</td><td class="mail">luisgarciah@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-08-04</td><td class="dias"><span class="chip bajo">12 d</span></td><td class="cod">23999632</td><td>Adolfo Morales Acurio</td><td class="mail">adolfo.morales@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-08-04</td><td class="dias"><span class="chip bajo">12 d</span></td><td class="cod">42846492</td><td>Homero Sanchez Vasquez</td><td class="mail">42846492@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-08-08</td><td class="dias"><span class="chip bajo">8 d</span></td><td class="cod">08684132</td><td>Veronica Juana Guerrero Iriarte</td><td class="mail">veronicaguerrero@upeu.edu.pe</td><td class="est">baja</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">05220667</td><td>Josimar Da Silva Souza</td><td class="mail">005220667@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">06810462</td><td>Hugo Alberto Alcantara Ventura</td><td class="mail">06810462@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">07664222</td><td>Medrano Ortega Maria Del Pilar</td><td class="mail">pilar@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">07664416</td><td>Francisco Quinteros Del Aguila</td><td class="mail">franciscoquinteros@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">10350511</td><td>Hugo Fernando Morales Morales</td><td class="mail">hugo.morales@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">10728917</td><td>Roddy Jhanet Machco Rojas</td><td class="mail">10728917@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">10819969</td><td>Aydee Puente De La Vega Alvarez</td><td class="mail">aydee.alvarez@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">15724649</td><td>Roberto Castulo Mejia Alejandro</td><td class="mail">roberto.mejia@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">15856546</td><td>Nidia Judith Aldave Carrion</td><td class="mail">nidiaaldave@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">21505281</td><td>Jose Antonio Lujan Soria</td><td class="mail">21505281@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">28067877</td><td>Elias Royer Alfaro Revilla</td><td class="mail">28067877@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">40353570</td><td>Itala Verónica Muguerza Garcia</td><td class="mail">itala.muguerza@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">40608535</td><td>Henry Lincold Salazar Campusano</td><td class="mail">40608535@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">40718513</td><td>Rolando Moises Condori Quaquera</td><td class="mail">40718513@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">41868466</td><td>Ruth Aurora Diaz Osorio</td><td class="mail">ruth.osorio@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">42149296</td><td>Fernando Cabanillas Guelles</td><td class="mail">fernandocabanillas@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">42344461</td><td>Carlos Romero Mozombite</td><td class="mail">carlos.romerom@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">42439673</td><td>Abner David Castillo Neira</td><td class="mail">abnercastillo@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">42503821</td><td>Gilber Alfonso Sambrano Quispe</td><td class="mail">42503821@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">42535066</td><td>Lucas Alfredo Cruz Puma</td><td class="mail">42535066@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">42620959</td><td>Wilmer Mendoza Yoctun</td><td class="mail">wilmer.mendoza@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">43132504</td><td>Juan Alberto Campos Silva</td><td class="mail">albertocampos@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">43220816</td><td>Grissella Lizeth Rios Paucar</td><td class="mail">43220816@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">44242083</td><td>Augusto Yaxvier Alvarado Olazabal</td><td class="mail">yaxvieralvarado@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">44481749</td><td>Diego Alonso Mesia Angeles</td><td class="mail">diego.mesia@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">45119279</td><td>Asmavet Maria Santiago Lopez</td><td class="mail">45119279@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">47164865</td><td>Samuel Eli Barboza Calderon</td><td class="mail">samuel.barboza@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">47686459</td><td>Giomara Francis Diaz Mitma</td><td class="mail">47686459@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">61833417</td><td>Shirley Paredes Rodriguez</td><td class="mail">61833417@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">70759374</td><td>Jhonatan Fernandez Huamani</td><td class="mail">70759374@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">771245575</td><td>Mayrin Gianella Espinoza Quiroz</td><td class="mail">77380977@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">771245604</td><td>Elizabet Paucar Vega</td><td class="mail">elizabetpaucar@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+<tr><td class="fecha">2026-08-16</td><td class="dias"><span class="chip bajo">hoy</span></td><td class="cod">803487990</td><td>Gabriella Andrea Esquivel Lorenzo</td><td class="mail">gabriella.esquivelt@upeu.edu.pe</td><td class="est">baja procesada hoy</td></tr>
+  </tbody>
+</table>
+
+<footer>
+  <p>Datos medidos en el sistema de gobierno de identidades (MidPoint) el 16 de agosto de 2026.
+     Documento con datos personales de 98 trabajadores cesados: distribución restringida a RR.HH. y DTI.</p>
+</footer>
+
+</div>
+</body>
+</html>
