@@ -1,12 +1,20 @@
-# De dónde sale la sede de un trabajador en Oracle LAMB — 18 personas sin campus
+# Dos consultas a Oracle LAMB — sede de trabajador (18 personas) e identidades sin fuente (26)
 
 **Para:** sesión con acceso a Oracle LAMB (`192.168.13.9/UPEU`)
 **De:** la sesión del IGA (MidPoint)
-**Fecha:** 15-ago-2026
+**Fecha:** 15-ago-2026 (ampliado el 16-ago con el encargo B)
 **Regla que no se toca:** **Oracle LAMB es de SOLO LECTURA. Política absoluta.** Aquí solo se
 consulta; ningún `UPDATE`, `INSERT` ni `DELETE`, ni siquiera "de prueba".
 
+Son dos encargos independientes; pueden resolverse por separado:
+
+- **A — sede de trabajador:** 3 trabajadoras en activo sin carné porque el IGA no sabe su sede.
+- **B — identidades sin fuente:** 26 personas que MidPoint tiene como estudiantes activos y no
+  aparecen en ninguna tabla de Oracle. Hay que decidir si existen.
+
 ---
+
+# ENCARGO A — de dónde sale la sede de un trabajador
 
 ## Qué se necesita
 
@@ -142,3 +150,76 @@ WARN koha library_id: campus no resuelto para 02530108 (cs=null, cw=null, ce=nul
 ```
 `cs`=campusStudent, `cw`=campusWorker, `ce`=campusEgreso, `loc`=ubicación. En las 18 personas,
 **las cuatro vienen null**.
+
+---
+
+# ENCARGO B — 26 identidades que MidPoint tiene y Oracle no
+
+## Qué son
+
+**26 personas figuran en MidPoint como estudiantes `active`, con rol `BR-Estudiante-Pregrado`,
+y no tienen shadow de NINGUNA fuente Oracle** — ni Estudiantes, ni Trabajadores, ni Egresados.
+
+No nacieron del MDM: las creó MidPoint **desde el Koha viejo**, a partir de patrons que existían
+en el ILS pero no en la fuente autoritativa.
+
+| Creadas | Canal | n |
+|---|---|---|
+| 2026-05-27 | `reconciliation` | 20 |
+| 2026-06-05 | `import` | 6 |
+
+## Por qué importa
+
+La cadena de consecuencias ya está medida:
+
+1. sin origen en Oracle → sin `ID_PERSONA` → **`extension/sciback:externalSystemId` nulo**;
+2. `cardnumber` de Koha se alimenta de ese campo → **patron sin carné** (son 26 de los 33.717
+   del Koha consolidado, es decir, prácticamente todos los que están así);
+3. y como no están en ninguna fuente, **ninguna reconciliación las toca**: se quedan `active`
+   indefinidamente, con lo que traían de mayo. No fallan; son invisibles.
+
+Mientras no se resuelva, cualquier intento de darles servicio produce un patron inútil (sin
+`cardnumber` no hay préstamo).
+
+## Los 26 códigos
+
+```
+202310206  202410977  202420956  202514113  202610070  202610078  202610079  202610618
+202612606  202612713  202612761  202612812  202612813  202612834  202613145  202613206
+202613778  202614152  202614283  202614339  202614346  202614468  324103441  324105266
+324105410  324105420
+```
+
+Los que empiezan por `3241…` son de la serie que en otros contextos corresponde a códigos de
+posgrado/otra numeración; conviene no asumir que los 26 son del mismo tipo.
+
+## Qué comprobar (todo `SELECT`)
+
+**1. ¿Existen con ese mismo código?**
+```sql
+SELECT COD_ALUMNO, ID_PERSONA, NUM_DOCUMENTO, ESTADO
+FROM <tabla de alumnos>            -- la que alimenta el resource Estudiantes
+WHERE COD_ALUMNO IN ('202310206','202410977', /* … los 26 … */);
+```
+
+**2. Si no aparecen por código: ¿existen como PERSONA por documento?** El IGA no tiene su DNI
+(nunca lo recibió de Oracle), pero sí lo tiene Koha. Si hace falta, se puede extraer del ILS y
+mandarlo en una segunda vuelta — **decirlo y se envía**, no hace falta adivinar.
+
+**3. ¿Hubo matrícula alguna vez?** Aunque hoy no estén activos, saber si estuvieron matriculados
+distingue dos casos muy distintos: *ex-alumno que ya no está* frente a *persona que nunca estuvo
+en el MDM* (por ejemplo, un usuario externo de biblioteca dado de alta a mano en Koha años
+atrás).
+
+## Qué se busca como respuesta
+
+Para cada uno de los 26, cuál de estos tres es:
+
+1. **Está en Oracle con otro código** → hay que correlacionarlo en el IGA y recuperará su
+   `ID_PERSONA` y su carné.
+2. **Estuvo y ya no** → corresponde darlo de baja en el IGA; hoy sigue `active` por inercia.
+3. **Nunca estuvo en Oracle** → es una identidad que solo existió en la biblioteca. Decisión de
+   producto: o se le da un origen legítimo, o se retira. Un IGA no debería sostener identidades
+   que su fuente autoritativa desconoce.
+
+Con eso el IGA puede cerrar el caso; sin eso, cualquier acción es adivinar.
