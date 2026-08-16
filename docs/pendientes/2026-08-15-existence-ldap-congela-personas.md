@@ -69,9 +69,12 @@ cuando la reconciliación de su canal lo procesa.
 | Lote canario (20 personas) | 20 | **0** | — | 2 | — |
 | Estudiantes | 29.526 | **26** | 399 | **358** | 2,94 |
 | Trabajadores | 7.393 | **18** | — | **69** | 1,14 |
+| Egresados | 31.253 | **63** | — | **0** | 0,74 |
 
-`Activation existence expression resulted in no values` **desaparece del log** en ambas
-corridas.
+Sobre `account/default`, `Activation existence expression resulted in no values` **desaparece
+del log** en las tres corridas. Fichas congeladas en `ou=people`: **8.412 → 7.985**.
+
+Que Egresados desbloquee **0** es lo correcto: ese canal no devuelve afiliación viva a nadie.
 
 Los fallos que quedan son cola conocida y ajena a esto: duplicados de persona/patron,
 `secondary_email` con más de un valor sobre un campo single-value, los `library_id` sin
@@ -94,9 +97,21 @@ eso exige:
    ejecutarse;
 3. simulación previa y lote canario verificado contra `ldapsearch`.
 
-Mientras tanto, el `existence` de `account/alumni` (`outbound id=473`) **conserva la condición
-vieja a propósito**: el defecto se midió solo sobre `account/default` y esa rama no lo
-manifestó. Se revisa junto con la fase 2.
+### La rama `alumni` tiene el mismo defecto, pero pequeño
+
+El `existence` de `account/alumni` (`outbound id=473`) **conserva la condición vieja**, y la
+corrida de Egresados confirma que falla por lo mismo: **80 apariciones del mensaje sobre
+`account (alumni)`, 16 personas distintas**, 0 sobre `account/default`.
+
+No ha llegado a formar el bucle circular que sí se dio en `people`: **congelados con shadow en
+`ou=alumni` = 0**. Por eso no urge, pero la corrección es la misma y toca hacerla con la fase 2.
+
+### Los dual-rama no crecieron
+
+Tras las tres corridas siguen siendo **1.598** con `primaryAffiliation=alum` en ambas ramas —
+el mismo número de antes del cambio. (El total de personas en las dos ramas es 1.871; los 273
+restantes tienen otra afiliación y no se midieron antes del cambio, así que de esos no puede
+afirmarse nada.)
 
 ## Trampas encontradas por el camino
 
