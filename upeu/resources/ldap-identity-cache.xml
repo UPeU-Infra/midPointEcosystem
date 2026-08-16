@@ -14850,6 +14850,48 @@ return result
                     </expression>
                 </outbound>
             </attribute>
+            <!-- ============================================================
+                 ACTIVATION — cierre del leaver gap (4-ago-2026), corregido el
+                 15-ago-2026. PROD v240.
+
+                 `existence` devuelve SIEMPRE true: la entrada de ou=people no
+                 desaparece nunca; las bajas se materializan por
+                 administrativeStatus=DISABLED (principio "MidPoint suma, nunca
+                 resta", coherente con el <cap:delete> deshabilitado abajo).
+
+                 POR QUE YA NO LLEVA <condition>: nacio con una condition que
+                 solo era cierta para las bajas. Para una persona VIVA el mapping
+                 no devolvia ningun valor; si ademas no tenia ningun assignment
+                 que legalizase la cuenta, MidPoint abortaba su procesamiento
+                 entero con «Activation existence expression resulted in no
+                 values» y la persona quedaba congelada en draft/archived, con 0
+                 assignments y sin primaryAffiliation — circular: sin assignments
+                 porque fallaba, y fallando porque no tenia assignments. Medido
+                 el 15-ago: 8.411 fichas en ese estado, y 375 de los 399 fallos
+                 de la reconciliacion de Estudiantes de esa noche.
+
+                 PENDIENTE (fase 2): la mudanza ou=people -> ou=alumni al
+                 graduarse. Hoy 1.598 egresados con primaryAffiliation=alum
+                 tienen entrada en las DOS ramas. Retirarlos de ou=people exige
+                 decision propia y simulacion — y ademas re-habilitar delete,
+                 hoy cerrado a nivel de resource.
+                 ============================================================ -->
+            <activation>
+                <existence>
+                    <outbound id="472">
+                        <name>leaver-gap-existence-la-entrada-siempre-existe</name>
+                        <strength>strong</strength>
+                        <expression>
+                            <value>true</value>
+                        </expression>
+                    </outbound>
+                </existence>
+                <administrativeStatus>
+                    <outbound id="470">
+                        <strength>strong</strength>
+                    </outbound>
+                </administrativeStatus>
+            </activation>
         </objectType>
         <!-- ================================================================
              objectType account/alumni — RAMA ou=alumni (EGRESADOS)
@@ -14880,12 +14922,14 @@ return result
              esta rama existe para respetar. Probado en ambos nodos: keycloak recibe
              `No such object (32)` sobre ou=alumni y sigue leyendo ou=people.
 
-             ⚠️ DEUDA CONSCIENTE — NACE SIN DEPROVISIONING (aceptada por Alberto
-             2026-07-16, NO es un olvido): con <cap:delete> deshabilitado a nivel de
-             resource y sin mapping <activation>/<existence>, cuando un egresado deja
-             de ser activo la entry se CONGELA con eduPersonAffiliation=alum. Es el
+             ⚠️ DEUDA CONSCIENTE — NACIO SIN DEPROVISIONING (aceptada por Alberto
+             2026-07-16, NO fue un olvido): con <cap:delete> deshabilitado a nivel de
+             resource y sin mapping <activation>/<existence>, cuando un egresado dejaba
+             de ser activo la entry se CONGELABA con eduPersonAffiliation=alum. Es el
              MISMO mecanismo que produjo los 20.012 huérfanos de ou=people. Drift
-             estimado: ~723 (2,6%). Se cierra junto con el leaver gap, no antes.
+             estimado entonces: ~723 (2,6%).
+             CERRADO el 4-ago-2026 (PROD v222): esta rama ya tiene <activation> con
+             existence + administrativeStatus, declarados al final del objectType.
              Ver docs/specs/inout-ldap-identity-map.md §9.6.
              ================================================================ -->
         <objectType>
@@ -15071,6 +15115,36 @@ return result
                     </expression>
                 </outbound>
             </attribute>
+            <!-- ACTIVATION (4-ago-2026, PROD v222). Antes de esa fecha esta rama
+                 NO tenia <activation>: un egresado nunca se podia deshabilitar.
+                 La condition sigue aqui a proposito — el fallo del 15-ago se
+                 midio solo sobre account/default, y esta rama no lo manifesto.
+                 Revisar junto con la fase 2 (mudanza people -> alumni). -->
+            <activation>
+                <existence>
+                    <outbound id="473">
+                        <name>leaver-gap-alumni-existence-conservar-solo-si-baja</name>
+                        <strength>strong</strength>
+                        <expression>
+                            <value>true</value>
+                        </expression>
+                        <condition>
+                            <script>
+                                <code>
+def st = focus?.activation?.effectiveStatus?.toString()?.toLowerCase()
+def lc = focus?.lifecycleState?.toString()?.toLowerCase()
+return (st in ['disabled', 'archived']) || (lc in ['archived', 'suspended'])
+</code>
+                            </script>
+                        </condition>
+                    </outbound>
+                </existence>
+                <administrativeStatus>
+                    <outbound id="474">
+                        <strength>strong</strength>
+                    </outbound>
+                </administrativeStatus>
+            </activation>
         </objectType>
         <objectType id="447">
             <kind>generic</kind>
