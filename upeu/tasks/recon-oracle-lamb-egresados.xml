@@ -2,7 +2,7 @@
 <!--
   Task: Reconciliacion diaria — Oracle LAMB Egresados v3
   Resource: 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23
-  Estado: schedulingState=READY. Activada en PROD 2026-07-20 (autorizado por Alberto), tras desplegar la alerta Telegram sobre fallo de tasks -- ver docs/runbooks/telegram-alertas-tasks-2026-07-20/README.md.
+  Estado: schedulingState=READY. Activada en PROD 2026-07-20 (autorizado por Alberto), tras desplegar la alerta Telegram sobre fallo de tasks — ver docs/runbooks/telegram-alertas-tasks-2026-07-20/README.md.
   Diseño 2026-07-19 (reemplaza el borrador de mayo/2026, sintaxis MidPoint 4.9.5
   executionStatus/recurrence, nunca desplegado en PROD; oid reutilizado).
 
@@ -18,8 +18,15 @@
   hoy; eso es la regla de negocio funcionando, no algo que esta task deba
   o pueda cambiar.
 
-  Horario: 06:45 UTC = 01:45 Lima. Despues de Trabajadores (06:00) y
-  Estudiantes (06:20), antes de recon-koha-upeu-daily (07:15 UTC).
+  Horario: 07:45 hora de Lima (antes 06:45; movido el 17-ago-2026 porque se
+  solapaba 32 min con Estudiantes y las dos escriben en Koha). Reparto vigente:
+  06:00 Trabajadores | 06:20 Estudiantes | 07:45 Egresados | 09:15 Koha.
+  ⚠️ ZONA HORARIA (verificado 17-ago-2026): el cron NO se interpreta en UTC.
+  El contenedor de MidPoint corre en TZ -05, asi que '0 20 6 * * ?' dispara a las
+  06:20 de LIMA. Los comentarios de estos ficheros decian "06:20 UTC = 01:20 Lima":
+  era falso, y hacia creer que habia 5 horas de margen que no existen. Lo que
+  confunde es psql, cuya sesion usa Etc/UTC y muestra 11:20 para ese mismo disparo.
+
 
   Riesgos: identicos a Trabajadores/Estudiantes (Oracle caido ->
   misfireAction=executeImmediately; errores por registro -> controlFlow
@@ -29,14 +36,24 @@
       xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
       oid="86c3766a-77a6-4635-853c-998b26cad45c">
     <name>recon-oracle-lamb-egresados-daily</name>
-    <description>Reconciliacion diaria Oracle LAMB Egresados v3 (inbound-only, fuente autoritativa). Cron 06:45 UTC (01:45 Lima). Disenada 2026-07-19, SUSPENDED hasta aprobacion explicita de Alberto.</description>
+    <description>Reconciliacion diaria Oracle LAMB Egresados v3 (inbound-only, fuente autoritativa). Cron 07:45 hora de Lima. Disenada 2026-07-19, SUSPENDED hasta aprobacion explicita de Alberto.</description>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
     <executionState>runnable</executionState>
     <schedulingState>ready</schedulingState>
     <binding>loose</binding>
     <schedule>
-        <cronLikePattern>0 45 6 * * ?</cronLikePattern>
-        <misfireAction>executeImmediately</misfireAction>
+        <!-- 07:45 desde el 17-ago-2026. Antes 06:45, que se solapaba 32 min con la
+             reconciliacion de Estudiantes (06:20-07:16): las dos escriben patrons en Koha y
+             el 17-ago ese pico produjo 103 «Read timed out» contra su API. Ahora cada canal
+             que escribe en Koha tiene la ventana para si:
+               06:00 Trabajadores -> 06:13 | 06:20 Estudiantes -> ~07:16
+               07:45 Egresados    -> ~08:50 | 09:15 Koha
+             Al mover la hora, comprobar antes cuanto duro la corrida anterior: el margen
+             vive de que Estudiantes cierre antes de las 07:45. -->
+        <cronLikePattern>0 45 7 * * ?</cronLikePattern>
+        <!-- reschedule, NO executeImmediately: con executeImmediately, reanudar una task
+             suspendida la dispara al instante (visto el 4-ago con Trabajadores). -->
+        <misfireAction>reschedule</misfireAction>
     </schedule>
     <activity>
         <work>

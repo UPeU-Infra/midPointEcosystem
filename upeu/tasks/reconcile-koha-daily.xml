@@ -2,7 +2,7 @@
 <!--
   Task: Reconciliacion diaria — koha-upeu (drift catch-up, NO driver primario)
   Resource: koha-upeu (e10a539a-cb7f-4c72-a19f-60f7f62e4b96)
-  Estado: schedulingState=READY. Activada en PROD 2026-07-20 (autorizado por Alberto), tras desplegar la alerta Telegram sobre fallo de tasks -- ver docs/runbooks/telegram-alertas-tasks-2026-07-20/README.md.
+  Estado: schedulingState=READY. Activada en PROD 2026-07-20 (autorizado por Alberto), tras desplegar la alerta Telegram sobre fallo de tasks — ver docs/runbooks/telegram-alertas-tasks-2026-07-20/README.md.
 
   FIX 2026-07-19: este task apuntaba al resource Koha VIEJO (9b5a7c81-...),
   formalmente archivado hoy mismo al cierre de la Etapa 4 de migracion
@@ -26,10 +26,16 @@
   MidPoint). Reconciliar koha-upeu mismo detecta y corrige esa clase de
   deriva; complementaria, no sustituta, de las 3 reconciliations LAMB.
 
-  Horario: 07:15 UTC = 02:15 Lima. Corre DESPUES de las 3 reconciliations
-  LAMB (06:00/06:20/06:45 UTC) para no competir por trabajo con el mismo
-  foco a medio recomputar; para cuando arranca, el grueso de la
-  propagacion Oracle->MidPoint->Koha de esa noche ya debio completarse.
+  Horario: 09:15 hora de Lima. Hasta el 17-ago-2026 estaba a las 07:15, que NO
+  corria despues de las otras tres: caia DENTRO del solapamiento de Estudiantes
+  (06:20-07:16) y Egresados (06:45-07:50), las dos escribiendo patrons. Reparto
+  vigente: 06:00 Trabajadores | 06:20 Estudiantes | 07:45 Egresados | 09:15 Koha.
+  ⚠️ ZONA HORARIA (verificado 17-ago-2026): el cron NO se interpreta en UTC.
+  El contenedor de MidPoint corre en TZ -05, asi que '0 20 6 * * ?' dispara a las
+  06:20 de LIMA. Los comentarios de estos ficheros decian "06:20 UTC = 01:20 Lima":
+  era falso, y hacia creer que habia 5 horas de margen que no existen. Lo que
+  confunde es psql, cuya sesion usa Etc/UTC y muestra 11:20 para ese mismo disparo.
+
 
   Riesgos: si Koha esta caido esa ventana (ha pasado: 10-jul a hoy con el
   viejo), la reconciliation falla/reintenta segun controlFlow -> ignore
@@ -40,14 +46,22 @@
       xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
       oid="58ef8e82-867e-432a-923e-98adcd7c57fa">
     <name>recon-koha-upeu-daily</name>
-    <description>Reconciliacion diaria koha-upeu — catch-up de drift (NO driver primario de provisioning, eso ya ocurre via las reconciliations LAMB). Cron 07:15 UTC (02:15 Lima). Repuntada 2026-07-19 del resource Koha viejo (archivado) a koha-upeu. SUSPENDED hasta aprobacion explicita de Alberto.</description>
+    <description>Reconciliacion diaria koha-upeu — catch-up de drift (NO driver primario de provisioning, eso ya ocurre via las reconciliations LAMB). Cron 09:15 hora de Lima. Repuntada 2026-07-19 del resource Koha viejo (archivado) a koha-upeu. SUSPENDED hasta aprobacion explicita de Alberto.</description>
     <ownerRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="UserType"/>
     <executionState>runnable</executionState>
     <schedulingState>ready</schedulingState>
     <binding>loose</binding>
     <schedule>
-        <cronLikePattern>0 15 7 * * ?</cronLikePattern>
-        <misfireAction>executeImmediately</misfireAction>
+        <!-- 09:15 desde el 17-ago-2026. Antes 07:15, que era el PEOR momento posible: caia
+             dentro del solapamiento de Estudiantes (06:20-07:16) y Egresados (06:45-07:50),
+             las dos escribiendo patrons. Esta task se suspendio sola el 13-ago con
+             FATAL_ERROR por fallo de conexion al ILS, y estuvo 4 dias parada sin que nadie
+             se enterase; el horario no era ajeno a eso. Ahora corre cuando ningun otro canal
+             toca Koha. -->
+        <cronLikePattern>0 15 9 * * ?</cronLikePattern>
+        <!-- reschedule, NO executeImmediately: con executeImmediately, reanudar esta task
+             tras un fallo la dispara al instante, justo cuando el ILS puede seguir tocado. -->
+        <misfireAction>reschedule</misfireAction>
     </schedule>
     <activity>
         <work>
