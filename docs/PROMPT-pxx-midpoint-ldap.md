@@ -95,15 +95,42 @@ El inbound retirado en PROD v184. Entonces hundía la cobertura del 40,9 % al 17
 estudiantes sin organización**. **Ya no**: con los EP-codes migrados, resolver por ID da **74,99 %**.
 El techo es 75 % porque los EP-code solo existen para pregrado.
 
-### 4. LDAP — publicar el P-code
-`ou=org` tiene 26 OUs con `scibackAcademicProgramCode` = `EP-XXX` y `scibackAcademicProgramUri`;
-25 de 26 resuelven a P-code (la que no, es el programa extinto `EP-IIE`).
+### 4. LDAP — ~~publicar el P-code~~ **YA ESTÁ PUBLICADO**
 
+⚠️ **Corrección: esto ya se hizo.** Medido en PROD el 17-ago-2026 (`192.168.15.168`):
+
+```
+personas en ou=people                            49.480
+personas con scibackAcademicProgramSuneduCode    22.767   ← el P-code YA viaja por LDAP
+P-codes distintos                                    91
+de ellos, fuera del A4/A8 2026-1                      0   ✅ todos válidos
+OUs de programa en ou=org                            26   (siguen con EP-XXX + URI)
+```
+
+Lo que queda en LDAP no es publicar el código, sino dos huecos:
+
+* **Las personas NO llevan `academicProgramSourceId` ni la URI del programa.** Los únicos atributos
+  `sciback*` en `ou=people` son `scibackAcademicProgramSuneduCode`, `scibackCampusCode`,
+  `scibackDocumentNumber` y `scibackFacultyCode`. Consecuencias: **InOut no puede resolver por URI**
+  —tendría que empalmar por P-code, justo lo que la regla prohíbe— y **desde fuera es imposible
+  auditar de dónde salió el código**, porque no hay con qué unir a Oracle.
 * **NO renombrar DNs.** El DN codifica el EP-code (`ou=ep-com,ou=8,ou=org,…`); moverlos rompe
   `memberOf`, ACLs y toda referencia por DN sin ganar nada.
-* **Atributo nuevo y MULTI-VALUE** para el P-code — `scibackAcademicProgramCode` es `SINGLE-VALUE`
-  y semánticamente es el EP. Multi-valor por los 52 recodificados.
 * Schema en `cn=config` **no replica**: aplicar en **.168 y .169**. Datos sí replican: **un nodo**.
+
+### 4b. La pregunta que hay que responder primero: ¿de dónde sale ese P-code?
+
+**Es lo que decide si el paso 2 sigue haciendo falta.** Desde fuera no se puede concluir, pero el
+test es exacto — la discrepancia conocida entre las dos fuentes:
+
+| | Oracle `CODIGO_SUNEDU2` | Tabla del tesauro |
+|---|---|---|
+| `id_programa_estudio` **320** y **146** | `P14` (Lingüística e Inglés) | **`P97`** (Inglés y Español) |
+
+En LDAP hoy conviven **249 personas con `P14`** y **186 con `P97`** — mezclado, y ambos códigos son
+programas reales del A4, así que el recuento por sí solo no distingue. **Hay que mirar a qué
+personas** les tocó cada uno: si los alumnos de los ids 320/146 llevan `P14`, la fuente es Oracle y
+el paso 2 sigue pendiente con 139 fichas equivocadas. Si llevan `P97`, ya se hizo.
 
 ### 5. Regla de transición
 **Publicar en paralelo antes de retirar nada.** El `EP-XXX` sostiene hoy la asignación de
