@@ -78,14 +78,14 @@ En VocBench (repo del tesauro), también hecho y verificado:
 Las 2 LookupTables y el esquema. ⚠️ Un cambio de esquema **suele exigir reinicio** — confirmarlo
 con Alberto antes.
 
-### 2. Cambiar la fuente del P-code — el punto con más valor
+### 2. La fuente del P-code — resolver por `program-pxx-byid`
 `sb:academicProgramSuneduCode` se alimenta hoy de la columna `SUNEDU_CODE` (→ `CODIGO_SUNEDU2`).
-**Debe pasar a `program-pxx-byid`.** Medido sobre los 19.486 matriculados de 2026-2:
+Pasarlo a `program-pxx-byid` aporta dos cosas, y **la segunda es la que arregla el 4b**:
 
-| Fuente | Cobertura | Errores |
+| Fuente | Cobertura | Códigos por matrícula |
 |---|---|---|
-| Oracle `CODIGO_SUNEDU2` | 73,18 % | **139 alumnos con el código equivocado** (Oracle dice `P14`, el A4 dice `P97`) |
-| **LookupTable del tesauro** | **88,44 %** | **0** |
+| Oracle `CODIGO_SUNEDU2` | 73,18 % | los del concepto → duplica en 637 personas |
+| **LookupTable del tesauro** | **88,44 %** | **uno, el de la modalidad** |
 
 Hace falta una función nueva en `canonical/function-libraries/sb-program-resolver-byid.xml`
 (OID `3f8b6c04-…`), copiando `resolveProgramCodeById` pero apuntando al OID `5d1c8a47-…`.
@@ -118,19 +118,47 @@ Lo que queda en LDAP no es publicar el código, sino dos huecos:
   `memberOf`, ACLs y toda referencia por DN sin ganar nada.
 * Schema en `cn=config` **no replica**: aplicar en **.168 y .169**. Datos sí replican: **un nodo**.
 
-### 4b. La pregunta que hay que responder primero: ¿de dónde sale ese P-code?
+### 4b. Un P-code por MATRÍCULA, no todos los del concepto
 
-**Es lo que decide si el paso 2 sigue haciendo falta.** Desde fuera no se puede concluir, pero el
-test es exacto — la discrepancia conocida entre las dos fuentes:
+**Multivalor está bien**: una persona puede cursar dos programas, o un docente enseñar en varias
+escuelas. Eso no se toca. El defecto es otro — **un mismo programa contado dos veces**.
 
-| | Oracle `CODIGO_SUNEDU2` | Tabla del tesauro |
+Medido en PROD el 17-ago-2026 sobre las **1.133 personas con más de un P-code**:
+
+| | | |
 |---|---|---|
-| `id_programa_estudio` **320** y **146** | `P14` (Lingüística e Inglés) | **`P97`** (Inglés y Español) |
+| Programas **realmente distintos** | **496** | 43,8 % — correcto, no tocar |
+| **Mismo concepto, varios códigos** | **637** | 56,2 % — **defecto** |
 
-En LDAP hoy conviven **249 personas con `P14`** y **186 con `P97`** — mezclado, y ambos códigos son
-programas reales del A4, así que el recuento por sí solo no distingue. **Hay que mirar a qué
-personas** les tocó cada uno: si los alumnos de los ids 320/146 llevan `P14`, la fuente es Oracle y
-el paso 2 sigue pendiente con 139 fichas equivocadas. Si llevan `P97`, ya se hizo.
+Las combinaciones que lo producen:
+
+```
+P08 + P96   223 personas  → Contabilidad, Gestión Tributaria y Aduanera
+P04 + P95   208           → Administración
+P08 + P09    79           → Contabilidad…
+P04 + P05    75           → Administración
+P19 + P98    24           → Educación Inicial y Puericultura
+P127 + P14   14           → Educación, Especialidad Lingüística e Inglés
+```
+
+`P04` es Administración **presencial**, `P05` **semipresencial**, `P95` **a distancia**: tres filas
+del A4 porque SUNEDU las declara por separado. **Nadie cursa Administración presencial y a
+distancia a la vez** — es una sola matrícula con los códigos de todas las modalidades pegados.
+
+**Por qué importa:** cuando Calidad cuente alumnos de `P04` para el A4, esas 208 personas
+aparecerán **también** en `P95`. El mismo estudiante, contado dos veces, en dos programas que ante
+SUNEDU son distintos.
+
+**La corrección:** emitir **un P-code por `ID_PROGRAMA_ESTUDIO`**, el de su modalidad.
+`program-pxx-byid` ya lo resuelve así — cruza con `DAVID.ACAD_PROGRAMA_ESTUDIO.ID_MODALIDAD_ESTUDIO`
+y devuelve uno solo por matrícula. Quien curse dos programas seguirá teniendo dos códigos, que es
+lo correcto.
+
+> **Corrección a la versión anterior de este prompt.** Aquí decía que el problema era si el P-code
+> venía de Oracle o del tesauro, y proponía el test de los ids 320/146. **Esa hipótesis no se
+> sostiene:** el alumno que se verificó lleva `P14` y `P97` a la vez, y `P127 + P14` aparece en la
+> lista de arriba — es este mismo patrón de códigos acumulados del mismo concepto, no dos fuentes
+> compitiendo.
 
 ### 5. Regla de transición
 **Publicar en paralelo antes de retirar nada.** El `EP-XXX` sostiene hoy la asignación de
