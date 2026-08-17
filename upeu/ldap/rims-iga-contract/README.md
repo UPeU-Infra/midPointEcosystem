@@ -16,13 +16,38 @@ Orden de aplicación:
 9. `09-ou-alumni-base.ldif`     — entry base `ou=alumni` — **dato → solo en UN nodo** (replica)
 10. `10-limits-rims-reader.ldif` — `size=unlimited` para `rims-reader`. **⚠️ VERSIONADO, NO APLICADO** — espera la ventana de sync que anunciará InOut
 11. `11-fix-frontend-sizelimit-169.ldif` — `olcSizeLimit` 500→10000 en `.169` (**aplicado 2026-07-16**; solo en .169)
+12. `12-schema-programuri-person.ldif` — `scibackAcademicProgramUri` pasa a **multivalor** y entra en el `MAY` de `upeuPerson` + índice `eq` (**aplicado 2026-08-17 en .168 y .169**, ensayado antes en lab). Sin esto la URI del programa solo podía vivir en las OUs de `ou=org` y InOut no tenía llave de unión
 
 ## ⚠️ Cuál va en UN nodo y cuál en LOS DOS (error fácil de cometer)
 
 | Tipo | Ficheros | Dónde |
 |---|---|---|
-| **`cn=config`** (schema, ACL, índices, límites) | 01, 02, 04, 06, 07, 08, 10, 11 | **AMBOS nodos** — `cn=config` NO replica |
+| **`cn=config`** (schema, ACL, índices, límites) | 01, 02, 04, 06, 07, 08, 10, 11, 12 | **AMBOS nodos** — `cn=config` NO replica |
 | **Datos** (entries del árbol `dc=upeu,dc=edu,dc=pe`) | 03, 05, 09 | **UN nodo** — syncrepl los propaga; aplicarlos en los dos crea conflicto |
+
+## 🔴 Los ordinales `{N}` de `cn={12}upeu` cambian con cada re-add — verificarlos siempre
+
+OpenLDAP no permite modificar un `olcAttributeTypes`/`olcObjectClasses` in-place: es
+`delete` por ordinal + `add`, en la **misma** operación (si se separan: *«attribute type in
+use»*). Y el re-add coloca el valor **al final**, así que el ordinal cambia. Estado medido en
+PROD el **17-ago-2026**, después de aplicar el `12`:
+
+| | ordinal antes | ordinal ahora |
+|---|---|---|
+| `scibackAcademicProgramUri` (`.1.8`) | `{7}` | **`{11}`** |
+| `upeuPerson` (`.2.1`) | `{1}` | `{1}` |
+
+⚠️ **El `06` dice `{0}` para `upeuPerson`: está desactualizado, hoy es `{1}`.** Nunca copiar un
+ordinal de un LDIF viejo — leerlo del directorio vivo:
+
+```bash
+ldapsearch -x -H ldap://<nodo>:389 -D 'cn=admin,cn=config' -W \
+  -b 'cn=schema,cn=config' '(cn=*upeu*)' olcAttributeTypes olcObjectClasses
+```
+
+Otro drift cerrado por el `12`: el `MAY` real de `upeuPerson` ya incluía
+`scibackAcademicProgramSuneduCode` (añadido en PROD sin versionar junto al `08-attr-pcode`); el
+`12` lo deja escrito tal como está en el directorio.
 
 ## Rama `ou=alumni` (2026-07-16) — aplicada
 

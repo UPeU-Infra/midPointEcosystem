@@ -1,0 +1,54 @@
+# scibackAcademicProgramUri en PERSONAS — contrato InOut←IGA
+#
+# POR QUE: la URI canonica del programa (VocBench) solo vivia en las 26 OUs de ou=org,
+# porque la clase auxiliar upeuPerson NO la lista en su MAY. Sin ella, InOut tendria que
+# empalmar por P-code, y el P-code NO es llave de union: 52 conceptos llevan dos codigos
+# oficiales por recodificacion via resolucion (SEG20->SEG61). La URI no cambia; el P-code si.
+#
+# DOS CAMBIOS, ambos sobre cn={12}upeu:
+#   1. scibackAcademicProgramUri (OID .1.8) deja de ser SINGLE-VALUE. En ou=org sigue
+#      habiendo una URI por OU, pero una persona puede cursar DOS programas a la vez
+#      (496 medidas en ou=people el 17-ago-2026), y en MidPoint el item de origen
+#      liveProgramUriStudent ya es multivalor.
+#   2. upeuPerson pasa a permitir el atributo.
+#
+# ORDINALES VERIFICADOS EN PROD el 17-ago-2026 (.168 y .169 identicos):
+#   olcAttributeTypes {7}  = 1.3.6.1.4.1.47378.1.8  scibackAcademicProgramUri
+#   olcObjectClasses  {1}  = 1.3.6.1.4.1.47378.2.1  upeuPerson
+# 🔴 RE-VERIFICAR antes de reaplicar — tras ESTE cambio el atributo pasa a {11}, porque el
+#    re-add lo coloca al final. OpenLDAP no permite modificar un valor in-place: es
+#    delete-por-ordinal + add, en la MISMA operacion (si no, "attribute type in use").
+#      ldapsearch -x -H ldap://<nodo>:389 -D 'cn=admin,cn=config' -W \
+#        -b 'cn=schema,cn=config' '(cn=*upeu*)' olcAttributeTypes olcObjectClasses
+#
+# ENSAYADO EN LAB antes de PROD (osixia/openldap:1.5.0, misma imagen): con el atributo ya
+# en uso por una OU y con upeuPerson referenciandolo, el modify se acepta, los datos
+# existentes sobreviven, la persona admite dos URIs, y **slapd arranca tras reiniciar**.
+#
+# 🔴 cn=config NO replica: aplicar en .168 Y .169. Los datos si replican.
+# 🔴 Tras aplicarlo, en MidPoint: purge-schema del resource LDAP-IdentityCache-UPeU +
+#    test connection, o el outbound falla con "Definition of attribute not found".
+#
+#   ldapmodify -x -H ldap://192.168.15.168:389 -D 'cn=admin,cn=config' -W -f 12-schema-programuri-person.ldif
+#   ldapmodify -x -H ldap://192.168.15.169:389 -D 'cn=admin,cn=config' -W -f 12-schema-programuri-person.ldif
+
+dn: cn={12}upeu,cn=schema,cn=config
+changetype: modify
+delete: olcAttributeTypes
+olcAttributeTypes: {7}
+-
+add: olcAttributeTypes
+olcAttributeTypes: ( 1.3.6.1.4.1.47378.1.8 NAME 'scibackAcademicProgramUri' DESC 'URI canonica VocBench del programa academico. Contrato RIMS-IGA O9. MULTI-VALUE desde 2026-08-17: en ou=org hay una por OU, pero en ou=people una persona puede cursar dos programas a la vez. Es la LLAVE DE UNION entre sistemas: el P-code se muestra y se declara, la URI empalma.' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )
+-
+delete: olcObjectClasses
+olcObjectClasses: {1}
+-
+add: olcObjectClasses
+olcObjectClasses: ( 1.3.6.1.4.1.47378.2.1 NAME 'upeuPerson' DESC 'Clase auxiliar UPeU para atributos de calidad de datos e identidad institucional' SUP top AUXILIARY MAY ( upeuDataQualityStatus $ upeuReniecValidationDate $ isni $ scibackDocumentNumber $ scibackFacultyCode $ scibackCampusCode $ scibackAcademicProgramSuneduCode $ scibackAcademicProgramUri ) )
+
+# indice eq — mismo criterio que scibackAcademicProgramSuneduCode (08-attr-pcode.ldif):
+# sin el, filtrar personas por programa hace scan completo de las 49.480 de ou=people.
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: scibackAcademicProgramUri eq
