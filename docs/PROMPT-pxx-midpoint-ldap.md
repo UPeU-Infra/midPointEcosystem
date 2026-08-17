@@ -14,7 +14,14 @@
 > «Ninguno de los 440 conceptos del tesauro declara un predicado con el id de LAMB: la
 > correspondencia vive **solo** en la LookupTable de MidPoint.»
 
-**Eso dejó de ser cierto el 09-ago**, cinco días antes de escribirse el ADR. Verificado:
+**Eso dejó de ser cierto el 09-ago**, cinco días antes de escribirse el ADR.
+**Verificado en vivo contra VocBench el 17-ago-2026** (SPARQL sobre el grafo, no sobre el export):
+
+```
+conceptos totales del tesauro  : 440      ← el ADR cita bien este número
+IDs de LAMB en el tesauro      : 188 sobre 76 conceptos   ← el ADR dice que son 0
+```
+
 
 | Punto de ADR-063 | Estado real |
 |---|---|
