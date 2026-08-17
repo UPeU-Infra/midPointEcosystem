@@ -1,136 +1,89 @@
-# Prompt — MidPoint + LDAP: el P-code como código principal (actualizado 17-ago-2026)
+# Prompt — MidPoint + LDAP: el P-code como código principal de programa
 
 > Pegar al abrir una sesión nueva sobre `~/proyectos/productos/iga`.
-> **Sustituye la versión del 09-ago**, que quedó desfasada: MidPoint avanzó mucho entre medias
-> (ADR-062 aplicado, ADR-063 propuesto) y **dos de sus premisas ya no son ciertas**.
+> Estado medido **en producción el 17-ago-2026**: MidPoint `192.168.15.166`, LDAP `192.168.15.168`,
+> VocBench vía SPARQL, Oracle LAMB.
 > Sesiones hermanas: `koha/canonico/docs/PROMPT-pxx-koha.md` e `inout/canonico/docs/PROMPT-pxx-inout.md`.
-
----
-
-## Lo primero: dos correcciones a `ADR-063`
-
-`ADR-063` está **propuesto**, y su sección *«Por qué no era opcional»* afirma:
-
-> «Ninguno de los 440 conceptos del tesauro declara un predicado con el id de LAMB: la
-> correspondencia vive **solo** en la LookupTable de MidPoint.»
-
-**Eso dejó de ser cierto el 09-ago**, cinco días antes de escribirse el ADR.
-**Verificado en vivo contra VocBench el 17-ago-2026** (SPARQL sobre el grafo, no sobre el export):
-
-```
-conceptos totales del tesauro  : 440      ← el ADR cita bien este número
-IDs de LAMB en el tesauro      : 188 sobre 76 conceptos   ← el ADR dice que son 0
-```
-
-
-| Punto de ADR-063 | Estado real |
-|---|---|
-| **2.** «El vínculo `ID_PROGRAMA_ESTUDIO` → concepto se muda al tesauro» | ✅ **HECHO**. **188 IDs** declarados en VocBench como `skos:notation` con datatype `urn:esther:id_programa_estudio`, repartidos en 76 conceptos vigentes. Commits `12a6e19` y `4d9a297` del repo del tesauro. |
-| **3.** «La LookupTable pasa a ser artefacto generado por SPARQL» | ✅ **HECHO**. `scripts/generar-lookup-programas.py` la genera desde VocBench. La cabecera de ambas tablas dice *«ARTEFACTO GENERADO — no editar a mano»*. |
-| **1.** «El tesauro cubre todo programa de matrícula; la licencia es propiedad, no condición» | ⬜ **PENDIENTE** — y es el único punto real que queda. |
-
-**El diagnóstico del ADR sigue siendo correcto; lo que estaba desfasado era el inventario.**
-Conviene corregir esa sección antes de aprobarlo, o quedará justificando un trabajo ya hecho.
 
 ---
 
 ## La regla (ADR-005 del tesauro)
 
-UPeU identifica el programa por su **P-code / SEG-code** en todos sus sistemas. El **INEI queda
-solo para el repositorio de tesis** (SUNEDU/RENATI lo exige como `renati.discipline`).
+UPeU identifica el programa académico por su **P-code / SEG-code** (`P30`, `SEG61`…) en **todos** sus
+sistemas. El **código INEI queda solo para el repositorio de tesis**, donde SUNEDU/RENATI lo exige
+como `renati.discipline`.
 
-**Fuente de verdad, innegociable:** `/Users/alberto/Downloads/programas pxx upeu` — Formatos A4/A8
-2026-1, **183 programas**. Cualquier cosa distinta está mal, incluido `CODIGO_SUNEDU2` de Oracle.
+**Fuente de verdad, innegociable:** `/Users/alberto/Downloads/programas pxx upeu` — Formatos de
+Licenciamiento **A4 y A8 2026-1**, **183 programas**. Cualquier cosa distinta está mal.
 
-**El P-code NO es la llave de unión.** 52 conceptos llevan dos códigos oficiales por recodificación
-vía resolución (`SEG20`→`SEG61`), **ambos en el A8 2026-1**. Para empalmar se usa
-`sb:academicProgramUri`. El P-code es lo que se muestra, se reporta y se declara.
+### Tres cosas que hay que tener claras antes de tocar nada
 
-**El P-code depende de la MODALIDAD.** El A4 lista una fila por modalidad: Administración es `P04`
-presencial, `P05` semipresencial, `P95` a distancia. La tabla generada ya lo resuelve cruzando con
-`DAVID.ACAD_PROGRAMA_ESTUDIO.ID_MODALIDAD_ESTUDIO` (146 de 188 filas eligen por modalidad).
+**1 · El P-code no es la llave de unión.** 52 conceptos llevan **dos** códigos oficiales porque UPeU
+recodifica por resolución (`SEG20`→`SEG61`, `SEG26`→`SEG44`), y **ambos están en el A8 2026-1**.
+Para empalmar sistemas se usa **`sb:academicProgramUri`**, que no cambia. El P-code es lo que se
+muestra, se reporta y se declara.
+
+**2 · El P-code depende de la MODALIDAD.** El A4 lista **una fila por modalidad**: Administración es
+`P04` presencial, `P05` semipresencial y `P95` a distancia — tres programas distintos ante SUNEDU.
+
+**3 · Multivalor está bien; duplicar el mismo programa, no.** Una persona puede cursar dos programas
+y un docente enseñar en varias escuelas. Lo que no puede es llevar `P04` **y** `P95` por una sola
+matrícula.
 
 ---
 
-## Lo que ya está en el repo, commiteado — no rehacer
+## Estado verificado — no rehacer
 
+### VocBench (repo del tesauro)
+* **188 IDs de LAMB** declarados como `skos:notation` con datatype `urn:esther:id_programa_estudio`,
+  en 76 conceptos vigentes, sobre 440 conceptos totales.
+* **100 % de los `ID_PROGRAMA_ESTUDIO` con matrícula resuelven a un concepto vigente**
+  (16.927/16.927 del semestre 2026-2, programas en alcance).
+* **Los 15 EP-codes atrapados en conceptos deprecados, migrados al vigente** — era el bloqueo
+  literal del inbound retirado en PROD v184.
+* Comprobación permanente en `10-auditar-tesauro.py`: *«IDs de Oracle atrapados en un concepto
+  deprecado»*. Hoy da 0.
+
+### Este repo, commiteado
 * **`upeu/lookup-tables/program-pxx-byid.xml`** — OID `5d1c8a47-2b93-4f60-8e1a-7c4d9f0e6a25`,
-  **188 filas**, `key` = `ID_PROGRAMA_ESTUDIO` → `value` = P-code vigente por modalidad. Los 103
-  P-codes que emite están **todos** en el A4/A8.
-* **`upeu/lookup-tables/program-resolver-lamb-byid.xml`** — regenerada: 186→**188 filas**,
-  82→**91 con EP-code**.
-* **`scripts/generar-lookup-programas.py`** — el generador.
+  188 filas, `key` = `ID_PROGRAMA_ESTUDIO` → `value` = **un** P-code, el de la modalidad. Los 103
+  que emite están todos en el A4/A8.
+* **`upeu/lookup-tables/program-resolver-lamb-byid.xml`** — regenerada: 188 filas, 91 con EP-code.
+* **`scripts/generar-lookup-programas.py`** — genera ambas desde VocBench. No editarlas a mano.
 * **`canonical/schemas/sciback-person-v1.0.xml`** — `academicProgramSuneduCode` pasó de *LEGACY* a
   **PRINCIPAL**; `academicProgramIneiCode` a **metadato de disciplina para tesis**.
 
-En VocBench (repo del tesauro), también hecho y verificado:
-* **100 % de los `ID_PROGRAMA_ESTUDIO` con matrícula resuelven a un concepto vigente**
-  (16.927/16.927 del semestre 2026-2, programas en alcance).
-* **Los 15 EP-codes atrapados en conceptos deprecados, migrados al vigente.** Ese era el bloqueo
-  literal del inbound retirado en PROD v184.
-* Comprobación permanente en el auditor: *«IDs de Oracle atrapados en un concepto deprecado»*.
+### LDAP producción — el P-code YA se publica
+```
+personas en ou=people                            49.480
+con scibackAcademicProgramSuneduCode             22.767
+P-codes distintos                                    91
+de ellos, fuera del A4/A8 2026-1                      0   ✅
+OUs de programa en ou=org                            26   (con EP-XXX + URI)
+```
 
 ---
 
-## Lo que falta
+## Lo que hay que cambiar
 
-### 1. Desplegar a MidPoint lo que está en el repo
-Las 2 LookupTables y el esquema. ⚠️ Un cambio de esquema **suele exigir reinicio** — confirmarlo
-con Alberto antes.
+### 1 · Publicar la URI del programa en las personas
+Hoy `ou=people` lleva **solo cuatro** atributos `sciback*`: `scibackAcademicProgramSuneduCode`,
+`scibackCampusCode`, `scibackDocumentNumber`, `scibackFacultyCode`. **La URI está únicamente en las
+26 OUs de `ou=org`.**
 
-### 2. La fuente del P-code — resolver por `program-pxx-byid`
-`sb:academicProgramSuneduCode` se alimenta hoy de la columna `SUNEDU_CODE` (→ `CODIGO_SUNEDU2`).
-Pasarlo a `program-pxx-byid` aporta dos cosas, y **la segunda es la que arregla el 4b**:
+Consecuencias medidas:
+* **InOut no puede resolver por URI** — tendría que empalmar por P-code, justo lo que la regla 1
+  prohíbe. Su prompt asume que la URI estará ahí.
+* **Desde fuera es imposible auditar de dónde salió un código**, porque no hay con qué unir una
+  persona a su `ID_PROGRAMA_ESTUDIO`.
 
-| Fuente | Cobertura | Códigos por matrícula |
-|---|---|---|
-| Oracle `CODIGO_SUNEDU2` | 73,18 % | los del concepto → duplica en 637 personas |
-| **LookupTable del tesauro** | **88,44 %** | **uno, el de la modalidad** |
-
-Hace falta una función nueva en `canonical/function-libraries/sb-program-resolver-byid.xml`
-(OID `3f8b6c04-…`), copiando `resolveProgramCodeById` pero apuntando al OID `5d1c8a47-…`.
-
-### 3. Restaurar `program-id-to-academicProgramCode`
-El inbound retirado en PROD v184. Entonces hundía la cobertura del 40,9 % al 17,0 % — **7.268
-estudiantes sin organización**. **Ya no**: con los EP-codes migrados, resolver por ID da **74,99 %**.
-El techo es 75 % porque los EP-code solo existen para pregrado.
-
-### 4. LDAP — ~~publicar el P-code~~ **YA ESTÁ PUBLICADO**
-
-⚠️ **Corrección: esto ya se hizo.** Medido en PROD el 17-ago-2026 (`192.168.15.168`):
-
-```
-personas en ou=people                            49.480
-personas con scibackAcademicProgramSuneduCode    22.767   ← el P-code YA viaja por LDAP
-P-codes distintos                                    91
-de ellos, fuera del A4/A8 2026-1                      0   ✅ todos válidos
-OUs de programa en ou=org                            26   (siguen con EP-XXX + URI)
-```
-
-Lo que queda en LDAP no es publicar el código, sino dos huecos:
-
-* **Las personas NO llevan `academicProgramSourceId` ni la URI del programa.** Los únicos atributos
-  `sciback*` en `ou=people` son `scibackAcademicProgramSuneduCode`, `scibackCampusCode`,
-  `scibackDocumentNumber` y `scibackFacultyCode`. Consecuencias: **InOut no puede resolver por URI**
-  —tendría que empalmar por P-code, justo lo que la regla prohíbe— y **desde fuera es imposible
-  auditar de dónde salió el código**, porque no hay con qué unir a Oracle.
-* **NO renombrar DNs.** El DN codifica el EP-code (`ou=ep-com,ou=8,ou=org,…`); moverlos rompe
-  `memberOf`, ACLs y toda referencia por DN sin ganar nada.
-* Schema en `cn=config` **no replica**: aplicar en **.168 y .169**. Datos sí replican: **un nodo**.
-
-### 4b. Un P-code por MATRÍCULA, no todos los del concepto
-
-**Multivalor está bien**: una persona puede cursar dos programas, o un docente enseñar en varias
-escuelas. Eso no se toca. El defecto es otro — **un mismo programa contado dos veces**.
-
-Medido en PROD el 17-ago-2026 sobre las **1.133 personas con más de un P-code**:
+### 2 · Un P-code por MATRÍCULA, no todos los del concepto
+De las **1.133 personas con más de un P-code** en LDAP:
 
 | | | |
 |---|---|---|
-| Programas **realmente distintos** | **496** | 43,8 % — correcto, no tocar |
+| Programas **realmente distintos** | **496** | 43,8 % — correcto, **no tocar** |
 | **Mismo concepto, varios códigos** | **637** | 56,2 % — **defecto** |
-
-Las combinaciones que lo producen:
 
 ```
 P08 + P96   223 personas  → Contabilidad, Gestión Tributaria y Aduanera
@@ -141,48 +94,64 @@ P19 + P98    24           → Educación Inicial y Puericultura
 P127 + P14   14           → Educación, Especialidad Lingüística e Inglés
 ```
 
-`P04` es Administración **presencial**, `P05` **semipresencial**, `P95` **a distancia**: tres filas
-del A4 porque SUNEDU las declara por separado. **Nadie cursa Administración presencial y a
-distancia a la vez** — es una sola matrícula con los códigos de todas las modalidades pegados.
+Es una sola matrícula con los códigos de **todas las modalidades** del programa pegados.
 
 **Por qué importa:** cuando Calidad cuente alumnos de `P04` para el A4, esas 208 personas
-aparecerán **también** en `P95`. El mismo estudiante, contado dos veces, en dos programas que ante
+aparecerán **también** en `P95` — el mismo estudiante contado dos veces en dos programas que ante
 SUNEDU son distintos.
 
-**La corrección:** emitir **un P-code por `ID_PROGRAMA_ESTUDIO`**, el de su modalidad.
-`program-pxx-byid` ya lo resuelve así — cruza con `DAVID.ACAD_PROGRAMA_ESTUDIO.ID_MODALIDAD_ESTUDIO`
-y devuelve uno solo por matrícula. Quien curse dos programas seguirá teniendo dos códigos, que es
-lo correcto.
+**La corrección:** `sb:academicProgramSuneduCode` se alimenta hoy de la columna `SUNEDU_CODE`
+(→ `CODIGO_SUNEDU2`). Pasarlo a **`program-pxx-byid`**, que ya cruza con
+`DAVID.ACAD_PROGRAMA_ESTUDIO.ID_MODALIDAD_ESTUDIO` (1=Presencial, 2=Semipresencial, 13=A Distancia)
+y devuelve **uno solo por `ID_PROGRAMA_ESTUDIO`**. Quien curse dos programas seguirá con dos códigos.
 
-> **Corrección a la versión anterior de este prompt.** Aquí decía que el problema era si el P-code
-> venía de Oracle o del tesauro, y proponía el test de los ids 320/146. **Esa hipótesis no se
-> sostiene:** el alumno que se verificó lleva `P14` y `P97` a la vez, y `P127 + P14` aparece en la
-> lista de arriba — es este mismo patrón de códigos acumulados del mismo concepto, no dos fuentes
-> compitiendo.
+Hace falta una función nueva en `canonical/function-libraries/sb-program-resolver-byid.xml`
+(OID `3f8b6c04-…`), copiando `resolveProgramCodeById` pero apuntando al OID `5d1c8a47-…`.
 
-### 5. Regla de transición
-**Publicar en paralelo antes de retirar nada.** El `EP-XXX` sostiene hoy la asignación de
-organización; quitarlo en caliente reproduce la regresión de los 7.268.
+De paso sube la cobertura: `CODIGO_SUNEDU2` resuelve el **73,18 %** de los 19.486 matriculados de
+2026-2; la tabla del tesauro, el **88,44 %**.
+
+### 3 · Desplegar el esquema que ya está en el repo
+Solo cambian anotaciones, pero mientras no se despliegue **el `.xsd` sigue diciendo que el
+identificador canónico es el INEI**, que es lo contrario de la decisión. ⚠️ Un cambio de esquema en
+MidPoint suele exigir reinicio — confirmarlo con Alberto antes.
+
+### 4 · Restaurar `program-id-to-academicProgramCode` (opcional, medir antes)
+Es el inbound retirado en PROD v184, que entonces hundió la cobertura del 40,9 % al 17,0 % — **7.268
+estudiantes sin organización**. Con los EP-codes ya migrados, resolver por ID daría **74,99 %**. El
+techo es 75 % porque los EP-code solo existen para pregrado.
 
 ---
 
-## Sobre ADR-062 — no hay conflicto, y conviene decirlo
+## Reglas de ejecución
 
-`ADR-062` (aplicado en PROD, schema v32 / resource v199) publica `academicProgramSourceId` siempre,
-resuelva o no a P-code, porque **6.706 estudiantes** —Inglés, CEPRE, Conservatorio, diplomaturas—
-no tienen entrada en una tabla de solo licenciados.
+**Publicar en paralelo antes de retirar nada.** El `EP-XXX` sostiene hoy la asignación de
+organización del bloque D6 de `user-template-student`; quitarlo en caliente reproduce la regresión
+de los 7.268.
 
-**Es correcto y complementa, no contradice.** Son dos preguntas distintas:
+**No renombrar DNs.** El DN codifica el EP-code (`ou=ep-com,ou=8,ou=org,…`); moverlos rompe
+`memberOf`, ACLs y toda referencia por DN sin ganar nada — el DN es un handle opaco.
 
-* *¿en qué programa está esta persona?* → identidad → **siempre**, `academicProgramSourceId`;
-* *¿qué declara UPeU ante SUNEDU?* → Calidad → **solo licenciados**, el P-code.
+**LDAP:** el schema va en `cn=config`, que **NO replica** → aplicar en **.168 y .169**. Los datos sí
+replican → aplicarlos en **un solo nodo**. Ver `upeu/ldap/rims-iga-contract/README.md`.
 
-El DW mide lo mismo desde su lado y llega al mismo sitio: sobre los 19.486 matriculados de 2026-2,
-**2.253 no tienen ni P-code ni deben tenerlo** — idiomas, CEPRE y Conservatorio no son programas
-licenciados (Ley 30220 art. 46 y 54) y **su cobertura correcta ante SUNEDU es 0 %**.
+---
 
-Por eso el punto 1 de ADR-063 —el tesauro cubre todo el catálogo, la licencia es una propiedad— es
-la solución limpia: da identidad a los 6.706 **sin** meterlos en el denominador de Calidad.
+## Sobre los dos ADR recientes
+
+**`ADR-062`** (aplicado en PROD, schema v32 / resource v199) publica `academicProgramSourceId`
+siempre, resuelva o no a P-code, porque 6.706 estudiantes —Inglés, CEPRE, Conservatorio,
+diplomaturas— no están en una tabla de solo licenciados. **Es correcto y no contradice ADR-005:**
+son dos preguntas distintas — *¿en qué programa está esta persona?* (identidad, siempre) frente a
+*¿qué declara UPeU ante SUNEDU?* (Calidad, solo licenciados). El DW mide lo mismo desde su lado:
+2.253 de los 19.486 matriculados **no tienen P-code ni deben tenerlo** (Ley 30220 art. 46 y 54).
+
+**`ADR-063`** (propuesto) afirma en *«Por qué no era opcional»* que *«ninguno de los 440 conceptos
+del tesauro declara un predicado con el id de LAMB»*. **Verificado en vivo el 17-ago: son 188 IDs en
+76 conceptos.** Sus puntos 2 (mudar el vínculo al tesauro) y 3 (LookupTable generada por SPARQL) ya
+están hechos desde el 09-ago. Queda vivo el **punto 1** —el tesauro cubre todo el catálogo y la
+licencia es propiedad del concepto—, que es justamente lo que da identidad a los 6.706 de ADR-062
+**sin** meterlos en el denominador de Calidad. Conviene corregir esa sección antes de aprobarlo.
 
 ---
 
@@ -193,6 +162,14 @@ cd ~/proyectos/productos/iga/canonico && python3 scripts/generar-lookup-programa
 cd ~/proyectos/productos/vocbench/instituciones/upeu && python3 scripts/sprint4/10-auditar-tesauro.py
 ```
 
-Tras desplegar, medir la cobertura real de `sb:academicProgramSuneduCode` y
-`sb:academicProgramCode` sobre los usuarios vivos y contrastarla con **88,44 %** y **74,99 %**.
-**Si sale por debajo, revertir** — es la señal exacta que se pasó por alto el 5-ago.
+Tras desplegar, medir sobre los usuarios vivos y contrastar:
+
+| Medida | Antes (17-ago) | Esperado después |
+|---|---|---|
+| Personas con P-code en LDAP | 22.767 | ≥ 22.767 |
+| Personas con **varios códigos del mismo concepto** | **637** | **0** |
+| Personas con códigos de programas distintos | 496 | 496 (no debe cambiar) |
+| P-codes fuera del A4/A8 | 0 | 0 |
+
+**Si la cobertura baja o aparecen códigos fuera del A4/A8, revertir.** Es la señal exacta que se
+pasó por alto el 5-ago.
