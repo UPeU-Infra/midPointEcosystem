@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Application Role: AR-Koha-Override-EditAnyItem
+  OID: e4537815-77de-43ec-a1a1-db1495fbb552
+  Versión: 1.0 (2026-08-17)
+
+  Excepción manual de mínimo privilegio: añade el subpermiso Koha
+  `edit_any_item` (module_bit=9, "Edit any item regardless of home library")
+  al paquete técnico que la persona ya recibe. NO contiene construction: el
+  resource Koha (mapping user-permissions-from-effective-koha-staff-role) es
+  quien lo interpreta y lo concatena a la lista de permisos granulares.
+
+  QUÉ CONCEDE
+  Poder editar el ejemplar (item) cuya home library NO es la biblioteca del
+  catalogador. Solo eso: es un subpermiso del módulo 9 (editcatalogue). NO
+  toca circulación (módulo 1), NO toca datos de usuarios (módulo 4), NO es
+  superlibrarian (flags=1).
+
+  POR QUÉ EXISTE (verificado en vivo el 2026-08-17 contra Koha PROD 26.05.01,
+  192.168.12.136 / BD koha_upeu)
+  El catalogador de Biblioteca Lima (BUL) también cataloga para la Biblioteca
+  CIA (Centro de Investigación Adventista, branchcode CIA, ID_AREA/costCenter
+  94, 3.564 ejemplares y un solo patron). Hoy no puede editarlos: en el código
+  instalado, `Koha::Patron::can_see_things_from`
+  (/usr/share/koha/lib/Koha/Patron.pm:2334) concede solo en tres supuestos —
+  (a) `$self->branchcode eq $branchcode`, (b) la persona tiene el subpermiso,
+  o (c) un library group los agrupa. En PROD no hay library groups
+  (`SELECT COUNT(*) FROM library_groups` = 0) y `edit_any_item` no lo tiene
+  nadie, así que el único camino abierto es (b).
+
+  ALTERNATIVA DESCARTADA
+  Un library group {BUL, CIA} habría resuelto lo mismo, pero abre CIA a los
+  15 miembros de staff de BUL. Se prefirió el subpermiso a UNA persona.
+  Tampoco se activa `IndependentBranches` (hoy = 0): el upstream lo
+  desaconseja en producción, anularía los library groups y — ver la
+  advertencia de abajo — dejaría este rol inerte.
+
+  🔴 ADVERTENCIA — ESTE ROL QUEDA INERTE SI SE ACTIVA `IndependentBranches`
+  Verificado en el código instalado: `Koha::Patron::can_edit_items_from` hace
+  `return` ANTES de evaluar el subpermiso cuando la preferencia está activa.
+  Es decir: activar `IndependentBranches` no endurece este permiso, lo
+  NEUTRALIZA. Si algún día se evalúa activarla, hay que rediseñar este caso
+  (library groups) antes, no después.
+
+  🔴 ALCANCE REAL — ABRE LAS 4 SEDES, NO SOLO CIA
+  `edit_any_item` es global por diseño de Koha: quien lo tiene puede editar
+  ejemplares de BUL, BUJ, BUT y CIA. NO existe forma nativa de acotarlo a un
+  subconjunto de bibliotecas. Se acepta conscientemente porque el asignatario
+  es uno solo y su función es catalogación (módulo 9), no circulación.
+
+  ASIGNACIÓN (manual, 1 asignatario — 2026-08-17)
+  Jaime Aurelio Vilcazan Quispe — Koha borrowernumber=150, userid=06960482,
+  branchcode=BUL, categorycode=staff, flags=4. Se asigna A MANO en MidPoint
+  (igual que AR-Koha-Override-Circulacion y AR-Koha-Librarian-CIA-Admin): no
+  hay birthright ni LookupTable, porque es una excepción individual. Si
+  aparecen más catalogadores cross-sede, generalizar con LookupTable antes de
+  seguir asignando a mano.
+
+  PRECONDICIÓN PARA QUE SURTA EFECTO
+  El resource solo añade '9:edit_any_item' en las dos ramas que ya entregan
+  el paquete técnico (con `9:edit_items`): costCenter=94 con
+  AR-Koha-Librarian-CIA-Admin, y costCenter=93 en el bucket `technical`
+  (ProcesosTecnicos / Supervision). Fuera de ahí el rol no hace nada: sin
+  `edit_items` el subpermiso no significa nada, y superadmin/Direccion/
+  Soporte devuelven [] antes (flags=1 ya lo cubre todo).
+
+  NOTA DE DERIVA DOCUMENTAL
+  La cabecera de AR-Koha-Librarian-CIA-Admin.xml (2026-07-26) afirma que
+  `IndependentBranches` está "activo, verificado en prod". Medido el
+  2026-08-17 en el Koha consolidado (.136) vale 0. Esa frase describe el
+  Koha viejo (.135) o quedó obsoleta con la consolidación; no se corrige
+  aquí para no mezclar cambios, pero queda anotada.
+-->
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+      oid="e4537815-77de-43ec-a1a1-db1495fbb552">
+    <name>AR-Koha-Override-EditAnyItem</name>
+    <description>Excepción manual: añade el subpermiso Koha edit_any_item (9:edit_any_item, "Edit any item regardless of home library") al paquete técnico ya vigente, para catalogar ejemplares de una biblioteca distinta a la propia (caso BUL→CIA). No contiene construction: lo interpreta el resource Koha. Alcance global a las 4 sedes; queda inerte si se activa IndependentBranches.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <!-- Archetype: Application role (OID canónico PROD, mismo que el resto de AR-Koha-*) -->
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="ArchetypeType"/>
+    </assignment>
+</role>

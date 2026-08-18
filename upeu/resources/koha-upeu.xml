@@ -1495,12 +1495,20 @@ if (assigned.contains(superadmin)) return []
 def live = basic.getExtensionPropertyValue(focus, 'liveAffiliationWorker')
 def cc = focus?.costCenter?.toString()?.trim()
 if (live == null) return []
+// OVERRIDE edit_any_item 2026-08-17: subpermiso Koha "Edit any item regardless of
+// home library" (module_bit=9) para catalogar ejemplares de otra sede (caso BUL->CIA:
+// sin library groups en PROD, Koha::Patron::can_see_things_from solo concede por
+// branchcode propio o por este subpermiso). Se suma SOLO a las ramas que ya entregan
+// 9:edit_items -- fuera de ellas no significaria nada. Ver AR-Koha-Override-EditAnyItem.
+// OJO: es global a las 4 sedes y queda INERTE si se activa IndependentBranches.
+def editAnyItem = 'e4537815-77de-43ec-a1a1-db1495fbb552' // AR-Koha-Override-EditAnyItem
+def extra = assigned.contains(editAnyItem) ? ['9:edit_any_item'] : []
 // FIX CIA 2026-07-26: mismo bucket técnico que Procesos técnicos/Supervisión de
 // Biblioteca Lima, pero para costCenter=94 (CIA). Ver AR-Koha-Librarian-CIA-Admin.
 if (cc == '94') {
     def ciaAdmin = '3e753452-dee7-4eee-822e-dd6a8c9539cb' // AR-Koha-Librarian-CIA-Admin
     if (assigned.contains(ciaAdmin)) {
-        return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds','9:edit_catalogue','9:edit_items','13:label_creator','13:manage_staged_marc','13:stage_marc_import']
+        return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds','9:edit_catalogue','9:edit_items','13:label_creator','13:manage_staged_marc','13:stage_marc_import'] + extra
     }
     return []
 }
@@ -1516,7 +1524,7 @@ def technical = [
     '03a2fc51-cda6-49d6-82b0-a00499afaf24'
 ] as Set
 if (!assigned.intersect(technical).isEmpty()) {
-    return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds','9:edit_catalogue','9:edit_items','13:label_creator','13:manage_staged_marc','13:stage_marc_import']
+    return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds','9:edit_catalogue','9:edit_items','13:label_creator','13:manage_staged_marc','13:stage_marc_import'] + extra
 }
 if (assigned.contains('dd74503c-7c12-4631-80ec-416aebc35319')) {
     return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds']
