@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Application Role: AR-Koha-Override-EditAnyItem
+  Application Role: AR-Koha-Catalogador-Multisede
   OID: e4537815-77de-43ec-a1a1-db1495fbb552
   Versión: 1.0 (2026-08-17)
 
@@ -86,8 +86,8 @@
       xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
       xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
       oid="e4537815-77de-43ec-a1a1-db1495fbb552">
-    <name>AR-Koha-Override-EditAnyItem</name>
-    <description>Excepción manual: añade el subpermiso Koha edit_any_item (9:edit_any_item, "Edit any item regardless of home library") al paquete técnico ya vigente, para catalogar ejemplares de una biblioteca distinta a la propia (caso BUL→CIA). No contiene construction: lo interpreta el resource Koha. Alcance global a las 4 sedes; queda inerte si se activa IndependentBranches.</description>
+    <name>AR-Koha-Catalogador-Multisede</name>
+    <description>Tier de catalogación multisede: añade el subpermiso Koha edit_any_item (9:edit_any_item, "Edit any item regardless of home library") al paquete técnico ya vigente, para quien cataloga en más de una biblioteca (caso BUL+CIA). Alcance sobre las 4 sedes por diseño — Koha no sabe acotarlo a un subconjunto — e incluye el borrado de ejemplares ajenos. No contiene construction: lo interpreta el resource Koha. Queda inerte si se activa IndependentBranches.</description>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <!-- Archetype: Application role (OID canónico PROD, mismo que el resto de AR-Koha-*) -->
