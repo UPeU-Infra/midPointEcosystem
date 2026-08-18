@@ -42,19 +42,30 @@
   NEUTRALIZA. Si algún día se evalúa activarla, hay que rediseñar este caso
   (library groups) antes, no después.
 
-  🔴 ALCANCE REAL — ABRE LAS 4 SEDES, NO SOLO CIA
-  `edit_any_item` es global por diseño de Koha: quien lo tiene puede editar
-  ejemplares de BUL, BUJ, BUT y CIA. NO existe forma nativa de acotarlo a un
-  subconjunto de bibliotecas. Se acepta conscientemente porque el asignatario
-  es uno solo y su función es catalogación (módulo 9), no circulación.
+  ALCANCE — ABRE LAS 4 SEDES, Y ESO ES LO PRETENDIDO
+  `edit_any_item` es global por diseño de Koha: quien lo tiene puede editar y
+  BORRAR ejemplares de BUL, BUJ, BUT y CIA. No existe forma nativa de acotarlo
+  a un subconjunto de bibliotecas.
+
+  CRITERIO INSTITUCIONAL (decisión de Alberto Sánchez, 2026-08-17): no es un
+  mal menor que se tolere, es el nivel correcto. Quien tiene responsabilidad
+  de catalogación en más de una biblioteca ocupa por definición un escalón por
+  encima del catalogador de sede única, y le corresponde alcance sobre todas
+  — igual que al superadmin. Este rol es por tanto un TIER, no una excepción.
+  Consecuencia práctica: no hay que justificar caso por caso el alcance de 4
+  sedes; lo que se justifica es la pertenencia al tier. El coste real que sí
+  hay que vigilar es el BORRADO de ejemplares ajenos, que va en el mismo
+  permiso; queda auditado en action_logs (CataloguingLog=1, con usuario y
+  fecha).
 
   ASIGNACIÓN (manual, 1 asignatario — 2026-08-17)
   Jaime Aurelio Vilcazan Quispe — Koha borrowernumber=150, userid=06960482,
   branchcode=BUL, categorycode=staff, flags=4. Se asigna A MANO en MidPoint
   (igual que AR-Koha-Override-Circulacion y AR-Koha-Librarian-CIA-Admin): no
-  hay birthright ni LookupTable, porque es una excepción individual. Si
-  aparecen más catalogadores cross-sede, generalizar con LookupTable antes de
-  seguir asignando a mano.
+  hay birthright ni LookupTable porque el tier todavía no está modelado en la
+  fuente de RR.HH. Se irán incorporando más perfiles a medida que el
+  responsable funcional los identifique; al segundo o tercer asignatario,
+  generalizar con LookupTable en vez de seguir asignando a mano.
 
   PRECONDICIÓN PARA QUE SURTA EFECTO
   El resource solo añade '9:edit_any_item' en las dos ramas que ya entregan
