@@ -8,12 +8,16 @@ from openpyxl.utils import get_column_letter
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.chart import BarChart, PieChart, Reference
 
-SP  = "/private/tmp/claude-501/-Users-alberto-proyectos-productos-iga/ca1dd53b-d6bb-4df4-95a3-78d21daf87b8/scratchpad"
+import os
+_SP = os.environ.get("M365_WORK") or os.path.expanduser("~/.cache/upeu-m365")
+_OUT = os.environ.get("M365_OUT") or os.path.expanduser("~/Downloads")
+
+SP = _SP
 HOY = datetime.datetime.now(datetime.timezone.utc)
 REF = HOY                                     # fecha de referencia elegida: hoy
 FECHA = HOY.strftime("%Y-%m-%d")
-OUT1 = f"/Users/alberto/Downloads/Analisis_Clasificacion_Cuentas_{FECHA}.xlsx"
-OUT2 = f"/Users/alberto/Downloads/Analisis_Actividad_Cuentas_{FECHA}.xlsx"
+OUT1 = f"{_OUT}/Analisis_Clasificacion_Cuentas_{FECHA}.xlsx"
+OUT2 = f"{_OUT}/Analisis_Actividad_Cuentas_{FECHA}.xlsx"
 
 rows = json.load(open(f"{SP}/clasificado.json"))
 

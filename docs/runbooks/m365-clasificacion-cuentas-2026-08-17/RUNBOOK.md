@@ -85,26 +85,56 @@ está automatizada (`API Lamb Academic` ejecuta el 74% de las creaciones); la ba
 
 Se entrega **HTML en lugar de Word** por indicación de Alberto.
 
-## Cómo regenerar
+## 🔄 Cómo actualizar con datos frescos — UN SOLO COMANDO
 
 ```bash
-# 1) tenant completo (~8 min, incluye lastPasswordChangeDateTime)
-source ~/.secrets/upeu-infra.env
-python3 entra_pull2.py "$MIDPOINT_AZ_TENANT_ID" "$MIDPOINT_AZ_CLIENT_ID" \
-  "$MIDPOINT_AZ_CLIENT_SECRET" <scratch>/entra_users2.json
-
-# 2) MidPoint: focos con archetype, orgs y campus  -> mp_full.csv
-# 3) MidPoint: catálogo de unidades                -> mp_orgs.csv
-# 4) Oracle (clase OraQ.java, ver runbook entra-duales-correo-2026-08-03):
-#      CORREO_INST + documento  -> ora_correo.tsv
-#      NUM_DOCUMENTO            -> ora_doc.tsv
-#      MOISES.PERSONA (nombres) -> ora_nombres.tsv
-python3 clasificar.py && python3 gen_entregables.py && python3 gen_informe.py
+cd ~/proyectos/productos/iga/canonico/docs/runbooks/m365-clasificacion-cuentas-2026-08-17
+./actualizar.sh
 ```
 
-Las consultas SQL exactas están en el histórico de la sesión; las claves de cruce son
-`m_user.emailaddress`, `m_user.nameorig` (= código institucional), `ext->>'72'` (DNI),
-`ext->>'74'` (código), `ext->>'78'` (afiliación), `ext->>'219'/'220'` (campus).
+Eso rehace **los tres entregables completos** desde cero: descarga el tenant, extrae MidPoint y
+Oracle, clasifica y escribe los Excel y el HTML en `~/Downloads` con la fecha del día.
+**No hay que reescribir ningún script.**
+
+| Variante | Qué hace | Tiempo |
+|---|---|---|
+| `./actualizar.sh` | Todo, con datos nuevos | **~40 min** (8 de descarga + 30 de Excel) |
+| `./actualizar.sh --rapido` | Reutiliza las descargas previas si ya existen | ~30 min |
+| `./actualizar.sh --solo-informe` | Rehace solo los entregables, sin tocar la red | ~30 min |
+
+Los 30 minutos son casi todos de `openpyxl` escribiendo dos libros de 75.000 filas; no hay error.
+
+**Antes de lanzarlo:** la VPN corporativa tiene que estar levantada — el script lo comprueba y se
+detiene con un mensaje claro si `192.168.15.166` no responde, igual que si falta un `.env` o
+`openpyxl`. Todo es **solo lectura**.
+
+**Dónde queda cada cosa:** los datos intermedios en `~/.cache/upeu-m365` (borrables, se regeneran
+solos); los entregables en `~/Downloads`. Ambas rutas se pueden cambiar con `M365_WORK` y `M365_OUT`.
+
+### Piezas del pipeline (`lib/`)
+
+| Script | Qué hace |
+|---|---|
+| `01-pull-entra.py` | Tenant completo vía Graph, con `signInActivity` y `lastPasswordChangeDateTime` |
+| `02-extraer-midpoint.sh` | Focos con archetype/afiliación/campus/unidad + catálogo de orgs. **Las consultas SQL están aquí, no en el histórico de una sesión** |
+| `03-extraer-oracle.sh` | MDM: correos institucionales, documentos, nombres y sede de egresados. Compila el cliente JDBC solo si falta |
+| `04-clasificar.py` | La cascada N0→N1→N2a→N2b→N3 |
+| `05-entregables.py` | Excel 1 y 2 |
+| `06-informe.py` | Informe HTML |
+| `09-estado-tenant.py` | Extra: estado del tenant por dominio y evolución mensual (independiente) |
+
+Claves de cruce, por si hay que tocar algo: `m_user.emailaddress`, `m_user.nameorig` (= código
+institucional), `ext->>'72'` (DNI), `ext->>'74'` (código), `ext->>'78'` (afiliación),
+`ext->>'219'`/`'220'` (campus).
+
+### Trampas ya resueltas (no volver a tropezar)
+
+- `MOISES.PERSONA_NATURAL` **no tiene** `NOMBRE`/`PATERNO`/`MATERNO` — están en `MOISES.PERSONA`.
+- El contenedor `midpoint_server` tiene `ojdbc11` pero **no `javac`**; el host de PROD sí. Se compila
+  en el host y se copia el `.class` con `docker cp` (lo hace `03-extraer-oracle.sh` solo).
+- Cargar solo los nombres de las personas **con correo** (29.857) deja el 42% de las cuentas «sin
+  evidencia». Hay que cargar el MDM completo (410.996 nombres).
+- `psql -F E'\t'` **no** produce tabuladores desde bash: usa `COPY ... WITH CSV`.
 
 ## Pendiente / siguiente paso natural
 

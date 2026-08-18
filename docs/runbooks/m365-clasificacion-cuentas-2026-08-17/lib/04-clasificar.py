@@ -16,7 +16,11 @@ Cada fila declara de qué nivel salió su clasificación.
 import json, csv, re, unicodedata, datetime, sys
 from collections import Counter, defaultdict
 
-SP = "/private/tmp/claude-501/-Users-alberto-proyectos-productos-iga/ca1dd53b-d6bb-4df4-95a3-78d21daf87b8/scratchpad"
+import os
+_SP = os.environ.get("M365_WORK") or os.path.expanduser("~/.cache/upeu-m365")
+_OUT = os.environ.get("M365_OUT") or os.path.expanduser("~/Downloads")
+
+SP = _SP
 HOY = datetime.datetime.now(datetime.timezone.utc)
 
 def norm(s):

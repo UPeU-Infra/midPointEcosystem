@@ -9,10 +9,14 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.chart import LineChart, BarChart, Reference
 
-SP  = "/private/tmp/claude-501/-Users-alberto-proyectos-productos-iga/ca1dd53b-d6bb-4df4-95a3-78d21daf87b8/scratchpad"
+import os
+_SP = os.environ.get("M365_WORK") or os.path.expanduser("~/.cache/upeu-m365")
+_OUT = os.environ.get("M365_OUT") or os.path.expanduser("~/Downloads")
+
+SP = _SP
 HOY = datetime.datetime.now(datetime.timezone.utc)
 FECHA = HOY.strftime("%Y-%m-%d")
-OUT = f"/Users/alberto/Downloads/M365_UPeU_Estado_Real_{FECHA}.xlsx"
+OUT = f"{_OUT}/M365_UPeU_Estado_Real_{FECHA}.xlsx"
 
 users = json.load(open(f"{SP}/entra_users.json"))
 audit = json.load(open(f"{SP}/audit.json")) if os.path.exists(f"{SP}/audit.json") else []
