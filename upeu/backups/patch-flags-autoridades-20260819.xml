@@ -3,8 +3,13 @@
                     xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3">
   <itemDelta>
     <t:modificationType>replace</t:modificationType>
-    <t:path>c:schemaHandling/c:objectType[2]/c:attribute[42]/c:outbound/c:expression/c:script/c:code</t:path>
-    <t:value><![CDATA[
+    <t:path>c:schemaHandling/c:objectType[2]/c:attribute[42]/c:outbound</t:path>
+    <t:value xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
+<name>flags-from-effective-koha-staff-role</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
 def assigned = (focus?.assignment ?: []).collect { it?.targetRef?.oid }.findAll { it != null } as Set
 def superadmin = 'd698dc99-1a8c-479c-9eec-2a0214fdbf04'
 if (assigned.contains(superadmin)) return 1
@@ -62,6 +67,9 @@ if (assigned.contains(overrideCirc)) {
 if (!assigned.intersect(technical).isEmpty()) return 16388
 if (!assigned.intersect(circulation).isEmpty()) return 4
 return null
-                            ]]></t:value>
+                            ]]></code>
+                        </script>
+                    </expression>
+    </t:value>
   </itemDelta>
 </objectModification>
