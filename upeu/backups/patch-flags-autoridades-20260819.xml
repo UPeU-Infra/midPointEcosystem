@@ -1,0 +1,67 @@
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+                    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3">
+  <itemDelta>
+    <t:modificationType>replace</t:modificationType>
+    <t:path>c:schemaHandling/c:objectType[2]/c:attribute[42]/c:outbound/c:expression/c:script/c:code</t:path>
+    <t:value><![CDATA[
+def assigned = (focus?.assignment ?: []).collect { it?.targetRef?.oid }.findAll { it != null } as Set
+def superadmin = 'd698dc99-1a8c-479c-9eec-2a0214fdbf04'
+if (assigned.contains(superadmin)) return 1
+def live = basic.getExtensionPropertyValue(focus, 'liveAffiliationWorker')
+def cc = focus?.costCenter?.toString()?.trim()
+if (live == null) return null
+// FIX CIA 2026-07-26: bucket propio para costCenter=94 (CIA), independiente del
+// bucket Biblioteca Lima (costCenter=93) de abajo. Ver AR-Koha-Librarian-CIA-Admin.
+if (cc == '94') {
+    def ciaAdmin = '3e753452-dee7-4eee-822e-dd6a8c9539cb' // AR-Koha-Librarian-CIA-Admin
+    // FIX AUTORIDADES 2026-08-19: 16388 (antes 4). Su propia cabecera define este bucket
+    // como "mismo bucket tecnico que Procesos tecnicos/Supervision" (ver el mapping
+    // hermano user-permissions-from-effective-koha-staff-role), asi que hereda tambien
+    // el control de autoridades. Ver la nota extensa en el bloque costCenter=93.
+    if (assigned.contains(ciaAdmin)) return 16388
+    return null
+}
+if (cc != '93') return null
+def admins = [
+    'd3303cec-7b05-4415-a19d-84a1c899f4c4', // Direccion
+    '8d3daccf-a76b-41ed-a772-1ccc5d273329'  // Soporte/TI
+] as Set
+// FIX AUTORIDADES 2026-08-19: el bucket unico 'staff' (return 4) dejaba a TODA la
+// biblioteca sin control de autoridades. authorities/authorities.pl:571 y
+// authorities/merge.pl:42 exigen flagsrequired => { editauthorities => 1 }, que es el
+// bit 14 de borrowers.flags (userflags: bit=14, flag=editauthorities, "Edit
+// authorities") y NO admite subpermisos: es todo o nada por flags, no se puede otorgar
+// granularmente por user_permissions. Medido en PROD 26.05.01 (192.168.12.136):
+// SELECT COUNT(*) FROM borrowers WHERE flags & 16384 -> 0 personas. Caso que lo
+// destapo: catalogador creando una materia desde el 650 recibe "Usted no tiene permiso
+// para ingresar a esta pagina" y al volver al formulario pierde el token CSRF (403).
+// Se parte el bucket unico en los mismos dos grupos que ya usa el mapping hermano
+// user-permissions-from-effective-koha-staff-role: 'technical' (Procesos tecnicos +
+// Supervision) pasa a 16388 = 4 (bit 2, catalogue) + 16384 (bit 14, editauthorities);
+// 'circulation' se queda en 4, sin control de autoridades porque no lo necesita.
+def technical = [
+    '337e8dc4-324e-454d-8c70-dcd50159af30', // Procesos tecnicos
+    '03a2fc51-cda6-49d6-82b0-a00499afaf24'  // Supervision
+] as Set
+def circulation = [
+    'dd74503c-7c12-4631-80ec-416aebc35319'  // Circulacion
+] as Set
+def overrideCirc = '62bdad44-6ad9-4ef3-b11e-4df711571e9c' // AR-Koha-Override-Circulacion
+if (!assigned.intersect(admins).isEmpty()) return 1
+// La excepcion manual de minimo privilegio gana sobre el bucket tecnico, igual que en
+// user-permissions-from-effective-koha-staff-role (alli el override se evalua ANTES que
+// 'technical'). Sin este check, quien tenga Procesos tecnicos + override recibiria
+// editauthorities por la via de flags y anularia la excepcion. Sin ningun rol de
+// biblioteca sigue devolviendo null, exactamente como hasta hoy.
+if (assigned.contains(overrideCirc)) {
+    if (!assigned.intersect(technical).isEmpty()) return 4
+    if (!assigned.intersect(circulation).isEmpty()) return 4
+    return null
+}
+if (!assigned.intersect(technical).isEmpty()) return 16388
+if (!assigned.intersect(circulation).isEmpty()) return 4
+return null
+                            ]]></t:value>
+  </itemDelta>
+</objectModification>

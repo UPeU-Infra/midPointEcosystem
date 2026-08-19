@@ -1,0 +1,1783 @@
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="e10a539a-cb7f-4c72-a19f-60f7f62e4b96" version="24463">
+    <_metadata id="1">
+        <storage>
+            <createTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-07-18T17:58:45.460-05:00</createTimestamp>
+            <creatorRef>
+                <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+            </creatorRef>
+            <createChannel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</createChannel>
+            <modifyTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-08-18T22:30:19.807-05:00</modifyTimestamp>
+            <modifierRef>
+                <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+            </modifierRef>
+            <modifyChannel xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</modifyChannel>
+        </storage>
+        <process>
+            <requestTimestamp xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3">2026-07-18T17:58:45.352-05:00</requestTimestamp>
+            <requestorRef>
+                <t:oid>00000000-0000-0000-0000-000000000002</t:oid>
+                <t:relation xmlns="http://prism.evolveum.com/xml/ns/public/types-3">org:default</t:relation>
+                <t:type xmlns="http://prism.evolveum.com/xml/ns/public/types-3">c:UserType</t:type>
+            </requestorRef>
+        </process>
+    </_metadata>
+    <name>Koha ILS UPeU (consolidado)</name>
+    <lifecycleState>active</lifecycleState>
+    <operationExecution id="49">
+        <recordType>simple</recordType>
+        <timestamp>2026-07-21T12:31:11.069-05:00</timestamp>
+        <operation>
+            <objectDelta>
+                <t:changeType>modify</t:changeType>
+                <t:objectType>c:ResourceType</t:objectType>
+            </objectDelta>
+            <executionResult>
+                <operation>com.evolveum.midpoint.model.impl.lens.ChangeExecutor.executeDelta</operation>
+                <status>partial_error</status>
+                <importance>normal</importance>
+                <token>1000000000000000596</token>
+                <message>Error while processing schemaHandling section of resource:e10a539a-cb7f-4c72-a19f-60f7f62e4b96(Koha ILS UPeU (consolidado)): Undeclared namespace prefix 'ri' in 'ri:description'</message>
+            </executionResult>
+            <objectName>Koha ILS UPeU (consolidado)</objectName>
+        </operation>
+        <status>partial_error</status>
+        <message>Error while processing schemaHandling section of resource:e10a539a-cb7f-4c72-a19f-60f7f62e4b96(Koha ILS UPeU (consolidado)): Undeclared namespace prefix 'ri' in 'ri:description'</message>
+        <initiatorRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="c:UserType"/>
+        <channel>http://midpoint.evolveum.com/xml/ns/public/common/channels-3#rest</channel>
+    </operationExecution>
+    <iteration>0</iteration>
+    <iterationToken/>
+    <operationalState>
+        <lastAvailabilityStatus>up</lastAvailabilityStatus>
+        <message>Status changed from DOWN to UP because getting shadow:d3e5cb95-9d34-4cf9-80f6-2bbf6103f3bc(75203850) on resource:e10a539a-cb7f-4c72-a19f-60f7f62e4b96(Koha ILS UPeU (consolidado)) [LIVE] (repo) was successful.</message>
+        <timestamp>2026-08-19T06:11:51.579-05:00</timestamp>
+        <nodeId>DefaultNode</nodeId>
+    </operationalState>
+    <operationalStateHistory id="24453">
+        <lastAvailabilityStatus>down</lastAvailabilityStatus>
+        <message>Status changed from UP to DOWN because modifying shadow:cb74e5b7-20ab-430e-bfdb-c4fd40b0373a(202512202) on resource:e10a539a-cb7f-4c72-a19f-60f7f62e4b96(Koha ILS UPeU (consolidado)) [LIVE] (repo) ended with communication problem, Error communicating with the resource (Koha ILS UPeU (consolidado): Koha Patron (AccountObjectClass), ConnId com.identicum.connectors.KohaConnector v1.7.0): Connection failed: org.identityconnectors.framework.common.exceptions.ConnectionFailedException(Connection to Koha service timed out for request to 'http://192.168.12.136:8001/api/v1/patrons/12085'. Details: Read timed out)-&gt;java.net.SocketTimeoutException(Read timed out)</message>
+        <timestamp>2026-08-19T06:09:56.563-05:00</timestamp>
+        <nodeId>DefaultNode</nodeId>
+    </operationalStateHistory>
+    <operationalStateHistory id="24454">
+        <lastAvailabilityStatus>up</lastAvailabilityStatus>
+        <message>Status changed from DOWN to UP because getting shadow:3a7f3216-87c5-46ff-9e5a-7e73b193f547(202100030) on resource:e10a539a-cb7f-4c72-a19f-60f7f62e4b96(Koha ILS UPeU (consolidado)) [LIVE] (repo) was successful.</message>
+        <timestamp>2026-08-19T06:10:50.987-05:00</timestamp>
+        <nodeId>DefaultNode</nodeId>
+    </operationalStateHistory>
+    <operationalStateHistory id="24455">
+        <lastAvailabilityStatus>up</lastAvailabilityStatus>
+        <message>Status changed from DOWN to UP because getting shadow:04b95b78-09a3-4f26-88d0-458bba76a4cd(202010281) on resource:e10a539a-cb7f-4c72-a19f-60f7f62e4b96(Koha ILS UPeU (consolidado)) [LIVE] (repo) was successful.</message>
+        <timestamp>2026-08-19T06:10:51.915-05:00</timestamp>
+        <nodeId>DefaultNode</nodeId>
+    </operationalStateHistory>
+    <operationalStateHistory id="24456">
+        <lastAvailabilityStatus>down</lastAvailabilityStatus>
+        <message>Status changed from UP to DOWN because getting shadow:d3e5cb95-9d34-4cf9-80f6-2bbf6103f3bc(75203850) on resource:e10a539a-cb7f-4c72-a19f-60f7f62e4b96(Koha ILS UPeU (consolidado)) [LIVE] (repo) ended with communication problem, IO error: org.identityconnectors.framework.common.exceptions.ConnectorIOException(IO error during request to 'http://192.168.12.136:8001/api/v1/patrons/16057'. Details: No route to host)-&gt;java.net.NoRouteToHostException(No route to host)</message>
+        <timestamp>2026-08-19T06:11:51.303-05:00</timestamp>
+        <nodeId>DefaultNode</nodeId>
+    </operationalStateHistory>
+    <operationalStateHistory id="24457">
+        <lastAvailabilityStatus>up</lastAvailabilityStatus>
+        <message>Status changed from DOWN to UP because getting shadow:4a04ea77-147a-4752-bdd9-8fe3e47ce7f2(202210593) on resource:e10a539a-cb7f-4c72-a19f-60f7f62e4b96(Koha ILS UPeU (consolidado)) [LIVE] (repo) was successful.</message>
+        <timestamp>2026-08-19T06:11:51.459-05:00</timestamp>
+        <nodeId>DefaultNode</nodeId>
+    </operationalStateHistory>
+    <operationalStateHistory id="24458">
+        <lastAvailabilityStatus>up</lastAvailabilityStatus>
+        <message>Status changed from DOWN to UP because getting shadow:d3e5cb95-9d34-4cf9-80f6-2bbf6103f3bc(75203850) on resource:e10a539a-cb7f-4c72-a19f-60f7f62e4b96(Koha ILS UPeU (consolidado)) [LIVE] (repo) was successful.</message>
+        <timestamp>2026-08-19T06:11:51.579-05:00</timestamp>
+        <nodeId>DefaultNode</nodeId>
+    </operationalStateHistory>
+    <connectorRef oid="8c090235-413a-41d3-bba3-11ec9ea776fd" relation="org:default" type="c:ConnectorType"/>
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:connectorPoolConfiguration>
+            <icfc:minEvictableIdleTimeMillis>300000</icfc:minEvictableIdleTimeMillis>
+            <icfc:minIdle>1</icfc:minIdle>
+            <icfc:maxIdle>6</icfc:maxIdle>
+            <icfc:maxObjects>8</icfc:maxObjects>
+            <icfc:maxWait>30000</icfc:maxWait>
+        </icfc:connectorPoolConfiguration>
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.identicum.midpoint.connector-koha/com.identicum.connectors.KohaConnector">
+            <cfg:serviceAddress>http://192.168.12.136:8001</cfg:serviceAddress>
+            <cfg:trustAllCertificates>false</cfg:trustAllCertificates>
+            <cfg:authenticationMethodStrategy>OAUTH2</cfg:authenticationMethodStrategy>
+            <cfg:clientId>9612bb8d-180a-4bc0-85c9-8db23647f289</cfg:clientId>
+            <cfg:clientSecret>
+                <t:encryptedData>
+                    <t:encryptionMethod>
+                        <t:algorithm>http://www.w3.org/2001/04/xmlenc#aes256-cbc</t:algorithm>
+                    </t:encryptionMethod>
+                    <t:keyInfo>
+                        <t:keyName>nkZ4VieDLlRmwD8hdryrmjz8IxQ=</t:keyName>
+                    </t:keyInfo>
+                    <t:cipherData>
+                        <t:cipherValue>Mx7PF0ajf45+Vlv+Iqm3boj388x63TkbNTWRtpDo8SY9+IJwpIuefUtpbQLC4YjI6PKcKfCTPzzxozXZAUISKw==</t:cipherValue>
+                    </t:cipherData>
+                </t:encryptedData>
+            </cfg:clientSecret>
+            <cfg:dbEnabled>true</cfg:dbEnabled>
+            <cfg:dbHost>192.168.12.136</cfg:dbHost>
+            <cfg:dbPort>3306</cfg:dbPort>
+            <cfg:dbName>koha_upeu</cfg:dbName>
+            <cfg:dbUser>koha_connector</cfg:dbUser>
+            <cfg:dbPassword>
+                <t:encryptedData>
+                    <t:encryptionMethod>
+                        <t:algorithm>http://www.w3.org/2001/04/xmlenc#aes256-cbc</t:algorithm>
+                    </t:encryptionMethod>
+                    <t:keyInfo>
+                        <t:keyName>nkZ4VieDLlRmwD8hdryrmjz8IxQ=</t:keyName>
+                    </t:keyInfo>
+                    <t:cipherData>
+                        <t:cipherValue>2OF6wFvjAlCEIylKfhdAKq9ArsAeuoYiinMraWo/UfWlGdbIveTmLszaV8WHWXNV</t:cipherValue>
+                    </t:cipherData>
+                </t:encryptedData>
+            </cfg:dbPassword>
+            <cfg:dbPoolSize>2</cfg:dbPoolSize>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+    <schema>
+        <cachingMetadata>
+            <retrievalTimestamp>2026-07-20T19:59:24.818-05:00</retrievalTimestamp>
+            <serialNumber>18160161fd169e5f-e2123fbd6ed32acf</serialNumber>
+        </cachingMetadata>
+        <definition>
+            <xsd:schema xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:api="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3" xmlns:ra="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:sb="urn:sciback:midpoint:person" xmlns:sciback="urn:sciback:midpoint:person" xmlns:tns="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:upeu="urn:upeu:midpoint:local" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xml:space="preserve">
+                <xsd:import namespace="http://prism.evolveum.com/xml/ns/public/annotation-3"/>
+                <xsd:import namespace="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3"/>
+                <xsd:complexType name="GroupObjectClass">
+                    <xsd:annotation>
+                        <xsd:appinfo>
+                            <a:container>true</a:container>
+                            <ra:resourceObject>true</ra:resourceObject>
+                            <ra:nativeObjectClass>__GROUP__</ra:nativeObjectClass>
+                            <ra:default>false</ra:default>
+                            <ra:auxiliary>false</ra:auxiliary>
+                            <ra:embedded>false</ra:embedded>
+                            <ra:namingAttribute>ri:description</ra:namingAttribute>
+                            <ra:displayNameAttribute>ri:description</ra:displayNameAttribute>
+                            <ra:identifier>ri:patron_category_id</ra:identifier>
+                            <ra:secondaryIdentifier>ri:description</ra:secondaryIdentifier>
+                        </xsd:appinfo>
+                    </xsd:annotation>
+                    <xsd:sequence>
+                        <xsd:element minOccurs="0" name="upper_age_limit" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>120</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>upper_age_limit</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>upper_age_limit</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="enrolment_fee" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>130</a:displayOrder>
+                                    <ra:nativeAttributeName>enrolment_fee</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>enrolment_fee</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="lower_age_limit" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>140</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>lower_age_limit</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>lower_age_limit</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="default_privacy" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>150</a:displayOrder>
+                                    <ra:nativeAttributeName>default_privacy</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>default_privacy</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="categorycode" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>160</a:displayOrder>
+                                    <ra:nativeAttributeName>patron_category_id</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>categorycode</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="enrolment_period" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>170</a:displayOrder>
+                                    <ra:nativeAttributeName>enrolment_period_in_months</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>enrolment_period</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="require_strong_password" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>180</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>require_strong_password</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>require_strong_password</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="description" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>110</a:displayOrder>
+                                    <ra:nativeAttributeName>description</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>__NAME__</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="overdue_notice_required" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>190</a:displayOrder>
+                                    <ra:nativeAttributeName>overdue_notice_required</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>overdue_notice_required</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="min_password_length" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>200</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>min_password_length</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>min_password_length</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="category_type" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>210</a:displayOrder>
+                                    <ra:nativeAttributeName>category_type</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>category_type</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="patron_category_id" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>100</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>patron_category_id</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>__UID__</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                    </xsd:sequence>
+                </xsd:complexType>
+                <xsd:complexType name="AccountObjectClass">
+                    <xsd:annotation>
+                        <xsd:appinfo>
+                            <a:container>true</a:container>
+                            <ra:resourceObject>true</ra:resourceObject>
+                            <ra:nativeObjectClass>__ACCOUNT__</ra:nativeObjectClass>
+                            <ra:default>true</ra:default>
+                            <ra:auxiliary>false</ra:auxiliary>
+                            <ra:embedded>false</ra:embedded>
+                            <ra:namingAttribute>ri:userid</ra:namingAttribute>
+                            <ra:displayNameAttribute>ri:userid</ra:displayNameAttribute>
+                            <ra:identifier>ri:patron_id</ra:identifier>
+                            <ra:secondaryIdentifier>ri:userid</ra:secondaryIdentifier>
+                        </xsd:appinfo>
+                    </xsd:annotation>
+                    <xsd:sequence>
+                        <xsd:element minOccurs="0" name="initials" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>120</a:displayOrder>
+                                    <ra:nativeAttributeName>initials</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>initials</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="category_id" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>130</a:displayOrder>
+                                    <ra:nativeAttributeName>category_id</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>category_id</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="altaddress_address" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>140</a:displayOrder>
+                                    <ra:nativeAttributeName>altaddress_address</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>altaddress_address</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="statistics_2" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>150</a:displayOrder>
+                                    <ra:nativeAttributeName>statistics_2</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>statistics_2</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="sms_provider_id" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>160</a:displayOrder>
+                                    <ra:nativeAttributeName>sms_provider_id</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>sms_provider_id</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="statistics_1" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>170</a:displayOrder>
+                                    <ra:nativeAttributeName>statistics_1</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>statistics_1</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="library_id" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>180</a:displayOrder>
+                                    <ra:nativeAttributeName>library_id</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>library_id</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="firstname" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>190</a:displayOrder>
+                                    <ra:nativeAttributeName>firstname</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>firstname</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="email" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>200</a:displayOrder>
+                                    <ra:nativeAttributeName>email</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>email</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="anonymized" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>210</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>anonymized</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>anonymized</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="country" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>220</a:displayOrder>
+                                    <ra:nativeAttributeName>country</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>country</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="cardnumber" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>230</a:displayOrder>
+                                    <ra:nativeAttributeName>cardnumber</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>cardnumber</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="flags" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>240</a:displayOrder>
+                                    <ra:nativeAttributeName>flags</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>flags</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element><xsd:element maxOccurs="unbounded" minOccurs="0" name="user_permissions" type="xsd:string"><xsd:annotation><xsd:appinfo><a:displayOrder>247</a:displayOrder><ra:nativeAttributeName>user_permissions</ra:nativeAttributeName><ra:frameworkAttributeName>user_permissions</ra:frameworkAttributeName><ra:returnedByDefault>true</ra:returnedByDefault></xsd:appinfo></xsd:annotation></xsd:element>
+                        <xsd:element minOccurs="0" name="photo" type="xsd:base64Binary">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>250</a:displayOrder>
+                                    <ra:nativeAttributeName>photo</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>photo</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>false</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="secondary_email" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>260</a:displayOrder>
+                                    <ra:nativeAttributeName>secondary_email</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>secondary_email</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="opac_notes" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>270</a:displayOrder>
+                                    <ra:nativeAttributeName>opac_notes</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>opac_notes</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="photo_mimetype" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>280</a:displayOrder>
+                                    <ra:nativeAttributeName>photo_mimetype</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>photo_mimetype</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>false</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="altaddress_postal_code" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>290</a:displayOrder>
+                                    <ra:nativeAttributeName>altaddress_postal_code</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>altaddress_postal_code</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="address" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>300</a:displayOrder>
+                                    <ra:nativeAttributeName>address</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>address</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="other_name" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>310</a:displayOrder>
+                                    <ra:nativeAttributeName>other_name</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>other_name</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="relationship_type" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>320</a:displayOrder>
+                                    <ra:nativeAttributeName>relationship_type</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>relationship_type</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="altaddress_email" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>330</a:displayOrder>
+                                    <ra:nativeAttributeName>altaddress_email</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>altaddress_email</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="patron_card_lost" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>340</a:displayOrder>
+                                    <ra:nativeAttributeName>patron_card_lost</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>patron_card_lost</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="altaddress_state" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>350</a:displayOrder>
+                                    <ra:nativeAttributeName>altaddress_state</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>altaddress_state</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element maxOccurs="unbounded" minOccurs="0" name="extended_attributes" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>360</a:displayOrder>
+                                    <ra:nativeAttributeName>extended_attributes</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>extended_attributes</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="phone" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>370</a:displayOrder>
+                                    <ra:nativeAttributeName>phone</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>phone</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="expired" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>380</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>expired</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>expired</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="state" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>390</a:displayOrder>
+                                    <ra:nativeAttributeName>state</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>state</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="lang" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>400</a:displayOrder>
+                                    <ra:nativeAttributeName>lang</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>lang</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="restricted" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>410</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>restricted</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>restricted</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="sms_number" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>420</a:displayOrder>
+                                    <ra:nativeAttributeName>sms_number</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>sms_number</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="updated_on" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>430</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>updated_on</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>updated_on</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="expiry_date" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>440</a:displayOrder>
+                                    <ra:nativeAttributeName>expiry_date</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>expiry_date</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="pronouns" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>450</a:displayOrder>
+                                    <ra:nativeAttributeName>pronouns</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>pronouns</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="staff_notes" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>460</a:displayOrder>
+                                    <ra:nativeAttributeName>staff_notes</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>staff_notes</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="altaddress_phone" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>470</a:displayOrder>
+                                    <ra:nativeAttributeName>altaddress_phone</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>altaddress_phone</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="date_enrolled" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>480</a:displayOrder>
+                                    <a:access>create</a:access>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>date_enrolled</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>date_enrolled</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="postal_code" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>490</a:displayOrder>
+                                    <ra:nativeAttributeName>postal_code</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>postal_code</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="preferred_name" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>500</a:displayOrder>
+                                    <ra:nativeAttributeName>preferred_name</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>preferred_name</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="altaddress_city" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>510</a:displayOrder>
+                                    <ra:nativeAttributeName>altaddress_city</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>altaddress_city</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="gender" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>520</a:displayOrder>
+                                    <ra:nativeAttributeName>gender</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>gender</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="primary_contact_method" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>530</a:displayOrder>
+                                    <ra:nativeAttributeName>primary_contact_method</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>primary_contact_method</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="userid" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>110</a:displayOrder>
+                                    <ra:nativeAttributeName>userid</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>__NAME__</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="middle_name" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>540</a:displayOrder>
+                                    <ra:nativeAttributeName>middle_name</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>middle_name</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="protected" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>550</a:displayOrder>
+                                    <ra:nativeAttributeName>protected</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>protected</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="autorenew_checkouts" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>560</a:displayOrder>
+                                    <ra:nativeAttributeName>autorenew_checkouts</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>autorenew_checkouts</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="altaddress_country" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>570</a:displayOrder>
+                                    <ra:nativeAttributeName>altaddress_country</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>altaddress_country</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="date_of_birth" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>580</a:displayOrder>
+                                    <ra:nativeAttributeName>date_of_birth</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>date_of_birth</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="last_seen" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>590</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>last_seen</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>last_seen</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="address2" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>600</a:displayOrder>
+                                    <ra:nativeAttributeName>address2</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>address2</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="surname" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>610</a:displayOrder>
+                                    <ra:nativeAttributeName>surname</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>surname</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="privacy" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>620</a:displayOrder>
+                                    <ra:nativeAttributeName>privacy</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>privacy</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="city" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>630</a:displayOrder>
+                                    <ra:nativeAttributeName>city</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>city</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="incorrect_address" type="xsd:boolean">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>640</a:displayOrder>
+                                    <ra:nativeAttributeName>incorrect_address</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>incorrect_address</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="title" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>650</a:displayOrder>
+                                    <ra:nativeAttributeName>title</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>title</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="login_attempts" type="xsd:int">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>660</a:displayOrder>
+                                    <ra:nativeAttributeName>login_attempts</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>login_attempts</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="date_renewed" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>670</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>date_renewed</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>date_renewed</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element minOccurs="0" name="mobile" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>680</a:displayOrder>
+                                    <ra:nativeAttributeName>mobile</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>mobile</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                        <xsd:element name="patron_id" type="xsd:string">
+                            <xsd:annotation>
+                                <xsd:appinfo>
+                                    <a:displayOrder>100</a:displayOrder>
+                                    <a:access>read</a:access>
+                                    <ra:nativeAttributeName>patron_id</ra:nativeAttributeName>
+                                    <ra:frameworkAttributeName>__UID__</ra:frameworkAttributeName>
+                                    <ra:returnedByDefault>true</ra:returnedByDefault>
+                                </xsd:appinfo>
+                            </xsd:annotation>
+                        </xsd:element>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:schema>
+        </definition>
+    </schema>
+    <schemaHandling>
+        <objectType id="2">
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>Koha Patron</displayName>
+            <default>true</default>
+            <delineation>
+                <objectClass>ri:AccountObjectClass</objectClass>
+            </delineation>
+            <focus>
+                <type>c:UserType</type>
+            </focus>
+            <attribute id="3">
+                <ref>ri:userid</ref>
+                <displayName>User ID (login)</displayName>
+                <outbound>
+                    <name>userid-outbound</name>
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/name</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="4">
+                <ref>ri:cardnumber</ref>
+                <displayName>Número de Carnet (ID_PERSONA)</displayName>
+                <outbound>
+                    <name>cardnumber-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sciback="urn:sciback:midpoint:person">$focus/extension/sciback:externalSystemId</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="5">
+                <ref>ri:surname</ref>
+                <displayName>Apellido(s)</displayName>
+                <outbound>
+                    <name>surname-outbound</name>
+                    <strength>normal</strength>
+                    <source>
+                        <path>$focus/familyName</path>
+                    </source>
+                    <source>
+                        <path>$focus/fullName</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>if (familyName != null &amp;&amp; basic.stringify(familyName).trim() != '') return basic.stringify(familyName).trim(); if (fullName != null &amp;&amp; basic.stringify(fullName).trim() != '') return basic.stringify(fullName).trim(); return null</code>
+                        </script>
+                    </expression>
+                </outbound>
+                <inbound id="6">
+                    <name>surname-inbound</name>
+                    <strength>weak</strength>
+                    <target>
+                        <path>$user/familyName</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="7">
+                <ref>ri:firstname</ref>
+                <displayName>Nombre(s)</displayName>
+                <outbound>
+                    <name>firstname-outbound</name>
+                    <strength>normal</strength>
+                    <source>
+                        <path>$focus/givenName</path>
+                    </source>
+                </outbound>
+                <inbound id="8">
+                    <name>firstname-inbound</name>
+                    <strength>weak</strength>
+                    <target>
+                        <path>$user/givenName</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="9">
+                <ref>ri:email</ref>
+                <displayName>Correo Electrónico</displayName>
+                <outbound>
+                    <name>email-outbound</name>
+                    <strength>normal</strength>
+                    <source>
+                        <path>$focus/emailAddress</path>
+                    </source>
+                </outbound>
+                <inbound id="10">
+                    <name>email-inbound</name>
+                    <strength>weak</strength>
+                    <expression>
+                        <script>
+                            <code>def v = (input ?: '').toString().trim().toLowerCase(); if (!v.endsWith('@upeu.edu.pe')) return null; def local = v.substring(0, v.indexOf('@')); return local ==~ /\d+/ ? null : v</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>$user/emailAddress</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="11">
+                <ref>ri:phone</ref>
+                <displayName>Teléfono</displayName>
+                <outbound>
+                    <name>phone-outbound</name>
+                    <strength>normal</strength>
+                    <source>
+                        <path>$focus/telephoneNumber</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="12">
+                <ref>ri:sms_number</ref>
+                <displayName>Número SMS</displayName>
+                <outbound>
+                    <name>sms-number-outbound</name>
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/telephoneNumber</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="13">
+                <ref>ri:statistics_1</ref>
+                <displayName>Facultad (Statistics 1 / Bsort1)</displayName>
+                <outbound>
+                    <name>statistics1-outbound</name>
+                    <strength>normal</strength>
+                    <expression>
+                        <script>
+                            <code>
+if (focus == null) return null
+def facName = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'facultyName'))
+if (facName == null) return null
+def name = facName.toString().trim()
+if (!name) return null
+// Switch nombre-de-facultad (ELISEO.ORG_AREA.NOMBRE) → authorised_value Bsort1 de Koha.
+// Match exacto contra el nombre crudo Oracle. Facultades no listadas → null.
+def bsort1Map = [
+    'Facultad de Ciencias de la Salud'           : 'FCS',
+    'Facultad de Ingeniería y Arquitectura'      : 'FIA',
+    'Facultad de Ciencias Humanas y Educación'   : 'FACIHED',
+    'Facultad de Ciencias Empresariales'         : 'FCE',
+    'Facultad de Teología'                       : 'FACTEO',
+    'Escuela General de Posgrado'                : 'EPG'
+]
+def result = bsort1Map.get(name)
+if (result == null) {
+    log.debug('statistics1-outbound: no Bsort1 mapping for facultyName "{}"', name)
+}
+return result
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="14">
+                <ref>ri:statistics_2</ref>
+                <displayName>Programa Académico (Statistics 2 / Bsort2)</displayName>
+                <outbound>
+                    <name>statistics2-outbound</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+if (focus == null) return null
+// ADR-005 (09-ago-2026): Bsort2 vuelve a llevar el P-code / SEG-code oficial del A4/A8
+// 2026-1, que es como UPeU identifica el programa en todos sus sistemas. El codigo INEI
+// queda solo para el repositorio de tesis, donde SUNEDU/RENATI lo exige.
+// Revierte la migracion del 13-jun-2026, que habia pasado Bsort2 de P-code a INEI.
+// El P-code llega ya resuelto por MODALIDAD desde la LookupTable program-pxx-byid
+// (generada de VocBench): Administracion es P04 presencial, P05 semipresencial y P95 a
+// distancia. Koha emite lo que recibe, sin transformar.
+// academicProgramSuneduCode es MULTIVALOR (quien cursa dos programas tiene dos P-codes)
+// y statistics_2 admite uno: se toma el primero, que J3d entrega ya ordenado (P antes
+// que SEG y, dentro de cada uno, el numero menor).
+// Null-safe: sin P-code -&gt; atributo vacio -&gt; Koha sin Bsort2. No es regresion.
+def vals = basic.getExtensionPropertyValues(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'academicProgramSuneduCode'))
+if (vals == null || vals.isEmpty()) return null
+def lista = []
+vals.each { def v = it != null ? it.toString().trim() : ''; if (v) lista &lt;&lt; v }
+if (lista.isEmpty()) return null
+lista = lista.unique()
+lista.sort { a, b -&gt;
+    def pa = a.startsWith('P') ? 0 : 1
+    def pb = b.startsWith('P') ? 0 : 1
+    if (pa != pb) return pa - pb
+    def na = (a.replaceAll(/[^0-9]/,'') ?: '0') as int
+    def nb = (b.replaceAll(/[^0-9]/,'') ?: '0') as int
+    return na - nb
+}
+return lista[0]
+</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="15">
+                <ref>ri:category_id</ref>
+                <displayName>Categoría Patrón Koha</displayName>
+                <outbound>
+                    <name>category-id-from-primary-affiliation</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:primaryAffiliation</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+// 2026-08-14 - LA CONDICION NO PODIA FUNCIONAR; SE RETIRA.
+//
+// El 12-ago se puso aqui una condition con la intencion de "no tocar el atributo cuando
+// la persona pierde todos sus vinculos". Con ESTE conector eso es imposible: actualiza
+// con PUT (reemplazo total del recurso, 87.621 PUT en un solo log), asi que SIEMPRE tiene
+// que enviar category_id. Si el mapping no le da valor, envia null y Koha responde 400
+// con "Expected string - got null." en /body/category_id. La condicion, pensada para
+// evitar el null, lo garantizaba.
+//
+// Medido el 14-ago: 10.954 de 11.223 errores de la reconciliacion eran ESE error, y 8.057
+// personas SIN NINGUN VINCULO conservaban carnet vigente -7.869 de ellas hasta 2027-08-12-
+// porque el PUT que debia expirarlas fallaba entero. El expiry_date correcto ya estaba
+// calculado: viajaba en el mismo PUT y se perdia con el.
+//
+// Regla: NUNCA devolver null. Sin afiliacion viva se conserva la categoria que el patron
+// ya tiene, de modo que el PUT sale valido y la baja la materializa expiry_date, que es la
+// via correcta - la categoria nunca fue la forma de retirar el acceso.
+def aff = primaryAffiliation != null ? basic.stringify(primaryAffiliation).trim().toLowerCase() : ''
+if (aff != '') {
+    if (aff == 'employee') return 'staff'
+    if (aff == 'faculty' || aff == 'staff' || aff == 'student' || aff == 'alum' || aff == 'affiliate') return aff
+    return 'local'
+}
+def actual = null
+try { actual = basic.getAttributeValue(shadow, 'category_id') } catch (Exception e) { }
+if (actual == null) {
+    try { actual = basic.getAttributeValue(projection, 'category_id') } catch (Exception e) { }
+}
+if (actual == null) return null
+def s = actual.toString().trim()
+return s ? s : null
+          </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="16">
+                <ref>ri:extended_attributes</ref>
+                <displayName>Atributos extendidos de patrón (pares JSON)</displayName>
+                <tolerant>false</tolerant>
+                <tolerantValuePattern>.*"type"\s*:\s*"(?!(AREA|CRAI_TIER|RESEARCHER|STUDY_LEVEL|STUDYCYCLE|COD_UPEU)").*</tolerantValuePattern>
+                <outbound>
+                    <name>extended-attributes-study-level-and-dni</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:primaryAffiliation</path>
+                    </source>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:studyLevel</path>
+                    </source>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:studentCycle</path>
+                    </source>
+                    <source>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:lambDocNum</path>
+                    </source>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:institutionalCode</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+// ===================================================================
+// FIX 2026-06-09 (provenance-binding): leer primaryAffiliation,
+// studyLevel y studentCycle vía basic.getExtensionPropertyValue(s)
+// en vez de las variables-source.
+//
+// CAUSA RAÍZ: estos items del foco llevan value-metadata/provenance
+// (se serializan con &lt;_value&gt;...&lt;/_value&gt;&lt;_metadata&gt;&lt;provenance&gt;...).
+// La binding de la variable-source en el script entrega el contenedor
+// metadata-aware, NO la String plana → basic.stringify(primaryAffiliation)
+// no daba 'student' → el guard aff=='student' fallaba → bloque vacío
+// (solo el par DNI se emitía, porque upeu:lambDocNum es valor plano).
+//
+// basic.getExtensionPropertyValue(focus, QName) SÍ dereferencia el valor
+// real plano aunque tenga provenance — mismo patrón que los outbounds
+// statistics1/statistics2 que SÍ funcionan (FCS/P33 escritos a 24k).
+// Las &lt;source&gt; se conservan declaradas (no estorban; documentan deps).
+// ===================================================================
+def NS_SB = 'urn:sciback:midpoint:person';
+def qn = { n -&gt; new javax.xml.namespace.QName(NS_SB, n) };
+def out = [];
+if (focus == null) return out;
+
+// par STUDY_LEVEL (solo students). Resuelve por studyLevel GRANULAR
+// (fuente única de nivel, derivada de la carrera principal). 2026-06-09:
+// ELIMINADO el fallback maxCycle&gt;=7 (proxy frágil que marcaba posgrado a
+// pregrados de ciclo alto). Koha colapsa el nivel granular a 2 buckets:
+// posgrado | pregrado.
+def affRaw = basic.getExtensionPropertyValue(focus, qn('primaryAffiliation'));
+def aff = affRaw != null ? affRaw.toString().trim().toLowerCase() : '';
+if (aff == 'student') {
+    def levelRaw = basic.getExtensionPropertyValue(focus, qn('studyLevel'));
+    def level = levelRaw != null ? levelRaw.toString().trim().toLowerCase() : '';
+    // 2026-08-14 - NORMALIZAR ANTES DE COMPARAR.
+    // El valor real del item es 'Segunda Especialidad' (con ESPACIO); aqui se comparaba
+    // con 'segunda-especialidad' (con GUION), asi que no matcheaba y caia al else, cuyo
+    // default es 'pregrado'. Resultado: 762 personas de Segunda Especialidad -que es
+    // posgrado por definicion- clasificadas como pregrado. 74 ya estaban degradadas en
+    // Koha; a las otras 1.252 las salvo por accidente el 409 del conector, que rechaza
+    // "more than one non-repeatable attribute" cuando el valor cambia. Un guion.
+    // Se normalizan espacios, guiones y guiones bajos, de modo que ambas grafias entran.
+    def lvl = level.replaceAll('[\\s_-]+', '');
+    if (lvl == 'posgrado' || lvl == 'maestria' || lvl == 'maestr\u00eda' || lvl == 'doctorado' || lvl == 'segundaespecialidad' || lvl == 'especializacion' || lvl == 'especializaci\u00f3n') {
+        out &lt;&lt; '{"type":"STUDY_LEVEL","value":"posgrado"}';
+    } else if (lvl == 'pregrado' || lvl == 'idiomas' || lvl == 'cepre' || lvl == 'tesis' || lvl.startsWith('conservatorio')) {
+        // 2026-08-15: los NIVELES NO-GRADO SON PREGRADO en Koha, por decision de producto.
+        // Antes caian al else y acababan en pregrado igual, pero por accidente: un default,
+        // no una decision. Se declaran aqui para que nadie lo "arregle" mas adelante y mueva
+        // a 642 personas sin saberlo -Idiomas 210, CEPRE 248, Conservatorio 108, Tesis 41
+        // (medido el 15-ago-2026)-. Koha solo admite dos casillas y esta es la que les toca.
+        // startsWith para Conservatorio: el valor real es 'Conservatorio de Musica' y la
+        // tilde de 'Musica' sobrevive a la normalizacion de espacios.
+        out &lt;&lt; '{"type":"STUDY_LEVEL","value":"pregrado"}';
+    } else {
+        // SIN DECIDIR: CEPRE (248), Conservatorio de Musica (108), Tesis (41). Caen aqui y
+        // se les escribe pregrado por defecto. Mientras no se decidan, cada vez que su valor
+        // cambie en Koha el conector chocara con el 409 de atributo no repetible.
+        // default conservador pregrado + log para visibilidad de datos.
+        if (level) log.warn("Koha STUDY_LEVEL: studyLevel no-grado '{}' en {} -&gt; default pregrado", level, focus?.name);
+        else log.warn("Koha STUDY_LEVEL: studyLevel vacio en student {} -&gt; default pregrado", focus?.name);
+        out &lt;&lt; '{"type":"STUDY_LEVEL","value":"pregrado"}';
+    }
+    // pares STUDYCYCLE (uno por ciclo vigente, multivalor). 2026-06-09:
+    // ciclo de estudio canónico (sb:studentCycle, multivalor: regular=1
+    // valor, irregular=N valores). getExtensionPropertyValues (plural)
+    // devuelve la colección de valores reales planos. Gobernado
+    // destructivamente por intolerantValuePattern STUDYCYCLE → MidPoint
+    // añade los vigentes y remueve los viejos. Solo students.
+    def cyclesRaw = basic.getExtensionPropertyValues(focus, qn('studentCycle'));
+    def cycles = (cyclesRaw instanceof Collection) ? cyclesRaw : (cyclesRaw != null ? [cyclesRaw] : []);
+    cycles.each { c -&gt;
+        def cyc = c != null ? c.toString().trim() : '';
+        if (cyc) out &lt;&lt; '{"type":"STUDYCYCLE","value":"' + cyc + '"}';
+    }
+}
+// par COD_UPEU (P1 D-11.bis): código universitario legible. Fuente
+// sciback:institutionalCode (código académico); fallback a focus.name
+// (que para trabajador puro es el personalNumber/COD_APS). Informativo y
+// GOBERNADO (ver tolerantValuePattern): MidPoint lo mantiene en sync.
+def codRaw = basic.getExtensionPropertyValue(focus, qn('institutionalCode'));
+def cod = codRaw != null ? codRaw.toString().trim() : (focus?.name != null ? focus.name.toString().trim() : '');
+if (cod) out &lt;&lt; '{"type":"COD_UPEU","value":"' + cod + '"}';
+// par DNI (P1): AHORA INFORMATIVO. El conector nuevo retiró el adopt-by-DNI
+// (D-14: instancia consolidada arranca sin borrowers legacy; la correlación
+// es cardnumber==externalSystemId). upeu:lambDocNum es valor plano.
+def dni = lambDocNum != null ? basic.stringify(lambDocNum).trim() : '';
+if (dni ==~ /^\d{8}$/) out &lt;&lt; '{"type":"DNI","value":"' + dni + '"}';
+return out;
+                            </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="17">
+                <ref>ri:library_id</ref>
+                <displayName>Sede Biblioteca</displayName>
+                <outbound>
+                    <name>library-id-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:campusStudent</path>
+                    </source>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:campusWorker</path>
+                    </source>
+                    <source>
+                        <path>$focus/locality</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+def cs = campusStudent?.toString()?.trim()?.toUpperCase()
+def cw = campusWorker?.toString()?.trim()?.toUpperCase()
+def loc = locality?.toString()?.trim()?.toUpperCase()
+def ce = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:sciback:midpoint:person', 'campusEgreso'))?.toString()?.trim()?.toUpperCase()
+def specialOid = 'd698dc99-1a8c-479c-9eec-2a0214fdbf04'
+if (focus?.assignment?.any { it?.targetRef?.oid == specialOid }) return 'BUL'
+// CIA (2026-07-25): el vinculo laboral en el Centro de Investigacion Adventista
+// (ID_AREA=94, ver mapeo de campusWorker en Oracle LAMB Trabajadores) tiene
+// prioridad sobre cualquier campus de estudiante. Caso real: Josue Agustin
+// Llancachagua es a la vez estudiante (campusStudent=LIMA) y trabajador de CIA
+// (campusWorker=CIA); sin este check explicito, el orden normal
+// estudiante &gt; trabajador de abajo haria que su Lima de estudiante tapara
+// su CIA de trabajador -- CIA quedaria indistinguible de BUL otra vez.
+if (cw == 'CIA') return 'CIA'
+// Precedencia: vinculo VIVO primero (estudia / trabaja), luego el campus de EGRESO
+// y por ultimo locality. campusEgreso (2026-08-11) es lo que permite dar de alta a
+// los egresados dentro de la ventana de 2 años: no tienen cs ni cw, y sin campus la
+// API de Koha rechaza el alta con 'Missing property: library_id'.
+def effective = (cs != null &amp;&amp; cs != '') ? cs : ((cw != null &amp;&amp; cw != '') ? cw : ((ce != null &amp;&amp; ce != '') ? ce : (loc ?: '')))
+def branch = ['LIMA':'BUL', 'JULIACA':'BUJ', 'TARAPOTO':'BUT', 'CIA':'CIA'].get(effective)
+if (branch == null) {
+    log.warn('koha library_id: campus no resuelto para {} (cs={}, cw={}, ce={}, loc={}) -&gt; sin branch', focus?.name, cs, cw, ce, loc)
+    return null
+}
+return branch
+</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="18">
+                <ref>ri:expiry_date</ref>
+                <displayName>Fecha de Expiración</displayName>
+                <tolerant>true</tolerant>
+                <outbound>
+                    <name>expiry-date-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:terminationDate</path>
+                    </source>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:terminationDateStudent</path>
+                    </source>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationWorker</path>
+                    </source>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationStudent</path>
+                    </source>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationAlum</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>
+// Expiry efectivo del carnet de biblioteca.
+//
+// 2026-08-12 — SIN VINCULO, EL CARNET EXPIRA.
+// Antes este mapping llevaba una condition (liveAffiliationWorker != null ||
+// liveAffiliationStudent != null) que lo desactivaba justo cuando la persona
+// causaba baja: la ultima fecha calculada -hoy+12 meses- quedaba congelada y
+// el carnet seguia vivo un anho mas sin vinculo que lo sostuviera.
+// Medido: 702 personas sin ninguno de los tres vinculos con cuenta en Koha.
+//
+// Ahora el mapping se evalua SIEMPRE y decide:
+//   sin ningun vinculo  -&gt; expira con su ultima fecha real (o hoy si no hay)
+//   con algun vinculo   -&gt; comportamiento previo, con holgura de 12 meses
+//
+// Se usa dateexpiry, el mecanismo NATIVO de Koha: el patron conserva su
+// historial de prestamos y multas, pero no puede prestar. No se borra nada.
+def vivo = (liveAffiliationWorker != null) || (liveAffiliationStudent != null) || (liveAffiliationAlum != null)
+def w = terminationDate?.toString()?.take(10)
+def s = terminationDateStudent?.toString()?.take(10)
+def realMax = null
+if (w != null &amp;&amp; s != null) { realMax = (w.compareTo(s) &gt;= 0) ? w : s }
+else if (w != null) { realMax = w }
+else if (s != null) { realMax = s }
+def today = java.time.LocalDate.now()
+
+if (!vivo) {
+    return realMax != null ? realMax : today.toString()
+}
+
+if (realMax == null) {
+    return today.plusMonths(12).toString()
+}
+def realMaxDate = java.time.LocalDate.parse(realMax)
+if (realMaxDate.isBefore(today)) {
+    return today.plusMonths(12).toString()
+}
+return realMax
+        </code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="19">
+                <ref>ri:title</ref>
+                <displayName>Cargo / Puesto</displayName>
+                <outbound>
+                    <name>title-outbound</name>
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/title</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="20">
+                <ref>ri:date_of_birth</ref>
+                <displayName>Fecha de Nacimiento</displayName>
+                <outbound>
+                    <name>date-of-birth-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:birthDate</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>if (birthDate == null) return null; birthDate.toString().take(10)</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="21">
+                <ref>ri:gender</ref>
+                <displayName>Género</displayName>
+                <outbound>
+                    <name>gender-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:gender</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code>switch ((gender ?: '').toString()) { case '1': return 'M'; case '2': return 'F'; default: return null }</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="22">
+                <ref>ri:mobile</ref>
+                <displayName>Móvil (Koha)</displayName>
+                <outbound>
+                    <name>mobile-outbound</name>
+                    <strength>weak</strength>
+                    <source>
+                        <path>$focus/telephoneNumber</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="23">
+                <ref>ri:middle_name</ref>
+                <displayName>Segundo Nombre</displayName>
+                <outbound>
+                    <name>middle-name-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>$focus/additionalName</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="24">
+                <ref>ri:secondary_email</ref>
+                <displayName>Correo de Recuperación</displayName>
+                <outbound>
+                    <name>secondary-email-outbound</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:personalEmail</path>
+                    </source>
+                </outbound>
+            </attribute>
+            <attribute id="42">
+                <ref>ri:flags</ref>
+                <displayName>Permisos administrativos Koha</displayName>
+                <tolerant>false</tolerant>
+                <outbound>
+                    <name>flags-from-effective-koha-staff-role</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+def assigned = (focus?.assignment ?: []).collect { it?.targetRef?.oid }.findAll { it != null } as Set
+def superadmin = 'd698dc99-1a8c-479c-9eec-2a0214fdbf04'
+if (assigned.contains(superadmin)) return 1
+def live = basic.getExtensionPropertyValue(focus, 'liveAffiliationWorker')
+def cc = focus?.costCenter?.toString()?.trim()
+if (live == null) return null
+if (cc == '94') {
+    def ciaAdmin = '3e753452-dee7-4eee-822e-dd6a8c9539cb'
+    if (assigned.contains(ciaAdmin)) return 4
+    return null
+}
+if (cc != '93') return null
+def admins = ['d3303cec-7b05-4415-a19d-84a1c899f4c4','8d3daccf-a76b-41ed-a772-1ccc5d273329'] as Set
+def staff = ['dd74503c-7c12-4631-80ec-416aebc35319','337e8dc4-324e-454d-8c70-dcd50159af30','03a2fc51-cda6-49d6-82b0-a00499afaf24'] as Set
+if (!assigned.intersect(admins).isEmpty()) return 1
+if (!assigned.intersect(staff).isEmpty()) return 4
+return null
+</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <attribute id="63">
+                <ref>ri:user_permissions</ref>
+                <displayName>Permisos granulares Koha</displayName>
+                <tolerant>false</tolerant>
+                <outbound>
+                    <name>user-permissions-from-effective-koha-staff-role</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+def assigned = (focus?.assignment ?: []).collect { it?.targetRef?.oid }.findAll { it != null } as Set
+def superadmin = 'd698dc99-1a8c-479c-9eec-2a0214fdbf04'
+if (assigned.contains(superadmin)) return []
+def live = basic.getExtensionPropertyValue(focus, 'liveAffiliationWorker')
+def cc = focus?.costCenter?.toString()?.trim()
+if (live == null) return []
+if (cc == '94') {
+    def ciaAdmin = '3e753452-dee7-4eee-822e-dd6a8c9539cb'
+    if (assigned.contains(ciaAdmin)) return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds','9:edit_catalogue','9:edit_items','13:label_creator','13:manage_staged_marc','13:stage_marc_import']
+    return []
+}
+if (cc != '93') return []
+def admins = ['d3303cec-7b05-4415-a19d-84a1c899f4c4','8d3daccf-a76b-41ed-a772-1ccc5d273329'] as Set
+if (!assigned.intersect(admins).isEmpty()) return []
+if (assigned.contains('62bdad44-6ad9-4ef3-b11e-4df711571e9c')) return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds']
+def technical = ['337e8dc4-324e-454d-8c70-dcd50159af30','03a2fc51-cda6-49d6-82b0-a00499afaf24'] as Set
+if (!assigned.intersect(technical).isEmpty()) return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds','9:edit_catalogue','9:edit_items','13:label_creator','13:manage_staged_marc','13:stage_marc_import']
+if (assigned.contains('dd74503c-7c12-4631-80ec-416aebc35319')) return ['1:circulate_remaining_permissions','4:edit_borrowers','4:list_borrowers','6:place_holds']
+return []
+</code>
+                        </script>
+                    </expression>
+                </outbound>
+            </attribute>
+            <protected id="23772">
+                <filter>
+                    <q:equal>
+                        <q:path>attributes/ri:cardnumber</q:path>
+                        <q:value>SVC-MIDPOINT</q:value>
+                    </q:equal>
+                </filter>
+            </protected>
+            <activation>
+                <existence>
+                    <outbound id="27">
+                        <name>koha-account-existence-by-live-affiliation</name>
+                        <strength>strong</strength>
+                        <source>
+                            <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationWorker</path>
+                        </source>
+                        <source>
+                            <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationStudent</path>
+                        </source>
+                        <source>
+                            <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:smartwifiGuest</path>
+                        </source>
+                        <source>
+                            <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:campusStudent</path>
+                        </source>
+                        <source>
+                            <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:campusWorker</path>
+                        </source>
+                        <source>
+                            <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationAlum</path>
+                        </source>
+                        <expression>
+                            <script>
+                                <code>
+// ================================================================
+// GATE KOHA MULTI-CAMPUS AFILIACIÓN-AWARE (tarea #65, 2026-06-03).
+// Koha hoy = solo BUL (Lima). Elegible Koha-Lima si la persona tiene
+// un VÍNCULO VIVO con Lima:
+//   - matrícula vigente Lima  (campusStudent == 'LIMA'), O
+//   - contrato 7124 vivo Lima (campusWorker  == 'LIMA').
+// El EGRESO histórico de Lima NO cuenta (sin campusAlum en el gate):
+// un egresado puro de Lima sin matrícula/contrato vivo NO es elegible.
+// Provincia pura (Juliaca/Tarapoto/ISTAT, sin vínculo vivo Lima) → excluido.
+//
+// campusStudent/campusWorker son slots per-IIA single-valued single-writer
+// (Estudiantes/Trabajadores) poblados strong single-source — misma vigencia
+// VIVA que liveAffiliationStudent/Worker. locality NO entra al gate (queda
+// libre para LDAP/Entra/M365, semántica de lugar físico).
+//
+// FUSIÓN 4 KOHA (mitad de año): cuando BUJ/BUT/BU-ISTAT entren a este IGA,
+// quitar la condición `&amp;&amp; hasLimaAffiliation` (1 línea) → vuelve a ser
+// gate puro por afiliación viva multi-campus. Diseñado para ese cambio.
+//
+// EGRESADOS HISTÓRICOS (2026-07-25, decisión de Alberto). Se retira la
+// exclusión de egreso histórico documentada arriba: cualquier persona con
+// liveAffiliationAlum poblado (graduó de al menos un programa; fuente
+// Oracle LAMB Egresados / DAVID.VW_PERSONA_EGRESADO) es elegible, sin
+// vínculo vivo adicional. Alcance medido ANTES de aplicar: 27.640 personas
+// pasan a ser elegibles (casi duplica la población Koha). Confirmado
+// explícitamente por Alberto con esa cifra delante. Ver
+// upeu-koha/context/27-egresados-koha-2026-07-25.md.
+// ================================================================
+def worker  = liveAffiliationWorker
+def student = liveAffiliationStudent
+def guest   = smartwifiGuest
+def alum    = liveAffiliationAlum
+def hasLib  = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72e-b874b3c48fa6' }
+// hasLiveAff: tiene algún vínculo vivo elegible (worker|student|guest|egresado|bibliotecario).
+def hasLiveAff = (worker != null) || (student != null) || (guest != null) || (alum != null) || hasLib
+// P1 4-&gt;1: gate PURO por afiliación viva MULTI-CAMPUS. Retirado `&amp;&amp; hasLimaAffiliation`
+// (la instancia consolidada koha_upeu sirve a BUL/BUJ/BUT/CIA; cualquier vínculo vivo
+// UPeU es elegible, sin importar sede). El branch concreto lo fija library_id.
+def eligible = hasLiveAff
+// suma-nunca-resta: si el patrón Koha YA EXISTE (reality), NUNCA borrar.
+// Se archiva vía administrativeStatus=disabled (expiry+card_lost), jamás delete.
+// El deprovisioning de provincia (Juliaca/Tarapoto) se hace por bulk unlink +
+// archivado koha-expert fuera de este mapping; aquí solo gobernamos creación
+// y preservación (no confiamos el delete a este gate).
+//
+// BLINDAJE ANTI-DELETE (Fase 2.5, 2026-06-04).
+// La barrera DURA contra el borrado es la capability `delete` DESHABILITADA
+// (bloque &lt;configured&gt; al final del resource): Koha NUNCA recibe un DELETE de
+// patrón, pase lo que pase con este mapping. Por eso aquí NO replicamos lógica
+// de query frágil (un error de script abortaría el existence en CADA recompute
+// de CADA foco — peor que el problema). Guard simple y defensivo:
+// BLINDAJE getLinkedShadow (tarea #65, caso Tito 43508613): si el foco tiene un
+// shadow huérfano/dangling, getLinkedShadow puede lanzar; con try/catch→null no
+// abortamos el mapping ni afirmamos existencia falsa.
+//
+// Caso 22422 (runbook §4): durante un recon que crea+linkea en el MISMO
+// clockwork, getLinkedShadow aún devuelve null para un foco inelegible → este
+// mapping retorna false. ANTES eso disparaba DELETE; AHORA la capability delete
+// deshabilitada lo intercepta → 0 borrado. El deprovisioning real del leaver lo
+// hace administrativeStatus=DISABLED (expiry+card_lost), archivado graceful.
+def existing = null
+try {
+    existing = midpoint.getLinkedShadow(focus, 'e10a539a-cb7f-4c72-a19f-60f7f62e4b96')
+} catch (Exception e) {
+    log.warn('koha-account-existence: getLinkedShadow falló para {} → existing=null: {}', focus?.name, e.message)
+    existing = null
+}
+// Decisión final. Aunque retorne false para un inelegible-sin-shadow (caso
+// legítimo: NO crear), el DELETE está bloqueado por capability → 0 riesgo de
+// borrado. midpoint-best-practices §7 (existence defensivo).
+return eligible || (existing != null)
+                                </code>
+                            </script>
+                        </expression>
+                    </outbound>
+                </existence>
+                <administrativeStatus>
+                    <outbound id="28">
+                        <name>koha-admin-status-by-live-affiliation</name>
+                        <strength>strong</strength>
+                        <source>
+                            <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationWorker</path>
+                        </source>
+                        <source>
+                            <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationStudent</path>
+                        </source>
+                        <source>
+                            <path xmlns:upeu="urn:upeu:midpoint:local">$focus/extension/upeu:smartwifiGuest</path>
+                        </source>
+                        <source>
+                            <path>$focus/locality</path>
+                        </source>
+                        <source>
+                            <path xmlns:sb="urn:sciback:midpoint:person">$focus/extension/sb:liveAffiliationAlum</path>
+                        </source>
+                        <expression>
+                            <script>
+                                <code>
+import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+def worker  = liveAffiliationWorker
+def student = liveAffiliationStudent
+def guest   = smartwifiGuest
+def alum    = liveAffiliationAlum
+def hasLib  = focus?.roleMembershipRef?.any { it?.oid == '91b2cbcd-3db9-4e90-b72e-b874b3c48fa6' }
+def eligible = (worker != null) || (student != null) || (guest != null) || (alum != null) || hasLib
+return eligible ? ActivationStatusType.ENABLED : ActivationStatusType.DISABLED
+                                </code>
+                            </script>
+                        </expression>
+                    </outbound>
+                </administrativeStatus>
+            </activation>
+            <correlation>
+                <correlators>
+                    <filter id="29">
+                        <name>correlate-by-cardnumber-idpersona</name>
+                        <documentation>cardnumber del patrón Koha == extension/sciback:externalSystemId (ID_PERSONA). Correlación única por identificador universal, único e inmutable del MDM. Sentinel zero-match si cardnumber ausente/blank.</documentation>
+                        <ownerFilter>
+                            <q:equal>
+                                <q:path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:externalSystemId</q:path>
+                                <expression>
+                                    <script>
+                                        <code>
+def cn = basic.getAttributeValue(projection, 'cardnumber')
+if (cn == null) return '__NO_MATCH__'
+cn = cn.toString().trim()
+return cn ? cn : '__NO_MATCH__'
+                                        </code>
+                                    </script>
+                                </expression>
+                            </q:equal>
+                        </ownerFilter>
+                    </filter>
+                </correlators>
+            </correlation>
+            <synchronization>
+                <reaction id="30">
+                    <situation>linked</situation>
+                    <actions>
+                        <synchronize id="31"/>
+                    </actions>
+                </reaction>
+                <reaction id="32">
+                    <situation>unlinked</situation>
+                    <actions>
+                        <link id="33"/>
+                    </actions>
+                </reaction>
+                <reaction id="34">
+                    <situation>unmatched</situation>
+                </reaction>
+                <reaction id="35">
+                    <situation>deleted</situation>
+                    <actions>
+                        <unlink id="36"/>
+                    </actions>
+                </reaction>
+                <reaction id="37">
+                    <situation>disputed</situation>
+                    <actions>
+                        <createCorrelationCase id="38"/>
+                    </actions>
+                </reaction>
+            </synchronization>
+        </objectType>
+        <objectType id="39">
+            <kind>entitlement</kind>
+            <intent>default</intent>
+            <displayName>Categoría de Patrón</displayName>
+            <default>true</default>
+            <delineation>
+                <objectClass>ri:GroupObjectClass</objectClass>
+            </delineation>
+        </objectType>
+    </schemaHandling>
+    <capabilities>
+        <cachingMetadata>
+            <retrievalTimestamp>2026-04-16T16:16:00.386Z</retrievalTimestamp>
+            <serialNumber>1db688f004832b67-74fff745868ae754</serialNumber>
+        </cachingMetadata>
+        <native xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:schema/>
+            <cap:activation>
+                <cap:status/>
+            </cap:activation>
+            <cap:create/>
+            <cap:read>
+                <cap:returnDefaultAttributesOption>false</cap:returnDefaultAttributesOption>
+            </cap:read>
+            <cap:update>
+                <cap:addRemoveAttributeValues>true</cap:addRemoveAttributeValues>
+            </cap:update>
+            <cap:delete/>
+            <cap:testConnection/>
+            <cap:script>
+                <cap:host id="40">
+                    <cap:type>connector</cap:type>
+                </cap:host>
+            </cap:script>
+        </native>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
+        </configured>
+    </capabilities>
+    <consistency>
+        <connectorErrorCriticality>
+            <network>partial</network>
+            <generic>partial</generic>
+        </connectorErrorCriticality>
+        <deadShadowRetentionPeriod>P3D</deadShadowRetentionPeriod>
+    </consistency>
+</resource>
