@@ -1,16 +1,19 @@
-# Dos consultas a Oracle LAMB — sede de trabajador (18 personas) e identidades sin fuente (26)
+# Tres consultas a Oracle LAMB — sede de trabajador, identidades sin fuente y documentos en conflicto
 
 **Para:** sesión con acceso a Oracle LAMB (`192.168.13.9/UPEU`)
 **De:** la sesión del IGA (MidPoint)
-**Fecha:** 15-ago-2026 (ampliado el 16-ago con el encargo B)
+**Fecha:** 15-ago-2026 (ampliado el 16-ago con el encargo B y el 27-ago con el C)
 **Regla que no se toca:** **Oracle LAMB es de SOLO LECTURA. Política absoluta.** Aquí solo se
 consulta; ningún `UPDATE`, `INSERT` ni `DELETE`, ni siquiera "de prueba".
 
-Son dos encargos independientes; pueden resolverse por separado:
+Son tres encargos independientes; pueden resolverse por separado:
 
 - **A — sede de trabajador:** 3 trabajadoras en activo sin carné porque el IGA no sabe su sede.
 - **B — identidades sin fuente:** 26 personas que MidPoint tiene como estudiantes activos y no
   aparecen en ninguna tabla de Oracle. Hay que decidir si existen.
+- **C — documentos en conflicto:** 4 personas con dos números de documento distintos según la
+  fuente. Provocan ~15 fallos diarios en la reconciliación. Una puede ser una correlación
+  errónea entre dos personas distintas.
 
 ---
 
@@ -223,3 +226,78 @@ Para cada uno de los 26, cuál de estos tres es:
    que su fuente autoritativa desconoce.
 
 Con eso el IGA puede cerrar el caso; sin eso, cualquier acción es adivinar.
+
+---
+
+# ENCARGO C — 4 personas con dos números de documento distintos
+
+**Añadido el 27-ago-2026.**
+
+## Qué pasa
+
+Cada corrida de la reconciliación de Trabajadores falla para estas personas con:
+
+```
+SchemaException: Strong mappings provided more than one value
+for single-valued item attributes/scibackDocumentNumber
+```
+
+MidPoint recibe **dos documentos distintos** para la misma persona desde fuentes distintas y se
+niega a elegir — correctamente: inventar cuál es el bueno propagaría el error a LDAP, Koha y
+todo lo que cuelga. Son ~15 fallos diarios constantes (medido igual los días 25, 26 y 27).
+
+## Los cuatro casos
+
+| Persona | Valores en conflicto | Diagnóstico |
+|---|---|---|
+| `200010025` Ruth Yenny Chura Muñuico | `41538729` vs **`40538729`** | **Dígito equivocado en RR.HH.** |
+| `200610808` Orlando Gabriel Cortez Bazantes | `41423761` vs `47432342` | **Dos documentos sin relación** |
+| `02507832` Jose Gregorio Moreno Brito | `02507832` vs `002507832` | Ceros de relleno |
+| `02143746` Rodrigo Daniel Cuello Ballestero | `00214374` vs `000214374` | Ceros de relleno |
+
+## El caso de Ruth está resuelto de antemano — solo hay que confirmarlo
+
+Lo que aporta cada fuente:
+
+```
+Oracle LAMB Trabajadores : NUM_DOCUMENTO = 40538729   ← y su COD_APS es 41538729
+Oracle LAMB Egresados    : NUM_DOCUMENTO = 41538729
+Oracle LAMB Grados       : NUM_DOCUMENTO = 41538729
+```
+
+**Dos de tres fuentes dicen `41538729`, y el propio `COD_APS` de Trabajadores también.** Todo
+apunta a un dígito mal tecleado en la ficha de RR.HH. Confirmar y corregir en el origen.
+
+## El caso de Orlando es el preocupante
+
+`41423761` y `47432342` no se parecen: no es un error de tecleo. O la persona tiene dos fichas
+en Oracle con documentos distintos, o **dos personas distintas están correlacionadas como una
+sola** en el IGA. Lo segundo sería grave y hay que descartarlo.
+
+```sql
+-- ¿cuántas fichas hay por cada uno de esos documentos?
+SELECT NUM_DOCUMENTO, COUNT(*) FROM <vistas de trabajadores y egresados>
+WHERE NUM_DOCUMENTO IN ('41423761','47432342') GROUP BY NUM_DOCUMENTO;
+```
+
+## Los dos de ceros de relleno: por qué NO se arreglan en MidPoint
+
+La tentación es normalizar quitando ceros a la izquierda. **Se descartó tras medirlo**: 4.401
+personas (7,5 %) tienen documentos que empiezan por cero y son DNI peruanos legítimos, y hay
+**389 documentos de más de 8 dígitos sin cero inicial** que son CE y pasaportes válidos. No se
+puede distinguir con certeza un DNI con relleno de un CE que empieza por cero — `032930931`
+podría ser cualquiera de las dos cosas.
+
+Cambiar el formato tocaría **353 fichas** sobre un atributo que es **clave de búsqueda de
+InOut/CRAI** (`scibackDocumentNumber`, búsqueda `eq`), para arreglar 2 casos. La corrección
+correcta es unificar el formato **en Oracle**.
+
+## Qué se pide
+
+1. Confirmar el documento correcto de Ruth (`41538729`, casi seguro) y corregir RR.HH.
+2. **Determinar si Orlando es una persona con dos fichas o dos personas mal correlacionadas.**
+3. Unificar el formato de los dos casos con ceros de relleno.
+4. Decir si hay más casos así fuera de estos cuatro:
+```sql
+-- misma persona con NUM_DOCUMENTO distinto entre vistas
+```
