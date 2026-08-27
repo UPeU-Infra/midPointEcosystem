@@ -1,6 +1,6 @@
-# El ePPN lleva el DNI — fase 1 aplicada (histórico), la corrección sigue pendiente
+# El ePPN llevaba el DNI — CORREGIDO (fases 1 y 2 aplicadas)
 
-**26-ago-2026 · fase 1 APLICADA en producción · la fase 2 NO**
+**26-ago-2026 · fases 1 y 2 APLICADAS en producción y verificadas**
 
 Origen: observación levantada desde el proyecto `devsupeu`/Indico
 (`prompt-midpoint-ldap.md`). Verificada aquí punto por punto contra producción.
@@ -78,18 +78,50 @@ Integridad verificada en cada paso: `xsd:element` 2.292 sin cambios, `attributes
 Uno de ellos, `200610808`, ya tenía su propia task de diagnóstico anterior a esto. Pendiente de
 explicar aparte.
 
-## Fase 2 — NO aplicada
+## Fase 2 — APLICADA
 
-Cambiar `C-eppn-from-personalNumber` para que la fuente sea `name`. Eso **cambia el ePPN de
-4.073 personas y, a la vez, su `schacPersonalUniqueCode`**, porque ambos beben de
-`personalNumber`. Debe ir como un solo movimiento, con simulación, canario, lote de 50 y masivo
-fuera de la ventana de las reconciliaciones diarias (06:00–09:15).
+Dos cambios, no uno (el ePPN sale del template; el `schacPersonalUniqueCode` se calcula
+directamente en el resource):
 
-No se ejecuta hasta decisión explícita.
+| Objeto | Cambio | Versión |
+|---|---|---|
+| `UserTemplate-Person-Base` | `C-eppn-from-name-codigo-institucional`: fuente `personalNumber` → `name` | v127 → **v128** |
+| Resource LDAP, ramas `default` y `alumni` | `schac-unique-code-from-name-codigo-institucional`: misma sustitución | v259 → **v263** |
+| Ambas ramas | **`tolerant=false`** en `schacPersonalUniqueCode` | idem |
 
-## Lección de método
+Desplegado con simulación previa (`executionMode: preview`, que confirmó `MODIFIED` solo en el
+foco y el shadow LDAP, y `UNMODIFIED` en Koha, Entra y Oracle), canario, lote de 50 y masivo de
+4.038 en 4 hilos.
 
-El poblado se lanzó sobre "quien tenga cuenta en el resource LDAP" cuando debía ser "quien tenga
-cuenta **en la rama que estoy tocando**": el mapping se había añadido solo a `default`, así que
-1.669 egresados pasaron por el recompute sin efecto. **Al medir un universo hay que comprobar
-que coincide exactamente con el que se va a modificar.**
+### Resultado medido sobre el árbol completo (78.577 entradas)
+
+| | Antes | Después |
+|---|---|---|
+| ePPN = `uid` | 94,1 % | **100,0 %** (78.571) |
+| ePPN = DNI | 2.543 | **1** |
+| `schacPersonalUniqueCode` duplicado | 495 | **0** |
+| Con `eduPersonPrincipalNamePrior` | 0 | **4.614** |
+
+El DNI salió del identificador federado; sigue —y debe seguir— en `schacPersonalUniqueID`.
+
+Nota de alcance: la medición inicial (50.070) era solo de `ou=people`; el árbol completo son
+78.577 entradas. El alcance real era mayor y aun así quedó al 100 %.
+
+## Dos trampas que costaron caro, y que valen para cualquier cambio futuro
+
+1. **`strong` sobre un target multivalor AÑADE, no sustituye.** `schacPersonalUniqueCode` es
+   multivalor y no declaraba `tolerant`, así que por defecto era tolerante: el canario quedó con
+   el DNI **y** el código. Sin ese canario, las 4.038 fichas habrían salido duplicadas. El ePPN se
+   libró solo por ser *single-value* en el esquema, no por diseño. (Es el patrón PM10 ya conocido.)
+2. **Ningún recompute es "puramente aditivo".** Aplica *todos* los mappings, no solo el que se
+   acaba de tocar. El poblado de la fase 1 —que se describió como inocuo— reescribió de paso el
+   `schacPersonalUniqueCode` de **495 personas**, añadiéndoles el DNI. La fase 2 los limpió, pero
+   la lección queda: al recomputar en masa hay que revisar **qué más** escribe ese objeto.
+
+## Lo que sigue pendiente
+
+- **1.782 personas cuyo `uid` ya es el DNI.** Este cambio **no las arregla**: su `name` es el
+  documento. Exige renombrar identidades (*rename hell*), lo que se abortó el 17-jul. Decisión
+  aparte.
+- **6 personas cuyo recompute se cuelga** (>2 min sin responder), una con task de diagnóstico
+  propia anterior a esto. Son las que quedan sin corregir (1 con ePPN = DNI y 5 sin clasificar).
