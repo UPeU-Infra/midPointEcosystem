@@ -105,6 +105,34 @@ pare, que es exactamente lo que ya pasó una vez.
 **No se propone** resucitar `midpoint-provisioner`: un cliente con permiso para modificar 54.000
 usuarios que nadie usa es superficie de ataque sin contrapartida.
 
+## Aparte y ya hecho: el `eppn` de 1.497 personas cambió hoy
+
+Al inventariar los atributos apareció algo más urgente que la afiliación: **1.500 personas tenían
+su DNI publicado como `eppn`** — justo lo que el IGA retiró del LDAP el 26 de agosto y que
+Keycloak seguía sirviendo, porque su copia es de mayo-junio.
+
+**Ya está corregido**: las 1.497 con entrada en el directorio tienen ahora el mismo
+`eduPersonPrincipalName` que el LDAP. Verificado entrada por entrada: 1.497 coinciden, 0 difieren.
+
+**Lo que esto significa para quien vincule por `eppn`:** el identificador de esas personas cambió
+—en el LDAP en agosto, en Keycloak hoy—. Para reconciliar, el LDAP conserva el valor anterior en
+**`eduPersonPrincipalNamePrior`**, que existe precisamente para esto (eduPerson 202208 exige que
+el ePPN no sea reasignable sin dejar rastro).
+
+### Y una franja de esta tarde que conviene que sepáis
+
+Entre las **15:35 y las 16:03** aproximadamente, esas 1.497 cuentas tuvieron en Keycloak **el
+`eppn` de otra persona**. Fue un error mío: el volcado que extraje del LDAP salió desplazado una
+posición porque el `awk` asumía que `uid` venía antes que el ePPN en el LDIF, y en OpenLDAP viene
+después. Lo detecté en la verificación final y lo reparé el mismo día.
+
+**Si en esa franja alguien inició sesión, vuestra aplicación pudo recibir un identificador que no
+era el suyo.** Merece la pena revisar registros creados o modificados en esa ventana antes de
+darlos por buenos. El estado actual es correcto y está verificado contra el directorio.
+
+Detalle completo, causa y las reglas que salen de ahí:
+[`2026-08-27-INCIDENTE-eppn-cruzado-keycloak.md`](2026-08-27-INCIDENTE-eppn-cruzado-keycloak.md).
+
 ## Corrección respecto a la versión anterior de este documento
 
 La primera versión atribuía el desfase a que «nadie aprovisiona Keycloak» y presentaba a los 12
