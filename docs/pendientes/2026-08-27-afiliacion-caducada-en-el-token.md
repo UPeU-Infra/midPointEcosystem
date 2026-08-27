@@ -1,33 +1,53 @@
-# La afiliación que viaja en el token está caducada para 3.014 personas
+# La afiliación que viaja en el token es una foto de mayo-junio de 2026
 
-**27-ago-2026 · para DTI y los equipos de las 12 aplicaciones federadas**
-**Estado: medido en producción. Antes de actuar hace falta una respuesta de cada equipo.**
+**27-ago-2026 · para DTI y los equipos de las aplicaciones federadas**
+**Estado: medido en producción. Antes de actuar hace falta una respuesta de tres equipos.**
 
-## Resumen en tres líneas
+## Resumen
 
-El claim `primaryAffiliation` que Keycloak entrega a las aplicaciones **no lo mantiene nadie**:
-es una copia guardada en cada cuenta que no se refresca. Comparado con lo que el IGA sabe hoy,
-**difiere para 3.014 personas (6,5 %)**. En **753** de ellas el token concede una afiliación
-activa a alguien que el IGA ya tiene como egresado.
+El atributo de afiliación que Keycloak entrega en el token **no lo mantiene nadie**. Es el
+sedimento de una **federación LDAP que se importó y luego se retiró**: los 54.366 usuarios del
+realm `upeu` son hoy **cuentas locales** (`federation_link = NULL`) que conservan los atributos
+tal y como estaban el día de la importación.
 
-**Si tu aplicación decide accesos con ese claim, esas 753 personas conservan permisos que el IGA
-ya les retiró.** Si solo lo muestras o lo registras, no hay riesgo de seguridad — pero el dato
-que enseñas puede estar equivocado.
+Comparado con lo que el IGA sabe hoy, **difiere para 3.014 personas (6,5 %)**. En **753** el
+token concede una afiliación activa a alguien que el IGA ya tiene como egresado.
 
-## Qué se midió
+## La cadena que se suele suponer, y dónde se corta
 
-53.723 personas presentes a la vez en Keycloak y en el IGA:
+La suposición razonable es: **MidPoint → Entra ID → Keycloak**. MidPoint sí aprovisiona Entra
+ID, y Keycloak sí usa Entra ID como proveedor de identidad. Pero **ese camino no transporta la
+afiliación**, por dos motivos medidos:
 
-| | |
+| Comprobación | Valor en producción |
 |---|---|
-| Coinciden | 43.335 |
-| **Difieren** | **3.014 (6,5 %)** |
+| Scopes que Keycloak pide a Entra ID (`MicrosoftUPeU`) | `openid profile email` — nada más |
+| Mappers de ese IdP | 4: `username`, `given_name`, `family_name`, `email` |
+| `syncMode` del IdP | **`IMPORT`** — escribe solo al **crear** la cuenta, nunca la actualiza |
 
-Desglose de las discrepancias:
+Aunque Entra ID tuviera la afiliación al día, Keycloak **no la pide y no la mapearía**. Y con
+`syncMode = IMPORT`, ni siquiera refresca el nombre o el correo en logins posteriores.
+
+## De dónde salen entonces los atributos
+
+De una federación LDAP que **ya no existe**:
+
+| Comprobación | Valor |
+|---|---|
+| Proveedores de almacenamiento de usuarios (`UserStorageProvider`) | **ninguno** — lista vacía |
+| Usuarios con `LDAP_ENTRY_DN` / `LDAP_ID` | **54.320** |
+| Usuarios con `federation_link` | **0** — los 54.366 son cuentas locales |
+| Creación de esas cuentas | **33.198 en mayo-2026 + 20.073 en junio-2026** |
+| Creadas en agosto-2026 | **4** |
+
+El patrón es inequívoco: una importación masiva en mayo y junio, y desde entonces el goteo se
+detiene. Los atributos quedaron **fosilizados en ese instante**. Por eso el desfase se desvía en
+las dos direcciones — quien se graduó después de la foto sigue apareciendo como estudiante, y
+quien fue contratado después conserva su rol anterior:
 
 ```
-895  el token dice alum     y el IGA dice student     ← acceso de MENOS
-636  el token dice student  y el IGA dice alum        ← acceso de MÁS
+895  el token dice alum     y el IGA dice student
+636  el token dice student  y el IGA dice alum
 449  el token dice staff    y el IGA dice faculty
 435  el token dice alum     y el IGA dice faculty
 286  el token dice alum     y el IGA dice staff
@@ -35,75 +55,65 @@ Desglose de las discrepancias:
  69  el token dice faculty  y el IGA dice alum
 ```
 
-Se desvía **en las dos direcciones**, lo que descarta un retraso de propagación: es una foto sin
-mantenimiento. Unos se quedaron congelados al graduarse; otros, al ser contratados.
+Nadie escribe esos atributos hoy: las **23 escrituras** sobre usuarios registradas desde el
+5-mayo son **todas de `admin-cli`** (consola de administración). El cliente
+`midpoint-provisioner`, que tiene permiso `manage-users`, **no ha escrito ninguna**.
 
-Los **895 con acceso de menos** no son un riesgo de seguridad, pero sí de servicio: gente a la
-que una aplicación puede estar negándole lo que le corresponde, y que probablemente no lo ha
-reportado porque no sabe que debería tenerlo.
+## Quién está expuesto de verdad — son 3 clientes, no 13
 
-## Por qué pasa
+Aquí hay un matiz que cambia el tamaño del problema. Conviven **dos nombres de atributo**, y uno
+de los dos **no existe**:
 
-Nadie aprovisiona Keycloak. Verificado el 27-ago:
+| Atributo | Usuarios que lo tienen | Quién lo lee |
+|---|---|---|
+| `affiliation` | **54.320** (el real, congelado) | `rims-upeu`, `rims-upeu-legacy`, `devsupeu-backend` |
+| `primaryAffiliation` | **0** | scope `upeu` (12 clientes) y scope `academic-databases-eduperson` |
 
-- **MidPoint no tiene resource de Keycloak** — ninguno de sus 12 lo es.
-- **Los mappers del IdP no escriben la afiliación**: los 4 solo copian `username`, `firstName`,
-  `lastName` y `email`.
-- El cliente `midpoint-provisioner` existe y tiene permisos de `manage-users`, pero **nunca ha
-  pedido un token**: 0 eventos.
-- Las 23 escrituras registradas sobre usuarios vienen de la **consola de administración**.
+**El claim `primaryAffiliation` del scope `upeu` va vacío para todo el mundo**, porque apunta a
+un atributo que ningún usuario tiene. Los 12 clientes que llevan ese scope —`koha-upeu`,
+`indico-upeu`, `librechat`, `onyx`, `guia-node`, `mayan-sgc`, `sgc-frappe`, `cloudflare-access`,
+`dgi-ingest-connector`, `rims-provisioning`, `devsupeu-backend`, `midpoint-provisioner`— reciben
+un claim inexistente. Si alguno de ellos **autorizara** con él, hoy estaría fallando de forma
+visible; que no lo haga sugiere que no lo usa.
 
-Los atributos de identidad de Keycloak son **una foto del pasado**. El 26-ago el IGA corrigió el
-`eduPersonPrincipalName` de ~4.600 personas y Keycloak no se enteró; el desfase de afiliación es
-el mismo fenómeno, pero sobre el dato que sí decide accesos.
+**El riesgo real se concentra en los tres que leen `affiliation`: RIMS (dos clientes) y
+`devsupeu-backend`.**
 
-## Quién recibe el claim
+## Lo que se pide — una sola pregunta, a tres equipos
 
-**13 de 19 clientes habilitados** reciben atributos de identidad en el token:
+> **¿Tu aplicación toma decisiones de acceso con el claim `affiliation`, o solo lo muestra o
+> registra?**
 
-| Vía | Clientes |
-|---|---|
-| Scope `upeu` (`primaryAffiliation`, `facultyShortName`) | `koha-upeu`, `indico-upeu`, `librechat`, `onyx`, `guia-node`, `mayan-sgc`, `sgc-frappe`, `cloudflare-access`, `dgi-ingest-connector`, `rims-provisioning`, `devsupeu-backend`, `midpoint-provisioner` |
-| Mappers propios | `rims-upeu` (`eppn`, `epuid`, `affiliation`, `eduperson_entitlement`), `devsupeu-backend` |
+Va a los responsables de **RIMS** y **devsupeu-backend**. De la respuesta depende si las 753
+personas con afiliación activa caducada son un incidente de acceso o una molestia cosmética.
 
-## Lo que se pide a cada equipo — una sola pregunta
+## Qué hacer después, según la respuesta
 
-> **¿Tu aplicación toma decisiones de acceso con `primaryAffiliation` del token, o solo lo usa
-> para mostrar o registrar?**
+**Si autorizan con el claim:** deben leer la afiliación del **LDAP en vivo**, como manda el
+ADR-058 —*«Keycloak dice QUIÉN eres. El LDAP dice QUÉ eres»*—. RIMS ya tiene su bind
+`cn=rims-reader`. **Dos avisos que muerden en silencio:** `olcSizeLimit` es 10.000 y trunca
+listas **sin error visible** (solo `cn=midpoint` y `cn=rims-reader` tienen `size=unlimited`), y
+**`ldap.upeu.edu.pe` no resuelve al LDAP real** — apunta a `192.168.13.160`, que no responde ni
+en 389 ni en 636; hay que conectar por IP.
 
-De la respuesta depende todo lo demás. Sin ella, cualquier acción es a ciegas.
+**En cualquier caso, el sedimento hay que limpiarlo.** Dejar 54.320 cuentas con una afiliación
+de hace tres meses es una trampa para la próxima aplicación que se integre y la crea buena. Las
+opciones son retirar el atributo, o volver a federar el LDAP de forma sostenida — pero lo segundo
+es justo lo que el ADR-058 desaconseja, y reintroduce el problema en cuanto la sincronización se
+pare, que es exactamente lo que ya pasó una vez.
 
-## La alternativa correcta, y ya hay precedente
+**No se propone** resucitar `midpoint-provisioner`: un cliente con permiso para modificar 54.000
+usuarios que nadie usa es superficie de ataque sin contrapartida.
 
-Lo dice el ADR-058: **«Keycloak dice QUIÉN eres. El LDAP dice QUÉ eres. Si el dato te importa
-para decidir algo, no lo leas del token.»**
+## Corrección respecto a la versión anterior de este documento
 
-Quien necesite la afiliación para autorizar debe leerla del LDAP, como ya hace RIMS con su bind
-`cn=rims-reader`. El IGA puede provisionar un bind de solo lectura por aplicación. **Dos avisos
-que van con él, porque los dos muerden en silencio:**
+La primera versión atribuía el desfase a que «nadie aprovisiona Keycloak» y presentaba a los 12
+clientes del scope `upeu` como expuestos. **El efecto era correcto, la causa y el alcance no.**
+La causa es una federación LDAP importada y retirada; el alcance real son 3 clientes, porque el
+claim del scope `upeu` está vacío. Las cifras del desfase no cambian: se midieron sobre
+`affiliation`, que es el atributo que sí existe.
 
-1. **`olcSizeLimit` es 10.000 y trunca sin error visible.** Solo `cn=midpoint` y
-   `cn=rims-reader` tienen `size=unlimited`. Un bind nuevo lo necesita desde el primer día, o
-   leerá listas incompletas creyéndolas completas.
-2. **`ldap.upeu.edu.pe` NO resuelve al LDAP real** — apunta a `192.168.13.160`, que no responde
-   ni en 389 ni en 636. Hay que conectar por IP hasta que se corrija el DNS.
+## Hallazgo colateral, sin relación con lo anterior
 
-## Lo que NO se propone
-
-- **Sincronizar Keycloak con el LDAP**, ni por federación ni por un proceso que copie atributos.
-  La federación la prohíbe el ADR-058 explícitamente, y copiar reconstruye el mismo problema: la
-  copia vuelve a envejecer entre pasadas.
-- **Resucitar `midpoint-provisioner`.** Un cliente con permiso para modificar 54.000 usuarios que
-  nadie usa es superficie de ataque sin contrapartida. Si se confirma que no hace falta, retirarlo.
-
-## Mientras se decide
-
-Documentar el claim como **informativo y potencialmente caducado**. Es honesto, no rompe nada y
-evita que una aplicación nueva lo adopte para autorizar creyéndolo fiable.
-
-## Anexos
-
-- Lista de las 753 personas con afiliación activa en el token y `alum` en el IGA:
-  `riesgo-afiliacion.txt` (no se incluye aquí por ser dato personal).
-- Método: volcado completo de ambos lados y cruce por `username`/`name`. Reproducible con el
-  script `desfase-afiliacion.sh`.
+En 7 días de eventos hay **4.386 `IDENTITY_PROVIDER_LOGIN_ERROR` en `indico-upeu`** y 3.940 más
+sin cliente asociado. Es un volumen alto que merece revisarse por separado.
