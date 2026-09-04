@@ -7,10 +7,11 @@ set -euo pipefail
 : "${M365_WORK:?define M365_WORK}"
 source ~/.secrets/midpoint-upeu.env
 source ~/.secrets/oracle-lamb.env
+export SSHPASS="$MIDPOINT_PROD_PASS"
 
 JAR=/opt/midpoint/var/lib/ojdbc11-23.6.0.24.10.jar
 DSN='jdbc:oracle:thin:@192.168.13.9:1521/UPEU'
-ssh_mp() { sshpass -p "$MIDPOINT_PROD_PASS" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 midpoint-prod "$@"; }
+ssh_mp() { sshpass -e ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 midpoint-prod "$@"; }
 
 echo "→ preparando cliente JDBC en PROD…"
 ssh_mp 'docker exec midpoint_server test -f /tmp/OraQ.class 2>/dev/null || (mkdir -p /tmp/orq && cat > /tmp/orq/OraQ.java <<'"'"'EOF'"'"'

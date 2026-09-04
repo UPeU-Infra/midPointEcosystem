@@ -4,9 +4,10 @@
 set -euo pipefail
 : "${M365_WORK:?define M365_WORK}"
 source ~/.secrets/midpoint-upeu.env
+export SSHPASS="$MIDPOINT_PROD_PASS"
 
 PSQL='docker exec midpoint-midpoint_data-1 psql -U midpoint midpoint'
-ssh_mp() { sshpass -p "$MIDPOINT_PROD_PASS" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=25 midpoint-prod "$@"; }
+ssh_mp() { sshpass -e ssh -o StrictHostKeyChecking=no -o ConnectTimeout=25 midpoint-prod "$@"; }
 
 echo "→ focos de identidad (archetype, afiliación, campus, unidad)…"
 ssh_mp "$PSQL -c \"COPY (
