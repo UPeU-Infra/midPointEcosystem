@@ -1,0 +1,40 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="d71a0001-0000-4000-a000-d71a00000001">
+    <name>AR-DTI-Team-activos-digitales</name>
+    <description>CANARIO 2026-09-03. Application Role que otorga la pertenencia al grupo LDAP cn=dti-activos-digitales,ou=groups,dc=upeu,dc=edu,dc=pe, que a su vez alimenta el grupo de agentes de Zammad. Se autoasigna desde el template global por extension/upeu:serviceDeskTeam. La CLAVE DE UNION es el elemento identifier: contiene el valor EXACTO de serviceDeskTeam tal y como lo escribe el DTI. El slug (cn del grupo LDAP) NO es derivable del nombre del equipo por algoritmo (comprobado: Coordinacion STI Lima -> dti-coord-sti-lima abrevia Coordinacion como coord), por eso el slug es dato almacenado en el name del rol y en el filtro de la construccion, nunca calculado.</description>
+    <displayName>DTI - Activos Digitales</displayName>
+    <identifier>Activos Digitales</identifier>
+    <subtype>dti-service-desk-team</subtype>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <inducement>
+        <construction>
+            <resourceRef oid="7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f" relation="org:default" type="c:ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+            <association>
+                <ref>ri:group</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <expression>
+                        <associationTargetSearch>
+                            <filter>
+                                <q:equal>
+                                    <q:path>attributes/ri:dn</q:path>
+                                    <q:value>cn=dti-activos-digitales,ou=groups,dc=upeu,dc=edu,dc=pe</q:value>
+                                </q:equal>
+                            </filter>
+                            <createOnDemand>false</createOnDemand>
+                        </associationTargetSearch>
+                    </expression>
+                </outbound>
+            </association>
+        </construction>
+    </inducement>
+</role>

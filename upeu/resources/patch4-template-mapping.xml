@@ -1,0 +1,49 @@
+<objectModification
+    xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
+    <itemDelta>
+        <t:modificationType>add</t:modificationType>
+        <t:path>c:mapping</t:path>
+        <t:value>
+            <c:name>T-autoassign-ar-dti-team-from-serviceDeskTeam</c:name>
+            <c:description>Autoasigna el Application Role del equipo del DTI a partir de extension/upeu:serviceDeskTeam. Resuelve el rol por identifier (que guarda el valor EXACTO del equipo) acotando por subtype=dti-service-desk-team para que no pueda colisionar con ningun otro rol del catalogo. Si el equipo no tiene rol creado todavia, la busqueda no devuelve nada y no se asigna nada (createOnDemand=false): eso es lo que acota el canario a un solo equipo. Anadido 2026-09-03.</c:description>
+            <c:lifecycleState>active</c:lifecycleState>
+            <c:strength>strong</c:strength>
+            <c:source>
+                <c:path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:serviceDeskTeam</c:path>
+            </c:source>
+            <c:expression>
+                <c:assignmentTargetSearch>
+                    <c:targetType>RoleType</c:targetType>
+                    <c:filter>
+                        <q:and>
+                            <q:equal>
+                                <q:path>subtype</q:path>
+                                <q:value>dti-service-desk-team</q:value>
+                            </q:equal>
+                            <q:equal>
+                                <q:path>identifier</q:path>
+                                <c:expression>
+                                    <c:script>
+                                        <c:code>basic.stringify(serviceDeskTeam).trim()</c:code>
+                                    </c:script>
+                                </c:expression>
+                            </q:equal>
+                        </q:and>
+                    </c:filter>
+                    <c:createOnDemand>false</c:createOnDemand>
+                </c:assignmentTargetSearch>
+            </c:expression>
+            <c:target>
+                <c:path>assignment</c:path>
+            </c:target>
+            <c:condition>
+                <c:script>
+                    <c:code>serviceDeskTeam != null &amp;&amp; basic.stringify(serviceDeskTeam).trim() != ''</c:code>
+                </c:script>
+            </c:condition>
+        </t:value>
+    </itemDelta>
+</objectModification>

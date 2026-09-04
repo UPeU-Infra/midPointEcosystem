@@ -107,3 +107,43 @@ hay que probarlos aisladamente.
 - Activar las dos tareas programadas, hoy `suspended`.
 - Capa institución UPeU (ADR-054). Generalizable a `canonico/` cambiando el filtro `cn=dti-*` y
   el prefijo del `subtype`.
+
+---
+
+# Despliegue de los 22 equipos — COMPLETADO el 03-sep-2026
+
+## Resultado
+
+```
+personas verificadas una por una: 64
+EN EL GRUPO CORRECTO            : 64
+incorrectas                     : 0
+con equipo pero sin grupo       : 0
+```
+
+22 grupos · 64 membresías · 64 personas distintas (nadie en dos grupos) · `memberOf` 64/64.
+
+**La verificación es cruzada, no de forma**: para cada una de las 64 personas se comparó el
+grupo real en LDAP contra su `serviceDeskTeam` real en MidPoint, resuelto por el mapa
+verificado. Que los totales cuadren no basta — podrían cuadrar estando todas cruzadas.
+
+## Lo desplegado
+
+- **22 roles** `AR-DTI-Team-*` (OIDs `d71a0001-0000-4000-a000-d71a000000NN`), todos HTTP 201.
+- **Tareas activas** (`RUNNABLE`): `recon-ldap-dti-groups-daily` (3:30) y
+  `recompute-dti-teams-daily` (4:15, acotada por `q:org` al Org DTI con scope SUBTREE).
+- Tareas de despliegue ya cerradas: `recompute-dti-64-despliegue-inicial`,
+  `recompute-canario-dti-activos-digitales-ACOTADA`.
+- **Eliminada** la tarea `CANARIO DTI grupos - recompute+reconcile` por llevar el bloque
+  `<recomputation>` vacío: reanudarla habría recomputado a los 65.661 usuarios.
+
+## Dos trampas más, encontradas al desplegar
+
+4. **El `fullObject` de MidPoint 4.10 es JSON, no XML.** Buscar `<serviceDeskTeam>` devuelve 0;
+   el atributo vive en `"extension":{"serviceDeskTeam":"..."}`. Tres consultas seguidas
+   devolvieron 4, 2 y 0 personas en lugar de 64 — **números plausibles, no errores**, que es
+   justo lo que hace peligroso un extractor roto. La forma fiable es trocear por `{"user":` y
+   parsear cada objeto con un decodificador JSON, no con expresiones regulares.
+5. **El SSH a PROD empezó a fallar de forma intermitente** tras el volumen de conexiones de la
+   sesión (deniega y entra al tercer intento). Todo script que consulte PROD en cadena debe
+   llevar reintentos, o interpretará una denegación transitoria como un cero real.

@@ -1,0 +1,38 @@
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="d71a0003-0000-4000-a000-d71a00000003">
+    <name>recon-ldap-dti-groups-daily</name>
+    <description>Reconciliacion diaria del objectType entitlement/group del recurso LDAP-IdentityCache-UPeU: mantiene frescos los 22 shadows de grupo (altas, bajas y cambios de descripcion hechos fuera de MidPoint). Cron 03:30 hora de Lima. OJO: esta tarea NO restaura pertenencias; la pertenencia vive en la proyeccion del SUJETO. Quien restaura pertenencias es recompute-dti-teams-daily. Creada SUSPENDED hasta aprobacion explicita de Alberto.</description>
+    <assignment>
+        <targetRef oid="00000000-0000-0000-0000-000000000501" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" relation="org:default" type="c:UserType"/>
+    <executionState>suspended</executionState>
+    <binding>loose</binding>
+    <schedule>
+        <cronLikePattern>0 30 3 * * ?</cronLikePattern>
+        <misfireAction>executeImmediately</misfireAction>
+    </schedule>
+    <activity>
+        <work>
+            <reconciliation>
+                <resourceObjects>
+                    <resourceRef oid="7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f" relation="org:default" type="c:ResourceType"/>
+                    <kind>entitlement</kind>
+                    <intent>group</intent>
+                </resourceObjects>
+            </reconciliation>
+        </work>
+        <controlFlow>
+            <errorHandling>
+                <entry>
+                    <reaction>
+                        <ignore/>
+                    </reaction>
+                </entry>
+            </errorHandling>
+        </controlFlow>
+    </activity>
+</task>

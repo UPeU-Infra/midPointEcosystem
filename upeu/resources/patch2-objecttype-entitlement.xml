@@ -1,0 +1,50 @@
+<objectModification
+    xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+    <itemDelta>
+        <t:modificationType>add</t:modificationType>
+        <t:path>c:schemaHandling/c:objectType</t:path>
+        <t:value>
+            <c:kind>entitlement</c:kind>
+            <c:intent>group</c:intent>
+            <c:displayName>Grupo LDAP de equipo DTI (cn=dti-*)</c:displayName>
+            <c:description>Grupos groupOfUniqueNames bajo ou=groups que representan los equipos de la mesa de servicio del DTI y alimentan los grupos de agentes de Zammad. El overlay memberof de este OpenLDAP esta configurado con olcMemberOfGroupOC=groupOfUniqueNames y olcMemberOfMemberAD=uniqueMember: un grupo groupOfNames/member se acepta sin error y NO puebla memberOf (fallo mudo), por eso la clase es groupOfUniqueNames. La delineacion se acota a cn=dti-* a proposito: cualquier grupo futuro NO gobernado queda fuera de este tipo y por tanto invisible para la asociacion (que es tolerant=false), de modo que MidPoint nunca puede retirar una pertenencia que no gobierna. Anadido 2026-09-03.</c:description>
+            <c:default>false</c:default>
+            <c:objectClass>ri:groupOfUniqueNames</c:objectClass>
+            <c:delineation>
+                <c:baseContext>
+                    <c:objectClass>ri:organizationalUnit</c:objectClass>
+                    <c:filter>
+                        <q:equal>
+                            <q:path>attributes/ri:dn</q:path>
+                            <q:value>ou=groups,dc=upeu,dc=edu,dc=pe</q:value>
+                        </q:equal>
+                    </c:filter>
+                </c:baseContext>
+                <c:searchHierarchyScope>one</c:searchHierarchyScope>
+                <c:filter>
+                    <q:substring>
+                        <q:path>attributes/ri:cn</q:path>
+                        <q:value>dti-</q:value>
+                        <q:anchorStart>true</q:anchorStart>
+                    </q:substring>
+                </c:filter>
+            </c:delineation>
+            <c:attribute>
+                <c:ref>ri:dn</c:ref>
+                <c:displayName>DN del grupo</c:displayName>
+            </c:attribute>
+            <c:attribute>
+                <c:ref>ri:cn</c:ref>
+                <c:displayName>Nombre del grupo (slug)</c:displayName>
+            </c:attribute>
+            <c:attribute>
+                <c:ref>ri:description</c:ref>
+                <c:displayName>Descripcion</c:displayName>
+            </c:attribute>
+        </t:value>
+    </itemDelta>
+</objectModification>

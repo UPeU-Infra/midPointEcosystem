@@ -1,0 +1,31 @@
+<objectModification
+    xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+    <itemDelta>
+        <t:modificationType>add</t:modificationType>
+        <t:path>c:capabilities/c:configured/cap:references</t:path>
+        <t:value>
+            <cap:type>
+                <cap:name>ri:group</cap:name>
+                <cap:subject>
+                    <cap:delineation>
+                        <cap:objectClass>ri:inetOrgPerson</cap:objectClass>
+                    </cap:delineation>
+                    <cap:primaryBindingAttributeRef>ri:dn</cap:primaryBindingAttributeRef>
+                    <cap:localItemName>ri:group</cap:localItemName>
+                </cap:subject>
+                <cap:object>
+                    <cap:delineation>
+                        <cap:objectClass>ri:groupOfUniqueNames</cap:objectClass>
+                    </cap:delineation>
+                    <cap:primaryBindingAttributeRef>ri:uniqueMember</cap:primaryBindingAttributeRef>
+                </cap:object>
+                <cap:direction>objectToSubject</cap:direction>
+                <cap:explicitReferentialIntegrity>false</cap:explicitReferentialIntegrity>
+            </cap:type>
+        </t:value>
+    </itemDelta>
+</objectModification>

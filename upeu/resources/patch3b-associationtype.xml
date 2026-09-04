@@ -1,0 +1,31 @@
+<objectModification
+    xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+    <itemDelta>
+        <t:modificationType>add</t:modificationType>
+        <t:path>c:schemaHandling/c:associationType</t:path>
+        <t:value>
+            <c:name>ri:group</c:name>
+            <c:displayName>Pertenencia a grupo LDAP</c:displayName>
+            <c:description>Asocia la cuenta LDAP de una persona (account/default, ou=people) con los grupos de equipo del DTI (entitlement/group, ou=groups). Se apoya en la referencia simulada ri:group declarada en capabilities/configured/references, cuyo enlace fisico es uniqueMember en el grupo (direction=objectToSubject). tolerant=false para que MidPoint sea autoritativo: al cambiar serviceDeskTeam la persona sale del grupo viejo. Es seguro porque el tipo entitlement/group esta acotado a cn=dti-*: los valores que apuntan a grupos no clasificados quedan ocultos para esta asociacion y MidPoint no puede retirarlos. Anadido 2026-09-03.</c:description>
+            <c:subject>
+                <c:objectType>
+                    <c:kind>account</c:kind>
+                    <c:intent>default</c:intent>
+                </c:objectType>
+                <c:association>
+                    <c:ref>ri:group</c:ref>
+                    <c:tolerant>false</c:tolerant>
+                </c:association>
+            </c:subject>
+            <c:object>
+                <c:objectType>
+                    <c:kind>entitlement</c:kind>
+                    <c:intent>group</c:intent>
+                </c:objectType>
+            </c:object>
+        </t:value>
+    </itemDelta>
+</objectModification>

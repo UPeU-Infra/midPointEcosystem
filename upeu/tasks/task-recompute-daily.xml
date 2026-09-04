@@ -1,0 +1,33 @@
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+      oid="d71a0004-0000-4000-a000-d71a00000004">
+    <name>recompute-dti-teams-daily</name>
+    <description>Recompute ACOTADO a las personas que tienen extension/upeu:serviceDeskTeam, para
+    materializar en LDAP las pertenencias a los 22 grupos del DTI tras crear los 21 roles
+    restantes. Acotada por parentOrgRef al Org DTI a proposito: un bloque recomputation vacio
+    recomputaria a los 65.661 usuarios. Despliegue 2026-09-03.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="c:UserType"/>
+    <executionState>runnable</executionState>
+    <schedule><cronLikePattern>0 15 4 * * ?</cronLikePattern><misfireAction>reschedule</misfireAction></schedule>
+    <activity>
+        <work>
+            <recomputation>
+                <objects>
+                    <type>c:UserType</type>
+                    <query>
+                        <q:filter>
+                            <q:org>
+                                <q:orgRef oid="00000000-0000-0000-0000-953119566392"/>
+                                <q:scope>SUBTREE</q:scope>
+                            </q:org>
+                        </q:filter>
+                    </query>
+                </objects>
+            </recomputation>
+        </work>
+        <distribution>
+            <workerThreads>2</workerThreads>
+        </distribution>
+    </activity>
+</task>
