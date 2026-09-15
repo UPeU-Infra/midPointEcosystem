@@ -1,0 +1,35 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="d71a0001-0000-4000-a000-d71a00000027">
+    <name>AR-DTI-Team-conservatory</name>
+    <description>Application Role que otorga la pertenencia al grupo LDAP cn=dti-conservatory,ou=groups,dc=upeu,dc=edu,dc=pe, correspondiente al equipo de desarrollo Conservatory (2 personas) del modelo de organizacion validado por el director de la DTI. Se autoasigna desde el template global por extension/upeu:serviceDeskTeam; la clave de union es identifier, que contiene el valor EXACTO del equipo. Creado 2026-09-15 (ADR-066) como parte de la unificacion sobre el mecanismo del 03-sep. SIN inducement de cola Zammad: la cola correspondiente NO existe todavia en servicedesk.upeu.edu.pe.</description>
+    <subtype>dti-service-desk-team</subtype>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <displayName>DTI - Conservatory</displayName>
+    <identifier>Conservatory</identifier>
+    <inducement>
+        <construction>
+            <resourceRef oid="7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f" relation="org:default" type="c:ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+            <association>
+                <ref>ri:group</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <expression>
+                        <associationTargetSearch>
+                            <filter>
+                                <q:equal>
+                                    <q:path>attributes/ri:dn</q:path>
+                                    <q:value>cn=dti-conservatory,ou=groups,dc=upeu,dc=edu,dc=pe</q:value>
+                                </q:equal>
+                            </filter>
+                            <createOnDemand>false</createOnDemand>
+                        </associationTargetSearch>
+                    </expression>
+                </outbound>
+            </association>
+        </construction>
+    </inducement>
+</role>

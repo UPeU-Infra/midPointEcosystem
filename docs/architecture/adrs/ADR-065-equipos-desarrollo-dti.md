@@ -1,7 +1,18 @@
 # ADR-065 — Los 9 equipos de desarrollo de la DTI
 
 **Fecha:** 15-sep-2026
-**Estado:** 🟠 **PROPUESTO — no aplicado.** Requiere aprobación escrita de Alberto
+**Estado:** ⚫ **PROPUESTO Y DESCARTADO** (15-sep-2026). Superado por [`ADR-066`](ADR-066-unificar-equipos-dti-sobre-servicedeskteam.md)
+
+> **Por qué se descarta.** Al contrastar persona a persona, las dos listas de la medición M5 no
+> eran dimensiones distintas: eran **la misma taxonomía con el corte desactualizado** (LAMB
+> Financiero coincidía 7 de 7). Crear la segunda dimensión habría sido la doble autoridad que el
+> canario del 03-sep evitó a propósito. Se unificó sobre `serviceDeskTeam`, con el modelo del
+> director como verdad.
+>
+> **Lo que sigue valiendo, y por eso este ADR no se borra:** la medición **M2** — que con OrgType
+> la pertenencia **no llega a LDAP en absoluto** — es la que explica por qué el mecanismo correcto
+> vuelve a ser RoleType. Y **M4**: la reconciliación de Oracle no borra lo que Oracle no conoce.
+> Los artefactos de `docs/pendientes/dti-dev-teams/` se retiraron al no aplicarse.
 **Ámbito:** árbol organizativo — cambio 🟡 (ADR + simulación + canario + baseline) · archetype de org nuevo
 **Rector:** [`ARQUITECTURA-ARBOL-ORGANIZATIVO.md`](../../ARQUITECTURA-ARBOL-ORGANIZATIVO.md) (D1, D3, D4, D5)
 **Contrasta con:** [`runbooks/gobierno-grupos-dti-canario-2026-09-03.md`](../../runbooks/gobierno-grupos-dti-canario-2026-09-03.md) — que decidió lo contrario para OTRA población

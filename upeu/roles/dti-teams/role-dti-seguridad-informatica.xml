@@ -1,0 +1,63 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="d71a0001-0000-4000-a000-d71a00000026">
+    <name>AR-DTI-Team-seguridad-informatica</name>
+    <description>Application Role de la cola "Seguridad Informatica" (group_id 26) de Zammad y del grupo LDAP cn=dti-seguridad-informatica.
+    NO ES UN EQUIPO DE AREA. Es una RESPONSABILIDAD DE TURNO: sus integrantes pertenecen a areas
+    distintas (Infraestructura TI, Redes y Conectividad, Direccion DTI) y su extension/upeu:serviceDeskTeam
+    nunca dira "Seguridad Informatica". Por eso este rol NO lleva subtype dti-service-desk-team y queda
+    deliberadamente FUERA del autoassign T-autoassign-ar-dti-team-from-serviceDeskTeam: se asigna a mano,
+    y el equipo real lo decide jefatura.
+    Respalda el compromiso de respuesta en 15 minutos ante un P1 de seguridad; conviene que quede escrito
+    aparte quien responde fuera de horario.
+    Verificado antes de crearlo (07-sep-2026, canario sobre Ruth Fuentes 200010139): dos roles de equipo
+    ACUMULAN sus colas en vez de pisarse, asi que sus titulares conservan la cola de su area.
+    Creado 2026-09-07.</description>
+    <subtype>dti-service-desk-team</subtype>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="c:ArchetypeType"/>
+    </assignment>
+    <displayName>DTI - Seguridad Informatica</displayName>
+    <identifier>Seguridad Informatica</identifier>
+    <inducement>
+        <construction>
+            <resourceRef oid="7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f" relation="org:default" type="c:ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+            <association>
+                <ref>ri:group</ref>
+                <outbound>
+                    <strength>strong</strength>
+                    <expression>
+                        <associationTargetSearch>
+                            <filter>
+                                <q:equal>
+                                    <q:path>attributes/ri:dn</q:path>
+                                    <q:value>cn=dti-seguridad-informatica,ou=groups,dc=upeu,dc=edu,dc=pe</q:value>
+                                </q:equal>
+                            </filter>
+                            <createOnDemand>false</createOnDemand>
+                        </associationTargetSearch>
+                    </expression>
+                </outbound>
+            </association>
+        </construction>
+    </inducement>
+    <inducement>
+        <description>Cola de Zammad "Seguridad Informatica" (group_id 26). El id va ALMACENADO, no calculado, igual que en los otros 22 roles de equipo. tolerant=false porque strong sobre multivalor ANADE y no sustituye.</description>
+        <construction>
+            <resourceRef oid="7a11d0d0-0000-4000-a000-7a11d0d00001" relation="org:default" type="c:ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+            <attribute>
+                <ref>ri:group_ids</ref>
+                <tolerant>false</tolerant>
+                <outbound>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>26</value>
+                    </expression>
+                </outbound>
+            </attribute>
+        </construction>
+    </inducement>
+</role>
