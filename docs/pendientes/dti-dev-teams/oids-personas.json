@@ -1,0 +1,707 @@
+{
+ "200920356": {
+  "oid": "88317d4f-181c-4c15-b161-cf8db1e73344",
+  "fullName": "Elvis Paul Arce Chavarria",
+  "title": "Desarrollador de Aplicaciones",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 391
+   }
+  }
+ },
+ "201011058": {
+  "oid": "e85fc3cd-debe-4571-bf8e-78249cc53726",
+  "fullName": "Jack Cosme Castillo Ramos",
+  "title": "Analista Programador de Sistemas",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 441
+   }
+  }
+ },
+ "201610466": {
+  "oid": "29b450d0-36b1-4623-b3ef-ec12fe61a931",
+  "fullName": "Jhon Dilmer Mendieta Tantalean",
+  "title": "Analista Programador de Sistemas",
+  "ou": {
+   "@value": "EP Ingeniería de Sistemas",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "school-name-to-organizationalUnit"
+     }
+    },
+    "@id": 380
+   }
+  }
+ },
+ "201811327": {
+  "oid": "df8ae304-17a7-4d86-8f05-611582881c18",
+  "fullName": "Ronald Anderson Lopez Mamani",
+  "title": "Analista Programador de Sistemas",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 502
+   }
+  }
+ },
+ "9610165": {
+  "oid": "763c5096-8010-427b-8c2b-b993268d270c",
+  "fullName": "Juan Alberto Sanchez Condor",
+  "title": "Analista Programador",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 173
+   }
+  }
+ },
+ "201110400": {
+  "oid": "cf757c78-b4ee-44f4-a652-619e6ee621e8",
+  "fullName": "Alvaro Melanio Vargas Fuster",
+  "title": "Analista Programador de Sistemas",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 460
+   }
+  }
+ },
+ "201110708": {
+  "oid": "f70fb617-927a-441f-882e-688551a55412",
+  "fullName": "Diana Elizabeth Garcia Tello",
+  "title": "Analista Programador de Sistemas",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 486
+   }
+  }
+ },
+ "73430216": {
+  "oid": "bacf9ed2-4832-4394-830d-64651c4ad88a",
+  "fullName": "Ever Ronaldo Condori Alanoca",
+  "title": "Analista de Sistemas - Programador",
+  "ou": null
+ },
+ "201810190": {
+  "oid": "1e9fc73f-b336-4cbc-bac4-217ba86c29d2",
+  "fullName": "Joseph Santiago Vera Sucapuca",
+  "title": "Analista de Sistemas - Programador",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 406
+   }
+  }
+ },
+ "201310305": {
+  "oid": "252cea99-2d00-44ad-bae0-3ba11f9f9988",
+  "fullName": "Kenner Augusto Jimenez Begazo",
+  "title": "Analista Programador Junior",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 382
+   }
+  }
+ },
+ "201911726": {
+  "oid": "0e2855cd-23a0-421b-ba47-0f8386b60aef",
+  "fullName": "Mario Elvey Ccallo Luque",
+  "title": "Analista de Sistemas - Programador",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 400
+   }
+  }
+ },
+ "201011015": {
+  "oid": "3300cd38-c785-4616-bdad-435ffdb61cec",
+  "fullName": "Samuel David Roncal Vidal",
+  "title": "Jefe de Proyecto \"Sistema Académico\"",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 425
+   }
+  }
+ },
+ "200510795": {
+  "oid": "e6c960c4-73bf-4ac3-a8e1-1483c3b22691",
+  "fullName": "Willy Jhon Medina Bacalla",
+  "title": "Analista Programador de Sistemas",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 486
+   }
+  }
+ },
+ "201220190": {
+  "oid": "24fb49b3-898d-4432-a94c-3a745aa0a7d5",
+  "fullName": "Winston Curasi Quispe",
+  "title": "Analista Programador de Sistemas",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 363
+   }
+  }
+ },
+ "201611794": {
+  "oid": "3bd16c3c-a16f-4327-9663-fd002768301c",
+  "fullName": "Owen Miguelich Mejia Guerra",
+  "title": "Analista Programador de Sistemas",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 390
+   }
+  }
+ },
+ "201610949": {
+  "oid": "2cfea499-1d9d-4e80-b503-a371de1e5dbb",
+  "fullName": "Abdiel Vicente Mamani Simeon",
+  "title": "Analista Programador de Sistemas",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 363
+   }
+  }
+ },
+ "201911723": {
+  "oid": "a7125ce5-f069-486a-87a1-10165bc3c903",
+  "fullName": "Alex Josmell Quispe Quispe",
+  "title": "Analista Programador de Sistemas",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 315
+   }
+  }
+ },
+ "201410586": {
+  "oid": "0ba27d36-a220-456b-a720-4768f20febfb",
+  "fullName": "Daniel Yeber Leon Sillo",
+  "title": "Analista de Sistemas - Programador",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 413
+   }
+  }
+ },
+ "200920457": {
+  "oid": "fdb24f3c-8652-4055-aa57-0ced3a295059",
+  "fullName": "Elvis Ali Vilca",
+  "title": "Analista de Sistemas - Programador",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 526
+   }
+  }
+ },
+ "201911730": {
+  "oid": "8a58bbae-cd94-4ed0-95c1-2854df2d99cf",
+  "fullName": "Hector Javier Limahuaya Adco",
+  "title": "Analista de Sistemas - Programador",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 367
+   }
+  }
+ },
+ "201121386": {
+  "oid": "07762d94-6a4b-44be-a5b8-f8ad108e173b",
+  "fullName": "Juan Daniel Pachamora Pinedo",
+  "title": "Analista Programador de Sistemas",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 314
+   }
+  }
+ },
+ "201713036": {
+  "oid": "5fe2c996-8211-4a9a-b692-ee1282a4b408",
+  "fullName": "Juan Hus Quezada Moreno",
+  "title": "Analista Programador de Sistemas",
+  "ou": [
+   {
+    "@value": "Curso Taller para Elaboración de Trabajos de Investigación en Formato Artículo Ingeniería de Sistemas",
+    "@metadata": {
+     "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+     "provenance": {
+      "mappingSpecification": {
+       "definitionObjectRef": {
+        "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22",
+        "relation": "org:default",
+        "type": "c:ResourceType"
+       },
+       "objectType": {
+        "kind": "account",
+        "intent": "default"
+       },
+       "mappingName": "school-name-to-organizationalUnit"
+      }
+     },
+     "@id": 937
+    }
+   },
+   {
+    "@value": "Facultad de Ingeniería y Arquitectura",
+    "@metadata": {
+     "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+     "provenance": {
+      "mappingSpecification": {
+       "definitionObjectRef": {
+        "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+        "relation": "org:default",
+        "type": "c:ResourceType"
+       },
+       "objectType": {
+        "kind": "account",
+        "intent": "default"
+       },
+       "mappingName": "nom-facultad-to-organizationalUnit"
+      }
+     },
+     "@id": 942
+    }
+   }
+  ]
+ },
+ "201010267": {
+  "oid": "3670a939-f9ea-4d66-9747-6e18cce5663f",
+  "fullName": "Heber Quelion Flores Chura",
+  "title": "Analista Programador de Sistemas",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 403
+   }
+  }
+ },
+ "200310777": {
+  "oid": "43149c77-95a7-410b-8e55-67fee51b4eb5",
+  "fullName": "Uziel Carpio Villanueva",
+  "title": "Jefe de Proyectos EAD",
+  "ou": {
+   "@value": "Facultad de Ciencias Empresariales",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 404
+   }
+  }
+ },
+ "201410595": {
+  "oid": "3af50c0e-2d90-4500-98a7-86ad31020c3a",
+  "fullName": "Armando Cristian Huarcaya Quilla",
+  "title": "Jefe de Proyecto \"Research\"",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 400
+   }
+  }
+ },
+ "201110759": {
+  "oid": "522fab61-1971-4a21-a1ec-09a6b55a7a58",
+  "fullName": "Lucio Cesar Rodriguez Reyes",
+  "title": "Analista Programador de Sistemas",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 355
+   }
+  }
+ },
+ "200010122": {
+  "oid": "b35fbf49-a1c9-4d5b-b9af-98df461b86a4",
+  "fullName": "Sotil Yarasca Quispe",
+  "title": "Jefe de Proyecto \"Talent\"",
+  "ou": {
+   "@value": "Facultad de Ingeniería y Arquitectura",
+   "@metadata": {
+    "@ns": "http://prism.evolveum.com/xml/ns/public/types-3",
+    "provenance": {
+     "mappingSpecification": {
+      "definitionObjectRef": {
+       "oid": "6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23",
+       "relation": "org:default",
+       "type": "c:ResourceType"
+      },
+      "objectType": {
+       "kind": "account",
+       "intent": "default"
+      },
+      "mappingName": "nom-facultad-to-organizationalUnit"
+     }
+    },
+    "@id": 108
+   }
+  }
+ }
+}

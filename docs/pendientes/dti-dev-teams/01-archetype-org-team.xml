@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ADR-065 · NO DESPLEGADO — requiere aprobacion de Alberto.
+     Archetype de equipo interno de trabajo. La diferencia con archetype-org-department
+     es DELIBERADA y es el punto entero del ADR: este archetype NO lleva el inducement
+     con la construction generic/ou hacia LDAP-IdentityCache (7b4e1c2d), de modo que un
+     equipo NO publica una OU en ou=org. Razon: D4 del documento rector
+     (docs/ARQUITECTURA-ARBOL-ORGANIZATIVO.md) — "el arbol es para gobernanza; los
+     destinos reciben proyecciones, nunca el arbol" — y porque el identifier de la rama
+     DTI pertenece al espacio de Oracle LAMB (areaId), donde DTI-DEV-* no existe. -->
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" oid="d71ade02-0000-4000-a000-d71ade020001">
+    <name>archetype-org-team</name>
+    <description>Equipo interno de trabajo permanente dentro de un area (squad de producto, celula). Estructura de gobierno y de linea de reporte: soporta relation default y manager. NO proyecta OU a LDAP: la pertenencia llega a los consumidores como grupo, via el Application Role que el propio equipo induce.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <assignmentRelation>
+            <holderType>OrgType</holderType>
+        </assignmentRelation>
+    </assignment>
+    <archetypePolicy>
+        <display>
+            <label>Equipo de trabajo</label>
+            <pluralLabel>Equipos de trabajo</pluralLabel>
+            <icon>
+                <cssClass>fa fa-users</cssClass>
+                <color>#8e44ad</color>
+            </icon>
+        </display>
+    </archetypePolicy>
+</archetype>

@@ -1,0 +1,240 @@
+{
+ "personas": [
+  {
+   "nombre": "Elvis Paul Arce Chavarria",
+   "cargo": "Desarrollador de Aplicaciones",
+   "equipo": "Aplicaciones Móviles",
+   "jefe": "David Jefferson Barrantes Delgado",
+   "codigo": "200920356"
+  },
+  {
+   "nombre": "Jack Cosme Castillo Ramos",
+   "cargo": "Analista Programador de Sistemas",
+   "equipo": "Aplicaciones Móviles",
+   "jefe": "David Jefferson Barrantes Delgado",
+   "codigo": "201011058"
+  },
+  {
+   "nombre": "Jhon Dilmer Mendieta Tantalean",
+   "cargo": "Analista Programador de Sistemas",
+   "equipo": "Conservatory",
+   "jefe": "Owen Miguelich Mejia Guerra",
+   "codigo": "201610466"
+  },
+  {
+   "nombre": "Ronald Anderson Lopez Mamani",
+   "cargo": "Analista Programador de Sistemas",
+   "equipo": "Conservatory",
+   "jefe": "Owen Miguelich Mejia Guerra",
+   "codigo": "201811327"
+  },
+  {
+   "nombre": "Juan Alberto Sanchez Condor",
+   "cargo": "Analista Programador",
+   "equipo": "DevOps",
+   "jefe": "David Jefferson Barrantes Delgado",
+   "codigo": "9610165"
+  },
+  {
+   "nombre": "Alvaro Melanio Vargas Fuster",
+   "cargo": "Analista Programador de Sistemas",
+   "equipo": "Lamb Academico",
+   "jefe": "Samuel David Roncal Vidal",
+   "codigo": "201110400"
+  },
+  {
+   "nombre": "Diana Elizabeth Garcia Tello",
+   "cargo": "Analista Programador de Sistemas",
+   "equipo": "Lamb Academico",
+   "jefe": "Samuel David Roncal Vidal",
+   "codigo": "201110708"
+  },
+  {
+   "nombre": "Ever Ronaldo Condori Alanoca",
+   "cargo": "Analista de Sistemas - Programador",
+   "equipo": "Lamb Academico",
+   "jefe": "Samuel David Roncal Vidal",
+   "codigo": "73430216"
+  },
+  {
+   "nombre": "Joseph Santiago Vera Sucapuca",
+   "cargo": "Analista de Sistemas - Programador",
+   "equipo": "Lamb Academico",
+   "jefe": "Samuel David Roncal Vidal",
+   "codigo": "201810190"
+  },
+  {
+   "nombre": "Kenner Augusto Jimenez Begazo",
+   "cargo": "Analista Programador Junior",
+   "equipo": "Lamb Academico",
+   "jefe": "Samuel David Roncal Vidal",
+   "codigo": "201310305"
+  },
+  {
+   "nombre": "Mario Elvey Ccallo Luque",
+   "cargo": "Analista de Sistemas - Programador",
+   "equipo": "Lamb Academico",
+   "jefe": "Samuel David Roncal Vidal",
+   "codigo": "201911726"
+  },
+  {
+   "nombre": "Samuel David Roncal Vidal",
+   "cargo": "Jefe de Proyecto \"Sistema Académico\"",
+   "equipo": "Lamb Academico",
+   "jefe": "David Jefferson Barrantes Delgado",
+   "codigo": "201011015"
+  },
+  {
+   "nombre": "Willy Jhon Medina Bacalla",
+   "cargo": "Analista Programador de Sistemas",
+   "equipo": "Lamb Academico",
+   "jefe": "Samuel David Roncal Vidal",
+   "codigo": "200510795"
+  },
+  {
+   "nombre": "Winston Curasi Quispe",
+   "cargo": "Analista Programador de Sistemas",
+   "equipo": "Lamb Academico",
+   "jefe": "Samuel David Roncal Vidal",
+   "codigo": "201220190"
+  },
+  {
+   "nombre": "Owen Miguelich Mejia Guerra",
+   "cargo": "Analista Programador de Sistemas",
+   "equipo": "Lamb Events",
+   "jefe": "David Jefferson Barrantes Delgado",
+   "codigo": "201611794"
+  },
+  {
+   "nombre": "Abdiel Vicente Mamani Simeon",
+   "cargo": "Analista Programador de Sistemas",
+   "equipo": "Lamb Financial",
+   "jefe": "Juan Hus Quezada Moreno",
+   "codigo": "201610949"
+  },
+  {
+   "nombre": "Alex Josmell Quispe Quispe",
+   "cargo": "Analista Programador de Sistemas",
+   "equipo": "Lamb Financial",
+   "jefe": "Juan Hus Quezada Moreno",
+   "codigo": "201911723"
+  },
+  {
+   "nombre": "Daniel Yeber Leon Sillo",
+   "cargo": "Analista de Sistemas - Programador",
+   "equipo": "Lamb Financial",
+   "jefe": "Juan Hus Quezada Moreno",
+   "codigo": "201410586"
+  },
+  {
+   "nombre": "Elvis Ali Vilca",
+   "cargo": "Analista de Sistemas - Programador",
+   "equipo": "Lamb Financial",
+   "jefe": "Juan Hus Quezada Moreno",
+   "codigo": "200920457"
+  },
+  {
+   "nombre": "Hector Javier Limahuaya Adco",
+   "cargo": "Analista de Sistemas - Programador",
+   "equipo": "Lamb Financial",
+   "jefe": "Juan Hus Quezada Moreno",
+   "codigo": "201911730"
+  },
+  {
+   "nombre": "Juan Daniel Pachamora Pinedo",
+   "cargo": "Analista Programador de Sistemas",
+   "equipo": "Lamb Financial",
+   "jefe": "Juan Hus Quezada Moreno",
+   "codigo": "201121386"
+  },
+  {
+   "nombre": "Juan Hus Quezada Moreno",
+   "cargo": "Coordinador de Desarrollo de Sistemas de Información",
+   "equipo": "Lamb Financial",
+   "jefe": "David Jefferson Barrantes Delgado",
+   "codigo": "201713036"
+  },
+  {
+   "nombre": "Heber Quelion Flores Chura",
+   "cargo": "Analista Programador de Sistemas",
+   "equipo": "Lamb Learning",
+   "jefe": "Uziel Carpio Villanueva",
+   "codigo": "201010267"
+  },
+  {
+   "nombre": "Uziel Carpio Villanueva",
+   "cargo": "Jefe de Proyectos EAD",
+   "equipo": "Lamb Learning",
+   "jefe": "David Jefferson Barrantes Delgado",
+   "codigo": "200310777"
+  },
+  {
+   "nombre": "Armando Cristian Huarcaya Quilla",
+   "cargo": "Jefe de Proyecto \"Research\"",
+   "equipo": "Lamb Research",
+   "jefe": "David Jefferson Barrantes Delgado",
+   "codigo": "201410595"
+  },
+  {
+   "nombre": "Lucio Cesar Rodriguez Reyes",
+   "cargo": "Analista Programador de Sistemas",
+   "equipo": "Lamb Talent",
+   "jefe": "Sotil Yarasca Quispe",
+   "codigo": "201110759"
+  },
+  {
+   "nombre": "Sotil Yarasca Quispe",
+   "cargo": "Jefe de Proyecto \"Talent\"",
+   "equipo": "Lamb Talent",
+   "jefe": "David Jefferson Barrantes Delgado",
+   "codigo": "200010122"
+  }
+ ],
+ "equipos": {
+  "Lamb Academico": {
+   "codigo": "DTI-DEV-ACADEMICO",
+   "jefe": "Samuel David Roncal Vidal",
+   "n": 9
+  },
+  "Lamb Financial": {
+   "codigo": "DTI-DEV-FINANCIAL",
+   "jefe": "Juan Hus Quezada Moreno",
+   "n": 7
+  },
+  "Aplicaciones Móviles": {
+   "codigo": "DTI-DEV-MOVILES",
+   "jefe": null,
+   "n": 2
+  },
+  "Conservatory": {
+   "codigo": "DTI-DEV-CONSERVATORY",
+   "jefe": "Owen Miguelich Mejia Guerra",
+   "n": 2
+  },
+  "Lamb Learning": {
+   "codigo": "DTI-DEV-LEARNING",
+   "jefe": "Uziel Carpio Villanueva",
+   "n": 2
+  },
+  "Lamb Talent": {
+   "codigo": "DTI-DEV-TALENT",
+   "jefe": "Sotil Yarasca Quispe",
+   "n": 2
+  },
+  "DevOps": {
+   "codigo": "DTI-DEV-DEVOPS",
+   "jefe": null,
+   "n": 1
+  },
+  "Lamb Events": {
+   "codigo": "DTI-DEV-EVENTS",
+   "jefe": null,
+   "n": 1
+  },
+  "Lamb Research": {
+   "codigo": "DTI-DEV-RESEARCH",
+   "jefe": null,
+   "n": 1
+  }
+ }
+}

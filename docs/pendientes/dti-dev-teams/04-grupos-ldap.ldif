@@ -1,0 +1,73 @@
+# ADR-065 · NO APLICADO — requiere aprobacion de Alberto.
+# Los 9 grupos de equipo de desarrollo del DTI.
+# objectClass groupOfUniqueNames (NO groupOfNames): el overlay memberof de este OpenLDAP
+# esta configurado con olcMemberOfGroupOC=groupOfUniqueNames y olcMemberOfMemberAD=uniqueMember.
+# Un groupOfNames se acepta sin error y NO puebla memberOf — fallo mudo.
+# uniqueMember es MUST en groupOfUniqueNames: cada grupo nace con UN miembro real de su
+# equipo (no un placeholder: la asociacion es tolerant=false y borraria un DN inexistente,
+# dejando el grupo vacio = violacion de schema). MidPoint completa el resto al recomputar.
+# El ACL {5} sobre ou=groups ya concede write a cn=midpoint (anadido el 2026-09-03).
+
+dn: cn=dti-dev-academico,ou=groups,dc=upeu,dc=edu,dc=pe
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: dti-dev-academico
+description: DTI - equipo de desarrollo Lamb Academico (DTI-DEV-ACADEMICO) - gobernado por MidPoint ADR-065
+uniqueMember: uid=201110400,ou=people,dc=upeu,dc=edu,dc=pe
+
+dn: cn=dti-dev-conservatory,ou=groups,dc=upeu,dc=edu,dc=pe
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: dti-dev-conservatory
+description: DTI - equipo de desarrollo Conservatory (DTI-DEV-CONSERVATORY) - gobernado por MidPoint ADR-065
+uniqueMember: uid=201610466,ou=people,dc=upeu,dc=edu,dc=pe
+
+dn: cn=dti-dev-devops,ou=groups,dc=upeu,dc=edu,dc=pe
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: dti-dev-devops
+description: DTI - equipo de desarrollo DevOps (DTI-DEV-DEVOPS) - gobernado por MidPoint ADR-065
+uniqueMember: uid=9610165,ou=people,dc=upeu,dc=edu,dc=pe
+
+dn: cn=dti-dev-events,ou=groups,dc=upeu,dc=edu,dc=pe
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: dti-dev-events
+description: DTI - equipo de desarrollo Lamb Events (DTI-DEV-EVENTS) - gobernado por MidPoint ADR-065
+uniqueMember: uid=201611794,ou=people,dc=upeu,dc=edu,dc=pe
+
+dn: cn=dti-dev-financial,ou=groups,dc=upeu,dc=edu,dc=pe
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: dti-dev-financial
+description: DTI - equipo de desarrollo Lamb Financial (DTI-DEV-FINANCIAL) - gobernado por MidPoint ADR-065
+uniqueMember: uid=201610949,ou=people,dc=upeu,dc=edu,dc=pe
+
+dn: cn=dti-dev-learning,ou=groups,dc=upeu,dc=edu,dc=pe
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: dti-dev-learning
+description: DTI - equipo de desarrollo Lamb Learning (DTI-DEV-LEARNING) - gobernado por MidPoint ADR-065
+uniqueMember: uid=201010267,ou=people,dc=upeu,dc=edu,dc=pe
+
+dn: cn=dti-dev-moviles,ou=groups,dc=upeu,dc=edu,dc=pe
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: dti-dev-moviles
+description: DTI - equipo de desarrollo Aplicaciones Móviles (DTI-DEV-MOVILES) - gobernado por MidPoint ADR-065
+uniqueMember: uid=200920356,ou=people,dc=upeu,dc=edu,dc=pe
+
+dn: cn=dti-dev-research,ou=groups,dc=upeu,dc=edu,dc=pe
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: dti-dev-research
+description: DTI - equipo de desarrollo Lamb Research (DTI-DEV-RESEARCH) - gobernado por MidPoint ADR-065
+uniqueMember: uid=201410595,ou=people,dc=upeu,dc=edu,dc=pe
+
+dn: cn=dti-dev-talent,ou=groups,dc=upeu,dc=edu,dc=pe
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: dti-dev-talent
+description: DTI - equipo de desarrollo Lamb Talent (DTI-DEV-TALENT) - gobernado por MidPoint ADR-065
+uniqueMember: uid=201110759,ou=people,dc=upeu,dc=edu,dc=pe
+
