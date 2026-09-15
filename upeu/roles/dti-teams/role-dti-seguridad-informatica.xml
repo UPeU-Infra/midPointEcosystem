@@ -11,11 +11,12 @@
     Verificado antes de crearlo (07-sep-2026, canario sobre Ruth Fuentes 200010139): dos roles de equipo
     ACUMULAN sus colas en vez de pisarse, asi que sus titulares conservan la cola de su area.
     Creado 2026-09-07.</description>
-    <subtype>dti-service-desk-team</subtype>
     <lifecycleState>active</lifecycleState>
     <assignment>
         <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" relation="org:default" type="c:ArchetypeType"/>
     </assignment>
+    <iteration>0</iteration>
+    <iterationToken/>
     <displayName>DTI - Seguridad Informatica</displayName>
     <identifier>Seguridad Informatica</identifier>
     <inducement>

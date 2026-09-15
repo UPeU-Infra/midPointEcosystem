@@ -25,7 +25,7 @@ las colas de Zammad se reorganizan solas porque beben del mismo dato.
 | 2 | `AR-DTI-Team-devops` (`…00000028`, identifier `DevOps`) | POST 201 |
 | 3 | `cn=dti-conservatory` y `cn=dti-devops` (`groupOfUniqueNames`, `ou=groups`) | `ldapadd` |
 | 4 | 7 personas cambian de `serviceDeskTeam` | PATCH `replace` |
-| 5 | `AR-DTI-Team-seguridad-informatica`: `subtype` + `displayName` + archetype | PATCH ×3 |
+| 5 | `AR-DTI-Team-seguridad-informatica`: `displayName` + archetype (**el `subtype` NO**, ver abajo) | PATCH ×2 |
 
 Los dos roles nuevos **no llevan `inducement` de cola Zammad**: `Conservatory` y `DevOps` no
 existen entre las 26 colas de `servicedesk.upeu.edu.pe`. Se añadirá cuando se creen.
@@ -83,19 +83,74 @@ Cruzada, no por totales: para cada una de las 27 se comparó su grupo real en LD
 | 4 de fuera del modelo intactas | 4/4 |
 | Ningún grupo `dti-*` vacío | 25 grupos, 69 membresías, 0 vacíos |
 
-## Hallazgos que quedan anotados
+## 🔴 `AR-DTI-Team-seguridad-informatica`: la ausencia de `subtype` es el mecanismo, no un bug
 
-1. **`dti-seguridad-informatica` tiene 4 miembros que ningún rol induce** y sobreviven a los
-   recomputes, pese a que la asociación es `tolerant=false` y nadie tiene ese `serviceDeskTeam`.
-   El rol estaba malformado (sin `subtype`, sin `displayName`, sin archetype) y **no estaba
-   versionado**: se creó a mano después del 03-sep. Arreglado y versionado aquí; **por qué no se
-   vacían queda por investigar** — no se tocó a esas 4 personas.
-2. **Ya no es cierto que nadie esté en dos grupos `dti-*`** (lo era el 03-sep): Ruth Fuentes está
+**Rectificación.** Durante este lote se le puso `subtype=dti-service-desk-team` leyéndolo como un
+descuido. **Era deliberado y estaba escrito dentro del propio objeto.** Revertido el mismo día con
+un PATCH que retira solo el `subtype`; `displayName` y el archetype se dejaron puestos, porque la
+justificación no los ampara y añadirlos es inocuo.
+
+Lo dice su `description` (y, en los mismos términos, la del grupo LDAP):
+
+> «**NO ES UN EQUIPO DE AREA. Es una RESPONSABILIDAD DE TURNO**: sus integrantes pertenecen a
+> areas distintas (Infraestructura TI, Redes y Conectividad, Direccion DTI) y su
+> `extension/upeu:serviceDeskTeam` nunca dira "Seguridad Informatica". **Por eso este rol NO lleva
+> subtype dti-service-desk-team y queda deliberadamente FUERA del autoassign**
+> `T-autoassign-ar-dti-team-from-serviceDeskTeam`: se asigna a mano, y el equipo real lo decide
+> jefatura. […] Respalda el compromiso de respuesta en 15 minutos ante un P1 de seguridad.
+> Verificado antes de crearlo (07-sep-2026, canario sobre Ruth Fuentes): dos roles de equipo
+> ACUMULAN sus colas en vez de pisarse, asi que sus titulares conservan la cola de su area.»
+
+**Por qué ponerle el `subtype` era peligroso:** el filtro del mapping es
+`subtype=dti-service-desk-team AND identifier=<serviceDeskTeam>`, con `strength: strong` sobre
+`assignment`. Con el `subtype` puesto, el rol vuelve a ser alcanzable por el autoassign — justo lo
+que ese diseño cerró a propósito para una responsabilidad que no se deduce del área.
+
+**Y explica el «hallazgo» que este ADR registró mal en su primera versión.** Que sus 4 titulares
+sobrevivan a los recomputes pese a `tolerant=false` **no es una anomalía: es el diseño
+funcionando.** Se asignan a mano; la asociación no los retira porque el rol asignado sí los
+induce. **No hay nada que investigar.**
+
+**Por eso no entra en `mapa-equipo-slug-VERIFICADO.json`**: ese mapa es de equipos de área.
+
+### Verificación de la reversión
+
+| Comprobación | Resultado |
+|---|---|
+| `subtype` retirado, `displayName` y archetype intactos | ✅ relectura de PROD |
+| Inducement de la cola Zammad (`group_ids=26`) intacto | ✅ |
+| Los 4 titulares siguen en `cn=dti-seguridad-informatica` | ✅ `200110568`, `200720020`, `201121781`, `9610165` |
+| El mecanismo real: **assignment directo** (a mano), no autoassign | ✅ los 4 con `assignment` directo al rol **y** `roleMembershipRef` resuelto |
+
+⚠️ **El recompute de los 4 no llegó a completarse y eso queda abierto.** El endpoint
+`POST /users/{oid}/recompute` da 404 y `POST /rpc/executeScript` agotó el tiempo sin dejar rastro.
+La tarea acotada por `inOid` sí arrancó (`expectedTotal=4`, filtro verificado) pero se quedó en
+`progress=0` más de 20 minutos, con toda probabilidad bloqueada en los recursos rotos de arriba;
+se **suspendió y eliminó** para no dejarla corriendo en PROD. La pertenencia de los 4 se comprobó
+igualmente por la vía que decide: el `assignment` directo existe y `roleMembershipRef` resuelve,
+que es lo que induce el grupo — el `subtype` solo gobernaba el autoassign, del que este rol está
+fuera por diseño.
+
+### Lección de método
+
+El dato estaba en el campo `description` del objeto que se iba a modificar. Se leyó el *estado*
+(«le faltan campos») sin leer su *justificación*. **En este repo la `description` se usa para dejar
+constancia de las excepciones a propósito: antes de "arreglar" un objeto que se sale del patrón,
+hay que leerla.**
+
+## Otros hallazgos
+
+1. **Ya no es cierto que nadie esté en dos grupos `dti-*`** (lo era el 03-sep): Ruth Fuentes está
    en `lamb-admision` y `mesa-de-servicio`; Juan Alberto en `devops` y `seguridad-informatica`.
-3. Los PATCH que cambian de verdad devuelven **HTTP 240**, no 204. El detalle son recursos ya
+   En ambos casos la segunda pertenencia es intencional, no deriva.
+2. Los PATCH que cambian de verdad devuelven **HTTP 240**, no 204. El detalle son recursos ya
    rotos de antes (RIMS-SciBack sin `clientSecret`, foto de Entra, Zammad 422 por correo
    duplicado). Un PATCH sin cambio real devuelve 204 limpio — se comprobó. **No lo causa este
    cambio** y no impidió ninguna escritura: todas verificadas en LDAP.
+3. El endpoint REST `POST /users/{oid}/recompute` devuelve **404** en esta versión, y
+   `POST /rpc/executeScript` agotó el tiempo sin dejar rastro en PROD. Lo que sí funciona es una
+   **tarea de recompute acotada por `inOid`** (`resume` y después `run`). Tarda minutos para 4
+   personas por los recursos rotos de arriba: comprobar `expectedTotal` antes de alarmarse.
 
 ## Backup
 
