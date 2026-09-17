@@ -1,4 +1,13 @@
 {
+ "_acta": "Lo que el director David Barrantes validó el 15-sep-2026. Es un acta: el contenido NO se corrige cuando la realidad cambia, se anota abajo. No usar como fuente para cargar nada.",
+ "_cambios_posteriores": [
+  {
+   "fecha": "2026-09-16",
+   "que": "El equipo DevOps se deshizo: Juan Alberto Sánchez (9610165) volvió a «Infraestructura TI».",
+   "efecto": "Quedan 8 equipos y 26 personas. Borrados el rol AR-DTI-Team-devops y el grupo cn=dti-devops; verificado el 17-sep-2026 (0 shadows con dti-devops, 0 referencias).",
+   "donde": "docs/2026-09-16-respuesta-pulso-gobierno-grupos-dti.md"
+  }
+ ],
  "personas": [
   {
    "nombre": "Elvis Paul Arce Chavarria",

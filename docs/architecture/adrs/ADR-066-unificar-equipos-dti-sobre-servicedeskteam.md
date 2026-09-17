@@ -1,8 +1,23 @@
 # ADR-066 — Los equipos del DTI se unifican sobre `serviceDeskTeam`; manda el modelo del director
 
-**Fecha:** 15-sep-2026 · **Estado:** **aplicado y verificado** (15-sep-2026, 41/41)
+**Fecha:** 15-sep-2026 · **Estado:** **aplicado y verificado** (15-sep-2026, 41/41) · **vigente con una enmienda**
 **Supersede:** [`ADR-065`](ADR-065-equipos-desarrollo-dti.md) — propuesto y **descartado**
 **Continúa:** [`runbooks/gobierno-grupos-dti-canario-2026-09-03.md`](../../runbooks/gobierno-grupos-dti-canario-2026-09-03.md)
+
+> ### Enmienda del 16-sep-2026 — el equipo DevOps se deshizo
+>
+> Juan Alberto Sánchez (`9610165`) volvió a «Infraestructura TI», de donde este ADR lo había
+> movido. Con él desaparece el equipo entero, que era de una sola persona: **quedan 8 equipos y
+> 26 personas**, no 9 y 27.
+>
+> Se borraron el rol `AR-DTI-Team-devops` (`…00000028`) y el grupo `cn=dti-devops` — este último
+> con `ldapdelete`, porque el recurso LDAP lleva `delete: {enabled:false}` por política — y el
+> shadow del grupo con `?options=raw`. **Verificado el 17-sep-2026:** 0 shadows con `dti-devops`,
+> 0 filas en `m_reference` apuntando al rol, y los otros 8 equipos intactos contra el modelo del
+> director. El artefacto `role-dti-devops.xml` se retiró del repo el 17-sep.
+>
+> Detalle y causa en [`2026-09-16-respuesta-pulso-gobierno-grupos-dti.md`](../../2026-09-16-respuesta-pulso-gobierno-grupos-dti.md).
+> Lo demás de este ADR sigue vigente tal cual.
 
 ## Qué se decidió y por qué
 
