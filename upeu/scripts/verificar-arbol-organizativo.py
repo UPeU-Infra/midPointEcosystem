@@ -5,6 +5,9 @@ Verificador del árbol organizativo — el blindaje ejecutable.
 Compara PROD contra la línea base versionada (docs/baselines/arbol-organizativo-baseline.json)
 y contra el repo. Falla (exit 1) ante cualquier desviación estructural no autorizada.
 
+Cubre el árbol de organizaciones (I1-I6) y la correspondencia repo↔PROD de los roles
+versionados (I7-I8).
+
 Uso:
     source ~/.secrets/midpoint-upeu.env
     python3 upeu/scripts/verificar-arbol-organizativo.py
@@ -22,6 +25,14 @@ Invariantes que protege (con su porqué, ver docs/ARQUITECTURA-ARBOL-ORGANIZATIV
   I5  Toda org academic-program de PROD está versionada en el repo — anti-drift PROD→repo
       (así aparecieron EP-DER/EP-III/EP-ISW el 2026-08-06).
   I6  Los restos del CRIS no reaparecen: LINEA-* == 0 (limpiadas 2026-08-06) y CII-* ≤ 7.
+  I7  Todo rol versionado en upeu/roles/ EXISTE en PROD y con el MISMO OID — anti-drift
+      repo→PROD, el análogo de I4 para roles. Un XML versionado describe algo aplicable:
+      quien lo encuentre lo va a aplicar. Añadida el 2026-09-17 tras el DevOps huérfano —
+      el equipo se deshizo el 16-sep, el rol y el grupo se borraron de PROD, y
+      role-dti-devops.xml siguió en el repo sin que nada lo cantara: este script daba 6/6.
+  I8  Todo AR-DTI-Team-* de PROD está versionado — anti-drift PROD→repo, el análogo de I5.
+      Acotado a esa familia a propósito: es la que se toca a mano con más frecuencia, y
+      exigirlo sobre los 72 roles de PROD sería ruido, no blindaje.
 
 Cambiar la estructura NO es editar la baseline a mano: exige ADR + simulación preview +
 regenerar la baseline en el mismo commit que el cambio. Ver la sección "Blindaje" del doc.
@@ -37,6 +48,23 @@ BASELINE = os.path.join(REPO, 'docs/baselines/arbol-organizativo-baseline.json')
 # archive/orgs-arbol-manual-2026-08-06/*-RETIRADAS.xml. El repo ya no describe
 # ninguna org que no exista en PROD. Volver a llenar esta lista exige justificación escrita.
 KNOWN_PENDING_FILES = []
+
+# Roles versionados que hoy NO están en PROD — cada entrada con su motivo y su salida.
+# No es una vía para silenciar I7: lo declarado aquí sigue saliendo en amarillo cada pasada.
+#
+# Los 5 del RIMS los destapó I7 el 2026-09-17, su primer día. Se versionaron el 2026-08-03
+# (commit 8326f30, "los 6 roles que solo vivian en PROD") y después desaparecieron de PROD sin
+# que nada lo registrara: hoy dan 404 por OID y no hay ningún rol con "RIMS" en el nombre.
+# No se sabe si se perdieron en la recuperación post-OOM o si se retiraron a propósito.
+# SALIDA: o se redespliegan desde estos XML, o se retiran del repo como se retiró
+# role-dti-devops.xml (b1f9de0). Mientras no se decida, quedan aquí a la vista.
+KNOWN_PENDING_ROLES = [
+    'upeu/roles/application/AR-RIMS-Admin.xml',
+    'upeu/roles/application/AR-RIMS-Cataloger.xml',
+    'upeu/roles/application/AR-RIMS-Cataloger-Campus-LIMA.xml',
+    'upeu/roles/application/AR-RIMS-Cataloger-Campus-JULIACA.xml',
+    'upeu/roles/application/AR-RIMS-Cataloger-Campus-TARAPOTO.xml',
+]
 
 def loc(t): return t.split('}')[-1]
 
@@ -56,6 +84,40 @@ def fetch_prod_orgs():
         orgs[oid] = {'name': g('name'), 'identifier': g('identifier'),
                      'subtype': (g('subtype') or '').strip() or None, 'parents': pars}
     return orgs
+
+def fetch_prod_roles():
+    """Los roles de PROD, por OID. Mismo transporte que las orgs."""
+    url = os.environ['MIDPOINT_URL'].rstrip('/') + '/midpoint/ws/rest/roles?limit=2000'
+    tok = base64.b64encode(f"{os.environ['MIDPOINT_ADMIN_USER']}:{os.environ['MIDPOINT_ADMIN_PASS']}".encode()).decode()
+    req = urllib.request.Request(url, headers={'Authorization': 'Basic ' + tok})
+    with urllib.request.urlopen(req, timeout=240) as r:
+        root = ET.fromstring(r.read())
+    roles = {}
+    for o in root:
+        oid = o.get('oid')
+        if not oid:
+            continue
+        nm = o.find('{*}name')
+        roles[oid] = {'name': nm.text if nm is not None else None}
+    return roles
+
+
+def repo_role_oids():
+    """Los roles versionados, por OID. `archive/` queda fuera, como en las orgs."""
+    out = {}
+    for f in glob.glob(os.path.join(REPO, 'upeu/roles/**/*.xml'), recursive=True):
+        rel = os.path.relpath(f, REPO)
+        try:
+            root = ET.parse(f).getroot()
+        except ET.ParseError:
+            continue
+        nodes = [root] if loc(root.tag) == 'role' else [c for c in root if loc(c.tag) == 'role']
+        for n in nodes:
+            if n.get('oid'):
+                nm = n.find('{*}name')
+                out[n.get('oid')] = (rel, nm.text if nm is not None else '?')
+    return out
+
 
 def repo_org_oids():
     out = {}
@@ -121,7 +183,30 @@ def main():
     if n_cii:
         warns.append(f"I6 quedan {n_cii} CII-* del CRIS (310 personas — decisión de reubicación pendiente)")
 
+    # I7 — todo rol versionado existe en PROD, con su OID (anti-drift repo→PROD)
+    prod_roles = fetch_prod_roles()
+    repo_roles = repo_role_oids()
+    roles_pending = 0
+    for oid, (rel, nm) in sorted(repo_roles.items()):
+        if oid not in prod_roles:
+            if rel in KNOWN_PENDING_ROLES:
+                roles_pending += 1
+                continue
+            fails.append(f"I7 rol versionado SIN desplegar (drift): {nm} en {rel}")
+        elif prod_roles[oid]['name'] != nm:
+            fails.append(f"I7 OID {oid[:8]} nombra '{nm}' en {rel} y '{prod_roles[oid]['name']}' en PROD")
+
+    if roles_pending:
+        warns.append(f"I7 {roles_pending} roles del RIMS versionados y ausentes de PROD "
+                     f"desde antes del 2026-09-17 — redesplegar o retirar, sin decidir")
+
+    # I8 — todo AR-DTI-Team-* de PROD está versionado (anti-drift PROD→repo)
+    for oid, v in prod_roles.items():
+        if (v['name'] or '').startswith('AR-DTI-Team-') and oid not in repo_roles:
+            fails.append(f"I8 rol de equipo del DTI en PROD sin versionar: {v['name']} ({oid[:8]})")
+
     print(f"Árbol organizativo — PROD: {len(prod)} orgs · baseline: {len(base['nodos'])} nodos estructurales")
+    print(f"Roles — PROD: {len(prod_roles)} · versionados: {len(repo_roles)}")
     for w in warns:
         print(f"  🟡 {w}")
     if fails:
@@ -129,7 +214,7 @@ def main():
         for f in fails:
             print(f"  🔴 {f}")
         sys.exit(1)
-    print("\n✅ Estructura íntegra: 6/6 invariantes se cumplen.")
+    print("\n✅ Estructura íntegra: 8/8 invariantes se cumplen.")
 
 if __name__ == '__main__':
     main()

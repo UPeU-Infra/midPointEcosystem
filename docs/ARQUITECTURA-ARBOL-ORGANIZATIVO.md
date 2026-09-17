@@ -145,11 +145,20 @@ source ~/.secrets/midpoint-upeu.env
 python3 upeu/scripts/verificar-arbol-organizativo.py
 ```
 
-Corre **antes y después de cualquier cambio estructural** y en cada auditoría. Protege 6
-invariantes (raíces exactas, identifiers intactos, espina intacta, anti-drift repo→PROD y
-PROD→repo, restos del CRIS sin crecer). Estado 2026-08-06 tras las limpiezas: **6/6 ✅**, `KNOWN_PENDING` **vacía**, `LINEA-*` en **0**
-(I6 endurecida: ahora FALLA si reaparece alguna). Único aviso vivo: las 7 `CII-*` con 310
-personas, pendientes de decisión de reubicación.
+Corre **antes y después de cualquier cambio estructural** y en cada auditoría. Protege 8
+invariantes: las 6 del árbol (raíces exactas, identifiers intactos, espina intacta, anti-drift
+repo→PROD y PROD→repo, restos del CRIS sin crecer) y desde el **2026-09-17** las 2 de los roles
+— **I7** todo rol versionado existe en PROD con el mismo OID, **I8** todo `AR-DTI-Team-*` de PROD
+está versionado.
+
+**Por qué se añadieron I7/I8.** El 16-sep se deshizo el equipo DevOps y se borraron de PROD el rol
+y el grupo; `role-dti-devops.xml` se quedó en el repo y este script seguía dando **6/6**, porque
+solo miraba orgs. Un XML versionado describe algo aplicable: quien lo encuentre lo va a aplicar.
+
+Estado 2026-09-17: **8/8 ✅**. Dos avisos vivos: las 7 `CII-*` con 310 personas, pendientes de
+decisión de reubicación; y **5 roles del RIMS versionados que no existen en PROD** — los destapó
+I7 su primer día, se versionaron el 2026-08-03 y desaparecieron después sin registro. Están en
+`KNOWN_PENDING_ROLES`, a la vista en cada pasada, hasta que se decida redesplegarlos o retirarlos.
 
 ### Prohibiciones permanentes (lecciones pagadas)
 
