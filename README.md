@@ -2,6 +2,20 @@
 
 Repositorio canónico de la configuración MidPoint 4.10.x de la Universidad Peruana Unión (UPeU). Operado por GitOps; clonado en PROD en `/home/juansanchez/midPointEcosystem/` (`192.168.15.166`).
 
+## 💾 Backups de PROD — están en AWS S3
+
+MidPoint corre on-prem (`midpoint.upeu`, 192.168.15.166), pero **sus backups están en
+`s3://upeu-iga-backups-360416501080/midpoint/`**, en la cuenta AWS `upeu-repo`
+(360416501080, us-east-2).
+
+- Cada noche a las 22:30 se guarda la BD sin auditoría y el home con el `keystore.jceks`.
+- La auditoría se exporta cada mes, antes de borrarla de la BD.
+- Si falla, llega una alerta a Telegram. **Todos los lunes llega un resumen: si no llega, el
+  backup murió.**
+
+→ Runbook, con el procedimiento de restore probado:
+[`docs/runbooks/backup-midpoint-s3/README.md`](docs/runbooks/backup-midpoint-s3/README.md)
+
 ## Estructura (post-consolidación 2026-05-19)
 
 ```
