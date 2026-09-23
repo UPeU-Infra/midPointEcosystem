@@ -14,6 +14,13 @@
 #                                            no expira)
 #   Runbook (restore incluido): docs/runbooks/backup-midpoint-s3/README.md
 #
+#   Cada dump va acompanado de <archivo>.sha256, que se escribe SOLO cuando el
+#   dump paso todas las verificaciones. UN DUMP SIN SU .sha256 AL LADO NO ESTA
+#   VERIFICADO (p. ej. pg_dump murio a medias): no restaurar desde el.
+#
+#   La BD va a S3 en STREAMING (pg_dump | S3), sin pasar por el disco local: el
+#   dump pesa ~4 GB y el servidor no tiene espacio para prepararlo en local.
+#
 # MODOS
 #   ./backup-midpoint-s3.sh                        backup diario (BD sin auditoria + home)
 #   ./backup-midpoint-s3.sh --export-audit YYYYMM  exporta las 3 particiones de ese mes
@@ -44,7 +51,7 @@ MP_CONTAINER="${MP_CONTAINER:-midpoint_server}"
 MP_HOST_DIR="${MP_HOST_DIR:-/opt/midpoint}"
 AWS_IMAGE="${AWS_IMAGE:-amazon/aws-cli:2.36.50}"
 STAGE="${STAGE:-/var/tmp/midpoint-backup}"
-MIN_FREE_GB="${MIN_FREE_GB:-4}"
+MIN_FREE_GB="${MIN_FREE_GB:-1}"
 LOG_FILE="${LOG_FILE:-$HOME/midpoint-backup.log}"
 
 # shellcheck disable=SC1090
@@ -77,7 +84,7 @@ on_error() {
 Paso: ${STEP} (exit ${rc})
 Log: ${LOG_FILE}
 Runbook: midPointEcosystem/docs/runbooks/backup-midpoint-s3"
-    rm -f "$STAGE"/*."$TS".* 2>/dev/null || true
+    rm -f "$STAGE"/*."$TS".* "$STAGE"/*."$TS" 2>/dev/null || true
     exit "$rc"
 }
 trap on_error ERR
@@ -85,7 +92,7 @@ trap on_error ERR
 aws_cli() {
     docker run --rm -i \
         -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION \
-        -v "$STAGE:/stage:ro" "$AWS_IMAGE" "$@"
+        -v "$STAGE:/stage" "$AWS_IMAGE" "$@"
 }
 
 # Sube /stage/<file> a s3://bucket/<key> y verifica que el tamano en S3 coincide.
@@ -103,7 +110,69 @@ upload_verified() {
         log "Tamano distinto en S3: local=$size remoto=$remote"
         false
     fi
+    printf '%s  %s\n' "$sha" "$(basename "$key")" \
+        | aws_cli s3 cp - "s3://$IGA_BACKUP_BUCKET/$key.sha256" --only-show-errors
     log "OK s3://$IGA_BACKUP_BUCKET/$key ($(numfmt --to=iec "$size"), sha256=$sha)"
+}
+
+# Cuenta bytes y calcula sha256 de lo que pasa por la tuberia; lo deja en $1.
+PYHASH='import sys,hashlib
+h=hashlib.sha256(); n=0; i=sys.stdin.buffer; o=sys.stdout.buffer
+while True:
+    b=i.read(1<<20)
+    if not b: break
+    h.update(b); n+=len(b); o.write(b)
+o.flush()
+open(sys.argv[1],"w").write("%d %s\n" % (n, h.hexdigest()))'
+
+# Subida en streaming: stdin -> s3://bucket/<key>, contando bytes y sha256.
+# Va como ultimo eslabon de una tuberia (subshell): solo sube y deja el .meta.
+#   uso: <productor> | stream_upload <key>
+stream_upload() {
+    trap - ERR   # el fallo lo recoge el shell padre via pipefail (una sola alerta)
+    python3 -c "$PYHASH" "$STAGE/stream.$TS.meta" \
+        | aws_cli s3 cp - "s3://$IGA_BACKUP_BUCKET/$1" \
+            --expected-size 21474836480 --only-show-errors
+}
+
+# Se llama DESPUES de que la tuberia entera termino bien (si pg_dump muere a
+# medias, pipefail dispara el ERR antes y nunca se llega aqui). Verifica tamano
+# en S3 y que el TOC del dump (al principio del archivo) trae las tablas
+# pedidas; solo entonces escribe <key>.sha256 = marca de "dump verificado".
+#   uso: verify_and_mark <key> <regex_tabla>...
+verify_and_mark() {
+    local key="$1"; shift
+    local meta="$STAGE/stream.$TS.meta" head="stream-head.$TS.bin" bytes sha remote toc re
+    read -r bytes sha < "$meta"
+    (( bytes > 0 )) || { log "Stream vacio para $key"; false; }
+
+    STEP="verificacion de tamano en S3 de $key"
+    remote=$(aws_cli s3api head-object --bucket "$IGA_BACKUP_BUCKET" --key "$key" \
+        --query ContentLength --output text | tr -d '\r')
+    if [[ "$remote" != "$bytes" ]]; then
+        log "Tamano distinto en S3: enviado=$bytes remoto=$remote"
+        false
+    fi
+
+    STEP="verificacion del TOC (pg_restore -l) de $key"
+    aws_cli s3api get-object --bucket "$IGA_BACKUP_BUCKET" --key "$key" \
+        --range bytes=0-67108863 "/stage/$head" > /dev/null
+    toc=$(docker exec -i "$PG_CONTAINER" pg_restore -l < "$STAGE/$head")
+    rm -f "$STAGE/$head"
+    for re in "$@"; do
+        if ! grep -Eq "TABLE DATA [[:alnum:]_]+ ${re} " <<< "$toc"; then
+            log "El dump $key no contiene TABLE DATA que case con '${re}'"
+            false
+        fi
+    done
+    LAST_TOC_TABLES=$(grep -c 'TABLE DATA' <<< "$toc" || true)
+
+    STEP="marca .sha256 de $key"
+    printf '%s  %s\n' "$sha" "$(basename "$key")" \
+        | aws_cli s3 cp - "s3://$IGA_BACKUP_BUCKET/$key.sha256" --only-show-errors
+    rm -f "$meta"
+    LAST_BYTES=$bytes
+    log "OK s3://$IGA_BACKUP_BUCKET/$key ($(numfmt --to=iec "$bytes"), $LAST_TOC_TABLES tablas con datos, sha256=$sha)"
 }
 
 check_free_space() {
@@ -121,47 +190,37 @@ check_free_space() {
 export_audit_month() {
     local m="$1"
     [[ "$m" =~ ^[0-9]{6}$ ]] || { log "Mes invalido: '$m'"; exit 2; }
-    local file="ma_audit_${m}.${TS}.dump" key="midpoint/audit/ma_audit_${m}.dump" toc
     log "==== EXPORT auditoria $m ===="
     check_free_space
     STEP="pg_dump auditoria $m"
     docker exec "$PG_CONTAINER" pg_dump -U "$PG_USER" -d "$PG_DB" -Fc -Z 6 \
         -t "*.ma_audit_event_${m}" -t "*.ma_audit_delta_${m}" -t "*.ma_audit_ref_${m}" \
-        > "$STAGE/$file"
-    STEP="verificacion pg_restore -l auditoria $m"
-    toc=$(docker exec -i "$PG_CONTAINER" pg_restore -l < "$STAGE/$file")
-    for t in event delta ref; do
-        if ! grep -Eq "TABLE DATA [[:alnum:]_]+ ma_audit_${t}_${m} " <<< "$toc"; then
-            log "El dump no contiene TABLE DATA de ma_audit_${t}_${m}"
-            false
-        fi
-    done
-    upload_verified "$file" "$key"
-    rm -f "$STAGE/$file"
+        | stream_upload "midpoint/audit/ma_audit_${m}.dump"
+    verify_and_mark "midpoint/audit/ma_audit_${m}.dump" \
+        "ma_audit_event_${m}" "ma_audit_delta_${m}" "ma_audit_ref_${m}"
     log "==== FIN EXPORT auditoria $m ===="
 }
 
 # ------------------------------------------------------------------------------
 daily_backup() {
-    local dbf="midpoint-db.${TS}.dump" homef="midpoint-home.${TS}.tar.gz" toc ndata t0
+    local homef="midpoint-home.${TS}.tar.gz" t0
     t0=$(date +%s)
     log "==== INICIO backup diario ===="
     check_free_space
 
-    STEP="pg_dump BD (sin datos de auditoria)"
-    docker exec "$PG_CONTAINER" pg_dump -U "$PG_USER" -d "$PG_DB" -Fc -Z 6 \
-        --exclude-table-data='*.ma_audit_*' > "$STAGE/$dbf"
-
-    STEP="verificacion pg_restore -l BD"
-    toc=$(docker exec -i "$PG_CONTAINER" pg_restore -l < "$STAGE/$dbf")
-    ndata=$(grep -c 'TABLE DATA' <<< "$toc" || true)
-    for t in m_user m_shadow m_resource m_role m_org m_system_configuration; do
-        if ! grep -Eq "TABLE DATA [[:alnum:]_]+ $t " <<< "$toc"; then
-            log "El dump no contiene TABLE DATA de $t"
-            false
-        fi
-    done
-    log "Dump BD: $(numfmt --to=iec "$(stat -c %s "$STAGE/$dbf")"), $ndata tablas con datos"
+    # Sin datos de auditoria (van aparte, por mes) ni de simulaciones (previews
+    # desechables). m_shadow esta particionada por recurso: sus datos viven en
+    # m_shadow_<oid>, por eso se comprueba con regex.
+    STEP="pg_dump BD (sin auditoria ni simulaciones)"
+    docker exec "$PG_CONTAINER" pg_dump -U "$PG_USER" -d "$PG_DB" -Fc -Z 1 \
+        --exclude-table-data='*.ma_audit_*' \
+        --exclude-table-data='*.m_simulation_result_processed_object*' \
+        | stream_upload "midpoint/db/$YM/midpoint-db-${TS}.dump"
+    verify_and_mark "midpoint/db/$YM/midpoint-db-${TS}.dump" \
+        m_user 'm_shadow_[[:alnum:]_]+' m_resource m_role m_org \
+        m_system_configuration m_assignment
+    local dbsize ndata
+    dbsize=$(numfmt --to=iec "$LAST_BYTES"); ndata=$LAST_TOC_TABLES
 
     # keystore.jceks es imprescindible: sin el, los valores cifrados de la BD
     # (credenciales de los recursos) no se pueden descifrar tras un restore.
@@ -185,12 +244,8 @@ daily_backup() {
     grep -qx './docker-compose.yml' <<< "$lhost"
     grep -qx './.env' <<< "$lhost"
 
-    upload_verified "$dbf" "midpoint/db/$YM/midpoint-db-${TS}.dump"
     upload_verified "$homef" "midpoint/home/$YM/midpoint-home-${TS}.tar.gz"
-
-    local dbsize
-    dbsize=$(numfmt --to=iec "$(stat -c %s "$STAGE/$dbf")")
-    rm -f "$STAGE/$dbf" "$STAGE/$homef"
+    rm -f "$STAGE/$homef"
     log "==== FIN backup diario OK ($(( $(date +%s) - t0 )) s) ===="
 
     if [[ "$(date +%u)" == "1" || "${FORCE_SUMMARY:-0}" == "1" ]]; then

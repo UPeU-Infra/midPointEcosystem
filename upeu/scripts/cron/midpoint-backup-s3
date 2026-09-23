@@ -1,0 +1,8 @@
+# Backup diario de MidPoint PROD a S3 (BD sin auditoria + home con keystore).
+# Instalado en midpoint-prod como /etc/cron.d/midpoint-backup-s3 (copia de este archivo).
+# Hora del host = America/Lima. 22:30 queda fuera de la ventana de recons (02:00-10:00).
+# Destino: s3://upeu-iga-backups-360416501080/midpoint/  (cuenta AWS upeu-repo)
+# Runbook: docs/runbooks/backup-midpoint-s3/README.md
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+30 22 * * * juansanchez /home/juansanchez/midPointEcosystem/upeu/scripts/backup-midpoint-s3.sh >/dev/null 2>&1
