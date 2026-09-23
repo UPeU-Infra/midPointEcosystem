@@ -15,8 +15,15 @@
 #     2. CALL audit_create_monthly_partitions(FUTURE_MONTHS) para reponer el
 #        colchon de particiones futuras (idempotente: solo crea las que faltan).
 #
-# RETENCION: 12 meses (ISO 27001 A.5.16 / A.8.2 exigen conservar el audit trail
-#   pero NO imponen una ventana mayor; 12 meses cabe holgado en el disco actual).
+# RETENCION EN LA BD: 2 meses completos + el mes en curso (2026-09-23).
+#   Antes eran 12 meses con la nota "cabe holgado en el disco": era falso. La
+#   auditoria crece ~11 GB/mes (~104.000 eventos/dia) y el disco es de ~73 GB;
+#   el 23-sep el disco estaba al 90%.
+#   El audit trail NO se pierde: cada mes se EXPORTA a S3 antes de su DROP
+#   (backup-midpoint-s3.sh --export-audit) y alli no expira
+#   (s3://upeu-iga-backups-360416501080/midpoint/audit/, Deep Archive).
+#   Si la exportacion falla, ese mes NO se dropea (fail-closed) y llega alerta
+#   a Telegram. Runbook: docs/runbooks/backup-midpoint-s3/README.md
 #
 # ORDEN DE DROP (CRITICO):
 #   ma_audit_delta_YYYYMM y ma_audit_ref_YYYYMM tienen FK -> ma_audit_event_YYYYMM
@@ -48,7 +55,8 @@ set -euo pipefail
 PG_CONTAINER="${PG_CONTAINER:-midpoint-midpoint_data-1}"
 PG_USER="${PG_USER:-midpoint}"
 PG_DB="${PG_DB:-midpoint}"
-RETENTION_MONTHS="${RETENTION_MONTHS:-12}"
+RETENTION_MONTHS="${RETENTION_MONTHS:-2}"
+EXPORT_SCRIPT="${EXPORT_SCRIPT:-$(dirname "$(readlink -f "$0")")/backup-midpoint-s3.sh}"
 FUTURE_MONTHS="${FUTURE_MONTHS:-60}"
 LOG_FILE="${LOG_FILE:-/var/log/midpoint-audit-partition-maintenance.log}"
 
@@ -107,8 +115,15 @@ if [[ -n "$CANDIDATES" ]]; then
         DELTA="ma_audit_delta_${M}"
         REF="ma_audit_ref_${M}"
         if [[ "$DRY_RUN" -eq 1 ]]; then
-            log "[DRY-RUN] dropearia (orden FK): $DELTA, $REF, luego $EVENT"
+            log "[DRY-RUN] exportaria a S3 y luego dropearia (orden FK): $DELTA, $REF, luego $EVENT"
         else
+            # Fail-closed: sin export verificado en S3 no hay DROP. Se corta el
+            # bucle entero: los meses siguientes tampoco se tocan.
+            log "EXPORT a S3 del mes $M antes del DROP..."
+            if ! "$EXPORT_SCRIPT" --export-audit "$M"; then
+                log "EXPORT FALLO para $M -> NO se dropea nada mas. Revisar $EXPORT_SCRIPT."
+                break
+            fi
             log "DROP particiones del mes $M (orden FK: delta, ref, event)..."
             # delta y ref ANTES que event (FK delta/ref -> event).
             printf 'DROP TABLE IF EXISTS %s; DROP TABLE IF EXISTS %s; DROP TABLE IF EXISTS %s;' \
