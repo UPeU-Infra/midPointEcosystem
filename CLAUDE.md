@@ -20,13 +20,13 @@ Regla: modelo canónico primero, datos UPeU se adaptan al modelo, NUNCA al revé
 
 | Alias SSH | Host | Usuario | Rol |
 |-----------|------|---------|-----|
-| `pruebas-alberto-1` | 192.168.15.230 | ticrai | Desarrollo |
-| `pruebas-alberto-2` | 192.168.15.231 | ticrai | Sandbox |
 | `midpoint-prod` | 192.168.15.166 | juansanchez | **Producción** |
+| — | 192.168.15.150 | devops | Laboratorio UPeU (`~/.secrets/lab-identidad.env`); su MidPoint (:8081) solo tiene LDAP |
+| ~~`pruebas-alberto-1`~~ | ~~192.168.15.230~~ | — | **Ya no existe**: la máquina se liberó el 25-ago-2026 |
 
 Secretos:
-- Dev: `~/.secrets/upeu-infra.env` (`TICRAI_PASS`)
 - Prod: `~/.secrets/midpoint-upeu.env` (`MIDPOINT_PROD_PASS`)
+- Backups de PROD: en S3, ver [`docs/runbooks/backup-midpoint-s3/README.md`](docs/runbooks/backup-midpoint-s3/README.md)
 
 SSH con password:
 ```bash
@@ -34,7 +34,9 @@ source ~/.secrets/midpoint-upeu.env
 sshpass -p "$MIDPOINT_PROD_PASS" ssh -o StrictHostKeyChecking=no midpoint-prod "<comando>"
 ```
 
-**Conectividad a la LAN UPeU:** vía VPN corporativa, O vía túnel WireGuard OCI (nuevo, reemplaza la VPN). Si `.166` y el resto de `192.168.x` no responden = red/VPN caída, no el servidor. Levantar túnel en la Mac: `~/.secrets/wg-upeu-oci/wg-mac.sh up`. PROD .166 es el **ancla** del túnel. Detalles en el CLAUDE.md global ("Acceso a la LAN interna de UPeU") y memoria `project_wg-tunnel-oci-upeu-2026-07-03`.
+**Conectividad a la LAN UPeU:** SOLO por la VPN corporativa (WireGuard.app, túnel «JSanchez»). Si `.166` y el resto de `192.168.x` no responden, es la red o la VPN, no el servidor: comprobar con `route -n get 192.168.15.168 | grep interface`. ⚠️ **El túnel WireGuard vía OCI está muerto y retirado desde el 17-ago-2026: NO levantarlo.** Aunque esté muerto, secuestra las rutas `192.168.12/13/15` y rompe la VPN. Detalles en el CLAUDE.md global («Acceso a la LAN interna de UPeU»).
+
+**SSH a `.166`:** a veces da «Permission denied» de forma intermitente. Un solo reintento; tres fallos seguidos bloquean la cuenta 15 minutos.
 
 ## Repos relacionados
 
