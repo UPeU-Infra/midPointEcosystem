@@ -1,0 +1,36 @@
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+      oid="d71a0010-0000-4000-a000-000000000027">
+    <name>AR-Zammad-Cola-Desarrollo-LAMB-Conservatory</name>
+    <description>Application Role de UNA sola aplicacion: la cola de Zammad "Desarrollo::LAMB Conservatory"
+    (group_id 27). Sin LDAP y sin subtype dti-service-desk-team a proposito: el autoassign por
+    serviceDeskTeam no puede verlo. Llega por dos vias: (1) inducido por AR-DTI-Team-conservatory
+    (pertenencia al equipo) y (2) assignment directo y explicito a quien cubre el sistema sin ser del
+    equipo. El id 27 va ALMACENADO, no calculado. tolerant=false: MidPoint es autoritativo sobre las
+    colas. Creado 2026-10-02.</description>
+    <lifecycleState>active</lifecycleState>
+    <assignment>
+        <targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" type="c:ArchetypeType"/>
+    </assignment>
+    <displayName>Zammad - Desarrollo::LAMB Conservatory</displayName>
+    <identifier>zammad-group-27</identifier>
+    <inducement>
+        <description>Cola de Zammad "Desarrollo::LAMB Conservatory" (group_id 27).</description>
+        <construction>
+            <resourceRef oid="7a11d0d0-0000-4000-a000-7a11d0d00001" type="c:ResourceType"/>
+            <kind>account</kind>
+            <intent>default</intent>
+            <attribute>
+                <ref>ri:group_ids</ref>
+                <tolerant>false</tolerant>
+                <outbound>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>27</value>
+                    </expression>
+                </outbound>
+            </attribute>
+        </construction>
+    </inducement>
+</role>
