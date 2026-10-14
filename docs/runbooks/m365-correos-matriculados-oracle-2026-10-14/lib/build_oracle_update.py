@@ -184,7 +184,7 @@ for x in CONFIRMAR:
     if m.startswith("solo coincide el nombre"):
         ck = controles(d, u, c)
         if all(ck.values()):
-            CARGAR2.append((d, u, c, "nombre exacto + 6 controles", "")); continue
+            CARGAR2.append((d, u, c, "nombre exacto + controles", "")); continue
         FLOR.append((d, u, c, o, m + " — falla: " + ", ".join(k for k, v in ck.items() if not v))); continue
     if m.startswith("ese correo ya es") or m.startswith("su documento tiene otra ficha"):
         LAMB.append(x); continue
@@ -220,62 +220,6 @@ W = {"PATERNO": 16, "MATERNO": 16, "NOMBRES": 22, "PROGRAMA": 40, "CORREO_A_CARG
      "CORREO_INST_ACTUAL_ORACLE": 30, "MOTIVO": 60, "CUENTA_EN_M365": 34, "NOMBRE_EN_M365": 30}
 dni_tal = sum(1 for x in CARGAR if num(x[2]))
 PRIV = ("Datos personales (Ley 29733): no reenviar por WhatsApp ni dejar en carpetas compartidas abiertas.", False)
-
-# ── Excel 1: lo que se carga en Oracle (va con el UPDATE) ──
-wb1 = openpyxl.Workbook()
-leeme(wb1, [
-    ("Correos a cargar en Oracle (MOISES.PERSONA_NATURAL.CORREO_INST) — pregrado 2026-2", True),
-    (f"Generado el {FECHA} con datos leídos hoy de Oracle LAMB, MidPoint y Entra ID (M365).", False),
-    ("", False),
-    (f"Filas: {len(CARGAR)}. Cada correo existe hoy como buzón en M365 y es de esa persona.", False),
-    (f"   {dni_tal} son cuentas DNI@upeu.edu.pe: se informan tal cual (no se cambia el usuario a mitad de ciclo).", False),
-    ("Solo se completa lo que falta: CORREO_INST vacío, numérico o con un correo no institucional.", False),
-    ("", False),
-    ("CÓMO SE CARGA", True),
-    ("UPDATE_CORREO_INST_*.sql: un UPDATE por fila de este Excel, con candados:", False),
-    ("  • ID_PERSONA + ID_TIPODOCUMENTO + NUM_DOCUMENTO deben coincidir (no escribe en otra ficha).", False),
-    ("  • CORREO_INST debe seguir valiendo lo mismo que hoy (no pisa un cambio hecho mientras tanto).", False),
-    (f"  • Sin COMMIT: al final un SELECT debe devolver {len(CARGAR)}. Si cuadra, COMMIT; si no, ROLLBACK.", False),
-    ("ROLLBACK_CORREO_INST_*.sql: devuelve cada fila a su valor anterior si hiciera falta.", False),
-    ("", False), PRIV])
-hoja(wb1, "Cargar en Oracle", HDR + ["CORREO_A_CARGAR", "ORIGEN", "CUENTA_HABILITADA", "ULTIMO_ACCESO_M365"],
-     [base(d) + [c, o, "Sí" if u.get("enabled") else "No", ultimo(u)] for d, u, c, o, _ in
-      sorted(CARGAR, key=lambda x: (x[0]["SEDE"], x[0]["PATERNO"]))], W)
-xl = f"{OUT}/Correos_para_cargar_Oracle_pregrado_2026-2_{FECHA}.xlsx"
-wb1.save(xl)
-
-# ── Excel 2: casos con conflicto, para revisión de Mesa de Servicios (Flor) ──
-def nota_crear(d):
-    pc = probable(d); notas = []
-    if d["CUR"].endswith("@upeu.edu.pe"): notas.append("Oracle tiene una dirección @upeu que NO existe en M365 (creación fallida o borrada)")
-    elif d["CUR"]: notas.append("Oracle tiene un correo no institucional en CORREO_INST")
-    if pc: notas.append("POSIBLE CUENTA EXISTENTE: revisar antes de crear")
-    return [(pc or {}).get("upn", ""), (pc or {}).get("display", ""), "; ".join(notas)]
-wb2 = openpyxl.Workbook()
-leeme(wb2, [
-    ("Casos por revisar — correo institucional de matriculados de pregrado 2026-2", True),
-    (f"Generado el {FECHA}. Ninguno de estos casos se carga en Oracle hasta que se resuelva.", False),
-    ("", False),
-    ("QUÉ HACER EN CADA HOJA", True),
-    (f"«1 Confirmar» ({len(FLOR)}): hay una cuenta candidata pero con una duda (columna MOTIVO).", False),
-    ("     Confirmar si la cuenta es de esa persona. Si lo es, se carga en el siguiente envío.", False),
-    (f"«2 Sin cuenta» ({len(CREAR)}): no se encontró cuenta en M365 → hay que crearla.", False),
-    (f"     ANTES revisar la columna POSIBLE_CUENTA_EN_M365 ({sum(1 for d in CREAR if probable(d))} casos): puede que ya tenga cuenta.", False),
-    (f"«3 Sin licencia» ({len(SINLIC)}): la cuenta EXISTE pero no tiene buzón porque no tiene licencia.", False),
-    ("     NO crear otra cuenta: basta asignarle la licencia de estudiante.", False),
-    ("", False),
-    ("Devolver este Excel con una columna de resultado por fila (correo confirmado / crear / licenciar / otro).", False),
-    ("", False), PRIV])
-hoja(wb2, "1 Confirmar", HDR + ["CORREO_PROPUESTO", "ORIGEN", "NOMBRE_EN_M365", "MOTIVO"],
-     [base(d) + [c, o, (u or {}).get("display", ""), m] for d, u, c, o, m in
-      sorted(FLOR, key=lambda x: (x[4], x[0]["PATERNO"]))], W)
-hoja(wb2, "2 Sin cuenta", HDR + ["POSIBLE_CUENTA_EN_M365", "NOMBRE_EN_M365", "NOTA"],
-     [base(d) + nota_crear(d) for d in sorted(CREAR, key=lambda d: (d["SEDE"], d["PATERNO"]))], {**W, "POSIBLE_CUENTA_EN_M365": 32, "NOTA": 60})
-hoja(wb2, "3 Sin licencia", HDR + ["CUENTA_EN_M365", "NOMBRE_EN_M365", "CUENTA_HABILITADA", "CREADA", "SITUACION"],
-     [base(d) + [u.get("upn"), u.get("display"), "Sí" if u.get("enabled") else "No", (u.get("created") or "")[:10], m]
-      for d, u, m in sorted(SINLIC, key=lambda x: (x[2], x[0]["PATERNO"]))], {**W, "SITUACION": 55})
-xl2 = f"{OUT}/Correos_por_revisar_pregrado_2026-2_{FECHA}.xlsx"
-wb2.save(xl2)
 
 # ── SQL ──
 def q(s): return "'" + s.replace("'", "''") + "'"
@@ -317,28 +261,79 @@ def gen_sql(rows, tag, xlname):
     rq = f"{OUT}/ROLLBACK_CORREO_INST_pregrado_2026-2{suf}_{FECHA}.sql"
     open(sq, "w").write("\n".join(up) + "\n"); open(rq, "w").write("\n".join(rb) + "\n")
     return sq, rq
-sq, rq = gen_sql(CARGAR, "lote 1", xl.split("/")[-1])
+def nota_crear(d):
+    pc = probable(d); notas = []
+    if d["CUR"].endswith("@upeu.edu.pe"): notas.append("Oracle tiene una dirección @upeu que NO existe en M365 (creación fallida o borrada)")
+    elif d["CUR"]: notas.append("Oracle tiene un correo no institucional en CORREO_INST")
+    if pc: notas.append("POSIBLE CUENTA EXISTENTE: revisar antes de crear")
+    return [(pc or {}).get("upn", ""), (pc or {}).get("display", ""), "; ".join(notas)]
 
-# lote 2
-wb3 = openpyxl.Workbook()
-leeme(wb3, [
-    ("Correos a cargar en Oracle — LOTE 2 — pregrado 2026-2", True),
-    (f"Generado el {FECHA}. Filas: {len(CARGAR2)}.", False),
-    ("Casos que solo coincidían por nombre y pasan TODOS estos controles, por lo que no requieren revisión manual:", False),
-    ("  • el nombre completo (nombre + 2 apellidos) es único entre todas las personas de Oracle;", False),
-    ("  • la cuenta de M365 lleva el nombre y ambos apellidos;  • está habilitada y se creó desde el año de ingreso;", False),
-    ("  • el correo no es el CORREO_INST de otra ficha ni se propone para otro alumno;", False),
-    ("  • el documento no tiene otra ficha en Oracle y Oracle no trae otro correo con nombre.", False),
-    ("Se carga igual que el lote 1: UPDATE_*_lote2.sql (sin COMMIT, con candados) y ROLLBACK_*_lote2.sql.", False),
+def carga(rows, titulo, nombre, extra):
+    """Excel + UPDATE + ROLLBACK de un lote de carga."""
+    wb = openpyxl.Workbook()
+    leeme(wb, [
+        (f"Correos a cargar en Oracle (MOISES.PERSONA_NATURAL.CORREO_INST) — pregrado 2026-2 — {titulo}", True),
+        (f"Generado el {FECHA} con datos leídos hoy de Oracle LAMB, MidPoint y Entra ID (M365).", False),
+        ("", False),
+        (f"Filas: {len(rows)}. Cada correo existe hoy como buzón en M365 y es de esa persona.", False)] + extra + [
+        ("Solo se completa lo que falta: CORREO_INST vacío, numérico o con un correo no institucional.", False),
+        ("", False),
+        ("CÓMO SE CARGA", True),
+        ("UPDATE_CORREO_INST_*.sql: un UPDATE por fila de este Excel, con candados:", False),
+        ("  • ID_PERSONA + ID_TIPODOCUMENTO + NUM_DOCUMENTO deben coincidir (no escribe en otra ficha).", False),
+        ("  • CORREO_INST debe seguir valiendo lo mismo que hoy (no pisa un cambio hecho mientras tanto).", False),
+        (f"  • Sin COMMIT: al final un SELECT debe devolver {len(rows)}. Si cuadra, COMMIT; si no, ROLLBACK.", False),
+        ("ROLLBACK_CORREO_INST_*.sql: devuelve cada fila a su valor anterior si hiciera falta.", False),
+        ("", False), PRIV])
+    hoja(wb, "Cargar en Oracle", HDR + ["CORREO_A_CARGAR", "ORIGEN", "NOMBRE_EN_M365", "CUENTA_HABILITADA", "ULTIMO_ACCESO_M365"],
+         [base(d) + [c, o, u.get("display"), "Sí" if u.get("enabled") else "No", ultimo(u)] for d, u, c, o, _ in
+          sorted(rows, key=lambda x: (x[0]["SEDE"], x[0]["PATERNO"]))], W)
+    x = f"{OUT}/{nombre}_{FECHA}.xlsx"; wb.save(x)
+    return [x, *gen_sql(rows, titulo, x.split("/")[-1])]
+
+# ── Uziel: lote 1 (verificado por MidPoint / documento) y lote 2 (nombre exacto + controles) ──
+L1 = carga(CARGAR, "lote 1", "Correos_para_cargar_Oracle_pregrado_2026-2",
+           [(f"   {dni_tal} son cuentas DNI@upeu.edu.pe: se informan tal cual (no se cambia el usuario a mitad de ciclo).", False)])
+L2 = carga(CARGAR2, "lote 2", "Correos_para_cargar_Oracle_pregrado_2026-2_lote2",
+           [("   Coincidían solo por nombre y pasan todos los controles: nombre completo único entre todas las personas de", False),
+            ("   Oracle; cuenta de M365 con nombre y ambos apellidos, habilitada y creada desde el año de ingreso; el correo no", False),
+            ("   es de otra ficha ni se propone para otro alumno; sin otra ficha con su documento.", False),
+            ("   Ninguna persona de este lote está en el lote 1.", False)])
+
+# ── Flor: SOLO los casos que tiene que confirmar ──
+wb2 = openpyxl.Workbook()
+leeme(wb2, [
+    ("Correo institucional por confirmar — matriculados de pregrado 2026-2", True),
+    (f"Generado el {FECHA}. Casos: {len(FLOR)}.", False),
+    ("", False),
+    ("Hay una cuenta de M365 candidata para cada estudiante, pero con una duda (columna MOTIVO).", False),
+    ("Confirmar si la cuenta es de esa persona y anotar el resultado en la columna RESULTADO:", False),
+    ("   CONFIRMADO  /  NO ES SU CUENTA  /  OTRO (detallar).", False),
+    ("Los confirmados se cargarán en Oracle en el siguiente envío.", False),
     ("", False), PRIV])
-hoja(wb3, "Cargar en Oracle", HDR + ["CORREO_A_CARGAR", "ORIGEN", "NOMBRE_EN_M365", "CUENTA_HABILITADA", "ULTIMO_ACCESO_M365"],
-     [base(d) + [c, o, u.get("display"), "Sí" if u.get("enabled") else "No", ultimo(u)] for d, u, c, o, _ in
-      sorted(CARGAR2, key=lambda x: (x[0]["SEDE"], x[0]["PATERNO"]))], W)
-xl3 = f"{OUT}/Correos_para_cargar_Oracle_pregrado_2026-2_lote2_{FECHA}.xlsx"
-wb3.save(xl3)
-sq2, rq2 = gen_sql(CARGAR2, "lote 2", xl3.split("/")[-1])
+hoja(wb2, "Confirmar", HDR + ["CORREO_PROPUESTO", "NOMBRE_EN_M365", "MOTIVO", "RESULTADO"],
+     [base(d) + [c, (u or {}).get("display", ""), m, ""] for d, u, c, o, m in
+      sorted(FLOR, key=lambda x: (x[4], x[0]["PATERNO"]))], {**W, "RESULTADO": 22})
+xl2 = f"{OUT}/Correos_por_confirmar_Flor_pregrado_2026-2_{FECHA}.xlsx"
+wb2.save(xl2)
 
-# pendientes que no son de Mesa de Servicios
+# ── Siguiente fase (IGA): crear cuentas y asignar licencias ──
+wb5 = openpyxl.Workbook()
+leeme(wb5, [
+    ("Siguiente fase — crear cuentas y asignar licencias — pregrado 2026-2", True),
+    (f"Generado el {FECHA}. Pendiente de la decisión de licencia y canal de contraseñas (Ing. Urquizo).", False),
+    (f"«Sin cuenta» ({len(CREAR)}): crear la cuenta. Revisar antes POSIBLE_CUENTA_EN_M365 ({sum(1 for d in CREAR if probable(d))}).", False),
+    (f"«Sin licencia» ({len(SINLIC)}): la cuenta EXISTE pero no tiene buzón: solo asignar licencia, NO crear otra.", False),
+    ("", False), PRIV])
+hoja(wb5, "Sin cuenta", HDR + ["POSIBLE_CUENTA_EN_M365", "NOMBRE_EN_M365", "NOTA"],
+     [base(d) + nota_crear(d) for d in sorted(CREAR, key=lambda d: (d["SEDE"], d["PATERNO"]))], {**W, "POSIBLE_CUENTA_EN_M365": 32, "NOTA": 60})
+hoja(wb5, "Sin licencia", HDR + ["CUENTA_EN_M365", "NOMBRE_EN_M365", "CUENTA_HABILITADA", "CREADA", "SITUACION"],
+     [base(d) + [u.get("upn"), u.get("display"), "Sí" if u.get("enabled") else "No", (u.get("created") or "")[:10], m]
+      for d, u, m in sorted(SINLIC, key=lambda x: (x[2], x[0]["PATERNO"]))], {**W, "SITUACION": 55})
+xl5 = f"{OUT}/Correos_crear_y_licenciar_pregrado_2026-2_{FECHA}.xlsx"
+wb5.save(xl5)
+
+# ── Pendientes de otros equipos ──
 wb4 = openpyxl.Workbook()
 leeme(wb4, [
     ("Pendientes fuera de Mesa de Servicios — correo institucional pregrado 2026-2", True),
@@ -355,9 +350,5 @@ hoja(wb4, "Decisión reemplazo", HDR + ["CORREO_PROPUESTO", "NOMBRE_EN_M365", "M
 xl4 = f"{OUT}/Correos_pendientes_LAMB_y_decision_pregrado_2026-2_{FECHA}.xlsx"
 wb4.save(xl4)
 
-print(f"pregrado matriculados: {len(ora)} | Oracle ya OK: {YA_OK}")
-print(f"1 cargar: {len(CARGAR)} (DNI@ tal cual: {dni_tal}) | por origen: {dict(Counter(x[3] for x in CARGAR))}")
-print(f"2 confirmar: {len(CONFIRMAR)} | motivos: {dict(Counter(re.sub(r'«.*»|\(.*\)', '', x[4]).strip() for x in CONFIRMAR))}")
-print(f"3 crear: {len(CREAR)} (posible cuenta: {sum(1 for d in CREAR if probable(d))}, Oracle con @upeu inexistente: {sum(1 for d in CREAR if d['CUR'].endswith('@upeu.edu.pe'))}) | 4 sin licencia: {len(SINLIC)} {dict(Counter(x[2].split(':')[0] for x in SINLIC))} | correos dobles: {len(dobles)}")
-print(f"lote 2: {len(CARGAR2)} | Flor confirmar: {len(FLOR)} | LAMB: {len(LAMB)} | decisión: {len(DAVID)}")
-print(xl); print(sq); print(rq); print(xl3); print(sq2); print(rq2); print(xl2); print(xl4)
+print(f"pregrado: {len(ora)} | Oracle ya OK: {YA_OK} | lote 1: {len(CARGAR)} | lote 2: {len(CARGAR2)} | Flor: {len(FLOR)} | crear: {len(CREAR)} | sin licencia: {len(SINLIC)} | LAMB: {len(LAMB)} | decisión: {len(DAVID)}")
+for f in L1 + L2 + [xl2, xl5, xl4]: print(f)

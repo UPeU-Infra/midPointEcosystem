@@ -12,8 +12,17 @@ para el IGA, Oracle es **solo lectura**.
 SEMESTRE=290 ./generar.sh    # otro semestre
 ```
 
-Deja en `~/Downloads`: `Correos_para_cargar_Oracle_*.xlsx` y `*_lote2_*.xlsx` (lo que se carga, con su UPDATE y ROLLBACK), `Correos_por_revisar_*.xlsx` (Mesa de Servicios), `Correos_pendientes_LAMB_y_decision_*.xlsx`, `UPDATE_CORREO_INST_*.sql` (sin COMMIT)
-y `ROLLBACK_CORREO_INST_*.sql`. Unos 10 minutos (7 son la descarga del tenant). Requiere la VPN.
+Deja en `~/Downloads`:
+
+| Archivo | Para |
+|---|---|
+| `UPDATE_/ROLLBACK_CORREO_INST_pregrado_2026-2_*.sql` (lote 1) y `*_lote2_*.sql` | **Uziel / equipo LAMB**: solo el SQL. Los lotes no se solapan |
+| `Correos_para_cargar_Oracle_*.xlsx` (y `_lote2_`) | Respaldo legible de cada SQL (no hace falta enviarlo) |
+| `Correos_por_confirmar_Flor_*.xlsx` | **Mesa de Servicios**: una sola hoja con los casos a confirmar y columna RESULTADO |
+| `Correos_crear_y_licenciar_*.xlsx` | Siguiente fase del IGA (crear cuentas, asignar licencias) |
+| `Correos_pendientes_LAMB_y_decision_*.xlsx` | Fichas duplicadas (LAMB) y la regla de reemplazo (Urquizo) |
+
+Unos 10 minutos (7 son la descarga del tenant). Requiere la VPN.
 
 ## Reglas
 
