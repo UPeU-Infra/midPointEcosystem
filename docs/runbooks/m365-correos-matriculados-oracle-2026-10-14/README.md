@@ -12,7 +12,7 @@ para el IGA, Oracle es **solo lectura**.
 SEMESTRE=290 ./generar.sh    # otro semestre
 ```
 
-Deja en `~/Downloads`: `Correos_para_cargar_Oracle_*.xlsx` (lo que se carga, para Ever), `Correos_por_revisar_*.xlsx` (conflictos, para Mesa de Servicios), `UPDATE_CORREO_INST_*.sql` (sin COMMIT)
+Deja en `~/Downloads`: `Correos_para_cargar_Oracle_*.xlsx` y `*_lote2_*.xlsx` (lo que se carga, con su UPDATE y ROLLBACK), `Correos_por_revisar_*.xlsx` (Mesa de Servicios), `Correos_pendientes_LAMB_y_decision_*.xlsx`, `UPDATE_CORREO_INST_*.sql` (sin COMMIT)
 y `ROLLBACK_CORREO_INST_*.sql`. Unos 10 minutos (7 son la descarga del tenant). Requiere la VPN.
 
 ## Reglas
@@ -45,5 +45,9 @@ la verificación final devolvía 0.
 | Oracle ya apunta a un buzón real | 8.199 |
 | **1 Cargar en Oracle** (1.701 son `DNI@`) | **4.495** |
 | 2 Confirmar antes (434 solo por nombre) | 490 |
+| → **lote 2**: solo por nombre pero pasan los controles (nombre completo único en Oracle, cuenta con ambos apellidos, habilitada, creada desde el ingreso, correo sin otro dueño, sin ficha duplicada) | **182** |
+| → Mesa de Servicios (Flor) | 270 |
+| → equipo LAMB (fichas duplicadas) | 27 |
+| → decisión: Oracle tiene un correo con nombre que no existe en M365 | 11 |
 | 3 Sin cuenta en M365 (156 con posible cuenta) | 1.615 |
 | 4 Tiene cuenta sin licencia (405 con Oracle ya correcto) | 508 |

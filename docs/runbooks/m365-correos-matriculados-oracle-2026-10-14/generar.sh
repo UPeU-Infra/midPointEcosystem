@@ -35,11 +35,13 @@ echo "→ 3/5 CORREO_INST de todo Oracle y fichas con documento duplicado"
 ora "SELECT ID_PERSONA, lower(trim(CORREO_INST)) CORREO_INST FROM MOISES.PERSONA_NATURAL WHERE CORREO_INST IS NOT NULL" > "$W/ora_correo_inst_all.tsv"
 ora "SELECT pn.ID_PERSONA, pn.ID_TIPODOCUMENTO, pn.NUM_DOCUMENTO, lower(pn.CORREO_INST) CORREO_INST FROM MOISES.PERSONA_NATURAL pn WHERE (pn.ID_TIPODOCUMENTO, pn.NUM_DOCUMENTO) IN (SELECT ID_TIPODOCUMENTO, NUM_DOCUMENTO FROM MOISES.PERSONA_NATURAL WHERE NUM_DOCUMENTO IS NOT NULL GROUP BY ID_TIPODOCUMENTO, NUM_DOCUMENTO HAVING COUNT(*)>1)" > "$W/ora_doc_dup.tsv"
 
+ora "SELECT UPPER(TRIM(NOMBRE)) N, UPPER(TRIM(PATERNO)) P, UPPER(TRIM(MATERNO)) M, COUNT(*) C FROM MOISES.PERSONA WHERE NOMBRE IS NOT NULL GROUP BY UPPER(TRIM(NOMBRE)), UPPER(TRIM(PATERNO)), UPPER(TRIM(MATERNO)) HAVING COUNT(*)>1" > "$W/ora_nombres_dup.tsv"
+
 echo "→ 4/5 focos de MidPoint"
 ssh_mp "docker exec midpoint-midpoint_data-1 psql -U midpoint midpoint -c \"COPY (SELECT u.nameorig, coalesce(u.ext->>'74','') AS codigo, regexp_replace(coalesce(u.ext->>'72',''),'^.*:','') AS dni, lower(coalesce(u.emailaddress,'')) AS email, coalesce(u.ext->>'219',u.ext->>'220','') AS campus, coalesce(u.ext->>'78','') AS aff, u.lifecyclestate FROM m_user u) TO STDOUT WITH CSV HEADER\"" > "$W/mp_hoy.csv"
 
 for f in entra_hoy.json ora_2026_2_v2.tsv ora_correo_inst_all.tsv mp_hoy.csv; do
   [ "$(wc -c < "$W/$f")" -gt 100000 ] || { echo "✗ $f sospechosamente corto"; exit 1; }
 done
-echo "→ 5/5 Excel + UPDATE + ROLLBACK"
+echo "→ 5/5 Excel (lote 1, lote 2, revisión, pendientes) + UPDATE + ROLLBACK"
 python3 lib/build_oracle_update.py "$W" "$OUT"

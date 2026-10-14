@@ -51,6 +51,13 @@ docdup = defaultdict(list)
 for r in csv.DictReader(open(f"{SP}/ora_doc_dup.tsv", encoding="utf-8", errors="replace"), delimiter="\t"):
     docdup[(r["ID_TIPODOCUMENTO"], r["NUM_DOCUMENTO"])].append(r)
 
+# nombres completos repetidos en TODO Oracle (homonimia): un nombre único es evidencia fuerte
+import os
+homon = set()
+if os.path.exists(f"{SP}/ora_nombres_dup.tsv"):
+    for r in csv.DictReader(open(f"{SP}/ora_nombres_dup.tsv", encoding="utf-8", errors="replace"), delimiter="\t"):
+        homon.add(norm(f"{r['N']} {r['P']} {r['M']}"))
+
 # ── MidPoint ──
 mp_cod, mp_dni = {}, {}
 for r in csv.DictReader(open(f"{SP}/mp_hoy.csv", encoding="utf-8")):
@@ -155,6 +162,36 @@ if dobles:
     CARGAR = [x for x in CARGAR if x[2] not in dobles]
     CONFIRMAR += [(d, u, c, o, "el mismo correo resultó para 2 personas") for d, u, c, o, _ in mov]
 
+# ── lote 2: coincidencias SOLO por nombre que pasan 6 controles → se cargan sin revisión manual ──
+correos_l1 = {x[2] for x in CARGAR}
+def controles(d, u, c):
+    full = norm(f'{d["NOMBRE"]} {d["PATERNO"]} {d["MATERNO"]}')
+    ing = d["CODIGO"][:4]
+    hermanas = [x for x in docdup.get((d["ID_TIPODOCUMENTO"], d["NUM_DOCUMENTO"]), []) if x["ID_PERSONA"] != d["ID_PERSONA"]]
+    return {
+        "nombre completo único en Oracle": bool(homon) and full not in homon,
+        "la cuenta lleva nombre y ambos apellidos": set(full.split()) <= set(norm(u.get("display")).split()),
+        "correo no es de otra ficha": not (dueno.get(c, set()) - {d["ID_PERSONA"]}),
+        "correo no propuesto para otro alumno": c not in correos_l1 and c not in dobles,
+        "cuenta habilitada": bool(u.get("enabled")),
+        "creada desde el año de ingreso -1": ing.isdigit() and (u.get("created") or "")[:4] >= str(int(ing) - 1),
+        "sin otra ficha con su documento": not hermanas,
+        "Oracle no trae otro correo con nombre": not (d["CUR"] and not num(d["CUR"]) and d["CUR"].endswith("@upeu.edu.pe")),
+    }
+CARGAR2, FLOR, LAMB, DAVID = [], [], [], []
+for x in CONFIRMAR:
+    d, u, c, o, m = x
+    if m.startswith("solo coincide el nombre"):
+        ck = controles(d, u, c)
+        if all(ck.values()):
+            CARGAR2.append((d, u, c, "nombre exacto + 6 controles", "")); continue
+        FLOR.append((d, u, c, o, m + " — falla: " + ", ".join(k for k, v in ck.items() if not v))); continue
+    if m.startswith("ese correo ya es") or m.startswith("su documento tiene otra ficha"):
+        LAMB.append(x); continue
+    if m.startswith("Oracle ya tiene"):
+        DAVID.append(x); continue
+    FLOR.append(x)
+
 # ── Excel ──
 HDR = ["ID_PERSONA", "ID_TIPODOCUMENTO", "TIPO_DOCUMENTO", "NUM_DOCUMENTO", "CODIGO", "PATERNO", "MATERNO",
        "NOMBRES", "SEDE", "PROGRAMA", "CORREO_INST_ACTUAL_ORACLE"]
@@ -220,7 +257,7 @@ leeme(wb2, [
     (f"Generado el {FECHA}. Ninguno de estos casos se carga en Oracle hasta que se resuelva.", False),
     ("", False),
     ("QUÉ HACER EN CADA HOJA", True),
-    (f"«1 Confirmar» ({len(CONFIRMAR)}): hay una cuenta candidata pero con una duda (columna MOTIVO).", False),
+    (f"«1 Confirmar» ({len(FLOR)}): hay una cuenta candidata pero con una duda (columna MOTIVO).", False),
     ("     Confirmar si la cuenta es de esa persona. Si lo es, se carga en el siguiente envío.", False),
     (f"«2 Sin cuenta» ({len(CREAR)}): no se encontró cuenta en M365 → hay que crearla.", False),
     (f"     ANTES revisar la columna POSIBLE_CUENTA_EN_M365 ({sum(1 for d in CREAR if probable(d))} casos): puede que ya tenga cuenta.", False),
@@ -231,7 +268,7 @@ leeme(wb2, [
     ("", False), PRIV])
 hoja(wb2, "1 Confirmar", HDR + ["CORREO_PROPUESTO", "ORIGEN", "NOMBRE_EN_M365", "MOTIVO"],
      [base(d) + [c, o, (u or {}).get("display", ""), m] for d, u, c, o, m in
-      sorted(CONFIRMAR, key=lambda x: (x[4], x[0]["PATERNO"]))], W)
+      sorted(FLOR, key=lambda x: (x[4], x[0]["PATERNO"]))], W)
 hoja(wb2, "2 Sin cuenta", HDR + ["POSIBLE_CUENTA_EN_M365", "NOMBRE_EN_M365", "NOTA"],
      [base(d) + nota_crear(d) for d in sorted(CREAR, key=lambda d: (d["SEDE"], d["PATERNO"]))], {**W, "POSIBLE_CUENTA_EN_M365": 32, "NOTA": 60})
 hoja(wb2, "3 Sin licencia", HDR + ["CUENTA_EN_M365", "NOMBRE_EN_M365", "CUENTA_HABILITADA", "CREADA", "SITUACION"],
@@ -243,45 +280,84 @@ wb2.save(xl2)
 # ── SQL ──
 def q(s): return "'" + s.replace("'", "''") + "'"
 def guard(cur): return f"NVL(LOWER(TRIM(CORREO_INST)),'#') = {q(cur or '#')}"
-up = [f"-- Carga de CORREO_INST · matriculados de pregrado 2026-2 · generado {FECHA}",
-      f"-- Filas: {len(CARGAR)} (hoja «Cargar en Oracle» de {xl.split('/')[-1]})",
-      "-- Candados por fila: ID_PERSONA + tipo y número de documento, y CORREO_INST igual al valor leído hoy.",
-      "-- NO incluye COMMIT. Al terminar revise el total impreso: si coincide, COMMIT; si no, ROLLBACK.",
-      "SET SERVEROUTPUT ON SIZE UNLIMITED", "SET DEFINE OFF", ""]
-rb = [f"-- ROLLBACK de la carga de CORREO_INST del {FECHA}: devuelve el valor anterior.",
-      "-- Solo revierte filas que sigan teniendo el correo cargado por el script de carga. Sin COMMIT.",
-      "SET SERVEROUTPUT ON SIZE UNLIMITED", "SET DEFINE OFF", ""]
-LOTE = 400
-for i in range(0, len(CARGAR), LOTE):
-    lote = CARGAR[i:i + LOTE]
-    for dst, inv in ((up, False), (rb, True)):
-        dst.append("DECLARE n NUMBER := 0; BEGIN")
-        for d, u, c, o, _ in lote:
-            if not inv:
-                dst.append(f"  UPDATE MOISES.PERSONA_NATURAL SET CORREO_INST = {q(c)} WHERE ID_PERSONA = {int(d['ID_PERSONA'])}"
-                           f" AND ID_TIPODOCUMENTO = {int(d['ID_TIPODOCUMENTO'])} AND NUM_DOCUMENTO = {q(d['NUM_DOCUMENTO'])}"
-                           f" AND {guard(d['CUR'])}; n := n + SQL%ROWCOUNT;")
-            else:
-                prev = "NULL" if not d["CORREO_INST_RAW"] else q(d["CORREO_INST_RAW"])
-                dst.append(f"  UPDATE MOISES.PERSONA_NATURAL SET CORREO_INST = {prev} WHERE ID_PERSONA = {int(d['ID_PERSONA'])}"
-                           f" AND LOWER(TRIM(CORREO_INST)) = {q(c)}; n := n + SQL%ROWCOUNT;")
-        dst.append(f"  DBMS_OUTPUT.PUT_LINE('lote {i // LOTE + 1}: ' || n || ' de {len(lote)} filas');")
-        dst.append("END;"); dst.append("/"); dst.append("")
-# verificación final: cuántas fichas del listado tienen ya el correo esperado
-ver = ["-- VERIFICACIÓN: debe devolver " + str(len(CARGAR))]
-partes = []
-for i in range(0, len(CARGAR), 500):
-    tup = ",".join(f"({int(d['ID_PERSONA'])},{q(c)})" for d, u, c, o, _ in CARGAR[i:i + 500])
-    partes.append(f"(ID_PERSONA, LOWER(TRIM(CORREO_INST))) IN ({tup})")
-ver.append("SELECT COUNT(*) AS FILAS_CON_CORREO_ESPERADO FROM MOISES.PERSONA_NATURAL WHERE\n   " + "\n OR ".join(partes) + ";")
-up += ver + ["", "-- Si FILAS_CON_CORREO_ESPERADO = " + str(len(CARGAR)) + " → COMMIT;   si no → ROLLBACK;"]
-sq = f"{OUT}/UPDATE_CORREO_INST_pregrado_2026-2_{FECHA}.sql"
-rq = f"{OUT}/ROLLBACK_CORREO_INST_pregrado_2026-2_{FECHA}.sql"
-open(sq, "w").write("\n".join(up) + "\n")
-open(rq, "w").write("\n".join(rb) + "\n")
+def gen_sql(rows, tag, xlname):
+    up = [f"-- Carga de CORREO_INST · matriculados de pregrado 2026-2 · {tag} · generado {FECHA}",
+          f"-- Filas: {len(rows)} (hoja «Cargar en Oracle» de {xlname})",
+          "-- Candados por fila: ID_PERSONA + tipo y número de documento, y CORREO_INST igual al valor leído hoy.",
+          "-- NO incluye COMMIT. Al terminar revise el total impreso: si coincide, COMMIT; si no, ROLLBACK.",
+          "SET SERVEROUTPUT ON SIZE UNLIMITED", "SET DEFINE OFF", ""]
+    rb = [f"-- ROLLBACK de la carga de CORREO_INST ({tag}, {FECHA}): devuelve el valor anterior.",
+          "-- Solo revierte filas que sigan teniendo el correo cargado por el script de carga. Sin COMMIT.",
+          "SET SERVEROUTPUT ON SIZE UNLIMITED", "SET DEFINE OFF", ""]
+    LOTE = 400
+    for i in range(0, len(rows), LOTE):
+        lote = rows[i:i + LOTE]
+        for dst, inv in ((up, False), (rb, True)):
+            dst.append("DECLARE n NUMBER := 0; BEGIN")
+            for d, u, c, o, _ in lote:
+                if not inv:
+                    dst.append(f"  UPDATE MOISES.PERSONA_NATURAL SET CORREO_INST = {q(c)} WHERE ID_PERSONA = {int(d['ID_PERSONA'])}"
+                               f" AND ID_TIPODOCUMENTO = {int(d['ID_TIPODOCUMENTO'])} AND NUM_DOCUMENTO = {q(d['NUM_DOCUMENTO'])}"
+                               f" AND {guard(d['CUR'])}; n := n + SQL%ROWCOUNT;")
+                else:
+                    prev = "NULL" if not d["CORREO_INST_RAW"] else q(d["CORREO_INST_RAW"])
+                    dst.append(f"  UPDATE MOISES.PERSONA_NATURAL SET CORREO_INST = {prev} WHERE ID_PERSONA = {int(d['ID_PERSONA'])}"
+                               f" AND LOWER(TRIM(CORREO_INST)) = {q(c)}; n := n + SQL%ROWCOUNT;")
+            dst.append(f"  DBMS_OUTPUT.PUT_LINE('bloque {i // LOTE + 1}: ' || n || ' de {len(lote)} filas');")
+            dst.append("END;"); dst.append("/"); dst.append("")
+    partes = []
+    for i in range(0, len(rows), 500):
+        tup = ",".join(f"({int(d['ID_PERSONA'])},{q(c)})" for d, u, c, o, _ in rows[i:i + 500])
+        partes.append(f"(ID_PERSONA, LOWER(TRIM(CORREO_INST))) IN ({tup})")
+    up += ["-- VERIFICACIÓN: debe devolver " + str(len(rows)),
+           "SELECT COUNT(*) AS FILAS_CON_CORREO_ESPERADO FROM MOISES.PERSONA_NATURAL WHERE\n   " + "\n OR ".join(partes) + ";",
+           "", "-- Si FILAS_CON_CORREO_ESPERADO = " + str(len(rows)) + " → COMMIT;   si no → ROLLBACK;"]
+    suf = "" if tag == "lote 1" else "_" + tag.replace(" ", "")
+    sq = f"{OUT}/UPDATE_CORREO_INST_pregrado_2026-2{suf}_{FECHA}.sql"
+    rq = f"{OUT}/ROLLBACK_CORREO_INST_pregrado_2026-2{suf}_{FECHA}.sql"
+    open(sq, "w").write("\n".join(up) + "\n"); open(rq, "w").write("\n".join(rb) + "\n")
+    return sq, rq
+sq, rq = gen_sql(CARGAR, "lote 1", xl.split("/")[-1])
+
+# lote 2
+wb3 = openpyxl.Workbook()
+leeme(wb3, [
+    ("Correos a cargar en Oracle — LOTE 2 — pregrado 2026-2", True),
+    (f"Generado el {FECHA}. Filas: {len(CARGAR2)}.", False),
+    ("Casos que solo coincidían por nombre y pasan TODOS estos controles, por lo que no requieren revisión manual:", False),
+    ("  • el nombre completo (nombre + 2 apellidos) es único entre todas las personas de Oracle;", False),
+    ("  • la cuenta de M365 lleva el nombre y ambos apellidos;  • está habilitada y se creó desde el año de ingreso;", False),
+    ("  • el correo no es el CORREO_INST de otra ficha ni se propone para otro alumno;", False),
+    ("  • el documento no tiene otra ficha en Oracle y Oracle no trae otro correo con nombre.", False),
+    ("Se carga igual que el lote 1: UPDATE_*_lote2.sql (sin COMMIT, con candados) y ROLLBACK_*_lote2.sql.", False),
+    ("", False), PRIV])
+hoja(wb3, "Cargar en Oracle", HDR + ["CORREO_A_CARGAR", "ORIGEN", "NOMBRE_EN_M365", "CUENTA_HABILITADA", "ULTIMO_ACCESO_M365"],
+     [base(d) + [c, o, u.get("display"), "Sí" if u.get("enabled") else "No", ultimo(u)] for d, u, c, o, _ in
+      sorted(CARGAR2, key=lambda x: (x[0]["SEDE"], x[0]["PATERNO"]))], W)
+xl3 = f"{OUT}/Correos_para_cargar_Oracle_pregrado_2026-2_lote2_{FECHA}.xlsx"
+wb3.save(xl3)
+sq2, rq2 = gen_sql(CARGAR2, "lote 2", xl3.split("/")[-1])
+
+# pendientes que no son de Mesa de Servicios
+wb4 = openpyxl.Workbook()
+leeme(wb4, [
+    ("Pendientes fuera de Mesa de Servicios — correo institucional pregrado 2026-2", True),
+    (f"Generado el {FECHA}.", False),
+    (f"«Fichas duplicadas (LAMB)» ({len(LAMB)}): el correo o el documento ya pertenece a OTRA ficha de Oracle.", False),
+    ("     Casi seguro es la misma persona con dos ID_PERSONA. Unir las fichas es tarea del equipo LAMB.", False),
+    (f"«Decisión reemplazo» ({len(DAVID)}): Oracle tiene un correo con nombre que NO existe en M365.", False),
+    ("     Si se aprueba la regla «reemplazar por el buzón verificado», pasan a un lote de carga.", False),
+    ("", False), PRIV])
+hoja(wb4, "Fichas duplicadas (LAMB)", HDR + ["CORREO_PROPUESTO", "NOMBRE_EN_M365", "MOTIVO"],
+     [base(d) + [c, (u or {}).get("display", ""), m] for d, u, c, o, m in LAMB], W)
+hoja(wb4, "Decisión reemplazo", HDR + ["CORREO_PROPUESTO", "NOMBRE_EN_M365", "MOTIVO"],
+     [base(d) + [c, (u or {}).get("display", ""), m] for d, u, c, o, m in DAVID], W)
+xl4 = f"{OUT}/Correos_pendientes_LAMB_y_decision_pregrado_2026-2_{FECHA}.xlsx"
+wb4.save(xl4)
 
 print(f"pregrado matriculados: {len(ora)} | Oracle ya OK: {YA_OK}")
 print(f"1 cargar: {len(CARGAR)} (DNI@ tal cual: {dni_tal}) | por origen: {dict(Counter(x[3] for x in CARGAR))}")
 print(f"2 confirmar: {len(CONFIRMAR)} | motivos: {dict(Counter(re.sub(r'«.*»|\(.*\)', '', x[4]).strip() for x in CONFIRMAR))}")
 print(f"3 crear: {len(CREAR)} (posible cuenta: {sum(1 for d in CREAR if probable(d))}, Oracle con @upeu inexistente: {sum(1 for d in CREAR if d['CUR'].endswith('@upeu.edu.pe'))}) | 4 sin licencia: {len(SINLIC)} {dict(Counter(x[2].split(':')[0] for x in SINLIC))} | correos dobles: {len(dobles)}")
-print(xl); print(xl2); print(sq); print(rq)
+print(f"lote 2: {len(CARGAR2)} | Flor confirmar: {len(FLOR)} | LAMB: {len(LAMB)} | decisión: {len(DAVID)}")
+print(xl); print(sq); print(rq); print(xl3); print(sq2); print(rq2); print(xl2); print(xl4)
