@@ -12,7 +12,7 @@ para el IGA, Oracle es **solo lectura**.
 SEMESTRE=290 ./generar.sh    # otro semestre
 ```
 
-Deja en `~/Downloads`: `Correos_faltantes_Oracle_pregrado_*.xlsx`, `UPDATE_CORREO_INST_*.sql` (sin COMMIT)
+Deja en `~/Downloads`: `Correos_para_cargar_Oracle_*.xlsx` (lo que se carga, para Ever), `Correos_por_revisar_*.xlsx` (conflictos, para Mesa de Servicios), `UPDATE_CORREO_INST_*.sql` (sin COMMIT)
 y `ROLLBACK_CORREO_INST_*.sql`. Unos 10 minutos (7 son la descarga del tenant). Requiere la VPN.
 
 ## Reglas
