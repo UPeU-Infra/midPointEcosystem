@@ -113,3 +113,44 @@ Usuarios desaparecidos: 0. 14 cambios de ciclo de vida (12 draft→active, 2 arc
 matrícula 2026-2): flujo diario de ~18 h de datos nuevos de Oracle, no atribuible al corte. Testigos 202512090,
 202310412, 201612129 sin cambios (ya estaban corregidos como canarios). Muestra de 8 en la BD de Koha
 (`koha-mysql upeu`): 6 BUJ + 2 BUT, actualizados 00:46–01:09 = lo esperado por MidPoint.
+
+## Alias de escuela en el lookup `d9b1e0c2` (15-oct-2026)
+
+Pedido de Alberto: «arregla los 168 que faltan escuela». En el feed completo eran **628 estudiantes**
+(no 157): el texto de `PRIMARY_SCHOOL` no estaba en el lookup.
+
+**`patch4-lookup-alias-escuela.xml`** (PATCH `add` de 5 filas, aplicado a las 07:22 después de la recon de
+las 06:20; lookup v8→**v9**, 80 filas; backup `~/backups/lookup-escuela-20261015/lookup-d9b1e0c2-v8.xml`).
+La clave es el texto **tras quitar `EP `**. La equivalencia se probó por P-code, no por parecido del nombre:
+
+| Clave nueva | EP | Evidencia | Estudiantes |
+|---|---|---|---|
+| `Educación, Especialidad Primaria y Pedagogía Terapeútica` | EP-EDU-PRI | P20 (= EP-EDU-PRI) | 580 |
+| `Educación: Educación Física` | EP-EDU-EFI | P12 | 33 |
+| `Educación: Especialidad Musical y Artes` | EP-EDU-MUA | P17 | 13 |
+| `Educación: Especialidad de Lingüística y Literatura` | EP-EDU-IES | P97 (VocBench, = un programa de EP-EDU-IES) | 1 |
+| `de Educación: Especialidad Biología y Quimica` | EP-EDU-CIN | alias VocBench existente con «de» | 1 |
+
+El repo del lookup se regeneró desde PROD: tenía 70 filas frente a 75, y una «Psicología»→EP-PSI-FCHE que
+PROD no tiene.
+
+**Consumidores medidos:** Egresados 0 afectados; Trabajadores `TEACHING_PROGRAMS` 146 docentes (solo
+cambia `teachingProgram`, que no consume nada más).
+
+**Simulación** (recompute `preview` de los 774): +628 `academicProgramCode`, +554 asignaciones a EP,
++547 `eduPersonOrgUnitDN`, +110 `teachingProgram`, **0** EP perdidas o cambiadas. **21 personas
+excluidas** porque arrastraban efectos ajenos al alias. En 9 de ellas la cuenta LDAP pasaba a `disabled`
+siendo activas: es el «estado intermedio» de ex-trabajadores tocados por la recon de Trabajadores de las
+06:00, como en el caso 201810596. **Pendiente de investigar; no recomputar a esas personas a mano.**
+Lista: 16763865 200511714 200610300 200711023 201110259 201121347 201511082 201910802 202220315
+202310594 202311642 202312372 202313398 202413952 202511878 40246911 44947277 71921385 76283402
+8710001 9110268.
+
+**Real:** canario de 3 (07:35) + lote de 750 (07:37–07:42), recompute acotado por `inOid` (lista en
+`alias-escuela-lote-753.txt`). Auditoría: LDAP `eduPersonOrgUnitDN` 540/540, `academicProgramCode`
+621/621, `teachingProgram` 97/97 (= simulación), **0** cambios de activación, **0** asignaciones
+borradas. Postgres: 547/547 con la EP esperada (PRI 514, EFI 21, MUA 11, IES 1). Hubo 2 fallos de
+la clase crónica de Koha `secondary_email`. LDAP verificado en .168 y .169 (muestra de 5).
+
+**Sin EP todavía:** 143 estudiantes de carreras sin org EP → borrador
+[`../../architecture/adrs/ADR-067-escuelas-profesionales-nuevas-sin-org.md`](../../architecture/adrs/ADR-067-escuelas-profesionales-nuevas-sin-org.md).
