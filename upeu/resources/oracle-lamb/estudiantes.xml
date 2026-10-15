@@ -746,6 +746,36 @@ return !nuevo</code>
                     <strength>weak</strength>
                     <expression>
                         <script>
+                            <code>def v = (input ?: '').toString().trim().toLowerCase(); v ? v : null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:personalEmail</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <!-- PROGRAM_LEVEL → sb:studyLevel (nivel canónico GRANULAR)
+                     IIA: derivado en el searchScript (columna PROGRAM_LEVEL) desde
+                     DAVID.TIPO_NIVEL_ENSENANZA.NOMBRE + DAVID.ACAD_PROGRAMA_ESTUDIO (NOMBRE para
+                     distinguir doctorado/maestría/segunda-especialidad dentro de 'Posgrado';
+                     CODIGO_SUNEDU2 IS NOT NULL ⇒ pregrado). KEEP DENSE_RANK LAST con la MISMA clave
+                     compuesta que SUNEDU_CODE/FACULTY_NAME → nivel de la carrera PRINCIPAL (matrícula
+                     vigente que termina más tarde, prefiriendo la que tiene P-code).
+                     Valores: pregrado | posgrado | doctorado | segunda-especialidad | diplomatura |
+                     educación contínua | idiomas | cepre | etc. (ya normalizado lowercase).
+                     2026-06-09: REEMPLAZA al antiguo inbound nivel-ensenanza-to-studyLevel que copiaba
+                     NIVEL_ENSENANZA crudo ("Posgrado" sin distinguir maestría/doctorado), lo que rompía
+                     el routing de BR-Estudiante-* y el STUDY_LEVEL de Koha. studyLevel es ahora la ÚNICA
+                     fuente de nivel (single source of truth).
+                     normal: permite multi-programa simultáneo. El shadow de la matrícula vigente prevalece
+                     (todos los shadows del mismo estudiante traen el mismo PROGRAM_LEVEL derivado). -->
+                <ref>ri:PROGRAM_LEVEL</ref>
+                <inbound>
+                    <name>program-level-to-studyLevel</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
                             <code>
 // Normaliza el nivel de estudios a una forma canonica unica (2026-08-10).
 // Antes convivian 17 valores para 11 conceptos porque las dos IIAs aplicaban
@@ -786,36 +816,6 @@ if (r != null) return r
 log.warn('studyLevel: valor no previsto "{}" — se normaliza por defecto', v)
 return k.length() &gt; 1 ? k.substring(0,1).toUpperCase() + k.substring(1) : k.toUpperCase()
 </code>
-                        </script>
-                    </expression>
-                    <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:personalEmail</path>
-                    </target>
-                </inbound>
-            </attribute>
-            <attribute>
-                <!-- PROGRAM_LEVEL → sb:studyLevel (nivel canónico GRANULAR)
-                     IIA: derivado en el searchScript (columna PROGRAM_LEVEL) desde
-                     DAVID.TIPO_NIVEL_ENSENANZA.NOMBRE + DAVID.ACAD_PROGRAMA_ESTUDIO (NOMBRE para
-                     distinguir doctorado/maestría/segunda-especialidad dentro de 'Posgrado';
-                     CODIGO_SUNEDU2 IS NOT NULL ⇒ pregrado). KEEP DENSE_RANK LAST con la MISMA clave
-                     compuesta que SUNEDU_CODE/FACULTY_NAME → nivel de la carrera PRINCIPAL (matrícula
-                     vigente que termina más tarde, prefiriendo la que tiene P-code).
-                     Valores: pregrado | posgrado | doctorado | segunda-especialidad | diplomatura |
-                     educación contínua | idiomas | cepre | etc. (ya normalizado lowercase).
-                     2026-06-09: REEMPLAZA al antiguo inbound nivel-ensenanza-to-studyLevel que copiaba
-                     NIVEL_ENSENANZA crudo ("Posgrado" sin distinguir maestría/doctorado), lo que rompía
-                     el routing de BR-Estudiante-* y el STUDY_LEVEL de Koha. studyLevel es ahora la ÚNICA
-                     fuente de nivel (single source of truth).
-                     normal: permite multi-programa simultáneo. El shadow de la matrícula vigente prevalece
-                     (todos los shadows del mismo estudiante traen el mismo PROGRAM_LEVEL derivado). -->
-                <ref>ri:PROGRAM_LEVEL</ref>
-                <inbound>
-                    <name>program-level-to-studyLevel</name>
-                    <strength>normal</strength>
-                    <expression>
-                        <script>
-                            <code>def v = (input ?: '').toString().trim().toLowerCase(); v ?: null</code>
                         </script>
                     </expression>
                     <target>
@@ -911,18 +911,10 @@ return !nuevo</code>
                      Null-safe: programa sin código asignado → el atributo queda vacío → Koha sin
                      Bsort2 (no error). -->
                 <ref>ri:SUNEDU_CODE</ref>
-                <inbound>
-                    <name>sunedu-code-to-academicProgramSuneduCode</name>
-                    <strength>strong</strength>
-                    <expression>
-                        <script>
-                            <code>def v = (input ?: '').toString().trim(); v ?: null</code>
-                        </script>
-                    </expression>
-                    <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramSuneduCode</path>
-                    </target>
-                </inbound>
+                <!-- RETIRADO del repo el 2026-10-14 para alinearlo con PROD (resource v203): el inbound
+                     `sunedu-code-to-academicProgramSuneduCode` NO existe en PROD (ri:SUNEDU_CODE sin
+                     inbounds). academicProgramSuneduCode lo deriva el template desde
+                     liveProgramSuneduCodeStudent (program-id-to-liveProgramSuneduCodeStudent, id 3365). -->
             </attribute>
             <attribute>
                 <!-- FACULTY_NAME → sb:facultyName (nombre crudo de la facultad)
@@ -1216,10 +1208,49 @@ return nuevo</code>
                 <inbound>
                     <name>primary-level-to-studyLevel</name>
                     <description>Regla 2026-10-14: sale de la matricula que gobierna (PREGRADO antes que cualquier otro nivel; dentro del nivel, la EN CURSO; desempate FECHA_FIN). Un alumno con Pregrado + Idiomas/Posgrado/CEPRE es de pregrado. Sustituye a program-level-to-studyLevel.</description>
-                    <strength>normal</strength>
+                    <strength>strong</strength>
                     <expression>
                         <script>
-                            <code>def v = (input ?: '').toString().trim().toLowerCase(); v ?: null</code>
+                            <code>
+// Normaliza el nivel de estudios a una forma canonica unica (2026-08-10).
+// Antes convivian 17 valores para 11 conceptos porque las dos IIAs aplicaban
+// criterios opuestos: Estudiantes hacia .toLowerCase() ("pregrado") y Egresados
+// no transformaba nada ("Pregrado"). Los reportes agrupaban por dos valores.
+// Criterio: mayuscula inicial. Excepciones deliberadas:
+//   - CEPRE en mayusculas: es un acronimo (Centro Preuniversitario), no una palabra.
+//   - "Segunda Especialidad": se retira el guion del slug 'segunda-especialidad'.
+//   - "de" en minuscula en "Conservatorio de Musica".
+// Se CORRIGE la grafia de la fuente Oracle: "contínua" es incorrecto, se
+// escribe "continua" (decision de Alberto, 2026-08-10).
+// Un valor no previsto se devuelve con mayuscula inicial simple, nunca se descarta.
+if (input == null) return null
+def v = input.toString().trim()
+if (!v) return null
+def k = v.toLowerCase()
+def canon = [
+    'pregrado'                : 'Pregrado',
+    'posgrado'                : 'Posgrado',
+    'doctorado'               : 'Doctorado',
+    'diplomatura'             : 'Diplomatura',
+    'tesis'                   : 'Tesis',
+    'idiomas'                 : 'Idiomas',
+    'tecnica'                 : 'Técnica',
+    'técnica'                 : 'Técnica',
+    'cepre'                   : 'CEPRE',
+    'segunda-especialidad'    : 'Segunda Especialidad',
+    'segunda especialidad'    : 'Segunda Especialidad',
+    'educacion continua'      : 'Educación Continua',
+    'educación contínua'      : 'Educación Continua',
+    'educación continua'      : 'Educación Continua',
+    'educacion contínua'      : 'Educación Continua',
+    'conservatorio de musica' : 'Conservatorio de Música',
+    'conservatorio de música' : 'Conservatorio de Música'
+]
+def r = canon[k]
+if (r != null) return r
+log.warn('studyLevel: valor no previsto "{}" — se normaliza por defecto', v)
+return k.length() &gt; 1 ? k.substring(0,1).toUpperCase() + k.substring(1) : k.toUpperCase()
+</code>
                         </script>
                     </expression>
                     <target>

@@ -24,6 +24,7 @@ sede: valor desconocido → vacío (antes `getOrDefault(v,'LIMA')`).
 |---|---|---|
 | 1 | `patch1-schemaScript.xml` → test connection (regenera el `<schema>` con `PRIMARY_*`) | aplicado |
 | 2 | `patch2-search-and-inbounds.xml`: `searchScript` con columnas `PRIMARY_*` (las viejas no cambian), 5 atributos nuevos con inbounds gateados, condición inversa en los 7 inbounds viejos | aplicado |
+| 2b | `patch2b-studyLevel.xml`: el inbound nuevo de nivel copiaba el del repo (minúsculas, `normal`); PROD usa `strong` + normalización «Pregrado». Cazado en la simulación del testigo (`Pregrado`→`pregrado`) | aplicado |
 | 3 | Corte: `patch3-corte.xml` | **pendiente de aprobación** |
 
 El GATE (condición Groovy) activa la lógica nueva solo en **simulaciones** (`TaskExecutionMode`
@@ -35,3 +36,9 @@ error, comportamiento de producción.
 1. `PATCH patch3-corte.xml` (quita la condición de los inbounds nuevos y archiva los viejos).
 2. Verificar `<schema>`, test connection, `schemaHandling`.
 3. Ejecutar `recon-oracle-lamb-estudiantes-daily` (run now) **o** esperar a la de las 06:20.
+
+## Deriva repo↔PROD corregida en el repo (sin efecto en PROD)
+
+- `program-level-to-studyLevel`: PROD `strong` + normalización canónica (2026-08-10); el repo tenía `normal` + minúsculas.
+- `correo-personal-to-personalEmail`: el repo tenía pegado el código de `studyLevel`.
+- `sunedu-code-to-academicProgramSuneduCode`: no existe en PROD; retirado del repo.
