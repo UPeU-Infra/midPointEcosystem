@@ -93,3 +93,23 @@ los nuevos, y recon. Los valores ya escritos vuelven con esa recon.
 - `program-level-to-studyLevel`: PROD `strong` + normalización canónica (2026-08-10); el repo tenía `normal` + minúsculas.
 - `correo-personal-to-personalEmail`: el repo tenía pegado el código de `studyLevel`.
 - `sunedu-code-to-academicProgramSuneduCode`: no existe en PROD; retirado del repo.
+
+## Verificación del corte (15-oct-2026)
+
+Recon `recon-oracle-lamb-estudiantes-daily` lanzada a mano por Alberto: **00:39 → 01:34 Lima (55 min)**,
+30.038 éxitos y **36 fallos** (los mismos 36 crónicos de la recon del 14-oct). Comparación con la foto previa
+(`~/backups/estudiantes-campus-20261014/snap_antes.psv` vs `snap_despues.psv`, Mac):
+
+| Ítem | Simulado | Real |
+|---|---|---|
+| `campusStudent` LIMA→JULIACA / LIMA→TARAPOTO | 1.062 / 387 | **1.060 / 386** |
+| ISTAT pierden el LIMA inventado | 31 | **31** |
+| Koha `library_id` BUL→BUJ / BUL→BUT | 1.064 / 385 | **1.062 / 384** |
+| Asignaciones nuevas a EP | 1.762 | **1.759** |
+| EP perdidas / cambiadas | 0 / 0 | **0 / 0** |
+| Facultad / nivel | 84 / 39 | 86 / 40 |
+
+Usuarios desaparecidos: 0. 14 cambios de ciclo de vida (12 draft→active, 2 archived→active; 11 de ellos con
+matrícula 2026-2): flujo diario de ~18 h de datos nuevos de Oracle, no atribuible al corte. Testigos 202512090,
+202310412, 201612129 sin cambios (ya estaban corregidos como canarios). Muestra de 8 en la BD de Koha
+(`koha-mysql upeu`): 6 BUJ + 2 BUT, actualizados 00:46–01:09 = lo esperado por MidPoint.
