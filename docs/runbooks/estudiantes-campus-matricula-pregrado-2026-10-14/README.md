@@ -25,7 +25,7 @@ sede: valor desconocido → vacío (antes `getOrDefault(v,'LIMA')`).
 | 1 | `patch1-schemaScript.xml` → test connection (regenera el `<schema>` con `PRIMARY_*`) | aplicado |
 | 2 | `patch2-search-and-inbounds.xml`: `searchScript` con columnas `PRIMARY_*` (las viejas no cambian), 5 atributos nuevos con inbounds gateados, condición inversa en los 7 inbounds viejos | aplicado |
 | 2b | `patch2b-studyLevel.xml`: el inbound nuevo de nivel copiaba el del repo (minúsculas, `normal`); PROD usa `strong` + normalización «Pregrado». Cazado en la simulación del testigo (`Pregrado`→`pregrado`) | aplicado |
-| 3 | Corte: `patch3-corte.xml` | **pendiente de aprobación** |
+| 3 | Corte: `patch3-corte.xml` | **aplicado el 15-oct-2026 ~00:35 Lima por Alberto** (PATCH manual, HTTP 204) → resource **v205** |
 
 El GATE (condición Groovy) activa la lógica nueva solo en **simulaciones** (`TaskExecutionMode`
 no persistente) y para la lista de **canarios**; en producción, para el resto, sigue la vieja. Ante
@@ -62,7 +62,19 @@ vacía 21).
 y Koha (`MODIFY SUCCESS`, `library_id` BUJ/BUT/BUJ). **Control negativo** (`202311335`, no canario,
 la simulación le cambiaba campus/EP/Koha): `import` real → ficha intacta. El gate funciona.
 
-## Corte (cuando se apruebe)
+## Estado del corte (15-oct-2026)
+
+- Aprobado por Alberto el 14-oct 20:58. El PATCH desde la sesión del agente lo bloqueó el sistema de
+  permisos; **Alberto lo aplicó él mismo ~00:35 del 15-oct** (HTTP 204). PROD **v205**: los 7 `primary-*`
+  activos sin condición; los 7 viejos en `archived` **conservando su condición** (rollback más simple).
+  Esquema con las 5 `PRIMARY_*`.
+- **No se lanzó recon manual**: el cambio lo procesa `recon-oracle-lamb-estudiantes-daily` de las 06:20.
+- **PENDIENTE: verificar tras la recon de las 06:20** contra la simulación (`campusStudent` ~1.451 cambios +
+  31 ISTAT vacíos; +~1.762 EP; 0 EP perdidas/cambiadas; fallos ≈ 36) y el testigo `202512090` + muestra
+  en LDAP (.168/.169) y Koha. Foto previa del 14-oct 20:59 (30.051 usuarios) en la sesión del agente.
+- Repo alineado a v205 en el mismo día.
+
+## Procedimiento de corte (referencia)
 
 1. `PATCH patch3-corte.xml` (zero-set de la condición de los 7 inbounds nuevos; los 7 viejos a `archived`).
 2. Verificar: `<schema>` 28 atributos, test connection 15/15, ids de inbounds, `lifecycleState`.

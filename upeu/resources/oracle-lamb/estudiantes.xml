@@ -546,6 +546,7 @@ return 'student'
                      del tesauro. Gobierna la org del programa (bloque D6 del template). -->
                 <inbound>
                     <name>school-name-to-academicProgramCode</name>
+                    <lifecycleState>archived</lifecycleState><!-- CORTE 2026-10-15 ~00:35 (PROD v205): sustituido por primary-*; se conserva para rollback -->
                     <strength>strong</strength>
                     <expression>
                         <function>
@@ -592,6 +593,7 @@ return !nuevo</code>
                      weak: para usuarios con doble afiliación, la unidad del trabajador (si existe) toma precedencia. -->
                 <inbound>
                     <name>school-name-to-organizationalUnit</name>
+                    <lifecycleState>archived</lifecycleState><!-- CORTE 2026-10-15 ~00:35 (PROD v205): sustituido por primary-*; se conserva para rollback -->
                     <strength>weak</strength>
                     <expression>
                         <script>
@@ -634,6 +636,7 @@ return !nuevo</code>
                 <ref>ri:SEDE_NOMBRE</ref>
                 <inbound>
                     <name>sede-nombre-to-locality</name>
+                    <lifecycleState>archived</lifecycleState><!-- CORTE 2026-10-15 ~00:35 (PROD v205): sustituido por primary-*; se conserva para rollback -->
                     <strength>weak</strength>
                     <expression>
                         <script>
@@ -676,6 +679,7 @@ return !nuevo</code>
                      NO toca locality (lugar físico, IIA distinta, lo usan LDAP/Entra/M365). -->
                 <inbound>
                     <name>sede-nombre-to-campusStudent</name>
+                    <lifecycleState>archived</lifecycleState><!-- CORTE 2026-10-15 ~00:35 (PROD v205): sustituido por primary-*; se conserva para rollback -->
                     <strength>strong</strength>
                     <expression>
                         <script>
@@ -773,6 +777,7 @@ return !nuevo</code>
                 <ref>ri:PROGRAM_LEVEL</ref>
                 <inbound>
                     <name>program-level-to-studyLevel</name>
+                    <lifecycleState>archived</lifecycleState><!-- CORTE 2026-10-15 ~00:35 (PROD v205): sustituido por primary-*; se conserva para rollback -->
                     <strength>strong</strength>
                     <expression>
                         <script>
@@ -856,6 +861,7 @@ return !nuevo</code>
                 <ref>ri:TIPO_ALUMNO</ref>
                 <inbound>
                     <name>tipo-alumno-to-studentEnrollmentType</name>
+                    <lifecycleState>archived</lifecycleState><!-- CORTE 2026-10-15 ~00:35 (PROD v205): sustituido por primary-*; se conserva para rollback -->
                     <strength>strong</strength>
                     <expression>
                         <script>
@@ -930,6 +936,7 @@ return !nuevo</code>
                 <ref>ri:FACULTY_NAME</ref>
                 <inbound>
                     <name>faculty-name-to-facultyName</name>
+                    <lifecycleState>archived</lifecycleState><!-- CORTE 2026-10-15 ~00:35 (PROD v205): sustituido por primary-*; se conserva para rollback -->
                     <strength>strong</strength>
                     <expression>
                         <script>
@@ -995,9 +1002,10 @@ return !nuevo</code>
                  de Pregrado (fin 27-nov) y gana. Las columnas PRIMARY_* del searchScript aplican la
                  regla: PREGRADO primero; dentro del nivel, la matricula EN CURSO; desempate FECHA_FIN.
                  Las columnas viejas NO cambian de semantica (0 diferencias en 30.074 filas).
-                 Despliegue escalonado: los inbounds de abajo solo actuan en simulacion y canarios
-                 (GATE); los viejos, con la condicion inversa. Corte: docs/runbooks/
-                 estudiantes-campus-matricula-pregrado-2026-10-14/.
+                 Despliegue escalonado (gate simulacion + 3 canarios) del 14-oct; CORTE aplicado por
+                 Alberto el 15-oct ~00:35 (PATCH manual patch3-corte.xml, PROD v205): estos inbounds
+                 activos sin condicion; los 7 viejos en archived (conservan su condicion, para
+                 rollback). Runbook: docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14/.
                  ================================================================================ -->
             <attribute>
                 <ref>ri:PRIMARY_SEDE</ref>
@@ -1019,30 +1027,6 @@ return r</code>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:campusStudent</path>
                     </target>
-                    <condition>
-                        <!-- GATE escalonado 2026-10-14: logica NUEVA: simulaciones + canarios; en el corte se quita esta condicion -->
-                        <script>
-                            <code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
-// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
-// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
-// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
-// Ante cualquier error -> false (comportamiento de produccion de siempre).
-def canarios = ['202512090', '202310412', '201612129'] as Set
-def nuevo = false
-try {
-    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
-    if (cod != null &amp;&amp; canarios.contains(cod)) {
-        nuevo = true
-    } else {
-        def m = midpoint.getCurrentTask()?.getExecutionMode()
-        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
-    }
-} catch (Exception ex) {
-    nuevo = false
-}
-return nuevo</code>
-                        </script>
-                    </condition>
                 </inbound>
                 <inbound>
                     <name>primary-sede-to-locality</name>
@@ -1062,30 +1046,6 @@ return r</code>
                     <target>
                         <path>locality</path>
                     </target>
-                    <condition>
-                        <!-- GATE escalonado 2026-10-14: logica NUEVA: simulaciones + canarios; en el corte se quita esta condicion -->
-                        <script>
-                            <code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
-// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
-// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
-// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
-// Ante cualquier error -> false (comportamiento de produccion de siempre).
-def canarios = ['202512090', '202310412', '201612129'] as Set
-def nuevo = false
-try {
-    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
-    if (cod != null &amp;&amp; canarios.contains(cod)) {
-        nuevo = true
-    } else {
-        def m = midpoint.getCurrentTask()?.getExecutionMode()
-        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
-    }
-} catch (Exception ex) {
-    nuevo = false
-}
-return nuevo</code>
-                        </script>
-                    </condition>
                 </inbound>
             </attribute>
             <attribute>
@@ -1100,30 +1060,6 @@ return nuevo</code>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramCode</path>
                     </target>
-                    <condition>
-                        <!-- GATE escalonado 2026-10-14: logica NUEVA: simulaciones + canarios; en el corte se quita esta condicion -->
-                        <script>
-                            <code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
-// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
-// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
-// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
-// Ante cualquier error -> false (comportamiento de produccion de siempre).
-def canarios = ['202512090', '202310412', '201612129'] as Set
-def nuevo = false
-try {
-    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
-    if (cod != null &amp;&amp; canarios.contains(cod)) {
-        nuevo = true
-    } else {
-        def m = midpoint.getCurrentTask()?.getExecutionMode()
-        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
-    }
-} catch (Exception ex) {
-    nuevo = false
-}
-return nuevo</code>
-                        </script>
-                    </condition>
                 </inbound>
                 <inbound>
                     <name>primary-school-to-organizationalUnit</name>
@@ -1137,30 +1073,6 @@ return nuevo</code>
                     <target>
                         <path>organizationalUnit</path>
                     </target>
-                    <condition>
-                        <!-- GATE escalonado 2026-10-14: logica NUEVA: simulaciones + canarios; en el corte se quita esta condicion -->
-                        <script>
-                            <code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
-// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
-// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
-// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
-// Ante cualquier error -> false (comportamiento de produccion de siempre).
-def canarios = ['202512090', '202310412', '201612129'] as Set
-def nuevo = false
-try {
-    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
-    if (cod != null &amp;&amp; canarios.contains(cod)) {
-        nuevo = true
-    } else {
-        def m = midpoint.getCurrentTask()?.getExecutionMode()
-        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
-    }
-} catch (Exception ex) {
-    nuevo = false
-}
-return nuevo</code>
-                        </script>
-                    </condition>
                 </inbound>
             </attribute>
             <attribute>
@@ -1177,30 +1089,6 @@ return nuevo</code>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:facultyName</path>
                     </target>
-                    <condition>
-                        <!-- GATE escalonado 2026-10-14: logica NUEVA: simulaciones + canarios; en el corte se quita esta condicion -->
-                        <script>
-                            <code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
-// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
-// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
-// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
-// Ante cualquier error -> false (comportamiento de produccion de siempre).
-def canarios = ['202512090', '202310412', '201612129'] as Set
-def nuevo = false
-try {
-    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
-    if (cod != null &amp;&amp; canarios.contains(cod)) {
-        nuevo = true
-    } else {
-        def m = midpoint.getCurrentTask()?.getExecutionMode()
-        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
-    }
-} catch (Exception ex) {
-    nuevo = false
-}
-return nuevo</code>
-                        </script>
-                    </condition>
                 </inbound>
             </attribute>
             <attribute>
@@ -1256,30 +1144,6 @@ return k.length() &gt; 1 ? k.substring(0,1).toUpperCase() + k.substring(1) : k.t
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:studyLevel</path>
                     </target>
-                    <condition>
-                        <!-- GATE escalonado 2026-10-14: logica NUEVA: simulaciones + canarios; en el corte se quita esta condicion -->
-                        <script>
-                            <code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
-// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
-// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
-// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
-// Ante cualquier error -> false (comportamiento de produccion de siempre).
-def canarios = ['202512090', '202310412', '201612129'] as Set
-def nuevo = false
-try {
-    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
-    if (cod != null &amp;&amp; canarios.contains(cod)) {
-        nuevo = true
-    } else {
-        def m = midpoint.getCurrentTask()?.getExecutionMode()
-        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
-    }
-} catch (Exception ex) {
-    nuevo = false
-}
-return nuevo</code>
-                        </script>
-                    </condition>
                 </inbound>
             </attribute>
             <attribute>
@@ -1296,30 +1160,6 @@ return nuevo</code>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:studentEnrollmentType</path>
                     </target>
-                    <condition>
-                        <!-- GATE escalonado 2026-10-14: logica NUEVA: simulaciones + canarios; en el corte se quita esta condicion -->
-                        <script>
-                            <code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
-// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
-// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
-// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
-// Ante cualquier error -> false (comportamiento de produccion de siempre).
-def canarios = ['202512090', '202310412', '201612129'] as Set
-def nuevo = false
-try {
-    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
-    if (cod != null &amp;&amp; canarios.contains(cod)) {
-        nuevo = true
-    } else {
-        def m = midpoint.getCurrentTask()?.getExecutionMode()
-        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
-    }
-} catch (Exception ex) {
-    nuevo = false
-}
-return nuevo</code>
-                        </script>
-                    </condition>
                 </inbound>
             </attribute>
             <correlation>
