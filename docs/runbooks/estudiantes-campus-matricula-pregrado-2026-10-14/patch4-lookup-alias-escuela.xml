@@ -1,0 +1,13 @@
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <!-- 2026-10-15: alias de escuela que traen PRIMARY_SCHOOL / TEACHING_PROGRAMS y no resolvian.
+       Evidencia por P-code (CODIGO_SUNEDU2 / program-pxx-byid): Primaria P20, Ed. Fisica P12, Musica P17,
+       Linguistica y Literatura P97 (= un programa de EP-EDU-IES); Biologia y Quimica = alias VocBench de EP-EDU-CIN con "de". -->
+  <itemDelta><t:modificationType>add</t:modificationType><t:path>c:row</t:path><t:value xsi:type="c:LookupTableRowType"><c:key>Educación, Especialidad Primaria y Pedagogía Terapeútica</c:key><c:value>http://upeu.edu.pe/sys/programas/programa/educacion-primaria</c:value><c:label>EP-EDU-PRI</c:label></t:value></itemDelta>
+  <itemDelta><t:modificationType>add</t:modificationType><t:path>c:row</t:path><t:value xsi:type="c:LookupTableRowType"><c:key>Educación: Educación Física</c:key><c:value>http://upeu.edu.pe/sys/programas/programa/educacion-educacion-fisica</c:value><c:label>EP-EDU-EFI</c:label></t:value></itemDelta>
+  <itemDelta><t:modificationType>add</t:modificationType><t:path>c:row</t:path><t:value xsi:type="c:LookupTableRowType"><c:key>Educación: Especialidad Musical y Artes</c:key><c:value>http://upeu.edu.pe/sys/programas/programa/educacion-musica-artes</c:value><c:label>EP-EDU-MUA</c:label></t:value></itemDelta>
+  <itemDelta><t:modificationType>add</t:modificationType><t:path>c:row</t:path><t:value xsi:type="c:LookupTableRowType"><c:key>Educación: Especialidad de Lingüística y Literatura</c:key><c:value>http://upeu.edu.pe/sys/programas/programa/educacion-ingles-espanol</c:value><c:label>EP-EDU-IES</c:label></t:value></itemDelta>
+  <itemDelta><t:modificationType>add</t:modificationType><t:path>c:row</t:path><t:value xsi:type="c:LookupTableRowType"><c:key>de Educación: Especialidad Biología y Quimica</c:key><c:value>http://upeu.edu.pe/sys/programas/programa/educacion-ciencias-naturales</c:value><c:label>EP-EDU-CIN</c:label></t:value></itemDelta>
+</objectModification>

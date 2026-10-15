@@ -16,8 +16,13 @@
   Usado por: FunctionLibrary "sb-program-resolver" (funcion resolveProgramUri).
   El label de cada row guarda el notation EP-XXX para inspeccion visual.
 
-  Total: 70 rows | 23 programas distintos.
-  Generado: 2026-05-15 desde VocBench Tesauro_Institucional_UPeU.
+  Total: 80 rows. Generado: 2026-05-15 desde VocBench Tesauro_Institucional_UPeU.
+  2026-10-15: regenerado desde PROD (v8, 75 rows: el repo tenia 70 y una fila "Psicologia"->EP-PSI-FCHE
+  que PROD no tiene) + 5 alias de escuela que traia el feed sin resolver (evidencia por P-code:
+  Primaria P20, Ed. Fisica P12, Musica P17, Linguistica y Literatura P97 = programa de EP-EDU-IES,
+  Biologia y Quimica = alias VocBench de EP-EDU-CIN con "de"). La clave es el texto TRAS quitar "EP ".
+  Consumidores: Estudiantes (PRIMARY_SCHOOL), Egresados (ESCUELA_PROFESIONAL), Trabajadores
+  (TEACHING_PROGRAMS). Runbook: docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14/
 -->
 <lookupTable xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
              oid="d9b1e0c2-e036-4c6a-9753-c732a83bbf0a">
@@ -74,6 +79,11 @@
     <label>EP-CON</label>
   </row>
   <row>
+    <key>Contabilidad y Gestion Tributaria y Aduanera</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria</value>
+    <label>EP-CON</label>
+  </row>
+  <row>
     <key>Contabilidad y Gestión Tributaria</key>
     <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria</value>
     <label>EP-CON</label>
@@ -82,6 +92,15 @@
     <key>Contabilidad, Gestión Tributaria y Aduanera</key>
     <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria</value>
     <label>EP-CON</label>
+  </row>
+  <row>
+    <key>de Contabilidad y Gestion Tributaria</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/contabilidad-gestion-tributaria</value>
+    <label>EP-CON</label>
+  </row>
+  <row>
+    <key>Derecho</key>
+    <label>EP-DER</label>
   </row>
   <row>
     <key>Educación, Especialidad Ciencias Naturales y Tecnología</key>
@@ -244,6 +263,18 @@
     <label>EP-IIE</label>
   </row>
   <row>
+    <key>Ingeniería Industrial</key>
+    <label>EP-III</label>
+  </row>
+  <row>
+    <key>Ingeniería de Software</key>
+    <label>EP-ISW</label>
+  </row>
+  <row>
+    <key>Ingeniería de software</key>
+    <label>EP-ISW</label>
+  </row>
+  <row>
     <key>MEDICINA HUMANA</key>
     <value>http://upeu.edu.pe/sys/programas/c_353ae8f7</value>
     <label>EP-MED</label>
@@ -287,11 +318,6 @@
     <key>Nutrición Vegetariana</key>
     <value>http://upeu.edu.pe/sys/programas/programa/nutricion-humana</value>
     <label>EP-NUT</label>
-  </row>
-  <row>
-    <key>Psicología</key>
-    <value>http://upeu.edu.pe/sys/programas/programa/psicologia-fche</value>
-    <label>EP-PSI-FCHE</label>
   </row>
   <row>
     <key>Psicología (FCHE)</key>
@@ -372,5 +398,31 @@
     <key>Teología-Mención: Salud Pública</key>
     <value>http://upeu.edu.pe/sys/programas/programa/teologia</value>
     <label>EP-TEO</label>
+  </row>
+  <!-- 2026-10-15: alias de escuela (ver cabecera) -->
+  <row>
+    <key>Educación, Especialidad Primaria y Pedagogía Terapeútica</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-primaria</value>
+    <label>EP-EDU-PRI</label>
+  </row>
+  <row>
+    <key>Educación: Educación Física</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-educacion-fisica</value>
+    <label>EP-EDU-EFI</label>
+  </row>
+  <row>
+    <key>Educación: Especialidad Musical y Artes</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-musica-artes</value>
+    <label>EP-EDU-MUA</label>
+  </row>
+  <row>
+    <key>Educación: Especialidad de Lingüística y Literatura</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-ingles-espanol</value>
+    <label>EP-EDU-IES</label>
+  </row>
+  <row>
+    <key>de Educación: Especialidad Biología y Quimica</key>
+    <value>http://upeu.edu.pe/sys/programas/programa/educacion-ciencias-naturales</value>
+    <label>EP-EDU-CIN</label>
   </row>
 </lookupTable>
