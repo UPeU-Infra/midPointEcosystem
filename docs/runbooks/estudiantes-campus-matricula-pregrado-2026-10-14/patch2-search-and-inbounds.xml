@@ -1,0 +1,338 @@
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+    xmlns:sb="urn:sciback:midpoint:person"
+    xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3"
+    xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">
+  <itemDelta>
+    <t:modificationType>replace</t:modificationType>
+    <t:path>c:connectorConfiguration/icfc:configurationProperties/cfg:searchScript</t:path>
+    <t:value>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseSelect = 'SELECT pna.CODIGO, p.ID_PERSONA AS ID_PERSONA, p.NOMBRE, p.PATERNO, p.MATERNO, pn.CORREO_INST AS CORREO_UPEU, pn.CORREO AS CORREO_PERSONAL, pn.CELULAR, pn.FEC_NACIMIENTO, pn.SEXO AS CODIGO_SEXO, pn.NUM_DOCUMENTO, pn.ID_TIPODOCUMENTO AS TIPO_DOC, pn.FOTO, ag.STUDENT_CYCLE, ag.PROGRAM_CODES, ag.SCHOOL_NAME, ag.SEDE_NOMBRE, ag.DATE_EXPIRY, ag.NIVEL_ENSENANZA, ag.SUNEDU_CODE, ag.FACULTY_NAME, ag.PROGRAM_LEVEL, ag.TIPO_ALUMNO, ag.PRIMARY_SEDE, ag.PRIMARY_SCHOOL, ag.PRIMARY_FACULTY, ag.PRIMARY_LEVEL, ag.PRIMARY_TIPO_ALUMNO FROM MOISES.PERSONA p INNER JOIN MOISES.PERSONA_NATURAL pn ON pn.ID_PERSONA = p.ID_PERSONA INNER JOIN MOISES.PERSONA_NATURAL_ALUMNO pna ON pna.ID_PERSONA = p.ID_PERSONA INNER JOIN ( SELECT aac.ID_PERSONA, LISTAGG(apc.CICLO, \',\') WITHIN GROUP (ORDER BY apc.CICLO) AS STUDENT_CYCLE, LISTAGG(TO_CHAR(asp.ID_PROGRAMA_ESTUDIO), \',\') WITHIN GROUP (ORDER BY asp.ID_PROGRAMA_ESTUDIO) AS PROGRAM_CODES, MAX(oa.NOMBRE) KEEP (DENSE_RANK LAST ORDER BY amd.FECHA_FIN NULLS FIRST) AS SCHOOL_NAME, MAX(os.NOMBRE) KEEP (DENSE_RANK LAST ORDER BY amd.FECHA_FIN NULLS FIRST) AS SEDE_NOMBRE, TO_CHAR(MAX(amd.FECHA_FIN), \'YYYY-MM-DD\') AS DATE_EXPIRY, MAX(tne.NOMBRE) KEEP (DENSE_RANK LAST ORDER BY amd.FECHA_FIN NULLS FIRST) AS NIVEL_ENSENANZA, MAX(ape.CODIGO_SUNEDU2) KEEP (DENSE_RANK LAST ORDER BY (CASE WHEN ape.CODIGO_SUNEDU2 IS NOT NULL THEN 1 ELSE 0 END), amd.FECHA_FIN NULLS FIRST) AS SUNEDU_CODE, MAX(oafac.NOMBRE) KEEP (DENSE_RANK LAST ORDER BY (CASE WHEN ape.CODIGO_SUNEDU2 IS NOT NULL THEN 1 ELSE 0 END), amd.FECHA_FIN NULLS FIRST) AS FACULTY_NAME, MAX(CASE WHEN ape.CODIGO_SUNEDU2 IS NOT NULL THEN \'pregrado\' WHEN tne.NOMBRE = \'Pregrado\' THEN \'pregrado\' WHEN tne.NOMBRE = \'Posgrado\' AND UPPER(ape.NOMBRE) LIKE \'%DOCTORADO%\' THEN \'doctorado\' WHEN tne.NOMBRE = \'Posgrado\' AND UPPER(ape.NOMBRE) LIKE \'%SEGUNDA ESPECIAL%\' THEN \'segunda-especialidad\' WHEN tne.NOMBRE = \'Posgrado\' THEN \'posgrado\' ELSE LOWER(tne.NOMBRE) END) KEEP (DENSE_RANK LAST ORDER BY (CASE WHEN ape.CODIGO_SUNEDU2 IS NOT NULL THEN 1 ELSE 0 END), amd.FECHA_FIN NULLS FIRST) AS PROGRAM_LEVEL, MAX(aac.TIPO_ALUMNO) KEEP (DENSE_RANK LAST ORDER BY amd.FECHA_FIN NULLS FIRST) AS TIPO_ALUMNO, MAX(os.NOMBRE) KEEP (DENSE_RANK LAST ORDER BY (CASE WHEN ape.CODIGO_SUNEDU2 IS NOT NULL OR tne.NOMBRE = \'Pregrado\' THEN 1 ELSE 0 END), (CASE WHEN amd.FECHA_INI &lt;= SYSDATE AND amd.FECHA_FIN &gt;= TRUNC(SYSDATE) THEN 1 ELSE 0 END), amd.FECHA_FIN NULLS FIRST) AS PRIMARY_SEDE, MAX(oa.NOMBRE) KEEP (DENSE_RANK LAST ORDER BY (CASE WHEN ape.CODIGO_SUNEDU2 IS NOT NULL OR tne.NOMBRE = \'Pregrado\' THEN 1 ELSE 0 END), (CASE WHEN amd.FECHA_INI &lt;= SYSDATE AND amd.FECHA_FIN &gt;= TRUNC(SYSDATE) THEN 1 ELSE 0 END), amd.FECHA_FIN NULLS FIRST) AS PRIMARY_SCHOOL, MAX(oafac.NOMBRE) KEEP (DENSE_RANK LAST ORDER BY (CASE WHEN ape.CODIGO_SUNEDU2 IS NOT NULL OR tne.NOMBRE = \'Pregrado\' THEN 1 ELSE 0 END), (CASE WHEN amd.FECHA_INI &lt;= SYSDATE AND amd.FECHA_FIN &gt;= TRUNC(SYSDATE) THEN 1 ELSE 0 END), amd.FECHA_FIN NULLS FIRST) AS PRIMARY_FACULTY, MAX(CASE WHEN ape.CODIGO_SUNEDU2 IS NOT NULL THEN \'pregrado\' WHEN tne.NOMBRE = \'Pregrado\' THEN \'pregrado\' WHEN tne.NOMBRE = \'Posgrado\' AND UPPER(ape.NOMBRE) LIKE \'%DOCTORADO%\' THEN \'doctorado\' WHEN tne.NOMBRE = \'Posgrado\' AND UPPER(ape.NOMBRE) LIKE \'%SEGUNDA ESPECIAL%\' THEN \'segunda-especialidad\' WHEN tne.NOMBRE = \'Posgrado\' THEN \'posgrado\' ELSE LOWER(tne.NOMBRE) END) KEEP (DENSE_RANK LAST ORDER BY (CASE WHEN ape.CODIGO_SUNEDU2 IS NOT NULL OR tne.NOMBRE = \'Pregrado\' THEN 1 ELSE 0 END), (CASE WHEN amd.FECHA_INI &lt;= SYSDATE AND amd.FECHA_FIN &gt;= TRUNC(SYSDATE) THEN 1 ELSE 0 END), amd.FECHA_FIN NULLS FIRST) AS PRIMARY_LEVEL, MAX(aac.TIPO_ALUMNO) KEEP (DENSE_RANK LAST ORDER BY (CASE WHEN ape.CODIGO_SUNEDU2 IS NOT NULL OR tne.NOMBRE = \'Pregrado\' THEN 1 ELSE 0 END), (CASE WHEN amd.FECHA_INI &lt;= SYSDATE AND amd.FECHA_FIN &gt;= TRUNC(SYSDATE) THEN 1 ELSE 0 END), amd.FECHA_FIN NULLS FIRST) AS PRIMARY_TIPO_ALUMNO FROM DAVID.ACAD_ALUMNO_CONTRATO aac INNER JOIN DAVID.ACAD_SEMESTRE_PROGRAMA asp ON asp.ID_SEMESTRE_PROGRAMA = aac.ID_SEMESTRE_PROGRAMA AND ( asp.ID_SEMESTRE IN (267, 279, 283) OR asp.ID_SEMESTRE IN ( SELECT DISTINCT s2.ID_SEMESTRE FROM DAVID.ACAD_SEMESTRE s2 INNER JOIN DAVID.ACAD_SEMESTRE_PROGRAMA asp2 ON asp2.ID_SEMESTRE = s2.ID_SEMESTRE INNER JOIN DAVID.ACAD_PROGRAMA_ESTUDIO ape2 ON ape2.ID_PROGRAMA_ESTUDIO = asp2.ID_PROGRAMA_ESTUDIO INNER JOIN DAVID.TIPO_NIVEL_ENSENANZA tne2 ON tne2.ID_NIVEL_ENSENANZA = ape2.ID_NIVEL_ENSENANZA  INNER JOIN DAVID.ACAD_MODULO_DETALLE amd2 ON amd2.ID_SEMESTRE_PROGRAMA = asp2.ID_SEMESTRE_PROGRAMA WHERE s2.ESTADO = \'1\' AND amd2.FECHA_FIN &gt;= SYSDATE ) ) INNER JOIN DAVID.ACAD_ALUMNO_CONTRATO_CURSO aacc ON aacc.ID_ALUMNO_CONTRATO = aac.ID_ALUMNO_CONTRATO INNER JOIN DAVID.ACAD_CURSO_ALUMNO aca ON aca.ID_CURSO_ALUMNO = aacc.ID_CURSO_ALUMNO AND aca.ESTADO = \'1\' INNER JOIN DAVID.ACAD_PROGRAMA_ESTUDIO ape ON ape.ID_PROGRAMA_ESTUDIO = asp.ID_PROGRAMA_ESTUDIO INNER JOIN DAVID.TIPO_NIVEL_ENSENANZA tne ON tne.ID_NIVEL_ENSENANZA = ape.ID_NIVEL_ENSENANZA INNER JOIN ELISEO.ORG_SEDE_AREA osa ON osa.ID_SEDEAREA = ape.ID_SEDEAREA INNER JOIN ELISEO.ORG_AREA oa ON oa.ID_AREA = osa.ID_AREA LEFT JOIN ELISEO.ORG_AREA oafac ON oafac.ID_AREA = oa.ID_PARENT INNER JOIN ELISEO.ORG_SEDE os ON os.ID_SEDE = osa.ID_SEDE LEFT JOIN DAVID.ACAD_PLAN_PROGRAMA app ON app.ID_PLAN_PROGRAMA = aca.ID_PLAN_PROGRAMA LEFT JOIN DAVID.ACAD_PLAN_CURSO apc ON apc.ID_PLAN = app.ID_PLAN AND apc.ID_CURSO_DETALLE = aca.ID_CURSO_DETALLE LEFT JOIN (SELECT ID_SEMESTRE_PROGRAMA, MIN(FECHA_INICIO) AS FECHA_INI, MAX(FECHA_FIN) AS FECHA_FIN FROM DAVID.ACAD_MODULO_DETALLE GROUP BY ID_SEMESTRE_PROGRAMA) amd ON amd.ID_SEMESTRE_PROGRAMA = asp.ID_SEMESTRE_PROGRAMA GROUP BY aac.ID_PERSONA ) ag ON ag.ID_PERSONA = p.ID_PERSONA WHERE pna.CODIGO IS NOT NULL'; def finalQuery = ''; def params = []; if (query != null &amp;&amp; query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { finalQuery = baseSelect + ' AND pna.CODIGO = ?'; params &lt;&lt; (query.right as String); } else if (query != null) { throw new UnsupportedOperationException('Estudiantes-v4 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } else { finalQuery = baseSelect; }; sql.eachRow(finalQuery, params) { row -&gt; if (row.CODIGO == null || (row.CODIGO as String).trim().isEmpty()) return; def map = [:]; map['__UID__'] = (row.CODIGO as String).trim(); map['__NAME__'] = row.CODIGO as String; map['CODIGO'] = row.CODIGO as String; map['ID_PERSONA'] = row.ID_PERSONA as String; map['NOMBRE'] = row.NOMBRE as String; map['PATERNO'] = row.PATERNO as String; map['MATERNO'] = row.MATERNO as String; map['CORREO_UPEU'] = row.CORREO_UPEU as String; map['CORREO_PERSONAL'] = row.CORREO_PERSONAL as String; map['CELULAR'] = row.CELULAR as String; map['FEC_NACIMIENTO'] = row.FEC_NACIMIENTO?.toString(); map['CODIGO_SEXO'] = row.CODIGO_SEXO as String; map['NUM_DOCUMENTO'] = row.NUM_DOCUMENTO as String; map['TIPO_DOC'] = row.TIPO_DOC?.toString(); map['FOTO'] = row.FOTO as String; if (row.STUDENT_CYCLE != null) { def cyc = (row.STUDENT_CYCLE as String).split(',').collect { it.trim() }.findAll { it }.unique(); if (cyc) map['STUDENT_CYCLE'] = cyc; }; if (row.PROGRAM_CODES != null) { def codes = (row.PROGRAM_CODES as String).split(',').collect { it.trim() }.findAll { it }.unique(); if (codes) map['PROGRAM_CODES'] = codes; }; map['SCHOOL_NAME'] = row.SCHOOL_NAME as String; map['SEDE_NOMBRE'] = row.SEDE_NOMBRE as String; map['DATE_EXPIRY'] = row.DATE_EXPIRY as String; map['NIVEL_ENSENANZA'] = row.NIVEL_ENSENANZA as String; map['SUNEDU_CODE'] = row.SUNEDU_CODE as String; map['FACULTY_NAME'] = row.FACULTY_NAME as String; map['PROGRAM_LEVEL'] = row.PROGRAM_LEVEL as String; map['TIPO_ALUMNO'] = row.TIPO_ALUMNO as String; map['PRIMARY_SEDE'] = row.PRIMARY_SEDE as String; map['PRIMARY_SCHOOL'] = row.PRIMARY_SCHOOL as String; map['PRIMARY_FACULTY'] = row.PRIMARY_FACULTY as String; map['PRIMARY_LEVEL'] = row.PRIMARY_LEVEL as String; map['PRIMARY_TIPO_ALUMNO'] = row.PRIMARY_TIPO_ALUMNO as String; result &lt;&lt; map }; return result</t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>c:schemaHandling/c:objectType[3297]/c:attribute</t:path>
+    <t:value xsi:type="c:ResourceAttributeDefinitionType"><c:ref>ri:PRIMARY_SEDE</c:ref><c:inbound><c:name>primary-sede-to-campusStudent</c:name><c:description>Regla 2026-10-14: sale de la matricula que gobierna (PREGRADO antes que cualquier otro nivel; dentro del nivel, la EN CURSO; desempate FECHA_FIN). Un alumno con Pregrado + Idiomas/Posgrado/CEPRE es de pregrado. Sustituye a sede-nombre-to-campusStudent.</c:description><c:strength>strong</c:strength><c:expression><c:script><c:code>// Sin default: una sede que no este en el diccionario NO se convierte en LIMA (antes
+// getOrDefault(v,'LIMA') la inventaba: 31 alumnos de 'Sede ISTAT' quedaban en Lima).
+def v = (input ?: '').toString().trim()
+if (!v) return null
+def r = ['Sede Lima':'LIMA','Filial Tarapoto':'TARAPOTO','Filial Juliaca':'JULIACA'].get(v)
+if (r == null) log.warn('primary-sede-to-campusStudent: sede no reconocida "{}" -&gt; sin valor (no se inventa)', v)
+return r</c:code></c:script></c:expression><c:target><c:path>extension/sb:campusStudent</c:path></c:target><c:condition><c:script><c:code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
+// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
+// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
+// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
+// Ante cualquier error -> false (comportamiento de produccion de siempre).
+def canarios = ['202512090', '202310412', '201612129'] as Set
+def nuevo = false
+try {
+    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
+    if (cod != null &amp;&amp; canarios.contains(cod)) {
+        nuevo = true
+    } else {
+        def m = midpoint.getCurrentTask()?.getExecutionMode()
+        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
+    }
+} catch (Exception ex) {
+    nuevo = false
+}
+return nuevo</c:code></c:script></c:condition></c:inbound><c:inbound><c:name>primary-sede-to-locality</c:name><c:description>Regla 2026-10-14: sale de la matricula que gobierna (PREGRADO antes que cualquier otro nivel; dentro del nivel, la EN CURSO; desempate FECHA_FIN). Un alumno con Pregrado + Idiomas/Posgrado/CEPRE es de pregrado. Sustituye a sede-nombre-to-locality.</c:description><c:strength>weak</c:strength><c:expression><c:script><c:code>// Sin default: una sede que no este en el diccionario NO se convierte en LIMA (antes
+// getOrDefault(v,'LIMA') la inventaba: 31 alumnos de 'Sede ISTAT' quedaban en Lima).
+def v = (input ?: '').toString().trim()
+if (!v) return null
+def r = ['Sede Lima':'LIMA','Filial Tarapoto':'TARAPOTO','Filial Juliaca':'JULIACA'].get(v)
+if (r == null) log.warn('primary-sede-to-locality: sede no reconocida "{}" -&gt; sin valor (no se inventa)', v)
+return r</c:code></c:script></c:expression><c:target><c:path>locality</c:path></c:target><c:condition><c:script><c:code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
+// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
+// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
+// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
+// Ante cualquier error -> false (comportamiento de produccion de siempre).
+def canarios = ['202512090', '202310412', '201612129'] as Set
+def nuevo = false
+try {
+    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
+    if (cod != null &amp;&amp; canarios.contains(cod)) {
+        nuevo = true
+    } else {
+        def m = midpoint.getCurrentTask()?.getExecutionMode()
+        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
+    }
+} catch (Exception ex) {
+    nuevo = false
+}
+return nuevo</c:code></c:script></c:condition></c:inbound></t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>c:schemaHandling/c:objectType[3297]/c:attribute</t:path>
+    <t:value xsi:type="c:ResourceAttributeDefinitionType"><c:ref>ri:PRIMARY_SCHOOL</c:ref><c:inbound><c:name>primary-school-to-academicProgramCode</c:name><c:description>Regla 2026-10-14: sale de la matricula que gobierna (PREGRADO antes que cualquier otro nivel; dentro del nivel, la EN CURSO; desempate FECHA_FIN). Un alumno con Pregrado + Idiomas/Posgrado/CEPRE es de pregrado. Sustituye a school-name-to-academicProgramCode (mismo resolver por nombre; el EP-XXX gobierna la org del programa, bloque D6).</c:description><c:strength>strong</c:strength><c:expression><c:function><c:libraryRef oid="6a99f9de-5db6-43d5-9b20-0cfd2b79ecf9" type="c:FunctionLibraryType"/><c:name>resolveProgramCode</c:name><c:parameter><c:name>programText</c:name><c:expression><c:path>$input</c:path></c:expression></c:parameter></c:function></c:expression><c:target><c:path>extension/sb:academicProgramCode</c:path></c:target><c:condition><c:script><c:code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
+// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
+// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
+// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
+// Ante cualquier error -> false (comportamiento de produccion de siempre).
+def canarios = ['202512090', '202310412', '201612129'] as Set
+def nuevo = false
+try {
+    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
+    if (cod != null &amp;&amp; canarios.contains(cod)) {
+        nuevo = true
+    } else {
+        def m = midpoint.getCurrentTask()?.getExecutionMode()
+        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
+    }
+} catch (Exception ex) {
+    nuevo = false
+}
+return nuevo</c:code></c:script></c:condition></c:inbound><c:inbound><c:name>primary-school-to-organizationalUnit</c:name><c:description>Regla 2026-10-14: sale de la matricula que gobierna (PREGRADO antes que cualquier otro nivel; dentro del nivel, la EN CURSO; desempate FECHA_FIN). Un alumno con Pregrado + Idiomas/Posgrado/CEPRE es de pregrado. Sustituye a school-name-to-organizationalUnit.</c:description><c:strength>weak</c:strength><c:expression><c:script><c:code>def v = (input ?: '').toString().trim(); v ?: null</c:code></c:script></c:expression><c:target><c:path>organizationalUnit</c:path></c:target><c:condition><c:script><c:code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
+// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
+// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
+// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
+// Ante cualquier error -> false (comportamiento de produccion de siempre).
+def canarios = ['202512090', '202310412', '201612129'] as Set
+def nuevo = false
+try {
+    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
+    if (cod != null &amp;&amp; canarios.contains(cod)) {
+        nuevo = true
+    } else {
+        def m = midpoint.getCurrentTask()?.getExecutionMode()
+        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
+    }
+} catch (Exception ex) {
+    nuevo = false
+}
+return nuevo</c:code></c:script></c:condition></c:inbound></t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>c:schemaHandling/c:objectType[3297]/c:attribute</t:path>
+    <t:value xsi:type="c:ResourceAttributeDefinitionType"><c:ref>ri:PRIMARY_FACULTY</c:ref><c:inbound><c:name>primary-faculty-to-facultyName</c:name><c:description>Regla 2026-10-14: sale de la matricula que gobierna (PREGRADO antes que cualquier otro nivel; dentro del nivel, la EN CURSO; desempate FECHA_FIN). Un alumno con Pregrado + Idiomas/Posgrado/CEPRE es de pregrado. Sustituye a faculty-name-to-facultyName.</c:description><c:strength>strong</c:strength><c:expression><c:script><c:code>def v = (input ?: '').toString().trim(); v ?: null</c:code></c:script></c:expression><c:target><c:path>extension/sb:facultyName</c:path></c:target><c:condition><c:script><c:code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
+// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
+// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
+// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
+// Ante cualquier error -> false (comportamiento de produccion de siempre).
+def canarios = ['202512090', '202310412', '201612129'] as Set
+def nuevo = false
+try {
+    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
+    if (cod != null &amp;&amp; canarios.contains(cod)) {
+        nuevo = true
+    } else {
+        def m = midpoint.getCurrentTask()?.getExecutionMode()
+        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
+    }
+} catch (Exception ex) {
+    nuevo = false
+}
+return nuevo</c:code></c:script></c:condition></c:inbound></t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>c:schemaHandling/c:objectType[3297]/c:attribute</t:path>
+    <t:value xsi:type="c:ResourceAttributeDefinitionType"><c:ref>ri:PRIMARY_LEVEL</c:ref><c:inbound><c:name>primary-level-to-studyLevel</c:name><c:description>Regla 2026-10-14: sale de la matricula que gobierna (PREGRADO antes que cualquier otro nivel; dentro del nivel, la EN CURSO; desempate FECHA_FIN). Un alumno con Pregrado + Idiomas/Posgrado/CEPRE es de pregrado. Sustituye a program-level-to-studyLevel.</c:description><c:strength>normal</c:strength><c:expression><c:script><c:code>def v = (input ?: '').toString().trim().toLowerCase(); v ?: null</c:code></c:script></c:expression><c:target><c:path>extension/sb:studyLevel</c:path></c:target><c:condition><c:script><c:code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
+// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
+// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
+// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
+// Ante cualquier error -> false (comportamiento de produccion de siempre).
+def canarios = ['202512090', '202310412', '201612129'] as Set
+def nuevo = false
+try {
+    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
+    if (cod != null &amp;&amp; canarios.contains(cod)) {
+        nuevo = true
+    } else {
+        def m = midpoint.getCurrentTask()?.getExecutionMode()
+        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
+    }
+} catch (Exception ex) {
+    nuevo = false
+}
+return nuevo</c:code></c:script></c:condition></c:inbound></t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>c:schemaHandling/c:objectType[3297]/c:attribute</t:path>
+    <t:value xsi:type="c:ResourceAttributeDefinitionType"><c:ref>ri:PRIMARY_TIPO_ALUMNO</c:ref><c:inbound><c:name>primary-tipo-alumno-to-studentEnrollmentType</c:name><c:description>Regla 2026-10-14: sale de la matricula que gobierna (PREGRADO antes que cualquier otro nivel; dentro del nivel, la EN CURSO; desempate FECHA_FIN). Un alumno con Pregrado + Idiomas/Posgrado/CEPRE es de pregrado. Sustituye a tipo-alumno-to-studentEnrollmentType.</c:description><c:strength>strong</c:strength><c:expression><c:script><c:code>def t = (input ?: '').toString().trim().toUpperCase(); if (!t) return null; return t == 'RE' ? 'regular' : 'irregular'</c:code></c:script></c:expression><c:target><c:path>extension/sb:studentEnrollmentType</c:path></c:target><c:condition><c:script><c:code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
+// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
+// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
+// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
+// Ante cualquier error -> false (comportamiento de produccion de siempre).
+def canarios = ['202512090', '202310412', '201612129'] as Set
+def nuevo = false
+try {
+    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
+    if (cod != null &amp;&amp; canarios.contains(cod)) {
+        nuevo = true
+    } else {
+        def m = midpoint.getCurrentTask()?.getExecutionMode()
+        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
+    }
+} catch (Exception ex) {
+    nuevo = false
+}
+return nuevo</c:code></c:script></c:condition></c:inbound></t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3330]/c:inbound[3331]/c:condition</t:path>
+    <t:value xsi:type="c:ExpressionType"><c:script><c:code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
+// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
+// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
+// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
+// Ante cualquier error -> false (comportamiento de produccion de siempre).
+def canarios = ['202512090', '202310412', '201612129'] as Set
+def nuevo = false
+try {
+    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
+    if (cod != null &amp;&amp; canarios.contains(cod)) {
+        nuevo = true
+    } else {
+        def m = midpoint.getCurrentTask()?.getExecutionMode()
+        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
+    }
+} catch (Exception ex) {
+    nuevo = false
+}
+return !nuevo</c:code></c:script></t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3330]/c:inbound[3332]/c:condition</t:path>
+    <t:value xsi:type="c:ExpressionType"><c:script><c:code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
+// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
+// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
+// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
+// Ante cualquier error -> false (comportamiento de produccion de siempre).
+def canarios = ['202512090', '202310412', '201612129'] as Set
+def nuevo = false
+try {
+    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
+    if (cod != null &amp;&amp; canarios.contains(cod)) {
+        nuevo = true
+    } else {
+        def m = midpoint.getCurrentTask()?.getExecutionMode()
+        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
+    }
+} catch (Exception ex) {
+    nuevo = false
+}
+return !nuevo</c:code></c:script></t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3324]/c:inbound[3329]/c:condition</t:path>
+    <t:value xsi:type="c:ExpressionType"><c:script><c:code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
+// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
+// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
+// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
+// Ante cualquier error -> false (comportamiento de produccion de siempre).
+def canarios = ['202512090', '202310412', '201612129'] as Set
+def nuevo = false
+try {
+    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
+    if (cod != null &amp;&amp; canarios.contains(cod)) {
+        nuevo = true
+    } else {
+        def m = midpoint.getCurrentTask()?.getExecutionMode()
+        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
+    }
+} catch (Exception ex) {
+    nuevo = false
+}
+return !nuevo</c:code></c:script></t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3324]/c:inbound[3362]/c:condition</t:path>
+    <t:value xsi:type="c:ExpressionType"><c:script><c:code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
+// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
+// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
+// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
+// Ante cualquier error -> false (comportamiento de produccion de siempre).
+def canarios = ['202512090', '202310412', '201612129'] as Set
+def nuevo = false
+try {
+    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
+    if (cod != null &amp;&amp; canarios.contains(cod)) {
+        nuevo = true
+    } else {
+        def m = midpoint.getCurrentTask()?.getExecutionMode()
+        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
+    }
+} catch (Exception ex) {
+    nuevo = false
+}
+return !nuevo</c:code></c:script></t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3343]/c:inbound[3344]/c:condition</t:path>
+    <t:value xsi:type="c:ExpressionType"><c:script><c:code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
+// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
+// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
+// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
+// Ante cualquier error -> false (comportamiento de produccion de siempre).
+def canarios = ['202512090', '202310412', '201612129'] as Set
+def nuevo = false
+try {
+    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
+    if (cod != null &amp;&amp; canarios.contains(cod)) {
+        nuevo = true
+    } else {
+        def m = midpoint.getCurrentTask()?.getExecutionMode()
+        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
+    }
+} catch (Exception ex) {
+    nuevo = false
+}
+return !nuevo</c:code></c:script></t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3337]/c:inbound[3338]/c:condition</t:path>
+    <t:value xsi:type="c:ExpressionType"><c:script><c:code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
+// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
+// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
+// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
+// Ante cualquier error -> false (comportamiento de produccion de siempre).
+def canarios = ['202512090', '202310412', '201612129'] as Set
+def nuevo = false
+try {
+    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
+    if (cod != null &amp;&amp; canarios.contains(cod)) {
+        nuevo = true
+    } else {
+        def m = midpoint.getCurrentTask()?.getExecutionMode()
+        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
+    }
+} catch (Exception ex) {
+    nuevo = false
+}
+return !nuevo</c:code></c:script></t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3339]/c:inbound[3340]/c:condition</t:path>
+    <t:value xsi:type="c:ExpressionType"><c:script><c:code>// GATE de despliegue escalonado (2026-10-14, campus/escuela por matricula de PREGRADO vigente).
+// Logica NUEVA (atributos PRIMARY_*) activa SOLO en: (a) simulaciones (modo de ejecucion no
+// persistente) y (b) los canarios listados. En produccion, para el resto, sigue la logica vieja.
+// Se retira en el corte masivo (ver docs/runbooks/estudiantes-campus-matricula-pregrado-2026-10-14).
+// Ante cualquier error -> false (comportamiento de produccion de siempre).
+def canarios = ['202512090', '202310412', '201612129'] as Set
+def nuevo = false
+try {
+    def cod = basic.getAttributeValue(shadow, 'CODIGO')?.toString()?.trim()
+    if (cod != null &amp;&amp; canarios.contains(cod)) {
+        nuevo = true
+    } else {
+        def m = midpoint.getCurrentTask()?.getExecutionMode()
+        nuevo = (m != null &amp;&amp; !m.isFullyPersistent())
+    }
+} catch (Exception ex) {
+    nuevo = false
+}
+return !nuevo</c:code></c:script></t:value>
+  </itemDelta>
+</objectModification>

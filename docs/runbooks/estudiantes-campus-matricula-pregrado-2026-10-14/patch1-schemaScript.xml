@@ -1,0 +1,14 @@
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+    xmlns:sb="urn:sciback:midpoint:person"
+    xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3"
+    xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">
+  <itemDelta>
+    <t:modificationType>replace</t:modificationType>
+    <t:path>c:connectorConfiguration/icfc:configurationProperties/cfg:schemaScript</t:path>
+    <t:value>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required, boolean multiValued = false -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.setMultiValued(multiValued); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("CODIGO", true)); ocib.addAttributeInfo(ro("ID_PERSONA", false)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("PATERNO", false)); ocib.addAttributeInfo(ro("MATERNO", false)); ocib.addAttributeInfo(ro("CORREO_UPEU", false)); ocib.addAttributeInfo(ro("CELULAR", false)); ocib.addAttributeInfo(ro("FEC_NACIMIENTO", false)); ocib.addAttributeInfo(ro("CODIGO_SEXO", false)); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false)); ocib.addAttributeInfo(ro("TIPO_DOC", false)); ocib.addAttributeInfo(ro("FOTO", false)); ocib.addAttributeInfo(ro("STUDENT_CYCLE", false, true)); ocib.addAttributeInfo(ro("PROGRAM_CODES", false, true)); ocib.addAttributeInfo(ro("SCHOOL_NAME", false)); ocib.addAttributeInfo(ro("SEDE_NOMBRE", false)); ocib.addAttributeInfo(ro("DATE_EXPIRY", false)); ocib.addAttributeInfo(ro("CORREO_PERSONAL", false)); ocib.addAttributeInfo(ro("NIVEL_ENSENANZA", false)); ocib.addAttributeInfo(ro("SUNEDU_CODE", false)); ocib.addAttributeInfo(ro("FACULTY_NAME", false)); ocib.addAttributeInfo(ro("PROGRAM_LEVEL", false)); ocib.addAttributeInfo(ro("TIPO_ALUMNO", false)); ocib.addAttributeInfo(ro("PRIMARY_SEDE", false)); ocib.addAttributeInfo(ro("PRIMARY_SCHOOL", false)); ocib.addAttributeInfo(ro("PRIMARY_FACULTY", false)); ocib.addAttributeInfo(ro("PRIMARY_LEVEL", false)); ocib.addAttributeInfo(ro("PRIMARY_TIPO_ALUMNO", false)); builder.defineObjectClass(ocib.build())</t:value>
+  </itemDelta>
+</objectModification>
