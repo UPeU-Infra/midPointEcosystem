@@ -31,11 +31,50 @@ El GATE (condición Groovy) activa la lógica nueva solo en **simulaciones** (`T
 no persistente) y para la lista de **canarios**; en producción, para el resto, sigue la vieja. Ante
 error, comportamiento de producción.
 
+## Resultado medido (2026-10-14)
+
+**Simulación** (`import` preview de todo el feed, 30.066 usuarios, 45 min, 28 fallos = mismas clases
+crónicas que la recon real de esa mañana, 36). Cambios atribuibles (columna vieja ≠ `PRIMARY_*`):
+
+| Ítem | Cambios |
+|---|---|
+| `campusStudent` | 1.451 (LIMA→JULIACA 1.062, LIMA→TARAPOTO 387, otros 2) + 31 `Sede ISTAT` pierden el LIMA inventado |
+| Koha `library_id` | 1.451 (BUL→BUJ 1.064 —incluye 2 ISTAT trabajadores de Juliaca—, BUL→BUT 385, 2 otros) |
+| LDAP `scibackCampusCode` | 1.443 |
+| Assignment a `EP-*` (D6) | +1.762 (0 cambios de EP a EP, 0 pérdidas) · LDAP `eduPersonOrgUnitDN` +1.760 |
+| `facultyName` / Koha `statistics_1` / LDAP `scibackFacultyCode` | 84 / 82 / 82 |
+| `studyLevel` / `studentEnrollmentType` | 39 / 24 |
+| `academicProgramCode` | +2.128 valores nuevos; 16.131 «borrar y re-añadir el MISMO valor» (solo cambia la procedencia del mapping; sin efecto en proyecciones) |
+
+No atribuibles (aparecen en cualquier recon): Koha `extended_attributes` (8.809, la recon real lo
+reescribe a diario), `rejectedAt` (7.302, ídem), 212 correos recién cargados en Oracle, matrículas
+nuevas del día.
+
+Sobre los 4.677 de pregrado 2026-2: **564/564** corregidos (Koha 410 BUL→BUJ + 153 BUL→BUT); los
+4.676 con usuario quedan con campus = sede del programa; **755 de 967** sin escuela reciben su EP
+(0 equivocadas). Quedan 212: 168 por nombre de escuela sin alias en el lookup `d9b1e0c2`
+(152 «Educación, Especialidad Primaria y Pedagogía Terapeútica», 10 Tecnología Médica —sin org EP—,
+4 «EP Educación: Educación Física», 1 «EP Educación: Especialidad Musical y Artes», 1 Comunicación
+Audiovisual —sin org EP—) y 44 por la condición de D6 (`primaryAffiliation` staff 22 / faculty 1 /
+vacía 21).
+
+**Canario real** (`202512090`, `202310412`, `201612129`): correcto en MidPoint, OpenLDAP (.168 y .169)
+y Koha (`MODIFY SUCCESS`, `library_id` BUJ/BUT/BUJ). **Control negativo** (`202311335`, no canario,
+la simulación le cambiaba campus/EP/Koha): `import` real → ficha intacta. El gate funciona.
+
 ## Corte (cuando se apruebe)
 
-1. `PATCH patch3-corte.xml` (quita la condición de los inbounds nuevos y archiva los viejos).
-2. Verificar `<schema>`, test connection, `schemaHandling`.
-3. Ejecutar `recon-oracle-lamb-estudiantes-daily` (run now) **o** esperar a la de las 06:20.
+1. `PATCH patch3-corte.xml` (zero-set de la condición de los 7 inbounds nuevos; los 7 viejos a `archived`).
+2. Verificar: `<schema>` 28 atributos, test connection 15/15, ids de inbounds, `lifecycleState`.
+3. `POST .../tasks/9bcfb273-3d8e-4acb-84b0-e7c8b490975b/run` (recon diaria, 4 hilos) en ventana
+   atendida 19:30–21:30 Lima (sin choques: backup 22:30, Entra 02:00), **o** dejar que la de las 06:20
+   lo haga. Duración esperada ~60–75 min (la diaria dura ~53; se suman ~18k escrituras en el foco).
+4. Verificar con las mismas consultas (564 → 0; Koha/LDAP por muestreo) y actualizar el repo:
+   quitar las condiciones de los `primary-*` y marcar `archived` los viejos (mismo commit que el corte).
+5. Limpieza posterior (otro cambio): retirar los inbounds viejos y la lista de canarios.
+
+**Rollback:** `lifecycleState=active` en los viejos + re-añadir la condición (bloque de `patch2`) en
+los nuevos, y recon. Los valores ya escritos vuelven con esa recon.
 
 ## Deriva repo↔PROD corregida en el repo (sin efecto en PROD)
 

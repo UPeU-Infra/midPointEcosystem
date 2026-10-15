@@ -1,0 +1,22 @@
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3">
+  <!-- CORTE 2026-10-14 campus/escuela por matricula de PREGRADO vigente. NO APLICAR sin aprobacion.
+       1) los 7 inbounds nuevos (primary-*) pierden el GATE -> activos para todos.
+       2) los 7 viejos pasan a archived (inactivos en produccion y simulacion); se conservan para rollback.
+       Rollback: replace lifecycleState=active en los viejos + re-add condition (patch2) en los nuevos. -->
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3367]/c:inbound[3368]/c:condition</t:path></itemDelta><!-- primary-sede-to-campusStudent -->
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3367]/c:inbound[3369]/c:condition</t:path></itemDelta><!-- primary-sede-to-locality -->
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3370]/c:inbound[3371]/c:condition</t:path></itemDelta><!-- primary-school-to-academicProgramCode -->
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3370]/c:inbound[3372]/c:condition</t:path></itemDelta><!-- primary-school-to-organizationalUnit -->
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3373]/c:inbound[3374]/c:condition</t:path></itemDelta><!-- primary-faculty-to-facultyName -->
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3375]/c:inbound[3376]/c:condition</t:path></itemDelta><!-- primary-level-to-studyLevel -->
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3377]/c:inbound[3378]/c:condition</t:path></itemDelta><!-- primary-tipo-alumno-to-studentEnrollmentType -->
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3324]/c:inbound[3329]/c:lifecycleState</t:path><t:value>archived</t:value></itemDelta><!-- school-name-to-organizationalUnit -->
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3324]/c:inbound[3362]/c:lifecycleState</t:path><t:value>archived</t:value></itemDelta><!-- school-name-to-academicProgramCode -->
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3330]/c:inbound[3331]/c:lifecycleState</t:path><t:value>archived</t:value></itemDelta><!-- sede-nombre-to-locality -->
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3330]/c:inbound[3332]/c:lifecycleState</t:path><t:value>archived</t:value></itemDelta><!-- sede-nombre-to-campusStudent -->
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3337]/c:inbound[3338]/c:lifecycleState</t:path><t:value>archived</t:value></itemDelta><!-- program-level-to-studyLevel -->
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3339]/c:inbound[3340]/c:lifecycleState</t:path><t:value>archived</t:value></itemDelta><!-- tipo-alumno-to-studentEnrollmentType -->
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[3297]/c:attribute[3343]/c:inbound[3344]/c:lifecycleState</t:path><t:value>archived</t:value></itemDelta><!-- faculty-name-to-facultyName -->
+</objectModification>
