@@ -10,7 +10,23 @@
     CREDENCIALES: clientSecret gestionado en keystore cifrado de MidPoint (AES-256-CBC).
     NO reproducir en texto plano. Gestionar via UI Admin o ninja.
 
-    Estado actual:  INBOUND-ONLY (doctrina UPeU: Entra ID solo-lectura hasta Fase 12).
+    Estado actual (2026-10-15): LECTURA + ENRIQUECIMIENTO DE ESTUDIANTES CON GATE.
+                    - 11 outbounds (employeeId, givenName, surname, employeeType, jobTitle,
+                      department, officeLocation, city, country, companyName, usageLocation)
+                      con una condicion GATE: solo escriben para la lista de canarios o en
+                      simulacion. Solo estudiantes (sin doble afiliacion de trabajador).
+                    - cap:update = true; create y delete SIGUEN en false.
+                    - Todos los inbounds y las reacciones de sincronizacion pasan a
+                      lifecycleState=proposed (antes ya eran solo-desarrollo de hecho, porque
+                      el objectType estaba en proposed: MEDIDO 15-oct, la recon diaria no ha
+                      modificado ni un usuario desde julio). Asi el objectType puede ponerse
+                      en active sin activar los inbounds (p.ej. icfs:name strong -> $user/name).
+                    - El objectType SIGUE en proposed en reposo: invisible en produccion.
+                      La ventana de prueba lo pone en active y lo devuelve a proposed.
+                    Runbook: docs/runbooks/entra-enriquecimiento-estudiantes-2026-10-15/
+                    DESPLIEGUE: SOLO PATCH (ver docs/runbooks/NUNCA-PUT-resources-schema-cache.md).
+
+    Estado anterior: INBOUND-ONLY (doctrina UPeU: Entra ID solo-lectura hasta Fase 12).
                     El objectType lleva <lifecycleState>proposed</lifecycleState>:
                     MidPoint ejecuta inbound/correlation/sync pero NO ejecuta
                     outbound mappings ni el existence-outbound → nunca intenta
@@ -21,7 +37,9 @@
                     Azure Portal (App registration 94dd7b5b → Graph API →
                     Application permissions → User.ReadWrite.All → admin consent),
                     luego cambiar el objectType a <lifecycleState>active</lifecycleState>
-                    y poner <cap:create>/<cap:update> enabled=true. Aplicar via REST PUT.
+                    y poner <cap:create>/<cap:update> enabled=true. Aplicar via REST PATCH
+                    (NUNCA PUT: arranca el <schema> cacheado de PROD).
+                    [2026-10-14: User.ReadWrite.All CONCEDIDO a la app MidPoint-UPeU.]
 
     Historial:
     - Fase 1 (2026-04-16): resource creado, solo inbound (readonly Entra ID → MidPoint)
@@ -33,6 +51,8 @@
                             (=true) forzaba el intento de creación en cada recompute
                             → 80 ObjectAlreadyExistsException por vuelta. proposed
                             suprime todo outbound de raíz.
+    - 2026-10-15:          enriquecimiento de estudiantes con GATE (PATCH v131->v135, ventana
+                            de prueba con 1 canario). Ver runbook entra-enriquecimiento-estudiantes-2026-10-15.
 -->
 <resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
           xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
@@ -46,13 +66,29 @@
           oid="2f11c057-7b15-4641-a0eb-00c98a6fa4cb">
 
     <name>UPEU-EntraID-Graph</name>
-    <description>Microsoft Graph API · tenant upeu.edu.pe · Fase 5: outbound preparado (bloqueante: User.ReadWrite.All pendiente David Urquizo)</description>
+    <description>Microsoft Graph API · tenant upeu.edu.pe · LECTURA + enriquecimiento de estudiantes (outbound con GATE: solo simulacion y canarios; ver docs/runbooks/entra-enriquecimiento-estudiantes-2026-10-15). Nunca create/delete.</description>
     <lifecycleState>active</lifecycleState>
 
     <!-- connectorRef OID real en PROD: 01a9df66-90e9-4fd6-b296-bbe28f2b6b0b -->
     <connectorRef oid="01a9df66-90e9-4fd6-b296-bbe28f2b6b0b" type="ConnectorType"/>
 
     <connectorConfiguration>
+        <!-- Deriva repo<-PROD corregida el 2026-10-15: watchdog ICF aplicado por PATCH el 2026-07-17
+             (el conector msgraph 1.2.0.0 no tiene timeouts de socket; ver memoria entra-tasks-rotas). -->
+        <icfc:timeouts>
+            <icfc:create>120000</icfc:create>
+            <icfc:get>300000</icfc:get>
+            <icfc:update>120000</icfc:update>
+            <icfc:delete>120000</icfc:delete>
+            <icfc:test>120000</icfc:test>
+            <icfc:scriptOnConnector>120000</icfc:scriptOnConnector>
+            <icfc:scriptOnResource>120000</icfc:scriptOnResource>
+            <icfc:authentication>120000</icfc:authentication>
+            <icfc:search>300000</icfc:search>
+            <icfc:validate>120000</icfc:validate>
+            <icfc:sync>300000</icfc:sync>
+            <icfc:schema>120000</icfc:schema>
+        </icfc:timeouts>
         <icfc:resultsHandlerConfiguration>
             <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
             <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
@@ -101,6 +137,8 @@
                 <ref>icfs:name</ref>
                 <!-- UPN como fuente de username (split en @) -->
                 <inbound>
+                    <!-- 2026-10-15: proposed = solo simulacion en modo desarrollo; en produccion no corre. -->
+                    <lifecycleState>proposed</lifecycleState>
                     <strength>strong</strength>
                     <expression>
                         <script>
@@ -119,6 +157,8 @@
                      ri:mail, este WEAK se aplica como fallback.
                      GUARD idéntico: descarta numéricos y no-upeu. -->
                 <inbound>
+                    <!-- 2026-10-15: proposed = solo simulacion en modo desarrollo; en produccion no corre. -->
+                    <lifecycleState>proposed</lifecycleState>
                     <strength>weak</strength>
                     <expression>
                         <script>
@@ -137,28 +177,186 @@
             <attribute>
                 <ref>ri:givenName</ref>
                 <inbound>
+                    <!-- 2026-10-15: proposed = solo simulacion en modo desarrollo; en produccion no corre. -->
+                    <lifecycleState>proposed</lifecycleState>
                     <strength>weak</strength>
                     <target>
                         <path>$user/givenName</path>
                     </target>
                 </inbound>
-                <!-- OUTBOUND ELIMINADO (2026-05-28): inbound-only hasta Fase 12 -->
+                <!-- 2026-10-15: outbound de enriquecimiento con GATE (runbook entra-enriquecimiento-estudiantes-2026-10-15) -->
+<outbound>
+                    <name>entra-enrich-givenName</name>
+                    <description>Enriquecimiento Entra ID de estudiantes (2026-10-15, runbook entra-enriquecimiento-estudiantes-2026-10-15). givenName &lt;- focus givenName (formato Titulo).</description>
+                    <strength>strong</strength>
+                    <source>
+                        <name>givenName</name>
+                        <path>$focus/givenName</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+// Nombres en formato Titulo (MidPoint los guarda en MAYUSCULAS desde Oracle/RENIEC).
+// Particulas (de, del, la...) en minuscula salvo en primera posicion. Guiones respetados.
+// Si el valor actual en Entra es el MISMO nombre y solo difiere en que Entra lleva MAS tildes
+// (p.ej. Entra 'Gutierrez' con tilde y MidPoint sin ella), se conserva la grafia de Entra:
+// el enriquecimiento no degrada un dato mejor que el de la fuente (medido: ~2% de la poblacion).
+def loc = new Locale('es', 'PE')
+def low = ['de', 'del', 'la', 'las', 'los', 'y', 'e', 'da', 'das', 'do', 'dos', 'van', 'von'] as Set
+def tc = { String t ->
+    def out = []
+    t.trim().toLowerCase(loc).split(/\s+/).eachWithIndex { w, i ->
+        if (i > 0 && low.contains(w)) { out << w }
+        else { out << w.split('-').collect { p -> p ? p.substring(0, 1).toUpperCase(loc) + p.substring(1) : p }.join('-') }
+    }
+    out.join(' ')
+}
+def s = (givenName ?: '').toString().trim()
+if (!s) return null
+def res = tc(s)
+try {
+    def cur = projection != null ? basic.getAttributeValue(projection, 'givenName')?.toString()?.trim() : null
+    if (cur) {
+        def nfd = { String t -> java.text.Normalizer.normalize(t, java.text.Normalizer.Form.NFD) }
+        def base = { String t -> nfd(t).replaceAll(/\p{M}/, '').toLowerCase(loc).split(/\s+/).join(' ') }
+        def marks = { String t -> nfd(t).findAll(/\p{M}/).size() }
+        if (base(cur) == base(res) && marks(cur) > marks(res)) { res = tc(cur) }
+    }
+} catch (Exception ex) { }
+return res
+                            ]]></code>
+                        </script>
+                    </expression>
+                    <condition>
+                        <script>
+                            <code><![CDATA[
+// GATE enriquecimiento Entra ID (2026-10-15). Escribe SOLO si:
+//  (1) la persona es estudiante en esta fase: 'student' en sb:affiliations y su afiliacion
+//      principal NO es de trabajador (faculty/staff/employee) -> las dobles afiliaciones
+//      estudiante+trabajador quedan FUERA hasta decidir que ficha manda en el directorio; y
+//  (2) es un canario de la lista, o el modo de ejecucion NO es persistente (simulacion).
+// Para cualquier otro caso (incluida la recon diaria de las 02:00) -> false: cero efecto.
+// Ante cualquier error -> false.
+def canarios = ['202512190'] as Set
+def ok = false
+try {
+    if (focus != null) {
+        def affs = basic.getExtensionPropertyValues(focus, 'urn:sciback:midpoint:person', 'affiliations')?.collect { it?.toString() } ?: []
+        def pa = basic.getExtensionPropertyValue(focus, 'urn:sciback:midpoint:person', 'primaryAffiliation')?.toString()
+        if (affs.contains('student') && !(pa in ['faculty', 'staff', 'employee'])) {
+            def n = focus.getName()?.getOrig()
+            if (n != null && canarios.contains(n)) {
+                ok = true
+            } else {
+                def m = midpoint.getCurrentTask()?.getExecutionMode()
+                ok = (m != null && !m.isFullyPersistent())
+            }
+        }
+    }
+} catch (Exception ex) {
+    ok = false
+}
+return ok
+                            ]]></code>
+                        </script>
+                    </condition>
+                </outbound>
             </attribute>
 
             <attribute>
                 <ref>ri:surname</ref>
                 <inbound>
+                    <!-- 2026-10-15: proposed = solo simulacion en modo desarrollo; en produccion no corre. -->
+                    <lifecycleState>proposed</lifecycleState>
                     <strength>weak</strength>
                     <target>
                         <path>$user/familyName</path>
                     </target>
                 </inbound>
-                <!-- OUTBOUND ELIMINADO (2026-05-28): inbound-only hasta Fase 12 -->
+                <!-- 2026-10-15: outbound de enriquecimiento con GATE (runbook entra-enriquecimiento-estudiantes-2026-10-15) -->
+<outbound>
+                    <name>entra-enrich-surname</name>
+                    <description>Enriquecimiento Entra ID de estudiantes (2026-10-15, runbook entra-enriquecimiento-estudiantes-2026-10-15). surname &lt;- focus familyName (formato Titulo).</description>
+                    <strength>strong</strength>
+                    <source>
+                        <name>familyName</name>
+                        <path>$focus/familyName</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+// Nombres en formato Titulo (MidPoint los guarda en MAYUSCULAS desde Oracle/RENIEC).
+// Particulas (de, del, la...) en minuscula salvo en primera posicion. Guiones respetados.
+// Si el valor actual en Entra es el MISMO nombre y solo difiere en que Entra lleva MAS tildes
+// (p.ej. Entra 'Gutierrez' con tilde y MidPoint sin ella), se conserva la grafia de Entra:
+// el enriquecimiento no degrada un dato mejor que el de la fuente (medido: ~2% de la poblacion).
+def loc = new Locale('es', 'PE')
+def low = ['de', 'del', 'la', 'las', 'los', 'y', 'e', 'da', 'das', 'do', 'dos', 'van', 'von'] as Set
+def tc = { String t ->
+    def out = []
+    t.trim().toLowerCase(loc).split(/\s+/).eachWithIndex { w, i ->
+        if (i > 0 && low.contains(w)) { out << w }
+        else { out << w.split('-').collect { p -> p ? p.substring(0, 1).toUpperCase(loc) + p.substring(1) : p }.join('-') }
+    }
+    out.join(' ')
+}
+def s = (familyName ?: '').toString().trim()
+if (!s) return null
+def res = tc(s)
+try {
+    def cur = projection != null ? basic.getAttributeValue(projection, 'surname')?.toString()?.trim() : null
+    if (cur) {
+        def nfd = { String t -> java.text.Normalizer.normalize(t, java.text.Normalizer.Form.NFD) }
+        def base = { String t -> nfd(t).replaceAll(/\p{M}/, '').toLowerCase(loc).split(/\s+/).join(' ') }
+        def marks = { String t -> nfd(t).findAll(/\p{M}/).size() }
+        if (base(cur) == base(res) && marks(cur) > marks(res)) { res = tc(cur) }
+    }
+} catch (Exception ex) { }
+return res
+                            ]]></code>
+                        </script>
+                    </expression>
+                    <condition>
+                        <script>
+                            <code><![CDATA[
+// GATE enriquecimiento Entra ID (2026-10-15). Escribe SOLO si:
+//  (1) la persona es estudiante en esta fase: 'student' en sb:affiliations y su afiliacion
+//      principal NO es de trabajador (faculty/staff/employee) -> las dobles afiliaciones
+//      estudiante+trabajador quedan FUERA hasta decidir que ficha manda en el directorio; y
+//  (2) es un canario de la lista, o el modo de ejecucion NO es persistente (simulacion).
+// Para cualquier otro caso (incluida la recon diaria de las 02:00) -> false: cero efecto.
+// Ante cualquier error -> false.
+def canarios = ['202512190'] as Set
+def ok = false
+try {
+    if (focus != null) {
+        def affs = basic.getExtensionPropertyValues(focus, 'urn:sciback:midpoint:person', 'affiliations')?.collect { it?.toString() } ?: []
+        def pa = basic.getExtensionPropertyValue(focus, 'urn:sciback:midpoint:person', 'primaryAffiliation')?.toString()
+        if (affs.contains('student') && !(pa in ['faculty', 'staff', 'employee'])) {
+            def n = focus.getName()?.getOrig()
+            if (n != null && canarios.contains(n)) {
+                ok = true
+            } else {
+                def m = midpoint.getCurrentTask()?.getExecutionMode()
+                ok = (m != null && !m.isFullyPersistent())
+            }
+        }
+    }
+} catch (Exception ex) {
+    ok = false
+}
+return ok
+                            ]]></code>
+                        </script>
+                    </condition>
+                </outbound>
             </attribute>
 
             <attribute>
                 <ref>ri:displayName</ref>
                 <inbound>
+                    <!-- 2026-10-15: proposed = solo simulacion en modo desarrollo; en produccion no corre. -->
+                    <lifecycleState>proposed</lifecycleState>
                     <strength>weak</strength>
                     <target>
                         <path>$user/fullName</path>
@@ -170,6 +368,8 @@
             <attribute>
                 <ref>ri:mail</ref>
                 <inbound>
+                    <!-- 2026-10-15: proposed = solo simulacion en modo desarrollo; en produccion no corre. -->
+                    <lifecycleState>proposed</lifecycleState>
                     <strength>strong</strength>
                     <!-- STRONG (2026-06-06): Entra ID es fuente de verdad fuerte para email.
                          GUARD: descarta correos no-upeu (gmail, etc.) y UPNs solo-numéricos
@@ -190,6 +390,8 @@
             <attribute>
                 <ref>ri:employeeId</ref>
                 <inbound>
+                    <!-- 2026-10-15: proposed = solo simulacion en modo desarrollo; en produccion no corre. -->
+                    <lifecycleState>proposed</lifecycleState>
                     <strength>weak</strength>
                     <target>
                         <!-- Nota: employeeNumber está deprecated en modelo UPeU canónico;
@@ -198,18 +400,487 @@
                         <path>$user/employeeNumber</path>
                     </target>
                 </inbound>
-                <!-- No outbound: personalNumber lo gestiona el template desde LAMB -->
+                <!-- 2026-10-15: outbound de enriquecimiento con GATE (runbook entra-enriquecimiento-estudiantes-2026-10-15) -->
+<outbound>
+                    <name>entra-enrich-employeeId</name>
+                    <description>Enriquecimiento Entra ID de estudiantes (2026-10-15, runbook entra-enriquecimiento-estudiantes-2026-10-15). employeeId &lt;- ID_PERSONA de LAMB (upeu:lambIdPersona): ancla de correlacion.</description>
+                    <strength>strong</strength>
+                    <source>
+                        <name>lambIdPersona</name>
+                        <path>$focus/extension/upeu:lambIdPersona</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def v = (lambIdPersona ?: '').toString().trim()
+return v ? v : null
+                            ]]></code>
+                        </script>
+                    </expression>
+                    <condition>
+                        <script>
+                            <code><![CDATA[
+// GATE enriquecimiento Entra ID (2026-10-15). Escribe SOLO si:
+//  (1) la persona es estudiante en esta fase: 'student' en sb:affiliations y su afiliacion
+//      principal NO es de trabajador (faculty/staff/employee) -> las dobles afiliaciones
+//      estudiante+trabajador quedan FUERA hasta decidir que ficha manda en el directorio; y
+//  (2) es un canario de la lista, o el modo de ejecucion NO es persistente (simulacion).
+// Para cualquier otro caso (incluida la recon diaria de las 02:00) -> false: cero efecto.
+// Ante cualquier error -> false.
+def canarios = ['202512190'] as Set
+def ok = false
+try {
+    if (focus != null) {
+        def affs = basic.getExtensionPropertyValues(focus, 'urn:sciback:midpoint:person', 'affiliations')?.collect { it?.toString() } ?: []
+        def pa = basic.getExtensionPropertyValue(focus, 'urn:sciback:midpoint:person', 'primaryAffiliation')?.toString()
+        if (affs.contains('student') && !(pa in ['faculty', 'staff', 'employee'])) {
+            def n = focus.getName()?.getOrig()
+            if (n != null && canarios.contains(n)) {
+                ok = true
+            } else {
+                def m = midpoint.getCurrentTask()?.getExecutionMode()
+                ok = (m != null && !m.isFullyPersistent())
+            }
+        }
+    }
+} catch (Exception ex) {
+    ok = false
+}
+return ok
+                            ]]></code>
+                        </script>
+                    </condition>
+                </outbound>
             </attribute>
 
             <attribute>
                 <ref>ri:jobTitle</ref>
                 <inbound>
+                    <!-- 2026-10-15: proposed = solo simulacion en modo desarrollo; en produccion no corre. -->
+                    <lifecycleState>proposed</lifecycleState>
                     <strength>weak</strength>
                     <target>
                         <path>$user/title</path>
                     </target>
                 </inbound>
-                <!-- No outbound: title lo gestiona el template desde LAMB -->
+                <!-- 2026-10-15: outbound de enriquecimiento con GATE (runbook entra-enriquecimiento-estudiantes-2026-10-15) -->
+<outbound>
+                    <name>entra-enrich-jobTitle</name>
+                    <description>Enriquecimiento Entra ID de estudiantes (2026-10-15, runbook entra-enriquecimiento-estudiantes-2026-10-15). jobTitle &lt;- nivel de estudios (sb:studyLevel).</description>
+                    <strength>strong</strength>
+                    <source>
+                        <name>studyLevel</name>
+                        <path>$focus/extension/sb:studyLevel</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def v = (studyLevel ?: '').toString().trim().toLowerCase(new Locale('es', 'PE')).replace('-', ' ')
+switch (v) {
+    case 'pregrado': return 'Estudiante de pregrado'
+    case 'posgrado': return 'Estudiante de posgrado'
+    case 'doctorado': return 'Estudiante de doctorado'
+    case 'segunda especialidad': return 'Estudiante de segunda especialidad'
+    case 'idiomas': return 'Estudiante de idiomas'
+    case 'cepre': return 'Estudiante de CEPRE'
+    default: return 'Estudiante'
+}
+                            ]]></code>
+                        </script>
+                    </expression>
+                    <condition>
+                        <script>
+                            <code><![CDATA[
+// GATE enriquecimiento Entra ID (2026-10-15). Escribe SOLO si:
+//  (1) la persona es estudiante en esta fase: 'student' en sb:affiliations y su afiliacion
+//      principal NO es de trabajador (faculty/staff/employee) -> las dobles afiliaciones
+//      estudiante+trabajador quedan FUERA hasta decidir que ficha manda en el directorio; y
+//  (2) es un canario de la lista, o el modo de ejecucion NO es persistente (simulacion).
+// Para cualquier otro caso (incluida la recon diaria de las 02:00) -> false: cero efecto.
+// Ante cualquier error -> false.
+def canarios = ['202512190'] as Set
+def ok = false
+try {
+    if (focus != null) {
+        def affs = basic.getExtensionPropertyValues(focus, 'urn:sciback:midpoint:person', 'affiliations')?.collect { it?.toString() } ?: []
+        def pa = basic.getExtensionPropertyValue(focus, 'urn:sciback:midpoint:person', 'primaryAffiliation')?.toString()
+        if (affs.contains('student') && !(pa in ['faculty', 'staff', 'employee'])) {
+            def n = focus.getName()?.getOrig()
+            if (n != null && canarios.contains(n)) {
+                ok = true
+            } else {
+                def m = midpoint.getCurrentTask()?.getExecutionMode()
+                ok = (m != null && !m.isFullyPersistent())
+            }
+        }
+    }
+} catch (Exception ex) {
+    ok = false
+}
+return ok
+                            ]]></code>
+                        </script>
+                    </condition>
+                </outbound>
+            </attribute>
+
+            <!-- ================================================================
+                 2026-10-15 — ENRIQUECIMIENTO DE ESTUDIANTES (outbound con GATE)
+                 ================================================================ -->
+            <attribute>
+                <ref>ri:employeeType</ref>
+                <outbound>
+                    <name>entra-enrich-employeeType</name>
+                    <description>Enriquecimiento Entra ID de estudiantes (2026-10-15, runbook entra-enriquecimiento-estudiantes-2026-10-15). employeeType = Estudiante.</description>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>Estudiante</value>
+                    </expression>
+                    <condition>
+                        <script>
+                            <code><![CDATA[
+// GATE enriquecimiento Entra ID (2026-10-15). Escribe SOLO si:
+//  (1) la persona es estudiante en esta fase: 'student' en sb:affiliations y su afiliacion
+//      principal NO es de trabajador (faculty/staff/employee) -> las dobles afiliaciones
+//      estudiante+trabajador quedan FUERA hasta decidir que ficha manda en el directorio; y
+//  (2) es un canario de la lista, o el modo de ejecucion NO es persistente (simulacion).
+// Para cualquier otro caso (incluida la recon diaria de las 02:00) -> false: cero efecto.
+// Ante cualquier error -> false.
+def canarios = ['202512190'] as Set
+def ok = false
+try {
+    if (focus != null) {
+        def affs = basic.getExtensionPropertyValues(focus, 'urn:sciback:midpoint:person', 'affiliations')?.collect { it?.toString() } ?: []
+        def pa = basic.getExtensionPropertyValue(focus, 'urn:sciback:midpoint:person', 'primaryAffiliation')?.toString()
+        if (affs.contains('student') && !(pa in ['faculty', 'staff', 'employee'])) {
+            def n = focus.getName()?.getOrig()
+            if (n != null && canarios.contains(n)) {
+                ok = true
+            } else {
+                def m = midpoint.getCurrentTask()?.getExecutionMode()
+                ok = (m != null && !m.isFullyPersistent())
+            }
+        }
+    }
+} catch (Exception ex) {
+    ok = false
+}
+return ok
+                            ]]></code>
+                        </script>
+                    </condition>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:department</ref>
+                <outbound>
+                    <name>entra-enrich-department</name>
+                    <description>Enriquecimiento Entra ID de estudiantes (2026-10-15, runbook entra-enriquecimiento-estudiantes-2026-10-15). department &lt;- escuela profesional (org EP-* archetype Academic-Program).</description>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+// Escuela profesional = org con archetype Academic-Program (9f3b8e2a) entre los parentOrgRef
+// (relacion default = miembro). Formato del nombre oficial de LAMB: 'EP ' + displayName, sin el
+// sufijo desambiguador entre parentesis (p.ej. 'Psicologia (FCS)' -> 'EP Psicologia').
+// 0 o 2+ escuelas -> null (no se adivina; tolerant: no borra lo que haya).
+def ARCH = '9f3b8e2a-4c7d-4b1e-a8f5-6d2c4e9a1b73'
+def names = [] as LinkedHashSet
+for (ref in (focus?.getParentOrgRef() ?: [])) {
+    def rel = ref.getRelation()
+    if (rel != null && rel.getLocalPart() != 'default') continue
+    try {
+        def org = midpoint.getObject(com.evolveum.midpoint.xml.ns._public.common.common_3.OrgType.class, ref.getOid())
+        if (org.getArchetypeRef()?.any { it.getOid() == ARCH }) {
+            def dn = org.getDisplayName()?.getOrig() ?: org.getName()?.getOrig()
+            if (dn) names << dn.replaceAll(/\s*\([^)]*\)\s*$/, '').trim()
+        }
+    } catch (Exception ex) { }
+}
+if (names.size() != 1) return null
+def d = names.iterator().next()
+return d.startsWith('EP ') ? d : 'EP ' + d
+                            ]]></code>
+                        </script>
+                    </expression>
+                    <condition>
+                        <script>
+                            <code><![CDATA[
+// GATE enriquecimiento Entra ID (2026-10-15). Escribe SOLO si:
+//  (1) la persona es estudiante en esta fase: 'student' en sb:affiliations y su afiliacion
+//      principal NO es de trabajador (faculty/staff/employee) -> las dobles afiliaciones
+//      estudiante+trabajador quedan FUERA hasta decidir que ficha manda en el directorio; y
+//  (2) es un canario de la lista, o el modo de ejecucion NO es persistente (simulacion).
+// Para cualquier otro caso (incluida la recon diaria de las 02:00) -> false: cero efecto.
+// Ante cualquier error -> false.
+def canarios = ['202512190'] as Set
+def ok = false
+try {
+    if (focus != null) {
+        def affs = basic.getExtensionPropertyValues(focus, 'urn:sciback:midpoint:person', 'affiliations')?.collect { it?.toString() } ?: []
+        def pa = basic.getExtensionPropertyValue(focus, 'urn:sciback:midpoint:person', 'primaryAffiliation')?.toString()
+        if (affs.contains('student') && !(pa in ['faculty', 'staff', 'employee'])) {
+            def n = focus.getName()?.getOrig()
+            if (n != null && canarios.contains(n)) {
+                ok = true
+            } else {
+                def m = midpoint.getCurrentTask()?.getExecutionMode()
+                ok = (m != null && !m.isFullyPersistent())
+            }
+        }
+    }
+} catch (Exception ex) {
+    ok = false
+}
+return ok
+                            ]]></code>
+                        </script>
+                    </condition>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:officeLocation</ref>
+                <outbound>
+                    <name>entra-enrich-officeLocation</name>
+                    <description>Enriquecimiento Entra ID de estudiantes (2026-10-15, runbook entra-enriquecimiento-estudiantes-2026-10-15). officeLocation &lt;- campus (sb:campusStudent).</description>
+                    <strength>strong</strength>
+                    <source>
+                        <name>campusStudent</name>
+                        <path>$focus/extension/sb:campusStudent</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def v = (campusStudent ?: '').toString().trim().toUpperCase()
+return ['LIMA': 'Sede Lima', 'JULIACA': 'Filial Juliaca', 'TARAPOTO': 'Filial Tarapoto'].get(v)
+                            ]]></code>
+                        </script>
+                    </expression>
+                    <condition>
+                        <script>
+                            <code><![CDATA[
+// GATE enriquecimiento Entra ID (2026-10-15). Escribe SOLO si:
+//  (1) la persona es estudiante en esta fase: 'student' en sb:affiliations y su afiliacion
+//      principal NO es de trabajador (faculty/staff/employee) -> las dobles afiliaciones
+//      estudiante+trabajador quedan FUERA hasta decidir que ficha manda en el directorio; y
+//  (2) es un canario de la lista, o el modo de ejecucion NO es persistente (simulacion).
+// Para cualquier otro caso (incluida la recon diaria de las 02:00) -> false: cero efecto.
+// Ante cualquier error -> false.
+def canarios = ['202512190'] as Set
+def ok = false
+try {
+    if (focus != null) {
+        def affs = basic.getExtensionPropertyValues(focus, 'urn:sciback:midpoint:person', 'affiliations')?.collect { it?.toString() } ?: []
+        def pa = basic.getExtensionPropertyValue(focus, 'urn:sciback:midpoint:person', 'primaryAffiliation')?.toString()
+        if (affs.contains('student') && !(pa in ['faculty', 'staff', 'employee'])) {
+            def n = focus.getName()?.getOrig()
+            if (n != null && canarios.contains(n)) {
+                ok = true
+            } else {
+                def m = midpoint.getCurrentTask()?.getExecutionMode()
+                ok = (m != null && !m.isFullyPersistent())
+            }
+        }
+    }
+} catch (Exception ex) {
+    ok = false
+}
+return ok
+                            ]]></code>
+                        </script>
+                    </condition>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:city</ref>
+                <outbound>
+                    <name>entra-enrich-city</name>
+                    <description>Enriquecimiento Entra ID de estudiantes (2026-10-15, runbook entra-enriquecimiento-estudiantes-2026-10-15). city &lt;- campus (sb:campusStudent).</description>
+                    <strength>strong</strength>
+                    <source>
+                        <name>campusStudent</name>
+                        <path>$focus/extension/sb:campusStudent</path>
+                    </source>
+                    <expression>
+                        <script>
+                            <code><![CDATA[
+def v = (campusStudent ?: '').toString().trim().toUpperCase()
+return ['LIMA': 'Lima', 'JULIACA': 'Juliaca', 'TARAPOTO': 'Tarapoto'].get(v)
+                            ]]></code>
+                        </script>
+                    </expression>
+                    <condition>
+                        <script>
+                            <code><![CDATA[
+// GATE enriquecimiento Entra ID (2026-10-15). Escribe SOLO si:
+//  (1) la persona es estudiante en esta fase: 'student' en sb:affiliations y su afiliacion
+//      principal NO es de trabajador (faculty/staff/employee) -> las dobles afiliaciones
+//      estudiante+trabajador quedan FUERA hasta decidir que ficha manda en el directorio; y
+//  (2) es un canario de la lista, o el modo de ejecucion NO es persistente (simulacion).
+// Para cualquier otro caso (incluida la recon diaria de las 02:00) -> false: cero efecto.
+// Ante cualquier error -> false.
+def canarios = ['202512190'] as Set
+def ok = false
+try {
+    if (focus != null) {
+        def affs = basic.getExtensionPropertyValues(focus, 'urn:sciback:midpoint:person', 'affiliations')?.collect { it?.toString() } ?: []
+        def pa = basic.getExtensionPropertyValue(focus, 'urn:sciback:midpoint:person', 'primaryAffiliation')?.toString()
+        if (affs.contains('student') && !(pa in ['faculty', 'staff', 'employee'])) {
+            def n = focus.getName()?.getOrig()
+            if (n != null && canarios.contains(n)) {
+                ok = true
+            } else {
+                def m = midpoint.getCurrentTask()?.getExecutionMode()
+                ok = (m != null && !m.isFullyPersistent())
+            }
+        }
+    }
+} catch (Exception ex) {
+    ok = false
+}
+return ok
+                            ]]></code>
+                        </script>
+                    </condition>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:country</ref>
+                <outbound>
+                    <name>entra-enrich-country</name>
+                    <description>Enriquecimiento Entra ID de estudiantes (2026-10-15, runbook entra-enriquecimiento-estudiantes-2026-10-15). country = Peru.</description>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>Perú</value>
+                    </expression>
+                    <condition>
+                        <script>
+                            <code><![CDATA[
+// GATE enriquecimiento Entra ID (2026-10-15). Escribe SOLO si:
+//  (1) la persona es estudiante en esta fase: 'student' en sb:affiliations y su afiliacion
+//      principal NO es de trabajador (faculty/staff/employee) -> las dobles afiliaciones
+//      estudiante+trabajador quedan FUERA hasta decidir que ficha manda en el directorio; y
+//  (2) es un canario de la lista, o el modo de ejecucion NO es persistente (simulacion).
+// Para cualquier otro caso (incluida la recon diaria de las 02:00) -> false: cero efecto.
+// Ante cualquier error -> false.
+def canarios = ['202512190'] as Set
+def ok = false
+try {
+    if (focus != null) {
+        def affs = basic.getExtensionPropertyValues(focus, 'urn:sciback:midpoint:person', 'affiliations')?.collect { it?.toString() } ?: []
+        def pa = basic.getExtensionPropertyValue(focus, 'urn:sciback:midpoint:person', 'primaryAffiliation')?.toString()
+        if (affs.contains('student') && !(pa in ['faculty', 'staff', 'employee'])) {
+            def n = focus.getName()?.getOrig()
+            if (n != null && canarios.contains(n)) {
+                ok = true
+            } else {
+                def m = midpoint.getCurrentTask()?.getExecutionMode()
+                ok = (m != null && !m.isFullyPersistent())
+            }
+        }
+    }
+} catch (Exception ex) {
+    ok = false
+}
+return ok
+                            ]]></code>
+                        </script>
+                    </condition>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:companyName</ref>
+                <outbound>
+                    <name>entra-enrich-companyName</name>
+                    <description>Enriquecimiento Entra ID de estudiantes (2026-10-15, runbook entra-enriquecimiento-estudiantes-2026-10-15). companyName = Universidad Peruana Union.</description>
+                    <strength>strong</strength>
+                    <expression>
+                        <value>Universidad Peruana Unión</value>
+                    </expression>
+                    <condition>
+                        <script>
+                            <code><![CDATA[
+// GATE enriquecimiento Entra ID (2026-10-15). Escribe SOLO si:
+//  (1) la persona es estudiante en esta fase: 'student' en sb:affiliations y su afiliacion
+//      principal NO es de trabajador (faculty/staff/employee) -> las dobles afiliaciones
+//      estudiante+trabajador quedan FUERA hasta decidir que ficha manda en el directorio; y
+//  (2) es un canario de la lista, o el modo de ejecucion NO es persistente (simulacion).
+// Para cualquier otro caso (incluida la recon diaria de las 02:00) -> false: cero efecto.
+// Ante cualquier error -> false.
+def canarios = ['202512190'] as Set
+def ok = false
+try {
+    if (focus != null) {
+        def affs = basic.getExtensionPropertyValues(focus, 'urn:sciback:midpoint:person', 'affiliations')?.collect { it?.toString() } ?: []
+        def pa = basic.getExtensionPropertyValue(focus, 'urn:sciback:midpoint:person', 'primaryAffiliation')?.toString()
+        if (affs.contains('student') && !(pa in ['faculty', 'staff', 'employee'])) {
+            def n = focus.getName()?.getOrig()
+            if (n != null && canarios.contains(n)) {
+                ok = true
+            } else {
+                def m = midpoint.getCurrentTask()?.getExecutionMode()
+                ok = (m != null && !m.isFullyPersistent())
+            }
+        }
+    }
+} catch (Exception ex) {
+    ok = false
+}
+return ok
+                            ]]></code>
+                        </script>
+                    </condition>
+                </outbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:usageLocation</ref>
+                <outbound>
+                    <name>entra-enrich-usageLocation</name>
+                    <description>Enriquecimiento Entra ID de estudiantes (2026-10-15, runbook entra-enriquecimiento-estudiantes-2026-10-15). usageLocation = PE solo si esta vacio (weak): 50 estudiantes tienen ES/US/... puesto a mano y usageLocation condiciona licencias.</description>
+                    <strength>weak</strength>
+                    <expression>
+                        <value>PE</value>
+                    </expression>
+                    <condition>
+                        <script>
+                            <code><![CDATA[
+// GATE enriquecimiento Entra ID (2026-10-15). Escribe SOLO si:
+//  (1) la persona es estudiante en esta fase: 'student' en sb:affiliations y su afiliacion
+//      principal NO es de trabajador (faculty/staff/employee) -> las dobles afiliaciones
+//      estudiante+trabajador quedan FUERA hasta decidir que ficha manda en el directorio; y
+//  (2) es un canario de la lista, o el modo de ejecucion NO es persistente (simulacion).
+// Para cualquier otro caso (incluida la recon diaria de las 02:00) -> false: cero efecto.
+// Ante cualquier error -> false.
+def canarios = ['202512190'] as Set
+def ok = false
+try {
+    if (focus != null) {
+        def affs = basic.getExtensionPropertyValues(focus, 'urn:sciback:midpoint:person', 'affiliations')?.collect { it?.toString() } ?: []
+        def pa = basic.getExtensionPropertyValue(focus, 'urn:sciback:midpoint:person', 'primaryAffiliation')?.toString()
+        if (affs.contains('student') && !(pa in ['faculty', 'staff', 'employee'])) {
+            def n = focus.getName()?.getOrig()
+            if (n != null && canarios.contains(n)) {
+                ok = true
+            } else {
+                def m = midpoint.getCurrentTask()?.getExecutionMode()
+                ok = (m != null && !m.isFullyPersistent())
+            }
+        }
+    }
+} catch (Exception ex) {
+    ok = false
+}
+return ok
+                            ]]></code>
+                        </script>
+                    </condition>
+                </outbound>
             </attribute>
 
             <!-- ================================================================
@@ -390,6 +1061,8 @@ try {
             <activation>
                 <administrativeStatus>
                     <inbound>
+                        <!-- 2026-10-15: proposed = solo simulacion en modo desarrollo; en produccion no corre. -->
+                        <lifecycleState>proposed</lifecycleState>
                         <strength>weak</strength>
                     </inbound>
                 </administrativeStatus>
@@ -419,9 +1092,12 @@ try {
 
             <!-- ================================================================
                  SYNCHRONIZATION — reacciones inbound (Fase 1, preservado)
+                 2026-10-15: las 4 reacciones en proposed (solo desarrollo). Con el
+                 objectType en active, una recon NO enlaza, NO sincroniza ni inactiva.
                  ================================================================ -->
             <synchronization>
                 <reaction>
+                    <lifecycleState>proposed</lifecycleState>
                     <situation>linked</situation>
                     <actions>
                         <synchronize>
@@ -430,6 +1106,7 @@ try {
                     </actions>
                 </reaction>
                 <reaction>
+                    <lifecycleState>proposed</lifecycleState>
                     <situation>unlinked</situation>
                     <actions>
                         <!-- link sin synchronize: vincula el shadow al user pero NO dispara
@@ -439,10 +1116,12 @@ try {
                     </actions>
                 </reaction>
                 <reaction>
+                    <lifecycleState>proposed</lifecycleState>
                     <situation>unmatched</situation>
                     <!-- sin acción: no crear usuarios desde Entra ID; Oracle LAMB es IIA -->
                 </reaction>
                 <reaction>
+                    <lifecycleState>proposed</lifecycleState>
                     <situation>deleted</situation>
                     <actions>
                         <inactivateResourceObject/>
@@ -491,13 +1170,14 @@ try {
 
     <!-- ================================================================
          CAPABILITIES CONFIGURADAS
-         create y update deshabilitados hasta que User.ReadWrite.All
-         sea concedido por David Urquizo en Azure Portal.
+         2026-10-15: update HABILITADO (enriquecimiento con GATE); create y delete
+         siguen deshabilitados. Los pasos de abajo son historicos: el despliegue
+         es SIEMPRE por PATCH, nunca PUT.
 
          Para activar outbound en PROD:
          1. David concede User.ReadWrite.All + admin consent
          2. Descomentar el bloque <configured> abajo
-         3. Aplicar este XML via REST PUT en PROD
+         3. Aplicar via REST PATCH en PROD (NUNCA PUT)
          4. Descomentar construction en AR-EntraID-User.xml
          5. Recompute usuarios con BR que incluyen AR-EntraID-User
 
@@ -511,7 +1191,8 @@ try {
                 <cap:enabled>false</cap:enabled>
             </cap:create>
             <cap:update>
-                <cap:enabled>false</cap:enabled>
+                <!-- 2026-10-15: true para el enriquecimiento (outbounds con GATE). create/delete siguen en false. -->
+                <cap:enabled>true</cap:enabled>
             </cap:update>
             <cap:delete>
                 <cap:enabled>false</cap:enabled>

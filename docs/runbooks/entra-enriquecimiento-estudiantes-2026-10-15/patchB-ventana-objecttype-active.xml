@@ -1,0 +1,10 @@
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+    xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3"
+    xmlns:sb="urn:sciback:midpoint:person"
+    xmlns:upeu="urn:upeu:midpoint:local">
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[340]/c:lifecycleState</t:path><t:value>active</t:value></itemDelta>
+</objectModification>

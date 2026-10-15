@@ -1,0 +1,18 @@
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
+  <name>SIM-PROD-IDEMPOTENCIA entra-enriquecimiento canario+marcos (2026-10-15)</name>
+  <description>Runbook entra-enriquecimiento-estudiantes-2026-10-15. Recompute+reconcile acotado por inOid.</description>
+  <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+  <executionState>runnable</executionState>
+  <activity>
+    <work>
+      <recomputation>
+        <objects>
+          <type>UserType</type>
+          <query><q:filter><q:inOid><q:value>85e3c886-d2e9-44fd-b502-0d14bafdfc59</q:value><q:value>6b5e6016-8209-4882-a75b-50f7fd439b58</q:value></q:inOid></q:filter></query>
+        </objects>
+        <executionOptions><reconcile>true</reconcile></executionOptions>
+      </recomputation>
+    </work>
+    <execution><mode>preview</mode><configurationToUse><predefined>production</predefined></configurationToUse></execution>
+  </activity>
+</task>

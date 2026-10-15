@@ -1,0 +1,17 @@
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
+  <name>REAL control-negativo entra-enriquecimiento 202510303 (2026-10-15)</name>
+  <description>Runbook entra-enriquecimiento-estudiantes-2026-10-15. CONTROL NEGATIVO: alumno NO canario, debe dar 0 cambios en Entra. Recompute+reconcile REAL de 1 usuario (inOid).</description>
+  <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+  <executionState>runnable</executionState>
+  <activity>
+    <work>
+      <recomputation>
+        <objects>
+          <type>UserType</type>
+          <query><q:filter><q:inOid><q:value>6033be4e-786a-434c-aece-143272d516f8</q:value></q:inOid></q:filter></query>
+        </objects>
+        <executionOptions><reconcile>true</reconcile></executionOptions>
+      </recomputation>
+    </work>
+  </activity>
+</task>

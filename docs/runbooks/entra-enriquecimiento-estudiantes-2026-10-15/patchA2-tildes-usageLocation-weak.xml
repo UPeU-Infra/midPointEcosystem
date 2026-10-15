@@ -1,0 +1,144 @@
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+    xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3"
+    xmlns:sb="urn:sciback:midpoint:person"
+    xmlns:upeu="urn:upeu:midpoint:local">
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[340]/c:attribute[344]/c:outbound</t:path><t:value><c:name>entra-enrich-givenName</c:name><c:description>Enriquecimiento Entra ID de estudiantes (2026-10-15, runbook entra-enriquecimiento-estudiantes-2026-10-15). givenName &lt;- focus givenName (formato Titulo).</c:description><c:strength>strong</c:strength><c:source><c:name>givenName</c:name><c:path>$focus/givenName</c:path></c:source><c:expression><c:script><c:code>// Nombres en formato Titulo (MidPoint los guarda en MAYUSCULAS desde Oracle/RENIEC).
+// Particulas (de, del, la...) en minuscula salvo en primera posicion. Guiones respetados.
+// Si el valor actual en Entra es el MISMO nombre y solo difiere en que Entra lleva MAS tildes
+// (p.ej. Entra 'Gutierrez' con tilde y MidPoint sin ella), se conserva la grafia de Entra:
+// el enriquecimiento no degrada un dato mejor que el de la fuente (medido: ~2% de la poblacion).
+def loc = new Locale('es', 'PE')
+def low = ['de', 'del', 'la', 'las', 'los', 'y', 'e', 'da', 'das', 'do', 'dos', 'van', 'von'] as Set
+def tc = { String t -&gt;
+    def out = []
+    t.trim().toLowerCase(loc).split(/\s+/).eachWithIndex { w, i -&gt;
+        if (i &gt; 0 &amp;&amp; low.contains(w)) { out &lt;&lt; w }
+        else { out &lt;&lt; w.split('-').collect { p -&gt; p ? p.substring(0, 1).toUpperCase(loc) + p.substring(1) : p }.join('-') }
+    }
+    out.join(' ')
+}
+def s = (givenName ?: '').toString().trim()
+if (!s) return null
+def res = tc(s)
+try {
+    def cur = projection != null ? basic.getAttributeValue(projection, 'givenName')?.toString()?.trim() : null
+    if (cur) {
+        def nfd = { String t -&gt; java.text.Normalizer.normalize(t, java.text.Normalizer.Form.NFD) }
+        def base = { String t -&gt; nfd(t).replaceAll(/\p{M}/, '').toLowerCase(loc).split(/\s+/).join(' ') }
+        def marks = { String t -&gt; nfd(t).findAll(/\p{M}/).size() }
+        if (base(cur) == base(res) &amp;&amp; marks(cur) &gt; marks(res)) { res = tc(cur) }
+    }
+} catch (Exception ex) { }
+return res</c:code></c:script></c:expression><c:condition><c:script><c:code>// GATE enriquecimiento Entra ID (2026-10-15). Escribe SOLO si:
+//  (1) la persona es estudiante en esta fase: 'student' en sb:affiliations y su afiliacion
+//      principal NO es de trabajador (faculty/staff/employee) -&gt; las dobles afiliaciones
+//      estudiante+trabajador quedan FUERA hasta decidir que ficha manda en el directorio; y
+//  (2) es un canario de la lista, o el modo de ejecucion NO es persistente (simulacion).
+// Para cualquier otro caso (incluida la recon diaria de las 02:00) -&gt; false: cero efecto.
+// Ante cualquier error -&gt; false.
+def canarios = ['202512190'] as Set
+def ok = false
+try {
+    if (focus != null) {
+        def affs = basic.getExtensionPropertyValues(focus, 'urn:sciback:midpoint:person', 'affiliations')?.collect { it?.toString() } ?: []
+        def pa = basic.getExtensionPropertyValue(focus, 'urn:sciback:midpoint:person', 'primaryAffiliation')?.toString()
+        if (affs.contains('student') &amp;&amp; !(pa in ['faculty', 'staff', 'employee'])) {
+            def n = focus.getName()?.getOrig()
+            if (n != null &amp;&amp; canarios.contains(n)) {
+                ok = true
+            } else {
+                def m = midpoint.getCurrentTask()?.getExecutionMode()
+                ok = (m != null &amp;&amp; !m.isFullyPersistent())
+            }
+        }
+    }
+} catch (Exception ex) {
+    ok = false
+}
+return ok</c:code></c:script></c:condition></t:value></itemDelta>
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[340]/c:attribute[346]/c:outbound</t:path><t:value><c:name>entra-enrich-surname</c:name><c:description>Enriquecimiento Entra ID de estudiantes (2026-10-15, runbook entra-enriquecimiento-estudiantes-2026-10-15). surname &lt;- focus familyName (formato Titulo).</c:description><c:strength>strong</c:strength><c:source><c:name>familyName</c:name><c:path>$focus/familyName</c:path></c:source><c:expression><c:script><c:code>// Nombres en formato Titulo (MidPoint los guarda en MAYUSCULAS desde Oracle/RENIEC).
+// Particulas (de, del, la...) en minuscula salvo en primera posicion. Guiones respetados.
+// Si el valor actual en Entra es el MISMO nombre y solo difiere en que Entra lleva MAS tildes
+// (p.ej. Entra 'Gutierrez' con tilde y MidPoint sin ella), se conserva la grafia de Entra:
+// el enriquecimiento no degrada un dato mejor que el de la fuente (medido: ~2% de la poblacion).
+def loc = new Locale('es', 'PE')
+def low = ['de', 'del', 'la', 'las', 'los', 'y', 'e', 'da', 'das', 'do', 'dos', 'van', 'von'] as Set
+def tc = { String t -&gt;
+    def out = []
+    t.trim().toLowerCase(loc).split(/\s+/).eachWithIndex { w, i -&gt;
+        if (i &gt; 0 &amp;&amp; low.contains(w)) { out &lt;&lt; w }
+        else { out &lt;&lt; w.split('-').collect { p -&gt; p ? p.substring(0, 1).toUpperCase(loc) + p.substring(1) : p }.join('-') }
+    }
+    out.join(' ')
+}
+def s = (familyName ?: '').toString().trim()
+if (!s) return null
+def res = tc(s)
+try {
+    def cur = projection != null ? basic.getAttributeValue(projection, 'surname')?.toString()?.trim() : null
+    if (cur) {
+        def nfd = { String t -&gt; java.text.Normalizer.normalize(t, java.text.Normalizer.Form.NFD) }
+        def base = { String t -&gt; nfd(t).replaceAll(/\p{M}/, '').toLowerCase(loc).split(/\s+/).join(' ') }
+        def marks = { String t -&gt; nfd(t).findAll(/\p{M}/).size() }
+        if (base(cur) == base(res) &amp;&amp; marks(cur) &gt; marks(res)) { res = tc(cur) }
+    }
+} catch (Exception ex) { }
+return res</c:code></c:script></c:expression><c:condition><c:script><c:code>// GATE enriquecimiento Entra ID (2026-10-15). Escribe SOLO si:
+//  (1) la persona es estudiante en esta fase: 'student' en sb:affiliations y su afiliacion
+//      principal NO es de trabajador (faculty/staff/employee) -&gt; las dobles afiliaciones
+//      estudiante+trabajador quedan FUERA hasta decidir que ficha manda en el directorio; y
+//  (2) es un canario de la lista, o el modo de ejecucion NO es persistente (simulacion).
+// Para cualquier otro caso (incluida la recon diaria de las 02:00) -&gt; false: cero efecto.
+// Ante cualquier error -&gt; false.
+def canarios = ['202512190'] as Set
+def ok = false
+try {
+    if (focus != null) {
+        def affs = basic.getExtensionPropertyValues(focus, 'urn:sciback:midpoint:person', 'affiliations')?.collect { it?.toString() } ?: []
+        def pa = basic.getExtensionPropertyValue(focus, 'urn:sciback:midpoint:person', 'primaryAffiliation')?.toString()
+        if (affs.contains('student') &amp;&amp; !(pa in ['faculty', 'staff', 'employee'])) {
+            def n = focus.getName()?.getOrig()
+            if (n != null &amp;&amp; canarios.contains(n)) {
+                ok = true
+            } else {
+                def m = midpoint.getCurrentTask()?.getExecutionMode()
+                ok = (m != null &amp;&amp; !m.isFullyPersistent())
+            }
+        }
+    }
+} catch (Exception ex) {
+    ok = false
+}
+return ok</c:code></c:script></c:condition></t:value></itemDelta>
+  <itemDelta><t:modificationType>replace</t:modificationType><t:path>c:schemaHandling/c:objectType[340]/c:attribute[438]/c:outbound</t:path><t:value><c:name>entra-enrich-usageLocation</c:name><c:description>Enriquecimiento Entra ID de estudiantes (2026-10-15, runbook entra-enriquecimiento-estudiantes-2026-10-15). usageLocation = PE solo si esta vacio (weak): 50 estudiantes tienen ES/US/... puesto a mano y usageLocation condiciona licencias.</c:description><c:strength>weak</c:strength><c:expression><c:value>PE</c:value></c:expression><c:condition><c:script><c:code>// GATE enriquecimiento Entra ID (2026-10-15). Escribe SOLO si:
+//  (1) la persona es estudiante en esta fase: 'student' en sb:affiliations y su afiliacion
+//      principal NO es de trabajador (faculty/staff/employee) -&gt; las dobles afiliaciones
+//      estudiante+trabajador quedan FUERA hasta decidir que ficha manda en el directorio; y
+//  (2) es un canario de la lista, o el modo de ejecucion NO es persistente (simulacion).
+// Para cualquier otro caso (incluida la recon diaria de las 02:00) -&gt; false: cero efecto.
+// Ante cualquier error -&gt; false.
+def canarios = ['202512190'] as Set
+def ok = false
+try {
+    if (focus != null) {
+        def affs = basic.getExtensionPropertyValues(focus, 'urn:sciback:midpoint:person', 'affiliations')?.collect { it?.toString() } ?: []
+        def pa = basic.getExtensionPropertyValue(focus, 'urn:sciback:midpoint:person', 'primaryAffiliation')?.toString()
+        if (affs.contains('student') &amp;&amp; !(pa in ['faculty', 'staff', 'employee'])) {
+            def n = focus.getName()?.getOrig()
+            if (n != null &amp;&amp; canarios.contains(n)) {
+                ok = true
+            } else {
+                def m = midpoint.getCurrentTask()?.getExecutionMode()
+                ok = (m != null &amp;&amp; !m.isFullyPersistent())
+            }
+        }
+    }
+} catch (Exception ex) {
+    ok = false
+}
+return ok</c:code></c:script></c:condition></t:value></itemDelta>
+</objectModification>

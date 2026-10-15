@@ -1,0 +1,18 @@
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
+  <name>SIM-DEV entra-enriquecimiento muestra 26 (2026-10-15)</name>
+  <description>Runbook entra-enriquecimiento-estudiantes-2026-10-15. Recompute+reconcile acotado por inOid.</description>
+  <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+  <executionState>runnable</executionState>
+  <activity>
+    <work>
+      <recomputation>
+        <objects>
+          <type>UserType</type>
+          <query><q:filter><q:inOid><q:value>03dcfbd7-5aeb-4aeb-99c5-51114e41c59b</q:value><q:value>6aab7324-c1b3-45e4-89ac-5c9ec124de04</q:value><q:value>95e4751c-07e1-42ee-818a-b8bbcf2465b0</q:value><q:value>6b1f0192-6c67-43d9-b5d5-686e42a705a6</q:value><q:value>fd3abc89-29e4-47dd-898b-f8ee64e9f984</q:value><q:value>e9931006-1e3a-4f86-81c5-f0403d47ae9a</q:value><q:value>e155a689-c659-4ae7-bb85-41adc869a86e</q:value><q:value>57b74ba4-dc21-4143-b189-676108d5756e</q:value><q:value>9cbfee4d-4069-4b2a-bac0-362afff6c237</q:value><q:value>c1586e5d-4066-4012-ba5f-54479fa3cd06</q:value><q:value>dd60bff8-5f42-456c-bbae-202aa47c43af</q:value><q:value>95bd8efe-74d0-43a0-a080-64d1f01738e2</q:value><q:value>ea4018f2-c89e-4028-ad02-13e379066973</q:value><q:value>a9936918-ba05-485c-b012-2631bd7b3f8e</q:value><q:value>a5af15db-57b5-4c3d-a907-3aae3db7eb59</q:value><q:value>ff4520af-b752-4168-b4f2-29049c0a307f</q:value><q:value>bff92bd0-aa3c-4f42-bde6-2e4936dae34d</q:value><q:value>645fffa1-c3a8-4067-8c1b-6bb816a5f4e4</q:value><q:value>6033be4e-786a-434c-aece-143272d516f8</q:value><q:value>3b3684af-0331-4f37-b09d-e51f518e163a</q:value><q:value>6b5e6016-8209-4882-a75b-50f7fd439b58</q:value><q:value>85e3c886-d2e9-44fd-b502-0d14bafdfc59</q:value><q:value>c622d190-b8b5-4602-b7ff-80c1b1096f04</q:value><q:value>6039a456-ab43-4e6f-963d-04b9406d6cd9</q:value><q:value>13329d97-4d60-4b07-b4b5-d34b97111d2f</q:value><q:value>f61d85c4-f22d-4f7a-8111-328e13c41c99</q:value></q:inOid></q:filter></query>
+        </objects>
+        <executionOptions><reconcile>true</reconcile></executionOptions>
+      </recomputation>
+    </work>
+    <execution><mode>preview</mode><configurationToUse><predefined>development</predefined></configurationToUse></execution>
+  </activity>
+</task>
