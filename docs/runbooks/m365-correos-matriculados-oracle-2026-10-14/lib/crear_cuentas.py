@@ -10,7 +10,8 @@ Regla de nombre (documento oficial + práctica descrita por Owen en la reunión 
   primernombre.apellidopaterno@upeu.edu.pe, minúsculas, sin tildes/ñ/espacios/apóstrofos;
   si ya existe → + 2 últimos dígitos del código; si vuelve a existir → + 3 últimos dígitos.
 Si LAMB ya le asignó un usuario al alumno (ELISEO.USERS, por ID_PERSONA) y es válido y está libre en M365,
-SE USA ESE (así M365, LAMB y Oracle coinciden); la regla solo se aplica si no hay usuario LAMB utilizable.
+SE USA ESE (así M365, LAMB y Oracle coinciden) SOLO SI sigue el formato nombre.apellido[NN|NNN]; si no (p. ej.
+«kewincharca», «gmba2005»), se ignora y se aplica la regla (15-oct: 39 cuentas salieron así y hubo que renombrarlas).
 «Ocupado» = cualquier UPN, mail o proxyAddress (alias) del tenant, cuentas BORRADAS incluidas (retienen sus
 direcciones 30 días), el usuario LAMB o el CORREO_INST de Oracle de OTRA persona y lo ya propuesto en el lote.
 
@@ -118,7 +119,6 @@ def simular(xlsx):
         c = (rr.get("CORREO_INST") or "").strip().lower()
         if c.endswith("@" + DOM): ora_dueno.setdefault(lp(c), set()).add(rr["ID_PERSONA"].strip())
     log(f"  Oracle CORREO_INST: {len(ora_dueno)} direcciones asignadas")
-    VALIDO = re.compile(r"^[a-z0-9]+(\.[a-z0-9]+)*$")
     plan, ret = [], []
     for r in R:
         n, p = tokens(r["NOMBRES"]), tokens(r["PATERNO"])
@@ -148,7 +148,7 @@ def simular(xlsx):
         elegido = regla = None
         if oracle_ok:
             elegido, regla = oracle_ok, "dirección que ya tiene Oracle (formato UPeU, libre)"
-        elif propio and VALIDO.match(propio) and propio not in occ and not ajeno(propio) and not propio.isdigit():
+        elif propio and FORMATO.match(propio) and propio not in occ and not ajeno(propio):   # solo si sigue la nomenclatura UPeU
             elegido, regla = propio, "usuario LAMB del alumno"
         else:
             for cand, rg in ((base, "regla: base"), (base + cod[-2:], "regla: +2 dígitos"), (base + cod[-3:], "regla: +3 dígitos")):
