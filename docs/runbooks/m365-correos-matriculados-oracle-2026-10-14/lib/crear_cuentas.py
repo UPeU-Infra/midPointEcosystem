@@ -16,7 +16,6 @@ SE USA ESE (así M365, LAMB y Oracle coinciden) SOLO SI sigue el formato nombre.
 direcciones 30 días), el usuario LAMB o el CORREO_INST de Oracle de OTRA persona y lo ya propuesto en el lote.
 
 Quedan RETENIDOS (no se crean) y van a una hoja aparte:
-  · apellido paterno compuesto (regla pendiente de validar en el anexo);
   · con posible cuenta existente (POSIBLE_CUENTA_EN_M365): la revisa Mesa de Servicios;
   · Oracle ya trae una dirección @upeu que no existe en M365 (decisión del Ing. Urquizo).
 
@@ -139,9 +138,9 @@ def simular(xlsx):
             # si no tiene el formato o está ocupada, se ignora y se crea por la regla (Oracle se actualiza por SQL)
         if not n or not p:
             ret.append((r, "sin nombre o apellido paterno en Oracle")); continue
-        if len(p) > 1:
-            ret.append((r, f"apellido paterno compuesto «{r['PATERNO']}»: regla pendiente del anexo")); continue
-        base = f"{slug(n[0])}.{slug(p[0])}"
+        # apellido paterno compuesto («Del Aguila», «De La Cruz»): se une sin espacios, como ya hace el tenant
+        # (renzo.delacruz@ existe desde 2023). Decisión del 15-oct a falta de regla en el anexo.
+        base = f"{slug(n[0])}.{slug(r['PATERNO'])}"
         cod = re.sub(r"\D", "", r["CODIGO"])
         propio = lamb.get(r["ID_PERSONA"], "")
         ajeno = lambda c: bool((lamb_dueno.get(c, set()) | ora_dueno.get(c, set())) - {r["ID_PERSONA"]})   # LAMB u Oracle de OTRA persona
