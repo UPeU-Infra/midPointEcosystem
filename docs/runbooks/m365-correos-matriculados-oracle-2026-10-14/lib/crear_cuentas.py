@@ -80,15 +80,17 @@ def usuarios_lamb():
             if len(p) > 1 and p[1].strip(): d[p[0].strip()] = lp(p[1].strip())
     return d
 
+EMPIDS = set()
 def direcciones_ocupadas():
     """Local-parts ocupados en el tenant M365 (activos y borrados: retienen sus direcciones 30 días)."""
     occ = set()
     for base in ("/users", "/directory/deletedItems/microsoft.graph.user"):
-        url = f"{base}?$select=userPrincipalName,mail,proxyAddresses&$top=999"; n = 0
+        url = f"{base}?$select=userPrincipalName,mail,proxyAddresses,employeeId&$top=999"; n = 0
         while url:
             st, j = graph("GET", url)
             if st != 200: sys.exit(f"✗ no se pudo leer {base}: {st} {str(j)[:200]}")
             for u in j["value"]:
+                if u.get("employeeId"): EMPIDS.add(str(u["employeeId"]).strip())
                 for a in [u.get("userPrincipalName"), u.get("mail")] + [p.split(":", 1)[1] for p in (u.get("proxyAddresses") or [])]:
                     if a and "@" in a: occ.add(lp(a))
             n += len(j["value"]); url = j.get("@odata.nextLink")
@@ -121,13 +123,20 @@ def simular(xlsx):
     for r in R:
         n, p = tokens(r["NOMBRES"]), tokens(r["PATERNO"])
         cur = (r["CORREO_INST_ACTUAL_ORACLE"] or "").lower()
+        if r["ID_PERSONA"] in EMPIDS:
+            ret.append((r, "YA TIENE CUENTA: existe una cuenta con su ID_PERSONA (employeeId) → creada antes")); continue
         propio0 = lamb.get(r["ID_PERSONA"], "")
         if propio0 and propio0 in occ:
             ret.append((r, f"YA TIENE CUENTA: su usuario LAMB «{propio0}» existe en M365 → va en el lote 3 de Oracle, no se crea")); continue
         if r["POSIBLE_CUENTA_EN_M365"]:
             ret.append((r, f"posible cuenta existente: {r['POSIBLE_CUENTA_EN_M365']} ({r['NOMBRE_EN_M365']})")); continue
+        FORMATO = re.compile(r"^[a-z]+\.[a-z]+\d{0,3}$")      # nombre.apellido[NN|NNN] de la nomenclatura UPeU
+        oracle_ok = ""
         if cur.endswith("@" + DOM) and not lp(cur).isdigit():
-            ret.append((r, f"Oracle ya trae {cur}, que no existe en M365: decisión pendiente")); continue
+            c0 = lp(cur)
+            if FORMATO.match(c0) and c0 not in occ and not bool((lamb_dueno.get(c0, set()) | ora_dueno.get(c0, set())) - {r["ID_PERSONA"]}):
+                oracle_ok = c0      # Oracle ya tiene una dirección con formato UPeU y libre → se crea con ESA (Oracle no cambia)
+            # si no tiene el formato o está ocupada, se ignora y se crea por la regla (Oracle se actualiza por SQL)
         if not n or not p:
             ret.append((r, "sin nombre o apellido paterno en Oracle")); continue
         if len(p) > 1:
@@ -137,7 +146,9 @@ def simular(xlsx):
         propio = lamb.get(r["ID_PERSONA"], "")
         ajeno = lambda c: bool((lamb_dueno.get(c, set()) | ora_dueno.get(c, set())) - {r["ID_PERSONA"]})   # LAMB u Oracle de OTRA persona
         elegido = regla = None
-        if propio and VALIDO.match(propio) and propio not in occ and not ajeno(propio) and not propio.isdigit():
+        if oracle_ok:
+            elegido, regla = oracle_ok, "dirección que ya tiene Oracle (formato UPeU, libre)"
+        elif propio and VALIDO.match(propio) and propio not in occ and not ajeno(propio) and not propio.isdigit():
             elegido, regla = propio, "usuario LAMB del alumno"
         else:
             for cand, rg in ((base, "regla: base"), (base + cod[-2:], "regla: +2 dígitos"), (base + cod[-3:], "regla: +3 dígitos")):
@@ -220,7 +231,8 @@ def ejecutar(pj, limite):
     json.dump({"hechos": hechos, "errores": err}, open(out, "w"), ensure_ascii=False, indent=1); os.chmod(out, 0o600)
     # Excel + SQL para Oracle con el UPN REALMENTE creado
     q = lambda s: "'" + str(s).replace("'", "''") + "'"
-    creadas = [h for h in hechos if h.get("estado") in ("creada", "ya existía")]
+    creadas = [h for h in hechos if h.get("estado") in ("creada", "ya existía")
+               and (h.get("CORREO_INST_ACTUAL_ORACLE") or "").strip().lower() != h["upn"].lower()]
     sql = [f"-- CORREO_INST de cuentas creadas en M365 · {stamp} · {len(creadas)} filas · sin COMMIT", "SET SERVEROUTPUT ON SIZE UNLIMITED", "SET DEFINE OFF",
            "DECLARE n NUMBER := 0; BEGIN"]
     for h in creadas:
