@@ -12,7 +12,7 @@ Regla de nombre (documento oficial + práctica descrita por Owen en la reunión 
 Si LAMB ya le asignó un usuario al alumno (ELISEO.USERS, por ID_PERSONA) y es válido y está libre en M365,
 SE USA ESE (así M365, LAMB y Oracle coinciden); la regla solo se aplica si no hay usuario LAMB utilizable.
 «Ocupado» = cualquier UPN, mail o proxyAddress (alias) del tenant, cuentas BORRADAS incluidas (retienen sus
-direcciones 30 días), el usuario LAMB de OTRA persona y lo ya propuesto en el mismo lote.
+direcciones 30 días), el usuario LAMB o el CORREO_INST de Oracle de OTRA persona y lo ya propuesto en el lote.
 
 Quedan RETENIDOS (no se crean) y van a una hoja aparte:
   · apellido paterno compuesto (regla pendiente de validar en el anexo);
@@ -107,6 +107,15 @@ def simular(xlsx):
     lamb_dueno = {}
     for idp, u in lamb.items(): lamb_dueno.setdefault(u, set()).add(idp)
     log(f"  ELISEO.USERS: {len(lamb)} usuarios LAMB")
+    # correos que Oracle YA asigna a otra persona (CORREO_INST): no se pueden dar a nadie más aunque no existan en M365
+    ora_dueno = {}
+    oc = os.path.join(HOME, ".cache/upeu-correos-oracle/ora_correo_inst_hoy.tsv")
+    if not os.path.exists(oc): sys.exit("✗ falta ~/.cache/upeu-correos-oracle/ora_correo_inst_hoy.tsv (CORREO_INST de Oracle leído hoy)")
+    import csv as _csv
+    for rr in _csv.DictReader(open(oc, encoding="utf-8", errors="replace"), delimiter="\t"):
+        c = (rr.get("CORREO_INST") or "").strip().lower()
+        if c.endswith("@" + DOM): ora_dueno.setdefault(lp(c), set()).add(rr["ID_PERSONA"].strip())
+    log(f"  Oracle CORREO_INST: {len(ora_dueno)} direcciones asignadas")
     VALIDO = re.compile(r"^[a-z0-9]+(\.[a-z0-9]+)*$")
     plan, ret = [], []
     for r in R:
@@ -126,7 +135,7 @@ def simular(xlsx):
         base = f"{slug(n[0])}.{slug(p[0])}"
         cod = re.sub(r"\D", "", r["CODIGO"])
         propio = lamb.get(r["ID_PERSONA"], "")
-        ajeno = lambda c: bool(lamb_dueno.get(c, set()) - {r["ID_PERSONA"]})   # usuario LAMB de OTRA persona
+        ajeno = lambda c: bool((lamb_dueno.get(c, set()) | ora_dueno.get(c, set())) - {r["ID_PERSONA"]})   # LAMB u Oracle de OTRA persona
         elegido = regla = None
         if propio and VALIDO.match(propio) and propio not in occ and not ajeno(propio) and not propio.isdigit():
             elegido, regla = propio, "usuario LAMB del alumno"
