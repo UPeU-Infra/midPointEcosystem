@@ -217,7 +217,7 @@ def ejecutar(pj, limite):
     for h in creadas:
         cur = (h.get("CORREO_INST_ACTUAL_ORACLE") or "").strip().lower()
         sql.append(f"  UPDATE MOISES.PERSONA_NATURAL SET CORREO_INST = {q(h['upn'].lower())} WHERE ID_PERSONA = {int(h['ID_PERSONA'])}"
-                   f" AND ID_TIPODOCUMENTO = {int(h['ID_TIPODOCUMENTO'])} AND NUM_DOCUMENTO = {q(h['NUM_DOCUMENTO'])}"
+                   f" AND ID_TIPODOCUMENTO = {int(h['ID_TIPODOCUMENTO'])} AND TRIM(NUM_DOCUMENTO) = {q(h['NUM_DOCUMENTO'])}"
                    f" AND NVL(LOWER(TRIM(CORREO_INST)),'#') = {q(cur or '#')}; n := n + SQL%ROWCOUNT;")
     sql += [f"  DBMS_OUTPUT.PUT_LINE('actualizadas: ' || n || ' de {len(creadas)}');", "END;", "/",
             f"-- Si 'actualizadas' = {len(creadas)} → COMMIT; si no → ROLLBACK;"]
