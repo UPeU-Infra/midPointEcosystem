@@ -371,20 +371,21 @@
     <item>
         <ref>extension/sciback:eppn</ref>
         <mapping>
-            <name>C-eppn-from-personalNumber</name>
+            <name>C-eppn-from-name-codigo-institucional</name>
+            <description>26-ago-2026 (fase 2). El ePPN pasa a construirse sobre name, no sobre personalNumber: este ultimo guarda el COD_APS crudo de Trabajadores, que en parte del personal ES el DNI, y eso metia el documento legal en el identificador federado. name ya aplica la politica canonica (A-name-canonical-codigo-or-codaps). Es el mapeo que declara el modelo: ePPN de uid@upeu.edu.pe. eduPerson 202208 exige que el ePPN no sea reasignable: el valor anterior quedo registrado en eduPersonPrincipalNamePrior (fase 1, 4.612 personas). Afecta a 4.073; a las 1.782 cuyo name ya es el DNI esto NO las arregla.</description>
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
             <source>
-                <path>personalNumber</path>
+                <path>name</path>
             </source>
             <expression>
                 <script>
-                    <code>if (personalNumber == null) return null; def pn = basic.stringify(personalNumber).trim(); if (pn == '') return null; return pn + '@upeu.edu.pe'</code>
+                    <code>if (name == null) return null; def nm = basic.stringify(name).trim(); if (nm == '') return null; return nm + '@upeu.edu.pe'</code>
                 </script>
             </expression>
             <condition>
                 <script>
-                    <code>personalNumber != null &amp;&amp; basic.stringify(personalNumber).trim() != ''</code>
+                    <code>name != null &amp;&amp; basic.stringify(name).trim() != ''</code>
                 </script>
             </condition>
         </mapping>
@@ -2411,6 +2412,57 @@ return new ArrayList(out)</code>
             </expression>
             <target>
                 <path>extension/sciback:academicProgramUri</path>
+            </target>
+        </mapping>
+    </item>
+
+    <!-- ============================================================
+         BLOQUE J3d — academicProgramSuneduCode DERIVADO del item per-IIA
+         Sincronizado desde PROD v130 (2026-10-21): existia en PROD y faltaba en el repo.
+         ============================================================ -->
+    <item>
+        <ref>extension/sciback:academicProgramSuneduCode</ref>
+        <mapping>
+            <name>J3d-academicProgramSuneduCode-from-live-item</name>
+            <description>Deriva el P-code principal (single-value) del item per-IIA liveProgramSuneduCodeStudent, que viene de la LookupTable program-pxx-byid generada desde VocBench (ADR-005). Reemplaza al inbound que leia CODIGO_SUNEDU2 de Oracle: 73,18% de cobertura con 139 estudiantes mal codificados, frente a 88,44% y 0 errores.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>codes</name>
+                <path>extension/sciback:liveProgramSuneduCodeStudent</path>
+            </source>
+            <expression>
+                <script>
+                    <code>// Deriva academicProgramSuneduCode (P-code oficial A4/A8 2026-1) del item per-IIA
+// liveProgramSuneduCodeStudent, poblado desde la LookupTable program-pxx-byid que se
+// genera de VocBench (ADR-005). VocBench es la fuente de verdad.
+// Multivalor a proposito: quien cursa dos programas a la vez tiene dos P-codes (51
+// medidos el 10-ago-2026 sobre 18.957 con cobertura). Intentar colapsarlo a un solo
+// valor en el mapping NO es posible: MidPoint evalua la expresion una vez por cada
+// valor del source, tanto en el inbound como aqui, y un target single-value da
+// "Strong mappings provided more than one value". Quien necesite uno solo -Koha en
+// Bsort2- elige en su outbound. Los valores salen ordenados: P antes que SEG y,
+// dentro de cada uno, el menor numero primero (el codigo original del concepto).
+// strong: reconstruye el multivalor completo, asi lo retirado desaparece.
+if (codes == null) return null
+def vals = (codes instanceof Collection) ? codes : [codes]
+def out = [] as Set
+vals.each { def v = it != null ? basic.stringify(it).trim() : ''; if (v) out &lt;&lt; v }
+if (out.isEmpty()) return null
+def lista = new ArrayList(out)
+lista.sort { a, b -&gt;
+    def pa = a.startsWith('P') ? 0 : 1
+    def pb = b.startsWith('P') ? 0 : 1
+    if (pa != pb) return pa - pb
+    def na = (a.replaceAll(/[^0-9]/,'') ?: '0') as int
+    def nb = (b.replaceAll(/[^0-9]/,'') ?: '0') as int
+    return na - nb
+}
+return lista</code>
+                </script>
+            </expression>
+            <target>
+                <path>extension/sciback:academicProgramSuneduCode</path>
             </target>
         </mapping>
     </item>
