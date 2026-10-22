@@ -1,0 +1,11 @@
+{
+  "objectModification": {
+    "itemDelta": [
+      {
+        "modificationType": "add",
+        "path": "item[5789]/mapping[5790]/target",
+        "value": { "set": { "predefined": "all" } }
+      }
+    ]
+  }
+}

@@ -2473,7 +2473,8 @@ return lista</code>
          por Koha/LDAP/Keycloak) deja de depender de los inbounds de recurso (que caían en zero-set
          multi-source y no materializaban). Ahora se DERIVA en el template como unión de los items
          persistidos por IIA (liveAffiliationWorker/Student/Alum), que SÍ se materializan (single-source).
-         strong: reconstruye el multivalor en cada recompute. Es la fuente única y fiable de affiliations
+         strong + <set><predefined>all</predefined> (2026-10-21): reconstruye el multivalor COMPLETO en
+         cada recompute y retira lo que ningún item vivo produce. Es la fuente única y fiable de affiliations
          downstream. Mantiene Reality-vs-Policy: la realidad (shadows linked) materializa los items
          per-IIA; el template los consolida en el atributo eduPerson de salida.
          ============================================================ -->
@@ -2504,6 +2505,25 @@ def live = [] as Set;
 return new ArrayList(live)</code>
                 </script>
             </expression>
+            <!-- 2026-10-21: RANGO EXPLICITO (patron PM10, igual que J3 el 15-ago).
+                 Sin <target> el rango por defecto de un item MULTIVALOR es, desde 4.9,
+                 `matchingProvenance`: J3b solo retira los valores que lleven SU procedencia.
+                 Los valores rancios llevan la procedencia de tres inbounds ya retirados de
+                 los resources (medido en PROD 21-oct sobre m_user.fullObject):
+                   archetype-to-affiliations   (Trabajadores e21)  5.965 valores staff/faculty
+                   school-name-to-affiliations (Estudiantes e22)   1.846 valores student
+                   afiliacion-to-affiliations  (Egresados e23)         1 valor alum
+                 Nadie los produce ni los retira: 7.678 personas con afiliaciones de mas,
+                 que el outbound de LDAP (ePA tolerant=false, ePSA) publica tal cual.
+                 set=all es seguro AQUI porque J3b es el UNICO escritor de `affiliations`
+                 (0 inbounds en los 12 resources, 0 mappings en otros templates/roles/
+                 archetypes; K2 solo lo LEE). Si algun dia otro mapping escribe este item,
+                 cambiar a un <set><condition> que acote el rango a los valores de J3b. -->
+            <target>
+                <set>
+                    <predefined>all</predefined>
+                </set>
+            </target>
         </mapping>
     </item>
 

@@ -1,0 +1,10 @@
+{
+  "objectModification": {
+    "itemDelta": [
+      {
+        "modificationType": "replace",
+        "path": "item[5789]/mapping[5790]/target"
+      }
+    ]
+  }
+}
