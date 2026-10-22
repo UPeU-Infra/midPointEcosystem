@@ -1,0 +1,9 @@
+{
+  "objectModification": {
+    "itemDelta": [
+      { "modificationType": "delete", "path": "item", "value": [ { "@id": 5830 }, { "@id": 5832 }, { "@id": 5834 } ] },
+      { "modificationType": "delete", "path": "item[5771]/mapping", "value": [ { "@id": 5836 } ] },
+      { "modificationType": "replace", "path": "item[5771]/mapping[5772]/lifecycleState", "value": "active" }
+    ]
+  }
+}

@@ -1,0 +1,48 @@
+name	oid	lc_hoy->nuevo	eff_hoy->nuevo	retira	217	215	216	cuenta_e22_viva	term	LDAP(cache)	Koha(cache)	oracle_estado	oracle_ultimo_fin	oracle_cursos_vig_hoy	oracle_max_sem	justificacion
+200710593	76454eaa-83d0-40aa-a24d-421a833a8354	active->active	DIS->ENA	-	student	alum	-	1	-	default:disabled|alumni:disabled	enabled	VIGENTE-HOY	2026-12-22	1	287	vigente: cuenta e22 viva + Oracle con cursos vigentes
+201122601	7f69978e-04a5-4564-9f90-8edb9f60e1cd	active->active	DIS->ENA	S	student	alum	-	0	-	default:disabled|alumni:disabled	enabled	SOLO-NO-ACTIVOS-FUT	2026-11-27	0	283	egresado: cuenta e23 viva (AFILIACION alum); 217 rancio se retira
+201320310	2a7cb518-4781-4f8b-9072-de7615877466	active->active	DIS->ENA	-	-	alum	-	0	-	alumni:disabled	enabled	SIN-MATRICULA-VIGENTE	-	0	-	egresado: cuenta e23 viva; DISABLED escrito por recon Egresados 05..12-ago
+201420230	47fff681-2993-4c74-bde4-9fd641349cb7	active->active	DIS->ENA	-	-	alum	-	0	-	alumni:disabled	-	SIN-MATRICULA-VIGENTE	-	0	-	egresado: cuenta e23 viva; DISABLED escrito por recon Egresados 05..12-ago
+201522134	014d4d29-13a4-43ae-8018-05a6d0f79b0a	active->active	DIS->ENA	-	-	alum	-	0	-	alumni:disabled	-	SIN-MATRICULA-VIGENTE	-	0	-	egresado: cuenta e23 viva; DISABLED escrito por recon Egresados 05..12-ago
+201610032	fc367a7a-731c-4c39-ad9e-9d4aa0472d5a	active->active	DIS->ENA	-	-	alum	-	0	-	alumni:disabled	-	SIN-MATRICULA-VIGENTE	-	0	-	egresado: cuenta e23 viva; DISABLED escrito por recon Egresados 05..12-ago
+201711925	2ab17d14-ee99-43df-815b-5f56a4a355c9	active->active	DIS->ENA	S	student	alum	-	0	-	alumni:disabled|default:disabled	enabled	SOLO-NO-ACTIVOS-FUT	2026-11-27	0	283	egresado: cuenta e23 viva (AFILIACION alum); 217 rancio se retira
+201811326	a2a9ae97-bc0f-4e3a-ba1b-eee3e35caf92	active->active	DIS->ENA	-	-	alum	-	0	-	alumni:disabled	-	SIN-MATRICULA-VIGENTE	-	0	-	egresado: cuenta e23 viva; DISABLED escrito por recon Egresados 05..12-ago
+201812334	69b18dc2-20fd-49c1-acbd-452cca409893	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-20	2	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+201910575	7f84d5fa-44f9-46f3-a699-417b1c888740	active->active	DIS->ENA	-	-	alum	-	0	-	alumni:disabled	-	SIN-MATRICULA-VIGENTE	-	0	-	egresado: cuenta e23 viva; DISABLED escrito por recon Egresados 05..12-ago
+202014210	05266e34-bc9a-4c90-8cc6-810ae9643549	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-27	1	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202015421	a2d2320c-d20f-47ce-b928-f74aacdc660d	active->active	DIS->ENA	-	-	alum	-	0	-	alumni:disabled	-	SIN-MATRICULA-VIGENTE	-	0	-	egresado: cuenta e23 viva; DISABLED escrito por recon Egresados 05..12-ago
+202120544	7e0842fb-2d98-4ac9-843e-beeb17065ba6	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-27	2	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202123410	21f1587b-472e-4f00-8415-c8677614e070	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-27	4	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202210728	34bb6629-d222-4364-8652-3848f97c40e5	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-30	3	285	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202313501	ec2c2250-5e8c-4878-873f-0a865b9695c4	active->active	DIS->ENA	-	-	alum	-	0	-	alumni:disabled	-	SIN-MATRICULA-VIGENTE	-	0	-	egresado: cuenta e23 viva; DISABLED escrito por recon Egresados 05..12-ago
+202614365	9fbd44e2-c477-4e03-8310-09ede575c8ff	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-27	6	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202622447	5e359b9a-b46e-42d2-83bc-c3871facb548	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-30	1	285	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202622457	f914de80-7dcf-4223-8daa-61bba68b3ce5	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-30	1	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202622462	6c38eeb7-595e-4d62-933e-a389279d1743	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-30	1	285	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202622464	19ed213b-7385-4ec9-ba6a-78302888e10b	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-30	1	285	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202622471	c0b03fb1-a2ea-40b5-8989-4a49b7ef3ab0	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-30	1	285	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202622476	f6bbd79c-83db-4cd9-a036-94a79e113181	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-30	1	285	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202622495	303d3f96-60e5-4055-befd-35d74c243bdb	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-27	7	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202622500	fbb150dc-a334-4028-a4a6-9720789b6504	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-27	7	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202622501	1ba520c4-bbc7-4e72-9d14-881fca0c648f	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-27	7	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202622502	0e88b500-d24b-4c10-8684-8a5bfa93fd80	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-27	7	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202622503	ebca8f59-aaa7-4330-b30d-9f0ce079c08a	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-27	5	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202622504	0152970f-cfbf-426f-92cd-2df170ca2618	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-27	7	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202622749	2e00d7fc-4476-4601-87d1-6f5a09946c7f	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-12-28	4	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202622832	9de0ea50-07cf-4aa9-8c4d-afd7a7f7d24a	active->active	DIS->ENA	S	student	alum	-	0	-	default:disabled	enabled	SIN-MATRICULA-VIGENTE	-	0	-	egresado: cuenta e23 viva (AFILIACION alum); 217 rancio se retira
+202622835	a3b50a33-ecfa-454f-98fd-8c2d9afe8d5f	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-27	7	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202623540	04db8242-d6db-4319-b1cc-6abd5d6c0248	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-27	7	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+202623718	29f8adcb-86d4-4ce6-a63e-a657190d207f	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2027-01-22	5	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+324100765	c4ec4380-bb48-4c4f-976d-417b1294bbe0	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-10-28	1	291	vigente: cuenta e22 viva + Oracle con cursos vigentes
+324100825	17d85571-d2c8-4c79-a617-c98c1e50d3e9	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-12-31	10	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+324104444	540e9bac-de95-4faf-af2d-202704c4d60f	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-12-23	1	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+324105266	85c5bacb-6f92-4f9f-a8c4-c885808bec65	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-12-23	2	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+324105289	9052039f-e661-4995-beb5-2fa89172bd4e	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-12-23	2	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+324105410	9f9d9aa0-afda-4164-b7d5-fe02cfa1f636	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-12-23	1	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+324105420	fa55da47-a210-4b88-9669-0ec0a68f15ad	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-12-23	1	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+324111391	53c064ff-098f-43ce-b249-e64da48ab9be	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-10-28	1	291	vigente: cuenta e22 viva + Oracle con cursos vigentes
+324111499	a17c5435-4015-479b-8a5e-1e27a09b0d29	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-06	11	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+324111664	2f443d35-6759-4582-9222-e5e507e2dec0	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-06	11	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+324111850	4e25f41a-6d38-4204-9a0d-f13680703dfa	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-06	10	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+324111852	3302a5e8-14e5-4f9e-8fcd-db96446161a3	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-11-06	11	283	vigente: cuenta e22 viva + Oracle con cursos vigentes
+324111933	afb13bf6-f8d3-4e10-9217-d3626df2ff9f	active->active	DIS->ENA	-	student	-	-	1	-	default:disabled	enabled	VIGENTE-HOY	2026-10-28	1	291	vigente: cuenta e22 viva + Oracle con cursos vigentes

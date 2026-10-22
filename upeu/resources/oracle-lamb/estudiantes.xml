@@ -1195,9 +1195,19 @@ return k.length() &gt; 1 ? k.substring(0,1).toUpperCase() + k.substring(1) : k.t
                     <situation>unmatched</situation>
                     <actions><addFocus/></actions>
                 </reaction>
+                <!-- 2026-10-22 (runbook activacion-vinculo-vivo-2026-10-22): deleted -> synchronize.
+                     Antes inactivateFocus: replace administrativeStatus=DISABLED como delta PRIMARIO
+                     (codigo 4.10 InactivateFocusAction) que apagaba a la PERSONA entera por perder UNA
+                     cuenta y nada lo deshacia al volver (104 estudiantes con 217 y DISABLED el 22-oct;
+                     3 egresados perdieron ou=alumni). Ahora el clockwork corre (doc 4.10 schema-handling/
+                     synchronization: "The synchronization (mappings evaluation) is driven by the presence
+                     of the synchronize action"; el unlink del shadow muerto ocurre siempre), el Bloque R
+                     del template retira el item vivo de esta IIA y el Bloque L decide lifecycleState.
+                     Mismo criterio que trabajadores.xml (deleted -> unlink, gobernanza 2026-05-29). -->
                 <reaction>
+                    <name>deleted-synchronize-vinculo-vivo</name>
                     <situation>deleted</situation>
-                    <actions><inactivateFocus/></actions>
+                    <actions><synchronize/></actions>
                 </reaction>
             </synchronization>
         </objectType>

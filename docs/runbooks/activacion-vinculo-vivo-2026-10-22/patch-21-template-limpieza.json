@@ -1,0 +1,7 @@
+{
+  "objectModification": {
+    "itemDelta": [
+      { "modificationType": "delete", "path": "item[5771]/mapping", "value": [ { "@id": 5772 } ] }
+    ]
+  }
+}

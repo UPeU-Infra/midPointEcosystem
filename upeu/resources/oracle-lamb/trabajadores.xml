@@ -467,18 +467,19 @@
                     </target>
                 </inbound>
             </attribute>
+            <!-- 2026-10-22 (runbook activacion-vinculo-vivo-2026-10-22): RETIRADO el inbound
+                 estado-to-administrativeStatus (strong, ESTADO='A' -> enabled, otro -> disabled).
+                 Competia en el MISMO clockwork con el mapping de administrativeStatus del template:
+                 para los ex-trabajadores en gracia (ESTADO='I') que siguen siendo egresados o
+                 estudiantes, el outbound LDAP se calculaba sobre el DISABLED intermedio y el foco
+                 terminaba ENABLED -> 1.484 cuentas LDAP deshabilitadas a las ~11:2x UTC y
+                 rehabilitadas por Estudiantes/Egresados/Koha horas despues, todos los dias (medido
+                 19-22 oct). ESTADO sigue leyendose en archetype-to-liveAffiliationWorker
+                 (ESTADO='I' -> liveAffiliationWorker=null) y el Bloque L decide lifecycleState.
+                 best-practices §1.2: el lifecycle se sincroniza desde la IIA; administrativeStatus
+                 es override manual. -->
             <attribute>
                 <ref>ri:ESTADO</ref>
-                <inbound>
-                    <name>estado-to-administrativeStatus</name>
-                    <strength>strong</strength>
-                    <expression>
-                        <script>
-                            <code>(input == 'A') ? 'enabled' : 'disabled'</code>
-                        </script>
-                    </expression>
-                    <target><path>activation/administrativeStatus</path></target>
-                </inbound>
             </attribute>
             <attribute>
                 <ref>ri:ID_PERSONA</ref>

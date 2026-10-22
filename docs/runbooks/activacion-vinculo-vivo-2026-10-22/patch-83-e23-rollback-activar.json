@@ -1,0 +1,8 @@
+{
+  "objectModification": {
+    "itemDelta": [
+      { "modificationType": "replace", "path": "schemaHandling/objectType[2708]/synchronization/reaction[2758]/lifecycleState", "value": "active" },
+      { "modificationType": "replace", "path": "schemaHandling/objectType[2708]/synchronization/reaction[2765]/lifecycleState", "value": "proposed" }
+    ]
+  }
+}

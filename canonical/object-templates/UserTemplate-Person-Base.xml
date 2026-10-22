@@ -32,13 +32,17 @@
     Q4 — Birthright AR-Koha-Librarian para personal CRAI (costCenter=93, ID_AREA CRAI) [movido de staff template v2.9; FIX 2026-05-31 G1: era area.97/522/625 (erróneo) → 93 numérico puro]
     Q5 — Birthright AR-Koha-Librarian-{tier} via LookupTable LT-CRAI-Puesto-Tier [movido de staff template v2.9; FIX 2026-05-31 G1: idem costCenter]
     S — schacPersonalTitle DERIVADO desde conferredDegreeAbbrev (Bach./Mg./Dr., strong) [añadido v2.8]
+    R — Retiro de liveAffiliationStudent/Alum/Worker cuando no hay cuenta VIVA de su IIA (strong, 2026-10-22)
+    ACT — Limpia el administrativeStatus=DISABLED automatico si hay vinculo vivo (2026-10-22)
 
   Validaciones de formato (weak/log-warn):
     birthDate (YYYY-MM-DD), gender (ISO 5218), nationality (ISO 3166 alpha-3),
     hireDate (YYYY-MM-DD), terminationDate (YYYY-MM-DD)
 
   Leaver policy (ciclo ISO 24760 completo):
-    activation/administrativeStatus ← terminationDate <= today → DISABLED (strong) [Bloque leaver]
+    [2026-10-22] El estado lo decide lifecycleState (Bloque L) desde los items vivos; la
+    automatizacion ya NO escribe administrativeStatus (ver ACT). Retirado
+    leaver-disable-on-terminationdate. Runbook activacion-vinculo-vivo-2026-10-22.
     lifecycleState ← grace period post-terminationDate + staff/faculty → archived (strong) [Bloque H]
     Grace periods: fallecimiento=0d, despido=7d, termino_contrato=0d, renuncia/mutuo_disenso/otro=30d
     Jubilados: nunca archivados via H (Bloque K los clasifica como alum, acceso Koha via AR-Koha-Patron-Alum)
@@ -1538,6 +1542,114 @@ return (relP == null &amp;&amp; perP == null)
     </item>
 
     <!-- ============================================================
+         BLOQUE R — RETIRO DE LOS ITEMS VIVOS CUANDO MUERE SU CUENTA (2026-10-22)
+         Runbook: docs/runbooks/activacion-vinculo-vivo-2026-10-22/
+
+         Problema medido (22-oct): liveAffiliationStudent/Alum/Worker los escribe
+         un inbound strong single-writer de su IIA, pero cuando la cuenta Oracle
+         sale del feed (shadow muerto) MidPoint NO evalua ese inbound (codigo
+         4.10 FullInboundsProcessing: "projection is gone" -> se salta) y el
+         valor queda RANCIO para siempre. Medido: 103 users con 217 sin cuenta
+         e22 viva, 1 con 215 sin e23, 1 con 216 sin e21. Con el rancio, el
+         Bloque L los deja 'active' (leaver gap) o el reaction inactivateFocus
+         los apaga y nada los reactiva.
+
+         Regla: un item vivo solo existe mientras exista una cuenta VIVA de su
+         IIA en el contexto. midpoint.hasLinkedAccount(oid) mira los projection
+         contexts del clockwork (no linkRef): una cuenta recien enlazada (link /
+         addFocus) cuenta como viva; una muerta (gone) o en unlink/delete no.
+         Patron "strong + null + condition" ya en PROD (B-email-sanitize-numeric):
+         strong sin valor => el target queda sin valor (doc Evolveum, citada en
+         leaver-disable-on-terminationdate). Fail-safe: si la funcion falla, NO
+         se retira (condition=false).
+         best-practices §2.1 Reality-vs-Policy (el shadow es la realidad),
+         iga-canonical §1.3 (una IIA por atributo: sin cuenta de la IIA no hay dato).
+         ============================================================ -->
+    <item>
+        <ref>extension/sciback:liveAffiliationStudent</ref>
+        <mapping>
+            <name>R1-retirar-liveAffiliationStudent-sin-cuenta-estudiantes-viva</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>student</name>
+                <path>extension/sciback:liveAffiliationStudent</path>
+            </source>
+            <expression>
+                <script>
+                    <code>null</code>
+                </script>
+            </expression>
+            <target>
+                <path>extension/sciback:liveAffiliationStudent</path>
+            </target>
+            <condition>
+                <script>
+                    <code>
+if (student == null || basic.stringify(student).trim() == '') return false
+try { return !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22') } catch (Exception e) { log.warn('R1: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                    </code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+    <item>
+        <ref>extension/sciback:liveAffiliationAlum</ref>
+        <mapping>
+            <name>R2-retirar-liveAffiliationAlum-sin-cuenta-egresados-viva</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>alum</name>
+                <path>extension/sciback:liveAffiliationAlum</path>
+            </source>
+            <expression>
+                <script>
+                    <code>null</code>
+                </script>
+            </expression>
+            <target>
+                <path>extension/sciback:liveAffiliationAlum</path>
+            </target>
+            <condition>
+                <script>
+                    <code>
+if (alum == null || basic.stringify(alum).trim() == '') return false
+try { return !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23') } catch (Exception e) { log.warn('R2: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                    </code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+    <item>
+        <ref>extension/sciback:liveAffiliationWorker</ref>
+        <mapping>
+            <name>R3-retirar-liveAffiliationWorker-sin-cuenta-trabajadores-viva</name>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>worker</name>
+                <path>extension/sciback:liveAffiliationWorker</path>
+            </source>
+            <expression>
+                <script>
+                    <code>null</code>
+                </script>
+            </expression>
+            <target>
+                <path>extension/sciback:liveAffiliationWorker</path>
+            </target>
+            <condition>
+                <script>
+                    <code>
+if (worker == null || basic.stringify(worker).trim() == '') return false
+try { return !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21') } catch (Exception e) { log.warn('R3: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                    </code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+    <!-- ============================================================
          BLOQUE L — DERIVACIÓN CANÓNICA DE lifecycleState (state machine única)
          (GOBERNANZA 2026-05-29 — veredicto canónico aprobado; reemplaza F+H+H2)
 
@@ -1696,75 +1808,42 @@ return 'draft'
     </item>
 
     <!-- ============================================================
-         LEAVER POLICY — DISABLE EN TERMINATIONDATE
-         activation/administrativeStatus ← terminationDate <= today → DISABLED
-         ISO 24760: active → suspended en fecha de cese.
-         strong: se aplica en cada recompute si terminationDate está presente.
-         Namespace: urn:sciback:midpoint:person
+         ACTIVACION POR VINCULO VIVO (2026-10-22) — reemplaza a
+         leaver-disable-on-terminationdate.
+         Runbook: docs/runbooks/activacion-vinculo-vivo-2026-10-22/
+
+         Modelo: el estado de la persona lo decide lifecycleState (Bloque L,
+         desde liveAffiliationWorker/Student/Alum). best-practices §1.2 y regla
+         de oro #3 / iga-canonical §1.2: "lifecycle se sincroniza desde la IIA;
+         administrativeStatus queda como ultimo recurso de override manual".
+         Por eso la automatizacion ya NO escribe DISABLED en administrativeStatus:
+           - Estudiantes/Egresados: deleted -> synchronize (antes inactivateFocus,
+             que hace replace administrativeStatus=DISABLED como delta PRIMARIO,
+             codigo 4.10 InactivateFocusAction, y nada lo deshacia).
+           - Trabajadores: retirado el inbound ESTADO -> administrativeStatus
+             (competia con este item en el mismo clockwork: ~1.484 LDAP
+             disabled/enabled cada dia, medido 19-22 oct).
+         Un leaver (sin ningun item vivo) queda disabled por L (draft/archived ->
+         effectiveStatus disabled); al volver un vinculo, L lo pone active y se
+         reactiva solo.
+
+         Este mapping solo LIMPIA el DISABLED que dejo la automatizacion vieja a
+         quien HOY tiene un vinculo vivo (medido: 113 active+DISABLED, todos
+         escritos por recon/recompute/REST-scripts; 0 overrides manuales en la
+         auditoria). Nunca escribe un valor. Excepcion documentada a §1.2: un
+         DISABLED manual sobre una persona con vinculo vivo tambien se limpia;
+         el bloqueo de emergencia de una persona viva se pide por la IIA o con
+         activation/validTo. Patron strong+null+condition (B-email-sanitize).
          ============================================================ -->
     <item>
         <ref>activation/administrativeStatus</ref>
         <mapping>
-            <name>leaver-disable-on-terminationdate</name>
-            <!-- ============================================================
-                 REDISENO 2026-07-16 — decidir por AFILIACION VIVA REAL, no por
-                 el proxy primaryAffiliation.
-
-                 BUG ANTERIOR (uno solo, dos sintomas SIMETRICOS): el mapping
-                 preguntaba "cual es tu afiliacion principal?" cuando debe
-                 preguntar "te queda algun vinculo vivo?". primaryAffiliation es
-                 un DERIVADO por PRECEDENCIA (faculty>staff>student>alum, bloque
-                 J3) que devuelve null si no hay ninguna viva. De ahi:
-                   (a) FALSO DISABLE — dual staff+student que cesa como
-                       trabajador: aff='staff' gana por precedencia aunque siga
-                       con matricula viva -> DISABLED. Medido en PROD 2026-07-16:
-                       3 estudiantes ACTIVOS desactivados (201010960, 201520563,
-                       201610198) durante el import de Estudiantes.
-                   (b) FALSO ENABLE — cesado puro: aff=null caia en la rama
-                       "afiliacion no laboral (alum/student/affiliate/null) ->
-                       recuperar ENABLED". Pero null NO es 'alum': es "sin
-                       ningun vinculo". Medido por simulacion preview
-                       (SimulationResult 2647ede5-...): habria REACTIVADO 1.811
-                       leavers sin vinculo vivo. Evento de seguridad, no bug.
-
-                 FIX: leer los 3 slots de HECHO (liveAffiliationWorker/Student/
-                 Alum), cada uno single-writer por su IIA, en vez del derivado.
-                 DISABLED solo si ceso Y no le queda NINGUN vinculo vivo.
-
-                 'alum' ES afiliacion viva (eduPerson 202208: "Graduado/
-                 egresado", uno de los 8 valores canonicos). Es estado
-                 PERMANENTE derivado de graduarse, NO una vigencia: exigirle
-                 matricula vigente a un alum es contradiccion en terminos (un
-                 egresado por definicion ya no esta matriculado). La IIA de
-                 'alum' es DAVID.VW_PERSONA_EGRESADO (-> liveAffiliationAlum,
-                 inbound strong en egresados.xml). OJO: "estuvo en
-                 PERSONA_NATURAL_ALUMNO" NO es alum — son ex-estudiantes que
-                 nunca se graduaron (434 casos medidos): no son alum ni nada.
-
-                 !! NUNCA retornar null con la <condition> verdadera !!
-                 En un mapping STRONG un output vacio NO es abstencion: la doc
-                 de Evolveum dice "If no value or null is produced, then it is
-                 assumed that the target should have no value" -> BORRA
-                 administrativeStatus -> effectiveStatus recomputa -> ENABLED de
-                 facto. Seria un reactivador encubierto (el mismo bug (b) por
-                 otra via). Tampoco <condition> sirve como abstencion: un
-                 true->false REMUEVE por relatividad los valores que el mapping
-                 produjo. Aqui no existe "no opinar": solo cabe afirmar ENABLED
-                 o DISABLED. Por eso el script computa booleanos (ceased/anyLive)
-                 y siempre afirma un valor.
-
-                 PENDIENTE DE REDISENO (anotado, fuera de alcance): gobernar
-                 administrativeStatus con un strong contradice
-                 iga-canonical-standards 1.2 ("administrativeStatus queda como
-                 ultimo recurso de override manual"; el lifecycle se sincroniza
-                 desde la IIA). Lo canonico seria gobernar lifecycleState
-                 (active/archived) y dejar administrativeStatus libre. Es
-                 PREEXISTENTE, no lo introduce este fix.
-                 ============================================================ -->
+            <name>ACT-limpiar-disabled-automatico-si-vinculo-vivo</name>
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
             <source>
-                <path>extension/sciback:terminationDate</path>
+                <name>adminStatus</name>
+                <path>activation/administrativeStatus</path>
             </source>
             <source>
                 <name>worker</name>
@@ -1780,28 +1859,19 @@ return 'draft'
             </source>
             <expression>
                 <script>
-                    <code>import java.time.LocalDate; import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType;
-if (terminationDate == null) return null;
-// ¿Ceso de verdad? Solo true con fecha valida YYYY-MM-DD y ya cumplida.
-// Dato ilegible o fecha futura -> ceased=false -> NO se desactiva (fail-safe).
-def ceased = false;
-def v = basic.stringify(terminationDate);
-if (v ==~ /^\d{4}-\d{2}-\d{2}$/) {
-    try { ceased = !LocalDate.parse(v).isAfter(LocalDate.now()) } catch (Exception e) { log.warn("leaver: terminationDate no parseable '{}' en {} -> no se desactiva", v, focus?.name) }
-} else {
-    log.warn("leaver: terminationDate con formato inesperado '{}' en {} -> no se desactiva", v, focus?.name)
-}
-// ¿Le queda ALGUN vinculo vivo? 'sin dato' y 'vacio' NO cuentan como vivo.
-def liveOf = { it != null &amp;&amp; basic.stringify(it).trim() != '' };
-def anyLive = liveOf(worker) || liveOf(student) || liveOf(alum);
-// ISO 24760: ceso y sin ningun vinculo -> suspended. Con vinculo vivo -> su
-// identidad persiste por otra IIA -> ENABLED.
-return (ceased &amp;&amp; !anyLive) ? ActivationStatusType.DISABLED : ActivationStatusType.ENABLED</code>
+                    <code>null</code>
                 </script>
             </expression>
+            <target>
+                <path>activation/administrativeStatus</path>
+            </target>
             <condition>
                 <script>
-                    <code>terminationDate != null</code>
+                    <code>
+def liveOf = { it != null &amp;&amp; basic.stringify(it).trim() != '' }
+def anyLive = liveOf(worker) || liveOf(student) || liveOf(alum)
+return anyLive &amp;&amp; adminStatus != null &amp;&amp; adminStatus.toString().equalsIgnoreCase('disabled')
+                    </code>
                 </script>
             </condition>
         </mapping>

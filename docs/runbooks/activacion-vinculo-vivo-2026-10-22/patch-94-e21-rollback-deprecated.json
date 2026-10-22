@@ -1,0 +1,7 @@
+{
+  "objectModification": {
+    "itemDelta": [
+      { "modificationType": "replace", "path": "schemaHandling/objectType[5464]/attribute[5484]/inbound[5485]/lifecycleState" }
+    ]
+  }
+}

@@ -1,0 +1,150 @@
+<objectModification
+    xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:sciback="urn:sciback:midpoint:person">
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item</t:path>
+    <t:value xsi:type="c:ObjectTemplateItemDefinitionType" id="5830">
+        <c:ref>extension/sciback:liveAffiliationStudent</c:ref>
+        <c:mapping id="5831">
+            <c:name>R1-retirar-liveAffiliationStudent-sin-cuenta-estudiantes-viva</c:name>
+            <c:lifecycleState>proposed</c:lifecycleState>
+            <c:strength>strong</c:strength>
+            <c:source>
+                <c:name>student</c:name>
+                <c:path>extension/sciback:liveAffiliationStudent</c:path>
+            </c:source>
+            <c:expression>
+                <c:script>
+                    <c:code>null</c:code>
+                </c:script>
+            </c:expression>
+            <c:target>
+                <c:path>extension/sciback:liveAffiliationStudent</c:path>
+            </c:target>
+            <c:condition>
+                <c:script>
+                    <c:code>
+if (student == null || basic.stringify(student).trim() == '') return false
+try { return !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22') } catch (Exception e) { log.warn('R1: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                    </c:code>
+                </c:script>
+            </c:condition>
+        </c:mapping>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item</t:path>
+    <t:value xsi:type="c:ObjectTemplateItemDefinitionType" id="5832">
+        <c:ref>extension/sciback:liveAffiliationAlum</c:ref>
+        <c:mapping id="5833">
+            <c:name>R2-retirar-liveAffiliationAlum-sin-cuenta-egresados-viva</c:name>
+            <c:lifecycleState>proposed</c:lifecycleState>
+            <c:strength>strong</c:strength>
+            <c:source>
+                <c:name>alum</c:name>
+                <c:path>extension/sciback:liveAffiliationAlum</c:path>
+            </c:source>
+            <c:expression>
+                <c:script>
+                    <c:code>null</c:code>
+                </c:script>
+            </c:expression>
+            <c:target>
+                <c:path>extension/sciback:liveAffiliationAlum</c:path>
+            </c:target>
+            <c:condition>
+                <c:script>
+                    <c:code>
+if (alum == null || basic.stringify(alum).trim() == '') return false
+try { return !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23') } catch (Exception e) { log.warn('R2: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                    </c:code>
+                </c:script>
+            </c:condition>
+        </c:mapping>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item</t:path>
+    <t:value xsi:type="c:ObjectTemplateItemDefinitionType" id="5834">
+        <c:ref>extension/sciback:liveAffiliationWorker</c:ref>
+        <c:mapping id="5835">
+            <c:name>R3-retirar-liveAffiliationWorker-sin-cuenta-trabajadores-viva</c:name>
+            <c:lifecycleState>proposed</c:lifecycleState>
+            <c:strength>strong</c:strength>
+            <c:source>
+                <c:name>worker</c:name>
+                <c:path>extension/sciback:liveAffiliationWorker</c:path>
+            </c:source>
+            <c:expression>
+                <c:script>
+                    <c:code>null</c:code>
+                </c:script>
+            </c:expression>
+            <c:target>
+                <c:path>extension/sciback:liveAffiliationWorker</c:path>
+            </c:target>
+            <c:condition>
+                <c:script>
+                    <c:code>
+if (worker == null || basic.stringify(worker).trim() == '') return false
+try { return !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21') } catch (Exception e) { log.warn('R3: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                    </c:code>
+                </c:script>
+            </c:condition>
+        </c:mapping>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5771]/mapping</t:path>
+    <t:value xsi:type="c:ObjectTemplateMappingType" id="5836">
+            <c:name>ACT-limpiar-disabled-automatico-si-vinculo-vivo</c:name>
+            <c:lifecycleState>proposed</c:lifecycleState>
+            <c:strength>strong</c:strength>
+            <c:source>
+                <c:name>adminStatus</c:name>
+                <c:path>activation/administrativeStatus</c:path>
+            </c:source>
+            <c:source>
+                <c:name>worker</c:name>
+                <c:path>extension/sciback:liveAffiliationWorker</c:path>
+            </c:source>
+            <c:source>
+                <c:name>student</c:name>
+                <c:path>extension/sciback:liveAffiliationStudent</c:path>
+            </c:source>
+            <c:source>
+                <c:name>alum</c:name>
+                <c:path>extension/sciback:liveAffiliationAlum</c:path>
+            </c:source>
+            <c:expression>
+                <c:script>
+                    <c:code>null</c:code>
+                </c:script>
+            </c:expression>
+            <c:target>
+                <c:path>activation/administrativeStatus</c:path>
+            </c:target>
+            <c:condition>
+                <c:script>
+                    <c:code>
+def liveOf = { it != null &amp;&amp; basic.stringify(it).trim() != '' }
+def anyLive = liveOf(worker) || liveOf(student) || liveOf(alum)
+return anyLive &amp;&amp; adminStatus != null &amp;&amp; adminStatus.toString().equalsIgnoreCase('disabled')
+                    </c:code>
+                </c:script>
+            </c:condition>
+        </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>replace</t:modificationType>
+    <t:path>item[5771]/mapping[5772]/lifecycleState</t:path>
+    <t:value>deprecated</t:value>
+  </itemDelta>
+</objectModification>

@@ -1,0 +1,27 @@
+<objectModification
+    xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <!-- Paso 1 (inerte en produccion): reaction nueva 'proposed' (solo configuracion de desarrollo)
+       y la vieja inactivateFocus 'deprecated' (solo produccion). Doc 4.10 simulation:
+       "Objects with active and deprecated lifecycle states comprise production configuration.
+        Objects with proposed and active lifecycle states comprise development configuration." -->
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>schemaHandling/objectType[2708]/synchronization/reaction</t:path>
+    <t:value xsi:type="c:SynchronizationReactionType" id="2765">
+      <c:name>deleted-synchronize-vinculo-vivo</c:name>
+      <c:lifecycleState>proposed</c:lifecycleState>
+      <c:situation>deleted</c:situation>
+      <c:actions>
+        <c:synchronize id="2766"/>
+      </c:actions>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>replace</t:modificationType>
+    <t:path>schemaHandling/objectType[2708]/synchronization/reaction[2758]/lifecycleState</t:path>
+    <t:value>deprecated</t:value>
+  </itemDelta>
+</objectModification>

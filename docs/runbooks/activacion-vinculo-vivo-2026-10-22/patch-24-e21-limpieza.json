@@ -1,0 +1,7 @@
+{
+  "objectModification": {
+    "itemDelta": [
+      { "modificationType": "delete", "path": "schemaHandling/objectType[5464]/attribute[5484]/inbound", "value": [ { "@id": 5485 } ] }
+    ]
+  }
+}

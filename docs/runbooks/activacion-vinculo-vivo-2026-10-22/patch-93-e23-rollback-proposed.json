@@ -1,0 +1,8 @@
+{
+  "objectModification": {
+    "itemDelta": [
+      { "modificationType": "delete", "path": "schemaHandling/objectType[2708]/synchronization/reaction", "value": [ { "@id": 2765 } ] },
+      { "modificationType": "replace", "path": "schemaHandling/objectType[2708]/synchronization/reaction[2758]/lifecycleState" }
+    ]
+  }
+}
