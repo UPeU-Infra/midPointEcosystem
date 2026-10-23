@@ -218,3 +218,65 @@ lección 201810596: **nunca** vaciar y reconciliar en la misma operación):
 - Drift repo↔PROD previo: `trabajadores.xml` (faltan `correlate-by-lamb-id-persona`,
   `guardarrail-homonimo-abre-caso`) y `egresados.xml` (`escuela-to-*`, `sede-to-campusEgreso`). No afecta: se
   despliega por PATCH de elementos concretos.
+
+## 8. v2 (23-oct) — por qué el paso 2 no hizo nada y la corrección
+
+**Hecho medido.** Paso 2 activo 13:16:50–13:52:59 UTC. Canario `7b605ba4` (recompute, reconcile=false, 8): SUCCESS,
+1 solo delta (202514113: `expiry_date` de Koha 2027-10-22→23, rodante, ajeno). Recon de Egresados en la ventana: 0
+cambios de 217/215/216/estado. Log 13:16–13:21: ningún WARN de R*/ACT (las condiciones se evaluaron sin excepción).
+
+**Causa (código v4.10.2, no hipótesis).** R1/R2/R3/ACT eran *no-op por construcción*:
+- `AbstractMappingImpl.evaluate` (l. ~839-854): condición cierta ⇒ la expresión `null` deja el triple vacío; con la
+  condición constante el resultado va al *zero set* — no hay *minus*.
+- Lo único que convierte un valor existente en *minus* es el **rango**: `checkExistingTargetValues` (l. 956-1016) →
+  `addToMinusIfNecessary` (l. 1145-1177). Sin `<target><set>` el rango implícito es `matchingProvenance` **solo si el
+  ítem es multivalor** (`shouldUseMatchingProvenance`, l. 1714). `liveAffiliation*` y `administrativeStatus` son
+  single-valued ⇒ «No range set definition, skipping range check».
+- `IvwoConsolidator` (l. 255-279 y ~570): un valor existente sin origen plus/minus/zero «se conserva tal cual».
+  El borrado de existentes sin origen (`deleteExistingValues`) solo lo usan los inbounds (`AbstractInboundsProcessing` l. 189).
+- Descartado: `lifecycleState` del mapping **sí** se respeta (`FocalMappingSetEvaluation` l. 229 `task.canSee`);
+  `hasLinkedAccount` funcionaba (202514113/202622704 no tienen linkRef a e22 ⇒ condición true) — no era el problema.
+  ⇒ **SIM-2 sí aplicó los `proposed`; no cambió nada porque los mappings no hacían nada.** La simulación de desarrollo
+  vuelve a ser válida para validar el template.
+- El patrón correcto ya estaba en este template: `E2-retract-orphan-*` y `J3b` (rango, probado en PROD).
+
+**Corrección (rama `fix/activacion-vinculo-vivo-v2`).** R1v2/R2v2/R3v2/ACTv2: sin `source` ni `condition`, expresión
+`null`, y la guarda **dentro de `<target><set><condition>`** (el rango se evalúa aunque el mapping no aplique, MID-5953).
+- R: `input` presente y `!midpoint.hasLinkedAccount(<IIA>)`.
+- ACT: `input == DISABLED` y algún vínculo vivo = ítem presente **y** cuenta de su IIA enlazada (no depende del
+  orden respecto a R). Rango evaluado solo en estado *new* (`skipEvaluationMinus`, `SingleShotEvaluation`).
+- `CANARIO = [...]` en el rango: con nombres, el mapping **no puede tocar a nadie más** (ni recon ni recompute).
+- Cada retirada/limpieza deja `WARN (com.evolveum.midpoint.expression): R1v2: retira …` / `ACTv2: limpia …`.
+- Generador único: `v2_mappings.py` + `v2_build.py <dir>` (regenera los patch v2).
+
+| Patch | Qué | Efecto en producción |
+|---|---|---|
+| `patch-31-template-v2-proposed.xml` | +5840..5843 (acotados, CANARIO) y +5844..5847 (globales), todos `proposed`; v1 5831/5833/5835/5836 → `archived`; 5772 → `deprecated` | Ninguno (proposed invisible; deprecated sigue visible) |
+| `patch-32-template-v2-canario-activar.json` | 5840..5843 → `active` | Solo los 8 nombres de CANARIO |
+| `patch-72-template-v2-canario-rollback.json` | 5840..5843 → `archived` | Vuelta atrás del canario |
+| `patch-41-template-v2-global-activar.json` | 5844..5847 → `active`; 5840..5843 y 5772 → `archived` | Global (+ `patch-12/13/14` para reactions y e21) |
+| `patch-81v2-template-global-rollback.json` | 5772 → `active`; 5844..5847 → `proposed` | Vuelta atrás global (+ `patch-82/83/84`) |
+| `patch-91v2-template-v2-retirar.json` | 5840..5847 → `archived`; 5772 → `active` | Deja PROD como hoy |
+
+**Procedimiento v2** (`date -u` antes de CADA paso; ventana 16:10–07:00 UTC; `rest.sh` = PATCH y versión antes/después):
+1. *(fuera de ventana vale, solo lectura)* `snapshot-estado.sql` → `snap-pre.tsv`; GET raw del template (respaldo).
+2. **[ventana]** `rest.sh objectTemplates 855caaca-… patch-31-template-v2-proposed.xml` (v134→135);
+   `verificar.py tpl.xml 5840=proposed 5841=proposed 5842=proposed 5843=proposed 5844=proposed 5845=proposed 5846=proposed 5847=proposed 5831=archived 5833=archived 5835=archived 5836=archived 5772=deprecated 5770=active`.
+3. **[ventana]** `task-sim-4-dev-canario.xml` y `task-sim-2-dev-muestra.xml` (preview, desarrollo). GO solo si:
+   202014210/202622500/201610032 → `administrativeStatus` borrado; 201122601 → sin 217 y sin DISABLED;
+   202514113 → sin 217, `archived`; 202622704 → sin 217, `draft`; controles 0 cambios; muestra ≈ §3 por clase.
+   (Ruido conocido: Entra `proposed` genera altas ficticias en desarrollo.)
+4. **[ventana]** `patch-32` (v→+1, `verificar.py 5840..5843=active`), luego `task-real-canario.xml`. Verificar en
+   `m_user`, LDAP .168=.169 y Koha los 8; `docker logs --since 10m | grep -E 'R[123]v2|ACTv2'` = solo nombres del
+   CANARIO. Si algo no cuadra: `patch-72` + `restore-datos.py` en el acto.
+5. *(recons diarias, fuera de ventana: es seguro, el rango no puede salir del CANARIO)* ≥1 ciclo completo
+   (Estudiantes 11:20, Egresados 12:45, Koha 14:15–16:03). Luego `snapshot-estado.sql` → `snap-post.tsv`, `diff`
+   (fuera del CANARIO solo cambios de las IIA del día) y `grep R[123]v2|ACTv2` del log del ciclo = solo CANARIO.
+6. **[ventana]** Global: `patch-41` + `patch-12/13/14`; `task-real-L1-*`; §5.9. Vuelta atrás: `patch-81v2` + `patch-82/83/84`.
+7. Limpieza ≥7 días: borrar 5831/5833/5835/5836/5840..5843/5772 (PATCH `delete` por id; antes comprobar en un
+   objeto de prueba que `delete` por `@id` sube la versión).
+
+**No cubierto por el canario acotado (❓):** el cambio de reactions `deleted → synchronize` y la retirada del inbound
+ESTADO de e21 se activan solo en el paso global. Las reactions sin canal se eligen por «la última que casa»
+(`SynchronizationActionExecutor.getReaction`): acotar 3379/2765 con `condition` sería seguro para terceros, pero su
+efecto en el canario depende del orden de la lista (no verificado), por eso no se incluye.

@@ -5,6 +5,7 @@ uso: gen_tasks.py <dir_salida> [--chunk 75] [--threads 2]
   task-sim-1-prod-muestra.xml     idem DESPUES del paso 1 (debe ser identica a sim-0: el paso 1 es inerte en produccion)
   task-sim-2-dev-muestra.xml      preview, config DESARROLLO (proposed+active): el diseno nuevo
   task-sim-3-dev-recon-trab.xml   preview, config DESARROLLO, reconciliation de Trabajadores (oscilacion LDAP)
+  task-sim-4-dev-canario.xml      v2: preview, config DESARROLLO, solo los 8 del canario
   task-real-canario.xml           recompute REAL reconcile=false (8)
   task-real-L1-NN.xml             recompute REAL reconcile=false por trozos (afectados sin canario ni excluidos)
 reconcile=false: el diseno no necesita releer Oracle (R/ACT/L leen items del foco y los projection
@@ -41,6 +42,7 @@ w('task-sim-0-prod-muestra.xml', recompute('SIM-0-PROD activacion-vinculo-vivo m
 w('task-sim-1-prod-muestra.xml', recompute('SIM-1-PROD activacion-vinculo-vivo muestra %d (tras paso 1)' % len(muestra), RUN + ' Preview, config produccion. Debe igualar a SIM-0.', muestra, 'production'))
 w('task-sim-2-dev-muestra.xml', recompute('SIM-2-DEV activacion-vinculo-vivo muestra %d' % len(muestra), RUN + ' Preview, config desarrollo (diseno nuevo).', muestra, 'development'))
 w('task-sim-3-dev-recon-trab.xml', recon_trab())
+w('task-sim-4-dev-canario.xml', recompute('SIM-4-DEV activacion-vinculo-vivo v2 canario (%d)' % len(canario), RUN + ' v2: preview, config desarrollo (mappings v2 proposed).', canario, 'development'))
 w('task-real-canario.xml', recompute('REAL activacion-vinculo-vivo canario (%d)' % len(canario), RUN + ' Recompute real, reconcile=false.', canario))
 for i in range(0, len(L1), chunk):
     part = L1[i:i + chunk]

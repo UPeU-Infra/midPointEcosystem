@@ -1,0 +1,244 @@
+<objectModification
+    xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:sciback="urn:sciback:midpoint:person">
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5830]/mapping</t:path>
+    <t:value xsi:type="c:ObjectTemplateMappingType" id="5840">
+        <c:name>R1v2-rango-retirar-liveAffiliationStudent-sin-cuenta-estudiantes-viva-canario</c:name>
+        <c:lifecycleState>proposed</c:lifecycleState>
+        <c:strength>strong</c:strength>
+        <c:expression><c:script><c:code>null</c:code></c:script></c:expression>
+        <c:target>
+            <c:path>extension/sciback:liveAffiliationStudent</c:path>
+            <c:set>
+                <c:condition>
+                    <c:script>
+                        <c:code>
+    // RANGO (no condition): retirable el valor actual si NO hay cuenta viva de su IIA en el contexto.
+    if (input == null || basic.stringify(input).trim() == '') return false
+    def CANARIO = ['202014210', '202622500', '201610032', '201122601', '202514113', '202622704', '201811473', '45302782']  // vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+    if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+    try { def gone = !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22'); if (gone) log.warn('R1v2: retira {} de {} (sin cuenta viva de su IIA)', input, focus?.name); return gone } catch (Exception e) { log.warn('R1v2: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                        </c:code>
+                    </c:script>
+                </c:condition>
+            </c:set>
+        </c:target>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5832]/mapping</t:path>
+    <t:value xsi:type="c:ObjectTemplateMappingType" id="5841">
+        <c:name>R2v2-rango-retirar-liveAffiliationAlum-sin-cuenta-egresados-viva-canario</c:name>
+        <c:lifecycleState>proposed</c:lifecycleState>
+        <c:strength>strong</c:strength>
+        <c:expression><c:script><c:code>null</c:code></c:script></c:expression>
+        <c:target>
+            <c:path>extension/sciback:liveAffiliationAlum</c:path>
+            <c:set>
+                <c:condition>
+                    <c:script>
+                        <c:code>
+    // RANGO (no condition): retirable el valor actual si NO hay cuenta viva de su IIA en el contexto.
+    if (input == null || basic.stringify(input).trim() == '') return false
+    def CANARIO = ['202014210', '202622500', '201610032', '201122601', '202514113', '202622704', '201811473', '45302782']  // vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+    if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+    try { def gone = !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23'); if (gone) log.warn('R2v2: retira {} de {} (sin cuenta viva de su IIA)', input, focus?.name); return gone } catch (Exception e) { log.warn('R2v2: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                        </c:code>
+                    </c:script>
+                </c:condition>
+            </c:set>
+        </c:target>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5834]/mapping</t:path>
+    <t:value xsi:type="c:ObjectTemplateMappingType" id="5842">
+        <c:name>R3v2-rango-retirar-liveAffiliationWorker-sin-cuenta-trabajadores-viva-canario</c:name>
+        <c:lifecycleState>proposed</c:lifecycleState>
+        <c:strength>strong</c:strength>
+        <c:expression><c:script><c:code>null</c:code></c:script></c:expression>
+        <c:target>
+            <c:path>extension/sciback:liveAffiliationWorker</c:path>
+            <c:set>
+                <c:condition>
+                    <c:script>
+                        <c:code>
+    // RANGO (no condition): retirable el valor actual si NO hay cuenta viva de su IIA en el contexto.
+    if (input == null || basic.stringify(input).trim() == '') return false
+    def CANARIO = ['202014210', '202622500', '201610032', '201122601', '202514113', '202622704', '201811473', '45302782']  // vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+    if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+    try { def gone = !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21'); if (gone) log.warn('R3v2: retira {} de {} (sin cuenta viva de su IIA)', input, focus?.name); return gone } catch (Exception e) { log.warn('R3v2: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                        </c:code>
+                    </c:script>
+                </c:condition>
+            </c:set>
+        </c:target>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5771]/mapping</t:path>
+    <t:value xsi:type="c:ObjectTemplateMappingType" id="5843">
+        <c:name>ACTv2-rango-limpiar-disabled-si-vinculo-vivo-canario</c:name>
+        <c:lifecycleState>proposed</c:lifecycleState>
+        <c:strength>strong</c:strength>
+        <c:expression><c:script><c:code>null</c:code></c:script></c:expression>
+        <c:target>
+            <c:path>activation/administrativeStatus</c:path>
+            <c:set>
+                <c:condition>
+                    <c:script>
+                        <c:code>
+    // RANGO (no condition): retirable el DISABLED actual si hay un vinculo VIVO (item + cuenta de su IIA).
+    if (input == null || !basic.stringify(input).trim().equalsIgnoreCase('disabled')) return false
+    def CANARIO = ['202014210', '202622500', '201610032', '201122601', '202514113', '202622704', '201811473', '45302782']  // vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+    if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+    def NS = 'urn:sciback:midpoint:person'
+    def live = { String item, String res -&gt; def v = basic.getExtensionPropertyValue(focus, NS, item); v != null &amp;&amp; basic.stringify(v).trim() != '' &amp;&amp; midpoint.hasLinkedAccount(res) }
+    try { def ok = live('liveAffiliationWorker', '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21') || live('liveAffiliationStudent', '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22') || live('liveAffiliationAlum', '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23'); if (ok) log.warn('ACTv2: limpia DISABLED de {} (vinculo vivo)', focus?.name); return ok } catch (Exception e) { log.warn('ACTv2: fallo en {}: {} -> no se limpia', focus?.name, e.message); return false }
+                        </c:code>
+                    </c:script>
+                </c:condition>
+            </c:set>
+        </c:target>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5830]/mapping</t:path>
+    <t:value xsi:type="c:ObjectTemplateMappingType" id="5844">
+        <c:name>R1v2-rango-retirar-liveAffiliationStudent-sin-cuenta-estudiantes-viva</c:name>
+        <c:lifecycleState>proposed</c:lifecycleState>
+        <c:strength>strong</c:strength>
+        <c:expression><c:script><c:code>null</c:code></c:script></c:expression>
+        <c:target>
+            <c:path>extension/sciback:liveAffiliationStudent</c:path>
+            <c:set>
+                <c:condition>
+                    <c:script>
+                        <c:code>
+    // RANGO (no condition): retirable el valor actual si NO hay cuenta viva de su IIA en el contexto.
+    if (input == null || basic.stringify(input).trim() == '') return false
+    def CANARIO = []  // vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+    if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+    try { def gone = !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22'); if (gone) log.warn('R1v2: retira {} de {} (sin cuenta viva de su IIA)', input, focus?.name); return gone } catch (Exception e) { log.warn('R1v2: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                        </c:code>
+                    </c:script>
+                </c:condition>
+            </c:set>
+        </c:target>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5832]/mapping</t:path>
+    <t:value xsi:type="c:ObjectTemplateMappingType" id="5845">
+        <c:name>R2v2-rango-retirar-liveAffiliationAlum-sin-cuenta-egresados-viva</c:name>
+        <c:lifecycleState>proposed</c:lifecycleState>
+        <c:strength>strong</c:strength>
+        <c:expression><c:script><c:code>null</c:code></c:script></c:expression>
+        <c:target>
+            <c:path>extension/sciback:liveAffiliationAlum</c:path>
+            <c:set>
+                <c:condition>
+                    <c:script>
+                        <c:code>
+    // RANGO (no condition): retirable el valor actual si NO hay cuenta viva de su IIA en el contexto.
+    if (input == null || basic.stringify(input).trim() == '') return false
+    def CANARIO = []  // vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+    if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+    try { def gone = !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23'); if (gone) log.warn('R2v2: retira {} de {} (sin cuenta viva de su IIA)', input, focus?.name); return gone } catch (Exception e) { log.warn('R2v2: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                        </c:code>
+                    </c:script>
+                </c:condition>
+            </c:set>
+        </c:target>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5834]/mapping</t:path>
+    <t:value xsi:type="c:ObjectTemplateMappingType" id="5846">
+        <c:name>R3v2-rango-retirar-liveAffiliationWorker-sin-cuenta-trabajadores-viva</c:name>
+        <c:lifecycleState>proposed</c:lifecycleState>
+        <c:strength>strong</c:strength>
+        <c:expression><c:script><c:code>null</c:code></c:script></c:expression>
+        <c:target>
+            <c:path>extension/sciback:liveAffiliationWorker</c:path>
+            <c:set>
+                <c:condition>
+                    <c:script>
+                        <c:code>
+    // RANGO (no condition): retirable el valor actual si NO hay cuenta viva de su IIA en el contexto.
+    if (input == null || basic.stringify(input).trim() == '') return false
+    def CANARIO = []  // vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+    if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+    try { def gone = !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21'); if (gone) log.warn('R3v2: retira {} de {} (sin cuenta viva de su IIA)', input, focus?.name); return gone } catch (Exception e) { log.warn('R3v2: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                        </c:code>
+                    </c:script>
+                </c:condition>
+            </c:set>
+        </c:target>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5771]/mapping</t:path>
+    <t:value xsi:type="c:ObjectTemplateMappingType" id="5847">
+        <c:name>ACTv2-rango-limpiar-disabled-si-vinculo-vivo</c:name>
+        <c:lifecycleState>proposed</c:lifecycleState>
+        <c:strength>strong</c:strength>
+        <c:expression><c:script><c:code>null</c:code></c:script></c:expression>
+        <c:target>
+            <c:path>activation/administrativeStatus</c:path>
+            <c:set>
+                <c:condition>
+                    <c:script>
+                        <c:code>
+    // RANGO (no condition): retirable el DISABLED actual si hay un vinculo VIVO (item + cuenta de su IIA).
+    if (input == null || !basic.stringify(input).trim().equalsIgnoreCase('disabled')) return false
+    def CANARIO = []  // vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+    if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+    def NS = 'urn:sciback:midpoint:person'
+    def live = { String item, String res -&gt; def v = basic.getExtensionPropertyValue(focus, NS, item); v != null &amp;&amp; basic.stringify(v).trim() != '' &amp;&amp; midpoint.hasLinkedAccount(res) }
+    try { def ok = live('liveAffiliationWorker', '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21') || live('liveAffiliationStudent', '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22') || live('liveAffiliationAlum', '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23'); if (ok) log.warn('ACTv2: limpia DISABLED de {} (vinculo vivo)', focus?.name); return ok } catch (Exception e) { log.warn('ACTv2: fallo en {}: {} -> no se limpia', focus?.name, e.message); return false }
+                        </c:code>
+                    </c:script>
+                </c:condition>
+            </c:set>
+        </c:target>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>replace</t:modificationType>
+    <t:path>item[5830]/mapping[5831]/lifecycleState</t:path>
+    <t:value>archived</t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>replace</t:modificationType>
+    <t:path>item[5832]/mapping[5833]/lifecycleState</t:path>
+    <t:value>archived</t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>replace</t:modificationType>
+    <t:path>item[5834]/mapping[5835]/lifecycleState</t:path>
+    <t:value>archived</t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>replace</t:modificationType>
+    <t:path>item[5771]/mapping[5836]/lifecycleState</t:path>
+    <t:value>archived</t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>replace</t:modificationType>
+    <t:path>item[5771]/mapping[5772]/lifecycleState</t:path>
+    <t:value>deprecated</t:value>
+  </itemDelta>
+</objectModification>

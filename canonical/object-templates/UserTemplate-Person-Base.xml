@@ -1558,95 +1558,93 @@ return (relP == null &amp;&amp; perP == null)
          IIA en el contexto. midpoint.hasLinkedAccount(oid) mira los projection
          contexts del clockwork (no linkRef): una cuenta recien enlazada (link /
          addFocus) cuenta como viva; una muerta (gone) o en unlink/delete no.
-         Patron "strong + null + condition" ya en PROD (B-email-sanitize-numeric):
-         strong sin valor => el target queda sin valor (doc Evolveum, citada en
-         leaver-disable-on-terminationdate). Fail-safe: si la funcion falla, NO
-         se retira (condition=false).
+         v2 (23-oct): la retirada vive en el RANGO (<target><set><condition>),
+         NO en <condition>. Medido en el canario del 23-oct: "strong + null +
+         condition" es un NO-OP en 4.10.2 - un mapping solo borra lo que cae en su
+         rango (AbstractMappingImpl.checkExistingTargetValues/addToMinusIfNecessary);
+         sin <set> y con target single-valued no hay rango (shouldUseMatchingProvenance
+         exige multivalor) y el IvwoConsolidator conserva el valor ("no visible plus,
+         minus, nor zero origins -> keep"). Mismo patron que E2-retract-orphan-* y
+         J3b (rango ya probado en PROD). El rango se evalua aunque el mapping no
+         aplique (MID-5953), por eso la guarda va DENTRO del rango. Fail-safe: si
+         hasLinkedAccount falla, NO se retira (rango=false). Cada retirada deja un
+         WARN "R1v2/R2v2/R3v2: retira ..." en el log (traza de auditoria barata).
          best-practices §2.1 Reality-vs-Policy (el shadow es la realidad),
          iga-canonical §1.3 (una IIA por atributo: sin cuenta de la IIA no hay dato).
          ============================================================ -->
     <item>
         <ref>extension/sciback:liveAffiliationStudent</ref>
         <mapping>
-            <name>R1-retirar-liveAffiliationStudent-sin-cuenta-estudiantes-viva</name>
+            <name>R1v2-rango-retirar-liveAffiliationStudent-sin-cuenta-estudiantes-viva</name>
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
-            <source>
-                <name>student</name>
-                <path>extension/sciback:liveAffiliationStudent</path>
-            </source>
-            <expression>
-                <script>
-                    <code>null</code>
-                </script>
-            </expression>
+            <expression><script><code>null</code></script></expression>
             <target>
                 <path>extension/sciback:liveAffiliationStudent</path>
+                <set>
+                    <condition>
+                        <script>
+                            <code>
+        // RANGO (no condition): retirable el valor actual si NO hay cuenta viva de su IIA en el contexto.
+        if (input == null || basic.stringify(input).trim() == '') return false
+        def CANARIO = []  // vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+        if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+        try { def gone = !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22'); if (gone) log.warn('R1v2: retira {} de {} (sin cuenta viva de su IIA)', input, focus?.name); return gone } catch (Exception e) { log.warn('R1v2: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                            </code>
+                        </script>
+                    </condition>
+                </set>
             </target>
-            <condition>
-                <script>
-                    <code>
-if (student == null || basic.stringify(student).trim() == '') return false
-try { return !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22') } catch (Exception e) { log.warn('R1: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
-                    </code>
-                </script>
-            </condition>
         </mapping>
     </item>
     <item>
         <ref>extension/sciback:liveAffiliationAlum</ref>
         <mapping>
-            <name>R2-retirar-liveAffiliationAlum-sin-cuenta-egresados-viva</name>
+            <name>R2v2-rango-retirar-liveAffiliationAlum-sin-cuenta-egresados-viva</name>
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
-            <source>
-                <name>alum</name>
-                <path>extension/sciback:liveAffiliationAlum</path>
-            </source>
-            <expression>
-                <script>
-                    <code>null</code>
-                </script>
-            </expression>
+            <expression><script><code>null</code></script></expression>
             <target>
                 <path>extension/sciback:liveAffiliationAlum</path>
+                <set>
+                    <condition>
+                        <script>
+                            <code>
+        // RANGO (no condition): retirable el valor actual si NO hay cuenta viva de su IIA en el contexto.
+        if (input == null || basic.stringify(input).trim() == '') return false
+        def CANARIO = []  // vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+        if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+        try { def gone = !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23'); if (gone) log.warn('R2v2: retira {} de {} (sin cuenta viva de su IIA)', input, focus?.name); return gone } catch (Exception e) { log.warn('R2v2: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                            </code>
+                        </script>
+                    </condition>
+                </set>
             </target>
-            <condition>
-                <script>
-                    <code>
-if (alum == null || basic.stringify(alum).trim() == '') return false
-try { return !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23') } catch (Exception e) { log.warn('R2: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
-                    </code>
-                </script>
-            </condition>
         </mapping>
     </item>
     <item>
         <ref>extension/sciback:liveAffiliationWorker</ref>
         <mapping>
-            <name>R3-retirar-liveAffiliationWorker-sin-cuenta-trabajadores-viva</name>
+            <name>R3v2-rango-retirar-liveAffiliationWorker-sin-cuenta-trabajadores-viva</name>
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
-            <source>
-                <name>worker</name>
-                <path>extension/sciback:liveAffiliationWorker</path>
-            </source>
-            <expression>
-                <script>
-                    <code>null</code>
-                </script>
-            </expression>
+            <expression><script><code>null</code></script></expression>
             <target>
                 <path>extension/sciback:liveAffiliationWorker</path>
+                <set>
+                    <condition>
+                        <script>
+                            <code>
+        // RANGO (no condition): retirable el valor actual si NO hay cuenta viva de su IIA en el contexto.
+        if (input == null || basic.stringify(input).trim() == '') return false
+        def CANARIO = []  // vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+        if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+        try { def gone = !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21'); if (gone) log.warn('R3v2: retira {} de {} (sin cuenta viva de su IIA)', input, focus?.name); return gone } catch (Exception e) { log.warn('R3v2: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
+                            </code>
+                        </script>
+                    </condition>
+                </set>
             </target>
-            <condition>
-                <script>
-                    <code>
-if (worker == null || basic.stringify(worker).trim() == '') return false
-try { return !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21') } catch (Exception e) { log.warn('R3: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
-                    </code>
-                </script>
-            </condition>
         </mapping>
     </item>
     <!-- ============================================================
@@ -1833,47 +1831,35 @@ return 'draft'
          auditoria). Nunca escribe un valor. Excepcion documentada a §1.2: un
          DISABLED manual sobre una persona con vinculo vivo tambien se limpia;
          el bloqueo de emergencia de una persona viva se pide por la IIA o con
-         activation/validTo. Patron strong+null+condition (B-email-sanitize).
+         activation/validTo. v2 (23-oct): la limpieza vive en el RANGO; "vivo" = item
+         presente Y cuenta de su IIA enlazada (no depende del orden respecto a R).
+         Cada limpieza deja un WARN "ACTv2: limpia DISABLED de ...".
          ============================================================ -->
     <item>
         <ref>activation/administrativeStatus</ref>
         <mapping>
-            <name>ACT-limpiar-disabled-automatico-si-vinculo-vivo</name>
+            <name>ACTv2-rango-limpiar-disabled-si-vinculo-vivo</name>
             <lifecycleState>active</lifecycleState>
             <strength>strong</strength>
-            <source>
-                <name>adminStatus</name>
-                <path>activation/administrativeStatus</path>
-            </source>
-            <source>
-                <name>worker</name>
-                <path>extension/sciback:liveAffiliationWorker</path>
-            </source>
-            <source>
-                <name>student</name>
-                <path>extension/sciback:liveAffiliationStudent</path>
-            </source>
-            <source>
-                <name>alum</name>
-                <path>extension/sciback:liveAffiliationAlum</path>
-            </source>
-            <expression>
-                <script>
-                    <code>null</code>
-                </script>
-            </expression>
+            <expression><script><code>null</code></script></expression>
             <target>
                 <path>activation/administrativeStatus</path>
+                <set>
+                    <condition>
+                        <script>
+                            <code>
+        // RANGO (no condition): retirable el DISABLED actual si hay un vinculo VIVO (item + cuenta de su IIA).
+        if (input == null || !basic.stringify(input).trim().equalsIgnoreCase('disabled')) return false
+        def CANARIO = []  // vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+        if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+        def NS = 'urn:sciback:midpoint:person'
+        def live = { String item, String res -&gt; def v = basic.getExtensionPropertyValue(focus, NS, item); v != null &amp;&amp; basic.stringify(v).trim() != '' &amp;&amp; midpoint.hasLinkedAccount(res) }
+        try { def ok = live('liveAffiliationWorker', '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21') || live('liveAffiliationStudent', '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22') || live('liveAffiliationAlum', '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23'); if (ok) log.warn('ACTv2: limpia DISABLED de {} (vinculo vivo)', focus?.name); return ok } catch (Exception e) { log.warn('ACTv2: fallo en {}: {} -> no se limpia', focus?.name, e.message); return false }
+                            </code>
+                        </script>
+                    </condition>
+                </set>
             </target>
-            <condition>
-                <script>
-                    <code>
-def liveOf = { it != null &amp;&amp; basic.stringify(it).trim() != '' }
-def anyLive = liveOf(worker) || liveOf(student) || liveOf(alum)
-return anyLive &amp;&amp; adminStatus != null &amp;&amp; adminStatus.toString().equalsIgnoreCase('disabled')
-                    </code>
-                </script>
-            </condition>
         </mapping>
     </item>
 
