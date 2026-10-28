@@ -17,7 +17,11 @@
 #                                   sin vinculo vivo; orden determinista md5(oid).
 #                                   Salida: OIDs, uno por linea (guardar en fichero;
 #                                   NO commitear: es una muestra de personas reales).
-#   tarea <etiqueta> <oids>         imprime el XML de la tarea de simulacion
+#   tarea <etiqueta> <oids> [--sin-reconcile]
+#                                   imprime el XML de la tarea de simulacion. Con
+#                                   --sin-reconcile no lee las proyecciones de los
+#                                   recursos (ensayo F1, con LDAP/Koha/Zammad/Entra
+#                                   aislados). PRE y POST siempre con la MISMA opcion.
 #   comparar <tareaPRE> <tareaPOST> solo lectura: compara, por usuario y proyeccion,
 #                                   estado (ADDED/MODIFIED/DELETED/UNMODIFIED) y
 #                                   metricas de los resultados de ambas tareas
@@ -44,14 +48,15 @@ UNION (SELECT oid FROM m_user WHERE NOT (ext ?| array['215','216','217']) ORDER 
 SQL
     ;;
 tarea)
-    TAG="${2:?falta etiqueta}"; F="${3:?falta fichero de OIDs}"
+    TAG="${2:?falta etiqueta}"; F="${3:?falta fichero de OIDs}"; RECONCILE=true
+    [[ "${4:-}" == "--sin-reconcile" ]] && RECONCILE=false
     [[ "$TAG" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "etiqueta invalida" >&2; exit 2; }
     VALUES=$(grep -oE '^[0-9a-f-]{36}$' "$F" | sed 's#.*#<q:value>&</q:value>#' | tr -d '\n')
     [[ -n "$VALUES" ]] || { echo "sin OIDs en $F" >&2; exit 2; }
     cat <<XML
 <task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
   <name>SIM upgrade-4.11 ${TAG} ($(date +%Y-%m-%d))</name>
-  <description>docs/upgrade-4.11: recompute+reconcile en preview sobre la muestra fija ($(grep -cE '^[0-9a-f-]{36}$' "$F") usuarios).</description>
+  <description>docs/upgrade-4.11: recompute (reconcile=${RECONCILE}) en preview sobre la muestra fija ($(grep -cE '^[0-9a-f-]{36}$' "$F") usuarios).</description>
   <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
   <executionState>runnable</executionState>
   <activity>
@@ -61,7 +66,7 @@ tarea)
           <type>UserType</type>
           <query><q:filter><q:inOid>${VALUES}</q:inOid></q:filter></query>
         </objects>
-        <executionOptions><reconcile>true</reconcile></executionOptions>
+        <executionOptions><reconcile>${RECONCILE}</reconcile></executionOptions>
       </recomputation>
     </work>
     <execution><mode>preview</mode><configurationToUse><predefined>production</predefined></configurationToUse></execution>

@@ -56,7 +56,7 @@ services:
       - net
     volumes:
       - midpoint_home:/opt/midpoint/var
-      - /opt/midpoint/connectors:/opt/midpoint/var/icf-connectors:ro
+      - ${MP_CONNECTORS_DIR:-/opt/midpoint/connectors}:/opt/midpoint/var/icf-connectors:ro
     depends_on:
       midpoint_data:
         condition: service_healthy

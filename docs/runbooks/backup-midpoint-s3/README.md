@@ -130,6 +130,10 @@ Es la misma idea, contra el contenedor `midpoint-midpoint_data-1`, **con MidPoin
 
 1. `dropdb` + `createdb` (o una BD nueva).
 2. `pg_restore`.
+   - Después, reponer el ajuste de base que tiene PROD y que **`pg_dump` no guarda** (es un
+     `ALTER DATABASE … SET`, no un objeto de la base): `ALTER DATABASE midpoint SET
+     enable_partitionwise_join = on;`. Medido el 28-oct-2026 con `pg_db_role_setting`; su origen
+     no está documentado (no viene de los scripts SQL de midPoint) ❓.
 3. Reponer `keystore.jceks` desde el `midpoint-home-<ts>.tar.gz` **del mismo día**.
 4. Arrancar MidPoint.
 5. Comprobar el test connection de todos los recursos.
