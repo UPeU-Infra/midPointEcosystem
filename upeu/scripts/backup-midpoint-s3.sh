@@ -29,8 +29,9 @@
 #                                                  audit-partition-maintenance.sh antes
 #                                                  de hacer DROP. Exit != 0 => NO dropear.
 #   ./backup-midpoint-s3.sh --pre-upgrade ETIQUETA  backup de ventana de subida, con
-#                                                  MidPoint PARADO: BD COMPLETA (con
-#                                                  auditoria) + home leido del volumen.
+#                                                  MidPoint PARADO: BD (sin datos de
+#                                                  auditoria salvo PRE_UPGRADE_WITH_AUDIT=1)
+#                                                  + home leido del volumen.
 #                                                  Va a midpoint/upgrade/ETIQUETA/.
 #                                                  Runbooks: docs/upgrade-4.11/
 #
@@ -276,13 +277,17 @@ Resumen semanal: si un lunes no llega este mensaje, el backup dejó de correr."
 # ------------------------------------------------------------------------------
 # Backup de ventana de subida (docs/upgrade-4.11/F2-*.md y F3-*.md).
 # Precondicion: midpoint_server PARADO (el home se lee del volumen, no con
-# docker exec) y Postgres arriba. Diferencias con el diario:
-#   - la BD va COMPLETA, CON los datos de auditoria: el esquema de auditoria
-#     tambien cambia en la subida y la vuelta atras debe poder restaurarlo;
+# docker exec) y Postgres arriba. Es la copia FUERA DEL HOST de la ventana; la
+# vuelta atras rapida es la copia local de la BD (upgrade-4.11/bd-copia-local.sh).
+# Diferencias con el diario:
+#   - BD con MidPoint parado (estado consistente, nadie escribe);
+#   - sin datos de auditoria por defecto, como el diario (~2,7 GB, ~9 min): con
+#     auditoria son ~37 GB y no caben en una ventana a ~5 MB/s de subida.
+#     PRE_UPGRADE_WITH_AUDIT=1 los incluye (fuera de ventana, si hiciera falta);
 #   - el home se lee del volumen con un contenedor auxiliar (--user 0, solo
 #     lectura), porque el contenedor de MidPoint esta parado;
-#   - destino propio midpoint/upgrade/<etiqueta>/, fuera de la caducidad de 35
-#     dias de db/ y home/ (revisar la regla de ciclo de vida del bucket).
+#   - destino propio midpoint/upgrade/<etiqueta>/: ese prefijo NO tiene regla
+#     de caducidad en el bucket (comprobado 28-oct); borrar a mano al terminar.
 pre_upgrade_backup() {
     local tag="$1" key_db key_home homef t0 running
     [[ "$tag" =~ ^[A-Za-z0-9._-]+$ ]] || { log "Etiqueta invalida: '$tag'"; exit 2; }
@@ -296,13 +301,18 @@ pre_upgrade_backup() {
     fi
     check_free_space
 
-    key_db="midpoint/upgrade/${tag}/midpoint-full-${TS}.dump"
-    STEP="pg_dump BD COMPLETA (con auditoria)"
-    docker exec "$PG_CONTAINER" pg_dump -U "$PG_USER" -d "$PG_DB" -Fc -Z 1 \
+    local excl=() must=(m_user 'm_shadow_[[:alnum:]_]+' m_resource m_role m_org m_system_configuration m_assignment) kind
+    if [[ "${PRE_UPGRADE_WITH_AUDIT:-0}" == "1" ]]; then
+        kind="full"; must+=('ma_audit_event_[0-9]{6}')
+    else
+        kind="sin-auditoria"; excl=(--exclude-table-data='*.ma_audit_*')
+    fi
+    key_db="midpoint/upgrade/${tag}/midpoint-db-${kind}-${TS}.dump"
+    STEP="pg_dump BD ($kind, MidPoint parado)"
+    docker exec "$PG_CONTAINER" pg_dump -U "$PG_USER" -d "$PG_DB" -Fc -Z 1 "${excl[@]}" \
+        --exclude-table-data='*.m_simulation_result_processed_object*' \
         | stream_upload "$key_db"
-    verify_and_mark "$key_db" \
-        m_user 'm_shadow_[[:alnum:]_]+' m_resource m_role m_org \
-        m_system_configuration m_assignment 'ma_audit_event_[0-9]{6}'
+    verify_and_mark "$key_db" "${must[@]}"
     local dbsize ndata
     dbsize=$(numfmt --to=iec "$LAST_BYTES"); ndata=$LAST_TOC_TABLES
 
@@ -326,9 +336,9 @@ pre_upgrade_backup() {
     key_home="midpoint/upgrade/${tag}/midpoint-home-${TS}.tar.gz"
     upload_verified "$homef" "$key_home"
     rm -f "$STAGE/$homef"
-    log "==== FIN backup pre-upgrade '$tag' OK ($(( $(date +%s) - t0 )) s): BD ${dbsize} (${ndata} tablas con datos) ===="
+    log "==== FIN backup pre-upgrade '$tag' OK ($(( $(date +%s) - t0 )) s): BD ${kind} ${dbsize} (${ndata} tablas con datos) ===="
     telegram "🟡 Backup PRE-UPGRADE MidPoint OK (${HOST}) - ${tag}
-BD completa: ${dbsize} · ${ndata} tablas
+BD (${kind}): ${dbsize} · ${ndata} tablas
 s3://${IGA_BACKUP_BUCKET}/midpoint/upgrade/${tag}/"
 }
 
