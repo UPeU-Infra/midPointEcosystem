@@ -1,8 +1,10 @@
 # Override para las VENTANAS de subida (F2 a 4.10.5 y F3 a 4.11.0).
-# Se usa SIEMPRE junto al compose base:
+# Se usa SIEMPRE junto al compose base, directamente desde el clon del repo (el
+# proyecto compose y el .env salen del directorio del PRIMER -f, /opt/midpoint):
 #
 #   cd /opt/midpoint
-#   docker compose -f docker-compose.yml -f upgrade-4.11/docker-compose.upgrade-window.yml <orden>
+#   W=~/midPointEcosystem/upeu/infra/upgrade-4.11
+#   docker compose -f docker-compose.yml -f $W/docker-compose.upgrade-window.yml <orden>
 #
 # Que hace:
 # 1. Neutraliza data_init. Su logica normal ejecuta `ninja -B info` y, si ve
@@ -15,12 +17,23 @@
 #    de la MISMA imagen que el servidor (MP_VER del .env, o MP_VER=... delante
 #    del comando), con las variables de conexion del .env. Nadie teclea la
 #    contrasena de la BD y no aparece en el historial.
-#      docker compose -f docker-compose.yml -f upgrade-4.11/docker-compose.upgrade-window.yml \
+#      docker compose -f docker-compose.yml -f $W/docker-compose.upgrade-window.yml \
 #        run --rm --no-deps ninja run-sql --upgrade --mode repository
+# 3. midpoint_server arranca con el PLANIFICADOR PARADO
+#    (midpoint.taskManager.schedulerInitiallyStopped=true; clave presente en
+#    TaskManagerConfiguration de v4.10.2 y v4.11.0). Ni las tareas de sistema
+#    (Trigger/Validity Scanner) corren mientras se verifica la version nueva y el
+#    connectorRef de LDAP aun apunta al conector viejo. Para volver al servicio
+#    normal se recrea el contenedor SIN este override (docker compose up -d con
+#    el compose base), que es ademas la prueba del arranque normal.
 #
 # Nada mas cambia respecto al compose base.
 
 services:
+  midpoint_server:
+    environment:
+      - MP_SET_midpoint_taskManager_schedulerInitiallyStopped=true
+
   data_init:
     entrypoint: ["/bin/sh", "-c"]
     command:

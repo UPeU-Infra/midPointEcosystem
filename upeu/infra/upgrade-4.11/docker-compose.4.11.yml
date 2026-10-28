@@ -1,8 +1,8 @@
 # Override PERMANENTE a partir de 4.11.0 (ventana F3 en adelante).
 #
-#   cd /opt/midpoint
-#   docker compose -f docker-compose.yml -f upgrade-4.11/docker-compose.4.11.yml up -d
-#   (durante la ventana, ademas: -f upgrade-4.11/docker-compose.upgrade-window.yml)
+#   cd /opt/midpoint; W=~/midPointEcosystem/upeu/infra/upgrade-4.11
+#   docker compose -f docker-compose.yml -f $W/docker-compose.4.11.yml up -d
+#   (durante la ventana, ademas: -f $W/docker-compose.upgrade-window.yml, antes de este)
 #
 # Desde 4.11.0 las imagenes corren como el usuario no-root `midpoint`, UID 1000
 # (release notes 4.11.0, "Container images ... run as non-root user midpoint

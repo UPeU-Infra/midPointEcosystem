@@ -34,8 +34,9 @@ de PROD (comprobado).
 Desde `/opt/midpoint`, con `MP_VER=4.11.0` en el `.env` y el volumen ya en 1000:1000:
 
 ```bash
-C="docker compose -f docker-compose.yml -f upgrade-4.11/docker-compose.upgrade-window.yml -f upgrade-4.11/docker-compose.4.11.yml"
-IO=~/midPointEcosystem/upeu/infra/upgrade-4.11/initial-objects
+W=~/midPointEcosystem/upeu/infra/upgrade-4.11
+C="docker compose -f docker-compose.yml -f $W/docker-compose.upgrade-window.yml -f $W/docker-compose.4.11.yml"
+IO=$W/initial-objects
 oids() { grep -o '^[0-9a-f-]\{36\}' "$1" | tr '\n' ' '; }
 
 # 1. Informe de TODO lo que 4.11 cambiaria (solo lectura), para el expediente de la ventana:
