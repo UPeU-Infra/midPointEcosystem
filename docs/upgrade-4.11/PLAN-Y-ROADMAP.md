@@ -1,6 +1,6 @@
 # MidPoint UPeU 4.10.2 → 4.11.0 — plan de acción y roadmap
 
-**Fecha:** 27-oct-2026 · **Estado:** propuesta · **Base medida:** [`INVENTARIO-PROD-4.10.md`](INVENTARIO-PROD-4.10.md) (solo lectura, 27-oct)
+**Fecha:** 27-oct-2026 (F0 preparada el 28-oct, rama `prep/upgrade-4.11`) · **Estado:** propuesta · **Base medida:** [`INVENTARIO-PROD-4.10.md`](INVENTARIO-PROD-4.10.md) (solo lectura, 27-oct)
 **Release:** [4.11.0 «Čapek»](https://docs.evolveum.com/midpoint/release/4.11.0/), publicada el 21-oct-2026, soporte hasta el 20-oct-2028.
 
 ## 1. Decisión
@@ -24,30 +24,36 @@ código de 4.11: si la SystemConfiguration no define perfiles ni `defaultScriptL
 | B1 | La imagen 4.11 corre como **UID 1000**; hoy el contenedor corre como root y el home tiene archivos de root (keystore `0600`, `log/` `0750`). | `chown -R 1000:1000` del volumen de midpoint home con el contenedor parado; verificar que el keystore se lee. |
 | B2 | Solo se sube a 4.11 desde la **última 4.10.x (4.10.5)**. | Salto intermedio 4.10.2 → 4.10.5. |
 | B3 | Esquema de BD 51/10 → 67/16 (repo/auditoría) y el compose usa `upgradeableSchemaAction=stop`; el servicio `data_init` lanza `run-sql --create` si `ninja info` da error. | `ninja run-sql --upgrade --mode repository` y `--mode audit` antes de arrancar; neutralizar `data_init` durante la subida. |
-| B4 | 4.11 crea `ma_audit_payload` con FK hacia los eventos: el script mensual de particiones (`audit-partition-maintenance.sh`) fallará al borrar. | Añadir payload al orden de exportación y borrado **antes del 1-dic**. |
-| B5 | El recurso LDAP usa el conector **bundled** 3.9.2; 4.11 trae el 3.10. | PATCH del `connectorRef` (nunca PUT) y test connection. Sin esto, el LDAP (58.883 cuentas) queda parado. |
+| B4 | 4.11 crea `ma_audit_payload` con FK hacia los eventos: el script mensual de particiones (`audit-partition-maintenance.sh`) fallará al borrar. **Además, ya fallaba en 4.10:** solo procesa el primer mes de cada corrida (1-oct: julio se quedó). | ✅ F0: payload, guarda FK, DROP en una transacción y corrección del bucle; probado (40/40) y en dry-run contra PROD. **Llevarlo a `main` antes del 1-nov 03:00 Lima**: así se purgan julio y agosto (20,5 GB) y la copia local de la BD cabe en las ventanas. |
+| B5 | El recurso LDAP usa el conector **bundled** 3.9.2; **4.10.5 trae el 3.9.4** y 4.11 el 3.10 (`pom.xml` de cada tag; las release notes de 4.10.5 dicen 3.9.2 por error). | PATCH del `connectorRef` (nunca PUT) y test connection **en F2 (→ 3.9.4) y en F3 (→ 3.10)**: `upeu/infra/upgrade-4.11/ldap-connectorref.sh`. Sin esto, el LDAP (58.883 cuentas) queda parado. |
 
 ## 3. Riesgos altos y cómo se cubren
 
 - **No importar la SystemConfiguration de 4.11** (ni la 702 ni la 004): trae `defaultScriptLanguage=mel` y perfiles por
   tipo que romperían las 433 expresiones a la vez. `ninja initial-objects` siempre con `--dry-run --report` y lista
   de exclusiones.
-- **Dejar escrito `safeScriptingLanguagesOnly=false` en `config.xml`** para que una reconstrucción del volumen no lo active.
+- **Dejar escrito `safeScriptingLanguagesOnly=false` en `config.xml`** para que una reconstrucción del volumen no lo active
+  (`config-xml-safe-scripting.sh`, en F3: la clave no existe en 4.10.5).
 - **ConnId 1.7.0.0-M0 (milestone)** con los conectores externos: ScriptedSQL 2.2.10 (×8), Koha 1.7.0 y Zammad 0.2.0
   (estos dos llevan framework interno 1.5.2.0) y msgraph 1.2.0.0. Se prueban uno por uno en el laboratorio.
 - **Imagen base Alpine por defecto:** el redimensionado de fotos de Entra usa `java.awt`/ImageIO. Se usa la variante
   `-ubuntu` (la de hoy) para no cambiar dos cosas a la vez.
 - **Expresiones ad hoc del administrador (GUI/REST)** pasan a «ninguna» en 4.11 si no se configura
-  `expressions/defaults/privilegedPrincipal`: configurarlo explícitamente.
+  `expressions/defaults/privilegedPrincipal`: configurarlo explícitamente. **Va en la SystemConfiguration, no en
+  `config.xml`**, y solo existe en el XSD de 4.11: PATCH con `permissive` (perfil que ya existe en PROD) tras arrancar 4.11.
+- **4.11 verifica los conectores ConnId contra una lista firmada** cuando se estima «producción sin suscripción»
+  (`ConnectorSignatureVerifier`). La lista no incluye ScriptedSQL de Tirasa (los 8 Oracle), Koha ni Zammad. Los
+  conectores existentes tienen 90 días de gracia desde el primer arranque de 4.11. Hoy **no aplica**: PROD da 0 de
+  los 6 indicadores de «producción» (medido el 28-oct). Detalle y alarma en `upeu/infra/upgrade-4.11/README.md` §2.
 - **Repo ≠ PROD** en conectores (Koha) y compose: alinear antes, porque el ensayo se monta desde el repo.
 
 ## 4. Roadmap
 
 | Fase | Qué | Cuándo (propuesto) | Ventana |
 |---|---|---|---|
-| **F0 · Preparación** | Terminar y estabilizar los cambios en curso sobre 4.10.2 (activación por vínculo vivo global + lote; fusión de Hulda). Alinear repo↔PROD (compose, Koha). Arreglar el script de particiones de auditoría (B4). Preparar `config.xml` y compose para 4.11 (B1, B3). **Congelar cambios de configuración** desde el fin de F0. | 28-oct → 7-nov | — |
+| **F0 · Preparación** | Terminar y estabilizar los cambios en curso sobre 4.10.2 (activación por vínculo vivo global + lote; fusión de Hulda). ✅ (rama `prep/upgrade-4.11`, 28-oct): alinear repo↔PROD (compose, Koha); script de particiones (B4); overrides de compose, `config.xml`, PATCH de LDAP, initial objects y runbooks [F1](F1-ensayo-lab.md), [F2](F2-ventana-4.10.5.md) y [F3](F3-ventana-4.11.0.md). **Congelar cambios de configuración** desde el fin de F0. | 28-oct → 7-nov | — |
 | **F1 · Ensayo en laboratorio (.150)** | Restaurar el backup de PROD en el lab, **con todos los recursos de escritura apuntando a destinos de laboratorio o con capabilities de escritura cerradas** (nunca escribir en el LDAP/Koha/Entra reales). Ejecutar 4.10.2 → 4.10.5 → 4.11.0 completo con el runbook, cronometrar cada paso, probar los 12 recursos (test connection + recon en preview), comparar SIM antes/después sobre una muestra fija. | 10 → 14-nov | Lab |
-| **F2 · PROD: 4.10.2 → 4.10.5** | Salto de mantenimiento (esquema compatible). Una semana de observación con las recons diarias. | mar 18-nov | 16:30–20:30 UTC |
+| **F2 · PROD: 4.10.2 → 4.10.5** | Salto de mantenimiento (sin cambios de esquema: 51/10 en ambos tags). **PATCH del `connectorRef` de LDAP a 3.9.4.** Una semana de observación con las recons diarias. | mar 18-nov | 16:30–20:30 UTC |
 | **F3 · PROD: 4.10.5 → 4.11.0** | B1, B3, B5; initial objects con exclusiones; reindex; reactivar tareas una a una. | mar 25-nov | 16:30–21:30 UTC |
 | **F4 · Estabilización** | Observación 1–2 semanas; script de particiones probado el 1-dic; initial objects de reports/dashboards/value policy en MEL (los 135 scripts de Evolveum no modificados). | 26-nov → 12-dic | — |
 | **F5 · Adopción de seguridad 4.11** (proyecto aparte) | Migrar a MEL los 298 scripts UPeU (192 fáciles, 60 con API de MidPoint, 46 con Java/red/E/S), las 11 `function`, y sustituir el transporte de Telegram por HttpClient; luego perfiles por tipo y `safeScriptingLanguagesOnly=true`. TOTP para administradores. `displayName`/`preferredName`. | ene → mar 2027 (antes de la matrícula 2027-1) | Varias |
@@ -55,7 +61,12 @@ código de 4.11: si la SystemConfiguration no define perfiles ni `defaultScriptL
 **Dependencias:** F1 no empieza sin F0 cerrada; F3 solo si F1 sale limpio y F2 lleva una semana sin incidencias.
 **Evitar:** semanas de matrícula y cierres de ciclo; la 4.10.6 sale en enero (no se espera por ella).
 
-## 5. Procedimiento de cada ventana PROD (resumen; detalle en el runbook de F1)
+## 5. Procedimiento de cada ventana PROD (resumen)
+
+> **Detalle ejecutable:** [F2-ventana-4.10.5.md](F2-ventana-4.10.5.md) y [F3-ventana-4.11.0.md](F3-ventana-4.11.0.md),
+> ensayados en [F1-ensayo-lab.md](F1-ensayo-lab.md). Cambio respecto a este resumen: la vuelta atrás rápida es una
+> **copia local de la BD** (`CREATE DATABASE … TEMPLATE`, renombrar para volver, segundos). Un `pg_dump` con
+> auditoría a S3 (~37 GB a ~5 MB/s) no cabe en una ventana; a S3 va el dump sin auditoría (~9 min) y el home.
 
 1. Antes (fuera de ventana): `ninja pre-upgrade-check` y `ninja verify -o verify.csv` con la ninja de la versión destino;
    0 errores de «deprecated/removed».

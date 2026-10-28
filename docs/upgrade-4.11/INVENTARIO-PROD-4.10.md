@@ -59,7 +59,7 @@ Luego se recorrió el JSON (en 4.10 el `fullObject` es JSON) con Python, buscand
 - **Último backup:** `s3://upeu-iga-backups-360416501080/midpoint/db/2026/10/midpoint-db-20261026-223001.dump` (2,70 GB) **con `.sha256`**, y `home/…20261026-223001.tar.gz` (138 MB) **con `.sha256`**. Comando: `aws s3 ls … --recursive` con las credenciales de `~/.secrets/aws-iga-backup.env`.
 - **Cron mensual de auditoría:** `/etc/cron.d/midpoint-audit-partition-maintenance`, el día 1 a las 03:00 (export a S3 y luego DROP).
   - En S3 solo está `audit/ma_audit_202606.dump`.
-  - **Las particiones de julio (`ma_audit_*_202607`, unos 10 GB) siguen en la BD.** Con la retención de 2 meses más el mes en curso, el 1-oct debían haberse exportado y borrado. Causa ❓ (mirar `/var/log/midpoint-audit-partition-maintenance.log`).
+  - **Las particiones de julio (`ma_audit_*_202607`, unos 10 GB) siguen en la BD.** Con la retención de 2 meses más el mes en curso, el 1-oct debían haberse exportado y borrado. **Causa (28-oct):** el log del 1-oct lista `202606 202607` y solo procesa junio. El export (`backup-midpoint-s3.sh`, que lanza `docker run -i`) se comía el stdin del `while read` que recorría los meses. Corregido en la rama `prep/upgrade-4.11`.
 
 ### Hallazgos de seguridad, de paso (no bloquean la 4.11)
 
@@ -90,6 +90,7 @@ Consulta: `m_resource` con JOIN a `m_connector` por `connectorRefTargetOid`, y `
 
 - **Solo un recurso depende de un conector bundled: LDAP-IdentityCache-UPeU.**
   - 4.11 trae LDAP **3.10** (ConnId 1.5.3.0). El objeto conector 3.9.2 quedará `available=false`, igual que pasó con 3.9.1 al subir a 4.10.x.
+  - **Corrección (28-oct):** el salto intermedio también lo cambia. El `pom.xml` de v4.10.3 trae 3.9.3 y el de v4.10.4/v4.10.5 trae **3.9.4**: en F2 hace falta el mismo PATCH (→ 3.9.4).
   - Hay que **cambiar `connectorRef` al OID del conector 3.10** que 4.11 crea al arrancar.
   - Ese cambio va por **PATCH, nunca por PUT**. Ver la memoria `nunca-put-resources-schema-cache`: un PUT pisa el `<schema>` cacheado.
   - Cambios de 3.10 según su ficha: filtro `exists` corregido (los resultados pueden cambiar), descripciones de clases en el esquema, security descriptor de AD binario. Nada marcado como breaking.
@@ -239,7 +240,7 @@ Consulta: `select objecttype, oid, nameorig, version from m_object where oid::te
   - Los dashboards admin y compliance no tienen OID `0000…`: confirmar su versión ❓.
 - **No hay colisiones de OID:** ninguno de los 32 objetos nuevos o renombrados de 4.11 choca con OIDs de UPeU.
   - Los 12 que ya existen en PROD son los mismos objetos de Evolveum, con el prefijo de archivo renombrado.
-  - UPeU usa OIDs propios en el espacio `00000000-0000-0000-0000-xxxxxx`: 26 orgs y los roles GOV `…000a`/`…000b`/`…000c`. **Mantener esa vigilancia en cada versión.**
+  - UPeU usa OIDs propios en el espacio `00000000-0000-0000-0000-xxxxxx`: 26 orgs. **Corrección (28-oct):** `…000a`/`…000b`/`…000c` no son OIDs propios. Son los de los roles de Evolveum 041 Approver, 042 Reviewer y 043 Delegator, **reutilizados y renombrados** como GOV-APROBADOR-WORKITEMS, GOV-REVISOR-CERTIFICACION y GOV-DELEGADOR-PRIVILEGIOS. 4.11 cambia 041 y 042: nunca aplicarlos con ninja (`upeu/infra/upgrade-4.11/initial-objects/nunca.oids`). **Mantener esa vigilancia en cada versión.**
 
 ---
 
@@ -290,7 +291,7 @@ Horas de Lima (`TZ=America/Lima`). Duración = última ejecución.
   - El script hace DROP de delta, ref y event: **el DROP de event fallará**, porque el payload depende de él.
   - El export a S3 (`pg_dump` por mes) tampoco incluirá el payload.
   - Hay que adaptar el orden (payload, delta, ref, event) antes del 1-dic.
-- **R5. `connectorRef` de LDAP-IdentityCache-UPeU** (3.9.2 → 3.10). Hasta que se cambie, **LDAP queda inoperativo** (58.883 cuentas). El cambio va por **PATCH**.
+- **R5. `connectorRef` de LDAP-IdentityCache-UPeU** (3.9.2 → **3.9.4 en F2** → 3.10 en F3). Hasta que se cambie, **LDAP queda inoperativo** (58.883 cuentas). El cambio va por **PATCH**.
 
 ### Altos: errores silenciosos o roturas a escala
 
