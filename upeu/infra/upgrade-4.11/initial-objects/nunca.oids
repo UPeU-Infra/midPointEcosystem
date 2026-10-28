@@ -1,0 +1,13 @@
+# Initial objects que NUNCA se aplican con ninja initial-objects (ni con merge).
+# Lo que interese de su version 4.11 se aplica a mano, con PATCH del item concreto.
+# Generado el 28-oct-2026 (mismo cruce).
+00000000-0000-0000-0000-000000000001  # system-configuration/000-system-configuration.xml | PROD: SYSTEM_CONFIGURATION 'SystemConfiguration' v63 | SystemConfiguration v63: trae defaultScriptLanguage=mel y perfiles por tipo que romperian las 433 expresiones Groovy
+00000000-0000-0000-0000-000000000002  # user/050-user-administrator.xml | PROD: USER 'administrator' v2334719 | usuario administrator: credenciales y asignaciones propias
+00000000-0000-0000-0000-00000000000a  # role/041-role-approver.xml | PROD: ROLE 'GOV-APROBADOR-WORKITEMS' v5 | OID de Evolveum (041 Approver) REUTILIZADO por UPeU como GOV-APROBADOR-WORKITEMS
+00000000-0000-0000-0000-00000000000b  # role/042-role-reviewer.xml | PROD: ROLE 'GOV-REVISOR-CERTIFICACION' v5 | OID de Evolveum (042 Reviewer) REUTILIZADO por UPeU como GOV-REVISOR-CERTIFICACION
+00000000-0000-0000-0000-000000000004  # role/030-role-superuser.xml | PROD: ROLE 'SYS-IGA-SUPERUSER' v2 | role Superuser renombrado a SYS-IGA-SUPERUSER
+00000000-0000-0000-0000-000000000005  # task/550-task-cleanup.xml | PROD: TASK 'Cleanup' v15763 | tarea Cleanup (estado de ejecucion)
+00000000-0000-0000-0000-000000000006  # task/560-task-validity.xml | PROD: TASK 'Validity Scanner' v436618 | tarea Validity Scanner (estado de ejecucion)
+00000000-0000-0000-0000-000000000007  # task/570-task-trigger.xml | PROD: TASK 'Trigger Scanner' v951268 | tarea Trigger Scanner (estado de ejecucion)
+00000000-0000-0000-0000-000000000008  # role/040-role-enduser.xml | PROD: ROLE 'End user' v2 | role End user modificado
+00000000-0000-0000-0000-00000000000c  # role/043-role-delegator.xml | PROD: ROLE 'GOV-DELEGADOR-PRIVILEGIOS' v3 | role Delegator modificado (v3)

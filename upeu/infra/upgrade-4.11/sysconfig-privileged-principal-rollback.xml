@@ -1,0 +1,13 @@
+<!--
+  Vuelta atras de sysconfig-privileged-principal-patch.xml: deja expressions/defaults
+  vacio (replace sin valores = borrar el contenedor), como estaba en 4.10.2.
+  Verificar despues con GET ?options=raw que expressions/defaults no aparece.
+-->
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3">
+    <itemDelta>
+        <t:modificationType>replace</t:modificationType>
+        <t:path>c:expressions/c:defaults</t:path>
+    </itemDelta>
+</objectModification>

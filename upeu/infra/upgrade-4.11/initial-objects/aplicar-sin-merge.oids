@@ -1,0 +1,45 @@
+# Initial objects de 4.11.0 CAMBIADOS respecto a 4.10.2 e INTACTOS en PROD (version 1).
+# Son contenido de Evolveum sin tocar (reports, marks, colecciones, value policy,
+# template 380 sin uso): se reemplazan por la version 4.11 (casi todos pasan sus
+# scripts de Groovy a MEL con language#mel explicito, permitido por el perfil full).
+# Generado el 28-oct-2026 cruzando m_object de PROD con los tags v4.10.2 y v4.11.0.
+# Formato: OID  # fichero 4.11 | estado en PROD. Uso: ver README.md (--no-merge --oid ...).
+00000000-0000-0000-0000-000000000003  # value-policy/010-value-policy.xml | PROD: VALUE_POLICY 'Default Password Policy' v1
+00000000-0000-0000-0000-000000000100  # report/100-report-reconciliation.xml | PROD: REPORT 'Reconciliation report' v1
+00000000-0000-0000-0000-000000000110  # report/110-report-user-list.xml | PROD: REPORT 'Users in MidPoint' v1
+00000000-0000-0000-0000-000000000130  # report/130-report-certification-definitions.xml | PROD: REPORT 'Certification definitions report' v1
+00000000-0000-0000-0000-000000000140  # report/140-report-certification-campaigns.xml | PROD: REPORT 'Certification campaigns report' v1
+00000000-0000-0000-0000-000000000150  # report/150-report-certification-cases.xml | PROD: REPORT 'Certification cases report' v1
+00000000-0000-0000-0000-000000000160  # report/160-report-certification-work-items.xml | PROD: REPORT 'Certification work items report' v1
+00000000-0000-0000-0000-000000000344  # object-collection/330-object-collection-my-cases.xml | PROD: OBJECT_COLLECTION 'My cases' v1
+00000000-0000-0000-0000-000000000380  # object-templates/380-object-template-person.xml | PROD: OBJECT_TEMPLATE 'Person Object Template' v1
+00000000-0000-0000-0000-000000000710  # mark/710-mark-focus-activated.xml | PROD: MARK 'Focus activated' v1
+00000000-0000-0000-0000-000000000711  # mark/711-mark-focus-deactivated.xml | PROD: MARK 'Focus deactivated' v1
+00000000-0000-0000-0000-000000000712  # mark/712-mark-focus-renamed.xml | PROD: MARK 'Focus renamed' v1
+00000000-0000-0000-0000-000000000713  # mark/713-mark-focus-assignment-changed.xml | PROD: MARK 'Focus assignments changed' v1
+00000000-0000-0000-0000-000000000714  # mark/714-mark-focus-archetype-changed.xml | PROD: MARK 'Focus archetype changed' v1
+00000000-0000-0000-0000-000000000715  # mark/715-mark-focus-parent-org-reference-changed.xml | PROD: MARK 'Focus parent organization reference changed' v1
+00000000-0000-0000-0000-000000000716  # mark/716-mark-focus-role-membership-changed.xml | PROD: MARK 'Focus role membership changed' v1
+00000000-0000-0000-0000-000000000730  # mark/730-mark-projection-activated.xml | PROD: MARK 'Projection activated' v1
+00000000-0000-0000-0000-000000000731  # mark/731-mark-projection-deactivated.xml | PROD: MARK 'Projection deactivated' v1
+00000000-0000-0000-0000-000000000732  # mark/732-mark-projection-renamed.xml | PROD: MARK 'Projection renamed' v1
+00000000-0000-0000-0000-000000000733  # mark/733-mark-projection-identifier-changed.xml | PROD: MARK 'Projection identifier changed' v1
+00000000-0000-0000-0000-000000000734  # mark/734-mark-projection-entitlement-changed.xml | PROD: MARK 'Projection entitlement changed' v1
+00000000-0000-0000-0000-000000000735  # mark/735-mark-projection-password-changed.xml | PROD: MARK 'Projection password changed' v1
+00000000-0000-0000-0000-000000000736  # mark/736-mark-shadow-classification-changed.xml | PROD: MARK 'Shadow classification changed' v1
+00000000-0000-0000-0000-000000000737  # mark/737-mark-shadow-correlation-state-changed.xml | PROD: MARK 'Shadow correlation state changed' v1
+00000000-0000-0000-0000-000000000738  # mark/738-mark-projection-resource-object-affected.xml | PROD: MARK 'Resource object affected' v1
+00000000-0000-0000-0000-286d76cea7c5  # report/170-report-simulation-objects.xml | PROD: REPORT 'Simulation report: Objects' v1
+00000000-0000-0000-0000-616a5c5dbca8  # report/171-report-simulation-objects-with-metrics.xml | PROD: REPORT 'Simulation report: Objects with metrics' v1
+00000000-0000-0000-0000-61bc8211947c  # report/173-report-simulation-values-changed.xml | PROD: REPORT 'Simulation report: Values changed' v1
+00000000-0000-0000-0000-97631b84fde7  # report/180-report-simulation-results.xml | PROD: REPORT 'Simulation report: Results' v1
+00000000-0000-0000-0000-b8249b79d2b5  # report/200-report-indirect-assignments.xml | PROD: REPORT 'IGA: Who has access to what and why' v1
+00000000-0000-0000-0000-ea32deff43df  # report/172-report-simulation-items-changed.xml | PROD: REPORT 'Simulation report: Items changed' v1
+00000000-0000-0000-0001-000000000002  # object-collection/273-object-collection-audit-modifications-24h.xml | PROD: OBJECT_COLLECTION 'Modification audit records in 24h' v1
+00000000-0000-0000-0001-000000000004  # object-collection/272-object-collection-audit-errors-24h.xml | PROD: OBJECT_COLLECTION 'Error audit records in 24h' v1
+00000000-0000-0000-0001-000000000284  # object-collection/016-object-collection-audit.xml | PROD: OBJECT_COLLECTION 'All audit records' v1
+00000000-0000-0000-0001-000000000285  # object-collection/271-object-collection-audit-24h.xml | PROD: OBJECT_COLLECTION 'Audit records in 24h' v1
+4758b0a3-4b26-47fb-b69e-d54703c86ee2  # policy/300-policy-require-classification.xml | PROD: POLICY 'Require classification' v1
+6451bca8-4035-4fb3-8ab1-5de14da59e18  # policy/300-policy-require-owner.xml | PROD: POLICY 'Require owner' v1
+c58394cd-c883-4e41-927c-f90a7c7a0c97  # mark/017-mark-privileged-access.xml | PROD: MARK 'Privileged access' v1
+f941f3fc-dcef-4415-9e79-ae56b185a501  # dashboard/899-dashboard-compliance.xml | PROD: DASHBOARD 'compliance-dashboard' v1

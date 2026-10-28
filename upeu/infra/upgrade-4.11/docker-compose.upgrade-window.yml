@@ -1,0 +1,49 @@
+# Override para las VENTANAS de subida (F2 a 4.10.5 y F3 a 4.11.0).
+# Se usa SIEMPRE junto al compose base:
+#
+#   cd /opt/midpoint
+#   docker compose -f docker-compose.yml -f upgrade-4.11/docker-compose.upgrade-window.yml <orden>
+#
+# Que hace:
+# 1. Neutraliza data_init. Su logica normal ejecuta `ninja -B info` y, si ve
+#    "ERROR", lanza `run-sql --create` sobre la BD EXISTENTE. Con el esquema a
+#    medio migrar no se sabe que imprime `info` (riesgo R3 del inventario). Aqui
+#    data_init solo imprime un aviso y sale con 0, asi `depends_on:
+#    service_completed_successfully` de midpoint_server se cumple sin tocar la BD.
+#    La migracion de esquema se hace a mano con el servicio `ninja`.
+# 2. Anade el servicio `ninja` (perfil "tools", no arranca con `up`): la ninja
+#    de la MISMA imagen que el servidor (MP_VER del .env, o MP_VER=... delante
+#    del comando), con las variables de conexion del .env. Nadie teclea la
+#    contrasena de la BD y no aparece en el historial.
+#      docker compose -f docker-compose.yml -f upgrade-4.11/docker-compose.upgrade-window.yml \
+#        run --rm --no-deps ninja run-sql --upgrade --mode repository
+#
+# Nada mas cambia respecto al compose base.
+
+services:
+  data_init:
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - "echo 'data_init NEUTRALIZADO (ventana de subida, docs/upgrade-4.11): no se toca la BD'; exit 0"
+
+  ninja:
+    profiles: ["tools"]
+    image: evolveum/midpoint:${MP_VER}-ubuntu
+    working_dir: /opt/midpoint
+    entrypoint: ["/opt/midpoint/bin/ninja.sh"]
+    environment:
+      - MP_SET_midpoint_repository_jdbcUsername=${POSTGRES_USER}
+      - MP_SET_midpoint_repository_jdbcPassword=${MP_DB_PASSWORD}
+      - MP_SET_midpoint_repository_jdbcUrl=jdbc:postgresql://midpoint_data:5432/midpoint
+      - MP_SET_midpoint_repository_database=postgresql
+      - MP_UNSET_midpoint_repository_hibernateHbm2ddl=1
+      - MP_NO_ENV_COMPAT=1
+      - TZ=America/Lima
+    networks:
+      - net
+    volumes:
+      - midpoint_home:/opt/midpoint/var
+      - /opt/midpoint/connectors:/opt/midpoint/var/icf-connectors:ro
+    depends_on:
+      midpoint_data:
+        condition: service_healthy

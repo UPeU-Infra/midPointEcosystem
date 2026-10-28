@@ -1,0 +1,39 @@
+# Initial objects de 4.11.0 CAMBIADOS respecto a 4.10.2 y MODIFICADOS en PROD (version > 1),
+# o intactos pero criticos. NO se aplican en bloque: se genera el informe de merge
+# (--dry-run --report) y se decide uno a uno. Si no hay motivo claro, se dejan como estan.
+# Generado el 28-oct-2026 (mismo cruce).
+00000000-0000-0000-0000-000000000120  # security-policy/015-security-policy.xml | PROD: SECURITY_POLICY 'Default Security Policy' v1 | Security Policy (intacta, v1) pero gobierna el login: 4.11 anade el modulo otp y passwordHintConfigurability; aplicar solo tras leer el diff
+00000000-0000-0000-0000-000000000200  # lookup-table/200-lookup-languages.xml | PROD: LOOKUP_TABLE 'Languages' v2
+00000000-0000-0000-0000-000000000210  # lookup-table/210-lookup-locales.xml | PROD: LOOKUP_TABLE 'Locales' v2
+00000000-0000-0000-0000-000000000329  # archetype/029-archetype-application.xml | PROD: ARCHETYPE 'Application' v2
+00000000-0000-0000-0000-000000000330  # archetype/018-archetype-classification.xml | PROD: ARCHETYPE 'Classification' v3
+00000000-0000-0000-0000-000000000501  # archetype/501-archetype-task-reconciliation.xml | PROD: ARCHETYPE 'Reconciliation task' v2
+00000000-0000-0000-0000-000000000502  # archetype/502-archetype-task-recomputation.xml | PROD: ARCHETYPE 'Recomputation task' v2
+00000000-0000-0000-0000-000000000503  # archetype/503-archetype-task-import.xml | PROD: ARCHETYPE 'Import task' v2
+00000000-0000-0000-0000-000000000504  # archetype/504-archetype-task-live-sync.xml | PROD: ARCHETYPE 'Live synchronization task' v2
+00000000-0000-0000-0000-000000000505  # archetype/505-archetype-task-async-update.xml | PROD: ARCHETYPE 'Asynchronous update task' v2
+00000000-0000-0000-0000-000000000506  # archetype/506-archetype-task-cleanup.xml | PROD: ARCHETYPE 'Cleanup task' v2
+00000000-0000-0000-0000-000000000507  # archetype/507-archetype-task-report.xml | PROD: ARCHETYPE 'Report task' v2
+00000000-0000-0000-0000-000000000508  # archetype/508-archetype-task-single-bulk-action.xml | PROD: ARCHETYPE 'Single action task' v2
+00000000-0000-0000-0000-000000000509  # archetype/509-archetype-task-iterative-bulk-action.xml | PROD: ARCHETYPE 'Iterative action task' v2
+00000000-0000-0000-0000-000000000513  # archetype/513-archetype-task-shadow-integrity-check.xml | PROD: ARCHETYPE 'Shadow integrity check task' v2
+00000000-0000-0000-0000-000000000514  # archetype/514-archetype-task-shadows-refresh.xml | PROD: ARCHETYPE 'Refresh shadows task' v2
+00000000-0000-0000-0000-000000000515  # archetype/515-archetype-task-objects-delete.xml | PROD: ARCHETYPE 'Delete objects task' v2
+00000000-0000-0000-0000-000000000516  # archetype/516-archetype-task-shadows-delete-long-time-not-updated.xml | PROD: ARCHETYPE 'Delete long time not updated shadows task' v2
+00000000-0000-0000-0000-000000000517  # archetype/517-archetype-task-execute-change.xml | PROD: ARCHETYPE 'Execute change task (one delta applicable for many objects)' v2
+00000000-0000-0000-0000-000000000518  # archetype/518-archetype-task-execute-deltas.xml | PROD: ARCHETYPE 'Execute deltas task (background processing for change execution)' v2
+00000000-0000-0000-0000-000000000519  # archetype/519-archetype-task-reindex-repository.xml | PROD: ARCHETYPE 'Reindex repository task' v2
+00000000-0000-0000-0000-000000000520  # archetype/520-archetype-task-certification.xml | PROD: ARCHETYPE 'Certification-related task' v2
+00000000-0000-0000-0000-000000000521  # archetype/521-archetype-task-approval.xml | PROD: ARCHETYPE 'Approval-related task' v2
+00000000-0000-0000-0000-000000000522  # archetype/522-archetype-task-object-integrity-check.xml | PROD: ARCHETYPE 'Object integrity check task' v2
+00000000-0000-0000-0000-000000000523  # archetype/523-archetype-task-shadow-reclassification.xml | PROD: ARCHETYPE 'Shadow reclassification task' v2
+00000000-0000-0000-0000-000000000530  # archetype/530-archetype-task-validity.xml | PROD: ARCHETYPE 'Validity scanner task' v2
+00000000-0000-0000-0000-000000000531  # archetype/531-archetype-task-trigger.xml | PROD: ARCHETYPE 'Trigger scanner task' v2
+00000000-0000-0000-0000-000000000532  # archetype/532-archetype-task-propagation.xml | PROD: ARCHETYPE 'Provisioning propagation task (one resource)' v2
+00000000-0000-0000-0000-000000000533  # archetype/533-archetype-task-multi-propagation.xml | PROD: ARCHETYPE 'Provisioning propagation task (many resources)' v2
+00000000-0000-0000-0000-000000000536  # archetype/536-archetype-task-certification-start-campaign.xml | PROD: ARCHETYPE 'Certification-campaign-start-related task' v2
+00000000-0000-0000-0000-000000000537  # archetype/537-archetype-task-certification-close-current-stage.xml | PROD: ARCHETYPE 'Certification-campaign-close-current-stage task' v2
+00000000-0000-0000-0000-000000000538  # archetype/538-archetype-task-certification-reiterate-campaign.xml | PROD: ARCHETYPE 'Certification-campaign-reiterate task' v2
+00000000-0000-0000-0000-000000000702  # archetype/702-archetype-person.xml | PROD: ARCHETYPE 'Person' v16
+00000000-0000-0000-0000-000000000705  # archetype/705-archetype-shadow-policy-mark.xml | PROD: ARCHETYPE 'Shadow policy mark' v2
+00000000-0000-0000-0001-000000000001  # dashboard/310-dashboard-admin.xml | PROD: DASHBOARD 'admin-dashboard' v2

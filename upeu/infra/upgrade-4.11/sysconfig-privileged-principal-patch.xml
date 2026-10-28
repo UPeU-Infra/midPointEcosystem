@@ -1,0 +1,34 @@
+<!--
+  SystemConfiguration (00000000-0000-0000-0000-000000000001): ANADE expressions/defaults
+  con privilegedPrincipal = permissive. Aplicar SOLO con midPoint 4.11 arrancado (el
+  elemento no existe en el XSD de 4.10.5: DefaultExpressionProfilesConfigurationType
+  de 4.10.5 solo tiene bulkActions, privilegedBulkActions, customWorkflowNotifications y gui).
+
+  POR QUE (riesgo R10): en 4.11, las expresiones evaluadas "como el principal actual"
+  (expresiones ad hoc del administrador por GUI/REST que no son acciones masivas: filtros
+  con expresion en busquedas, vista previa de mapeos...) usan expressions/defaults; si
+  `defaults` no existe, devuelven ExpressionProfile.none() (ExpressionProfileManager,
+  v4.11.0). En 4.10.2 se evaluaban con todo permitido. `permissive` es un perfil que YA
+  existe en la SystemConfiguration de PROD (decision allow, sin restricciones; comprobado
+  el 28-oct-2026), asi que reproduce el comportamiento actual solo para usuarios
+  privilegiados. No se fija `principal` (no privilegiados): sigue en none(), el valor
+  por defecto de 4.11.
+
+  QUE NO CAMBIA: con `defaults` presente pero sin `authorizedObjects`, las 433 expresiones
+  guardadas en objetos siguen cayendo en legacyDefaultForAuthorizedObjects() = full
+  (mismo metodo, rama AuthorizedObject). Las acciones masivas tampoco cambian (sin
+  bulkActionsInAuthorizedObjects/privilegedBulkActions/bulkActions -> mismos valores legacy).
+
+  Vuelta atras: sysconfig-privileged-principal-rollback.xml (quita el contenedor entero).
+-->
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3">
+    <itemDelta>
+        <t:modificationType>add</t:modificationType>
+        <t:path>c:expressions/c:defaults</t:path>
+        <t:value>
+            <c:privilegedPrincipal>permissive</c:privilegedPrincipal>
+        </t:value>
+    </itemDelta>
+</objectModification>

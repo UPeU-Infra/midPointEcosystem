@@ -1,0 +1,27 @@
+# Override PERMANENTE a partir de 4.11.0 (ventana F3 en adelante).
+#
+#   cd /opt/midpoint
+#   docker compose -f docker-compose.yml -f upgrade-4.11/docker-compose.4.11.yml up -d
+#   (durante la ventana, ademas: -f upgrade-4.11/docker-compose.upgrade-window.yml)
+#
+# Desde 4.11.0 las imagenes corren como el usuario no-root `midpoint`, UID 1000
+# (release notes 4.11.0, "Container images ... run as non-root user midpoint
+# with UID 1000"). Se deja escrito para que no dependa del valor por defecto de
+# la imagen. PRECONDICION: el volumen midpoint_midpoint_home ya es 1000:1000
+# (chown en la ventana F3, paso 6). Sin el chown, keystore.jceks (hoy root 0600)
+# no se puede leer y midPoint no descifra nada.
+#
+# Los bind de solo lectura (/opt/midpoint/connectors y /opt/midpoint/certs) son
+# legibles por el UID 1000 tal como estan (ficheros 0644).
+#
+# Al cerrar F3, este contenido se integra en el docker-compose.yml base y este
+# fichero se borra (un solo compose en PROD, como hoy).
+
+services:
+  data_init:
+    user: "1000:1000"
+  midpoint_server:
+    user: "1000:1000"
+# El servicio `ninja` (override de ventana) no se fija aqui: usa el usuario por
+# defecto de la imagen (root en 4.10.x, 1000 en 4.11). Para ejecutar la ninja
+# de 4.11 ANTES del chown (pre-upgrade-check), anadir `--user 0` al `run`.

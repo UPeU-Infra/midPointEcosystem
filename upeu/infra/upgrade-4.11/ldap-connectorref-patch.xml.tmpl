@@ -1,0 +1,17 @@
+<!--
+  PATCH del connectorRef de LDAP-IdentityCache-UPeU (7b4e1c2d-3f8a-4d6b-9e5c-0a1b2c3d4e5f).
+  Plantilla: ldap-connectorref.sh sustituye __NEW_CONNECTOR_OID__ por el OID del
+  LdapConnector bundled de la version arrancada (3.9.4 en F2, 3.10 en F3).
+  Solo toca el item connectorRef: el <schema> cacheado, schemaHandling y
+  capabilities no se envian, asi que no se pisan (NUNCA PUT).
+  Vuelta atras: el mismo PATCH con el OID anterior (hoy 31072286-b58e-4133-af79-fabdd4578fae, 3.9.2).
+-->
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3">
+    <itemDelta>
+        <t:modificationType>replace</t:modificationType>
+        <t:path>c:connectorRef</t:path>
+        <t:value oid="__NEW_CONNECTOR_OID__" type="c:ConnectorType"/>
+    </itemDelta>
+</objectModification>
