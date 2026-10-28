@@ -23,10 +23,16 @@
 #
 # MODOS
 #   ./backup-midpoint-s3.sh                        backup diario (BD sin auditoria + home)
-#   ./backup-midpoint-s3.sh --export-audit YYYYMM  exporta las 3 particiones de ese mes
-#                                                  (event, delta, ref); lo invoca
+#   ./backup-midpoint-s3.sh --export-audit YYYYMM  exporta las particiones de ese mes
+#                                                  (event, delta, ref y, desde 4.11,
+#                                                  payload); lo invoca
 #                                                  audit-partition-maintenance.sh antes
 #                                                  de hacer DROP. Exit != 0 => NO dropear.
+#   ./backup-midpoint-s3.sh --pre-upgrade ETIQUETA  backup de ventana de subida, con
+#                                                  MidPoint PARADO: BD COMPLETA (con
+#                                                  auditoria) + home leido del volumen.
+#                                                  Va a midpoint/upgrade/ETIQUETA/.
+#                                                  Runbooks: docs/upgrade-4.11/
 #
 # CREDENCIALES (nunca en el repo)
 #   $CONF (por defecto ~/.config/midpoint-backup/backup.env, permisos 600):
@@ -53,6 +59,10 @@ AWS_IMAGE="${AWS_IMAGE:-amazon/aws-cli:2.36.50}"
 STAGE="${STAGE:-/var/tmp/midpoint-backup}"
 MIN_FREE_GB="${MIN_FREE_GB:-1}"
 LOG_FILE="${LOG_FILE:-$HOME/midpoint-backup.log}"
+# Solo para --pre-upgrade (MidPoint parado): volumen del home y una imagen
+# que ya este en el host para leerlo (no descarga nada nuevo).
+MP_HOME_VOLUME="${MP_HOME_VOLUME:-midpoint_midpoint_home}"
+MP_IMAGE_FOR_TAR="${MP_IMAGE_FOR_TAR:-postgres:16-bullseye}"
 
 # shellcheck disable=SC1090
 source "$CONF"
@@ -192,12 +202,19 @@ export_audit_month() {
     [[ "$m" =~ ^[0-9]{6}$ ]] || { log "Mes invalido: '$m'"; exit 2; }
     log "==== EXPORT auditoria $m ===="
     check_free_space
+    # 4.10: event, delta, ref. 4.11+ (cambio de auditoria 15): ademas payload,
+    # que tiene FK a event. Se detecta en tiempo de ejecucion.
+    local tables=("ma_audit_event_${m}" "ma_audit_delta_${m}" "ma_audit_ref_${m}") t n targs=()
+    STEP="deteccion de ma_audit_payload_${m}"
+    n=$(docker exec -i "$PG_CONTAINER" psql -U "$PG_USER" -d "$PG_DB" -tA \
+        -c "SELECT count(*) FROM pg_class WHERE relname = 'ma_audit_payload_${m}' AND relkind = 'r'" < /dev/null)
+    [[ "$n" == "1" ]] && tables+=("ma_audit_payload_${m}")
+    for t in "${tables[@]}"; do targs+=(-t "*.${t}"); done
+    log "Tablas a exportar: ${tables[*]}"
     STEP="pg_dump auditoria $m"
-    docker exec "$PG_CONTAINER" pg_dump -U "$PG_USER" -d "$PG_DB" -Fc -Z 6 \
-        -t "*.ma_audit_event_${m}" -t "*.ma_audit_delta_${m}" -t "*.ma_audit_ref_${m}" \
+    docker exec "$PG_CONTAINER" pg_dump -U "$PG_USER" -d "$PG_DB" -Fc -Z 6 "${targs[@]}" \
         | stream_upload "midpoint/audit/ma_audit_${m}.dump"
-    verify_and_mark "midpoint/audit/ma_audit_${m}.dump" \
-        "ma_audit_event_${m}" "ma_audit_delta_${m}" "ma_audit_ref_${m}"
+    verify_and_mark "midpoint/audit/ma_audit_${m}.dump" "${tables[@]}"
     log "==== FIN EXPORT auditoria $m ===="
 }
 
@@ -256,8 +273,68 @@ Resumen semanal: si un lunes no llega este mensaje, el backup dejó de correr."
     fi
 }
 
+# ------------------------------------------------------------------------------
+# Backup de ventana de subida (docs/upgrade-4.11/F2-*.md y F3-*.md).
+# Precondicion: midpoint_server PARADO (el home se lee del volumen, no con
+# docker exec) y Postgres arriba. Diferencias con el diario:
+#   - la BD va COMPLETA, CON los datos de auditoria: el esquema de auditoria
+#     tambien cambia en la subida y la vuelta atras debe poder restaurarlo;
+#   - el home se lee del volumen con un contenedor auxiliar (--user 0, solo
+#     lectura), porque el contenedor de MidPoint esta parado;
+#   - destino propio midpoint/upgrade/<etiqueta>/, fuera de la caducidad de 35
+#     dias de db/ y home/ (revisar la regla de ciclo de vida del bucket).
+pre_upgrade_backup() {
+    local tag="$1" key_db key_home homef t0 running
+    [[ "$tag" =~ ^[A-Za-z0-9._-]+$ ]] || { log "Etiqueta invalida: '$tag'"; exit 2; }
+    t0=$(date +%s)
+    log "==== INICIO backup pre-upgrade '$tag' ===="
+    STEP="comprobar que MidPoint esta parado"
+    running=$(docker ps --filter "name=^/${MP_CONTAINER}$" --format '{{.Names}}')
+    if [[ -n "$running" ]]; then
+        log "El contenedor $MP_CONTAINER sigue en marcha: pararlo antes (docker compose stop midpoint_server)."
+        false
+    fi
+    check_free_space
+
+    key_db="midpoint/upgrade/${tag}/midpoint-full-${TS}.dump"
+    STEP="pg_dump BD COMPLETA (con auditoria)"
+    docker exec "$PG_CONTAINER" pg_dump -U "$PG_USER" -d "$PG_DB" -Fc -Z 1 \
+        | stream_upload "$key_db"
+    verify_and_mark "$key_db" \
+        m_user 'm_shadow_[[:alnum:]_]+' m_resource m_role m_org \
+        m_system_configuration m_assignment 'ma_audit_event_[0-9]{6}'
+    local dbsize ndata
+    dbsize=$(numfmt --to=iec "$LAST_BYTES"); ndata=$LAST_TOC_TABLES
+
+    homef="midpoint-home.${TS}.tar.gz"
+    STEP="tar del home desde el volumen ${MP_HOME_VOLUME}"
+    docker run --rm --user 0 --entrypoint tar -v "${MP_HOME_VOLUME}:/v:ro" "$MP_IMAGE_FOR_TAR" \
+        -C /v -cf - --exclude=./log --exclude=./trace --exclude=./tmp --exclude=./work . \
+        > "$STAGE/home-var.${TS}.tar"
+    tar -C "$MP_HOST_DIR" -cf "$STAGE/home-host.${TS}.tar" \
+        --exclude='*.jar.bak*' --exclude='*.bak' .
+    tar -C "$STAGE" -czf "$STAGE/$homef" "home-var.${TS}.tar" "home-host.${TS}.tar"
+    rm -f "$STAGE/home-var.${TS}.tar" "$STAGE/home-host.${TS}.tar"
+    STEP="verificacion del tar del home"
+    local lvar lhost
+    lvar=$(tar -xzOf "$STAGE/$homef" "home-var.${TS}.tar" | tar -t)
+    lhost=$(tar -xzOf "$STAGE/$homef" "home-host.${TS}.tar" | tar -t)
+    grep -qx './keystore.jceks' <<< "$lvar"
+    grep -qx './config.xml' <<< "$lvar"
+    grep -qx './docker-compose.yml' <<< "$lhost"
+    grep -qx './.env' <<< "$lhost"
+    key_home="midpoint/upgrade/${tag}/midpoint-home-${TS}.tar.gz"
+    upload_verified "$homef" "$key_home"
+    rm -f "$STAGE/$homef"
+    log "==== FIN backup pre-upgrade '$tag' OK ($(( $(date +%s) - t0 )) s): BD ${dbsize} (${ndata} tablas con datos) ===="
+    telegram "🟡 Backup PRE-UPGRADE MidPoint OK (${HOST}) - ${tag}
+BD completa: ${dbsize} · ${ndata} tablas
+s3://${IGA_BACKUP_BUCKET}/midpoint/upgrade/${tag}/"
+}
+
 case "${1:-}" in
     --export-audit) export_audit_month "${2:-}" ;;
+    --pre-upgrade)  pre_upgrade_backup "${2:-}" ;;
     "")             daily_backup ;;
-    *)              echo "Uso: $0 [--export-audit YYYYMM]" >&2; exit 2 ;;
+    *)              echo "Uso: $0 [--export-audit YYYYMM | --pre-upgrade ETIQUETA]" >&2; exit 2 ;;
 esac
