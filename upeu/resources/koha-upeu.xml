@@ -34,7 +34,7 @@
     <!-- lifecycleState=active desde el dry-run de julio/2026 (ver upeu-koha/context/22).
          El comentario original de arriba ("proposed... outbound NO se ejecutan") quedó
          obsoleto — se conserva solo como registro histórico del diseño inicial. -->
-    <!-- connectorRef → KohaConnector **v1.6.0** (OID 16030383, descubierto 2026-07-25).
+    <!-- connectorRef → KohaConnector **v1.7.1** (OID 51e26e79, descubierto en caliente 2026-10-28).
          Implementa PoolableConnector (checkAlive()) y NO maneja fotos del patrón
          (retiradas en v1.4.1→v1.5.0). Historial de versiones relevantes:
            - v1.4.0 (02d503a0): retiró adopt-by-DNI legacy (D-14, commit e384c82).
@@ -48,11 +48,16 @@
              MidPoint no gestiona fotos binarias en ningún aprovisionamiento).
            - v1.6.0: implementa PoolableConnector — evita crear/destruir un pool
              JDBC por cada operación de la API.
+           - v1.7.0 (8c090235, 15-ago): implementa UpdateDeltaOp (altas y bajas ya no se
+             fusionan → fin del 409 "more than one non-repeatable attributes").
+           - v1.7.1 (51e26e79, 28-oct): las BAJAS de extended_attributes se aplican (el
+             merge-preserve reponía los tipos retirados por completo) + socketTimeout en el
+             pool JDBC. Vuelta atrás: repuntar a 8c090235.
          Ver upeu-koha/context/26 y github.com/UPeU-Infra/connector-koha releases.
          ⚠️ YA NO comparte OID con koha-ils.xml: el Koha VIEJO (.135) se queda
          deliberadamente en v1.3.11 (45b4f0e0) hasta que se jubile — no cambiar ese,
          ni borrar su jar/ConnectorType, o se rompe el resource viejo. -->
-    <connectorRef oid="16030383-b7aa-49c0-9310-72c96c4ffd0f" relation="org:default" type="c:ConnectorType"/>
+    <connectorRef oid="51e26e79-862c-4f66-9b76-0a29e3f25b6e" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration>
         <!-- connectorPoolConfiguration (2026-07-25): solo tiene efecto real desde que
              KohaConnector implementa PoolableConnector (v1.6.0) — antes MidPoint lo
