@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:sciback="urn:sciback:midpoint:person" xmlns:sb="urn:sciback:midpoint:person" xmlns:upeu="urn:upeu:midpoint:local" xmlns:ns1="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3" xmlns:ns2="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.identicum.midpoint.connector-koha/com.identicum.connectors.KohaConnector" xmlns:ns5="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:ns6="http://midpoint.evolveum.com/xml/ns/public/resource/annotation-3" xmlns:ns7="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xs="http://www.w3.org/2001/XMLSchema" oid="9b5a7c81-47aa-42ac-9a08-4de8b64935af">
+    <!-- RETIRADO. Este recurso (OID 9b5a7c81-..., Koha .135) NO existe en PROD (comprobado el 28-oct-2026:
+         el unico recurso Koha es e10a539a-..., "Koha ILS UPeU (consolidado)", en koha-upeu.xml).
+         Se conserva como referencia historica; NO importar. Su connectorRef apunta a Koha 1.3.11, un
+         conector que PROD ya no usa. -->
     <name>Koha ILS</name>
     <!-- proposed durante la fase dry-run de la reactivación 2026-05-30: outbound NO se
          ejecuta (mismo patrón que Entra ID). Pasar a active SOLO tras aprobar el dry-run

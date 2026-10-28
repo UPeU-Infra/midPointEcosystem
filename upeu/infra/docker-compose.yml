@@ -1,3 +1,9 @@
+# docker-compose de MidPoint PROD (midpoint.upeu, 192.168.15.166).
+# Copia SANITIZADA de /opt/midpoint/docker-compose.yml (alineada el 28-oct-2026).
+# Unica diferencia con el fichero del host: la contrasena del truststore va como
+# ${MP_TRUSTSTORE_PASSWORD} (variables en env.example; el .env real NO se versiona).
+# Truststore: /opt/midpoint/certs/truststore.jceks (bind de solo lectura, 17-ago-2026).
+# Subida a 4.11: docs/upgrade-4.11/ y upeu/infra/upgrade-4.11/.
 services:
   midpoint_data:
     image: postgres:16-bullseye
@@ -89,12 +95,13 @@ services:
       - TZ=America/Lima
       - MP_MEM_INIT=5120m
       - MP_MEM_MAX=9216m
-      - JAVA_OPTS=-XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:G1HeapRegionSize=32m -XX:+ParallelRefProcEnabled -XX:+DisableExplicitGC -XX:ParallelGCThreads=8 -XX:ConcGCThreads=4 -XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=35 -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStorePassword=changeit
+      - JAVA_OPTS=-XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:G1HeapRegionSize=32m -XX:+ParallelRefProcEnabled -XX:+DisableExplicitGC -XX:ParallelGCThreads=8 -XX:ConcGCThreads=4 -XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=35 -Djavax.net.ssl.trustStore=/opt/midpoint/certs/truststore.jceks -Djavax.net.ssl.trustStorePassword=${MP_TRUSTSTORE_PASSWORD}
     networks:
       - net
     volumes:
       - midpoint_home:/opt/midpoint/var
       - /opt/midpoint/connectors:/opt/midpoint/var/icf-connectors:ro
+      - /opt/midpoint/certs:/opt/midpoint/certs:ro
     mem_limit: 10g
     mem_reservation: 8g
     logging:

@@ -52,7 +52,9 @@
          ⚠️ YA NO comparte OID con koha-ils.xml: el Koha VIEJO (.135) se queda
          deliberadamente en v1.3.11 (45b4f0e0) hasta que se jubile — no cambiar ese,
          ni borrar su jar/ConnectorType, o se rompe el resource viejo. -->
-    <connectorRef oid="16030383-b7aa-49c0-9310-72c96c4ffd0f" relation="org:default" type="c:ConnectorType"/>
+    <!-- connectorRef = KohaConnector 1.7.0 (OID 8c090235-...), el que usa PROD desde el 15-ago-2026.
+         Alineado con PROD el 28-oct-2026 (antes apuntaba a 1.6.0, 16030383-...). Desplegar SOLO por PATCH. -->
+    <connectorRef oid="8c090235-413a-41d3-bba3-11ec9ea776fd" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration>
         <!-- connectorPoolConfiguration (2026-07-25): solo tiene efecto real desde que
              KohaConnector implementa PoolableConnector (v1.6.0) — antes MidPoint lo
