@@ -1,0 +1,44 @@
+# scibackStudyLevel — nivel del programa de la matricula vigente
+#
+# POR QUE: el HIS del Centro Medico (OpenMRS) consulta el LDAP al admitir a un paciente para
+# aplicar la tarifa. Hoy eduPersonAffiliation=student mezcla pregrado, posgrado, CEPRE, idiomas,
+# conservatorio y diplomaturas, y el seguro del alumno no cubre necesariamente a todos.
+#
+# POR QUE UN ATRIBUTO PROPIO: ni eduPerson 202208 ni SCHAC 1.6.0 tienen nivel de estudio
+# (eduPerson define 8 valores de affiliation y ninguno lo distingue; SCHAC .1-.21 tampoco).
+# Verificado contra la skill iga-canonical-standards. Por eso va en el arco propio 47378.
+#
+# EL DATO YA EXISTE EN EL FOCO: extension/sciback:studyLevel, poblado en 17.813 de 17.814
+# estudiantes (99,99%) — medido en PROD el 29-oct-2026. Esto solo lo publica.
+#
+# SINGLE-VALUE: el item del foco es SCALAR. Quien cursa dos programas a la vez tiene el nivel
+# del programa que gobierna (regla PRIMARY_*, 14-oct).
+#
+# OID: siguiente libre del arco. Ultimo usado el 29-oct-2026: .1.16 (scibackAbsenceType).
+#
+# ORDINALES VERIFICADOS EN PROD el 29-oct-2026 (.168):
+#   olcObjectClasses {1} = 1.3.6.1.4.1.47378.2.1 upeuPerson
+# 🔴 RE-VERIFICAR antes de aplicar: el re-add mueve el valor al final y el ordinal cambia.
+#   ldapsearch -x -H ldap://<nodo>:389 -D 'cn=admin,cn=config' -W \
+#     -b 'cn=schema,cn=config' '(cn=*upeu*)' olcAttributeTypes olcObjectClasses
+#
+# 🔴 cn=config NO replica: aplicar en .168 Y .169.
+# 🔴 Tras aplicarlo, en MidPoint: purge-schema del resource LDAP-IdentityCache-UPeU +
+#    test connection, o el outbound falla con "Definition of attribute not found".
+
+dn: cn={12}upeu,cn=schema,cn=config
+changetype: modify
+add: olcAttributeTypes
+olcAttributeTypes: ( 1.3.6.1.4.1.47378.1.17 NAME 'scibackStudyLevel' DESC 'Nivel del programa de la matricula vigente: pregrado | posgrado | doctorado | segunda-especialidad | cepre | idiomas | conservatorio | diplomatura. Vocabulario controlado, minusculas sin tildes, mismo criterio que scibackAbsenceType. Fuente: extension/sciback:studyLevel (IIA Oracle LAMB DAVID.TIPO_NIVEL_ENSENANZA). Sin default: nivel desconocido deja el atributo AUSENTE, nunca imputa. Solo estudiantes con matricula vigente. Lo consume el HIS del Centro Medico para la tarifa del paciente.' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+-
+delete: olcObjectClasses
+olcObjectClasses: {1}
+-
+add: olcObjectClasses
+olcObjectClasses: ( 1.3.6.1.4.1.47378.2.1 NAME 'upeuPerson' DESC 'Clase auxiliar UPeU para atributos de calidad de datos e identidad institucional' SUP top AUXILIARY MAY ( upeuDataQualityStatus $ upeuReniecValidationDate $ isni $ scibackDocumentNumber $ scibackFacultyCode $ scibackCampusCode $ scibackAcademicProgramSuneduCode $ scibackAcademicProgramUri $ scibackAbsent $ scibackAbsenceStartDate $ scibackAbsenceEndDate $ scibackAbsenceType $ scibackStudyLevel ) )
+
+# indice eq — el HIS filtra por nivel; sin indice es scan de las ~49.500 de ou=people
+dn: olcDatabase={1}mdb,cn=config
+changetype: modify
+add: olcDbIndex
+olcDbIndex: scibackStudyLevel eq
