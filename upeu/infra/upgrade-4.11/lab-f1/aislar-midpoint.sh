@@ -11,8 +11,11 @@
 #      Maintenance State", experimental desde 4.2; por eso es la 2.a capa, no la 1.a).
 #      Los 8 Oracle LAMB siguen operativos: solo lectura (create/update/delete
 #      deshabilitados en las capabilities, medido en PROD el 28-oct).
-#   2. SystemConfiguration -> sin messageTransportConfiguration (el transporte de
-#      Telegram): el clon no puede avisar al grupo real aunque la red lo dejara.
+#   2. SystemConfiguration -> sin messageTransportConfiguration NI
+#      notificationConfiguration: en PROD el transporte de Telegram (con el token del
+#      bot) vive en notificationConfiguration/customTransport, no solo en el primero
+#      (medido en el clon el 3-nov). Sin los dos, el clon no puede avisar al grupo real
+#      aunque la red lo dejara.
 #   3. Suspende las 8 tareas de negocio (../tareas-ventana.sh suspender).
 #
 # ORDENES: aplicar | comprobar
@@ -45,7 +48,7 @@ sql() { docker exec -i -e PGOPTIONS='-c default_transaction_read_only=on' "$PG_C
 comprobar() {
     echo "Recursos (nombre|administrativeAvailabilityStatus):"
     echo "SELECT nameorig, coalesce(convert_from(fullobject,'UTF8')::jsonb->'resource'->'administrativeOperationalState'->>'administrativeAvailabilityStatus','operational (sin valor)') FROM m_resource ORDER BY 1;" | sql
-    echo "SystemConfiguration: messageTransportConfiguration presente = $(echo "SELECT (convert_from(fullobject,'UTF8')::jsonb->'systemConfiguration') ? 'messageTransportConfiguration' FROM m_object WHERE oid = '$SYSCONFIG';" | sql)"
+    echo "SystemConfiguration: messageTransportConfiguration|notificationConfiguration presentes = $(echo "SELECT (convert_from(fullobject,'UTF8')::jsonb->'systemConfiguration') ? 'messageTransportConfiguration', (convert_from(fullobject,'UTF8')::jsonb->'systemConfiguration') ? 'notificationConfiguration' FROM m_object WHERE oid = '$SYSCONFIG';" | sql) (deben ser f|f)"
     "$HERE/../tareas-ventana.sh" estado
 }
 
@@ -59,7 +62,9 @@ aplicar)
 EOF
     cat > "$T/notransport.xml" <<EOF
 <objectModification $NS><itemDelta><t:modificationType>replace</t:modificationType>
-<t:path>c:messageTransportConfiguration</t:path></itemDelta></objectModification>
+<t:path>c:messageTransportConfiguration</t:path></itemDelta>
+<itemDelta><t:modificationType>replace</t:modificationType>
+<t:path>c:notificationConfiguration</t:path></itemDelta></objectModification>
 EOF
     for o in "${ESCRITORES[@]}"; do patch resources "$o" "$T/maint.xml"; done
     patch systemConfigurations "$SYSCONFIG" "$T/notransport.xml"
