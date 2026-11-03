@@ -109,3 +109,12 @@ ITSM con kind `work`, políticas de foco por actividad. Se evalúan en F5 o desp
   4.10.2 / 4.10.5 / 4.11.0. Resultado y hallazgos: [`F1-RESULTADO-2026-11-03.md`](F1-RESULTADO-2026-11-03.md).
 - Sin ensayar (Oracle inalcanzable desde el lab y sin escritura real): pasan al canario de F3, paso 21.
 - Nuevo en F3 §1: quitar `cleanupPolicy/objectResults` (único `NECESSARY` del `verify`).
+- **F2 hecho en PROD el 3-nov** (adelantado desde el 18-nov), 21:16–21:38 UTC (22 min). midPoint
+  **4.10.5**, esquema 51/10 sin cambios; LDAP repuntado al conector **3.9.4** (`de61cb29-…`,
+  recurso v275); **12/12 recursos `success`**, Oracle incluido (lo que F1 no pudo medir); canarios
+  LDAP-DTI (4 s) y ausencias (2 min) `success`; foto PRE = POST (66.137 líneas, 0 diferencias).
+  Copia local de la BD 142 s (27 GB) y backup `s3://…/midpoint/upgrade/f2-4102/` 523 s.
+  Resuelto: `data_init` en arranque normal dice «Repository init is not needed». Visto: los
+  `ERR_13750 REGISTERING_FAILED_ALREADY_PRESENT` de la librería LDAP ya salían cada día con 4.10.2.
+  Pendiente: espejo del `connectorRef` en `upeu/resources/ldap-identity-cache.xml`; borrar la copia
+  `midpoint_pre_4102` y `home-pre-F2.tgz` a los 7 días sin incidencias (10-nov).
