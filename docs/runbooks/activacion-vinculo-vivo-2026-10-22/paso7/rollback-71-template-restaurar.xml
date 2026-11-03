@@ -1,0 +1,303 @@
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5771]/mapping</t:path>
+    <t:value xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xsi:type="c:ObjectTemplateMappingType" id="5772">
+            <name>leaver-disable-on-terminationdate</name>
+            <lifecycleState>archived</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:terminationDate</path>
+            </source>
+            <source>
+                <name>worker</name>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationWorker</path>
+            </source>
+            <source>
+                <name>student</name>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationStudent</path>
+            </source>
+            <source>
+                <name>alum</name>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationAlum</path>
+            </source>
+            <expression>
+                <script>
+                    <code>import java.time.LocalDate; import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType;
+if (terminationDate == null) return null;
+// ¿Ceso de verdad? Solo true con fecha valida YYYY-MM-DD y ya cumplida.
+// Dato ilegible o fecha futura -&gt; ceased=false -&gt; NO se desactiva (fail-safe).
+def ceased = false;
+def v = basic.stringify(terminationDate);
+if (v ==~ /^\d{4}-\d{2}-\d{2}$/) {
+    try { ceased = !LocalDate.parse(v).isAfter(LocalDate.now()) } catch (Exception e) { log.warn("leaver: terminationDate no parseable '{}' en {} -&gt; no se desactiva", v, focus?.name) }
+} else {
+    log.warn("leaver: terminationDate con formato inesperado '{}' en {} -&gt; no se desactiva", v, focus?.name)
+}
+// ¿Le queda ALGUN vinculo vivo? 'sin dato' y 'vacio' NO cuentan como vivo.
+def liveOf = { it != null &amp;&amp; basic.stringify(it).trim() != '' };
+def anyLive = liveOf(worker) || liveOf(student) || liveOf(alum);
+// ISO 24760: ceso y sin ningun vinculo -&gt; suspended. Con vinculo vivo -&gt; su
+// identidad persiste por otra IIA -&gt; ENABLED.
+return (ceased &amp;&amp; !anyLive) ? ActivationStatusType.DISABLED : ActivationStatusType.ENABLED</code>
+                </script>
+            </expression>
+            <condition>
+                <script>
+                    <code>terminationDate != null</code>
+                </script>
+            </condition>
+        </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5771]/mapping</t:path>
+    <t:value xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xsi:type="c:ObjectTemplateMappingType" id="5836">
+            <name>ACT-limpiar-disabled-automatico-si-vinculo-vivo</name>
+            <lifecycleState>archived</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>adminStatus</name>
+                <path>activation/administrativeStatus</path>
+            </source>
+            <source>
+                <name>worker</name>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationWorker</path>
+            </source>
+            <source>
+                <name>student</name>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationStudent</path>
+            </source>
+            <source>
+                <name>alum</name>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationAlum</path>
+            </source>
+            <expression>
+                <script>
+                    <code>null</code>
+                </script>
+            </expression>
+            <target>
+                <path>activation/administrativeStatus</path>
+            </target>
+            <condition>
+                <script>
+                    <code>
+def liveOf = { it != null &amp;&amp; basic.stringify(it).trim() != '' }
+def anyLive = liveOf(worker) || liveOf(student) || liveOf(alum)
+return anyLive &amp;&amp; adminStatus != null &amp;&amp; adminStatus.toString().equalsIgnoreCase('disabled')
+                    </code>
+                </script>
+            </condition>
+        </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5771]/mapping</t:path>
+    <t:value xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xsi:type="c:ObjectTemplateMappingType" id="5843">
+            <name>ACTv2-rango-limpiar-disabled-si-vinculo-vivo-canario</name>
+            <lifecycleState>archived</lifecycleState>
+            <strength>strong</strength>
+            <expression>
+                <script>
+                    <code>null</code>
+                </script>
+            </expression>
+            <target>
+                <path>activation/administrativeStatus</path>
+                <set>
+                    <condition>
+                        <script>
+                            <code>
+    // RANGO (no condition): retirable el DISABLED actual si hay un vinculo VIVO (item + cuenta de su IIA).
+    if (input == null || !basic.stringify(input).trim().equalsIgnoreCase('disabled')) return false
+    def CANARIO = []  // lista de canario: NO en el repo publico (PII); vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+    if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+    def NS = 'urn:sciback:midpoint:person'
+    def live = { String item, String res -&gt; def v = basic.getExtensionPropertyValue(focus, NS, item); v != null &amp;&amp; basic.stringify(v).trim() != '' &amp;&amp; midpoint.hasLinkedAccount(res) }
+    try { def ok = live('liveAffiliationWorker', '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21') || live('liveAffiliationStudent', '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22') || live('liveAffiliationAlum', '6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23'); if (ok) log.warn('ACTv2: limpia DISABLED de {} (vinculo vivo)', focus?.name); return ok } catch (Exception e) { log.warn('ACTv2: fallo en {}: {} -&gt; no se limpia', focus?.name, e.message); return false }
+                        </code>
+                        </script>
+                    </condition>
+                </set>
+            </target>
+        </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5830]/mapping</t:path>
+    <t:value xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xsi:type="c:ObjectTemplateMappingType" id="5831">
+            <name>R1-retirar-liveAffiliationStudent-sin-cuenta-estudiantes-viva</name>
+            <lifecycleState>archived</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>student</name>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationStudent</path>
+            </source>
+            <expression>
+                <script>
+                    <code>null</code>
+                </script>
+            </expression>
+            <target>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationStudent</path>
+            </target>
+            <condition>
+                <script>
+                    <code>
+if (student == null || basic.stringify(student).trim() == '') return false
+try { return !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22') } catch (Exception e) { log.warn('R1: hasLinkedAccount fallo en {}: {} -&gt; no se retira', focus?.name, e.message); return false }
+                    </code>
+                </script>
+            </condition>
+        </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5830]/mapping</t:path>
+    <t:value xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xsi:type="c:ObjectTemplateMappingType" id="5840">
+            <name>R1v2-rango-retirar-liveAffiliationStudent-sin-cuenta-estudiantes-viva-canario</name>
+            <lifecycleState>archived</lifecycleState>
+            <strength>strong</strength>
+            <expression>
+                <script>
+                    <code>null</code>
+                </script>
+            </expression>
+            <target>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationStudent</path>
+                <set>
+                    <condition>
+                        <script>
+                            <code>
+    // RANGO (no condition): retirable el valor actual si NO hay cuenta viva de su IIA en el contexto.
+    if (input == null || basic.stringify(input).trim() == '') return false
+    def CANARIO = []  // lista de canario: NO en el repo publico (PII); vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+    if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+    try { def gone = !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22'); if (gone) log.warn('R1v2: retira {} de {} (sin cuenta viva de su IIA)', input, focus?.name); return gone } catch (Exception e) { log.warn('R1v2: hasLinkedAccount fallo en {}: {} -&gt; no se retira', focus?.name, e.message); return false }
+                        </code>
+                        </script>
+                    </condition>
+                </set>
+            </target>
+        </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5832]/mapping</t:path>
+    <t:value xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xsi:type="c:ObjectTemplateMappingType" id="5833">
+            <name>R2-retirar-liveAffiliationAlum-sin-cuenta-egresados-viva</name>
+            <lifecycleState>archived</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>alum</name>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationAlum</path>
+            </source>
+            <expression>
+                <script>
+                    <code>null</code>
+                </script>
+            </expression>
+            <target>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationAlum</path>
+            </target>
+            <condition>
+                <script>
+                    <code>
+if (alum == null || basic.stringify(alum).trim() == '') return false
+try { return !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23') } catch (Exception e) { log.warn('R2: hasLinkedAccount fallo en {}: {} -&gt; no se retira', focus?.name, e.message); return false }
+                    </code>
+                </script>
+            </condition>
+        </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5832]/mapping</t:path>
+    <t:value xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xsi:type="c:ObjectTemplateMappingType" id="5841">
+            <name>R2v2-rango-retirar-liveAffiliationAlum-sin-cuenta-egresados-viva-canario</name>
+            <lifecycleState>archived</lifecycleState>
+            <strength>strong</strength>
+            <expression>
+                <script>
+                    <code>null</code>
+                </script>
+            </expression>
+            <target>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationAlum</path>
+                <set>
+                    <condition>
+                        <script>
+                            <code>
+    // RANGO (no condition): retirable el valor actual si NO hay cuenta viva de su IIA en el contexto.
+    if (input == null || basic.stringify(input).trim() == '') return false
+    def CANARIO = []  // lista de canario: NO en el repo publico (PII); vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+    if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+    try { def gone = !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23'); if (gone) log.warn('R2v2: retira {} de {} (sin cuenta viva de su IIA)', input, focus?.name); return gone } catch (Exception e) { log.warn('R2v2: hasLinkedAccount fallo en {}: {} -&gt; no se retira', focus?.name, e.message); return false }
+                        </code>
+                        </script>
+                    </condition>
+                </set>
+            </target>
+        </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5834]/mapping</t:path>
+    <t:value xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xsi:type="c:ObjectTemplateMappingType" id="5835">
+            <name>R3-retirar-liveAffiliationWorker-sin-cuenta-trabajadores-viva</name>
+            <lifecycleState>archived</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>worker</name>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationWorker</path>
+            </source>
+            <expression>
+                <script>
+                    <code>null</code>
+                </script>
+            </expression>
+            <target>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationWorker</path>
+            </target>
+            <condition>
+                <script>
+                    <code>
+if (worker == null || basic.stringify(worker).trim() == '') return false
+try { return !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21') } catch (Exception e) { log.warn('R3: hasLinkedAccount fallo en {}: {} -&gt; no se retira', focus?.name, e.message); return false }
+                    </code>
+                </script>
+            </condition>
+        </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5834]/mapping</t:path>
+    <t:value xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xsi:type="c:ObjectTemplateMappingType" id="5842">
+            <name>R3v2-rango-retirar-liveAffiliationWorker-sin-cuenta-trabajadores-viva-canario</name>
+            <lifecycleState>archived</lifecycleState>
+            <strength>strong</strength>
+            <expression>
+                <script>
+                    <code>null</code>
+                </script>
+            </expression>
+            <target>
+                <path xmlns:sciback="urn:sciback:midpoint:person">extension/sciback:liveAffiliationWorker</path>
+                <set>
+                    <condition>
+                        <script>
+                            <code>
+    // RANGO (no condition): retirable el valor actual si NO hay cuenta viva de su IIA en el contexto.
+    if (input == null || basic.stringify(input).trim() == '') return false
+    def CANARIO = []  // lista de canario: NO en el repo publico (PII); vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
+    if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
+    try { def gone = !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21'); if (gone) log.warn('R3v2: retira {} de {} (sin cuenta viva de su IIA)', input, focus?.name); return gone } catch (Exception e) { log.warn('R3v2: hasLinkedAccount fallo en {}: {} -&gt; no se retira', focus?.name, e.message); return false }
+                        </code>
+                        </script>
+                    </condition>
+                </set>
+            </target>
+        </t:value>
+  </itemDelta>
+</objectModification>

@@ -1,0 +1,57 @@
+{
+  "objectModification": {
+    "itemDelta": [
+      {
+        "modificationType": "delete",
+        "path": "item[5771]/mapping",
+        "value": [
+          {
+            "@id": 5772
+          },
+          {
+            "@id": 5836
+          },
+          {
+            "@id": 5843
+          }
+        ]
+      },
+      {
+        "modificationType": "delete",
+        "path": "item[5830]/mapping",
+        "value": [
+          {
+            "@id": 5831
+          },
+          {
+            "@id": 5840
+          }
+        ]
+      },
+      {
+        "modificationType": "delete",
+        "path": "item[5832]/mapping",
+        "value": [
+          {
+            "@id": 5833
+          },
+          {
+            "@id": 5841
+          }
+        ]
+      },
+      {
+        "modificationType": "delete",
+        "path": "item[5834]/mapping",
+        "value": [
+          {
+            "@id": 5835
+          },
+          {
+            "@id": 5842
+          }
+        ]
+      }
+    ]
+  }
+}

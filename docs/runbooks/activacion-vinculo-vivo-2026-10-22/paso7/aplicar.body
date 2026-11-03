@@ -1,0 +1,7 @@
+date -u
+T='objectTemplates/855caaca-68c4-4f7f-8ff8-b4e35dd7d390'
+v=$(mp GET "$T?options=raw" | grep -o 'version="[0-9]*"' | head -1 | tr -dc 0-9)
+[ "$v" = "$VESP" ] || { echo "PARO: template v$v, se esperaba v$VESP (alguien lo cambió: volver a correr la lectura)"; exit 1; }
+mp PATCH "$T" application/json "$F/patch-71-template-limpieza.json" | tail -c 400
+mp GET "$T?options=raw" > $F/t.xml; tail -1 $F/t.xml
+echo '=== B64'; head -n -2 $F/t.xml | base64 -w0; echo

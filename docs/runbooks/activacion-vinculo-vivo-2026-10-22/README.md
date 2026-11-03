@@ -297,3 +297,13 @@ efecto en el canario depende del orden de la lista (no verificado), por eso no s
 - Efecto nuevo: al acabar el módulo, la persona pasa a `draft` en la recon siguiente (46 el 29-oct; Oracle: 0 con módulo
   vigente o futuro). Vuelve sola al rematricularse. Si se quiere un margen de gracia es una decisión de negocio.
 - Pendiente: paso 7 (limpieza) ≥ 4-nov.
+
+## PASO 7 — limpieza (preparada 2-nov-2026, ejecutable ya, en ventana 16:10–07:00 UTC; Alberto decidió el 2-nov no esperar los 7 días)
+`paso7/paso7.sh` borra del template los 9 mappings `archived` desde el 28-oct (5772, v1 5831/5833/5835/5836, canario v2
+5840..5843). Al estar `archived` no calculan nada: el borrado no cambia ninguna ficha. Guardas: ventana,
+ninguna recon corriendo, template (versión leída en ese momento) con los 9 `archived` y los vivos (5770, 5845..5847, 5850) `active`, parche
+regenerado del GET de ese momento idéntico al revisado, versión sin cambios justo antes del PATCH. Después: v142, los 9
+ausentes, los vivos intactos (`comprobar.py`). Respaldo: `paso7/out/tpl-antes.xml`. Vuelta atrás: `paso7.sh --rollback`
+(re-añade los 9 `archived` desde ese mismo GET; ❓ no probado en PROD). Orden: este primero, luego la limpieza de la gracia.
+Los retirados por la gracia (5844, 5852, 5853, e22 3327) van en `gracia-matricula-90-2026-10-29/limpieza/`.
+- **APLICADO 3-nov-2026, 17:08 UTC** (lo ejecutó Alberto): template v141 → v142, los 9 `archived` borrados, vivos intactos.
