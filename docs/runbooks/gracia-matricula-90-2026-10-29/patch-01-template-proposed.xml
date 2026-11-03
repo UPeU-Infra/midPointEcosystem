@@ -1,0 +1,133 @@
+<objectModification
+    xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:sciback="urn:sciback:midpoint:person">
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>mapping</t:path>
+    <t:value xsi:type="c:ObjectTemplateMappingType" id="5848">
+      <c:name>G1-studentEnrollmentLastEnd-fin-real-con-memoria</c:name>
+      <c:description>Fin real de la matricula con memoria (gracia-matricula-90). Ver runbook gracia-matricula-90-2026-10-29.</c:description>
+      <c:lifecycleState>proposed</c:lifecycleState>
+      <c:strength>strong</c:strength>
+      <c:source><c:path>extension/sciback:terminationDateStudent</c:path></c:source>
+      <c:expression><c:script><c:code>
+    def NS = 'urn:sciback:midpoint:person'
+    def HOY = java.time.LocalDate.now(java.time.ZoneId.of('America/Lima'))
+    def fecha = { v -&gt; def s = (v == null) ? '' : basic.stringify(v).trim(); (s ==~ /\d{4}-\d{2}-\d{2}.*/) ? java.time.LocalDate.parse(s.substring(0, 10)) : null }
+    // G1: fin real de la matricula CON MEMORIA. terminationDateStudent (IIA e22) puede BAJAR cuando un
+    // semestre sale del horizonte del feed (medido 29-oct: 21 de los 46). Regla:
+    //   sube o igual -&gt; se acepta; baja con el fin previo YA pasado -&gt; memoria (fin de modulo, no retiro);
+    //   baja ANTES del fin previsto -&gt; retiro/anulacion (cursos ESTADO=3) -&gt; se acepta el valor menor.
+    def t = fecha(terminationDateStudent)
+    def prev = fecha(basic.getExtensionPropertyValue(focus, NS, 'studentEnrollmentLastEnd'))
+    if (t == null) return prev?.toString()
+    if (prev == null || !t.isBefore(prev)) return t.toString()
+    if (HOY.isBefore(prev)) return t.toString()
+    return prev.toString()
+    </c:code></c:script></c:expression>
+      <c:target><c:path>extension/sciback:studentEnrollmentLastEnd</c:path></c:target>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>mapping</t:path>
+    <t:value xsi:type="c:ObjectTemplateMappingType" id="5849">
+      <c:name>G2-studentEnrollmentEffectiveEnd-fin-efectivo-con-gracia</c:name>
+      <c:description>Fin efectivo = fin real + N dias de gracia. UNICO sitio de N. Alumno con 215/216 vivo: sin gracia.</c:description>
+      <c:lifecycleState>proposed</c:lifecycleState>
+      <c:strength>strong</c:strength>
+      <c:source><c:path>extension/sciback:studentEnrollmentLastEnd</c:path></c:source>
+      <c:source><c:name>worker</c:name><c:path>extension/sciback:liveAffiliationWorker</c:path></c:source>
+      <c:source><c:name>alum</c:name><c:path>extension/sciback:liveAffiliationAlum</c:path></c:source>
+      <c:expression><c:script><c:code>
+    // N = DIAS DE GRACIA tras el fin real de la matricula. UNICO SITIO donde vive N.
+    // Cambiarlo = PATCH replace de este &lt;code&gt; (item mapping[5849]) y recompute de los afectados.
+    def N = 90
+    def s = (studentEnrollmentLastEnd == null) ? '' : basic.stringify(studentEnrollmentLastEnd).trim()
+    if (!(s ==~ /\d{4}-\d{2}-\d{2}.*/)) return null
+    def fin = java.time.LocalDate.parse(s.substring(0, 10))
+    // Alumno + personal/egresado: la gracia NO aplica (su estado lo sostiene 216/215; no cambian).
+    def otro = [worker, alum].any { it != null &amp;&amp; basic.stringify(it).trim() != '' }
+    return (otro ? fin : fin.plusDays(N)).toString()
+    </c:code></c:script></c:expression>
+      <c:target><c:path>extension/sciback:studentEnrollmentEffectiveEnd</c:path></c:target>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>item[5830]/mapping</t:path>
+    <t:value xsi:type="c:ObjectTemplateMappingType" id="5850">
+      <c:name>R1v3-rango-retirar-liveAffiliationStudent-sin-cuenta-viva-salvo-gracia</c:name>
+      <c:lifecycleState>proposed</c:lifecycleState>
+      <c:strength>strong</c:strength>
+      <c:source><c:path>extension/sciback:studentEnrollmentLastEnd</c:path></c:source>
+      <c:source><c:path>extension/sciback:studentEnrollmentEffectiveEnd</c:path></c:source>
+      <c:expression><c:script><c:code>null</c:code></c:script></c:expression>
+      <c:target>
+        <c:path>extension/sciback:liveAffiliationStudent</c:path>
+        <c:set><c:condition><c:script><c:code>
+    def NS = 'urn:sciback:midpoint:person'
+    def HOY = java.time.LocalDate.now(java.time.ZoneId.of('America/Lima'))
+    def fecha = { v -&gt; def s = (v == null) ? '' : basic.stringify(v).trim(); (s ==~ /\d{4}-\d{2}-\d{2}.*/) ? java.time.LocalDate.parse(s.substring(0, 10)) : null }
+    if (input == null || basic.stringify(input).trim() == '') return false
+    def vivo
+    try { vivo = midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22') } catch (Exception e) { log.warn('R1v3: hasLinkedAccount fallo en {}: {} -&gt; no se retira', focus?.name, e.message); return false }
+    if (vivo) return false
+    def fin = fecha(basic.getExtensionPropertyValue(focus, NS, 'studentEnrollmentLastEnd'))
+    def eff = fecha(basic.getExtensionPropertyValue(focus, NS, 'studentEnrollmentEffectiveEnd'))
+    def enGracia = fin != null &amp;&amp; eff != null &amp;&amp; !HOY.isBefore(fin) &amp;&amp; !HOY.isAfter(eff)
+    if (enGracia) return false
+    log.warn('R1v3: retira {} de {} (sin cuenta e22 viva y fuera de la gracia: fin={} eff={})', input, focus?.name, fin, eff)
+    return true
+    </c:code></c:script></c:condition></c:set>
+      </c:target>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>mapping</t:path>
+    <t:value xsi:type="c:ObjectTemplateMappingType" id="5851">
+      <c:name>T1-gracia-matricula-recompute-trigger</c:name>
+      <c:description>Planta un trigger de recompute en fin efectivo + 1 dia para quien conserva 217 por gracia con la cuenta e22 muerta (nadie mas lo recompondria). Patron N2-absence.</c:description>
+      <c:lifecycleState>proposed</c:lifecycleState>
+      <c:strength>strong</c:strength>
+      <c:source><c:path>extension/sciback:studentEnrollmentLastEnd</c:path></c:source>
+      <c:source><c:path>extension/sciback:studentEnrollmentEffectiveEnd</c:path></c:source>
+      <c:expression><c:script><c:code>
+    import com.evolveum.midpoint.xml.ns._public.common.common_3.TriggerType
+    import com.evolveum.midpoint.prism.xml.XmlTypeConverter
+    def NS = 'urn:sciback:midpoint:person'
+    def HOY = java.time.LocalDate.now(java.time.ZoneId.of('America/Lima'))
+    def fecha = { v -&gt; def s = (v == null) ? '' : basic.stringify(v).trim(); (s ==~ /\d{4}-\d{2}-\d{2}.*/) ? java.time.LocalDate.parse(s.substring(0, 10)) : null }
+    def out = []
+    def s217 = basic.getExtensionPropertyValue(focus, NS, 'liveAffiliationStudent')
+    if (s217 == null || basic.stringify(s217).trim() == '') return out
+    def vivo
+    try { vivo = midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22') } catch (Exception e) { return out }
+    if (vivo) return out
+    def fin = fecha(basic.getExtensionPropertyValue(focus, NS, 'studentEnrollmentLastEnd'))
+    def eff = fecha(basic.getExtensionPropertyValue(focus, NS, 'studentEnrollmentEffectiveEnd'))
+    def enGracia = fin != null &amp;&amp; eff != null &amp;&amp; !HOY.isBefore(fin) &amp;&amp; !HOY.isAfter(eff)
+    if (!enGracia) return out
+    // Solo fechas ESTRICTAMENTE futuras (mismo guardarrail que N2: sin bucle al disparar).
+    def d = eff.plusDays(1)
+    if (!d.isAfter(HOY)) return out
+    def ZONE = java.time.ZoneId.of('America/Lima')
+    def t = new TriggerType()
+    t.setHandlerUri('http://midpoint.evolveum.com/xml/ns/public/model/trigger/recompute/handler-3')
+    t.setTimestamp(XmlTypeConverter.createXMLGregorianCalendar(d.atStartOfDay(ZONE).toInstant().toEpochMilli()))
+    out.add(t)
+    return out
+    </c:code></c:script></c:expression>
+      <c:target><c:path>trigger</c:path></c:target>
+    </t:value>
+  </itemDelta>
+  <itemDelta>
+    <t:modificationType>replace</t:modificationType>
+    <t:path>item[5830]/mapping[5844]/lifecycleState</t:path>
+    <t:value>deprecated</t:value>
+  </itemDelta>
+</objectModification>

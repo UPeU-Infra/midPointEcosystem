@@ -1574,27 +1574,32 @@ return (relP == null &amp;&amp; perP == null)
          ============================================================ -->
     <item>
         <ref>extension/sciback:liveAffiliationStudent</ref>
-        <mapping>
-            <name>R1v2-rango-retirar-liveAffiliationStudent-sin-cuenta-estudiantes-viva</name>
-            <lifecycleState>active</lifecycleState>
-            <strength>strong</strength>
-            <expression><script><code>null</code></script></expression>
-            <target>
-                <path>extension/sciback:liveAffiliationStudent</path>
-                <set>
-                    <condition>
-                        <script>
-                            <code>
-        // RANGO (no condition): retirable el valor actual si NO hay cuenta viva de su IIA en el contexto.
+        <!-- R1v2 sustituido por R1v3 (gracia-matricula-90, runbook gracia-matricula-90-2026-10-29) -->
+<mapping>
+          <name>R1v3-rango-retirar-liveAffiliationStudent-sin-cuenta-viva-salvo-gracia</name>
+          <lifecycleState>active</lifecycleState>
+          <strength>strong</strength>
+          <source><path>extension/sciback:studentEnrollmentLastEnd</path></source>
+          <source><path>extension/sciback:studentEnrollmentEffectiveEnd</path></source>
+          <expression><script><code>null</code></script></expression>
+          <target>
+            <path>extension/sciback:liveAffiliationStudent</path>
+            <set><condition><script><code>
+        def NS = 'urn:sciback:midpoint:person'
+        def HOY = java.time.LocalDate.now(java.time.ZoneId.of('America/Lima'))
+        def fecha = { v -&gt; def s = (v == null) ? '' : basic.stringify(v).trim(); (s ==~ /\d{4}-\d{2}-\d{2}.*/) ? java.time.LocalDate.parse(s.substring(0, 10)) : null }
         if (input == null || basic.stringify(input).trim() == '') return false
-        def CANARIO = []  // vacio = todos; con nombres = SOLO esos usuarios (encendido acotado)
-        if (!CANARIO.isEmpty() &amp;&amp; !(basic.stringify(focus?.name) in CANARIO)) return false
-        try { def gone = !midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22'); if (gone) log.warn('R1v2: retira {} de {} (sin cuenta viva de su IIA)', input, focus?.name); return gone } catch (Exception e) { log.warn('R1v2: hasLinkedAccount fallo en {}: {} -> no se retira', focus?.name, e.message); return false }
-                            </code>
-                        </script>
-                    </condition>
-                </set>
-            </target>
+        def vivo
+        try { vivo = midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22') } catch (Exception e) { log.warn('R1v3: hasLinkedAccount fallo en {}: {} -&gt; no se retira', focus?.name, e.message); return false }
+        if (vivo) return false
+        def fin = fecha(basic.getExtensionPropertyValue(focus, NS, 'studentEnrollmentLastEnd'))
+        def eff = fecha(basic.getExtensionPropertyValue(focus, NS, 'studentEnrollmentEffectiveEnd'))
+        def enGracia = fin != null &amp;&amp; eff != null &amp;&amp; !HOY.isBefore(fin) &amp;&amp; !HOY.isAfter(eff)
+        if (enGracia) return false
+        log.warn('R1v3: retira {} de {} (sin cuenta e22 viva y fuera de la gracia: fin={} eff={})', input, focus?.name, fin, eff)
+        return true
+        </code></script></condition></set>
+          </target>
         </mapping>
     </item>
     <item>
@@ -2896,4 +2901,89 @@ return null</code>
     </mapping>
     END BLOQUE R COMENTADO -->
 
+
+    <!-- ============================================================
+         BLOQUE G — GRACIA DE MATRICULA (2026-10-29). Runbook: docs/runbooks/gracia-matricula-90-2026-10-29/
+         G1 fin real con memoria, G2 fin efectivo = G1 + N (UNICO sitio de N), T1 trigger de recompute
+         en fin efectivo + 1 para la cuenta e22 muerta. R1v3 (arriba) y el inbound de e22 respetan la gracia.
+         ============================================================ -->
+    <mapping>
+      <name>G1-studentEnrollmentLastEnd-fin-real-con-memoria</name>
+      <description>Fin real de la matricula con memoria (gracia-matricula-90). Ver runbook gracia-matricula-90-2026-10-29.</description>
+      <lifecycleState>active</lifecycleState>
+      <strength>strong</strength>
+      <source><path>extension/sciback:terminationDateStudent</path></source>
+      <expression><script><code>
+    def NS = 'urn:sciback:midpoint:person'
+    def HOY = java.time.LocalDate.now(java.time.ZoneId.of('America/Lima'))
+    def fecha = { v -&gt; def s = (v == null) ? '' : basic.stringify(v).trim(); (s ==~ /\d{4}-\d{2}-\d{2}.*/) ? java.time.LocalDate.parse(s.substring(0, 10)) : null }
+    // G1: fin real de la matricula CON MEMORIA. terminationDateStudent (IIA e22) puede BAJAR cuando un
+    // semestre sale del horizonte del feed (medido 29-oct: 21 de los 46). Regla:
+    //   sube o igual -&gt; se acepta; baja con el fin previo YA pasado -&gt; memoria (fin de modulo, no retiro);
+    //   baja ANTES del fin previsto -&gt; retiro/anulacion (cursos ESTADO=3) -&gt; se acepta el valor menor.
+    def t = fecha(terminationDateStudent)
+    def prev = fecha(basic.getExtensionPropertyValue(focus, NS, 'studentEnrollmentLastEnd'))
+    if (t == null) return prev?.toString()
+    if (prev == null || !t.isBefore(prev)) return t.toString()
+    if (HOY.isBefore(prev)) return t.toString()
+    return prev.toString()
+    </code></script></expression>
+      <target><path>extension/sciback:studentEnrollmentLastEnd</path></target>
+    </mapping>
+    <mapping>
+      <name>G2-studentEnrollmentEffectiveEnd-fin-efectivo-con-gracia</name>
+      <description>Fin efectivo = fin real + N dias de gracia. UNICO sitio de N. Alumno con 215/216 vivo: sin gracia.</description>
+      <lifecycleState>active</lifecycleState>
+      <strength>strong</strength>
+      <source><path>extension/sciback:studentEnrollmentLastEnd</path></source>
+      <source><name>worker</name><path>extension/sciback:liveAffiliationWorker</path></source>
+      <source><name>alum</name><path>extension/sciback:liveAffiliationAlum</path></source>
+      <expression><script><code>
+    // N = DIAS DE GRACIA tras el fin real de la matricula. UNICO SITIO donde vive N.
+    // Cambiarlo = PATCH replace de este &lt;code&gt; (item mapping[5849]) y recompute de los afectados.
+    def N = 90
+    def s = (studentEnrollmentLastEnd == null) ? '' : basic.stringify(studentEnrollmentLastEnd).trim()
+    if (!(s ==~ /\d{4}-\d{2}-\d{2}.*/)) return null
+    def fin = java.time.LocalDate.parse(s.substring(0, 10))
+    // Alumno + personal/egresado: la gracia NO aplica (su estado lo sostiene 216/215; no cambian).
+    def otro = [worker, alum].any { it != null &amp;&amp; basic.stringify(it).trim() != '' }
+    return (otro ? fin : fin.plusDays(N)).toString()
+    </code></script></expression>
+      <target><path>extension/sciback:studentEnrollmentEffectiveEnd</path></target>
+    </mapping>
+    <mapping>
+      <name>T1-gracia-matricula-recompute-trigger</name>
+      <description>Planta un trigger de recompute en fin efectivo + 1 dia para quien conserva 217 por gracia con la cuenta e22 muerta (nadie mas lo recompondria). Patron N2-absence.</description>
+      <lifecycleState>active</lifecycleState>
+      <strength>strong</strength>
+      <source><path>extension/sciback:studentEnrollmentLastEnd</path></source>
+      <source><path>extension/sciback:studentEnrollmentEffectiveEnd</path></source>
+      <expression><script><code>
+    import com.evolveum.midpoint.xml.ns._public.common.common_3.TriggerType
+    import com.evolveum.midpoint.prism.xml.XmlTypeConverter
+    def NS = 'urn:sciback:midpoint:person'
+    def HOY = java.time.LocalDate.now(java.time.ZoneId.of('America/Lima'))
+    def fecha = { v -&gt; def s = (v == null) ? '' : basic.stringify(v).trim(); (s ==~ /\d{4}-\d{2}-\d{2}.*/) ? java.time.LocalDate.parse(s.substring(0, 10)) : null }
+    def out = []
+    def s217 = basic.getExtensionPropertyValue(focus, NS, 'liveAffiliationStudent')
+    if (s217 == null || basic.stringify(s217).trim() == '') return out
+    def vivo
+    try { vivo = midpoint.hasLinkedAccount('6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22') } catch (Exception e) { return out }
+    if (vivo) return out
+    def fin = fecha(basic.getExtensionPropertyValue(focus, NS, 'studentEnrollmentLastEnd'))
+    def eff = fecha(basic.getExtensionPropertyValue(focus, NS, 'studentEnrollmentEffectiveEnd'))
+    def enGracia = fin != null &amp;&amp; eff != null &amp;&amp; !HOY.isBefore(fin) &amp;&amp; !HOY.isAfter(eff)
+    if (!enGracia) return out
+    // Solo fechas ESTRICTAMENTE futuras (mismo guardarrail que N2: sin bucle al disparar).
+    def d = eff.plusDays(1)
+    if (!d.isAfter(HOY)) return out
+    def ZONE = java.time.ZoneId.of('America/Lima')
+    def t = new TriggerType()
+    t.setHandlerUri('http://midpoint.evolveum.com/xml/ns/public/model/trigger/recompute/handler-3')
+    t.setTimestamp(XmlTypeConverter.createXMLGregorianCalendar(d.atStartOfDay(ZONE).toInstant().toEpochMilli()))
+    out.add(t)
+    return out
+    </code></script></expression>
+      <target><path>trigger</path></target>
+    </mapping>
 </objectTemplate>

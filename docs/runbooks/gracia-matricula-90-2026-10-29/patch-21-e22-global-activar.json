@@ -1,0 +1,21 @@
+{
+ "objectModification": {
+  "itemDelta": [
+   {
+    "modificationType": "replace",
+    "path": "schemaHandling/objectType[3297]/attribute[3324]/inbound[3381]/lifecycleState",
+    "value": "active"
+   },
+   {
+    "modificationType": "replace",
+    "path": "schemaHandling/objectType[3297]/attribute[3324]/inbound[3327]/lifecycleState",
+    "value": "archived"
+   },
+   {
+    "modificationType": "replace",
+    "path": "schemaHandling/objectType[3297]/attribute[3324]/inbound[3382]/lifecycleState",
+    "value": "archived"
+   }
+  ]
+ }
+}

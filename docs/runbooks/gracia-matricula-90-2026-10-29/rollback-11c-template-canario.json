@@ -1,0 +1,21 @@
+{
+ "objectModification": {
+  "itemDelta": [
+   {
+    "modificationType": "replace",
+    "path": "item[5830]/mapping[5844]/lifecycleState",
+    "value": "active"
+   },
+   {
+    "modificationType": "replace",
+    "path": "item[5830]/mapping[5852]/lifecycleState",
+    "value": "archived"
+   },
+   {
+    "modificationType": "replace",
+    "path": "mapping[5853]/lifecycleState",
+    "value": "archived"
+   }
+  ]
+ }
+}

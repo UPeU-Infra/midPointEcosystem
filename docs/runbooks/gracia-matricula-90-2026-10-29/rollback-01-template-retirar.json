@@ -1,0 +1,31 @@
+{
+ "objectModification": {
+  "itemDelta": [
+   {
+    "modificationType": "replace",
+    "path": "item[5830]/mapping[5844]/lifecycleState",
+    "value": "active"
+   },
+   {
+    "modificationType": "replace",
+    "path": "mapping[5848]/lifecycleState",
+    "value": "archived"
+   },
+   {
+    "modificationType": "replace",
+    "path": "mapping[5849]/lifecycleState",
+    "value": "archived"
+   },
+   {
+    "modificationType": "replace",
+    "path": "mapping[5851]/lifecycleState",
+    "value": "archived"
+   },
+   {
+    "modificationType": "replace",
+    "path": "item[5830]/mapping[5850]/lifecycleState",
+    "value": "archived"
+   }
+  ]
+ }
+}

@@ -501,45 +501,28 @@ input == null ? null : (basic.stringify(input).trim() ?: null)
                      `school-name-to-liveAffiliationStudent` (abajo, item per-IIA single-source) + (2)
                      Bloque J3b del template que deriva `affiliations` como unión. Autoridad única de
                      `affiliations` = template (Reality-vs-Policy §2.1). -->
+                <!-- 2026-10-29 gracia-matricula-90: sustituye a school-name-to-liveAffiliationStudent (PROD 3327 -> archived). -->
                 <inbound>
-                    <name>school-name-to-liveAffiliationStudent</name>
-                    <!-- OPCIÓN 2 (runbook PM10): item per-IIA SINGLE-SOURCE para la afiliación de
-                         estudiante. single-valor, único escritor → strong materializa de forma fiable
-                         (sin zero-set multi-source). Presente SOLO mientras hay matrícula vigente: el
-                         searchScript de Estudiantes v4 ya restringe a semestres 279/267, por lo que la
-                         existencia del shadow ⇔ matrícula vigente. Al perder matrícula, el shadow se
-                         desproyecta → el item se vacía → 'student' deja de ser afiliación viva.
-                         IIA única: Estudiantes (iga-canonical §1.3). -->
-                    <strength>strong</strength>
-                    <expression>
-                        <script>
-                            <code>
-// VIGENCIA (2026-08-12): la premisa "existencia del shadow = matricula vigente" era FALSA.
-// El searchScript NO filtra >= SYSDATE a proposito (evita huerfanos): la persona sigue en
-// el feed mientras tenga CUALQUIER matricula en el horizonte de semestres. Resultado: el
-// vinculo academico no se apagaba nunca, al contrario que el laboral. Medido en PROD:
-// 10.519 de 25.843 estudiantes activos con matricula vencida y liveAffiliationStudent=true.
-// Se aplica aqui la MISMA logica que archetype-to-liveAffiliationWorker: la fecha manda.
-// Sin fecha -> se conserva el vinculo (no se desactiva a nadie por falta de dato), igual
-// que FEC_TERMINO nulo = contrato permanente en el canal laboral.
-def fin = basic.getAttributeValue(shadow, 'DATE_EXPIRY')
-if (fin == null) return 'student'
-def s = fin.toString().trim()
-if (s.length() &lt; 10) return 'student'
-try {
-    if (java.time.LocalDate.parse(s.substring(0, 10)).isBefore(java.time.LocalDate.now())) return null
-} catch (Exception ex) {
-}
-return 'student'
-                            </code>
-                        </script>
-                    </expression>
-                    <target>
-                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveAffiliationStudent</path>
-                    </target>
-                    <!-- SIN <evaluationPhases>: default (solo clockwork). Ver nota en
-                         egresados.xml (afiliacion-to-liveAffiliationAlum): beforeCorrelation empuja
-                         el valor al zero-set y no materializa el item vacío. -->
+                  <name>school-name-to-liveAffiliationStudent-con-gracia</name>
+                  <lifecycleState>active</lifecycleState>
+                  <strength>strong</strength>
+                  <expression><script><code>
+                def NS = 'urn:sciback:midpoint:person'
+                def HOY = java.time.LocalDate.now(java.time.ZoneId.of('America/Lima'))
+                def fecha = { v -&gt; def s = (v == null) ? '' : basic.stringify(v).trim(); (s ==~ /\d{4}-\d{2}-\d{2}.*/) ? java.time.LocalDate.parse(s.substring(0, 10)) : null }
+                // Matricula vigente segun la fuente (identico a 3327): sin fecha o fin &gt;= hoy -&gt; 'student'.
+                def raw = basic.getAttributeValue(shadow, 'DATE_EXPIRY')
+                if (raw == null) return 'student'
+                def s = raw.toString().trim()
+                if (s.length() &lt; 10) return 'student'
+                def f
+                try { f = java.time.LocalDate.parse(s.substring(0, 10)) } catch (Exception ex) { return 'student' }
+                if (!f.isBefore(HOY)) return 'student'
+                // Fin vencido: gracia hasta el fin efectivo que publica el template (G2; ahi vive N).
+                def eff = fecha(basic.getExtensionPropertyValue(focus, NS, 'studentEnrollmentEffectiveEnd'))
+                return (eff != null &amp;&amp; !HOY.isAfter(eff)) ? 'student' : null
+                </code></script></expression>
+                  <target><path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveAffiliationStudent</path></target>
                 </inbound>
                 <!-- MANTENIDO por nombre (PROD v184, inbound id 3362): el EP-XXX no se puede
                      resolver por ID mientras 15 de los 23 EP-codes sigan en conceptos deprecados

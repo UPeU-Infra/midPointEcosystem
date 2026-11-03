@@ -1,0 +1,37 @@
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <itemDelta>
+    <t:modificationType>add</t:modificationType>
+    <t:path>schemaHandling/objectType[3297]/attribute[3324]/inbound</t:path>
+    <t:value xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xsi:type="c:InboundMappingType" id="3327">
+                    <name>school-name-to-liveAffiliationStudent</name>
+                    <lifecycleState>archived</lifecycleState>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+// VIGENCIA (2026-08-12): la premisa "existencia del shadow = matricula vigente" era FALSA.
+// El searchScript NO filtra &gt;= SYSDATE a proposito (evita huerfanos): la persona sigue en
+// el feed mientras tenga CUALQUIER matricula en el horizonte de semestres. Resultado: el
+// vinculo academico no se apagaba nunca, al contrario que el laboral. Medido en PROD:
+// 10.519 de 25.843 estudiantes activos con matricula vencida y liveAffiliationStudent=true.
+// Se aplica aqui la MISMA logica que archetype-to-liveAffiliationWorker: la fecha manda.
+// Sin fecha -&gt; se conserva el vinculo (no se desactiva a nadie por falta de dato), igual
+// que FEC_TERMINO nulo = contrato permanente en el canal laboral.
+def fin = basic.getAttributeValue(shadow, 'DATE_EXPIRY')
+if (fin == null) return 'student'
+def s = fin.toString().trim()
+if (s.length() &lt; 10) return 'student'
+try {
+    if (java.time.LocalDate.parse(s.substring(0, 10)).isBefore(java.time.LocalDate.now())) return null
+} catch (Exception ex) {
+}
+return 'student'
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:liveAffiliationStudent</path>
+                    </target>
+                </t:value>
+  </itemDelta>
+</objectModification>

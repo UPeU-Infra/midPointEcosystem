@@ -1,0 +1,8 @@
+date -u
+pg <<'SQL'
+select 'recons-corriendo', count(*) from m_task where executionstate='RUNNING' and nameorig ilike 'recon%';
+SQL
+mp GET 'objectTemplates/855caaca-68c4-4f7f-8ff8-b4e35dd7d390?options=raw' > $F/t.xml; tail -1 $F/t.xml
+mp GET 'resources/6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22?options=raw' > $F/r.xml; tail -1 $F/r.xml
+echo '=== TPL'; head -n -2 $F/t.xml | base64 -w0; echo
+echo '=== E22'; head -n -2 $F/r.xml | base64 -w0; echo

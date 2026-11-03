@@ -280,3 +280,20 @@ cambios de 217/215/216/estado. Log 13:16–13:21: ningún WARN de R*/ACT (las co
 ESTADO de e21 se activan solo en el paso global. Las reactions sin canal se eligen por «la última que casa»
 (`SynchronizationActionExecutor.getReaction`): acotar 3379/2765 con `condition` sería seguro para terceros, pero su
 efecto en el canario depende del orden de la lista (no verificado), por eso no se incluye.
+
+## RESULTADO paso global (28-oct-2026)
+- 21:19 UTC: patch-41 (template v136→137), patch-12 (e22 v208→209), patch-13 (e23 v214→215), patch-14 (e21
+  v333→334). `<schema>` intacto (60/44/68 `xsd:element`), test connection `success` en los tres.
+- Lote L1: `task-real-L1-01` (75, 21:27–21:28) y `-02` (67, 21:47), CLOSED SUCCESS. **142/142 = `afectados.tsv`**,
+  0 usuarios fuera del lote, LDAP .168=.169, Koha 82 → disabled (`expiry_date` = ayer). 4 `ou=alumni` recreadas.
+- `medir-estado.sql`: R1 2, R2 0, R3 0, ACT 1, L 2. R1/ACT = <alumno-A> y <alumno-B>, retirados en Oracle el
+  22/23-oct (posteriores al lote): la preview muestra archived/draft; se aplican con la próxima recon que los toque.
+- Pendiente: `medir-oscilacion.sql` el 29-oct tras las recons; paso 7 (limpieza) ≥ 4-nov.
+
+## RESULTADO día siguiente (29-oct-2026, recons diarias)
+- Oscilación eliminada: Trabajadores→LDAP DIS 1.378 → 1; Egresados→LDAP ENA 774 → 0.
+- `medir-estado.sql`: R1 0, R2 0, R3 0, ACT 0, L 2 (svc-ai-identity y <alumno-C>, esperados).
+- FATAL por recon (28 → 29-oct): Estudiantes 27 → 20, Egresados 10 → 8, Koha 2 → 2; ninguno ligado al diseño.
+- Efecto nuevo: al acabar el módulo, la persona pasa a `draft` en la recon siguiente (46 el 29-oct; Oracle: 0 con módulo
+  vigente o futuro). Vuelve sola al rematricularse. Si se quiere un margen de gracia es una decisión de negocio.
+- Pendiente: paso 7 (limpieza) ≥ 4-nov.

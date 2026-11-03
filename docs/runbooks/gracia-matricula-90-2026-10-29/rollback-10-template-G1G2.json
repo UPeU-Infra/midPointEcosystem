@@ -1,0 +1,16 @@
+{
+ "objectModification": {
+  "itemDelta": [
+   {
+    "modificationType": "replace",
+    "path": "mapping[5848]/lifecycleState",
+    "value": "proposed"
+   },
+   {
+    "modificationType": "replace",
+    "path": "mapping[5849]/lifecycleState",
+    "value": "proposed"
+   }
+  ]
+ }
+}

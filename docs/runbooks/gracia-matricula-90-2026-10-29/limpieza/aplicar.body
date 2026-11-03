@@ -1,0 +1,12 @@
+date -u
+T='objectTemplates/855caaca-68c4-4f7f-8ff8-b4e35dd7d390'; R='resources/6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22'
+ver() { mp GET "$1?options=raw" | grep -o 'version="[0-9]*"' | head -1 | tr -dc 0-9; }
+vt=$(ver "$T"); vr=$(ver "$R")
+[ "$vt" = "$VT" ] && [ "$vr" = "$VR" ] || { echo "PARO: template v$vt / e22 v$vr, se esperaba v$VT / v$VR (alguien los cambió)"; exit 1; }
+echo '--- template'; mp PATCH "$T" application/json "$F/patch-L1-template-limpieza.json" | tail -c 400
+echo '--- e22';      mp PATCH "$R" application/json "$F/patch-L2-e22-limpieza.json" | tail -c 400
+echo '--- test connection'; mp POST "$R/test" | grep -o '<status>[a-z_]*</status>' | head -1
+mp GET "$T?options=raw" > $F/t.xml; tail -1 $F/t.xml
+mp GET "$R?options=raw" > $F/r.xml; tail -1 $F/r.xml
+echo '=== TPL'; head -n -2 $F/t.xml | base64 -w0; echo
+echo '=== E22'; head -n -2 $F/r.xml | base64 -w0; echo

@@ -199,6 +199,12 @@
                     <xsd:element name="terminationDateStudent" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo><a:displayName>Fecha de término — matrícula (IIA Estudiantes)</a:displayName><a:help>YYYY-MM-DD. Expiración derivada de la matrícula vigente (MAX FECHA_FIN del semestre activo en Oracle LAMB Estudiantes, columna DATE_EXPIRY). IIA única: resource Estudiantes. Single-source: inbound strong lo materializa/retira con la proyección Estudiante. NO confundir con `terminationDate` (IIA Trabajadores, FEC_TERMINO del contrato). Ambos atributos por-IIA single-valued single-writer evitan la colisión dual-strong en focos employee+student. El expiry efectivo a Koha/downstream = MAX de las fechas de afiliación viva.</a:help><a:displayOrder>475</a:displayOrder></xsd:appinfo></xsd:annotation>
                     </xsd:element>
+                    <xsd:element name="studentEnrollmentLastEnd" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fin de matricula — real, con memoria (derivado)</a:displayName><a:help>YYYY-MM-DD. Lo calcula el template (G1) desde terminationDateStudent: sube con la fuente y NO baja cuando un semestre sale del horizonte del feed; si baja antes del fin previsto (retiro/anulacion) acepta el valor menor. Base del fin efectivo.</a:help><a:displayOrder>476</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="studentEnrollmentEffectiveEnd" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fin de matricula — efectivo (con gracia)</a:displayName><a:help>YYYY-MM-DD. Fin real + N dias de gracia (template G2, unico sitio de N). Mientras hoy &lt;= este valor se conserva liveAffiliationStudent. Sin gracia si la persona tiene otro vinculo vivo (215/216). Base de la vigencia academica publicada a LDAP.</a:help><a:indexed>true</a:indexed><a:displayOrder>477</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
 
                     <!-- S5 — ACADÉMICO -->
                     <xsd:element name="academicProgram" type="xsd:string" minOccurs="0" maxOccurs="unbounded">

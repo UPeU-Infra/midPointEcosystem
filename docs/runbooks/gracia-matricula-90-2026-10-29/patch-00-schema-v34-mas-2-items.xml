@@ -1,0 +1,667 @@
+<objectModification
+    xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:sciback="urn:sciback:midpoint:person">
+  <itemDelta>
+    <t:modificationType>replace</t:modificationType>
+    <t:path>c:definition</t:path>
+    <t:value>
+        <xsd:schema xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3" xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3" xmlns:tns="urn:sciback:midpoint:person" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="urn:sciback:midpoint:person" xml:space="preserve">
+
+            <xsd:import namespace="http://prism.evolveum.com/xml/ns/public/annotation-3"/>
+            <xsd:import namespace="http://midpoint.evolveum.com/xml/ns/public/common/common-3"/>
+
+            <!-- IdentityDocumentType — PrismContainer. Todos los campos xsd:string. -->
+            <xsd:complexType name="IdentityDocumentType">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <a:container/>
+                        <a:displayName>Documento de identidad</a:displayName>
+                        <a:help>Documento oficial de identificación. Exactamente 1 con primary=true.</a:help>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="type" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Tipo de documento</a:displayName><a:help>DNI|CE|PASSPORT|PTP|CPP|CSR|ITIN</a:help><a:displayOrder>10</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="number" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Número de documento</a:displayName><a:displayOrder>20</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="countryOfIssue" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>País emisor</a:displayName><a:help>ISO 3166-1 alpha-3</a:help><a:displayOrder>30</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="primary" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Documento principal</a:displayName><a:help>true|false</a:help><a:displayOrder>40</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="issuedAt" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de emisión</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>50</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="expiresAt" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de vencimiento</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>60</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="verifiedBy" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Verificado por</a:displayName><a:help>RENIEC|MIGRACIONES|INSTITUTIONAL|SELF-DECLARED</a:help><a:displayOrder>70</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="verifiedAt" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de verificación</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>80</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <!-- UserExtensionType — todos los tipos xsd:string -->
+            <xsd:complexType name="UserExtensionType">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                        <a:displayName>Datos de persona SciBack IGA</a:displayName>
+                        <a:help>Extensión canónica v1.0. eduPerson 202208 + SCHAC 1.6.0 + SCIM 2.0 + ISO 24760 + Ley 29733 + Ley 30220 + SUNEDU CBC.</a:help>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+
+                    <!-- S1 — IDENTIFICADORES -->
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="identityDocuments" type="tns:IdentityDocumentType">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Documentos de identidad</a:displayName><a:displayOrder>100</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="institutionalCode" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código institucional</a:displayName><a:indexed>true</a:indexed><a:displayOrder>110</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="externalSystemId" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>ID sistema externo</a:displayName><a:indexed>true</a:indexed><a:displayOrder>130</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S2 — DEMOGRÁFICOS -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="birthDate" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de nacimiento</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>200</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="gender" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Género</a:displayName><a:help>ISO 5218: 0|1|2|9</a:help><a:displayOrder>210</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="nationality" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Nacionalidad</a:displayName><a:help>ISO 3166-1 alpha-3</a:help><a:displayOrder>220</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="preferredName" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Nombre preferido</a:displayName><a:displayOrder>230</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="displayPronouns" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Pronombres preferidos</a:displayName><a:displayOrder>240</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="disability" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Persona con discapacidad</a:displayName><a:help>true|false</a:help><a:displayOrder>250</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="maritalStatus" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Estado civil</a:displayName><a:displayOrder>260</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="religion" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Religión</a:displayName><a:displayOrder>270</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S3 — CONTACTO -->
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="personalEmail" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Correo personal</a:displayName><a:displayOrder>300</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="phoneNumber" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Teléfono</a:displayName><a:displayOrder>310</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="streetAddress" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Dirección</a:displayName><a:displayOrder>320</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="ubigeo" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Ubigeo</a:displayName><a:displayOrder>330</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S4 — AFILIACIÓN (COMPUTADOS) -->
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="affiliations" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Afiliaciones</a:displayName><a:displayOrder>400</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="primaryAffiliation" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Afiliación principal</a:displayName><a:indexed>true</a:indexed><a:displayOrder>410</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="scopedAffiliations" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Afiliaciones con ámbito</a:displayName><a:displayOrder>420</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- S4b — AFILIACIONES VIVAS POR IIA (PERSISTIDAS, single-source).
+                         Opción 2 (runbook org-canonical-migration-2026-05-29, PM10): cada item es
+                         alimentado por UN SOLO inbound strong desde su IIA (una IIA por atributo,
+                         iga-canonical §1.3). Al ser single-source, el inbound strong MATERIALIZA el
+                         valor en el focus sin caer en el zero-set multi-source que bloqueaba el
+                         multivalor `affiliations` (no requiere metadata-provenance). El template
+                         deriva liveAff = unión de estos items persistidos; J3 deriva primaryAffiliation
+                         y Bloque L deriva lifecycleState a partir de ellos (NO del transitorio
+                         `affiliations`, que se conserva solo como atributo eduPerson downstream). -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="liveAffiliationWorker" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Afiliación viva — empleo (IIA Trabajadores)</a:displayName><a:help>Token eduPerson (faculty|staff) presente SOLO mientras el contrato UPeU está vigente (ESTADO≠'I' en Oracle LAMB Trabajadores v3). IIA única: resource Trabajadores. Single-source: el inbound strong lo materializa/retira con la cuenta laboral. Ausente = sin empleo vigente. NO confundir con `affiliations` (multivalor eduPerson downstream).</a:help><a:indexed>true</a:indexed><a:displayOrder>421</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="liveAffiliationAlum" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Afiliación viva — egresado (IIA Egresados)</a:displayName><a:help>Token eduPerson (alum) presente mientras el shadow Egresados v3 está linked con AFILIACION=alum. IIA única: resource Egresados. Single-source: el inbound strong lo materializa/retira con la proyección Egresado. La condición de egresado es permanente (alum no caduca). Ausente = no es egresado.</a:help><a:indexed>true</a:indexed><a:displayOrder>422</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- PM10 aplicado a academicProgramUri (2026-08-07): items per-IIA SINGLE-VALUE,
+                         single-source. El multivalor academicProgramUri se DERIVA de estos en el template
+                         (bloque J3c). Motivo: escrito por 2 inbounds (Estudiantes + Egresados), caia en
+                         zero-set multi-source y NO retiraba los valores obsoletos -> 14.139 users
+                         publicaban URIs de conceptos deprecados. Mismo patron que liveAffiliation*. -->
+                    <!-- PM10 aplicado al P-code (2026-08-10): item per-IIA MULTIVALOR, single-source.
+                         academicProgramSuneduCode es el derivado; la eleccion NO puede hacerse en el
+                         mapping porque MidPoint evalua la expresion una vez por cada valor del source
+                         multivalor (en inbound y en template). Ver bloque J3d. -->
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="liveProgramSuneduCodeStudent" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>P-code de programa — estudiante (IIA Estudiantes)</a:displayName><a:help>P-code/SEG-code oficial (A4/A8 2026-1) de cada programa con matricula vigente, resuelto por ID_PROGRAMA_ESTUDIO contra program-pxx-byid (generada de VocBench). Multivalor: se puede cursar dos programas.</a:help><a:indexed>true</a:indexed><a:displayOrder>563</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="liveProgramUriStudent" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>URI de programa viva — estudiante (IIA Estudiantes)</a:displayName><a:help>URI canonica del concepto SKOS del programa, presente SOLO mientras hay matricula vigente. IIA unica: resource Estudiantes. Single-source: el inbound strong la materializa/retira con la matricula. Se resuelve desde ID_PROGRAMA_ESTUDIO via el puente generado de VocBench (resuelve dct:isReplacedBy). Ausente = sin matricula vigente o programa no licenciado.</a:help><a:indexed>true</a:indexed><a:displayOrder>561</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="liveProgramUriAlum" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>URI de programa viva — egresado (IIA Egresados)</a:displayName><a:help>URI canonica del programa del que la persona egreso. IIA unica: resource Egresados. Single-source: el inbound strong la materializa/retira con la proyeccion Egresado. La condicion de egresado es permanente.</a:help><a:indexed>true</a:indexed><a:displayOrder>562</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="liveAffiliationStudent" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Afiliación viva — estudiante (IIA Estudiantes)</a:displayName><a:help>Token eduPerson (student) presente SOLO mientras hay matrícula vigente (semestres 279/267 en Oracle LAMB Estudiantes v4). IIA única: resource Estudiantes. Single-source: el inbound strong lo materializa/retira con la proyección Estudiante. Ausente = sin matrícula vigente.</a:help><a:indexed>true</a:indexed><a:displayOrder>423</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- Campus por-IIA single-valued single-writer (mismo patrón que liveAffiliation*). Cada IIA escribe su propio slot → cero colisión strong/strong. Usados por el gate Koha multi-campus (vínculos VIVOS): elegible Koha-Lima si campusStudent=LIMA (matrícula vigente Lima) O campusWorker=LIMA (contrato 7124 vivo Lima). El EGRESO histórico NO cuenta (sin slot campusAlum en el gate). NO confundir con `locality` (lugar físico, IIA distinta, usado por LDAP/Entra/M365 — intacto). -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="campusStudent" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Campus — matrícula vigente (IIA Estudiantes)</a:displayName><a:help>Sede (LIMA|JULIACA|TARAPOTO|ISTAT) de la matrícula vigente. IIA única: resource Estudiantes. Single-source: el inbound strong lo materializa/retira con la proyección Estudiante (mismo origen que liveAffiliationStudent). Ausente = sin matrícula vigente. Entra al gate Koha multi-campus como vínculo VIVO de estudiante.</a:help><a:indexed>true</a:indexed><a:displayOrder>424</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="campusWorker" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Campus — contrato vivo (IIA Trabajadores)</a:displayName><a:help>Sede (LIMA|JULIACA|TARAPOTO|ISTAT) del contrato UPeU vigente (ID_ENTIDAD=7124, ESTADO≠'I'). IIA única: resource Trabajadores. Single-source: el inbound strong lo materializa/retira con la cuenta laboral (mismo origen que liveAffiliationWorker). Ausente = sin empleo vigente. Entra al gate Koha multi-campus como vínculo VIVO de trabajador.</a:help><a:indexed>true</a:indexed><a:displayOrder>425</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- RESTAURADO 2026-08-12: existia SOLO en PROD (creado el 11-ago) y el repo
+                         no lo reflejaba; un despliegue del schema desde el repo lo borro. Los datos
+                         nunca se perdieron (31.289 personas lo conservan en m_user.ext).
+                         Campus de EGRESO: hecho consumado, a diferencia de campusStudent, que se
+                         vacia al perder la matricula. Si una filial deja de ofertar un programa,
+                         quien egreso de el alli sigue siendo de esa filial. Sin este dato la API de
+                         Koha rechaza el alta con "Missing property: library_id".
+                         IIA: DAVID.VW_PERSONA_EGRESADO.SEDE. -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="campusEgreso" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Campus — de egreso (IIA Egresados)</a:displayName><a:help>Sede (LIMA|JULIACA|TARAPOTO) donde la persona egreso. Hecho consumado: no caduca. Alimenta library_id en Koha cuando no hay campus vivo.</a:help><a:indexed>true</a:indexed><a:displayOrder>426</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="entitlements" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Derechos (entitlements)</a:displayName><a:displayOrder>430</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="eppn" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>ePPN (eduPersonPrincipalName)</a:displayName><a:displayOrder>440</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="eduPersonUniqueId" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>eduPersonUniqueId</a:displayName><a:indexed>true</a:indexed><a:displayOrder>450</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="schacHomeOrganization" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Organización (schacHomeOrganization)</a:displayName><a:displayOrder>460</a:displayOrder><a:indexed>true</a:indexed></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="schacExpiryDate" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de expiración (SCHAC)</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>470</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="terminationDateStudent" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de término — matrícula (IIA Estudiantes)</a:displayName><a:help>YYYY-MM-DD. Expiración derivada de la matrícula vigente (MAX FECHA_FIN del semestre activo en Oracle LAMB Estudiantes, columna DATE_EXPIRY). IIA única: resource Estudiantes. Single-source: inbound strong lo materializa/retira con la proyección Estudiante. NO confundir con `terminationDate` (IIA Trabajadores, FEC_TERMINO del contrato). Ambos atributos por-IIA single-valued single-writer evitan la colisión dual-strong en focos employee+student. El expiry efectivo a Koha/downstream = MAX de las fechas de afiliación viva.</a:help><a:displayOrder>475</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="studentEnrollmentLastEnd" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fin de matricula — real, con memoria (derivado)</a:displayName><a:help>YYYY-MM-DD. Lo calcula el template (G1) desde terminationDateStudent: sube con la fuente y NO baja cuando un semestre sale del horizonte del feed; si baja antes del fin previsto (retiro/anulacion) acepta el valor menor. Base del fin efectivo.</a:help><a:displayOrder>476</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="studentEnrollmentEffectiveEnd" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fin de matricula — efectivo (con gracia)</a:displayName><a:help>YYYY-MM-DD. Fin real + N dias de gracia (template G2, unico sitio de N). Mientras hoy &lt;= este valor se conserva liveAffiliationStudent. Sin gracia si la persona tiene otro vinculo vivo (215/216). Base de la vigencia academica publicada a LDAP.</a:help><a:indexed>true</a:indexed><a:displayOrder>477</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S5 — ACADÉMICO -->
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="academicProgram" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Programa académico</a:displayName><a:displayOrder>500</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="academicProgramCode" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código de programa académico</a:displayName><a:indexed>true</a:indexed><a:displayOrder>510</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- academicProgramSuneduCode: código P-code SUNEDU del programa de estudio
+                         (ej. P30, P31, P143). IIA: Oracle LAMB DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_SUNEDU2
+                         (vía searchScript Estudiantes, columna SUNEDU_CODE, vigencia-aware KEEP DENSE_RANK
+                         LAST). Identificador oficial del programa en el Registro Nacional de Grados y
+                         Títulos SUNEDU (Ley 30220). Single-value: corresponde al programa de la matrícula
+                         vigente que termina más tarde. Destino: outbound koha-ils statistics2-outbound
+                         (Bsort2) — el código se emite tal cual (separación: el resource Koha consume el
+                         dato canónico SUNEDU sin transformación). NO confundir con academicProgramCode
+                         (EP-XXX, código corto interno SciBack/VocBench, solo pregrado). -->
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="academicProgramSuneduCode" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código SUNEDU del programa (P-code)</a:displayName><a:help>Código oficial del programa en el Registro Nacional de Grados y Títulos SUNEDU (ej. P30, P31, P143). IIA: Oracle LAMB DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_SUNEDU2. Single-value (programa de la matrícula vigente). PRINCIPAL desde 2026-08-09 (ADR-005 del tesauro): es el código con el que UPeU identifica el programa en TODOS sus sistemas — MidPoint, LDAP, Koha, Indico, InOut, RIMS, DW, SGC. Es el código que UPeU declaró ante SUNEDU en sus Formatos de Licenciamiento A4/A8. FUENTE: LookupTable program-pxx-byid (tesauro VocBench), NO DAVID.ACAD_PROGRAMA_ESTUDIO.CODIGO_SUNEDU2 — ese campo es un correlativo interno que diverge del oficial en el posgrado (ADR-004). Medido sobre la matrícula 2026-2: Oracle da 73,18 % con 139 códigos equivocados; el tesauro da 88,44 % sin errores. OJO: el P-code NO es llave de unión entre sistemas (52 conceptos llevan dos códigos oficiales por recodificación vía resolución) — para empalmar se usa academicProgramUri.</a:help><a:indexed>true</a:indexed><a:displayOrder>515</a:displayOrder><a:valueEnumerationRef oid="4e7a9b13-5c26-4d80-91af-3b6e2c8d5017" type="c:LookupTableType"/></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- ADR-062 (14-ago-2026): el IGA identifica el programa de TODO estudiante,
+                         este licenciado o no. 6.706 activos no tenian NINGUN identificador de
+                         programa -ni P-code ni URI- porque program-pxx-byid solo cubre los 188
+                         licenciados: Ingles, Conservatorio, CEPRE y las diplomaturas quedaban
+                         invisibles para el sistema de identidad aunque Oracle si sabe donde estan.
+                         Que no necesiten P-code (Ley 30220 art. 46) no implica que el IGA pueda no
+                         saber nombrarlos: ese razonamiento produjo el hueco de ou=org que dejo a
+                         899 personas sin area en el aforo del CRAI.
+                         IDENTIFICADOR DE CORRELACION, hermano de externalSystemId — NO es un valor
+                         de publicacion. NO SALE del hub mientras el programa no tenga URI: publicar
+                         el entero de Oracle obliga al consumidor a ir a consultar LAMB, que es
+                         comunicacion spoke-a-spoke (libro de MidPoint, Data Unification p.204), y
+                         ningun atributo semantico de eduPerson/SCHAC transporta una clave cruda del
+                         sistema origen. Ver ADR-063.
+                         UNBOUNDED de nacimiento: 90 estudiantes con doble matricula, y cambiar la
+                         cardinalidad despues crea un id nuevo en m_ext_item que PARTE los datos
+                         (paso con academicProgramSuneduCode: 29 personas ancladas al id viejo).
+                         IIA: DAVID.ACAD_PROGRAMA_ESTUDIO.ID_PROGRAMA_ESTUDIO, via PROGRAM_CODES. -->
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="academicProgramSourceId" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>ID de programa en la fuente (Oracle LAMB)</a:displayName><a:help>ID_PROGRAMA_ESTUDIO de Oracle LAMB. Presente para TODO estudiante con matricula, tenga o no codigo SUNEDU. Multivalor: dobles matriculas. Identificador de correlacion, no de publicacion (ADR-062).</a:help><a:indexed>true</a:indexed><a:displayOrder>437</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- 2026-08-15: item que el mapping teaching-programs-to-teachingProgram
+                         (resource Trabajadores, inbound 5527, F5-prep del 4-jul-2026) lleva un mes
+                         esperando. El mapping se escribio y el item NUNCA se creo: al ser strong y
+                         apuntar a un path inexistente, lanza SchemaException y ABORTA el
+                         procesamiento de la persona entera -con sus tres proyecciones-, no solo de
+                         este atributo. Cazado el 15-ago al recomputar a un docente.
+                         UNBOUNDED: el mapping devuelve una LISTA de codigos EP- (un docente ensena
+                         en varias escuelas profesionales); ademas, nacer single-value y cambiarlo
+                         despues crea un id nuevo en m_ext_item y parte los datos.
+                         IIA: ENOC.VW_CARGA_DOCENTE via TEACHING_PROGRAMS, resuelto contra la
+                         LookupTable d9b1e0c2-e036-4c6a-9753-c732a83bbf0a. Alimenta D6b
+                         (relation=teacher). -->
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="teachingProgram" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Escuela profesional en la que ensena</a:displayName><a:help>Codigos EP- de las escuelas profesionales donde el docente tiene carga en el semestre vigente. Multivalor. IIA: ENOC.VW_CARGA_DOCENTE.</a:help><a:indexed>true</a:indexed><a:displayOrder>438</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- academicProgramIneiCode: código INEI 2022 de 8 dígitos del programa de
+                         estudio (ej. 31300211=Psicología, 91300071=Enfermería, 41300270=Administración).
+                         Es el identificador NACIONAL canónico del programa según el clasificador
+                         INEI 2022 (alineado SCHAC familia schacPersonalUniqueCode como código nacional
+                         de programa). DERIVADO (no IIA directa): Oracle LAMB no expone el INEI; se
+                         resuelve desde academicProgramSuneduCode (P-code) vía el LookupTable
+                         LT-Pcode-INEI (OID e129d9e4-c2fd-4a02-9369-0ae5b8f59c06), cuyo contenido
+                         proviene del tesauro VocBench-UPeU v2 (skos:notation). Single-value
+                         (programa de la matrícula vigente, hereda la elección de academicProgramSuneduCode).
+                         Destino: koha-ils statistics2-outbound (Bsort2) — REEMPLAZA al P-code en Bsort2
+                         a partir de la migración 2026-06-13. Null-safe: si el P-code no está en el
+                         LookupTable (posgrado/2da-especialidad sin P-code, o P-code nuevo no cargado)
+                         → atributo vacío → Koha sin Bsort2 (mismo comportamiento previo, no regresión).
+                         Coexiste con academicProgramSuneduCode (P-code legacy = altLabel). -->
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="academicProgramIneiCode" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código INEI del programa (8 díg)</a:displayName><a:help>Código nacional INEI 2022 de 8 dígitos del programa de estudio (ej. 31300211=Psicología). ALCANCE ACOTADO desde 2026-08-09 (ADR-005): metadato de DISCIPLINA para el repositorio institucional de tesis, donde la normativa SUNEDU/RENATI lo exige como renati.discipline. NO es el identificador del programa en los sistemas internos de UPeU — ese papel es del P-code (academicProgramSuneduCode). DERIVADO de academicProgramSuneduCode vía LookupTable LT-Pcode-INEI (fuente: tesauro VocBench-UPeU, skos:notation). Single-value. Null-safe. 14 programas no tienen código INEI porque no existen en el Clasificador Nacional 2022 (corte 31-12-2022); para agregación por disciplina úsese el campo detallado, que sí está completo.</a:help><a:indexed>true</a:indexed><a:displayOrder>516</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- facultyName: nombre crudo de la facultad a la que pertenece el programa de la
+                         matrícula vigente. IIA: Oracle LAMB ELISEO.ORG_AREA.NOMBRE del nodo PADRE de la
+                         escuela (oafac via ID_PARENT). NO es un código canónico universal — es el nombre
+                         legible de la facultad. El mapeo facultad→código corto (FCS/FIA/FACIHED/...) es
+                         específico de Koha (authorised_values Bsort1) y vive en el resource koha-ils
+                         (statistics1-outbound switch), NO aquí. Single-value (facultad de la matrícula
+                         vigente que termina más tarde, KEEP DENSE_RANK LAST). Ejemplos: 'Facultad de
+                         Ciencias de la Salud', 'Facultad de Ingeniería y Arquitectura'. -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="facultyName" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Nombre de facultad</a:displayName><a:help>Nombre crudo de la facultad del programa de la matrícula vigente. IIA: Oracle LAMB ELISEO.ORG_AREA.NOMBRE (nodo padre de la escuela vía ID_PARENT). El código corto Koha (Bsort1) se deriva de este nombre en el resource koha-ils. Single-value.</a:help><a:indexed>true</a:indexed><a:displayOrder>517</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- studyLevel: nivel canónico GRANULAR del programa de la matrícula
+                         vigente (la carrera PRINCIPAL, misma que da el P-code/facultad).
+                         Vocabulario controlado normalizado (lowercase): pregrado | posgrado |
+                         doctorado | segunda-especialidad | diplomatura | educación contínua |
+                         idiomas | cepre | conservatorio de música | técnica | básico |
+                         instituto | salt | clínica good hope | tesis. Single-value.
+                         IIA: Oracle LAMB DAVID.TIPO_NIVEL_ENSENANZA.NOMBRE + DAVID.ACAD_PROGRAMA_ESTUDIO
+                         (NOMBRE para distinguir doctorado/maestría/segunda-especialidad dentro de
+                         'Posgrado', CODIGO_SUNEDU2 IS NOT NULL ⇒ pregrado). DERIVADO en el searchScript
+                         de estudiantes.xml (columna PROGRAM_LEVEL, KEEP DENSE_RANK LAST con la MISMA
+                         clave compuesta que SUNEDU_CODE/FACULTY_NAME → coherente con la carrera principal).
+                         NO es la copia cruda de NIVEL_ENSENANZA (que no distingue maestría/doctorado).
+                         Es la ÚNICA fuente de verdad de nivel: la consume el routing de business role
+                         (D.2 base template: doctorado→BR-Doctorado, posgrado/segunda-especialidad→BR-Posgrado,
+                         resto→BR-Pregrado) y el outbound STUDY_LEVEL de Koha (Bsort STUDY_LEVEL). -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="studyLevel" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Nivel de estudios</a:displayName><a:help>Nivel canónico granular del programa de la matrícula vigente (carrera principal): pregrado | posgrado | doctorado | segunda-especialidad | diplomatura | educación contínua | idiomas | cepre | etc. IIA: Oracle LAMB (TIPO_NIVEL_ENSENANZA + ACAD_PROGRAMA_ESTUDIO). Single-value. Única fuente de nivel para routing de business role y STUDY_LEVEL de Koha.</a:help><a:indexed>true</a:indexed><a:displayOrder>520</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- studentEnrollmentType: tipo de matrícula del estudiante (regular vs irregular).
+                         Vocabulario controlado: regular | irregular. IIA: Oracle LAMB
+                         DAVID.ACAD_ALUMNO_CONTRATO.TIPO_ALUMNO ('RE'⇒regular; 'B18'/'BP'/'INT'/otros⇒irregular;
+                         NULL⇒sin clasificar, atributo vacío). KEEP DENSE_RANK LAST de la matrícula vigente.
+                         Single-value, INFORMATIVO (reporting / futuras políticas de matrícula). No gobierna
+                         provisioning hoy. Concepto canónico: toda universidad distingue estudiante regular
+                         de irregular (recuperación/repitencia). -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="studentEnrollmentType" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Tipo de matrícula</a:displayName><a:help>Tipo de matrícula del estudiante: regular | irregular. IIA: Oracle LAMB DAVID.ACAD_ALUMNO_CONTRATO.TIPO_ALUMNO (RE⇒regular; B18/BP/INT⇒irregular; NULL⇒vacío). Single-value, informativo.</a:help><a:indexed>true</a:indexed><a:displayOrder>521</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="studyModality" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Modalidad de estudio</a:displayName><a:displayOrder>530</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- studentCycle: ciclos académicos cursados en la matrícula vigente (multivalor,
+                         deduplicado). IIA: Oracle LAMB DAVID.ACAD_PLAN_CURSO.CICLO (LISTAGG sin DISTINCT
+                         en SQL — Oracle 11g no soporta LISTAGG(DISTINCT) — + dedup .unique() en Groovy del
+                         map, mismo patrón que PROGRAM_CODES). INFORMATIVO: ya NO gobierna el nivel de
+                         estudios (eso lo hace studyLevel granular). Un estudiante puede llevar cursos de
+                         varios ciclos simultáneamente. -->
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="studentCycle" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Ciclo académico</a:displayName><a:help>Ciclos cursados en la matrícula vigente (multivalor, deduplicado). IIA: Oracle LAMB DAVID.ACAD_PLAN_CURSO.CICLO. Informativo — NO determina el nivel (ver studyLevel).</a:help><a:displayOrder>540</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="admissionPeriod" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Período de admisión</a:displayName><a:displayOrder>550</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- graduationYear: año del último egreso/graduación. Fuente IIA: Oracle LAMB
+                         DAVID.VW_PERSONA_EGRESADO.ANIO. Tipado como xsd:int para permitir
+                         aritmética en expresiones (validTo = graduationYear + N años) sin
+                         conversiones en cada mapping (Semancik Cap. 6 §1.4: "use proper
+                         types where arithmetic is required"). Driver de la policy de
+                         deprovisioning temporal canónica (validTo en assignment de
+                         AR-Koha-Patron-Alumni). NULL safe: usuarios sin dato → vigencia
+                         indefinida (fail-open). -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="graduationYear" type="xsd:int">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Año de graduación</a:displayName>
+                            <a:help>Año del último egreso/graduación efectiva. Fuente: Oracle LAMB DAVID.VW_PERSONA_EGRESADO.ANIO. Driver del cálculo de vigencia post-graduación (validTo). NULL → vigencia indefinida (fail-open).</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>551</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- graduationSemester: período "YYYY-N" (e.g. "2024-1", "2024-2").
+                         Informativo. Para policy actual usamos solo graduationYear con
+                         cierre el 31-Dic (decisión simplificadora: precisión por semestre
+                         es over-engineering). Se conserva para reporting y futuras
+                         políticas que requieran granularidad semestral. -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="graduationSemester" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Semestre de graduación</a:displayName>
+                            <a:help>Período del último egreso en formato "YYYY-N" (e.g. 2024-1, 2024-2). Fuente: Oracle LAMB DAVID.VW_PERSONA_EGRESADO.SEMESTRE. Informativo / reporting.</a:help>
+                            <a:displayOrder>552</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="academicProgramUri" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>URI canónica del programa académico</a:displayName><a:help>Identificador persistente del programa (urn:sciback:program:{institutionId}:{programCode}). Vinculado al OrgType academic-program. Para uso en eduPersonOrgUnitDN y SCHAC.</a:help><a:indexed>true</a:indexed><a:displayOrder>560</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="academicProgramRole" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Rol del usuario en el programa</a:displayName><a:help>Vocabulario controlado: student|faculty|coordinator|director|alum. Multivalor: una persona puede ser docente de un programa y coordinador de otro.</a:help><a:displayOrder>570</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S5b — GRADOS Y TÍTULOS CONFERIDOS (Secretaría General) -->
+                    <!-- IIA: Secretaría General (Oracle LAMB DAVID.VW_PERSONA_GRADO). Grado/título
+                         académico efectivamente conferido por la institución. Concepto canónico:
+                         toda universidad confiere grados (Perú: Ley 30220 art. 44-45, registro SUNEDU).
+                         NO confundir con studyLevel (nivel del programa que se cursa). -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="conferredDegree" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Grado/título conferido</a:displayName><a:help>Grado académico o título profesional más alto efectivamente conferido por la institución. Vocabulario controlado normalizado: BACHILLER | TITULO_PROFESIONAL | MAESTRIA | DOCTORADO | POSDOCTORADO. Single-value: una persona porta el grado más alto obtenido. IIA: Secretaría General. Para uso en SCHAC schacPersonalTitle y eduPerson.</a:help><a:indexed>true</a:indexed><a:displayOrder>580</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="conferredDegreeAbbrev" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Abreviatura del grado conferido</a:displayName><a:help>Abreviatura honorífica del grado/título conferido (Bach., Mg., Dr.). Mapea a SCHAC schacPersonalTitle. Puede ser nula para títulos profesionales sin abreviatura honorífica estándar.</a:help><a:displayOrder>585</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="schacPersonalTitle" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Título personal (schacPersonalTitle)</a:displayName><a:help>Atributo canónico SCHAC 1.6.0 schacPersonalTitle: tratamiento/título honorífico de la persona (Bach., Mg., Dr.). Valor DERIVADO por el object template desde conferredDegreeAbbrev — no se importa directamente desde ninguna IIA. Single-value. Destino de outbound hacia LDAP (schacPersonalTitle / personalTitle) y Keycloak. Puede ser nulo si la persona no tiene grado conferido con abreviatura honorífica estándar.</a:help><a:displayOrder>590</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S6 — LABORAL -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="employeeCategory" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Categoría ocupacional</a:displayName><a:displayOrder>600</a:displayOrder><a:valueEnumerationRef oid="2b8d4f61-9e07-4c35-a1d8-6f3b5e90c7a2" type="c:LookupTableType"/></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="employeeType" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Tipo de empleo</a:displayName><a:displayOrder>610</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="hireDate" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de ingreso</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>620</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="terminationDate" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha de término</a:displayName><a:help>YYYY-MM-DD</a:help><a:displayOrder>630</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="contractType" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Tipo de contrato</a:displayName><a:displayOrder>640</a:displayOrder><a:valueEnumerationRef oid="7f2c6a94-3d15-4e88-b072-9a4e1c8f5d63" type="c:LookupTableType"/></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- Codigo oficial del tipo de contrato en RR.HH. (ELISEO.TIPO_CONTRATO).
+                         '01' = A Plazo Indeterminado (permanente, SIN fecha de fin por diseno).
+                         Distingue "permanente" de "falta el dato": ambos llegan como FEC_TERMINO
+                         nulo y sin este codigo son indistinguibles. Medido 12-ago-2026 sobre las
+                         7.416 personas del IGA: 1.084 permanentes sin fecha (correctos) y 12
+                         contratos a plazo sin fecha (huecos de captura en el origen). -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="employmentContractCode" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código de tipo de contrato</a:displayName><a:help>Catálogo ELISEO.TIPO_CONTRATO; 01 = A Plazo Indeterminado</a:help><a:displayOrder>645</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- Tipo de cese declarado en RR.HH. (ELISEO.VW_APS_EMPLEADO.ID_TIPOCESE).
+                         Presente = el vinculo termino, aunque no se haya cerrado la fecha. -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="employmentTerminationCode" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código de tipo de cese</a:displayName><a:displayOrder>646</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S7 — INVESTIGACIÓN -->
+                    <!-- orcid: ORCID iD canónico (https://orcid.org/0000-0000-0000-0000).
+                         IIA futura: CTI Vitae / ORCID Public API. -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="orcid" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>ORCID iD</a:displayName>
+                            <a:help>ORCID iD del investigador. Formato: 0000-0000-0000-0000 (sin prefijo URL). IIA futura: CTI Vitae portal / ORCID Public API. Persistente e inmutable.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>700</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- isni (v1.4, RIMS←IGA contrato P5): International Standard Name Identifier
+                         del investigador (ISO 27729). Forma canónica con espacios cada 4 dígitos:
+                         '0000 0000 0000 0000' (16 dígitos, dígito de control MOD 11-2 igual que ORCID).
+                         IIA: CONCYTEC / registro manual (no Oracle LAMB). Persistente e inmutable.
+                         Distinto de orcid (ambos son identificadores de nombre de investigador, ISNI
+                         es el contenedor ISO del que ORCID es un sub-rango). Destino: LDAP atributo
+                         'isni' (objectClass aux upeuPerson, arc UPeU 1.3.6.1.4.1.47378.1.3) → consumo
+                         RIMS por ePUID. NO se publica en token OIDC (atributo voluminoso/PII-research). -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="isni" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>ISNI</a:displayName>
+                            <a:help>International Standard Name Identifier (ISO 27729) del investigador. Forma canónica: '0000 0000 0000 0000' (16 dígitos, espacios cada 4, dígito de control MOD 11-2). IIA: CONCYTEC / registro manual. Persistente e inmutable. Destino: LDAP atributo isni (upeuPerson). Contrato RIMS←IGA P5.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>705</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- concytecId: código de registro RENACYT (ej: P0012345).
+                         IIA: lista anual DGI (Excel Charmín) → sciback-research-projects M4. -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="concytecId" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Código RENACYT</a:displayName>
+                            <a:help>Código de registro del investigador en el padrón RENACYT/CONCYTEC (ej: P0012345). IIA: lista anual DGI / sciback-research-projects. Indexed para búsquedas de validación.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>710</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- ctiVitaeId: ID de perfil en el portal CTI Vitae de CONCYTEC.
+                         Distinto de concytecId (código RENACYT): es el identificador interno
+                         del perfil en el portal web CTI Vitae (ej: 161494).
+                         IIA futura: sciback-research-projects CtiVitaeAdapter (M5). -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="ctiVitaeId" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>ID CTI Vitae</a:displayName>
+                            <a:help>Identificador del perfil en el portal CTI Vitae de CONCYTEC (ej: 161494). Distinto del código RENACYT (concytecId). Disponible en la columna F del Excel DGI anual. IIA futura: CtiVitaeAdapter en sciback-research-projects M5.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>715</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- renacytLevel: nivel de calificación en el padrón RENACYT 2022.
+                         Vocabulario controlado alineado con Reglamento RENACYT Art. 11.
+                         IIA: lista anual DGI / sciback-research-projects M4. -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="renacytLevel" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Nivel RENACYT</a:displayName>
+                            <a:help>Nivel de calificación en el padrón RENACYT. Vocabulario controlado: DISTINGUIDO | NIVEL_I | NIVEL_II | NIVEL_III | NIVEL_IV | NIVEL_V | NIVEL_VI | NIVEL_VII. Alineado con Reglamento RENACYT 2022 (Res. Pres. Ejecutiva 045-2021-CONCYTEC-PE). IIA: lista anual DGI / sciback-research-projects M4.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>718</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- renacytStatus: estado de vigencia en el padrón RENACYT.
+                         Determina si el investigador puede liderar proyectos, asesorar tesis, etc.
+                         IIA: lista anual DGI / sciback-research-projects M4. -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="renacytStatus" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Estado RENACYT</a:displayName>
+                            <a:help>Estado de vigencia en el padrón RENACYT. Vocabulario controlado: ACTIVO | ACTIVO_AFILIADO | NO_ACTIVO | EXCLUIDO. Solo ACTIVO y ACTIVO_AFILIADO habilitan liderar proyectos/asesorar tesis (Reglamento RENACYT Art. 11). IIA: lista anual DGI / sciback-research-projects M4.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>719</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- researcherCategory: categoría institucional de investigador (uso interno).
+                         Distinto de renacytLevel (padrón CONCYTEC). Para clasificaciones
+                         propias de la universidad (ej: SENIOR, JUNIOR, FORMATIVO). -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="researcherCategory" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Categoría investigador (institucional)</a:displayName>
+                            <a:help>Categoría de investigador según clasificación interna de la universidad. Distinto de renacytLevel (padrón CONCYTEC). Vocabulario libre por institución.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>720</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S7b — ESTATUS INSTITUCIONAL DEL INVESTIGADOR (EJE 2, ortogonal).
+                         Vocabulario controlado: oficial-dgi | detectado-autoria | externo.
+                         NO es archetype ni rol: es dato clasificatorio gobernado (no otorga
+                         accesos por sí mismo; si se requiere acceso, derivar business role vía
+                         assignmentTargetSearch filtrando este atributo).
+                         GOBERNANZA (Reality vs Policy):
+                           - detectado-autoria  -> lo DETECTA el CRIS por autoría/Scopus.
+                             IIA: resource DSpace-CRIS (inbound, strength weak/normal).
+                           - oficial-dgi        -> lo PROMUEVE la DGI (humano) desde la lista
+                             oficial (SINEACE E22/E24, SUNEDU). IIA: lista DGI (inbound strong;
+                             gana sobre la detección).
+                           - externo            -> coautor/colaborador sin afiliación contractual.
+                         Multivalor: un foco puede portar más de un token durante la promoción.
+                         El template deriva primaryResearcherStatus (single) si se requiere.
+                         Independiente del eje 3 (RENACYT): se puede ser oficial-dgi sin RENACYT,
+                         o RENACYT sin docencia activa. Eje ortogonal a eduPersonAffiliation
+                         (no está en el vocabulario eduPerson de 8 valores -> no es afiliación). -->
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="researcherStatus" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Estatus institucional de investigador</a:displayName>
+                            <a:help>Vocabulario controlado: oficial-dgi | detectado-autoria | externo. Eje ortogonal a la afiliación eduPerson y a la calificación RENACYT. oficial-dgi lo promueve la DGI (lista oficial, IIA strong); detectado-autoria lo detecta el CRIS por autoría/Scopus (IIA DSpace-CRIS); externo = coautor sin afiliación contractual. No otorga accesos por sí mismo (no es rol); si se requiere acceso, derivar business role vía assignmentTargetSearch filtrando este atributo.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>721</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- S7c — Estatus principal derivado (single), opcional para downstream
+                         que requiera un solo valor (mismo patrón affiliations->primaryAffiliation).
+                         Precedencia: oficial-dgi > detectado-autoria > externo. Lo deriva el
+                         object template, NO una IIA directa. Destino: outbound a DSpace
+                         (upeu.person.estatus) y eventuales assignmentTargetSearch. -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="primaryResearcherStatus" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Estatus de investigador principal (derivado)</a:displayName>
+                            <a:help>Valor único derivado por el object template desde researcherStatus (precedencia oficial-dgi &gt; detectado-autoria &gt; externo). Destino del outbound a DSpace (upeu.person.estatus) y de eventuales assignmentTargetSearch. No es IIA directa.</a:help>
+                            <a:indexed>true</a:indexed>
+                            <a:displayOrder>722</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S8 — ORGANIZACIÓN / CAMPUS -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="homeCampus" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Campus sede</a:displayName><a:displayOrder>800</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S9 — GOVERNANCE / DRAFT METADATA -->
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="rejectionReasons" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Razones de rechazo</a:displayName><a:displayOrder>900</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="rejectedAt" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha/hora de rechazo</a:displayName><a:help>ISO 8601 datetime</a:help><a:displayOrder>910</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="rejectionSource" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fuente del rechazo</a:displayName><a:displayOrder>920</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="expectedSourceForFix" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fuente esperada para corrección</a:displayName><a:displayOrder>930</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="lastReviewedAt" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fecha/hora última revisión</a:displayName><a:help>ISO 8601 datetime</a:help><a:displayOrder>940</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="reviewerNotes" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Notas del revisor</a:displayName><a:displayOrder>950</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S11 — AUSENCIA / DISPONIBILIDAD (SciBack canónico, 2026-09-04)
+                         "Persona ausente entre dos fechas" es un concepto universal de la gestión de
+                         identidad institucional y NO existe en eduPerson 202208 ni en SCHAC 1.6.0
+                         (verificado contra el LDIF oficial REFEDS y el subschema vivo del directorio).
+                         Por eso vive en la capa canónica y no en el overlay local.
+                         Vocabulario de absenceType deliberadamente NO revelador: el MOTIVO de la
+                         ausencia (enfermedad, maternidad) es dato sensible Ley 29733 y se queda en la
+                         fuente. Aquí sólo se publica la disponibilidad. -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="absent" type="xsd:boolean">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Ausente actualmente</a:displayName><a:help>Booleano calculado: hoy está entre absenceStartDate y absenceEndDate. Lo computa el object template, NO una fuente.</a:help><a:indexed>true</a:indexed><a:displayOrder>960</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="absenceStartDate" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Inicio de ausencia</a:displayName><a:help>ISO 8601 date (YYYY-MM-DD). Periodo VIGENTE o, si no hay, el PRÓXIMO. Escalar por diseño.</a:help><a:displayOrder>961</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="absenceEndDate" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Fin de ausencia</a:displayName><a:help>ISO 8601 date (YYYY-MM-DD). Último día de ausencia, inclusive.</a:help><a:indexed>true</a:indexed><a:displayOrder>962</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="absenceType" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Tipo de ausencia</a:displayName><a:help>Vocabulario cerrado NO revelador: vacation | leave | suspension</a:help><a:indexed>true</a:indexed><a:displayOrder>963</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- S10 — DEPRECADOS (compatibilidad v3.0 / urn:upeu:midpoint:person) -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="taxId" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] DNI/CE (taxId)</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9900</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="secondaryMail" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] Correo secundario</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9910</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="phoneNumberAlt" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] Teléfono alternativo</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9920</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="primaryAffiliationCode" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] Código afiliación principal</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9930</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="campus" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] Campus</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9940</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="institutionalIdCard" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] Carnet institucional</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9950</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="universityIdCard" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] Carnet universitario</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9960</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="primaryAffiliationName" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>[DEPRECADO] Nombre afiliación principal</a:displayName><a:deprecated>true</a:deprecated><a:displayOrder>9970</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <!-- OrgExtensionType — extension de OrgType para programas academicos -->
+            <xsd:complexType name="OrgExtensionType">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:OrgType"/>
+                        <a:displayName>Datos academicos de OrgType SciBack IGA</a:displayName>
+                        <a:help>Extension del OrgType. Usada por archetype-org-academic-program para vincular un Org a su concepto SKOS canonico en VocBench.</a:help>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="academicProgramUri" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>URI canonica del programa academico (VocBench SKOS)</a:displayName><a:help>Identificador persistente del concepto SKOS en el Tesauro Institucional. Ej.: http://upeu.edu.pe/sys/programas/c_bbf436cf. Coincide con el valor que se mapea hacia extension/sciback:academicProgramUri en el User.</a:help><a:indexed>true</a:indexed><a:displayOrder>100</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="academicProgramCode" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Codigo corto del programa</a:displayName><a:help>Notation SKOS del programa (p. ej. EP-SIS, EP-ENF). Mismo valor que el atributo "identifier" del Org pero indexado para busquedas.</a:help><a:indexed>true</a:indexed><a:displayOrder>110</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="studyLevel" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Nivel del programa</a:displayName><a:help>pregrado | maestria | doctorado | especializacion | segunda-especialidad</a:help><a:displayOrder>120</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element maxOccurs="1" minOccurs="0" name="iscedFCode" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>ISCED-F (campo de educacion)</a:displayName><a:help>ISCED-F 2013 (UNESCO). Ej.: 0613, 0221.</a:help><a:displayOrder>130</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- orgRorId (v1.4, RIMS←IGA contrato O3): Research Organization Registry id.
+                         Forma canónica URL: 'https://ror.org/0XXXXXXXX' (siempre empieza por 0,
+                         9 caracteres tras el prefijo, base32 + checksum). IIA: ROR registry.
+                         Típicamente solo poblado en el nodo institution (raíz). Destino: LDAP
+                         atributo scibackOrgRorId del nodo OU → consumo RIMS para OrgUnit CERIF. -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="orgRorId" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>ROR id</a:displayName><a:help>Research Organization Registry id. Forma canónica: https://ror.org/0XXXXXXXX. IIA: ROR registry. Normalmente solo en el nodo institution. Destino: LDAP scibackOrgRorId. Contrato RIMS←IGA O3.</a:help><a:indexed>true</a:indexed><a:displayOrder>140</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <!-- orgRuc (v1.4, RIMS←IGA contrato O4): RUC de la organización (SUNAT).
+                         11 dígitos numéricos, dígito verificador módulo 11. IIA: SUNAT.
+                         Normalmente solo poblado en el nodo institution (UPeU RUC). Destino: LDAP
+                         atributo scibackOrgRuc del nodo OU → consumo RIMS (grantor/publisher CERIF). -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="orgRuc" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>RUC</a:displayName><a:help>RUC de la organización (SUNAT), 11 dígitos, dígito verificador módulo 11. IIA: SUNAT. Normalmente solo en el nodo institution. Destino: LDAP scibackOrgRuc. Contrato RIMS←IGA O4.</a:help><a:indexed>true</a:indexed><a:displayOrder>150</a:displayOrder></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                
+                    <!-- RESTAURADO 2026-08-12: mismo caso que campusEgreso — solo existia en PROD.
+                         Codigo de LOCAL oficial SUNEDU de la sede (SL01 Lima, F01L01 Juliaca,
+                         F02L01 Tarapoto). Va en la ORG del campus, no en la persona: el local es
+                         de la sede. Los P-code son agnosticos a la sede -son el contrato con el
+                         Estado- pero los reportes exigen vincular que programas gestiona cada
+                         campus. Fuente autoritativa: resolucion de licenciamiento SUNEDU. -->
+                    <xsd:element maxOccurs="1" minOccurs="0" name="suneduLocalCode" type="xsd:string">
+                        <xsd:annotation><xsd:appinfo><a:displayName>Código de local SUNEDU</a:displayName><a:help>SL01 (Lima) | F01L01 (Juliaca) | F02L01 (Tarapoto)</a:help><a:indexed>true</a:indexed></xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+</xsd:sequence>
+            </xsd:complexType>
+
+        </xsd:schema>
+    </t:value>
+  </itemDelta>
+</objectModification>

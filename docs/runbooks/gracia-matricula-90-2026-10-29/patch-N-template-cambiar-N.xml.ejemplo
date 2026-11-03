@@ -1,0 +1,22 @@
+<objectModification
+    xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:sciback="urn:sciback:midpoint:person">
+  <itemDelta>
+    <t:modificationType>replace</t:modificationType>
+    <t:path>mapping[5849]/expression</t:path>
+    <t:value xsi:type="c:ExpressionType"><c:script><c:code>
+// N = DIAS DE GRACIA tras el fin real de la matricula. UNICO SITIO donde vive N.
+// Cambiarlo = PATCH replace de este &lt;code&gt; (item mapping[5849]) y recompute de los afectados.
+def N = 120
+def s = (studentEnrollmentLastEnd == null) ? '' : basic.stringify(studentEnrollmentLastEnd).trim()
+if (!(s ==~ /\d{4}-\d{2}-\d{2}.*/)) return null
+def fin = java.time.LocalDate.parse(s.substring(0, 10))
+// Alumno + personal/egresado: la gracia NO aplica (su estado lo sostiene 216/215; no cambian).
+def otro = [worker, alum].any { it != null &amp;&amp; basic.stringify(it).trim() != '' }
+return (otro ? fin : fin.plusDays(N)).toString()
+</c:code></c:script></t:value>
+  </itemDelta>
+</objectModification>
