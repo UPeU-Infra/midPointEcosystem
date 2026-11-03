@@ -1,0 +1,14 @@
+<!--
+  F3 §1 (dias antes, con 4.10.5): quita cleanupPolicy/objectResults de la SystemConfiguration.
+  `ninja verify` de 4.11 lo marca NECESSARY / fase BEFORE: el item desaparece en 4.11
+  (medido en el ensayo F1, 3-nov-2026). Valor en PROD: <maxAge>P7D</maxAge>.
+  Vuelta atras: sysconfig-cleanup-objectresults-rollback.xml
+-->
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+                    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3">
+    <itemDelta>
+        <t:modificationType>replace</t:modificationType>
+        <t:path>c:cleanupPolicy/c:objectResults</t:path>
+    </itemDelta>
+</objectModification>

@@ -40,32 +40,45 @@ IO=$W/initial-objects
 oids() { grep -o '^[0-9a-f-]\{36\}' "$1" | tr '\n' ' '; }
 
 # 1. Informe de TODO lo que 4.11 cambiaria (solo lectura), para el expediente de la ventana:
-$C run --rm --no-deps ninja initial-objects --dry-run --report --report-style DELTA \
+$C run --rm -T --no-deps ninja initial-objects --dry-run --report --report-style DELTA \
    -o /opt/midpoint/var/export/io-411-todo-delta.xml -O
 
 # 2. Informe de la lista blanca (solo lectura) y LECTURA del informe antes del paso 3:
-$C run --rm --no-deps ninja initial-objects --dry-run --report --report-style DELTA --no-merge \
+$C run --rm -T --no-deps ninja initial-objects --dry-run --report --report-style DELTA --no-merge \
    --oid $(oids $IO/aplicar-sin-merge.oids) -o /opt/midpoint/var/export/io-411-aplicar-delta.xml -O
 
 # 3. Aplicar la lista blanca:
-$C run --rm --no-deps ninja initial-objects --no-merge --oid $(oids $IO/aplicar-sin-merge.oids)
+$C run --rm -T --no-deps ninja initial-objects --no-merge --oid $(oids $IO/aplicar-sin-merge.oids)
 
 # Leer un informe desde el host:
 docker run --rm -v midpoint_midpoint_home:/v:ro --entrypoint cat postgres:16-bullseye /v/export/io-411-aplicar-delta.xml | less
 ```
 
-Comprobación antes del paso 3: en el informe del paso 2 **no puede aparecer** ningún OID de
-`nunca.oids` ni de `revisar-a-mano.oids`:
+Comprobación antes del paso 3: entre los objetos que el informe del paso 2 va a escribir
+(`objectToAdd`) **no puede haber** ningún OID de `nunca.oids` ni de `revisar-a-mano.oids`, y deben
+ser exactamente los 39 de la lista blanca. Se miran solo los `objectToAdd oid`: buscar los OID en
+todo el informe da falsos positivos por las **referencias** (F1, 3-nov: un `targetArchetypeRef` al
+330 dentro de la política «Require classification»).
 
 ```bash
 docker run --rm -v midpoint_midpoint_home:/v:ro --entrypoint cat postgres:16-bullseye /v/export/io-411-aplicar-delta.xml \
-  | grep -c -F -f <(grep -o '^[0-9a-f-]\{36\}' $IO/nunca.oids $IO/revisar-a-mano.oids | cut -d: -f2)   # debe dar 0
+  | grep -oE 'objectToAdd oid="[0-9a-f-]{36}"' | grep -oE '[0-9a-f-]{36}' | sort > /tmp/io-a-escribir.txt
+grep -c -F -f <(grep -oh '^[0-9a-f-]\{36\}' $IO/nunca.oids $IO/revisar-a-mano.oids) /tmp/io-a-escribir.txt   # debe dar 0
+comm -3 /tmp/io-a-escribir.txt <(grep -o '^[0-9a-f-]\{36\}' $IO/aplicar-sin-merge.oids | sort) | wc -l          # debe dar 0
 ```
 
 Comprobación después: `version` de los 39 objetos subió en 1 y los 10 de `nunca.oids`
 conservan su `version` (consulta en el runbook F3, paso 10).
 
-## ❓ Lo que solo el ensayo F1 puede confirmar
+## Lo que confirmó el ensayo F1 (3-nov-2026)
+
+- `--oid` acepta los 39 valores en una sola invocación: «39 added, 0 errors».
+- Informe completo: 51 merged, 113 unchanged, 6 errores de *merge not supported*, todos fuera de
+  la lista blanca (3 políticas y las orgs Projects/Teams/World).
+- Tiempos: 26 s (informe completo), 22 s (lista blanca), 25 s (aplicar).
+- Pendiente: la lectura uno a uno de los 35 de `revisar-a-mano.oids` (F4).
+
+## ❓ Planteado antes del ensayo
 
 - Que `--oid` acepta 39 valores separados por espacios en una sola invocación
   (`variableArity = true` en `InitialObjectsOptions` de v4.11.0, así que debería).

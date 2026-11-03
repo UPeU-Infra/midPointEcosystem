@@ -27,16 +27,23 @@ alias prod='sshpass -p "$MIDPOINT_PROD_PASS" ssh -o ProxyJump=none -o NumberOfPa
 1. `git pull` en PROD (ver F2 §1).
 2. Imágenes:
    `prod 'docker pull evolveum/midpoint:4.11.0-ubuntu && docker pull evolveum/midpoint:4.11.0-alpine'`.
-3. **Pre-upgrade check con la ninja de 4.11** contra la BD en marcha. Solo lee; `--user 0`
-   porque el volumen aún es de root:
+3. **Comprobación previa (nodos y esquema).** `ninja pre-upgrade-check` de 4.11 **no sirve**:
+   su repositorio se niega a abrir una BD en esquema 51 (exige 67), también con
+   `upgradeableSchemaAction=warn` (ensayo F1, H5). Se mide lo mismo por SQL:
    ```bash
-   prod 'cd /opt/midpoint && W=~/midPointEcosystem/upeu/infra/upgrade-4.11 && \
-     MP_VER=4.11.0 docker compose -f docker-compose.yml -f $W/docker-compose.upgrade-window.yml \
-     run --rm --no-deps --user 0 ninja pre-upgrade-check'
+   prod 'docker exec midpoint-midpoint_data-1 psql -U midpoint -d midpoint -tAc "select nameorig, convert_from(fullobject,'"'"'UTF8'"'"')::jsonb->'"'"'node'"'"'->'"'"'build'"'"'->>'"'"'version'"'"' from m_node; select * from m_global_metadata"'
    ```
-   Esperado: nodos en `4.10.5` y esquema 51/10 «matches supported».
-4. **`verify` de 4.11:** el informe se obtiene en F1, sobre la BD del lab ya migrada (mismos
-   datos). Hace falta **0 `CRITICAL`**. Los `NECESSARY` se revisan uno a uno.
+   Esperado: **un solo** nodo, en `4.10.5`, y `51` / `10`.
+4. **`verify` de 4.11** (F1, 3-nov): **0 `CRITICAL`**, 1 `NECESSARY`, 288 `OPTIONAL`. El
+   `NECESSARY` es `SystemConfiguration` → `cleanupPolicy/objectResults` (eliminado en 4.11). Se
+   quita **con 4.10.5 en marcha**, fuera de ventana (probado en F1 ida y vuelta):
+   ```bash
+   curl -sS -o /dev/null -w '%{http_code}\n' -u administrator:$MP_REST_PASS -X PATCH -H 'Content-Type: application/xml' \
+     --data-binary @$W/sysconfig-cleanup-objectresults-delete.xml $REST/systemConfigurations/00000000-0000-0000-0000-000000000001
+   ```
+   `204`, `version` +1 y `?options=raw` sin `<objectResults>`. Vuelta atrás:
+   `sysconfig-cleanup-objectresults-rollback.xml` (repone `P7D`). Si se olvidara, 4.11 arranca
+   igual (medido), pero el `verify` lo exige.
 5. **Espacio:** borrar la copia de F2 (`bd-copia-local.sh borrar midpoint_pre_4102`) y comprobar
    con `estado` que hay libre ≥ tamaño de `midpoint` + 8 GB.
 6. **Muestra fija** para la simulación, generada una vez y reutilizada en PRE y POST:
@@ -60,24 +67,24 @@ REST=http://localhost:8080/midpoint/ws/rest
 | 0 | **Hora** | `date -u` | 16:30–17:00 UTC | — |
 | 1 | Fotos PRE | `snapshot-estado.sql > ~/upgrade-4.11/snap-pre-F3.tsv` (como en F2), `$W/ldap-connectorref.sh show > ~/upgrade-4.11/conectores-pre-F3.txt`, `curl -s -u administrator:$MP_REST_PASS "$REST/systemConfigurations/00000000-0000-0000-0000-000000000001?options=raw" > ~/upgrade-4.11/sysconfig-pre-F3.xml && chmod 600 ~/upgrade-4.11/sysconfig-pre-F3.xml` | ficheros no vacíos | 2 min |
 | 2 | Suspender tareas | `$W/tareas-ventana.sh suspender` | 8 `SUSPENDED`, ninguna `RUNNING` | 1 min |
-| 3 | **SIM PRE** (4.10.5) | `$W/muestra-sim.sh tarea pre-F3 ~/upgrade-4.11/muestra.oids > ~/upgrade-4.11/sim-pre.xml` y `curl -sS -u administrator:$MP_REST_PASS -X POST -H 'Content-Type: application/xml' --data-binary @$HOME/upgrade-4.11/sim-pre.xml -D - -o /dev/null $REST/tasks \| grep -i '^location'` → apuntar el OID (`SIM_PRE`) | La tarea termina (`tareas-ventana.sh estado` no la muestra `RUNNING`; GUI: resultado `SUCCESS`) | ❓ F1 |
+| 3 | **SIM PRE** (4.10.5) | `$W/muestra-sim.sh tarea pre-F3 ~/upgrade-4.11/muestra.oids > ~/upgrade-4.11/sim-pre.xml` y `curl -sS -u administrator:$MP_REST_PASS -X POST -H 'Content-Type: application/xml' --data-binary @$HOME/upgrade-4.11/sim-pre.xml -D - -o /dev/null $REST/tasks \| grep -i '^location'` → apuntar el OID (`SIM_PRE`) | La tarea termina (`tareas-ventana.sh estado` no la muestra `RUNNING`; GUI: resultado `SUCCESS`) | F1: 73 s (73 usuarios) |
 | 4 | Parar midPoint | `docker compose stop midpoint_server` | sin `midpoint_server` | 15 s |
-| 5 | **Copia local de la BD** | `$W/bd-copia-local.sh crear 4105` | «OK: la copia coincide» | ❓ F1 |
+| 5 | **Copia local de la BD** | `$W/bd-copia-local.sh crear 4105` | «OK: la copia coincide» | ~5 min (F1: 5 GB en 59 s) |
 | 6 | Copia fuera del host | `~/midPointEcosystem/upeu/scripts/backup-midpoint-s3.sh --pre-upgrade f3-4105` | `.sha256` del dump y del home en S3 | ~10 min |
 | 7 | Copia local del home | como F2 paso 6, a `~/upgrade-4.11/home-pre-F3.tgz` | `./keystore.jceks` listado | 30 s |
 | 8 | **`config.xml`** (R8) | `$W/config-xml-safe-scripting.sh --apply` y luego `--check` | `safeScriptingLanguagesOnly … : false` | 10 s |
-| 9 | **Propietario UID 1000** (R1) | `docker run --rm -v midpoint_midpoint_home:/var --user 0 --entrypoint chown postgres:16-bullseye -R 1000:1000 /var` | `docker run --rm -v midpoint_midpoint_home:/v --user 1000:1000 --entrypoint sh postgres:16-bullseye -c 'cat /v/keystore.jceks >/dev/null && test -w /v/log && test -w /v && echo LEGIBLE-Y-ESCRIBIBLE; find /v -xdev ! -user 1000 \| head -3'` → `LEGIBLE-Y-ESCRIBIBLE` y ninguna ruta | <1 min |
+| 9 | **Propietario UID 1000** (R1) | `docker run --rm -v midpoint_midpoint_home:/v --user 0 --entrypoint chown postgres:16-bullseye -R 1000:1000 /v` (en `/v`, **no** en `/var`: la imagen `postgres` declara `VOLUME /var/lib/postgresql/data` y crearía esa ruta dentro del home, F1 H6) | `docker run --rm -v midpoint_midpoint_home:/v --user 1000:1000 --entrypoint sh postgres:16-bullseye -c 'cat /v/keystore.jceks >/dev/null && test -w /v/log && test -w /v && echo LEGIBLE-Y-ESCRIBIBLE; find /v -xdev ! -user 1000 \| head -3'` → `LEGIBLE-Y-ESCRIBIBLE` y ninguna ruta | <1 min |
 | 10 | Versión en `.env` | `cp -p .env .env.bak-pre-4110 && sed -i 's/^MP_VER=4.10.5$/MP_VER=4.11.0/' .env && grep '^MP_VER' .env` | `MP_VER=4.11.0` | — |
-| 11 | **Esquema** (R3) | `$C3 run --rm --no-deps ninja run-sql --upgrade --mode repository` y después `--mode audit` | «Scripts executed successfully»; `select * from m_global_metadata` → **67 y 16** | ❓ F1 (cambios 52–67 de repo; el 58 añade 4 columnas a `m_user`) |
+| 11 | **Esquema** (R3) | `$C3 run --rm -T --no-deps ninja run-sql --upgrade --mode repository` y después `--mode audit` | «Scripts executed successfully»; `select * from m_global_metadata` → **67 y 16** | F1: 8 s + 7 s (sin datos de auditoría ❓ en PROD) |
 | 12 | Auditoría con payload (R4) | `docker exec midpoint-midpoint_data-1 psql -U midpoint -d midpoint -tAc "select count(*) filter (where relname ~ '^ma_audit_event_[0-9]{6}\$'), count(*) filter (where relname ~ '^ma_audit_payload_[0-9]{6}\$') from pg_class where relkind='r'"` | mismo número de particiones `event` que `payload` | — |
-| 13 | **Initial objects** | los 3 comandos de [`initial-objects/README.md`](../../upeu/infra/upgrade-4.11/initial-objects/README.md) con `C="$C3"` | el informe del paso 2 no contiene OIDs de `nunca`/`revisar`; tras aplicar, los 39 suben `version` en 1 y los 10 de `nunca.oids` no cambian (consulta abajo) | ❓ F1 |
-| 14 | **Arrancar 4.11** (planificador parado) | `$C3 up -d midpoint_server`; esperar `healthy` como en F2 | versión `4.11.0` en `m_node`; `docker logs midpoint_server 2>&1 \| grep -E ' ERROR \|not writable\|TrustDescriptor\|SubscriptionCompliance\|safeScripting'` sin nada nuevo respecto a F1 | ❓ F1 |
+| 13 | **Initial objects** | los 3 comandos de [`initial-objects/README.md`](../../upeu/infra/upgrade-4.11/initial-objects/README.md) con `C="$C3"` | el informe del paso 2 no contiene OIDs de `nunca`/`revisar` **como `objectToAdd`** (ver README); tras aplicar, los 39 suben `version` en 1 y los 10 de `nunca.oids` no cambian (consulta abajo) | F1: 26 + 22 + 25 s; 39/39 +1, 10/10 y 35/35 intactos |
+| 14 | **Arrancar 4.11** (planificador parado) | `$C3 up -d midpoint_server`; esperar `healthy` como en F2 | versión `4.11.0` en `m_node`; `docker logs midpoint_server 2>&1 \| grep -E ' ERROR \|not writable\|TrustDescriptor\|SubscriptionCompliance\|safeScripting'` sin nada nuevo respecto a F1 (F1: solo el `ERROR` preexistente del archetype «Project», H11) | F1: 75 s |
 | 15 | **LDAP 3.10** (R5) | `$W/ldap-connectorref.sh show`, `apply 3.10`, `test` | 3.10 `available=t`, PATCH verificado, test `success` | 2 min |
-| 16 | Resto de conectores | `docker exec midpoint-midpoint_data-1 psql -U midpoint -d midpoint -tAc "select connectorversion, available, (convert_from(fullobject,'UTF8')::jsonb->'connector') ? 'discoveryTimestamp' from m_connector where oid in ('8c090235-413a-41d3-bba3-11ec9ea776fd','0ae9cbcd-0b39-4b5e-82a5-e0b8ea8a6c95','e4cd8ed3-2e91-48d9-abb7-32090a5e8849','01a9df66-90e9-4fd6-b296-bbe28f2b6b0b')"` | Koha 1.7.0, Zammad 0.2.0, ScriptedSQL 2.2.10 y msgraph 1.2.0.0 con `available=t` y `discoveryTimestamp` presente (desde hoy cuentan los 90 días, ver README §2) | — |
+| 16 | Resto de conectores | `docker exec midpoint-midpoint_data-1 psql -U midpoint -d midpoint -tAc "select connectorversion, available, (convert_from(fullobject,'UTF8')::jsonb->'connector') ? 'discoveryTimestamp' from m_connector where oid in ('51e26e79-862c-4f66-9b76-0a29e3f25b6e','0ae9cbcd-0b39-4b5e-82a5-e0b8ea8a6c95','e4cd8ed3-2e91-48d9-abb7-32090a5e8849','01a9df66-90e9-4fd6-b296-bbe28f2b6b0b')"` | Koha **1.7.1** (el que usa el recurso; F1 H9), Zammad 0.2.0, ScriptedSQL 2.2.10 y msgraph 1.2.0.0 con `available=t` y `discoveryTimestamp` presente (desde hoy cuentan los 90 días, ver README §2) | — |
 | 17 | Test de los 12 recursos | `$W/test-recursos.sh` | `12/12 success` | ~2 min |
 | 18 | **`privilegedPrincipal`** (R10) | `curl -sS -o /dev/null -w '%{http_code}\n' -u administrator:$MP_REST_PASS -X PATCH -H 'Content-Type: application/xml' --data-binary @$W/sysconfig-privileged-principal-patch.xml $REST/systemConfigurations/00000000-0000-0000-0000-000000000001` | `204`; `version` +1; `?options=raw` contiene `<privilegedPrincipal>permissive</privilegedPrincipal>` y **no** contiene `defaultScriptLanguage` | 1 min |
 | 19 | Arranque normal (planificador en marcha, UID 1000) | `docker compose -f docker-compose.yml -f $W/docker-compose.4.11.yml up -d`; esperar `healthy` | `healthy`; `data_init` (4.11-alpine, UID 1000) dice «Repository init is not needed» | ~4 min ❓ |
-| 20 | **SIM POST** y comparación | como el paso 3 con etiqueta `post-F3` → `SIM_POST`; `$W/muestra-sim.sh comparar $SIM_PRE $SIM_POST` | `IGUALES`, o cada diferencia explicada (no por la versión) | ❓ F1 |
+| 20 | **SIM POST** y comparación | como el paso 3 con etiqueta `post-F3` → `SIM_POST`; `$W/muestra-sim.sh comparar $SIM_PRE $SIM_POST` | `IGUALES`, o cada diferencia explicada (no por la versión) | F1: 83 s; IGUALES (17 MODIFIED preexistentes) |
 | 21 | Canarios reales | como F2 paso 13 (grupos DTI de LDAP y ausencias); si quedan más de 45 min, también `recon-oracle-lamb-trabajadores-daily` (~12 min: ScriptedSQL + outbounds a LDAP y Koha con 4.11) | `SUCCESS`; 0 errores de expresión; `pendingOperationCount=0` | 5–20 min |
 | 22 | Reanudar el resto | `tareas-ventana.sh reanudar` de las demás (sin `ejecutar`) | 8 `RUNNABLE` | 1 min |
 | 23 | Foto POST | `snapshot-estado.sql > snap-post-F3.tsv`; `diff` con la PRE | solo cambios explicados por los canarios | 2 min |
@@ -130,4 +137,5 @@ El esquema 67/16 **no se revierte**: se vuelve a la base copiada en el paso 5.
 | R6 | Recursos, tareas | `test-recursos.sh` 12/12; reanudar las 8 | como antes de la ventana |
 
 Último recurso: el dump `s3://…/midpoint/upgrade/f3-4105/` (sin datos de auditoría; ver F2 §4).
-Tiempos medidos en F1: ❓ (rellenar).
+Tiempos medidos en F1 (3-nov, lab): R1–R5 **86 s**, más ~3 min del test de recursos. Detalle en
+[`F1-RESULTADO-2026-11-03.md`](F1-RESULTADO-2026-11-03.md).

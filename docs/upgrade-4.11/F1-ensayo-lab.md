@@ -1,5 +1,9 @@
 # F1 · Ensayo completo en el laboratorio (192.168.15.150)
 
+> **Ejecutado el 3-nov-2026 → [`F1-RESULTADO-2026-11-03.md`](F1-RESULTADO-2026-11-03.md)** (tiempos, hallazgos H1–H12 y
+> criterio de salida). Diferencias con este texto: puerto **8096** (el 8085 lo usa el Zammad del lab),
+> clon reducido (`LAB_MP_MEM_*`, `LAB_PG_*`) y **Oracle inalcanzable desde el `.150`**.
+
 **Objetivo:**
 
 - Ejecutar sobre una copia de PROD **exactamente** los pasos de [F2](F2-ventana-4.10.5.md) y

@@ -1,0 +1,10 @@
+<!-- Vuelta atras de sysconfig-cleanup-objectresults-delete.xml (solo con 4.10.x). -->
+<objectModification xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+                    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3">
+    <itemDelta>
+        <t:modificationType>replace</t:modificationType>
+        <t:path>c:cleanupPolicy/c:objectResults</t:path>
+        <t:value xsi:type="c:CleanupPolicyType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><c:maxAge>P7D</c:maxAge></t:value>
+    </itemDelta>
+</objectModification>

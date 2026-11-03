@@ -101,3 +101,11 @@ ITSM con kind `work`, políticas de foco por actividad. Se evalúan en F5 o desp
 - **Entra / M365:** ya usamos el conector del catálogo (`MSGraphConnector 1.2.0.0`).
 - **«Oracle Database»** del catálogo (`OracleConnector 1.1.0.0`) gestiona **cuentas de usuario de la propia base Oracle**;
   no sirve para leer los datos de LAMB (personas, matrículas, contratos). Seguimos con ScriptedSQL.
+
+
+## Estado (3-nov-2026)
+
+- **F1 hecho** en el lab: F2 y F3 completos, dos vueltas atrás (245 s y 86 s), SIM **IGUALES** en
+  4.10.2 / 4.10.5 / 4.11.0. Resultado y hallazgos: [`F1-RESULTADO-2026-11-03.md`](F1-RESULTADO-2026-11-03.md).
+- Sin ensayar (Oracle inalcanzable desde el lab y sin escritura real): pasan al canario de F3, paso 21.
+- Nuevo en F3 §1: quitar `cleanupPolicy/objectResults` (único `NECESSARY` del `verify`).

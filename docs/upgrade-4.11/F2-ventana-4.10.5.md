@@ -72,15 +72,15 @@ Cada paso lleva su tiempo de referencia (de F1 ❓ o de la subida de mayo). Apun
 | 1 | Foto PRE | `docker exec -i midpoint-midpoint_data-1 psql -U midpoint -d midpoint < ~/midPointEcosystem/docs/runbooks/activacion-vinculo-vivo-2026-10-22/snapshot-estado.sql > ~/upgrade-4.11/snap-pre-F2.tsv` y `$W/ldap-connectorref.sh show > ~/upgrade-4.11/conectores-pre-F2.txt` | `wc -l` ≈ número de usuarios (66.1xx) | 1 min |
 | 2 | Suspender tareas | `$W/tareas-ventana.sh suspender` | `estado`: las 8 `SUSPENDED`, **ninguna `RUNNING`** (si Koha sigue corriendo, esperar) | 1 min |
 | 3 | Parar midPoint (Postgres sigue) | `docker compose stop midpoint_server` | `docker ps` sin `midpoint_server`; `bd-copia-local.sh estado` con 0 conexiones a `midpoint` | 15 s |
-| 4 | **Copia local de la BD** (vuelta atrás) | `$W/bd-copia-local.sh crear 4102` | «OK: la copia coincide» y el ajuste `enable_partitionwise_join` copiado | ❓ F1 (FILE_COPY de ~30–45 GB) |
+| 4 | **Copia local de la BD** (vuelta atrás) | `$W/bd-copia-local.sh crear 4102` | «OK: la copia coincide» y el ajuste `enable_partitionwise_join` copiado | ~5 min (F1: 5 GB en 56 s ≈ 90 MB/s; PROD 26 GB el 3-nov) |
 | 5 | Copia fuera del host | `~/midPointEcosystem/upeu/scripts/backup-midpoint-s3.sh --pre-upgrade f2-4102` | «FIN backup pre-upgrade … OK»; `.sha256` del dump y del home en `s3://…/midpoint/upgrade/f2-4102/` | ~10 min |
 | 6 | Copia local del home | `docker run --rm -v midpoint_midpoint_home:/v:ro --entrypoint tar postgres:16-bullseye -C /v -czf - --exclude=./log --exclude=./trace . > ~/upgrade-4.11/home-pre-F2.tgz && chmod 600 ~/upgrade-4.11/home-pre-F2.tgz && tar -tzf ~/upgrade-4.11/home-pre-F2.tgz \| grep -x './keystore.jceks'` | imprime `./keystore.jceks` | 30 s |
 | 7 | Versión nueva en `.env` | `cp -p .env .env.bak-pre-4105 && sed -i 's/^MP_VER=4.10.2$/MP_VER=4.10.5/' .env && grep '^MP_VER' .env` | `MP_VER=4.10.5` (una sola línea) | — |
-| 8 | Comprobación de esquema | `$C run --rm --no-deps ninja run-sql --upgrade --mode repository` y luego `--mode audit`; después `docker exec midpoint-midpoint_data-1 psql -U midpoint -d midpoint -tAc "select * from m_global_metadata"` | «Scripts executed successfully»; **51 y 10** (sin cambios) | <1 min |
+| 8 | Comprobación de esquema | `$C run --rm -T --no-deps ninja run-sql --upgrade --mode repository` y luego `--mode audit`; después `docker exec midpoint-midpoint_data-1 psql -U midpoint -d midpoint -tAc "select * from m_global_metadata"` | «Scripts executed successfully»; **51 y 10** (sin cambios) | <1 min |
 | 9 | Arrancar 4.10.5 (planificador parado, `data_init` neutralizado) | `$C up -d midpoint_server` y `until [ "$(docker inspect -f '{{.State.Health.Status}}' midpoint_server)" = healthy ]; do sleep 10; done; date -u` | `healthy`; `docker logs midpoint_server 2>&1 \| grep -c ' ERROR '` sin errores nuevos de arranque; versión: `docker exec midpoint-midpoint_data-1 psql -U midpoint -d midpoint -tAc "select convert_from(fullobject,'UTF8')::jsonb->'node'->'build'->>'version' from m_node"` → `4.10.5` | ~4 min (mayo) |
 | 10 | **Conector LDAP 3.9.4** | `$W/ldap-connectorref.sh show`, luego `$W/ldap-connectorref.sh apply 3.9.4` y `$W/ldap-connectorref.sh test` | `show`: 3.9.4 `available=t` y 3.9.2 `available=f`. `apply`: «OK: connectorRef -> 3.9.4 verificado» (versión +1, GET raw, `<schema>` presente). `test`: ESTADO GLOBAL `success` | 2 min |
 | 11 | Test de los 12 recursos | `$W/test-recursos.sh` | `RESULTADO: 12/12 success` | ~2 min |
-| 12 | Volver al arranque normal (planificador en marcha) | `docker compose up -d` (solo el compose base) y esperar `healthy` como en 9 | `healthy`; el log trae «Scheduler started» ❓ (texto exacto en F1); `data_init` ejecutó su lógica normal y dijo «Repository init is not needed» | ~4 min |
+| 12 | Volver al arranque normal (planificador en marcha) | `docker compose up -d` (solo el compose base) y esperar `healthy` como en 9 | `healthy`; el log **no** trae una línea de «scheduler» (F1): comprobar que el planificador corre con `tareas-ventana.sh estado`; `data_init` ejecutó su lógica normal y dijo «Repository init is not needed» | ~4 min |
 | 13 | Canarios | `$W/tareas-ventana.sh reanudar d71a0003-0000-4000-a000-d71a00000003` y `ejecutar` la misma (LDAP grupos DTI, ~1 s). Después, `reanudar` + `ejecutar a1c0de00-0000-4000-8000-00000000a05e` (ausencias, ~2 min) | Ambas terminan `SUCCESS`; 0 errores de expresión en el log | 5 min |
 | 14 | Reanudar el resto | `reanudar` las otras 6 (Entra, DTI teams, trabajadores, estudiantes, egresados, Koha), **sin `ejecutar`**: corren mañana a su hora | `estado`: 8 `RUNNABLE` | 1 min |
 | 15 | Foto POST y cierre | `snapshot-estado.sql > snap-post-F2.tsv; diff snap-pre-F2.tsv snap-post-F2.tsv \| head` | Diferencias **solo** explicables por los dos canarios (ausencias) | 2 min |
@@ -106,7 +106,7 @@ la BD de antes, renombrando, que es inmediato.
 | # | Paso | Comando | Verificación |
 |---|---|---|---|
 | R1 | Parar | `docker compose stop midpoint_server` | sin `midpoint_server` |
-| R2 | BD de antes | `$W/bd-copia-local.sh restaurar 4102` | huella = la del paso 4; la fallida queda como `midpoint_fallida_<ts>` |
+| R2 | BD de antes | `$W/bd-copia-local.sh restaurar 4102` (pide escribir `SI`; si sale «ABORTO», **no** se ha restaurado nada) | huella = la del paso 4; la fallida queda como `midpoint_fallida_<ts>` |
 | R3 | Versión | `cp -p .env.bak-pre-4105 .env && grep '^MP_VER' .env` | `MP_VER=4.10.2` |
 | R4 | Home | Solo si 4.10.5 cambió algo en el volumen (no se espera): `docker run --rm -i -v midpoint_midpoint_home:/v --user 0 --entrypoint tar postgres:16-bullseye -C /v -xzf - < ~/upgrade-4.11/home-pre-F2.tgz` | `keystore.jceks` presente |
 | R5 | Arrancar 4.10.2 | `docker compose up -d`, esperar `healthy` | versión `4.10.2` en `m_node`; `ldap-connectorref.sh show` → 3.9.2 en uso y `available=t` |
@@ -116,4 +116,5 @@ la BD de antes, renombrando, que es inmediato.
 (runbook de backup, §Restaurar, **sin `-j`**). Ese dump **no lleva datos de auditoría**: la
 auditoría posterior al último export mensual se perdería. Es el último recurso.
 
-Tiempos de la vuelta atrás medidos en F1: ❓ (rellenar).
+Tiempos de la vuelta atrás medidos en F1 (3-nov, lab): **245 s** de R1 a R6, de ellos 178 s del
+test de recursos. Detalle en [`F1-RESULTADO-2026-11-03.md`](F1-RESULTADO-2026-11-03.md).
