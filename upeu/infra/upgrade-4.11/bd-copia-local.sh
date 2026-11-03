@@ -18,7 +18,9 @@
 # ORDENES
 #   estado                    solo lectura: bases, tamanos, disco libre, conexiones
 #   crear     <etiqueta>      copia midpoint -> midpoint_pre_<etiqueta> (midPoint PARADO)
-#   restaurar <etiqueta>      midpoint -> midpoint_fallida_<ts>; midpoint_pre_<etiqueta> -> midpoint
+#   restaurar <etiqueta> [--yes]
+#                             midpoint -> midpoint_fallida_<ts>; midpoint_pre_<etiqueta> -> midpoint
+#                             (pide escribir SI; sin terminal, o sin --yes, ABORTA con mensaje)
 #   borrar    <nombre>        DROP DATABASE <nombre> (nunca 'midpoint'); pide confirmacion
 #
 # Corre en el HOST (docker exec al contenedor de Postgres, conectando a la base
@@ -90,7 +92,7 @@ restaurar)
     mp_parado
     existe "$SRC" || die "no existe $SRC"
     echo "Se renombrara: $DB -> $FAILED ; $SRC -> $DB"
-    if [[ "${3:-}" != "--yes" ]]; then read -r -p "¿Seguir? escribe SI: " ok; [[ "$ok" == "SI" ]] || die "cancelado"; fi
+    if [[ "${3:-}" != "--yes" ]]; then read -r -p "¿Seguir? escribe SI: " ok || ok=""; [[ "$ok" == "SI" ]] || die "cancelado"; fi
     t0=$(date +%s)
     q -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname IN ('$DB','$SRC') AND pid <> pg_backend_pid();" >/dev/null
     q -c "ALTER DATABASE ${DB} RENAME TO ${FAILED};"
@@ -103,7 +105,7 @@ borrar)
     [[ "$NAME" == "$DB" || "$NAME" == "postgres" || "$NAME" == template* ]] && die "no se borra '$NAME'"
     [[ "$NAME" =~ ^${DB}_(pre|fallida)_[a-z0-9_]+$ ]] || die "solo se borran ${DB}_pre_* o ${DB}_fallida_*"
     existe "$NAME" || die "no existe $NAME"
-    read -r -p "DROP DATABASE $NAME ($(q -c "SELECT pg_size_pretty(pg_database_size('$NAME'));")). Escribe el nombre para confirmar: " ok
+    read -r -p "DROP DATABASE $NAME ($(q -c "SELECT pg_size_pretty(pg_database_size('$NAME'));")). Escribe el nombre para confirmar: " ok || ok=""
     [[ "$ok" == "$NAME" ]] || die "cancelado"
     q -c "DROP DATABASE ${NAME};"; echo "Borrada $NAME. Libres: $(libre_gb) GB"
     ;;
