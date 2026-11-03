@@ -99,3 +99,48 @@ La skill `iga-canonical-standards` recomienda explícitamente `eduPersonEntitlem
 
 **No son excluyentes:** el nivel sirve para reportería y el entitlement para la decisión de tarifa.
 Pero si solo se va a aplicar uno, el entitlement es más barato, más estándar y expone menos.
+
+---
+
+# Anexo — vigencia académica (puntos 1 y 2 del encargo), medido el 3-nov-2026
+
+La gracia de matrícula **ya está decidida y desplegada**: N = 90 días, en PROD desde el 30-oct
+(schema canónico **v35**). No hay que calcular nada en el recurso LDAP: los dos atributos existen
+en el foco, namespace `urn:sciback:midpoint:person`, `xsd:string` `YYYY-MM-DD`, monovaluados.
+
+| Ítem del foco | `m_ext_item` | Qué es |
+|---|---|---|
+| `studentEnrollmentLastEnd` (G1) | **348** | Fin **real** de matrícula, con memoria. Sube con la fuente y no baja cuando un semestre sale del horizonte del feed |
+| `studentEnrollmentEffectiveEnd` (G2) | **347** | Fin **efectivo** = G1 + 90 días. Si hay otro vínculo vivo (215/216), G2 = G1 sin gracia. **Este es el que se publica como vigencia académica** |
+| `liveAffiliationStudent` | **217** | El vínculo vivo. Es lo que sostiene `eduPersonAffiliation=student` |
+
+**No usar `terminationDateStudent` como fin efectivo:** retrocede cuando un semestre sale del
+horizonte del feed (medido por la sesión de la gracia: 21 de 46 casos tenían el 30-jun en vez del
+28-oct).
+
+## 🔴 Un G2 futuro NO prueba matrícula viva — medido
+
+| | |
+|---|---|
+| Users con G1 y G2 poblados | **30.240** (incluye egresados: los atributos guardan memoria) |
+| Users con `liveAffiliationStudent` (217) | **18.477** |
+| G2 poblado **sin** 217 | **11.767** |
+| **G2 en el futuro y sin 217** | **75** |
+
+Si el HIS decidiera la cobertura solo con «`studentEnrollmentEffectiveEnd` ≥ hoy», **esas 75
+personas pasarían como aseguradas sin tener matrícula viva**. Salieron del feed y G2 conserva la
+memoria.
+
+**Consecuencia para el diseño del outbound:** publicar G2 **condicionado a que exista el 217**, no
+G2 crudo. Así el atributo del LDAP no puede mentir por sí solo y el HIS puede comparar una sola
+fecha sin conocer la regla. La alternativa —publicar G2 siempre y exigir al HIS que además
+compruebe `eduPersonAffiliation=student`— funciona igual, pero reparte la regla entre dos sistemas.
+
+## Avisos de despliegue
+
+- **`main` todavía no tiene estos atributos.** Están en PROD y en la rama local
+  `fix/gracia-matricula-90` (sin push): `canonical/schemas/sciback-person-v1.0.xml` y
+  `UserTemplate-Person-Base.xml`, commits `25a5f5f` y `27c0461`. **Leer la definición de PROD por
+  REST, nunca la de `main`.**
+- Igual que `studyLevel`: **nada en el recurso LDAP hasta cerrar F3** (4.11.0, el `connectorRef`
+  vuelve a cambiar al LDAP 3.10).
