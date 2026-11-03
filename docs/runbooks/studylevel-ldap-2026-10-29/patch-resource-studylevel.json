@@ -1,0 +1,30 @@
+{
+  "objectModification": {
+    "itemDelta": [
+      {
+        "modificationType": "add",
+        "path": "schemaHandling/objectType[62]/attribute",
+        "value": {
+          "ref": "ri:scibackStudyLevel",
+          "displayName": "Nivel del programa de la matrícula vigente — tarifa del Centro Médico",
+          "description": "pregrado | posgrado | doctorado | segunda-especialidad | cepre | idiomas | conservatorio | diplomatura. Lo lee el HIS (OpenMRS) al admitir al paciente. Sin default: nivel desconocido deja el atributo ausente.",
+          "outbound": {
+            "name": "studyLevel-to-scibackStudyLevel",
+            "strength": "strong",
+            "source": {
+              "path": {
+                "@context": { "sciback": "urn:sciback:midpoint:person" },
+                "@value": "$focus/extension/sciback:studyLevel"
+              }
+            },
+            "expression": {
+              "script": {
+                "code": "\n// Normaliza el nivel de Oracle a vocabulario controlado (minusculas, sin tildes ni espacios),\n// mismo criterio que scibackAbsenceType. Medido en PROD 29-oct-2026 sobre 17.814 estudiantes:\n//   Pregrado 15.173 · Segunda Especialidad 978 · Posgrado 603 · CEPRE 462 · Idiomas 238\n//   Conservatorio de Musica 234 · Doctorado 61 · Diplomatura 35 · Tesis 27\n//   (+3 sucios: 'pregrado', 'posgrado' y 1 vacio — los absorbe el toLowerCase)\n// SIN DEFAULT a proposito: un nivel no previsto deja el atributo AUSENTE. Imputar un nivel\n// decidiria mal una tarifa de salud (precedente: el getOrDefault(v,'LIMA') del campus).\nif (studyLevel == null) return null\ndef v = studyLevel.toString().trim().toLowerCase()\nif (v == '') return null\nv = java.text.Normalizer.normalize(v, java.text.Normalizer.Form.NFD).replaceAll('\\\\p{M}', '')\ndef mapa = [\n  'pregrado'                : 'pregrado',\n  'posgrado'                : 'posgrado',\n  'doctorado'               : 'doctorado',\n  'segunda especialidad'    : 'segunda-especialidad',\n  'cepre'                   : 'cepre',\n  'idiomas'                 : 'idiomas',\n  'conservatorio de musica' : 'conservatorio',\n  'diplomatura'             : 'diplomatura',\n  'tesis'                   : 'tesis'\n]\nreturn mapa[v]\n"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

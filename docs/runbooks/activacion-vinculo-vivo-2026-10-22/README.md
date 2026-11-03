@@ -124,15 +124,15 @@ IDs nuevos elegidos > máximo actual (template 5829, e22 3378, e23 2764): **tras
 ```bash
 # Mac. Previo: Alberto revisa/mergea la rama; push; luego en PROD:
 source ~/.secrets/midpoint-upeu.env
-SSH() { sshpass -p "$MIDPOINT_PROD_PASS" ssh -o ProxyJump=none -o NumberOfPasswordPrompts=1 -o StrictHostKeyChecking=no juansanchez@192.168.15.166 "$@"; }
+SSH() { SSHPASS="$MIDPOINT_PROD_PASS" sshpass -e ssh -o ProxyJump=none -o NumberOfPasswordPrompts=1 -o StrictHostKeyChecking=no juansanchez@192.168.15.166 "$@"; }
 RB='~/midPointEcosystem/docs/runbooks/activacion-vinculo-vivo-2026-10-22'
-CR="MIDPOINT_ADMIN_USER='$MIDPOINT_ADMIN_USER' MIDPOINT_ADMIN_PASS='$MIDPOINT_ADMIN_PASS'"
+cred() { printf '%s:%s\n' "$MIDPOINT_ADMIN_USER" "$MIDPOINT_ADMIN_PASS"; }   # rest.sh la lee por stdin: nunca en argv
 SSH "cd ~/midPointEcosystem && git pull --ff-only && git log --oneline -1"
 ```
 
 **5.1 Respaldo** (Permission denied ⇒ esperar 90 s, 1 reintento):
 ```bash
-SSH "cd $RB && $CR ./backup-pre.sh"          # template/resources raw + estado-pre.tsv.gz + SHA256SUMS
+cred | SSH "cd $RB && ./backup-pre.sh"          # template/resources raw + estado-pre.tsv.gz + SHA256SUMS
 ./ldap-afectados.sh 168 > /tmp/ldap-168-pre.tsv; ./ldap-afectados.sh 169 > /tmp/ldap-169-pre.tsv; diff /tmp/ldap-16{8,9}-pre.tsv
 ```
 **5.2 SIM-0** (config producción, antes del paso 1) — separa los cambios latentes (lección j3b):
@@ -145,10 +145,10 @@ SSH "docker exec -i -e PGOPTIONS='-c default_transaction_read_only=on' midpoint-
 ```
 **5.3 Paso 1** (inerte) y verificación por objeto — un 204 no prueba nada (R8):
 ```bash
-SSH "cd $RB && $CR ./rest.sh objectTemplates 855caaca-68c4-4f7f-8ff8-b4e35dd7d390 patch-01-template-proposed.xml"   # 131 -> 132
-SSH "cd $RB && $CR ./rest.sh resources 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22 patch-02-e22-reaction-proposed.xml"       # 205 -> 206
-SSH "cd $RB && $CR ./rest.sh resources 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23 patch-03-e23-reaction-proposed.xml"       # 211 -> 212
-SSH "cd $RB && $CR ./rest.sh resources 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21 patch-04-e21-estado-deprecated.json"      # 330 -> 331
+cred | SSH "cd $RB && ./rest.sh objectTemplates 855caaca-68c4-4f7f-8ff8-b4e35dd7d390 patch-01-template-proposed.xml"   # 131 -> 132
+cred | SSH "cd $RB && ./rest.sh resources 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22 patch-02-e22-reaction-proposed.xml"       # 205 -> 206
+cred | SSH "cd $RB && ./rest.sh resources 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e23 patch-03-e23-reaction-proposed.xml"       # 211 -> 212
+cred | SSH "cd $RB && ./rest.sh resources 6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e21 patch-04-e21-estado-deprecated.json"      # 330 -> 331
 G() { SSH "curl -sf -u '$MIDPOINT_ADMIN_USER:$MIDPOINT_ADMIN_PASS' -H 'Accept: application/xml' 'http://localhost:8080/midpoint/ws/rest/$1?options=raw'" > /tmp/$2.xml; }
 G objectTemplates/855caaca-68c4-4f7f-8ff8-b4e35dd7d390 tpl && ./verificar.py /tmp/tpl.xml 5831=proposed 5833=proposed 5835=proposed 5836=proposed 5772=deprecated 5770=active
 G resources/6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22 e22 && ./verificar.py /tmp/e22.xml 3379=proposed 3355=deprecated

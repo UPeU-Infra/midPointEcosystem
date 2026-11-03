@@ -1,0 +1,12 @@
+<objectModification
+    xmlns="http://midpoint.evolveum.com/xml/ns/public/common/api-types-3"
+    xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <!-- Recurso Koha ILS UPeU (consolidado) e10a539a: connectorRef -> KohaConnector v1.7.0 (8c090235-413a-41d3-bba3-11ec9ea776fd) -->
+  <itemDelta>
+    <t:modificationType>replace</t:modificationType>
+    <t:path>c:connectorRef</t:path>
+    <t:value xsi:type="c:ObjectReferenceType" oid="8c090235-413a-41d3-bba3-11ec9ea776fd" type="c:ConnectorType"/>
+  </itemDelta>
+</objectModification>
