@@ -11,7 +11,7 @@
 #   - puerto publicado ${LAB_PORT:-8085};
 #   - conectores y certs desde ${LAB_DIR}/{connectors,certs} (sacados del tar del home);
 #   - data_init NEUTRALIZADO SIEMPRE: la BD se crea con pg_restore, nunca con run-sql --create;
-#   - memoria configurable (LAB_MP_MEM_MAX / LAB_MP_MEM_LIMIT) por si el lab no tiene
+#   - memoria configurable (LAB_MP_MEM_* y LAB_PG_*) por si el lab no tiene
 #     los 15 GB que usa PROD. Si se rebaja, los tiempos medidos no son los de PROD.
 # Los nombres de servicio, volumen y red coinciden con PROD para que los overrides
 # ../docker-compose.upgrade-window.yml y ../docker-compose.4.11.yml se usen tal cual.
@@ -26,8 +26,8 @@ services:
     container_name: mp411_data
     command: >
       postgres
-      -c shared_buffers=1536MB
-      -c effective_cache_size=3GB
+      -c shared_buffers=${LAB_PG_SHARED_BUFFERS:-1536MB}
+      -c effective_cache_size=${LAB_PG_CACHE:-3GB}
       -c work_mem=48MB
       -c maintenance_work_mem=512MB
       -c checkpoint_completion_target=0.9
@@ -44,7 +44,7 @@ services:
       - net
     volumes:
       - midpoint_data:/var/lib/postgresql/data
-    mem_limit: 5g
+    mem_limit: ${LAB_PG_MEM_LIMIT:-5g}
     shm_size: 256m
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d midpoint"]
