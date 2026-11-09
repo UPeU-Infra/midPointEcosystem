@@ -76,6 +76,19 @@ Después de cualquier PATCH, **verifica** (no lo asumas): `<schema>` sigue con s
 
 ClaudeFlow specs en `docs/specs/`.
 
+## Nombre oficial de persona — MidPoint es la fuente (decisión 2026-11-09)
+
+**MidPoint es la fuente de consulta del nombre oficial de cada persona de UPeU, y la más actualizada.** Todos los sistemas lo toman de aquí (LDAP, M365/Entra ID, Koha, certificados y diplomas digitales, DSpace, DSpace-CRIS, OJS…). **Ningún sistema resuelve el nombre por su cuenta** ni consulta RENIEC directamente: si lo hiciera, cada uno tendría su propia versión.
+
+- **Regla (CRAI + DTI/Infra, por observación de CONCYTEC):** con DNI, el nombre es el del DNI tal como lo registra RENIEC (con sus tildes o sin ellas, con apellido de casada), solo pasado de MAYÚSCULAS a altas y bajas (`sb-name-normalizer`). Sin DNI (CE, PTP, pasaporte…) → el de Lamb.
+- **Orden de fuentes para mejorarlo:**
+  1. Lo que ya tiene MidPoint (y lo que se le cargue verificado contra RENIEC).
+  2. `DAVID.CONSULTA_APIS_LOG` (caché RENIEC que alimenta admisión; costo cero).
+  3. **API de pago de consultas DNI de UPeU (`~/.secrets/dni-ruc-upeu.env`): solo en casos extremos y urgentes, y siempre con aprobación expresa de Alberto, lote por lote.** Cada consulta es un gasto y el saldo es compartido con admisión. **Nunca** desde un conector o tarea de MidPoint.
+- **Solo personas activas por ahora** (trabajadores y estudiantes vigentes). Egresados, ex trabajadores y jubilados: otra etapa.
+- Diseño y etapas: [`docs/specs/nombre-oficial-reniec/01-diseno.md`](docs/specs/nombre-oficial-reniec/01-diseno.md).
+- Hoy (2026-11-09) **el nombre visible aún viene de Lamb** (`trabajadores.xml` strong; `reniec-cache.xml` weak). `dataQualityStatus=reniec_validated` NO significa que el nombre sea el de RENIEC.
+
 ## Convenciones
 
 - 🔴 **Antes de CUALQUIER ejecución en PROD: [`docs/runbooks/PROTOCOLO-PRE-EJECUCION-PROD.md`](docs/runbooks/PROTOCOLO-PRE-EJECUCION-PROD.md)** — 9 reglas destiladas de incidentes reales (leer el mecanismo, no muestrear; contrastar contra los docs rectores; leer la lista del lote; anclar filtros de DN; toda predicción de riesgo lleva medición previa).

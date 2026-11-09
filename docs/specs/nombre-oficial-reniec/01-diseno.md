@@ -51,7 +51,10 @@ Trampa medida: `MOISES1.VW_PERSONA_NATURAL` tiene varias filas por persona (DNI 
 ## 4. Principios
 
 1. **Nunca una consulta pagada desde MidPoint.** Un conector en vivo consultaría en cada recompute, importación o reconciliación y gastaría sin control. MidPoint **solo lee la caché**. Las consultas las hace un proceso por lotes, fuera de MidPoint, aprobado lote a lote.
-2. **Una sola caché: `DAVID.CONSULTA_APIS_LOG`.** Es la fuente autorizada y con prioridad (matriz de fuentes P1/P2), la que ya lee `reniec-cache.xml` y donde admisión registra sus consultas. Lo consultado fuera (p. ej. los 694 asesores del 9-nov, hoy en la tabla `dniruc_asesores_20261109` del repositorio) debe **registrarse ahí**, en el mismo formato. Pedido a DTI Desarrollo.
+2. **MidPoint es la fuente del nombre oficial (decisión 2026-11-09).** Es la consulta más actualizada y desde él se actualizan los demás sistemas (LDAP, M365, Koha, certificados y diplomas, DSpace, CRIS, OJS). Para mejorarlo, en este orden:
+   1. Cargar en MidPoint lo ya verificado contra RENIEC (p. ej. los 694 asesores del 9-nov, hoy en la tabla `dniruc_asesores_20261109` del repositorio).
+   2. `DAVID.CONSULTA_APIS_LOG`: la caché RENIEC que alimenta admisión, sin costo. Conviene además que lo consultado fuera se registre ahí (pedido a DTI Desarrollo), pero **no es requisito** para cargarlo en MidPoint.
+   3. La API de pago: **solo en casos extremos y urgentes**, con aprobación expresa y lote por lote.
 3. **No repetir consultas.** Si el DNI ya está en la caché con `STATUS='S'`, no se consulta. La caché no caduca para el nombre; solo se revalida a pedido (cambio de apellido por matrimonio, corrección en RENIEC).
 4. **Minimizar datos (Ley 29733).** La API devuelve foto, dirección, padres, estado civil y fecha de nacimiento. Para este fin solo se usan apellidos y nombres. Qué guarda la caché lo decide DTI, no este proceso.
 5. **Lamb sigue siendo la fuente que crea a la persona.** RENIEC solo fija la forma oficial del nombre de quien tiene DNI.
@@ -76,10 +79,10 @@ Además:
 
 | Etapa | Qué | Consultas a la API | Condición para pasar a la siguiente |
 |---|---|---|---|
-| **E0** | DTI Desarrollo registra en `CONSULTA_APIS_LOG` las 694 consultas del 9-nov | 0 | Filas visibles en la caché |
+| **E0** | Cargar en MidPoint los nombres ya verificados contra RENIEC (694 del 9-nov) por un recurso CSV de solo lectura «RENIEC verificados», inbound a las extensiones de transporte del §5 (deja auditoría y origen). En paralelo, pedir a DTI Desarrollo que los registre en `CONSULTA_APIS_LOG` | 0 | Valores cargados en el lab y luego en producción |
 | **E1** | Cambio del §5 en el lab, informe de impacto, luego producción | 0 | Visto bueno de DTI/Infra al informe; 0 errores de recompute |
-| **E2** | Trabajadores activos sin caché, en lotes de ~500: primero docentes (asesores y jurados de tesis), luego administrativos | ~2 871 | Aprobación de DTI/Infra **por lote**; saldo del lote revisado |
-| **E3** | Estudiantes activos sin caché, en lotes, empezando por los cercanos a titularse (últimos ciclos y posgrado, futuros autores de tesis) | ~13 531 | Ídem, y decisión de la Dirección DTI sobre el gasto |
+| **E2** | Trabajadores activos sin nombre RENIEC: esperar a que la caché los cubra. Con la API de pago **solo si es extremo y urgente**, en lotes de ~500, docentes primero | 0 por defecto (máx. ~2 871) | Aprobación de DTI/Infra **por lote** |
+| **E3** | Estudiantes activos: la caché los irá cubriendo (admisión). API de pago solo en caso extremo y urgente | 0 por defecto (máx. ~13 531) | Ídem, y decisión de la Dirección DTI sobre el gasto |
 | **E4** (otra etapa) | Egresados, ex trabajadores, jubilados | por medir | Proyecto aparte |
 | **E5** | Publicar la autoridad a los consumidores (§7) | 0 | E1 en producción |
 
@@ -126,7 +129,7 @@ Detalle en una especificación propia cuando E1 esté en producción.
 
 ## 10. Pendientes para decidir
 
-1. Visto bueno a E0: pedir a DTI Desarrollo el registro en `CONSULTA_APIS_LOG`.
+1. Visto bueno a E0 (recurso CSV en el lab) y al pedido a DTI Desarrollo para `CONSULTA_APIS_LOG`.
 2. Visto bueno a E1 (diseño del §5) para prepararlo en el lab.
 3. Tamaño de lote y ritmo para E2.
 4. Si E3 se hace, cuánto del lote se le asigna (Dirección DTI).
