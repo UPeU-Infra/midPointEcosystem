@@ -4,9 +4,13 @@
      OID: c4d5e6f7-a8b9-0123-cdef-123456789abc
 
      Fuente: DAVID.CONSULTA_APIS_LOG (cache de llamadas a API RENIEC)
-     Propósito: Enriquecer givenName y familyName de usuarios existentes
-                con datos jurídicamente validados por RENIEC, aplicando
-                conversión de MAYÚSCULAS a Title Case (español).
+     Propósito: llevar a MidPoint el nombre del DNI según RENIEC (caché de admisión),
+                sin consultar nada. Desde E1 (nombre-oficial-reniec, 2026-11-09) escribe
+                upeu:reniecGivenName / upeu:reniecFamilyName (transporte) y el object template
+                UserTemplate-Nombre-Oficial decide el nombre visible y upeu:dataQualityStatus.
+                Corrección 2026-11-09: RENIEC NO elimina las tildes. Devuelve lo que figura en
+                el DNI: con tildes si el DNI las tiene, sin ellas si no (medido contra la caché).
+                Con la decisión de UPeU (CRAI + DTI/Infra) ese es el nombre oficial.
 
      Arquitectura:
        - ScriptedSQL connector (mismo OID que egresados)
@@ -14,7 +18,9 @@
        - SQL devuelve NRO_DOCUMENTO + CONTENT (JSON raw de RENIEC)
        - Groovy inbound parsea el JSON con JsonSlurper
        - Title Case en Groovy (preposiciones/artículos en minúscula)
-       - Correlación por extension/sb:taxId (URN canónico)
+       - Correlación por extension/upeu:lambDocNum (DNI zfill 8), E1 2026-11-09. Antes por
+         sb:taxId: type-blind, deprecado y vaciado por el Bloque J2 del template, así que no
+         enlazaba a quien ya no lo conservara.
        - Reacción unmatched: inactivateShadow (no crea usuarios nuevos)
 
      Notas de diseño:
@@ -22,7 +28,7 @@
        - CONTENT siempre en MAYÚSCULAS desde RENIEC → Title Case obligatorio
        - La dedup toma la entrada MÁS RECIENTE por DNI (ORDER BY FECHA_REGISTRO DESC)
        - Cobertura actual: ~151.245 DNIs únicos validados (mayo 2026)
-       - Fortaleza strong: RENIEC es fuente jurídica > datos admin LAMB
+       - Escribe solo su propio transporte (strong, único escritor de upeu:reniec*Name).
      ============================================================ -->
 <resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
     xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
@@ -129,46 +135,60 @@
                         <include>clockwork</include>
                     </evaluationPhases>
                 </inbound>
+                <!-- E1 2026-11-09: DNI → upeu:lambDocNum SOLO para correlacionar (no se escribe en
+                     el usuario: su IIA es Lamb). Mismo CANON_DOC que trabajadores para DNI. -->
+                <inbound>
+                    <name>reniec-dni-to-lambDocNum-correlation</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def d = (input ?: '').toString().trim(); (d ==~ /\d{7,8}/) ? d.padLeft(8, '0') : null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</path>
+                    </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <exclude>clockwork</exclude>
+                    </evaluationPhases>
+                </inbound>
             </attribute>
 
-            <!-- CONTENT → givenName (Title Case español)
-                 Parsea el campo "nombres" del JSON RENIEC con JsonSlurper.
-                 Title Case: capitaliza cada palabra excepto preposiciones/artículos
-                 de 1-3 letras en posición no inicial (de, del, la, las, los, y, e, a).
-                 Ejemplo: "JUAN CARLOS DE LA TORRE" → "Juan Carlos de la Torre"
-                 strength WEAK (FIX 2026-06-29, colisión tildes): RENIEC ya NO es autoridad de
-                 display de givenName. Dos mappings strong sobre un item single-valued no se
-                 arbitran por strength → MidPoint lanza SchemaException si trabajadores y reniec
-                 difieren (ej. trabajadores "Rubi Nélida" vs RENIEC "Rubi Nelida" sin tilde).
-                 Además RENIEC ENTREGA EL NOMBRE SIN DIACRÍTICOS, degradando el dato. Por eso:
-                   - trabajadores = ÚNICO strong de givenName/familyName (NOMBRE ya viene con tildes)
-                   - reniec-cache = WEAK (solo rellena si el foco aún no tiene valor; típicamente
-                     personas student-only sin shadow de trabajadores)
-                 RENIEC sigue siendo autoridad para birthDate y dataQualityStatus (campos donde
-                 es IIA único, sin colisión). Ver docs/IIA-MATRIX.md §2.1 (corregido). -->
+            <!-- CONTENT → upeu:reniecGivenName / upeu:reniecFamilyName (E1 2026-11-09)
+                 Parsea "nombres", "ap_paterno", "ap_materno" del JSON con JsonSlurper y aplica
+                 sb-name-normalizer.toOfficialName (de, del, la, las, los, y en minúscula; guiones y
+                 apóstrofos). Escribe SOLO transporte; el nombre visible lo decide
+                 UserTemplate-Nombre-Oficial comparando con el apellido de Lamb.
+                 Historia: el 29-jun-2026 estos mappings pasaron a weak porque chocaban con
+                 trabajadores sobre givenName (dos escritores single-valued). Aquella nota decía que
+                 RENIEC entrega el nombre sin diacríticos: ERA FALSO. Medido el 9-nov-2026: RENIEC
+                 devuelve lo que figura en el DNI (con tildes o sin ellas). Desde E1 cada fuente
+                 escribe su propio transporte y ese choque ya no puede ocurrir.
+                 RENIEC sigue siendo IIA de reniecValidationDate. -->
             <attribute>
                 <ref>ri:CONTENT</ref>
                 <inbound>
-                    <name>reniec-content-to-givenName</name>
-                    <strength>weak</strength>
-                    <!-- LAST-RESORT: solo rellena si el foco AÚN NO tiene givenName.
-                         Evita que el nombre RENIEC (sin tildes) compita en el merge weak con
-                         estudiantes/egresados (que pueden traer tildes) y produzca dos valores
-                         distintos en un item single-valued (SchemaException). FIX 2026-06-29. -->
-                    <condition>
-                        <script>
-                            <code>focus == null || focus.givenName == null || focus.givenName.toString().trim().isEmpty()</code>
-                        </script>
-                    </condition>
+                    <name>reniec-content-to-reniecGivenName</name>
+                    <!-- E1 2026-11-09: transporte, strong, único escritor; forma toOfficialName
+                         (partículas de la regla UPeU, guiones y apóstrofos). Sin condición: ya no
+                         compite con nadie. El nombre visible lo elige UserTemplate-Nombre-Oficial. -->
+                    <strength>strong</strength>
                     <expression>
-                        <script>
-                            <!-- weak; misma forma canonica que sb-name-normalizer.toCanonicalName
-                                 (Title Case + NFC). NOTA: RENIEC entrega SIN tildes, por eso es weak
-                                 (no debe ganar a trabajadores, que SI las trae). FIX 2026-06-29. -->
-                            <code>def prep = ['de','del','la','las','los','y','e','a','al','en','con','o'] as Set; def canon = { String s -> if (!s) return null; def t = s.toLowerCase().split(' ').toList().findAll { it }.withIndex().collect { w, i -> (i == 0 || !(w in prep)) ? w.capitalize() : w }.join(' '); return java.text.Normalizer.normalize(t, java.text.Normalizer.Form.NFC).replaceAll('\\s+', ' ').trim() ?: null }; if (input == null || input.toString().trim().isEmpty()) return null; try { def json = new groovy.json.JsonSlurper().parseText(input.toString()); def nombres = json?.nombres?.toString()?.trim(); return (nombres &amp;&amp; nombres.length() &gt; 0) ? canon(nombres) : null } catch (Exception e) { log.warn('reniec-cache: givenName parse error', e.getMessage()); return null }</code>
-                        </script>
+                        <function>
+                            <libraryRef oid="0b6f3a1c-2d4e-4f5a-9b8c-7e6d5c4b3a2f" type="FunctionLibraryType"/>
+                            <name>toOfficialName</name>
+                            <parameter>
+                                <name>raw</name>
+                                <expression>
+                                    <script>
+                                        <code>if (input == null || input.toString().trim().isEmpty()) return null; try { def json = new groovy.json.JsonSlurper().parseText(input.toString()); def n = json?.nombres?.toString()?.trim(); return n ?: null } catch (Exception e) { log.warn('reniec-cache: nombres parse error {}', e.getMessage()); return null }</code>
+                                    </script>
+                                </expression>
+                            </parameter>
+                        </function>
                     </expression>
-                    <target><path>givenName</path></target>
+                    <target><path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:reniecGivenName</path></target>
                 </inbound>
 
                 <!-- CONTENT → familyName (ap_paterno + ap_materno, Title Case)
@@ -178,20 +198,23 @@
                     <!-- WEAK (FIX 2026-06-29): ver justificación en reniec-content-to-givenName.
                          trabajadores es el único strong de familyName.
                          LAST-RESORT: solo rellena si el foco aún no tiene familyName. -->
-                    <name>reniec-content-to-familyName</name>
-                    <strength>weak</strength>
-                    <condition>
-                        <script>
-                            <code>focus == null || focus.familyName == null || focus.familyName.toString().trim().isEmpty()</code>
-                        </script>
-                    </condition>
+                    <name>reniec-content-to-reniecFamilyName</name>
+                    <strength>strong</strength>
                     <expression>
-                        <script>
-                            <!-- weak; misma forma canonica que sb-name-normalizer.toCanonicalName. FIX 2026-06-29. -->
-                            <code>def prep = ['de','del','la','las','los','y','e','a','al','en','con','o'] as Set; def canon = { String s -> if (!s) return null; def t = s.toLowerCase().split(' ').toList().findAll { it }.withIndex().collect { w, i -> (i == 0 || !(w in prep)) ? w.capitalize() : w }.join(' '); return java.text.Normalizer.normalize(t, java.text.Normalizer.Form.NFC).replaceAll('\\s+', ' ').trim() ?: null }; if (input == null || input.toString().trim().isEmpty()) return null; try { def json = new groovy.json.JsonSlurper().parseText(input.toString()); def pat = json?.ap_paterno?.toString()?.trim() ?: ''; def mat = json?.ap_materno?.toString()?.trim() ?: ''; def full = (pat + (mat ? ' ' + mat : '')).trim(); return full ? canon(full) : null } catch (Exception e) { log.warn('reniec-cache: familyName parse error', e.getMessage()); return null }</code>
-                        </script>
+                        <function>
+                            <libraryRef oid="0b6f3a1c-2d4e-4f5a-9b8c-7e6d5c4b3a2f" type="FunctionLibraryType"/>
+                            <name>toOfficialName</name>
+                            <parameter>
+                                <name>raw</name>
+                                <expression>
+                                    <script>
+                                        <code>if (input == null || input.toString().trim().isEmpty()) return null; try { def json = new groovy.json.JsonSlurper().parseText(input.toString()); def pat = json?.ap_paterno?.toString()?.trim() ?: ''; def mat = json?.ap_materno?.toString()?.trim() ?: ''; def full = (pat + (mat ? ' ' + mat : '')).trim(); return full ?: null } catch (Exception e) { log.warn('reniec-cache: apellidos parse error {}', e.getMessage()); return null }</code>
+                                    </script>
+                                </expression>
+                            </parameter>
+                        </function>
                     </expression>
-                    <target><path>familyName</path></target>
+                    <target><path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:reniecFamilyName</path></target>
                 </inbound>
 
                 <!-- CONTENT → dataQualityStatus
@@ -202,6 +225,9 @@
                      Fix 2026-05-27: consolidado en el bloque ri:CONTENT único (evita ORA Duplicate definition). -->
                 <inbound>
                     <name>reniec-content-to-dataQualityStatus</name>
+                    <!-- ARCHIVED E1 2026-11-09: dataQualityStatus lo decide UserTemplate-Nombre-Oficial
+                         (único escritor). Dos escritores sobre un ítem single-valued chocarían. -->
+                    <lifecycleState>archived</lifecycleState>
                     <strength>strong</strength>
                     <condition>
                         <script>
@@ -283,9 +309,9 @@ try {
             <correlation>
                 <correlators>
                     <items>
-                        <name>correlate-by-taxId</name>
+                        <name>correlate-by-lambDocNum</name>
                         <item>
-                            <ref xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</ref>
+                            <ref xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</ref>
                         </item>
                     </items>
                 </correlators>

@@ -195,7 +195,7 @@
                     <xsd:element name="dataQualityStatus" type="xsd:string" minOccurs="0" maxOccurs="1">
                         <xsd:annotation><xsd:appinfo>
                             <a:displayName>Estado calidad datos (RENIEC)</a:displayName>
-                            <a:help>Estado de validación de datos personales contra RENIEC. Vocabulario controlado: reniec_validated (CONTENT parseado OK, nombres coinciden o fueron actualizados) | mismatch (CONTENT parseado OK pero nombres difieren significativamente) | pending (sin consulta RENIEC aún) | manual_override (seteado por admin, no sobreescribir automáticamente). IIA: reniec-cache.xml inbound + apiperu.dev task mensual.</a:help>
+                            <a:help>Estado de validación de datos personales contra RENIEC. Vocabulario controlado: reniec_name (el nombre visible ES el del DNI según RENIEC; desde E1 2026-11-09) | mismatch (hay nombre RENIEC pero su apellido no calza con el de Lamb: no se cambia el nombre, va a revisión) | pending (sin nombre RENIEC vigente) | manual_override (seteado por admin; nada automático lo sobrescribe ni cambia el nombre) | reniec_validated (histórico, anterior a E1: había consulta RENIEC pero el nombre visible venía de Lamb). IIA desde E1: el object template (UserTemplate-Nombre-Oficial), ÚNICO escritor; reniec-cache ya no lo escribe.</a:help>
                             <a:indexed>true</a:indexed>
                             <a:displayOrder>200</a:displayOrder>
                         </xsd:appinfo></xsd:annotation>
@@ -206,6 +206,41 @@
                             <a:displayName>Fecha validación RENIEC</a:displayName>
                             <a:help>Fecha y hora de la última consulta exitosa a RENIEC para este usuario. IIA: DAVID.CONSULTA_APIS_LOG.FECHA_REGISTRO (Oracle LAMB cache) o timestamp de llamada a apiperu.dev. Permite detectar validaciones obsoletas (ej: > 1 año) para re-validar con cuota mensual apiperu.dev.</a:help>
                             <a:displayOrder>201</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
+                    <!-- L12c — TRANSPORTE DE NOMBRE POR FUENTE (E1 nombre-oficial-reniec, 2026-11-09)
+                         Las fuentes ya NO escriben givenName/familyName: cada una deja su versión aquí y el
+                         object template UserTemplate-Nombre-Oficial elige el nombre visible. Así no hay dos
+                         inbounds sobre givenName/familyName (choque del 29-jun-2026).
+                         lamb*: trabajadores (strong) + estudiantes/egresados (weak), con toCanonicalName.
+                         reniec*: reniec-cache (strong, único escritor), con toOfficialName. -->
+                    <xsd:element name="lambGivenName" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Nombres según Lamb (transporte)</a:displayName>
+                            <a:help>Nombres tal como vienen de Oracle Lamb (trabajadores strong; estudiantes/egresados weak), forma toCanonicalName. Transporte: el nombre visible lo elige el object template.</a:help>
+                            <a:displayOrder>206</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="lambFamilyName" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Apellidos según Lamb (transporte)</a:displayName>
+                            <a:help>Paterno + materno de Oracle Lamb, forma toCanonicalName. Referencia para comparar con el apellido RENIEC. Transporte.</a:help>
+                            <a:displayOrder>207</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="reniecGivenName" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Nombres según caché RENIEC (transporte)</a:displayName>
+                            <a:help>Nombres del DNI según DAVID.CONSULTA_APIS_LOG (reniec-cache), forma toOfficialName. Transporte. Fecha: upeu:reniecValidationDate.</a:help>
+                            <a:displayOrder>208</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="reniecFamilyName" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Apellidos según caché RENIEC (transporte)</a:displayName>
+                            <a:help>Paterno + materno del DNI según reniec-cache, forma toOfficialName. Transporte.</a:help>
+                            <a:displayOrder>209</a:displayOrder>
                         </xsd:appinfo></xsd:annotation>
                     </xsd:element>
 

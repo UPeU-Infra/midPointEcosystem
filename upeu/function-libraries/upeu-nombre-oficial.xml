@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================================
+     Function Library: upeuNombreOficial
+     OID: 3da5013a-18cf-427f-99c2-26f466faacdb
+     Etapa: E1 de docs/specs/nombre-oficial-reniec/01-diseno.md (informe: 03-e1-laboratorio.md)
+
+     Una sola decisión, usada por todos los mappings del nombre oficial
+     (givenName, familyName, dataQualityStatus, identityDocuments.verifiedAt), para que
+     nunca discrepen entre sí.
+
+     resolver(focus, campo) — campo = 'decision' | 'givenName' | 'familyName' | 'estado' | 'verifiedAt'.
+     'decision' devuelve:
+       'manual_override'      → no tocar nada (lo puso un administrador)
+       'reniec_name:csv'      → nombre RENIEC del recurso «RENIEC verificados (CSV)»
+       'reniec_name:cache'    → nombre RENIEC de reniec-cache (DAVID.CONSULTA_APIS_LOG)
+       'mismatch:csv|cache'   → hay RENIEC pero su apellido no calza con el de Lamb
+       'sin_lamb'             → hay RENIEC pero aún no hay apellido de Lamb con qué comparar
+                                (prudencia: no se cambia nada hasta que Lamb lo traiga)
+       'sin_reniec'           → no hay nombre RENIEC con enlace vivo → nombre de Lamb
+
+     Reglas:
+       - Solo cuenta una fuente RENIEC con ENLACE VIVO al recurso (midpoint.hasLinkedAccount):
+         un inbound no retira sus valores cuando el shadow muere (midpoint-best-practices §11.1),
+         así que los valores de transporte de una fila retirada se ignoran.
+       - Si hay dos fuentes RENIEC vivas gana la de fecha de verificación más reciente
+         (empate → CSV, que es la verificación explícita del lote aprobado).
+       - El apellido «calza» si, sin tildes, mayúsculas, guiones ni apóstrofos, es igual o uno
+         contiene al otro por palabras completas (cubre el apellido de casada: «Garcia Torres de Paz»
+         contiene «García Torres»).
+
+     Los OID de recursos son de UPeU (overlay). Otra institución: copiar y cambiar los OID.
+     ============================================================ -->
+<functionLibrary xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                 xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                 oid="3da5013a-18cf-427f-99c2-26f466faacdb">
+    <name>upeuNombreOficial</name>
+    <description>Decide la fuente del nombre oficial (RENIEC con enlace vivo y apellido que calza con Lamb, o Lamb). Etapa E1 de nombre-oficial-reniec.</description>
+
+    <function>
+        <name>resolver</name>
+        <parameter>
+            <name>focus</name>
+            <type>c:UserType</type>
+        </parameter>
+        <parameter>
+            <name>campo</name>
+            <type>xsd:string</type>
+        </parameter>
+        <returnType>xsd:string</returnType>
+        <script>
+            <code>
+final String CSV_OID   = '082811dd-d4c4-4b3f-b288-e06f89d3383e'   // RENIEC verificados (CSV)
+final String CACHE_OID = 'c4d5e6f7-a8b9-0123-cdef-123456789abc'   // Oracle LAMB RENIEC Cache v1
+final String NS = 'urn:upeu:midpoint:local'
+if (focus == null) return null
+def ext = { String n ->
+    def v = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName(NS, n))
+    def s = v?.toString()?.trim()
+    s ? s : null
+}
+def estadoActual = ext('dataQualityStatus')
+def decision = 'sin_reniec'
+def elegido = null
+if (estadoActual == 'manual_override') {
+    decision = 'manual_override'
+} else {
+    def cands = []
+    if (ext('reniecVerifiedGivenName') &amp;&amp; ext('reniecVerifiedFamilyName') &amp;&amp; midpoint.hasLinkedAccount(CSV_OID)) {
+        cands &lt;&lt; [src: 'csv', giv: ext('reniecVerifiedGivenName'), fam: ext('reniecVerifiedFamilyName'), at: (ext('reniecVerifiedAt') ?: '')]
+    }
+    if (ext('reniecGivenName') &amp;&amp; ext('reniecFamilyName') &amp;&amp; midpoint.hasLinkedAccount(CACHE_OID)) {
+        def d = ext('reniecValidationDate')
+        cands &lt;&lt; [src: 'cache', giv: ext('reniecGivenName'), fam: ext('reniecFamilyName'), at: (d ? d.take(10) : '')]
+    }
+    if (!cands.isEmpty()) {
+        // más reciente primero; empate → csv (verificación explícita del lote aprobado)
+        elegido = cands.max { a, b -> (a.at &lt;=&gt; b.at) ?: (a.src == 'csv' ? 1 : -1) }
+        def lambFam = ext('lambFamilyName')
+        if (!lambFam) {
+            decision = 'sin_lamb'
+        } else {
+            def norm = { String x ->
+                def t = java.text.Normalizer.normalize(x ?: '', java.text.Normalizer.Form.NFD).replaceAll('\\p{M}', '')
+                t.toLowerCase(Locale.ROOT).replaceAll("[-'\u2019]", ' ').replaceAll('\\s+', ' ').trim()
+            }
+            def r = norm(elegido.fam); def l = norm(lambFam)
+            boolean calza = r &amp;&amp; l &amp;&amp; (r == l || (' ' + r + ' ').contains(' ' + l + ' ') || (' ' + l + ' ').contains(' ' + r + ' '))
+            decision = (calza ? 'reniec_name:' : 'mismatch:') + elegido.src
+        }
+    }
+}
+switch (campo) {
+    case 'decision':
+        return decision
+    case 'givenName':
+        if (decision == 'manual_override') return focus.givenName?.orig
+        return decision.startsWith('reniec_name') ? elegido.giv : ext('lambGivenName')
+    case 'familyName':
+        if (decision == 'manual_override') return focus.familyName?.orig
+        return decision.startsWith('reniec_name') ? elegido.fam : ext('lambFamilyName')
+    case 'estado':
+        if (decision.startsWith('reniec_name')) return 'reniec_name'
+        if (decision.startsWith('mismatch')) return 'mismatch'
+        // sin RENIEC vigente: si antes lo había, pasa a pending; si no, se deja como está
+        if (decision == 'sin_reniec' &amp;&amp; (estadoActual == 'reniec_name' || estadoActual == 'mismatch')) return 'pending'
+        return estadoActual
+    case 'verifiedAt':
+        return decision.startsWith('reniec_name') ? (elegido.at ?: null) : null
+    default:
+        throw new IllegalArgumentException('upeuNombreOficial.resolver: campo desconocido ' + campo)
+}
+            </code>
+        </script>
+    </function>
+</functionLibrary>

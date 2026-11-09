@@ -67,7 +67,7 @@ Estado inicial del lab: 4.10.2, schemas `sciback` v1.4 y `upeu-local` v7 (mismos
 | **CSV real (694 filas)** | 694 leídas, 694 «success», 0 errores en el log, **0 usuarios modificados** (ninguno de esos DNI existe en el lab) ✔ |
 | Forma producida vs la ya aplicada en el repositorio de tesis (etapa 2 de asesores) | **694 de 694 idénticas** (comparación local, sin MidPoint) ✔ |
 
-Tras la prueba con datos reales se borraron (raw) los 694 shadows y se restauró el CSV de prueba: en el lab solo quedan datos ficticios en el repositorio de objetos. **La auditoría del lab sí conserva 694 eventos `DISCOVER_OBJECT`** de esa corrida; no se tocaron (no se edita la auditoría a mano).
+Tras la prueba con datos reales se borraron (raw) los 694 shadows y se restauró el CSV de prueba: en el lab solo quedan datos ficticios en el repositorio de objetos. La auditoría del lab conservaba 694 eventos `DISCOVER_OBJECT` de esa corrida (más 1 388 del borrado raw de los shadows). **Se purgaron el mismo día con aprobación expresa**: ver `03-e1-laboratorio.md` §0.
 
 ## 4. Problemas encontrados
 

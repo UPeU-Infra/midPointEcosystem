@@ -27,7 +27,9 @@
      Forma canónica: Title Case español (preposiciones/artículos en
      minúscula salvo posición inicial) + normalización Unicode NFC +
      colapso de espacios. Conserva diacríticos correctos cuando la fuente
-     los trae (Oracle trabajadores SÍ los trae; RENIEC NO).
+     los trae. (Corregido 2026-11-09: RENIEC devuelve lo que figura en el DNI,
+     con tildes o sin ellas; no las elimina. Medido contra la caché.)
+     Para el NOMBRE OFICIAL (el del DNI) usar toOfficialName, abajo.
      ============================================================ -->
 <functionLibrary xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
                  xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
@@ -58,6 +60,45 @@ def titled = s.toLowerCase().split(' ').toList().findAll { it }.withIndex().coll
 // NFC + colapso de espacios
 def out = java.text.Normalizer.normalize(titled, java.text.Normalizer.Form.NFC).replaceAll('\\s+', ' ').trim()
 return out ?: null
+            </code>
+        </script>
+    </function>
+
+    <!-- toOfficialName (2026-11-09, nombre-oficial-reniec E1): forma del NOMBRE OFICIAL (el del DNI).
+         Distinta de toCanonicalName a propósito, para no alterar sus usos actuales (Lamb):
+           - Solo las partículas de la regla de UPeU (CRAI + DTI/Infra): de, del, la, las, los, y.
+             Las demás (e, a, al, en, con, o) se capitalizan como cualquier palabra.
+           - Capitaliza tras guion y apóstrofo: SAINT-HILAIRE → Saint-Hilaire, D'ANGELO → D'Angelo
+             (también con el apóstrofo tipográfico ’).
+           - Conserva las tildes y la Ñ tal como vienen (si el DNI no las trae, no se inventan).
+           - NFC + colapso de espacios. Una partícula en primera posición va con mayúscula. -->
+    <function>
+        <name>toOfficialName</name>
+        <parameter>
+            <name>raw</name>
+            <type>xsd:string</type>
+        </parameter>
+        <returnType>xsd:string</returnType>
+        <script>
+            <code>
+if (raw == null) return null
+def s = java.text.Normalizer.normalize(raw.toString(), java.text.Normalizer.Form.NFC).trim()
+if (s.isEmpty()) return null
+def particles = ['de','del','la','las','los','y'] as Set
+def capWord = { String w ->
+    def sb = new StringBuilder()
+    boolean up = true
+    for (char ch : w.toCharArray()) {
+        sb.append(up ? Character.toUpperCase(ch) : ch)
+        up = (ch == (char) 45 || ch == (char) 39 || ch == (char) 0x2019)
+    }
+    sb.toString()
+}
+def words = s.toLowerCase(new Locale('es', 'PE')).split(/\s+/).toList().findAll { it }
+def out = []
+words.eachWithIndex { w, i -> out.add((i > 0 &amp;&amp; particles.contains(w)) ? w : capWord(w)) }
+def r = out.join(' ').trim()
+return r ?: null
             </code>
         </script>
     </function>

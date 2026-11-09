@@ -130,7 +130,10 @@
                             </parameter>
                         </function>
                     </expression>
-                    <target><path>givenName</path></target>
+                    <!-- E1 nombre-oficial-reniec (2026-11-09): ya NO escribe givenName sino el transporte
+                         upeu:lambGivenName; el nombre visible lo elige UserTemplate-Nombre-Oficial (único escritor).
+                         Se conserva la fuerza (weak) y la forma (toCanonicalName). -->
+                    <target><path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambGivenName</path></target>
                 </inbound>
             </attribute>
             <attribute>
@@ -146,7 +149,10 @@
                             <code>def p = (PATERNO ?: '').toString().trim(); def m = (MATERNO ?: '').toString().trim(); def full = (p + (m ? ' ' + m : '')).trim(); if (!full) return null; def prep = ['de','del','la','las','los','y','e','a','al','en','con','o'] as Set; def titled = full.toLowerCase().split(' ').toList().findAll { it }.withIndex().collect { w, i -&gt; (i == 0 || !(w in prep)) ? w.capitalize() : w }.join(' '); return java.text.Normalizer.normalize(titled, java.text.Normalizer.Form.NFC).replaceAll('\\s+', ' ').trim() ?: null</code>
                         </script>
                     </expression>
-                    <target><path>familyName</path></target>
+                    <!-- E1 nombre-oficial-reniec (2026-11-09): ya NO escribe familyName sino el transporte
+                         upeu:lambFamilyName; el nombre visible lo elige UserTemplate-Nombre-Oficial (único escritor).
+                         Se conserva la fuerza (weak) y la forma (toCanonicalName). -->
+                    <target><path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambFamilyName</path></target>
                 </inbound>
             </attribute>
             <attribute>

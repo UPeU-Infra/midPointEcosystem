@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================================
+     Object template: UserTemplate-Nombre-Oficial
+     OID: 0943af72-231e-4aef-a0fd-7cbad1357fe7
+     Etapa: E1 de docs/specs/nombre-oficial-reniec/01-diseno.md (informe: 03-e1-laboratorio.md)
+
+     ÚNICO escritor de givenName, familyName y upeu:dataQualityStatus.
+     Lo incluye UserTemplate-Person-Base (includeRef). Las fuentes (trabajadores, estudiantes,
+     egresados, reniec-cache, RENIEC verificados CSV) ya no escriben esos ítems: dejan su versión en
+     campos de transporte (upeu:lamb*, upeu:reniec*, upeu:reniecVerified*) y aquí se elige.
+     Por qué aquí y no en inbound: dos inbounds sobre un ítem single-valued con valores distintos
+     lanzan SchemaException al consolidar, ANTES del template (runbook 2026-06-29). Con un solo
+     escritor (este template) ese choque no puede ocurrir.
+
+     Regla (decisión UPeU 2026-11-09, CRAI + DTI/Infra):
+       1. manual_override → no se toca nada (condición de cada mapping).
+       2. Nombre RENIEC con enlace vivo y apellido que calza con Lamb → nombre RENIEC, estado reniec_name.
+       3. Apellido que no calza → nombre de Lamb, estado mismatch (revisión humana).
+       4. Sin RENIEC → nombre de Lamb (como antes de E1). Si antes era reniec_name/mismatch → pending.
+     La decisión vive en la librería upeuNombreOficial.resolver (una sola implementación).
+
+     Semántica (midpoint-best-practices §11.1): strong + valor null NO borra. Si aún no hay
+     transporte de Lamb (transición) el nombre actual se conserva. Sin rango declarado: los
+     ítems son single-valued y el valor nuevo reemplaza al anterior.
+     ============================================================ -->
+<objectTemplate xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:upeu="urn:upeu:midpoint:local"
+    oid="0943af72-231e-4aef-a0fd-7cbad1357fe7">
+    <name>UserTemplate-Nombre-Oficial</name>
+    <description>Elige el nombre visible (RENIEC si calza con Lamb; si no, Lamb) y fija upeu:dataQualityStatus. Único escritor de givenName/familyName/dataQualityStatus. Etapa E1 de nombre-oficial-reniec.</description>
+    <lifecycleState>active</lifecycleState>
+
+    <item>
+        <ref>givenName</ref>
+        <mapping>
+            <name>N1-givenName-oficial</name>
+            <description>givenName = nombres RENIEC (si reniec_name) o de Lamb. No corre con manual_override.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>lambGivenName</name>
+                <path>extension/upeu:lambGivenName</path>
+            </source>
+            <source>
+                <name>lambFamilyName</name>
+                <path>extension/upeu:lambFamilyName</path>
+            </source>
+            <source>
+                <name>reniecVerifiedGivenName</name>
+                <path>extension/upeu:reniecVerifiedGivenName</path>
+            </source>
+            <source>
+                <name>reniecVerifiedFamilyName</name>
+                <path>extension/upeu:reniecVerifiedFamilyName</path>
+            </source>
+            <source>
+                <name>reniecVerifiedAt</name>
+                <path>extension/upeu:reniecVerifiedAt</path>
+            </source>
+            <source>
+                <name>reniecGivenName</name>
+                <path>extension/upeu:reniecGivenName</path>
+            </source>
+            <source>
+                <name>reniecFamilyName</name>
+                <path>extension/upeu:reniecFamilyName</path>
+            </source>
+            <source>
+                <name>reniecValidationDate</name>
+                <path>extension/upeu:reniecValidationDate</path>
+            </source>
+            <expression>
+                <function>
+                    <libraryRef oid="3da5013a-18cf-427f-99c2-26f466faacdb" type="c:FunctionLibraryType"/>
+                    <name>resolver</name>
+                    <parameter>
+                        <name>focus</name>
+                        <expression><path>$focus</path></expression>
+                    </parameter>
+                    <parameter>
+                        <name>campo</name>
+                        <expression><value>givenName</value></expression>
+                    </parameter>
+                </function>
+            </expression>
+            <condition>
+                <script>
+                    <code>basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:upeu:midpoint:local', 'dataQualityStatus'))?.toString() != 'manual_override'</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <item>
+        <ref>familyName</ref>
+        <mapping>
+            <name>N2-familyName-oficial</name>
+            <description>familyName = apellidos RENIEC (si reniec_name) o de Lamb. No corre con manual_override.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>lambGivenName</name>
+                <path>extension/upeu:lambGivenName</path>
+            </source>
+            <source>
+                <name>lambFamilyName</name>
+                <path>extension/upeu:lambFamilyName</path>
+            </source>
+            <source>
+                <name>reniecVerifiedGivenName</name>
+                <path>extension/upeu:reniecVerifiedGivenName</path>
+            </source>
+            <source>
+                <name>reniecVerifiedFamilyName</name>
+                <path>extension/upeu:reniecVerifiedFamilyName</path>
+            </source>
+            <source>
+                <name>reniecVerifiedAt</name>
+                <path>extension/upeu:reniecVerifiedAt</path>
+            </source>
+            <source>
+                <name>reniecGivenName</name>
+                <path>extension/upeu:reniecGivenName</path>
+            </source>
+            <source>
+                <name>reniecFamilyName</name>
+                <path>extension/upeu:reniecFamilyName</path>
+            </source>
+            <source>
+                <name>reniecValidationDate</name>
+                <path>extension/upeu:reniecValidationDate</path>
+            </source>
+            <expression>
+                <function>
+                    <libraryRef oid="3da5013a-18cf-427f-99c2-26f466faacdb" type="c:FunctionLibraryType"/>
+                    <name>resolver</name>
+                    <parameter>
+                        <name>focus</name>
+                        <expression><path>$focus</path></expression>
+                    </parameter>
+                    <parameter>
+                        <name>campo</name>
+                        <expression><value>familyName</value></expression>
+                    </parameter>
+                </function>
+            </expression>
+            <condition>
+                <script>
+                    <code>basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:upeu:midpoint:local', 'dataQualityStatus'))?.toString() != 'manual_override'</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+
+    <item>
+        <ref>extension/upeu:dataQualityStatus</ref>
+        <mapping>
+            <name>N3-dataQualityStatus</name>
+            <description>reniec_name | mismatch | pending (si ya no hay RENIEC vigente) | se conserva el valor actual en otro caso. No corre con manual_override.</description>
+            <lifecycleState>active</lifecycleState>
+            <strength>strong</strength>
+            <source>
+                <name>lambGivenName</name>
+                <path>extension/upeu:lambGivenName</path>
+            </source>
+            <source>
+                <name>lambFamilyName</name>
+                <path>extension/upeu:lambFamilyName</path>
+            </source>
+            <source>
+                <name>reniecVerifiedGivenName</name>
+                <path>extension/upeu:reniecVerifiedGivenName</path>
+            </source>
+            <source>
+                <name>reniecVerifiedFamilyName</name>
+                <path>extension/upeu:reniecVerifiedFamilyName</path>
+            </source>
+            <source>
+                <name>reniecVerifiedAt</name>
+                <path>extension/upeu:reniecVerifiedAt</path>
+            </source>
+            <source>
+                <name>reniecGivenName</name>
+                <path>extension/upeu:reniecGivenName</path>
+            </source>
+            <source>
+                <name>reniecFamilyName</name>
+                <path>extension/upeu:reniecFamilyName</path>
+            </source>
+            <source>
+                <name>reniecValidationDate</name>
+                <path>extension/upeu:reniecValidationDate</path>
+            </source>
+            <expression>
+                <function>
+                    <libraryRef oid="3da5013a-18cf-427f-99c2-26f466faacdb" type="c:FunctionLibraryType"/>
+                    <name>resolver</name>
+                    <parameter>
+                        <name>focus</name>
+                        <expression><path>$focus</path></expression>
+                    </parameter>
+                    <parameter>
+                        <name>campo</name>
+                        <expression><value>estado</value></expression>
+                    </parameter>
+                </function>
+            </expression>
+            <condition>
+                <script>
+                    <code>basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:upeu:midpoint:local', 'dataQualityStatus'))?.toString() != 'manual_override'</code>
+                </script>
+            </condition>
+        </mapping>
+    </item>
+</objectTemplate>

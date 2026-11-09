@@ -25,7 +25,9 @@
          El inbound a lambDocNum corre SOLO en beforeCorrelation: este recurso nunca escribe
          lambDocNum en el usuario (su IIA es Lamb).
        - Un único escritor por ítem de transporte (no reniec-cache) → sin colisión single-valued.
-       - Paso a altas y bajas en el inbound con sb-name-normalizer (no en el CSV).
+       - Paso a altas y bajas en el inbound con sb-name-normalizer.toOfficialName (no en el CSV):
+         partículas de la regla UPeU (de, del, la, las, los, y), guiones y apóstrofos (E1, 2026-11-09;
+         en E0 era toCanonicalName, que daba el mismo resultado para los 694 del primer lote).
        - Solo lectura: connector readOnly=true + capacidades create/update/delete deshabilitadas.
        - unmatched → nada: no crea usuarios. deleted → unlink (los valores de transporte quedan;
          E1 debe ignorarlos si no hay proyección viva de este recurso, ver midpoint-best-practices §11.1).
@@ -112,7 +114,7 @@
                     <expression>
                         <function>
                             <libraryRef oid="0b6f3a1c-2d4e-4f5a-9b8c-7e6d5c4b3a2f" type="c:FunctionLibraryType"/>
-                            <name>toCanonicalName</name>
+                            <name>toOfficialName</name>
                             <parameter>
                                 <name>raw</name>
                                 <expression><path>$input</path></expression>
@@ -136,7 +138,7 @@
                     <expression>
                         <function>
                             <libraryRef oid="0b6f3a1c-2d4e-4f5a-9b8c-7e6d5c4b3a2f" type="c:FunctionLibraryType"/>
-                            <name>toCanonicalName</name>
+                            <name>toOfficialName</name>
                             <parameter>
                                 <name>raw</name>
                                 <expression>

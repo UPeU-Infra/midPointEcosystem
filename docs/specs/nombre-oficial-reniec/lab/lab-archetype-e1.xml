@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SOLO LABORATORIO — arquetipo que aplica LAB-UserTemplate-E1-Nombre-Oficial a los usuarios de prueba. -->
+<archetype xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    oid="a793776e-98a7-4b83-91d2-bee06aa25321">
+    <name>LAB-E1-Persona-Prueba</name>
+    <archetypePolicy>
+        <objectTemplateRef oid="6c2349f8-b015-48a7-8302-b7ff65a950a3" type="c:ObjectTemplateType"/>
+    </archetypePolicy>
+</archetype>

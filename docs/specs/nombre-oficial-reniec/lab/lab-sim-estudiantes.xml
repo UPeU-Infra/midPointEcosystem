@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SOLO LABORATORIO — generado por build_lab.py. NO desplegar en PROD (mismo OID que el recurso Oracle real). -->
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+    xmlns:upeu="urn:upeu:midpoint:local"
+    xmlns:sb="urn:sciback:midpoint:person"
+    oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e22">
+    <name>LAB-SIM Oracle LAMB Estudiantes (CSV)</name>
+    <description>SOLO LABORATORIO. Simula con un CSV el recurso Oracle de PROD del mismo OID; los mappings de nombre son copia literal del XML de PROD.</description>
+    <lifecycleState>active</lifecycleState>
+    <connectorRef type="c:ConnectorType">
+        <filter><q:text>connectorType = "com.evolveum.polygon.connector.csv.CsvConnector"</q:text></filter>
+    </connectorRef>
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.evolveum.polygon.connector-csv/com.evolveum.polygon.connector.csv.CsvConnector">
+            <cfg:filePath>/opt/midpoint/var/e1-lab/estudiantes.csv</cfg:filePath>
+            <cfg:tmpFolder>/opt/midpoint/var/e1-lab</cfg:tmpFolder>
+            <cfg:encoding>utf-8</cfg:encoding>
+            <cfg:fieldDelimiter>,</cfg:fieldDelimiter>
+            <cfg:quote>"</cfg:quote>
+            <cfg:headerExists>true</cfg:headerExists>
+            <cfg:trim>true</cfg:trim>
+            <cfg:uniqueAttribute>NUM_DOCUMENTO</cfg:uniqueAttribute>
+            <cfg:nameAttribute>NUM_DOCUMENTO</cfg:nameAttribute>
+            <cfg:readOnly>true</cfg:readOnly>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+    <schemaHandling>
+        <objectType>
+            <kind>account</kind>
+            <intent>default</intent>
+            <default>true</default>
+            <delineation><objectClass>ri:AccountObjectClass</objectClass></delineation>
+            <focus><type>UserType</type></focus>
+
+            <attribute>
+                <ref>ri:NUM_DOCUMENTO</ref>
+                <inbound>
+                    <name>lab-num-documento-to-lambDocNum-correlation</name>
+                    <strength>strong</strength>
+                    <expression><script><code>def d = (input ?: '').toString().trim(); (d ==~ /\d{7,8}/) ? d.padLeft(8, '0') : null</code></script></expression>
+                    <target><path>extension/upeu:lambDocNum</path></target>
+                    <evaluationPhases><include>beforeCorrelation</include><exclude>clockwork</exclude></evaluationPhases>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:NOMBRE</ref>
+                <inbound>
+                    <!-- weak (fallback). Canonicaliza con la MISMA forma que trabajadores/reniec
+                         (FunctionLibrary sb-name-normalizer) para que dos fuentes que describen a la
+                         misma persona produzcan un string IDENTICO y no colisionen en el item
+                         single-valued givenName (FIX 2026-06-29). -->
+                    <name>nombre-to-givenName</name>
+                    <strength>weak</strength>
+                    <expression>
+                        <function>
+                            <libraryRef oid="0b6f3a1c-2d4e-4f5a-9b8c-7e6d5c4b3a2f" type="FunctionLibraryType"/>
+                            <name>toCanonicalName</name>
+                            <parameter>
+                                <name>raw</name>
+                                <expression><path>$input</path></expression>
+                            </parameter>
+                        </function>
+                    </expression>
+                    <!-- E1 nombre-oficial-reniec (2026-11-09): ya NO escribe givenName sino el transporte
+                         upeu:lambGivenName; el nombre visible lo elige UserTemplate-Nombre-Oficial (único escritor).
+                         Se conserva la fuerza (weak) y la forma (toCanonicalName). -->
+                    <target><path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambGivenName</path></target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:PATERNO</ref>
+                <inbound>
+                    <name>paterno-materno-to-familyName</name>
+                    <strength>weak</strength>
+                    <source><path>$shadow/attributes/ri:PATERNO</path></source>
+                    <source><path>$shadow/attributes/ri:MATERNO</path></source>
+                    <expression>
+                        <script>
+                            <!-- weak; misma forma canonica que sb-name-normalizer.toCanonicalName (FIX 2026-06-29). -->
+                            <code>def p = (PATERNO ?: '').toString().trim(); def m = (MATERNO ?: '').toString().trim(); def full = (p + (m ? ' ' + m : '')).trim(); if (!full) return null; def prep = ['de','del','la','las','los','y','e','a','al','en','con','o'] as Set; def titled = full.toLowerCase().split(' ').toList().findAll { it }.withIndex().collect { w, i -&gt; (i == 0 || !(w in prep)) ? w.capitalize() : w }.join(' '); return java.text.Normalizer.normalize(titled, java.text.Normalizer.Form.NFC).replaceAll('\\s+', ' ').trim() ?: null</code>
+                        </script>
+                    </expression>
+                    <!-- E1 nombre-oficial-reniec (2026-11-09): ya NO escribe familyName sino el transporte
+                         upeu:lambFamilyName; el nombre visible lo elige UserTemplate-Nombre-Oficial (único escritor).
+                         Se conserva la fuerza (weak) y la forma (toCanonicalName). -->
+                    <target><path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambFamilyName</path></target>
+                </inbound>
+            </attribute>
+            <correlation><correlators><items><name>correlate-by-lambDocNum</name>
+                <item><ref>extension/upeu:lambDocNum</ref></item></items></correlators></correlation>
+            <synchronization>
+                <reaction><situation>linked</situation><actions><synchronize/></actions></reaction>
+                <reaction><situation>unlinked</situation><actions><link/></actions></reaction>
+                <reaction><situation>unmatched</situation><actions/></reaction>
+                <reaction><situation>deleted</situation><actions><unlink/></actions></reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>
+    <capabilities>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:create><cap:enabled>false</cap:enabled></cap:create>
+            <cap:update><cap:enabled>false</cap:enabled></cap:update>
+            <cap:delete><cap:enabled>false</cap:enabled></cap:delete>
+        </configured>
+    </capabilities>
+    <projection><assignmentPolicyEnforcement>relative</assignmentPolicyEnforcement></projection>
+</resource>

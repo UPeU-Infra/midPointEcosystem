@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SOLO LABORATORIO — generado por build_lab.py. NO desplegar en PROD (mismo OID que el recurso Oracle real). -->
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+    xmlns:upeu="urn:upeu:midpoint:local"
+    xmlns:sb="urn:sciback:midpoint:person"
+    oid="c4d5e6f7-a8b9-0123-cdef-123456789abc">
+    <name>LAB-SIM Oracle LAMB RENIEC Cache (CSV)</name>
+    <description>SOLO LABORATORIO. Simula con un CSV el recurso Oracle de PROD del mismo OID; los mappings de nombre son copia literal del XML de PROD.</description>
+    <lifecycleState>active</lifecycleState>
+    <connectorRef type="c:ConnectorType">
+        <filter><q:text>connectorType = "com.evolveum.polygon.connector.csv.CsvConnector"</q:text></filter>
+    </connectorRef>
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.evolveum.polygon.connector-csv/com.evolveum.polygon.connector.csv.CsvConnector">
+            <cfg:filePath>/opt/midpoint/var/e1-lab/reniec-cache.csv</cfg:filePath>
+            <cfg:tmpFolder>/opt/midpoint/var/e1-lab</cfg:tmpFolder>
+            <cfg:encoding>utf-8</cfg:encoding>
+            <cfg:fieldDelimiter>,</cfg:fieldDelimiter>
+            <cfg:quote>"</cfg:quote>
+            <cfg:headerExists>true</cfg:headerExists>
+            <cfg:trim>true</cfg:trim>
+            <cfg:uniqueAttribute>NRO_DOCUMENTO</cfg:uniqueAttribute>
+            <cfg:nameAttribute>NRO_DOCUMENTO</cfg:nameAttribute>
+            <cfg:readOnly>true</cfg:readOnly>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+    <schemaHandling>
+        <objectType>
+            <kind>account</kind>
+            <intent>default</intent>
+            <default>true</default>
+            <delineation><objectClass>ri:AccountObjectClass</objectClass></delineation>
+            <focus><type>UserType</type></focus>
+
+            <attribute>
+                <ref>ri:NRO_DOCUMENTO</ref>
+                <inbound>
+                    <name>reniec-dni-to-taxId-urn</name>
+                    <strength>normal</strength>
+                    <expression>
+                        <script>
+                            <code>def d = (input ?: '').toString().trim(); d ? 'urn:schac:personalUniqueID:pe:DNI:PE:' + d : null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:taxId</path>
+                    </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
+                </inbound>
+                <!-- E1 2026-11-09: DNI → upeu:lambDocNum SOLO para correlacionar (no se escribe en
+                     el usuario: su IIA es Lamb). Mismo CANON_DOC que trabajadores para DNI. -->
+                <inbound>
+                    <name>reniec-dni-to-lambDocNum-correlation</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def d = (input ?: '').toString().trim(); (d ==~ /\d{7,8}/) ? d.padLeft(8, '0') : null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</path>
+                    </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <exclude>clockwork</exclude>
+                    </evaluationPhases>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:CONTENT</ref>
+                <inbound>
+                    <name>reniec-content-to-reniecGivenName</name>
+                    <!-- E1 2026-11-09: transporte, strong, único escritor; forma toOfficialName
+                         (partículas de la regla UPeU, guiones y apóstrofos). Sin condición: ya no
+                         compite con nadie. El nombre visible lo elige UserTemplate-Nombre-Oficial. -->
+                    <strength>strong</strength>
+                    <expression>
+                        <function>
+                            <libraryRef oid="0b6f3a1c-2d4e-4f5a-9b8c-7e6d5c4b3a2f" type="FunctionLibraryType"/>
+                            <name>toOfficialName</name>
+                            <parameter>
+                                <name>raw</name>
+                                <expression>
+                                    <script>
+                                        <code>if (input == null || input.toString().trim().isEmpty()) return null; try { def json = new groovy.json.JsonSlurper().parseText(input.toString()); def n = json?.nombres?.toString()?.trim(); return n ?: null } catch (Exception e) { log.warn('reniec-cache: nombres parse error {}', e.getMessage()); return null }</code>
+                                    </script>
+                                </expression>
+                            </parameter>
+                        </function>
+                    </expression>
+                    <target><path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:reniecGivenName</path></target>
+                </inbound>
+
+                <!-- CONTENT → familyName (ap_paterno + ap_materno, Title Case)
+                     Construye el apellido completo concatenando ambos campos RENIEC.
+                     Se omite ap_materno si está vacío (ciudadanos con un solo apellido). -->
+                <inbound>
+                    <!-- WEAK (FIX 2026-06-29): ver justificación en reniec-content-to-givenName.
+                         trabajadores es el único strong de familyName.
+                         LAST-RESORT: solo rellena si el foco aún no tiene familyName. -->
+                    <name>reniec-content-to-reniecFamilyName</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <function>
+                            <libraryRef oid="0b6f3a1c-2d4e-4f5a-9b8c-7e6d5c4b3a2f" type="FunctionLibraryType"/>
+                            <name>toOfficialName</name>
+                            <parameter>
+                                <name>raw</name>
+                                <expression>
+                                    <script>
+                                        <code>if (input == null || input.toString().trim().isEmpty()) return null; try { def json = new groovy.json.JsonSlurper().parseText(input.toString()); def pat = json?.ap_paterno?.toString()?.trim() ?: ''; def mat = json?.ap_materno?.toString()?.trim() ?: ''; def full = (pat + (mat ? ' ' + mat : '')).trim(); return full ?: null } catch (Exception e) { log.warn('reniec-cache: apellidos parse error {}', e.getMessage()); return null }</code>
+                                    </script>
+                                </expression>
+                            </parameter>
+                        </function>
+                    </expression>
+                    <target><path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:reniecFamilyName</path></target>
+                </inbound>
+
+                <!-- CONTENT → dataQualityStatus
+                     reniec_validated: CONTENT parseable y se extrajeron nombres.
+                     mismatch: CONTENT parseable pero nombres RENIEC difieren >30% de los actuales.
+                     No sobreescribe manual_override.
+                     strength=strong: RENIEC es fuente jurídica de mayor confianza.
+                     Fix 2026-05-27: consolidado en el bloque ri:CONTENT único (evita ORA Duplicate definition). -->
+                <inbound>
+                    <name>reniec-content-to-dataQualityStatus</name>
+                    <!-- ARCHIVED E1 2026-11-09: dataQualityStatus lo decide UserTemplate-Nombre-Oficial
+                         (único escritor). Dos escritores sobre un ítem single-valued chocarían. -->
+                    <lifecycleState>archived</lifecycleState>
+                    <strength>strong</strength>
+                    <condition>
+                        <script>
+                            <code>if (focus == null) return false; def currentStatus = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:upeu:midpoint:local','dataQualityStatus'))?.toString(); return currentStatus != 'manual_override'</code>
+                        </script>
+                    </condition>
+                    <expression>
+                        <script>
+                            <code>
+if (input == null || input.toString().trim().isEmpty()) return null
+try {
+    def json = new groovy.json.JsonSlurper().parseText(input.toString())
+    def nombres = json?.nombres?.toString()?.trim()
+    def pat = json?.ap_paterno?.toString()?.trim()
+    if (!nombres &amp;&amp; !pat) return null
+    // Detectar mismatch: si el foco ya tiene nombres y difieren significativamente
+    def focusGiven = focus?.givenName?.toString()?.trim()?.toUpperCase() ?: ''
+    def focusFamily = focus?.familyName?.toString()?.trim()?.toUpperCase() ?: ''
+    def reniecNombres = (nombres ?: '').toUpperCase()
+    def reniecApellidos = ((json?.ap_paterno?.toString()?.trim() ?: '') + ' ' + (json?.ap_materno?.toString()?.trim() ?: '')).trim().toUpperCase()
+    if (focusGiven &amp;&amp; focusFamily) {
+        def givenMatch = focusGiven.contains(reniecNombres) || reniecNombres.contains(focusGiven)
+        def familyMatch = focusFamily.contains(reniecApellidos) || reniecApellidos.contains(focusFamily)
+        if (!givenMatch &amp;&amp; !familyMatch) return 'mismatch'
+    }
+    return 'reniec_validated'
+} catch (Exception e) {
+    log.warn('reniec-cache: dataQualityStatus error: ' + e.getMessage())
+    return null
+}
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:dataQualityStatus</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:FECHA_REGISTRO</ref>
+                <inbound>
+                    <name>reniec-fecha-to-validationDate</name>
+                    <strength>strong</strength>
+                    <condition>
+                        <script>
+                            <code>if (focus == null) return false; def currentStatus = basic.getExtensionPropertyValue(focus, new javax.xml.namespace.QName('urn:upeu:midpoint:local','dataQualityStatus'))?.toString(); return currentStatus != 'manual_override' &amp;&amp; input != null</code>
+                        </script>
+                    </condition>
+                    <expression>
+                        <script>
+                            <code>
+if (input == null) return null
+try {
+    def ts = java.sql.Timestamp.valueOf(input.toString())
+    def gc = new java.util.GregorianCalendar()
+    gc.setTimeInMillis(ts.getTime())
+    return javax.xml.datatype.DatatypeFactory.newInstance().newXMLGregorianCalendar(gc)
+} catch (Exception e) {
+    log.warn('reniec-cache: reniecValidationDate parse error: ' + e.getMessage())
+    return null
+}
+                            </code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:reniecValidationDate</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <correlation>
+                <correlators>
+                    <items>
+                        <name>correlate-by-lambDocNum</name>
+                        <item>
+                            <ref xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambDocNum</ref>
+                        </item>
+                    </items>
+                </correlators>
+            </correlation>
+            <synchronization>
+                <reaction><situation>linked</situation><actions><synchronize/></actions></reaction>
+                <reaction><situation>unlinked</situation><actions><link/></actions></reaction>
+                <reaction><situation>unmatched</situation><actions/></reaction>
+                <reaction><situation>deleted</situation><actions><unlink/></actions></reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>
+    <capabilities>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:create><cap:enabled>false</cap:enabled></cap:create>
+            <cap:update><cap:enabled>false</cap:enabled></cap:update>
+            <cap:delete><cap:enabled>false</cap:enabled></cap:delete>
+        </configured>
+    </capabilities>
+    <projection><assignmentPolicyEnforcement>relative</assignmentPolicyEnforcement></projection>
+</resource>

@@ -14482,7 +14482,7 @@ if (check != String.valueOf(digits.charAt(15))) return null
 def pn = personalNumber?.toString()?.trim()
 if (!pn) return null
 def dq = dataQualityStatus?.toString()?.trim()?.toLowerCase()
-def high = (dq == 'reniec_validated')
+def high = (dq == 'reniec_validated' || dq == 'reniec_name')   // E1 2026-11-09: reniec_name = nombre del DNI verificado; sin esto bajaría a low
 def out = []
 out &lt;&lt; 'https://refeds.org/assurance'
 out &lt;&lt; ('https://refeds.org/assurance/IAP/' + (high ? 'high' : 'low'))
