@@ -1,7 +1,7 @@
 # Nombre oficial de persona desde RENIEC — diseño por etapas
 
 **Slug:** `nombre-oficial-reniec`
-**Estado:** DISEÑO — nada desplegado. Cada etapa necesita el visto bueno de Alberto antes de ejecutarse.
+**Estado:** DISEÑO — nada desplegado. Cada etapa necesita el visto bueno de DTI/Infra antes de ejecutarse.
 **Fecha:** 2026-11-09
 **Reemplaza a:** `docs/specs/connector-reniec-midpoint/01-brainstorm.md` (abril 2026, conector en vivo contra apiperu.dev). Ver §8.
 **Relacionado:** `DECISION-canonical-identifier.md`, `DECISION-vigencia-temporal-afiliaciones.md`, `IIA-MATRIX.md` §2.1, `runbooks/givenName-collision-fix-2026-06-29.md`, `governance/matriz-fuentes-oracle-lamb.md` (P1/P2).
@@ -11,7 +11,7 @@
 ## 1. Por qué
 
 1. **CONCYTEC observó al repositorio de tesis** (nov-2026): el mismo asesor aparece escrito de varias formas. Pide una sola forma oficial por persona, aplicada en todo el repositorio.
-2. **Decisión de UPeU (Elvira, CRAI, 9-nov-2026; Alberto de acuerdo): el nombre oficial es el del DNI**, tal como lo registra RENIEC (con sus tildes o sin ellas, con apellido de casada), solo pasado de MAYÚSCULAS a altas y bajas.
+2. **Decisión de UPeU (CRAI, 9-nov-2026, con acuerdo de DTI/Infra): el nombre oficial es el del DNI**, tal como lo registra RENIEC (con sus tildes o sin ellas, con apellido de casada), solo pasado de MAYÚSCULAS a altas y bajas.
 3. Ya se aplicó en el repositorio de tesis (etapa 2 de asesores, 1 476 valores). Pero si cada sistema (DSpace, DSpace-CRIS, Koha, OJS) resuelve el nombre por su cuenta, volverán a divergir. **La forma oficial debe vivir una sola vez, en MidPoint, y de ahí salir a todos.** Es el primer paso de un control de autoridades de personas para toda UPeU.
 
 ## 2. Situación actual (verificada en el repo, 2026-11-09)
@@ -46,12 +46,12 @@ Activos = `ELISEO.VW_APS_EMPLEADO` (`ID_ENTIDAD=7124`, `ESTADO='A'`, sin términ
 
 Trampa medida: `MOISES1.VW_PERSONA_NATURAL` tiene varias filas por persona (DNI más tipos 97/98, 6, 4…). Hay que preferir `ID_TIPODOCUMENTO IN (1,24)`; tomar cualquier fila da 477 trabajadores con DNI en vez de 3 810.
 
-**Costo:** el lote de DNI RUC tenía 27 921 consultas el 9-nov y **es compartido con admisión**. Los 16 402 pendientes serían el 59 % del lote. Por eso va por etapas y con aprobación en cada una.
+**Costo:** cada consulta se paga y el saldo contratado **es compartido con admisión**. Los 16 402 pendientes serían más de la mitad del saldo disponible en noviembre de 2026. Por eso va por etapas y con aprobación en cada una.
 
 ## 4. Principios
 
 1. **Nunca una consulta pagada desde MidPoint.** Un conector en vivo consultaría en cada recompute, importación o reconciliación y gastaría sin control. MidPoint **solo lee la caché**. Las consultas las hace un proceso por lotes, fuera de MidPoint, aprobado lote a lote.
-2. **Una sola caché: `DAVID.CONSULTA_APIS_LOG`.** Es la fuente autorizada y con prioridad (matriz de fuentes P1/P2), la que ya lee `reniec-cache.xml` y donde admisión registra sus consultas. Lo consultado fuera (p. ej. los 694 asesores del 9-nov, hoy en la tabla `dniruc_asesores_20261109` del repositorio) debe **registrarse ahí**, en el mismo formato. Pedido a Owen (DTI Dev).
+2. **Una sola caché: `DAVID.CONSULTA_APIS_LOG`.** Es la fuente autorizada y con prioridad (matriz de fuentes P1/P2), la que ya lee `reniec-cache.xml` y donde admisión registra sus consultas. Lo consultado fuera (p. ej. los 694 asesores del 9-nov, hoy en la tabla `dniruc_asesores_20261109` del repositorio) debe **registrarse ahí**, en el mismo formato. Pedido a DTI Desarrollo.
 3. **No repetir consultas.** Si el DNI ya está en la caché con `STATUS='S'`, no se consulta. La caché no caduca para el nombre; solo se revalida a pedido (cambio de apellido por matrimonio, corrección en RENIEC).
 4. **Minimizar datos (Ley 29733).** La API devuelve foto, dirección, padres, estado civil y fecha de nacimiento. Para este fin solo se usan apellidos y nombres. Qué guarda la caché lo decide DTI, no este proceso.
 5. **Lamb sigue siendo la fuente que crea a la persona.** RENIEC solo fija la forma oficial del nombre de quien tiene DNI.
@@ -76,10 +76,10 @@ Además:
 
 | Etapa | Qué | Consultas a la API | Condición para pasar a la siguiente |
 |---|---|---|---|
-| **E0** | Owen registra en `CONSULTA_APIS_LOG` las 694 consultas del 9-nov | 0 | Filas visibles en la caché |
-| **E1** | Cambio del §5 en el lab, informe de impacto, luego producción | 0 | Visto bueno de Alberto al informe; 0 errores de recompute |
-| **E2** | Trabajadores activos sin caché, en lotes de ~500: primero docentes (asesores y jurados de tesis), luego administrativos | ~2 871 | Aprobación de Alberto **por lote**; saldo del lote revisado |
-| **E3** | Estudiantes activos sin caché, en lotes, empezando por los cercanos a titularse (últimos ciclos y posgrado, futuros autores de tesis) | ~13 531 | Ídem, y decisión de David Barrantes sobre el gasto |
+| **E0** | DTI Desarrollo registra en `CONSULTA_APIS_LOG` las 694 consultas del 9-nov | 0 | Filas visibles en la caché |
+| **E1** | Cambio del §5 en el lab, informe de impacto, luego producción | 0 | Visto bueno de DTI/Infra al informe; 0 errores de recompute |
+| **E2** | Trabajadores activos sin caché, en lotes de ~500: primero docentes (asesores y jurados de tesis), luego administrativos | ~2 871 | Aprobación de DTI/Infra **por lote**; saldo del lote revisado |
+| **E3** | Estudiantes activos sin caché, en lotes, empezando por los cercanos a titularse (últimos ciclos y posgrado, futuros autores de tesis) | ~13 531 | Ídem, y decisión de la Dirección DTI sobre el gasto |
 | **E4** (otra etapa) | Egresados, ex trabajadores, jubilados | por medir | Proyecto aparte |
 | **E5** | Publicar la autoridad a los consumidores (§7) | 0 | E1 en producción |
 
@@ -89,10 +89,10 @@ La caché crece sola: admisión consulta a cada ingresante desde enero de 2025, 
 
 Script fuera de MidPoint, en el repo (`upeu/scripts/`), con lo aprendido el 9-nov:
 - Lista = activos con DNI − caché − ya consultados. Tope duro por ejecución.
-- Una consulta por segundo. Vigila `data.count` (saldo) en cada respuesta, como pidió Owen, y se detiene si baja más de lo esperado o hay 3 errores seguidos.
+- Una consulta por segundo. Vigila `data.count` (saldo) en cada respuesta, como pidió DTI Desarrollo, y se detiene si baja más de lo esperado o hay 3 errores seguidos.
 - Reanudable, sin repetir DNI.
 - Los DNI sin resultado (HTTP 404, no se cobran) quedan anotados para no reintentarlos.
-- Resultado → `CONSULTA_APIS_LOG` (vía DTI). MidPoint lo toma en la siguiente importación de `reniec-cache`.
+- Resultado → `CONSULTA_APIS_LOG` (vía DTI Desarrollo). MidPoint lo toma en la siguiente importación de `reniec-cache`.
 
 ## 7. Hacia una autoridad de personas para toda UPeU (E5, esbozo)
 
@@ -110,8 +110,8 @@ Detalle en una especificación propia cuando E1 esté en producción.
 ## 8. Por qué se descarta el borrador de abril
 
 `connector-reniec-midpoint/01-brainstorm.md` proponía un conector ConnId en vivo contra apiperu.dev. Se descarta:
-- apiperu.dev es una cuenta personal de Alberto, «no usar para producción UPeU», y según la matriz de fuentes usa el registro de SUNAT, no RENIEC directo.
-- UPeU ya paga un proveedor (DNI RUC) y ya tiene la caché que alimenta admisión.
+- apiperu.dev es una cuenta personal, «no usar para producción UPeU», y según la matriz de fuentes usa el registro de SUNAT, no RENIEC directo.
+- UPeU ya paga un proveedor de consultas DNI y ya tiene la caché que alimenta admisión.
 - Un conector en vivo contradice el principio 1 (§4): gasto sin control.
 
 ## 9. Riesgos
@@ -126,7 +126,7 @@ Detalle en una especificación propia cuando E1 esté en producción.
 
 ## 10. Pendientes para decidir
 
-1. Visto bueno a E0: pedir a Owen el registro en `CONSULTA_APIS_LOG`.
+1. Visto bueno a E0: pedir a DTI Desarrollo el registro en `CONSULTA_APIS_LOG`.
 2. Visto bueno a E1 (diseño del §5) para prepararlo en el lab.
 3. Tamaño de lote y ritmo para E2.
-4. Si E3 se hace, cuánto del lote se le asigna (David Barrantes).
+4. Si E3 se hace, cuánto del lote se le asigna (Dirección DTI).
