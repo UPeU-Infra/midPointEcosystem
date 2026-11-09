@@ -5,7 +5,7 @@
 **Diseño:** [`01-diseno.md`](01-diseno.md) §5. Etapa anterior: [`02-e0-laboratorio.md`](02-e0-laboratorio.md).
 **Consultas a RENIEC / API de pago:** 0.
 
-> Sin datos personales: los usuarios de prueba (`e1test911…924`) llevan DNI ficticios `000009xx` y nombres inventados.
+> Sin datos personales: los usuarios de prueba (`e1test911…931`) llevan DNI ficticios `000009xx` y nombres inventados.
 
 ---
 
@@ -46,7 +46,7 @@ MidPoint no tiene un mecanismo soportado para purgar por selección (el cleanup 
 | `upeu/resources/oracle-lamb/estudiantes.xml`, `egresados.xml` | Ídem (siguen `weak`) |
 | `upeu/resources/oracle-lamb/reniec-cache.xml` | Nombres → `upeu:reniecGivenName`/`reniecFamilyName` (`strong`, sin condición, `toOfficialName`); inbound de `dataQualityStatus` → `archived`; **correlación por `upeu:lambDocNum`** en vez de `sb:taxId`; comentario de los diacríticos corregido |
 | `upeu/resources/reniec-verificados-csv.xml` | `toCanonicalName` → `toOfficialName` |
-| `upeu/resources/ldap-identity-cache.xml` | `eduPersonAssurance`: «high» también con `reniec_name` |
+| `upeu/resources/ldap-identity-cache.xml` | `eduPersonAssurance`: «high» también con `reniec_name`; **`displayName` (atributo 87) de `weak` a `strong`** (ajuste del §6) |
 | `canonical/object-templates/UserTemplate-Person-Base.xml` | `includeRef` a `UserTemplate-Nombre-Oficial`; Bloque J añade `verifiedAt` al DNI cuando el nombre visible es el de RENIEC |
 | `upeu/schemas/upeu-local-v1.0.xml` | Vocabulario de `dataQualityStatus`: nuevo `reniec_name` |
 
@@ -64,9 +64,13 @@ MidPoint no tiene un mecanismo soportado para purgar por selección (el cleanup 
 **Regla de decisión** (`upeuNombreOficial.resolver`):
 1. `manual_override` → los mappings no corren (condición): no se toca nada.
 2. Hay nombre RENIEC **con enlace vivo** al recurso (CSV o caché) → si hay dos, gana la de fecha de verificación más reciente (empate → CSV).
-3. Se compara el apellido RENIEC con `lambFamilyName`, sin tildes, mayúsculas, guiones ni apóstrofos: igual, o uno contiene al otro por palabras completas. Calza → nombre RENIEC, `reniec_name`, `verifiedAt`. No calza → nombre de Lamb, `mismatch`.
+3. Se compara con Lamb, por **palabras completas** (sin tildes, mayúsculas, guiones, apóstrofos, puntos, comas ni espacios repetidos), y deben calzar **las dos cosas** (ajuste del §6):
+   - **Apellidos:** iguales, o la secuencia de palabras de uno está dentro de la del otro (apellido de casada). Nunca por subcadena: «Paz» no calza con «Pazos».
+   - **Primer nombre:** la primera palabra del nombre de Lamb está entre las palabras del nombre RENIEC (un segundo nombre que falta en Lamb no impide calzar).
+
+   Calzan → nombre RENIEC, `reniec_name`, `verifiedAt`. No calzan → nombre de Lamb, `mismatch`.
 4. Sin RENIEC vivo → nombre de Lamb. Si antes era `reniec_name`/`mismatch` → `pending`; si no, se deja como está.
-5. Hay RENIEC pero aún no hay apellido de Lamb (transición) → no se cambia nada.
+5. Hay RENIEC pero aún no hay apellido **o nombre** de Lamb (transición) → no se cambia nada.
 
 **Enlace roto o fila retirada → vuelve al nombre de Lamb, estado `pending`.** Justificación: retirar una fila significa que esa verificación ya no vale (p. ej. un DNI equivocado). Los valores de transporte quedan en el usuario porque un inbound no los retira (`midpoint-best-practices` §11.1), pero la decisión los ignora porque mira el enlace vivo. Verificado: el shadow queda «muerto» con relación `related` y `hasLinkedAccount` devuelve `false`.
 
@@ -105,33 +109,70 @@ Orden realista: import de trabajadores → estudiantes → caché → CSV. Despu
 | `givenName` | strong | Toma el nombre elegido y **se actualiza** cuando cambia (917 volvió a Lamb) ✔ |
 | `sn` | strong | Ídem ✔ |
 | `cn` | strong (de `fullName`) | Ídem ✔ |
-| `displayName` | **weak** | Se fija al crear la cuenta y **NO se actualiza**: 917 quedó con el nombre RENIEC después de volver a Lamb ✘ |
+| `displayName` | ~~weak~~ → **strong** (§6) | Con `weak` se fijaba al crear la cuenta y no se actualizaba (917 quedó con el nombre RENIEC tras volver a Lamb). Con `strong` sigue a `fullName` ✔ |
 | `upeuDataQualityStatus` | strong | `reniec_name` / `mismatch` / `pending` ✔ |
 | `eduPersonAssurance` | strong | Con el cambio: `reniec_name` → IAP/medium, high, cappuccino; `mismatch` → low, espresso ✔ |
 
-En PROD, `ldap-identity-cache.xml` tiene el mismo `displayName weak`. Las personas que ya tienen entrada LDAP **no verían el nombre RENIEC en `displayName`**. Además, Entra ID (`givenName`/`surname`) y RIMS (SCIM) son `strong`, y Koha es `normal`. Entra ID está hoy en `proposed` (no escribe).
+Resuelto en el §6 (`displayName` a `strong`). Además, Entra ID (`givenName`/`surname`) y RIMS (SCIM) son `strong`, y Koha es `normal`. Entra ID está hoy en `proposed` (no escribe).
 
 ## 4. Problemas encontrados
 
 1. **Sin el cambio de `eduPersonAssurance`, cada persona que pase a `reniec_name` bajaría de nivel** (de IAP/medium a low): la regla solo miraba `reniec_validated`. Corregido en el repo y en el lab. Otros consumidores de `upeuDataQualityStatus` fuera de MidPoint (RIMS, InOut…) no se revisaron.
-2. `displayName` en LDAP es `weak` (ver §3).
+2. ~~`displayName` en LDAP es `weak`~~ → **resuelto en el §6** (`strong`).
 3. `reniec_validated` deja de producirse. Las personas enlazadas a la caché pasan a `reniec_name` o `mismatch`. Las que pierdan el enlace conservan `reniec_validated`.
 4. El Bloque J sigue poniendo `verifiedBy=RENIEC` a **todo** DNI, verificado o no. E1 solo añade `verifiedAt` cuando la verificación es real. Corregir `verifiedBy` cambiaría el contenedor de ~todas las personas: queda como decisión aparte.
-5. La regla «contiene» acepta un apellido RENIEC más largo (casada) y también uno más corto. Un DNI equivocado con un apellido compartido (p. ej. solo «Quispe») pasaría la comparación si Lamb tiene «Quispe». Mitigación posible: exigir también que calcen los nombres de pila, o que el apellido más corto tenga al menos dos palabras. **Decisión pendiente.**
+5. ~~La regla «contiene» acepta un DNI equivocado que comparta apellido~~ → **resuelto en el §6**: ahora también debe calzar el primer nombre. Queda un caso residual: mismo primer nombre y un solo apellido RENIEC contenido en el de Lamb (931).
 
 ## 5. Qué falta para producción
 
-1. **Visto bueno de DTI/Infra** a este diseño y a la decisión pendiente de §4.5.
-2. **Medir antes (solo lectura):**
-   - Cuántas personas cambiarían de nombre y de qué tipo (solo tildes, casada, otras letras).
-   - Cuántos `mismatch`.
-   - Cuántos shadows de `reniec-cache` se enlazarían al correlacionar por `lambDocNum`.
-   - Cuántas personas tienen entrada LDAP (por el `displayName`).
+1. **Visto bueno de DTI/Infra** a este diseño y a la medición de producción: [`04-medicion-prod.md`](04-medicion-prod.md) (y a sus decisiones nuevas, §7 de ese documento).
+2. ~~Medir antes (solo lectura)~~ → **hecho el 9-nov**: [`04-medicion-prod.md`](04-medicion-prod.md).
 3. Orden de despliegue, cada paso con PATCH (nunca PUT en recursos) y verificación de `version`:
    1. Schema (PATCH construido desde la `definition` viva de PROD + los 8 ítems de E0 y E1).
    2. Función `toOfficialName`, librería `upeuNombreOficial` y `UserTemplate-Nombre-Oficial`.
    3. Recursos (los inbounds a transporte) en `proposed`, y `includeRef` + Bloque J en `Person-Base`.
    4. Reconciliación de Lamb para llenar `lamb*` **antes** de activar la plantilla (sin `lamb*` la plantilla no cambia nada, por diseño).
    5. SIM PRE/POST, canario por nombre, luego el lote.
-4. LDAP: aplicar el cambio de `eduPersonAssurance` **antes o junto con** la plantilla, y decidir si `displayName` pasa a `strong`.
+4. LDAP: aplicar el cambio de `eduPersonAssurance` y el de `displayName` (`strong`) **antes o junto con** la plantilla. `displayName`: PATCH `replace` de `schemaHandling/objectType[62]/attribute[87]/outbound/strength` = `strong` (mismo id en el repo y en el lab; confirmar el id en PROD con `GET ?options=raw` antes).
 5. Avisar a los consumidores de `upeuDataQualityStatus` del valor nuevo `reniec_name`.
+
+---
+
+## 6. Ajuste del 9-nov: regla más estricta y `displayName` en `strong` (decisión de DTI/Infra)
+
+### Qué cambió
+
+| Archivo | Cambio |
+|---|---|
+| `upeu/function-libraries/upeu-nombre-oficial.xml` | La comparación pasa a **palabras completas** (listas de tokens, no cadenas) y exige **apellidos + primer nombre**. Separadores: guion, apóstrofo, punto y coma («Sta. Rosa» = «Sta Rosa»). Sin `lambGivenName` → `sin_lamb` (no se toca nada) |
+| `upeu/resources/ldap-identity-cache.xml` | Atributo 87 (`ri:displayName`, `account/default`): `weak` → `strong`, misma fuente (`fullName`) que `cn` |
+
+El object template no cambia: sus tres mappings ya tenían `lambGivenName` como fuente.
+
+`displayName` en los consumidores: en LDAP lo publica solo el tipo `account/default` (la rama `alumni` no lo publica). RIMS (SCIM) ya lo tenía `strong` desde `fullName`; Entra ID solo lo lee (`proposed`); Koha no lo usa. Con MidPoint 4.11, si se adopta `UserType.preferredName` (nombre social), habrá que decidir aquí su prioridad frente al nombre oficial.
+
+### Pruebas (en vivo, laboratorio)
+
+Librería reimportada; LDAP con **PATCH** del ítem (versión 23 → 24, `<schema>` intacto, test de conexión 15/15 «success»). Siete usuarios nuevos (`e1test925…931`, DNI ficticios), con filas nuevas en el simulador de trabajadores y en el CSV de E0.
+
+| Caso | Usuario | Resultado |
+|---|---|---|
+| Los 13 casos anteriores | 911-924 | **Sin ningún cambio** con la regla nueva ✔ |
+| Mismos apellidos, otro primer nombre | 925 | `mismatch`, se queda Lamb ✔ |
+| Apellido subcadena (Lamb «Paz», RENIEC «Pazos») | 926 | `mismatch` ✔ |
+| Falta el segundo nombre en Lamb («Miguel» / «Miguel Ángel») | 927 | `reniec_name`, `Miguel Ángel` ✔ |
+| El primer nombre de Lamb es el segundo de RENIEC | 928 | `reniec_name` (la regla lo admite) ✔ |
+| Apellido compartido, otro nombre (el caso que la regla anterior aceptaba) | 929 | `mismatch` ✔ |
+| Punto en el apellido (Lamb «Sta Rosa», RENIEC «Sta. Rosa») | 930 | `reniec_name`, `Sta. Rosa Lima` ✔ |
+| Caso residual: mismo nombre, RENIEC con un solo apellido contenido en el de Lamb | 931 | `reniec_name`, `Quispe` (ver §4.5) |
+| `displayName` al cambiar el nombre (cuenta LDAP creada con el nombre de Lamb) | 927 | `Miguel Torres Lazo` → `Miguel Ángel Torres Lazo`, igual que `cn` ✔ |
+| `displayName` viejo (fijado con `weak`) | 917 | `Ana María Ñahui Quispe` → `Ana Ñahui Quispe` ✔ |
+| `displayName` cambiado a mano en el LDAP | 914 | Un recompute lo devuelve a `fullName` (el `strong` carga la cuenta) ✔ |
+| Dos recomputes seguidos sin cambios | todos | **0 modificaciones** (auditoría) ✔ |
+| `SchemaException` / «more than one value» / resultados distintos de `success` | — | **0** ✔ |
+
+La lógica se reprodujo en Python para la medición de producción; da el mismo resultado que MidPoint en los 15 casos del laboratorio que tienen nombre RENIEC.
+
+### Medición en producción
+
+[`04-medicion-prod.md`](04-medicion-prod.md): 21 880 activos, 5 161 `reniec_name`, 46 `mismatch` (17 más que con la regla anterior), 6 644 cambios de nombre visible y 7 115 de `displayName`. **Riesgo nuevo:** la plantilla no se limita a los activos (§7 de ese documento).

@@ -14342,8 +14342,13 @@ return mapped ? new ArrayList(mapped) : null</code>
             <attribute id="87">
                 <ref>ri:displayName</ref>
                 <displayName>Display Name</displayName>
+                <!-- nombre-oficial-reniec E1 (2026-11-09): weak → strong. Con weak se fijaba al crear la
+                     cuenta y no se actualizaba nunca: LDAP mostraba en displayName un nombre distinto del de
+                     cn/givenName/sn (strong) cuando el nombre oficial cambiaba. Ahora sigue a fullName
+                     (= givenName + familyName elegidos por UserTemplate-Nombre-Oficial), igual que cn.
+                     Ojo 4.11: si se adopta UserType.preferredName (nombre social), decidir aquí su prioridad. -->
                 <outbound>
-                    <strength>weak</strength>
+                    <strength>strong</strength>
                     <source>
                         <path>$focus/fullName</path>
                     </source>

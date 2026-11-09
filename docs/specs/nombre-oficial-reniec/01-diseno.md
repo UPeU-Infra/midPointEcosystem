@@ -124,7 +124,7 @@ Detalle en una especificación propia cuando E1 esté en producción.
 | Cambiar el nombre visible de miles de personas a la vez | E1 con informe previo y en el lab primero |
 | Nombre RENIEC sin tildes que la persona sí usa | Es la regla decidida (§1). Las excepciones las resuelve el CRAI o RR. HH., con `dataQualityStatus=manual_override` |
 | Consumir el lote compartido con admisión | Aprobación por lote; medir antes de cada lote; tope duro |
-| DNI equivocado en Lamb (en tesis hubo 221 casos) | Si el apellido de RENIEC no calza con el de Lamb → `mismatch`, no se cambia el nombre, va a revisión |
+| DNI equivocado en Lamb (en tesis hubo 221 casos) | Si los apellidos o el primer nombre de RENIEC no calzan con los de Lamb (por palabras completas) → `mismatch`, no se cambia el nombre, va a revisión. Medido en producción: [`04-medicion-prod.md`](04-medicion-prod.md) |
 | Datos sensibles de la respuesta | Solo apellidos y nombres en este proceso (§4.4) |
 
 ## 10. Pendientes para decidir

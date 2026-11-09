@@ -13,8 +13,8 @@
        'manual_override'      → no tocar nada (lo puso un administrador)
        'reniec_name:csv'      → nombre RENIEC del recurso «RENIEC verificados (CSV)»
        'reniec_name:cache'    → nombre RENIEC de reniec-cache (DAVID.CONSULTA_APIS_LOG)
-       'mismatch:csv|cache'   → hay RENIEC pero su apellido no calza con el de Lamb
-       'sin_lamb'             → hay RENIEC pero aún no hay apellido de Lamb con qué comparar
+       'mismatch:csv|cache'   → hay RENIEC pero su apellido o su primer nombre no calzan con los de Lamb
+       'sin_lamb'             → hay RENIEC pero aún no hay apellido o nombre de Lamb con qué comparar
                                 (prudencia: no se cambia nada hasta que Lamb lo traiga)
        'sin_reniec'           → no hay nombre RENIEC con enlace vivo → nombre de Lamb
 
@@ -24,9 +24,16 @@
          así que los valores de transporte de una fila retirada se ignoran.
        - Si hay dos fuentes RENIEC vivas gana la de fecha de verificación más reciente
          (empate → CSV, que es la verificación explícita del lote aprobado).
-       - El apellido «calza» si, sin tildes, mayúsculas, guiones ni apóstrofos, es igual o uno
-         contiene al otro por palabras completas (cubre el apellido de casada: «Garcia Torres de Paz»
-         contiene «García Torres»).
+       - Se acepta el nombre RENIEC solo si calzan LAS DOS cosas (decisión 2026-11-09, ajuste de E1):
+         a) Apellidos: comparados por PALABRAS COMPLETAS (tokens), sin tildes, mayúsculas, guiones,
+            apóstrofos, puntos, comas ni espacios repetidos («Sta. Rosa» = «Sta Rosa»): iguales, o la lista de palabras de uno aparece seguida
+            dentro de la del otro (apellido de casada: «Garcia Torres de Paz» contiene «García Torres»).
+            Nunca por subcadena: «Paz» NO calza con «Pazos».
+         b) Primer nombre de pila: la primera palabra del nombre de Lamb (normalizada igual) está entre
+            las palabras del nombre RENIEC («José» calza con «José María» y con «Luis José»; «Juan» no
+            calza con «Pedro Juanito»). Un segundo nombre que falta en Lamb no impide calzar.
+         Si no calzan → mismatch (se queda el nombre de Lamb, va a revisión humana).
+       - Sin nombre de pila de Lamb no hay con qué comparar → 'sin_lamb' (no se cambia nada).
 
      Los OID de recursos son de UPeU (overlay). Otra institución: copiar y cambiar los OID.
      ============================================================ -->
@@ -77,16 +84,25 @@ if (estadoActual == 'manual_override') {
         // más reciente primero; empate → csv (verificación explícita del lote aprobado)
         elegido = cands.max { a, b -> (a.at &lt;=&gt; b.at) ?: (a.src == 'csv' ? 1 : -1) }
         def lambFam = ext('lambFamilyName')
-        if (!lambFam) {
+        def lambGiv = ext('lambGivenName')
+        if (!lambFam || !lambGiv) {
             decision = 'sin_lamb'
         } else {
-            def norm = { String x ->
+            // palabras normalizadas: sin tildes, minúsculas, guion/apóstrofo/punto/coma = separador, espacios colapsados
+            def toks = { String x ->
                 def t = java.text.Normalizer.normalize(x ?: '', java.text.Normalizer.Form.NFD).replaceAll('\\p{M}', '')
-                t.toLowerCase(Locale.ROOT).replaceAll("[-'\u2019]", ' ').replaceAll('\\s+', ' ').trim()
+                t.toLowerCase(Locale.ROOT).replaceAll("[-'\u2019.,]", ' ').trim().split('\\s+').findAll { it } as List
             }
-            def r = norm(elegido.fam); def l = norm(lambFam)
-            boolean calza = r &amp;&amp; l &amp;&amp; (r == l || (' ' + r + ' ').contains(' ' + l + ' ') || (' ' + l + ' ').contains(' ' + r + ' '))
-            decision = (calza ? 'reniec_name:' : 'mismatch:') + elegido.src
+            // ¿la lista b aparece seguida, palabra por palabra, dentro de la lista a? (nunca subcadena)
+            def contiene = { List a, List b ->
+                if (b.isEmpty() || b.size() &gt; a.size()) return false
+                (0..(a.size() - b.size())).any { i -&gt; a.subList(i, i + b.size()) == b }
+            }
+            def rf = toks(elegido.fam); def lf = toks(lambFam)
+            boolean apellidos = !rf.isEmpty() &amp;&amp; !lf.isEmpty() &amp;&amp; (rf == lf || contiene(rf, lf) || contiene(lf, rf))
+            def rg = toks(elegido.giv); def lg = toks(lambGiv)
+            boolean primerNombre = !lg.isEmpty() &amp;&amp; rg.contains(lg[0])
+            decision = ((apellidos &amp;&amp; primerNombre) ? 'reniec_name:' : 'mismatch:') + elegido.src
         }
     }
 }
