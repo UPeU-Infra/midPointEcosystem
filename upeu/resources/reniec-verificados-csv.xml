@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================================
+     Resource: RENIEC verificados (CSV)
+     OID: 082811dd-d4c4-4b3f-b288-e06f89d3383e
+     Etapa: E0 de docs/specs/nombre-oficial-reniec/01-diseno.md (informe: 02-e0-laboratorio.md)
+
+     Qué hace: lleva a MidPoint nombres YA verificados contra RENIEC fuera de MidPoint
+     (p. ej. el lote de asesores del 9-nov-2026), sin consultar nada: MidPoint solo lee un CSV.
+     Escribe SOLO extensiones de transporte (upeu:reniecVerified*). NO toca givenName/familyName:
+     elegir el nombre visible es trabajo del object template en E1.
+
+     Formato del CSV (UTF-8, con cabecera, comillas dobles, nombres en MAYÚSCULAS como RENIEC):
+        dni,ap_paterno,ap_materno,nombres,fuente,fecha_verificacion
+        "<8 dígitos>","<PATERNO>","<MATERNO o vacío>","<NOMBRES>","RENIEC","AAAA-MM-DD"
+     Filas sin nombres (RENIEC sin resultado) NO se incluyen en el CSV.
+     ⚠️ El CSV contiene datos personales (Ley 29733): vive fuera del repo (repo PÚBLICO), en
+        /opt/midpoint/var/reniec-verificados/ dentro del contenedor, permisos 600. Nunca commitearlo.
+
+     Decisiones:
+       - Correlación por extension/upeu:lambDocNum (DNI, zfill 8), el mismo correlador type-aware
+         que trabajadores/estudiantes/egresados/grados (CANON_KEY 2026-06-02). NO por sb:taxId como
+         reniec-cache: taxId es type-blind (fusionaba CE y DNI con el mismo número), está deprecado
+         en el schema canónico y el Bloque J2 del template lo vacía en cuanto hay identityDocuments,
+         así que un correlador por taxId no encuentra a quien no lo conserve.
+         El inbound a lambDocNum corre SOLO en beforeCorrelation: este recurso nunca escribe
+         lambDocNum en el usuario (su IIA es Lamb).
+       - Un único escritor por ítem de transporte (no reniec-cache) → sin colisión single-valued.
+       - Paso a altas y bajas en el inbound con sb-name-normalizer (no en el CSV).
+       - Solo lectura: connector readOnly=true + capacidades create/update/delete deshabilitadas.
+       - unmatched → nada: no crea usuarios. deleted → unlink (los valores de transporte quedan;
+         E1 debe ignorarlos si no hay proyección viva de este recurso, ver midpoint-best-practices §11.1).
+     ============================================================ -->
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+    xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3"
+    xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3"
+    xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+    xmlns:upeu="urn:upeu:midpoint:local"
+    oid="082811dd-d4c4-4b3f-b288-e06f89d3383e">
+
+    <name>RENIEC verificados (CSV)</name>
+    <description>Solo lectura. Nombres ya verificados contra RENIEC fuera de MidPoint (lotes aprobados). Inbound a extensiones de transporte upeu:reniecVerified*; no crea usuarios ni cambia el nombre visible. Etapa E0 de nombre-oficial-reniec.</description>
+    <lifecycleState>active</lifecycleState>
+
+    <!-- Por tipo, no por OID: el OID del ConnectorType cambia entre instancias (lab/PROD). -->
+    <connectorRef type="c:ConnectorType">
+        <filter>
+            <q:text>connectorType = "com.evolveum.polygon.connector.csv.CsvConnector"</q:text>
+        </filter>
+    </connectorRef>
+
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.evolveum.polygon.connector-csv/com.evolveum.polygon.connector.csv.CsvConnector">
+            <cfg:filePath>/opt/midpoint/var/reniec-verificados/reniec-verificados.csv</cfg:filePath>
+            <cfg:tmpFolder>/opt/midpoint/var/reniec-verificados</cfg:tmpFolder>
+            <cfg:encoding>utf-8</cfg:encoding>
+            <cfg:fieldDelimiter>,</cfg:fieldDelimiter>
+            <cfg:quote>"</cfg:quote>
+            <cfg:headerExists>true</cfg:headerExists>
+            <cfg:ignoreEmptyLines>true</cfg:ignoreEmptyLines>
+            <cfg:trim>true</cfg:trim>
+            <cfg:uniqueAttribute>dni</cfg:uniqueAttribute>
+            <cfg:nameAttribute>dni</cfg:nameAttribute>
+            <cfg:readOnly>true</cfg:readOnly>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+
+    <schemaHandling>
+        <objectType>
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>Nombre verificado RENIEC</displayName>
+            <default>true</default>
+            <delineation>
+                <objectClass>ri:AccountObjectClass</objectClass>
+            </delineation>
+            <focus>
+                <type>UserType</type>
+                <!-- Sin archetypeRef: esta fuente no define el tipo de persona. -->
+            </focus>
+
+            <!-- dni → upeu:lambDocNum SOLO para correlacionar. El conector CSV 2.9 lo publica como
+                 ri:dni (nativo) con frameworkAttributeName __NAME__; icfs:name NO existe aquí.
+                 Mismo CANON_DOC que Lamb para DNI: solo dígitos, zfill 8. Lo que no sea un DNI
+                 de 7-8 dígitos no correlaciona (null). -->
+            <attribute>
+                <ref>ri:dni</ref>
+                <inbound>
+                    <name>reniec-csv-dni-to-lambDocNum-correlation</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def d = (input ?: '').toString().trim(); (d ==~ /\d{7,8}/) ? d.padLeft(8, '0') : null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>extension/upeu:lambDocNum</path>
+                    </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <exclude>clockwork</exclude>
+                    </evaluationPhases>
+                </inbound>
+            </attribute>
+
+            <!-- nombres → upeu:reniecVerifiedGivenName (altas y bajas, sb-name-normalizer) -->
+            <attribute>
+                <ref>ri:nombres</ref>
+                <inbound>
+                    <name>reniec-csv-nombres-to-reniecVerifiedGivenName</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <function>
+                            <libraryRef oid="0b6f3a1c-2d4e-4f5a-9b8c-7e6d5c4b3a2f" type="c:FunctionLibraryType"/>
+                            <name>toCanonicalName</name>
+                            <parameter>
+                                <name>raw</name>
+                                <expression><path>$input</path></expression>
+                            </parameter>
+                        </function>
+                    </expression>
+                    <target>
+                        <path>extension/upeu:reniecVerifiedGivenName</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <!-- ap_paterno + ap_materno → upeu:reniecVerifiedFamilyName (materno opcional) -->
+            <attribute>
+                <ref>ri:ap_paterno</ref>
+                <inbound>
+                    <name>reniec-csv-apellidos-to-reniecVerifiedFamilyName</name>
+                    <strength>strong</strength>
+                    <source><path>$shadow/attributes/ri:ap_paterno</path></source>
+                    <source><path>$shadow/attributes/ri:ap_materno</path></source>
+                    <expression>
+                        <function>
+                            <libraryRef oid="0b6f3a1c-2d4e-4f5a-9b8c-7e6d5c4b3a2f" type="c:FunctionLibraryType"/>
+                            <name>toCanonicalName</name>
+                            <parameter>
+                                <name>raw</name>
+                                <expression>
+                                    <script>
+                                        <code>def p = (ap_paterno ?: '').toString().trim(); def m = (ap_materno ?: '').toString().trim(); def full = (p + (m ? ' ' + m : '')).trim(); full ?: null</code>
+                                    </script>
+                                </expression>
+                            </parameter>
+                        </function>
+                    </expression>
+                    <target>
+                        <path>extension/upeu:reniecVerifiedFamilyName</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:ap_materno</ref>
+            </attribute>
+
+            <!-- fuente → upeu:reniecVerifiedBy (vocabulario sciback verifiedBy; solo RENIEC) -->
+            <attribute>
+                <ref>ri:fuente</ref>
+                <inbound>
+                    <name>reniec-csv-fuente-to-reniecVerifiedBy</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def f = (input ?: '').toString().trim().toUpperCase(); f == 'RENIEC' ? 'RENIEC' : null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>extension/upeu:reniecVerifiedBy</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <!-- fecha_verificacion → upeu:reniecVerifiedAt (YYYY-MM-DD, formato de sciback verifiedAt) -->
+            <attribute>
+                <ref>ri:fecha_verificacion</ref>
+                <inbound>
+                    <name>reniec-csv-fecha-to-reniecVerifiedAt</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>def f = (input ?: '').toString().trim(); (f ==~ /\d{4}-\d{2}-\d{2}/) ? f : null</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path>extension/upeu:reniecVerifiedAt</path>
+                    </target>
+                </inbound>
+            </attribute>
+
+            <correlation>
+                <correlators>
+                    <items>
+                        <name>correlate-by-lambDocNum</name>
+                        <item>
+                            <ref>extension/upeu:lambDocNum</ref>
+                        </item>
+                    </items>
+                </correlators>
+            </correlation>
+
+            <synchronization>
+                <reaction>
+                    <situation>linked</situation>
+                    <actions><synchronize/></actions>
+                </reaction>
+                <reaction>
+                    <situation>unlinked</situation>
+                    <actions><link/></actions>
+                </reaction>
+                <!-- No crea personas: Lamb es quien las crea. -->
+                <reaction>
+                    <situation>unmatched</situation>
+                    <actions/>
+                </reaction>
+                <reaction>
+                    <situation>deleted</situation>
+                    <actions><unlink/></actions>
+                </reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>
+
+    <capabilities>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:create><cap:enabled>false</cap:enabled></cap:create>
+            <cap:update><cap:enabled>false</cap:enabled></cap:update>
+            <cap:delete><cap:enabled>false</cap:enabled></cap:delete>
+        </configured>
+    </capabilities>
+
+    <projection>
+        <assignmentPolicyEnforcement>relative</assignmentPolicyEnforcement>
+    </projection>
+</resource>

@@ -209,6 +209,44 @@
                         </xsd:appinfo></xsd:annotation>
                     </xsd:element>
 
+                    <!-- L12b — NOMBRE VERIFICADO CONTRA RENIEC POR LOTE (transporte, E0 nombre-oficial-reniec)
+                         IIA ÚNICA: recurso «RENIEC verificados (CSV)» (upeu/resources/reniec-verificados-csv.xml).
+                         Un solo escritor por ítem: NO los escribe reniec-cache (que en E1 escribirá sus
+                         propios reniecGivenName/reniecFamilyName, §5 del diseño). Así dos fuentes RENIEC con
+                         valores distintos (p. ej. apellido de casada más reciente) nunca chocan sobre un ítem
+                         single-valued (runbook givenName-collision-fix-2026-06-29).
+                         Son de TRANSPORTE: no se publican ni se muestran como nombre. El object template de E1
+                         elige el nombre visible y copia reniecVerifiedBy/At a sciback:identityDocuments[DNI].
+                         Ver docs/specs/nombre-oficial-reniec/01-diseno.md y 02-e0-laboratorio.md. -->
+                    <xsd:element name="reniecVerifiedGivenName" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Nombres verificados RENIEC (transporte)</a:displayName>
+                            <a:help>Nombres tal como figuran en el DNI según RENIEC, pasados a altas y bajas con sb-name-normalizer. Transporte: lo consume el object template (E1). IIA: recurso RENIEC verificados (CSV).</a:help>
+                            <a:displayOrder>202</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="reniecVerifiedFamilyName" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Apellidos verificados RENIEC (transporte)</a:displayName>
+                            <a:help>Apellido paterno + materno tal como figuran en el DNI según RENIEC, en altas y bajas (sb-name-normalizer). Transporte para E1. IIA: recurso RENIEC verificados (CSV).</a:help>
+                            <a:displayOrder>203</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="reniecVerifiedBy" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Verificado por (transporte)</a:displayName>
+                            <a:help>Autoridad que verificó el nombre. Vocabulario de sciback:IdentityDocumentType/verifiedBy (RENIEC). Transporte para E1.</a:help>
+                            <a:displayOrder>204</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="reniecVerifiedAt" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation><xsd:appinfo>
+                            <a:displayName>Fecha de verificación RENIEC (transporte)</a:displayName>
+                            <a:help>YYYY-MM-DD, mismo formato que sciback:IdentityDocumentType/verifiedAt. Fecha de la consulta a RENIEC del lote. Transporte para E1.</a:help>
+                            <a:displayOrder>205</a:displayOrder>
+                        </xsd:appinfo></xsd:annotation>
+                    </xsd:element>
+
                     <!-- L13 — MARCADOR EMAIL SIN ENTRA ID -->
                     <!-- IIA: derivado por Bloque B del UserTemplate-Person-Base.
                          true cuando el usuario no tiene emailAddress proveniente de Entra ID.

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task: Importación del CSV «RENIEC verificados» (E0 nombre-oficial-reniec)
+  Resource: 082811dd-d4c4-4b3f-b288-e06f89d3383e
+  Ejecución ÚNICA y manual, por lote aprobado (no recurrente): cada lote nuevo se copia al
+  servidor, se reemplaza el CSV y se vuelve a ejecutar esta tarea.
+
+  Se entrega SUSPENDIDA: importarla no ejecuta nada. Para correrla, reanudarla (resume).
+  En PROD seguir docs/runbooks/PROTOCOLO-PRE-EJECUCION-PROD.md: primero una corrida acotada
+  (canario) con <query> por ri:dni sobre unos pocos DNI, revisar auditoría, y luego el lote.
+
+  Import (no reconciliation): solo procesa lo que está en el CSV; no busca shadows
+  desaparecidos. Si se retira una fila, usar una reconciliation para que la reacción
+  deleted → unlink se aplique.
+-->
+<task xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+      oid="bc5350d1-94bd-403b-89d7-636011eabcaa">
+    <name>import-reniec-verificados-csv</name>
+    <description>Importa el CSV RENIEC verificados (solo lectura) a las extensiones de transporte upeu:reniecVerified*. Corrida única por lote aprobado. Etapa E0 de nombre-oficial-reniec.</description>
+    <ownerRef oid="00000000-0000-0000-0000-000000000002" type="UserType"/>
+    <executionState>suspended</executionState>
+    <schedulingState>suspended</schedulingState>
+    <binding>loose</binding>
+    <activity>
+        <work>
+            <import>
+                <resourceObjects>
+                    <resourceRef oid="082811dd-d4c4-4b3f-b288-e06f89d3383e" type="c:ResourceType"/>
+                    <kind>account</kind>
+                    <intent>default</intent>
+                </resourceObjects>
+            </import>
+        </work>
+        <controlFlow>
+            <errorHandling>
+                <entry>
+                    <reaction>
+                        <ignore/>
+                    </reaction>
+                </entry>
+            </errorHandling>
+        </controlFlow>
+    </activity>
+</task>
