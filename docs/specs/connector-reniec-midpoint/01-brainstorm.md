@@ -1,5 +1,7 @@
 # Conector MidPoint → RENIEC vía apiperu.dev
 
+> **REEMPLAZADO el 2026-11-09** por [`../nombre-oficial-reniec/01-diseno.md`](../nombre-oficial-reniec/01-diseno.md): no habrá conector en vivo contra una API de pago; MidPoint solo lee la caché `DAVID.CONSULTA_APIS_LOG`, y las consultas se hacen por lotes aprobados. Se conserva como historial.
+
 **Slug:** `connector-reniec-midpoint`
 **Autor:** Claude Code
 **Fecha:** 2026-04-24
