@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Recurso ScriptedSQL minimo para reproducir el fallo de F3 sin Oracle.
+  Misma forma que los 8 recursos Oracle LAMB (upeu/resources/oracle-lamb/*.xml):
+  ScriptedSQL 2.2.10, scriptingLanguage GROOVY, scripts en linea. Cambia solo la
+  base: el Postgres del propio proyecto del lab, en solo lectura (SELECT 1).
+  repro.sh sustituye @CONNECTOR_OID@ y @DB_PASS@ en un fichero temporal.
+-->
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3"
+          oid="5c1f3a2e-0b7d-4e6a-9f11-4110a5c0f3e1">
+    <name>REPRO ScriptedSQL Groovy (Postgres del lab)</name>
+    <connectorRef oid="@CONNECTOR_OID@" type="c:ConnectorType"/>
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">
+            <cfg:host>midpoint_data</cfg:host>
+            <cfg:port>5432</cfg:port>
+            <cfg:user>midpoint</cfg:user>
+            <cfg:password><t:clearValue>@DB_PASS@</t:clearValue></cfg:password>
+            <cfg:database>midpoint</cfg:database>
+            <cfg:jdbcDriver>org.postgresql.Driver</cfg:jdbcDriver>
+            <cfg:jdbcUrlTemplate>jdbc:postgresql://%h:%p/%d</cfg:jdbcUrlTemplate>
+            <cfg:rethrowAllSQLExceptions>true</cfg:rethrowAllSQLExceptions>
+            <cfg:nativeTimestamps>true</cfg:nativeTimestamps>
+            <cfg:allNative>false</cfg:allNative>
+            <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
+            <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
+            <cfg:searchScript>return []</cfg:searchScript>
+            <cfg:syncScript>return null</cfg:syncScript>
+            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def aib = new AttributeInfoBuilder('UNO', String.class); aib.setCreateable(false); aib.setUpdateable(false); def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(aib.build()); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
+            <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); def row = sql.firstRow('SELECT 1 AS UNO'); return 'OK REPRO: ' + row.UNO</cfg:testScript>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+</resource>

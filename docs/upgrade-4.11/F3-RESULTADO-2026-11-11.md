@@ -61,10 +61,27 @@ No se encontró el fallo reportado aguas arriba (búsqueda del 11-nov).
   `tgz`/`xml`/`tsv` cuando se cierre el análisis.
 - Volumen del home con dueño 1000 (no molesta a 4.10.5, que corre como root).
 
+## Reproducción en el lab (11-nov, 16:28 Lima) ✅
+
+Kit: [`upeu/infra/upgrade-4.11/lab-repro-groovy/`](../../upeu/infra/upgrade-4.11/lab-repro-groovy/).
+Se usó un midPoint vacío por versión con el **mismo** bundle ScriptedSQL 2.2.10 (sha256 igual
+al de PROD) y un recurso con la forma de los Oracle LAMB contra el Postgres del propio proyecto.
+
+| Versión | Test de conexión |
+|---|---|
+| 4.10.5 (control) | `success` en todas las fases |
+| 4.11.0 | `fatal_error` en **`initialize`** (y `schema`): `NoClassDefFoundError: org/jenkinsci/plugins/scriptsecurity/sandbox/Whitelist`, el mismo `WARN` de `ConnIdUtil` que en PROD |
+
+- Falla en `initialize`, **antes de abrir la conexión**: es la compilación de los scripts Groovy.
+  No depende de Oracle ni de la red.
+- ⚠️ Esto contradice F1, que anotó `initialize` en `success` con 4.11 (§3.1 de
+  `F1-RESULTADO`). Es probable que ese test se midiera en otra fase. No se puede comprobar
+  porque los logs de F1 ya no existen.
+
 ## Antes de reintentar F3
 
-1. **Reproducir en el lab** con un recurso ScriptedSQL contra una base alcanzable (Postgres) en
-   4.11.0: confirmar el `NoClassDefFoundError` sin Oracle.
+1. ~~**Reproducir en el lab**~~ ✅ hecho (sección anterior). El kit es también el banco de
+   pruebas de cualquier arreglo.
 2. Buscar/abrir el caso con Evolveum (Jira / lista `midpoint`): ¿4.11.x lo corrige? ¿qué
    versión de `script-security`/`groovy-sandbox` espera ConnId 1.7.0.0-M0?
 3. Solo si Evolveum no lo corrige: probar en el lab añadir esas dependencias en `var/lib`
