@@ -26,7 +26,9 @@
             <cfg:allNative>false</cfg:allNative>
             <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
             <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
-            <cfg:searchScript>return []</cfg:searchScript>
+            <!-- searchScript con la misma forma que los de PROD (Sql, eachRow con parametros, closures, mapas,
+                 filtro EQUALS sobre __UID__/__NAME__) para ejercitar el sandbox en ejecucion, no solo al compilar -->
+            <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def where = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { where = ' WHERE u.nameorig = ?'; params &lt;&lt; (query.right as String).trim() } else { throw new UnsupportedOperationException('REPRO solo EQUALS: ' + query) } }; def q = ('SELECT u.nameorig AS NOMBRE, u.oid::text AS ID FROM m_user u' + where).toString(); sql.eachRow(q, params) { row -&gt; def n = row.NOMBRE?.toString(); result &lt;&lt; ['__UID__': n, '__NAME__': n, 'UNO': (row.ID?.toString() ?: '')] }; return result</cfg:searchScript>
             <cfg:syncScript>return null</cfg:syncScript>
             <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def aib = new AttributeInfoBuilder('UNO', String.class); aib.setCreateable(false); aib.setUpdateable(false); def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(aib.build()); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
             <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); def row = sql.firstRow('SELECT 1 AS UNO'); return 'OK REPRO: ' + row.UNO</cfg:testScript>

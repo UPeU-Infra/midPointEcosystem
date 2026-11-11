@@ -28,3 +28,14 @@ dependencias en `var/lib`. **El criterio es que en 4.11 el test dé `success`.**
 
 Cada versión es su propio proyecto Compose (`mprepro4105`, `mprepro4110`). Ocupa unos 3 GB de RAM
 por versión.
+
+## Variantes del parche (11-nov)
+
+```bash
+./repro.sh preparar-parche                     # lib-parche/ (2 jars, sha1 de Maven Central) y lib-parche-b/ (1 jar)
+PARCHE=1 ./repro.sh probar 4.11.0 8099         # con las 2 librerías: test ok, eachRow falla en el sandbox
+PARCHE=b ./repro.sh probar 4.11.0 8099         # solo groovy-security-sandbox: falla al enlazar
+TMPL=recurso-scriptedsql-postgres-rows.xml.tmpl PARCHE=1 ./repro.sh probar 4.11.0 8099   # rows(): funciona
+```
+
+Los resultados están en `docs/upgrade-4.11/F3-RESULTADO-2026-11-11.md` («Prueba del parche»).

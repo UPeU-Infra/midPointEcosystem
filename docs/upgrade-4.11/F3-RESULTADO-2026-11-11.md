@@ -78,6 +78,37 @@ al de PROD) y un recurso con la forma de los Oracle LAMB contra el Postgres del 
   `F1-RESULTADO`). Es probable que ese test se midiera en otra fase. No se puede comprobar
   porque los logs de F1 ya no existen.
 
+## Prueba del parche en el lab (11-nov, 17:20–17:35 Lima)
+
+**Causa exacta (bytecode de `connector-framework-internal-1.7.0.0-M0`):** ConnId 1.7 añade un
+sandbox Groovy. Para ello declara como **opcional** `net.tirasa:groovy-security-sandbox`, que
+depende de `org.craftercms:groovy-sandbox`. El constructor del ejecutor intenta desactivarlo si
+falta la librería (`catch NoClassDefFoundError` → `"Groovy Sandbox runtime not found, disabling"`).
+Pero el verificador de la JVM carga `Whitelist` al enlazar la clase, fuera de ese `try`, y la
+clase entera no se puede usar. **Es un bug de ConnId 1.7.0.0-M0.** midPoint 4.11.0 no trae
+ninguna de las dos librerías.
+
+| Variante (4.11.0, librerías en `var/lib`) | Test | Búsqueda con `eachRow` |
+|---|---|---|
+| Sin nada (lo de F3) | ❌ `NoClassDefFoundError: …/Whitelist` | ❌ |
+| Solo `groovy-security-sandbox-1.1.0` | ❌ `NoClassDefFoundError: org/kohsuke/groovy/sandbox/GroovyInterceptor` (el mismo problema de verificación) | ❌ |
+| `groovy-security-sandbox-1.1.0` + `groovy-sandbox-4.3.2` | ✅ `success` | ❌ `MissingPropertyException: No such property: NOMBRE for class: jdk.proxy2.$Proxy…` |
+| Lo mismo + script con `sql.rows(q, params).each { row -> … }` | ✅ `success` | ✅ datos correctos (todos y `EQUALS`) |
+| 4.10.5 (control), script original | ✅ | ✅ |
+
+- **Ningún parche de librerías basta por sí solo.** Con las dos librerías el sandbox se activa,
+  y su lista negra (`META-INF/groovy.blacklist`, línea 85:
+  `method groovy.lang.GroovyObject getProperty java.lang.String`) bloquea `row.COLUMNA` sobre la
+  fila de `eachRow`, que es un proxy `GroovyObject`. Con `rows()` la fila es un `GroovyRowResult`
+  (un `Map`) y funciona. `firstRow` (los `testScript`) también funciona.
+- **Cambio de script necesario:** 1 `eachRow` por recurso (7 ficheros en
+  `upeu/resources/oracle-lamb/`). `rows()` también funciona en 4.10.5, así que el cambio se puede
+  desplegar **antes** de subir. Coste: `rows()` carga todo el resultado en memoria en lugar de
+  recorrerlo en streaming ❓ medir en estudiantes y trabajadores.
+- **No probado:** el resto de construcciones de los scripts reales contra el sandbox. La lista
+  negra tiene 210 entradas, y la prueba solo ejercitó `Sql`, `eachRow`/`rows`, closures, mapas y
+  `query.*`. Probarlo de verdad exige Oracle; el lab `.150` sigue sin acceso.
+
 ## Antes de reintentar F3
 
 1. ~~**Reproducir en el lab**~~ ✅ hecho (sección anterior). El kit es también el banco de

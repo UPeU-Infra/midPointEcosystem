@@ -1,0 +1,9 @@
+# PARCHE en prueba (no es de PROD): las dos librerias que ConnId 1.7.0.0-M0 declara
+# como opcionales y que midPoint 4.11.0 no trae, en var/lib (classpath extendido,
+# igual que ojdbc11 en PROD). Las baja y verifica `repro.sh preparar-parche`.
+#   net.tirasa:groovy-security-sandbox:1.1.0  (contiene ...scriptsecurity/sandbox/Whitelist)
+#   org.craftercms:groovy-sandbox:4.3.2       (su dependencia; compilada para Groovy 4.0.x)
+services:
+  midpoint_server:
+    volumes:
+      - ${LIB_PARCHE:-./lib-parche}:/opt/midpoint/var/lib:ro
