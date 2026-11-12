@@ -45,6 +45,9 @@ services:
 
   data_init:
     image: evolveum/midpoint:${MP_VER}-alpine
+    # Desde 4.11.0 (F3, 12-nov-2026) la imagen corre como el usuario no-root midpoint, UID 1000;
+    # se fija para no depender del valor por defecto. El volumen midpoint_home es 1000:1000.
+    user: "1000:1000"
     command: >
       bash -c "
       cd /opt/midpoint ;
@@ -73,6 +76,7 @@ services:
 
   midpoint_server:
     image: evolveum/midpoint:${MP_VER}-ubuntu
+    user: "1000:1000"
     container_name: midpoint_server
     restart: unless-stopped
     hostname: midpoint-container

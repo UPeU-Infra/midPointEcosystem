@@ -1,4 +1,10 @@
-# F3 · Resultado (11-nov-2026): **VUELTA ATRÁS** — PROD sigue en 4.10.5
+# F3 · Resultado: 11-nov **vuelta atrás** · 12-nov **✅ HECHO — PROD en 4.11.0**
+
+> **12-nov-2026 (reintento): PROD queda en midPoint 4.11.0.** 12/12 recursos `success`, búsqueda real
+> en los 8 Oracle 8/8, simulación POST **IGUAL** a la PRE, canarios `SUCCESS`, foto POST = PRE
+> (`diff` 0). Detalle en [«Reintento del 12-nov»](#reintento-del-12-nov--hecho). Lo de abajo es el
+> intento del 11-nov.
+
 
 **Resumen:** la ventana llegó al paso 17 sin incidencias y se volvió atrás porque **los 8 recursos
 Oracle LAMB (ScriptedSQL 2.2.10) dan `fatal_error` en 4.11.0**. La vuelta atrás (R1–R6) tardó
@@ -193,3 +199,48 @@ Alberto decidió no esperar a Evolveum y no reportar el fallo; se sube con el ar
 4. Paso 17, **bloqueante**: test de los 8 Oracle en `success` **y** una búsqueda real por nombre en
    cada uno. Si alguno falla, se vuelve atrás (R1–R6, ~70 s, probado) y se quitan los 3 jars.
 5. Tras la ventana: vigilar las recons de la primera noche (duración y errores frente a la base).
+
+## Reintento del 12-nov ✅ HECHO
+
+Autorizado por Alberto el 12-nov a las 08:40 Lima («arranca ya»). Antes de empezar se esperó a que
+terminara `recon-oracle-lamb-egresados-daily` (07:45–08:50 Lima, ya con el script `toRowResult`
+sobre 4.10.5): 31.312 cuentas `success`, 20 `failure`, `partial_error` como de costumbre. Se
+suspendió `recon-koha-upeu-daily` antes de su hora (09:15), y `recon-entra-id-daily` se suspendió
+en marcha (se reanuda con el resto). Los jars del parche se bajaron de Maven Central en el host y se
+comprobó su sha1 (los mismos fijados en `lab-repro-groovy/repro.sh`).
+
+| Hora (UTC) | Paso | Resultado |
+|---|---|---|
+| 13:51 | 0–2 | 4.10.5, esquema 51/10; fotos PRE (66.157 filas); 8 tareas `SUSPENDED` |
+| 13:51 | 3 SIM PRE | 73 usuarios, `SUCCESS` en 131 s |
+| 13:54 | 4–5 | parado; `midpoint_pre_4105` (28 GB) en 115 s, huella igual |
+| 13:56 | 6 | S3 `f3b-4105`: dump 2,6 GB + home 76 MB, 509 s |
+| 14:04 | 7–10 | home tgz con keystore; `safeScripting=false`; **3 jars de `lib-parche-c` en `var/lib`** (sha1 OK); UID 1000 legible/escribible; `MP_VER=4.11.0` |
+| 14:05 | 11–13 | esquema **67/16**; 62/62 particiones; initial objects 39/39 +1, nada fuera de la lista |
+| 14:06 | 14 | 4.11.0 `healthy` en 50 s, `uid=1000`; log: solo el `ERROR` del archetype Project (H11) |
+| 14:07 | 15–16 | LDAP → **3.10** (`081a86f6-…`), test `success`; Koha 1.7.1, Zammad 0.2.0, ScriptedSQL 2.2.10, msgraph 1.2.0.0 `available=t` |
+| 14:07 | **17** | **12/12 `success`**; búsqueda real por nombre en los 8 Oracle: **8/8 = 1 resultado** |
+| 14:09 | 18–19 | `privilegedPrincipal=permissive` (v64→65, sin `defaultScriptLanguage`); arranque normal `healthy` en 41 s; `data_init` 4.11-alpine «Repository init is not needed» |
+| 14:10 | 20 SIM POST | `SUCCESS` en 162 s; **IGUALES** (330 objetos: 18 MODIFIED / 312 UNMODIFIED, como PRE) |
+| 14:13 | 21 | canarios `recon-ldap-dti-groups-daily` `SUCCESS` (5 s) y `import-oracle-lamb-ausencias-daily` `SUCCESS` (116 s) |
+| 14:17 | 22–23 | 8 tareas `RUNNABLE`; foto POST = PRE (`diff` 0 líneas) |
+
+Corte de servicio: midPoint parado de 13:54 a 14:06 (12 min); planificador parado hasta 14:10.
+
+**Errores del log tras los canarios:** 225 líneas `ERROR`, de las que **224** son
+`org.apache.directory.api…Registries: ERR_13750_REGISTERING_FAILED_ALREADY_PRESENT Registering of
+MATCHING_RULE:… failed, it's already present` (dos tandas, al inicializar el conector LDAP 3.10) y
+la otra es el archetype Project (H11). **0** `ExpressionEvaluationException`. Las del registro LDAP
+son ruido de la librería Apache Directory al cargar el esquema; vigilarlas, no bloquean.
+
+**Pendiente tras la ventana:**
+- Primera noche con 4.11.0 (13-nov): duración y `resultStatus` de las recons frente a la base de
+  4.10.5 (recons del 5 al 11-nov); LDAP `.168 = .169`.
+- §3 del runbook: integrar `user: "1000:1000"` en el compose base y borrar `docker-compose.4.11.yml`;
+  revisar a mano los 35 de `revisar-a-mano.oids` (F4).
+- A los 7 días (19-nov): `bd-copia-local.sh borrar midpoint_pre_4105` y borrar `~/upgrade-4.11`
+  (con `shred` lo que lleva keystore/token/PII).
+- Los 3 jars de `var/lib` forman parte ya del home de PROD (y del backup diario del home). Si algún
+  día se reconstruye el home desde cero, hay que volver a ponerlos (`lab-repro-groovy/repro.sh
+  preparar-parche`, variante `c`) o los 8 Oracle vuelven a dar `NoClassDefFoundError`.
+

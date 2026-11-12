@@ -14,8 +14,10 @@
 # Los bind de solo lectura (/opt/midpoint/connectors y /opt/midpoint/certs) son
 # legibles por el UID 1000 tal como estan (ficheros 0644).
 #
-# Al cerrar F3, este contenido se integra en el docker-compose.yml base y este
-# fichero se borra (un solo compose en PROD, como hoy).
+# ✅ 12-nov-2026: F3 hecha; el `user: "1000:1000"` ya esta integrado en el
+# docker-compose.yml base (upeu/infra/docker-compose.yml). Este fichero se
+# conserva solo porque lo citan los runbooks de F1/F3; aplicarlo encima del base
+# no cambia nada.
 
 services:
   data_init:

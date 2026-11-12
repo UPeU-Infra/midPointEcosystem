@@ -27,12 +27,11 @@
         <timestamp>2026-05-15T12:10:14.926Z</timestamp>
         <nodeId>DefaultNode</nodeId>
     </operationalStateHistory>
-    <!-- LdapConnector 3.9.4, en PROD desde el 3-nov-2026 (F2 de la subida a 4.10.5), repuntado
-         por PATCH: el 3.9.4 viene incorporado en 4.10.5 y el 3.9.2 quedo available=f.
-         Vuelta atras al 3.9.2 (oid 31072286-b58e-4133-af79-fabdd4578fae) SOLO con 4.10.2.
-         Espejo de PROD: NO se despliega, alli ya esta aplicado (resource v275).
-         ⚠️ En F3 (4.11.0) vuelve a cambiar, al LDAP 3.10: no tocar este recurso esos dias. -->
-    <connectorRef oid="de61cb29-7ad0-4b7f-9d38-3904a3c65770" relation="org:default" type="c:ConnectorType"/>
+    <!-- LdapConnector 3.10, en PROD desde el 12-nov-2026 (F3, subida a 4.11.0), repuntado por PATCH
+         con upgrade-4.11/ldap-connectorref.sh: el 3.10 viene incorporado en 4.11.0.
+         Vuelta atras al 3.9.4 (oid de61cb29-7ad0-4b7f-9d38-3904a3c65770) SOLO con 4.10.5.
+         Espejo de PROD: NO se despliega, alli ya esta aplicado. -->
+    <connectorRef oid="081a86f6-1850-49dc-a31e-c704677c91c1" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
         <icfc:resultsHandlerConfiguration>
             <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
