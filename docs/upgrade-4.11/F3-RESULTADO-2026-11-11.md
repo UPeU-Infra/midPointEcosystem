@@ -147,6 +147,31 @@ Alberto decidió no esperar a Evolveum y no reportar el fallo; se sube con el ar
    `version` sube, el `<schema>` sigue intacto, el test da `success` y una búsqueda real por nombre
    devuelve 1. Validación: las recons diarias del día siguiente, con el mismo número de cambios y
    errores que la base. Pasar al repo Egresados (la versión de PROD) y Ausencias v1.
+
+   ✅ **Aplicado el 12-nov, 07:10–07:15 (Lima)**, con autorización de Alberto, en los 8 recursos y
+   uno por uno. En los 8: PATCH HTTP 204, la `version` sube en 1, el `<schema>` conserva sus
+   elementos, el test da `success` en todo el árbol y una búsqueda real contra Oracle por el nombre
+   de una cuenta existente devuelve 1. En marcha durante el cambio solo estaba `recon-entra-id-daily`,
+   que no toca Oracle.
+
+   | Recurso | version |
+   |---|---|
+   | Grados v1 (canario) | 6 → 7 |
+   | Posiciones | 11 → 12 |
+   | Org | 46 → 47 |
+   | RENIEC Cache v1 | 26 → 27 |
+   | Ausencias v1 | 1 → 2 |
+   | Egresados v3 | 215 → 216 |
+   | Estudiantes v3 | 212 → 213 |
+   | Trabajadores v3 | 334 → 335 |
+
+   En el repo los 7 `searchScript` quedan idénticos a los de PROD (comparado carácter a carácter).
+   **Quedan dos desfases pendientes, ajenos a este cambio:**
+   - Egresados en PROD lleva la columna `SEDE` en el script **y en `schemaHandling`**, y el repo no.
+     En el repo solo se copió el script.
+   - Ausencias v1 (`6a91f7e1-…0e24`) sigue sin estar en el repo.
+
+   Falta la validación con las recons diarias del 13-nov.
 3. **Ventana F3** con los mismos pasos que el 11-nov, más uno: antes de arrancar 4.11.0, copiar a
    `/opt/midpoint/var/lib` (volumen `midpoint_midpoint_home`, junto a `ojdbc11`) los 3 jars de
    `lib-parche-c` (sha1 de Maven Central fijados en `repro.sh`). En 4.10.5 no hacen nada: ConnId 1.6
