@@ -57,9 +57,10 @@ No se encontró el fallo reportado aguas arriba (búsqueda del 11-nov).
   (20:45 UTC)** con `bd-copia-local.sh borrar`, tras comprobar 0 conexiones. PGDATA pasó de
   45 GB a 73 GB libres. En PROD solo queda la base `midpoint`.
 - `midpoint_pre_4105` **ya no existe** (pasó a ser `midpoint`). La copia S3 `f3-4105` sigue válida.
-- `~/upgrade-4.11/`: `log-411-F3-fallido.txt` (600), `home-pre-F3.tgz`, `sysconfig-pre-F3.xml`
-  (600, lleva el token de Telegram), `snap-*-F3.tsv`, `muestra.oids` (PII). Borrar los
-  `tgz`/`xml`/`tsv` cuando se cierre el análisis.
+- ~~`~/upgrade-4.11/`~~ **borrado el 11-nov**: 18 ficheros de trabajo de F2/F3 (44 MB). Los que
+  llevaban secretos o datos personales (`home-pre-F3.tgz` con el keystore, los 2 `sysconfig-*.xml`
+  con el token de Telegram, `muestra.oids`, el log) se borraron con `shred -u`. La copia S3
+  `f3-4105` sigue siendo el respaldo de esa ventana.
 - Volumen del home con dueño 1000 (no molesta a 4.10.5, que corre como root).
 
 ## Reproducción en el lab (11-nov, 16:28 Lima) ✅
