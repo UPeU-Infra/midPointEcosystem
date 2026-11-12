@@ -11,8 +11,9 @@
 #   ./repro.sh bajar <ver>           para y BORRA ese proyecto (contenedores y volúmenes)
 #   ./repro.sh preparar-parche       baja a lib-parche/ las 2 librerías del parche en prueba
 #                                    (sha1 de Maven Central fijados aquí)
-#   PARCHE=1 ./repro.sh probar|bajar ...   lo mismo con lib-parche/ montado en var/lib
-#                                    (proyecto aparte: mprepro<ver>p)
+#   PARCHE=1|b|c ./repro.sh probar|bajar ...   lo mismo con lib-parche[-b|-c]/ montado en var/lib
+#                                    (proyecto aparte: mprepro<ver>p[b|c])
+#   TMPL=<plantilla> ./repro.sh probar ...      usa otra plantilla de recurso
 #
 # Solo toca contenedores/volúmenes del proyecto mprepro<ver sin puntos>. Nada sale del lab.
 set -euo pipefail
@@ -57,6 +58,17 @@ LIST
     # variante b: solo la que contiene Whitelist/Blacklist; sin org.kohsuke SandboxTransformer,
     # el constructor del ejecutor de ConnId captura NoClassDefFoundError y DESACTIVA el sandbox
     mkdir -p lib-parche-b; cp -p lib-parche/groovy-security-sandbox-1.1.0.jar lib-parche-b/; ls -l lib-parche-b
+    # variante c (la elegida para F3): las 2 librerias + una lista negra VACIA que se carga antes que la
+    # de ConnId (verificado: var/lib va primero en el classpath). El sandbox queda activo pero no prohibe
+    # nada, como en 4.10.5. OJO: no arregla eachRow (ese fallo no es de la lista negra): hace falta toRowResult().
+    mkdir -p lib-parche-c; cp -p lib-parche/*.jar lib-parche-c/
+    python3 -I -c "
+import zipfile
+with zipfile.ZipFile('lib-parche-c/zz-groovy-blacklist-vacia.jar', 'w') as z:
+    z.writestr('META-INF/MANIFEST.MF', 'Manifest-Version: 1.0\n\n')
+    z.writestr('META-INF/groovy.blacklist', '# vacia: neutraliza la lista negra del sandbox Groovy de ConnId 1.7.0.0-M0\n')
+"
+    chmod 644 lib-parche-c/*.jar; ls -l lib-parche-c
     ;;
 probar)
     V="${2:?falta version}"; P="${3:?falta puerto}"
@@ -134,5 +146,5 @@ bajar)
     V="${2:?falta version}"
     dc "$V" 0 down -v
     ;;
-*) sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+*) sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
 esac

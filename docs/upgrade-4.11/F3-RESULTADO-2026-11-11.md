@@ -111,12 +111,46 @@ ninguna de las dos librerías.
   negra tiene 210 entradas, y la prueba solo ejercitó `Sql`, `eachRow`/`rows`, closures, mapas y
   `query.*`. Probarlo de verdad exige Oracle; el lab `.150` sigue sin acceso.
 
-## Antes de reintentar F3
+## ⚠️ Corrección (11-nov, noche): el fallo de `eachRow` NO es de la lista negra
 
-1. ~~**Reproducir en el lab**~~ ✅ hecho (sección anterior). El kit es también el banco de
-   pruebas de cualquier arreglo.
-2. Buscar/abrir el caso con Evolveum (Jira / lista `midpoint`): ¿4.11.x lo corrige? ¿qué
-   versión de `script-security`/`groovy-sandbox` espera ConnId 1.7.0.0-M0?
-3. Solo si Evolveum no lo corrige: probar en el lab añadir esas dependencias en `var/lib`
-   (classpath extendido, como `ojdbc11`), con la SIM recon de Oracle como criterio.
-4. Añadir al runbook F3, paso 17, que el test de los 8 Oracle es **bloqueante**.
+La explicación de la sección anterior (línea 85 de la lista negra) era **incorrecta**. Medido en el
+lab: con una `META-INF/groovy.blacklist` **vacía** en `var/lib`, que es la que se carga primero
+(lo confirmó un `testScript` de diagnóstico que listó los recursos del classpath), `eachRow` sigue
+fallando con la misma `MissingPropertyException`. El fallo está en cómo el interceptor del sandbox
+resuelve `row.COLUMNA` sobre la fila de `eachRow`, que es un `java.lang.reflect.Proxy`. Una lista
+negra prohibitiva daría `RejectedAccessException`, no `MissingPropertyException`.
+
+**Arreglo probado en el lab** (`lab-repro-groovy`, plantilla `…-torowresult.xml.tmpl`, `PARCHE=c`):
+
+| Variante | Test | Búsqueda |
+|---|---|---|
+| 4.11.0 + 2 librerías + lista negra vacía, `eachRow` original | ✅ | ❌ `MissingPropertyException` |
+| 4.11.0 + 2 librerías, `eachRow { rs -> def row = rs.toRowResult(); … }` | ✅ | ✅ (todos, `EQUALS`, `row[0]`) |
+| 4.11.0 + 2 librerías + lista negra vacía, `toRowResult()` | ✅ | ✅ |
+| 4.10.5 sin librerías, `toRowResult()` | ✅ | ✅ |
+
+`toRowResult()` mantiene el streaming (no carga el resultado entero como `rows()`). Y como también
+funciona en 4.10.5, **se puede desplegar antes de subir** y validarlo con Oracle real en las recons
+diarias.
+
+**Los 8 recursos en PROD** (leídos por REST el 11-nov): los 8 tienen exactamente un
+`{ row -> ` en el `searchScript` y no usan la variable `rs`. 6 coinciden con el repo. **Egresados**
+difiere del repo (manda PROD), y **Ausencias v1** (`6a91f7e1-…0e24`) **no está en el repo**.
+
+## Antes de reintentar F3 (plan del 11-nov, noche)
+
+Alberto decidió no esperar a Evolveum y no reportar el fallo; se sube con el arreglo probado.
+
+1. ~~Reproducir en el lab~~ ✅ · ~~probar el arreglo en el lab~~ ✅ (sección anterior).
+2. **Scripts en PROD sobre 4.10.5** (PATCH, nunca PUT): `{ row -> ` → `{ rs -> def row = rs.toRowResult(); `
+   en los 8 `searchScript`. Primero un canario (Grados), después el resto. Verificar en cada uno: la
+   `version` sube, el `<schema>` sigue intacto, el test da `success` y una búsqueda real por nombre
+   devuelve 1. Validación: las recons diarias del día siguiente, con el mismo número de cambios y
+   errores que la base. Pasar al repo Egresados (la versión de PROD) y Ausencias v1.
+3. **Ventana F3** con los mismos pasos que el 11-nov, más uno: antes de arrancar 4.11.0, copiar a
+   `/opt/midpoint/var/lib` (volumen `midpoint_midpoint_home`, junto a `ojdbc11`) los 3 jars de
+   `lib-parche-c` (sha1 de Maven Central fijados en `repro.sh`). En 4.10.5 no hacen nada: ConnId 1.6
+   no los referencia.
+4. Paso 17, **bloqueante**: test de los 8 Oracle en `success` **y** una búsqueda real por nombre en
+   cada uno. Si alguno falla, se vuelve atrás (R1–R6, ~70 s, probado) y se quitan los 3 jars.
+5. Tras la ventana: vigilar las recons de la primera noche (duración y errores frente a la base).

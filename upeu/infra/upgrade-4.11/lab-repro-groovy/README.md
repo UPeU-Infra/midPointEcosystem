@@ -39,3 +39,19 @@ TMPL=recurso-scriptedsql-postgres-rows.xml.tmpl PARCHE=1 ./repro.sh probar 4.11.
 ```
 
 Los resultados están en `docs/upgrade-4.11/F3-RESULTADO-2026-11-11.md` («Prueba del parche»).
+
+## Arreglo elegido para reintentar F3 (11-nov, noche)
+
+```bash
+./repro.sh preparar-parche     # crea también lib-parche-c/: 2 librerías + zz-groovy-blacklist-vacia.jar
+TMPL=recurso-scriptedsql-postgres-torowresult.xml.tmpl PARCHE=c ./repro.sh probar 4.11.0 8099   # ✅ test y búsqueda
+TMPL=recurso-scriptedsql-postgres-torowresult.xml.tmpl ./repro.sh probar 4.10.5 8098            # ✅ el script nuevo también vale en 4.10.5
+```
+
+- **Librerías (`var/lib`):** `groovy-security-sandbox-1.1.0` + `groovy-sandbox-4.3.2` (sin ellas la clase
+  ni siquiera enlaza) + una `META-INF/groovy.blacklist` **vacía**, que se carga antes que la de ConnId
+  (verificado con un `testScript` de diagnóstico). El sandbox queda activo pero no prohíbe nada,
+  como en 4.10.5. Así, las construcciones de los scripts reales que no se pueden probar sin Oracle no
+  dependen de la lista de 210 prohibiciones.
+- **Scripts:** en cada `searchScript`, `sql.eachRow(finalQuery, params) { row -> …` pasa a
+  `{ rs -> def row = rs.toRowResult(); …`. Sigue en streaming, y `row.COLUMNA` y `row[0]` se comportan igual.
