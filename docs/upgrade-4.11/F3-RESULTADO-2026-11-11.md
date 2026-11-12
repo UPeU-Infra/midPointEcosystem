@@ -169,7 +169,11 @@ Alberto decidió no esperar a Evolveum y no reportar el fallo; se sube con el ar
    **Quedan dos desfases pendientes, ajenos a este cambio:**
    - Egresados en PROD lleva la columna `SEDE` en el script **y en `schemaHandling`**, y el repo no.
      En el repo solo se copió el script.
-   - Ausencias v1 (`6a91f7e1-…0e24`) sigue sin estar en el repo.
+   - ~~Ausencias v1 (`6a91f7e1-…0e24`) sigue sin estar en el repo.~~ ✅ 12-nov: subido como
+     `upeu/resources/oracle-lamb/ausencias.xml`, exportado de PROD sin el estado de runtime
+     (`_metadata`, `iteration*`, `operationalState*`, `<schema>`, `capabilities/native` y
+     `cachingMetadata`, atributo `version`). Única diferencia con PROD: en la `documentation` del
+     correlador se quitó un `ID_PERSONA` concreto (el repo es público).
 
    Falta la validación con las recons diarias del 13-nov.
 3. **Ventana F3** con los mismos pasos que el 11-nov, más uno: antes de arrancar 4.11.0, copiar a

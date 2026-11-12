@@ -1,0 +1,189 @@
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3" xmlns:icfs="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/resource-schema-3" xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3" xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3" xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3" xmlns:t="http://prism.evolveum.com/xml/ns/public/types-3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" oid="6a91f7e1-1b50-4dcf-9c4b-7c0c0e0e0e24">
+    <name>Oracle LAMB Ausencias v1</name>
+    <description>Fuente autoritativa de AUSENCIAS de trabajadores (ISO 24760 IIA: Oracle LAMB, ENOC.PLLA_ROL_VACACIONAL).
+Publica el periodo de ausencia VIGENTE o, si no lo hay, el PRÓXIMO. Escalar por diseño: cero personas
+tienen dos periodos vigentes a la vez (medido 04-sep-2026), y un target single-value se reemplaza limpio,
+mientras que `strong` sobre multivalor añade y no retira.
+
+CRITERIO DE INCLUSIÓN DEL PERIODO: rv.CONDICION='P' (excluye los 159 reprogramados/anulados)
+ + t.ID_SITUACION_TRABAJADOR='1' + rv.FECHA_FIN &gt;= TRUNC(SYSDATE). SIN filtro por ID_ESTADO_ROL_VAC:
+ese campo NO es criterio de validez (4.036 periodos ya terminados siguen en '01' porque nadie los
+promueve; de los ausentes hoy 25 son '01' y sólo 6 son '02'). Se conserva como procedencia en absenceSource.
+
+POBLACIÓN DEVUELTA (más ancha que la de los periodos, a propósito): toda persona con algún registro
+de FECHA_FIN &gt;= hoy-90. Quien ya no tiene periodo vigente ni futuro vuelve con ABSENCE_* nulos, y el
+inbound `strong` con salida vacía RETIRA el valor. Ése es el mecanismo de auto-limpieza; sin él, una
+ausencia anulada antes de empezar dejaría fechas futuras rancias que encenderían `absent` sin motivo.
+
+AGREGACIÓN POR ID_PERSONA, nunca por ID_TRABAJADOR: 77 personas tienen 2+ trabajador activo.
+DESEMPATE DETERMINISTA: vigente antes que futuro, luego menor FECHA_INI, mayor DIAS, menor ID_ROL_VACACION.
+CORRELACIÓN por extension/upeu:lambIdPersona (ID_PERSONA). NO por p.CODIGO: es nulo en 115 de 516.
+
+ORACLE LAMB ES SOLO LECTURA: create/update/delete deshabilitados en capabilities. Política absoluta.</description>
+    <lifecycleState>active</lifecycleState>
+    <connectorRef oid="e4cd8ed3-2e91-48d9-abb7-32090a5e8849" relation="org:default" type="c:ConnectorType"/>
+    <connectorConfiguration xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3">
+        <icfc:resultsHandlerConfiguration>
+            <icfc:enableNormalizingResultsHandler>false</icfc:enableNormalizingResultsHandler>
+            <icfc:enableFilteredResultsHandler>false</icfc:enableFilteredResultsHandler>
+            <icfc:filteredResultsHandlerInValidationMode>true</icfc:filteredResultsHandlerInValidationMode>
+            <icfc:enableAttributesToGetSearchResultsHandler>false</icfc:enableAttributesToGetSearchResultsHandler>
+        </icfc:resultsHandlerConfiguration>
+        <icfc:configurationProperties xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">
+            <cfg:host>192.168.13.9</cfg:host>
+            <cfg:port>1521</cfg:port>
+            <cfg:user>JUANSANCHEZ</cfg:user>
+            <cfg:password>
+                <t:encryptedData>
+                    <t:encryptionMethod>
+                        <t:algorithm xmlns="http://prism.evolveum.com/xml/ns/public/types-3">http://www.w3.org/2001/04/xmlenc#aes256-cbc</t:algorithm>
+                    </t:encryptionMethod>
+                    <t:keyInfo>
+                        <t:keyName>nkZ4VieDLlRmwD8hdryrmjz8IxQ=</t:keyName>
+                    </t:keyInfo>
+                    <t:cipherData>
+                        <t:cipherValue>5PiBLf405M3U4ulm9p6WfqMMVVwtOcVl5PuL6/CqPRMTmbA5Aoa/axj4ks8onfI2</t:cipherValue>
+                    </t:cipherData>
+                </t:encryptedData>
+            </cfg:password>
+            <cfg:database>UPEU</cfg:database>
+            <cfg:jdbcDriver>oracle.jdbc.OracleDriver</cfg:jdbcDriver>
+            <cfg:jdbcUrlTemplate xmlns="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">jdbc:oracle:thin:@%h:%p/%d</cfg:jdbcUrlTemplate>
+            <cfg:rethrowAllSQLExceptions>true</cfg:rethrowAllSQLExceptions>
+            <cfg:nativeTimestamps>true</cfg:nativeTimestamps>
+            <cfg:allNative>false</cfg:allNative>
+            <cfg:scriptingLanguage>GROOVY</cfg:scriptingLanguage>
+            <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
+            <cfg:searchScript xmlns="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/net.tirasa.connid.bundles.db.scriptedsql/net.tirasa.connid.bundles.db.scriptedsql.ScriptedSQLConnector">import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT TO_CHAR(s.ID_PERSONA) AS ID_PERSONA, s.CODIGO, s.NOM, sel.ABSENCE_START, sel.ABSENCE_END, sel.ABSENCE_TYPE, sel.ABSENCE_SOURCE FROM ( SELECT DISTINCT t.ID_PERSONA, p.CODIGO, p.PATERNO || ' ' || p.MATERNO || ', ' || p.NOMBRE AS NOM FROM ENOC.PLLA_ROL_VACACIONAL rv JOIN ENOC.PLLA_PERIODO_VAC_TRAB pvt ON pvt.ID_PERIODO_VAC_TRAB = rv.ID_PERIODO_VAC_TRAB JOIN MOISES.TRABAJADOR t ON t.ID_TRABAJADOR = pvt.ID_TRABAJADOR JOIN MOISES.PERSONA p ON p.ID_PERSONA = t.ID_PERSONA WHERE t.ID_SITUACION_TRABAJADOR = '1' AND rv.FECHA_FIN &gt;= TRUNC(SYSDATE) - 90 ) s LEFT JOIN ( SELECT ID_PERSONA, ABSENCE_START, ABSENCE_END, ABSENCE_TYPE, ABSENCE_SOURCE FROM ( SELECT t.ID_PERSONA, TO_CHAR(rv.FECHA_INI,'YYYY-MM-DD') AS ABSENCE_START, TO_CHAR(rv.FECHA_FIN,'YYYY-MM-DD') AS ABSENCE_END, 'vacation' AS ABSENCE_TYPE, 'lamb:PLLA_ROL_VACACIONAL:' || rv.ID_ROL_VACACION || ':estado' || rv.ID_ESTADO_ROL_VAC AS ABSENCE_SOURCE, ROW_NUMBER() OVER (PARTITION BY t.ID_PERSONA ORDER BY CASE WHEN TRUNC(SYSDATE) BETWEEN TRUNC(rv.FECHA_INI) AND TRUNC(rv.FECHA_FIN) THEN 0 ELSE 1 END ASC, rv.FECHA_INI ASC, rv.DIAS DESC, rv.ID_ROL_VACACION ASC) AS RN FROM ENOC.PLLA_ROL_VACACIONAL rv JOIN ENOC.PLLA_PERIODO_VAC_TRAB pvt ON pvt.ID_PERIODO_VAC_TRAB = rv.ID_PERIODO_VAC_TRAB JOIN MOISES.TRABAJADOR t ON t.ID_TRABAJADOR = pvt.ID_TRABAJADOR WHERE t.ID_SITUACION_TRABAJADOR = '1' AND rv.CONDICION = 'P' AND rv.FECHA_FIN &gt;= TRUNC(SYSDATE) ) WHERE RN = 1 ) sel ON sel.ID_PERSONA = s.ID_PERSONA'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE ID_PERSONA = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Ausencias-v1 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { rs -&gt; def row = rs.toRowResult(); result &lt;&lt; ['__UID__': row.ID_PERSONA as String, '__NAME__': row.ID_PERSONA as String, 'ID_PERSONA': row.ID_PERSONA as String, 'CODIGO': row.CODIGO as String, 'NOM': row.NOM as String, 'ABSENCE_START': row.ABSENCE_START as String, 'ABSENCE_END': row.ABSENCE_END as String, 'ABSENCE_TYPE': row.ABSENCE_TYPE as String, 'ABSENCE_SOURCE': row.ABSENCE_SOURCE as String] }; return result</cfg:searchScript>
+            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("ID_PERSONA", true)); ocib.addAttributeInfo(ro("CODIGO", false)); ocib.addAttributeInfo(ro("NOM", false)); ocib.addAttributeInfo(ro("ABSENCE_START", false)); ocib.addAttributeInfo(ro("ABSENCE_END", false)); ocib.addAttributeInfo(ro("ABSENCE_TYPE", false)); ocib.addAttributeInfo(ro("ABSENCE_SOURCE", false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
+            <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); sql.firstRow("SELECT 1 AS OK FROM DUAL"); return "OK"</cfg:testScript>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+    <schemaHandling>
+        <objectType id="2">
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>Ausencia de trabajador (LAMB rol vacacional)</displayName>
+            <default>true</default>
+            <delineation>
+                <objectClass>ri:AccountObjectClass</objectClass>
+            </delineation>
+            <focus>
+                <type>UserType</type>
+            </focus>
+            <attribute id="3">
+                <ref>ri:ID_PERSONA</ref>
+                <inbound id="4">
+                    <name>id-persona-to-lambIdPersona</name>
+                    <documentation>WEAK a propósito: la autoridad de lambIdPersona sigue siendo el recurso
+                    Trabajadores (e21). Aquí sólo se necesita para poblar el PRE-FOCUS y que el correlador
+                    tenga con qué resolver — un ítem correlator DEBE venir de un inbound. De ahí el
+                    evaluationPhases explícito con beforeCorrelation.</documentation>
+                    <strength>weak</strength>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambIdPersona</path>
+                    </target>
+                    <evaluationPhases>
+                        <include>beforeCorrelation</include>
+                        <include>clockwork</include>
+                    </evaluationPhases>
+                </inbound>
+            </attribute>
+            <attribute id="5">
+                <ref>ri:ABSENCE_START</ref>
+                <inbound id="6">
+                    <name>absence-start-to-absenceStartDate</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:absenceStartDate</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="7">
+                <ref>ri:ABSENCE_END</ref>
+                <inbound id="8">
+                    <name>absence-end-to-absenceEndDate</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:absenceEndDate</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="9">
+                <ref>ri:ABSENCE_TYPE</ref>
+                <inbound id="10">
+                    <name>absence-type-to-absenceType</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:absenceType</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute id="11">
+                <ref>ri:ABSENCE_SOURCE</ref>
+                <inbound id="12">
+                    <name>absence-source-to-absenceSource</name>
+                    <strength>strong</strength>
+                    <target>
+                        <path xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:absenceSource</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <correlation>
+                <correlators>
+                    <items id="13">
+                        <name>correlate-by-lamb-id-persona</name>
+                        <documentation>Tier único. ID_PERSONA es la clave de persona de LAMB y no cambia
+                        cuando cambia el documento. p.CODIGO es nulo en 115 de las 516 filas, por eso no
+                        se usa. Medido antes de desplegar: de los 232 con periodo, 224 resuelven a un User
+                        y 1 persona resuelve a dos Users — ése cae en `disputed` y NO se toca.</documentation>
+                        <item id="14">
+                            <ref xmlns:upeu="urn:upeu:midpoint:local">extension/upeu:lambIdPersona</ref>
+                        </item>
+                        <composition>
+                            <tier>1</tier>
+                            <weight>1.0</weight>
+                        </composition>
+                    </items>
+                </correlators>
+                <thresholds>
+                    <definite>1.0</definite>
+                    <candidate>0.5</candidate>
+                </thresholds>
+            </correlation>
+            <synchronization>
+                <reaction id="15">
+                    <situation>linked</situation>
+                    <actions>
+                        <synchronize id="16"/>
+                    </actions>
+                </reaction>
+                <reaction id="17">
+                    <situation>unlinked</situation>
+                    <actions>
+                        <link id="18"/>
+                    </actions>
+                </reaction>
+                <reaction id="19">
+                    <situation>deleted</situation>
+                    <actions>
+                        <unlink id="20"/>
+                    </actions>
+                </reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>
+    <capabilities>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <cap:create>
+                <cap:enabled>false</cap:enabled>
+            </cap:create>
+            <cap:update>
+                <cap:enabled>false</cap:enabled>
+            </cap:update>
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
+        </configured>
+    </capabilities>
+</resource>
