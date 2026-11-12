@@ -53,8 +53,9 @@ No se encontró el fallo reportado aguas arriba (búsqueda del 11-nov).
 
 ## Qué queda en PROD
 
-- `midpoint_fallida_202611111103` (BD en esquema 67/16, ~28 GB) para análisis. Borrar con
-  `bd-copia-local.sh borrar midpoint_fallida_202611111103` cuando no haga falta.
+- ~~`midpoint_fallida_202611111103` (BD en esquema 67/16, ~28 GB)~~ **borrada el 11-nov
+  (20:45 UTC)** con `bd-copia-local.sh borrar`, tras comprobar 0 conexiones. PGDATA pasó de
+  45 GB a 73 GB libres. En PROD solo queda la base `midpoint`.
 - `midpoint_pre_4105` **ya no existe** (pasó a ser `midpoint`). La copia S3 `f3-4105` sigue válida.
 - `~/upgrade-4.11/`: `log-411-F3-fallido.txt` (600), `home-pre-F3.tgz`, `sysconfig-pre-F3.xml`
   (600, lleva el token de Telegram), `snap-*-F3.tsv`, `muestra.oids` (PII). Borrar los
