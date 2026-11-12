@@ -167,8 +167,18 @@ Alberto decidió no esperar a Evolveum y no reportar el fallo; se sube con el ar
 
    En el repo los 7 `searchScript` quedan idénticos a los de PROD (comparado carácter a carácter).
    **Quedan dos desfases pendientes, ajenos a este cambio:**
-   - Egresados en PROD lleva la columna `SEDE` en el script **y en `schemaHandling`**, y el repo no.
-     En el repo solo se copió el script.
+   - ~~Egresados en PROD lleva la columna `SEDE` en el script **y en `schemaHandling`**, y el repo no.~~
+     ✅ 12-nov: el repo recibe de PROD el atributo `ri:SEDE` → `extension/sb:campusEgreso` (inbound
+     `sede-to-campusEgreso`, desplegado por PATCH el 11-ago) y su línea en el `schemaScript`, que
+     tampoco estaba. Comparado después el recurso completo, sin recortar textos. Diferencias que
+     **quedan a propósito**:
+     - `givenName`/`familyName` → `extension/upeu:lambGivenName`/`lambFamilyName`: el repo va por
+       delante (`1594a3c`, nombre oficial RENIEC E1, sin desplegar).
+     - Nombre del inbound de `ESCUELA_PROFESIONAL` (`escuela-to-liveProgramUriAlum` en el repo,
+       `escuela-to-academicProgramUri` en PROD), de `f3669e5`; solo cambia el nombre.
+     - PROD conserva **archivada** (inerte) la reacción antigua `deleted → inactivateFocus`; el repo
+       la eliminó en `2692407`. El efecto es el mismo.
+     - `xsi:type` en `libraryRef`/`parameter`: serialización de midPoint, no es configuración.
    - ~~Ausencias v1 (`6a91f7e1-…0e24`) sigue sin estar en el repo.~~ ✅ 12-nov: subido como
      `upeu/resources/oracle-lamb/ausencias.xml`, exportado de PROD sin el estado de runtime
      (`_metadata`, `iteration*`, `operationalState*`, `<schema>`, `capabilities/native` y

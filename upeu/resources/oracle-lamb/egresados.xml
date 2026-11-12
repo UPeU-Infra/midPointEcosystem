@@ -45,7 +45,7 @@
             <cfg:reloadScriptOnExecution>false</cfg:reloadScriptOnExecution>
             <cfg:searchScript>import groovy.sql.Sql; def sql = new Sql(connection); def result = []; def baseQuery = '''SELECT * FROM ( SELECT e.CODIGO, MAX(e.ID_PERSONA) AS ID_PERSONA, MAX(e.NOMBRE) AS NOMBRE, MAX(e.PATERNO) AS PATERNO, MAX(e.MATERNO) AS MATERNO, MAX(e.CORREO_UPEU) AS CORREO_UPEU, MAX(e.CELULAR) AS CELULAR, MAX(e.NUM_DOCUMENTO) AS NUM_DOCUMENTO, MAX(pn.ID_TIPODOCUMENTO) AS TIPO_DOC, MAX(e.FEC_NACIMIENTO) AS FEC_NACIMIENTO, MAX(e.ESCUELA_PROFESIONAL) AS ESCUELA_PROFESIONAL, MAX(e.NOM_FACULTAD) AS NOM_FACULTAD, MAX(e.NIVEL_ENSENANZA) AS NIVEL_ENSENANZA, MAX(e.MODALIDAD_ESTUDIO) AS MODALIDAD_ESTUDIO, MAX(e.SEDE) AS SEDE, MAX(e.ANIO) AS ANIO, MAX(e.SEMESTRE) AS SEMESTRE, MAX(pn.FOTO) AS FOTO, MAX(pn.CORREO) AS CORREO_PERSONAL, \'alum\' AS AFILIACION FROM DAVID.VW_PERSONA_EGRESADO e LEFT JOIN MOISES.PERSONA_NATURAL pn ON pn.ID_PERSONA = e.ID_PERSONA WHERE e.CODIGO IS NOT NULL GROUP BY e.CODIGO )'''; def whereClause = ''; def params = []; if (query != null) { if (query.operation == 'EQUALS' &amp;&amp; !query.not &amp;&amp; (query.left == '__NAME__' || query.left == '__UID__')) { whereClause = ' WHERE CODIGO = ?'; params &lt;&lt; (query.right as String); } else { throw new UnsupportedOperationException('Egresados-v2 searchScript only supports EqualsFilter on __NAME__/__UID__; got: ' + query); } }; def finalQuery = "SELECT * FROM (${baseQuery})${whereClause}".toString(); sql.eachRow(finalQuery, params) { rs -&gt; def row = rs.toRowResult(); if (row.CODIGO == null || (row.CODIGO as String).trim().isEmpty()) return; result &lt;&lt; ['__UID__': (row.CODIGO as String).trim(), '__NAME__': (row.CODIGO as String).trim(), 'CODIGO': row.CODIGO as String, 'ID_PERSONA': row.ID_PERSONA as String, 'NOMBRE': row.NOMBRE as String, 'PATERNO': row.PATERNO as String, 'MATERNO': row.MATERNO as String, 'CORREO_UPEU': row.CORREO_UPEU as String, 'CELULAR': row.CELULAR as String, 'NUM_DOCUMENTO': row.NUM_DOCUMENTO as String, 'TIPO_DOC': row.TIPO_DOC?.toString(), 'FEC_NACIMIENTO': row.FEC_NACIMIENTO?.toString(), 'ESCUELA_PROFESIONAL': row.ESCUELA_PROFESIONAL as String, 'NOM_FACULTAD': row.NOM_FACULTAD as String, 'NIVEL_ENSENANZA': row.NIVEL_ENSENANZA as String, 'MODALIDAD_ESTUDIO': row.MODALIDAD_ESTUDIO as String, 'SEDE': row.SEDE as String, 'ANIO': row.ANIO?.toString(), 'SEMESTRE': row.SEMESTRE?.toString(), 'FOTO': row.FOTO as String, 'CORREO_PERSONAL': row.CORREO_PERSONAL as String, 'AFILIACION': row.AFILIACION as String] }; return result</cfg:searchScript>
             <cfg:syncScript>return null</cfg:syncScript>
-            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("CODIGO", true)); ocib.addAttributeInfo(ro("ID_PERSONA", false)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("PATERNO", false)); ocib.addAttributeInfo(ro("MATERNO", false)); ocib.addAttributeInfo(ro("CORREO_UPEU", false)); ocib.addAttributeInfo(ro("CELULAR", false)); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false)); ocib.addAttributeInfo(ro("TIPO_DOC", false)); ocib.addAttributeInfo(ro("FEC_NACIMIENTO", false)); ocib.addAttributeInfo(ro("ESCUELA_PROFESIONAL", false)); ocib.addAttributeInfo(ro("NOM_FACULTAD", false)); ocib.addAttributeInfo(ro("NIVEL_ENSENANZA", false)); ocib.addAttributeInfo(ro("MODALIDAD_ESTUDIO", false)); ocib.addAttributeInfo(ro("ANIO", false)); ocib.addAttributeInfo(ro("SEMESTRE", false)); ocib.addAttributeInfo(ro("FOTO", false)); ocib.addAttributeInfo(ro("CORREO_PERSONAL", false)); ocib.addAttributeInfo(ro("AFILIACION", false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
+            <cfg:schemaScript>import org.identityconnectors.framework.common.objects.AttributeInfoBuilder; import org.identityconnectors.framework.common.objects.ObjectClass; import org.identityconnectors.framework.common.objects.ObjectClassInfoBuilder; def ro = { String attrName, boolean required -&gt; def aib = new AttributeInfoBuilder(attrName, String.class); aib.setRequired(required); aib.setCreateable(false); aib.setUpdateable(false); aib.setReadable(true); aib.build() }; def ocib = new ObjectClassInfoBuilder(); ocib.setType(ObjectClass.ACCOUNT_NAME); ocib.addAttributeInfo(ro("CODIGO", true)); ocib.addAttributeInfo(ro("ID_PERSONA", false)); ocib.addAttributeInfo(ro("NOMBRE", true)); ocib.addAttributeInfo(ro("PATERNO", false)); ocib.addAttributeInfo(ro("MATERNO", false)); ocib.addAttributeInfo(ro("CORREO_UPEU", false)); ocib.addAttributeInfo(ro("CELULAR", false)); ocib.addAttributeInfo(ro("NUM_DOCUMENTO", false)); ocib.addAttributeInfo(ro("TIPO_DOC", false)); ocib.addAttributeInfo(ro("FEC_NACIMIENTO", false)); ocib.addAttributeInfo(ro("ESCUELA_PROFESIONAL", false)); ocib.addAttributeInfo(ro("NOM_FACULTAD", false)); ocib.addAttributeInfo(ro("NIVEL_ENSENANZA", false)); ocib.addAttributeInfo(ro("MODALIDAD_ESTUDIO", false)); ocib.addAttributeInfo(ro("SEDE", false)); ocib.addAttributeInfo(ro("ANIO", false)); ocib.addAttributeInfo(ro("SEMESTRE", false)); ocib.addAttributeInfo(ro("FOTO", false)); ocib.addAttributeInfo(ro("CORREO_PERSONAL", false)); ocib.addAttributeInfo(ro("AFILIACION", false)); builder.defineObjectClass(ocib.build())</cfg:schemaScript>
             <cfg:testScript>import groovy.sql.Sql; def sql = new Sql(connection); sql.firstRow("SELECT 1 AS OK FROM DUAL"); return "OK"</cfg:testScript>
         </icfc:configurationProperties>
     </connectorConfiguration>
@@ -569,6 +569,43 @@ return k.length() &gt; 1 ? k.substring(0,1).toUpperCase() + k.substring(1) : k.t
                     </expression>
                     <target>
                         <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:academicProgramRole</path>
+                    </target>
+                </inbound>
+            </attribute>
+            <attribute>
+                <ref>ri:SEDE</ref>
+                <displayName>Sede de egreso</displayName>
+                <inbound>
+                    <name>sede-to-campusEgreso</name>
+                    <description>Campus donde curso el programa del que egreso. Inmutable. Lo consume el outbound library_id de Koha, que sin campus no puede crear el lector.</description>
+                    <lifecycleState>active</lifecycleState>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <code>
+// Campus de egreso, normalizado al vocabulario canonico LIMA | JULIACA | TARAPOTO.
+// FUENTE: DAVID.VW_PERSONA_EGRESADO.SEDE ("Sede Lima" 25.254, "Filial Juliaca" 7.865,
+// "Filial Tarapoto" 3.486 — medido 2026-08-11; solo esos tres valores).
+// Los mismos tres locales que la RCD 054-2018-SUNEDU/CD reconoce como SL01, F01L01 y
+// F02L01; la traduccion a codigo oficial vive en LT-Campus-LocalSunedu.
+//
+// Es un HECHO CONSUMADO, no la oferta vigente: si una filial deja de dictar el programa,
+// quien egreso de el alli sigue siendo de esa filial. Por eso no se deriva del P-code
+// (que es agnostico al campus) ni de campusStudent (que se vacia al perder la matricula).
+if (input == null) return null
+def v = input.toString().trim()
+if (!v) return null
+def k = v.toLowerCase()
+if (k.contains('lima')) return 'LIMA'
+if (k.contains('juliaca')) return 'JULIACA'
+if (k.contains('tarapoto')) return 'TARAPOTO'
+log.warn('campusEgreso: sede no prevista "{}" — se deja vacio en vez de imputar', v)
+return null
+</code>
+                        </script>
+                    </expression>
+                    <target>
+                        <path xmlns:sb="urn:sciback:midpoint:person">extension/sb:campusEgreso</path>
                     </target>
                 </inbound>
             </attribute>
