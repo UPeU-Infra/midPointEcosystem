@@ -619,3 +619,13 @@ Lo informó la sesión de Discovery, medido en su EC2 y en PROD de Discovery:
   2. VPN sitio a sitio AWS↔UPeU.
   3. Discovery escribe `preferred_name` en Koha (ya lo alcanza) y midPoint lo recoge por live sync. No expone midPoint, pero exige el `SyncOp` de Koha (§4.3, 1,5–2 días), y la validación deja de ser síncrona (sin 409): Discovery tendría que validar antes de escribir.
 - En el laboratorio la cuenta `svc-discovery-preferred-name` funciona desde la VPN; sus credenciales están en `~/.secrets/lab-identidad.env` (`LAB_NP_SVC_*`), fuera del repo.
+
+### 13.1 Decisión: opción 3 y riesgo aceptado (Alberto, 16-nov-2026)
+
+- **Elegida la opción 3:** Discovery escribe `preferred_name` en Koha con `PUT /api/v1/patrons/{id}` (Koha 26.05 no tiene PATCH; cuerpo mínimo `surname`, `library_id` y `category_id` sin cambios, más `preferred_name`; `""` para borrar) y valida antes de escribir con la regla del §3.1. midPoint lo recoge por live sync: connector-koha 1.8.0, PR `UPeU-Infra/connector-koha#36`, que excluye por **usuario** (`svc_midpoint`), nunca por `interface='api'`.
+- **Riesgo aceptado:** la cuenta de API de Koha de Discovery necesita el permiso `borrowers` (Koha no permite acotarlo a un campo), desde una aplicación expuesta a internet. Mitigaciones obligatorias:
+  1. El subpermiso mínimo (`edit_borrowers`), no `superlibrarian` ni la administración de lectores.
+  2. La credencial vive solo en Discovery y se rota.
+  3. Una alerta sobre `action_logs` si esa cuenta cambia cualquier campo distinto de `preferred_name` (❓ por implementar; puede reutilizar el lector de `action_logs` del conector 1.8.0).
+- La cuenta la crea el CRAI. Su `userid` debe comunicarse al IGA y no puede ser el de `svc_midpoint`.
+- Pendiente antes de PROD: prueba real del conector y del PUT mínimo en Koha dev (no hay credencial de API de dev que funcione), `GRANT SELECT` sobre `action_logs` y confirmar el formato `diff` de 26.05.05 con una fila real.
