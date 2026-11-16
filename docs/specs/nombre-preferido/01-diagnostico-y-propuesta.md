@@ -629,3 +629,12 @@ Lo informó la sesión de Discovery, medido en su EC2 y en PROD de Discovery:
   3. Una alerta sobre `action_logs` si esa cuenta cambia cualquier campo distinto de `preferred_name` (❓ por implementar; puede reutilizar el lector de `action_logs` del conector 1.8.0).
 - La cuenta la crea el CRAI. Su `userid` debe comunicarse al IGA y no puede ser el de `svc_midpoint`.
 - Pendiente antes de PROD: prueba real del conector y del PUT mínimo en Koha dev (no hay credencial de API de dev que funcione), `GRANT SELECT` sobre `action_logs` y confirmar el formato `diff` de 26.05.05 con una fila real.
+
+### 13.2 Avance 16-nov-2026 (tarde)
+
+- **Conector 1.8.0 probado con escrituras reales** en Koha dev (`koha_upeu`, 25.11) y fusionado (UPeU-Infra/connector-koha#36): (a)–(e) ✅. El PUT mínimo de Discovery solo cambia `preferred_name` y `updated_on` (84 columnas comparadas). Detalle en `doc/livesync-preferred-name.md` del conector.
+- 🔴 **Permiso de Discovery:** en 25.11 el `PUT /patrons` exige el módulo `borrowers` completo (`edit_borrowers` solo → 403). En 26.05 el spec pide `edit_borrowers`; ❓ comprobar con un PUT real en PROD cuando el CRAI cree la cuenta.
+- ✅ **Mitigación 3 implementada:** cron `ops/alerta-discovery/` del conector (UPeU-Infra/connector-koha#37), aviso por Telegram sin valores. Corre en Koha dev; en PROD falta la cuenta de Discovery.
+- ✅ **`GRANT SELECT ON koha_upeu.action_logs TO koha_connector@192.168.15.166`** aplicado en Koha PROD (`192.168.12.136`, MariaDB 10.11) con aprobación de Alberto, verificado con `SHOW GRANTS`. `BorrowersLog=1` ✅, Koha 26.05.05, `action_logs` con índice por `user`.
+- ✅ **Formato real de 26.05 confirmado** en PROD, solo estructura y sin valores: `info` = `{"campo": "nuevo"}` (string) y `diff` = `{"D": {"campo": {"O","N"}}}`. Es el que el conector ya entiende. Hoy hay 0 cambios de `preferred_name` en las últimas 200 000 filas; 2 filas de `api` tienen `info` no JSON y `diff` nulo (el conector las ignora con aviso; la alerta las marcaría).
+- Siguiente: instalar el conector 1.8.0 en midPoint PROD, propiedades del recurso y tarea de live sync (con aprobación).
