@@ -603,3 +603,19 @@ Dos sesiones SSH al `.166`, cada una con un solo script. Postgres con `default_t
 - **La REST de 4.11 no tiene `POST /{type}/{oid}/recompute`** (404; tampoco figura en la documentación de operaciones REST de 4.11). Para recomputar hay que usar una tarea, o `POST /tasks/{oid}/run` para relanzarla.
 - En una instalación 4.11 **nueva**, la configuración del sistema trae perfiles de expresión por tipo (`configuration` para plantillas, recursos y la propia configuración; `safe` para roles y arquetipos). PROD no los tiene porque no se importó la configuración de 4.11.
 - El conector CSV 2.10 escribe el fichero con finales de línea CRLF.
+
+---
+
+## 13. Respuesta de Discovery (16-nov-2026) y bloqueante de red
+
+Lo informó la sesión de Discovery, medido en su EC2 y en PROD de Discovery:
+
+- **Claims:** Discovery pide `openid profile email` al realm `upeu`. Guarda el `sub` (UUID) y el correo; **no recibe el código**. El código lo obtiene de Koha: busca al lector por correo exacto y toma su `userid`.
+- **Identificación:** primero `name` = `userid` de Koha; de respaldo, `emailAddress` en minúsculas.
+  - Como `userid ← name` es `weak` en Koha, se añade una salvaguarda: si la persona se encontró por `name` y el `emailAddress` de midPoint no coincide con el correo del SSO (habiendo ambos), no se escribe.
+- **Lectura de vuelta:** Discovery **no lee LDAP**: su EC2 (AWS, cuenta upeu-repo) no alcanza la LAN. Lee `preferred_name` del lector de Koha, y si es igual a `firstname` lo toma como «sin preferido». Por eso el outbound **`NP-koha-preferred-out` (§4.3) pasa a ser requisito para PROD**, no una fase posterior.
+- **Bloqueante:** la EC2 de Discovery tampoco alcanza midPoint. `192.168.15.166` no es enrutable desde AWS y `identity.upeu.edu.pe` no está en DNS público (internamente resuelve al balanceador `192.168.12.199`). Opciones, a decidir por Alberto con redes:
+  1. Publicar solo `POST /ws/rest/users/search` y `PATCH /ws/rest/users/{oid}`, restringidos a la IP elástica de Discovery y con TLS.
+  2. VPN sitio a sitio AWS↔UPeU.
+  3. Discovery escribe `preferred_name` en Koha (ya lo alcanza) y midPoint lo recoge por live sync. No expone midPoint, pero exige el `SyncOp` de Koha (§4.3, 1,5–2 días), y la validación deja de ser síncrona (sin 409): Discovery tendría que validar antes de escribir.
+- En el laboratorio la cuenta `svc-discovery-preferred-name` funciona desde la VPN; sus credenciales están en `~/.secrets/lab-identidad.env` (`LAB_NP_SVC_*`), fuera del repo.
