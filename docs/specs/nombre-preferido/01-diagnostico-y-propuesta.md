@@ -1,7 +1,7 @@
 # Nombre preferido de persona: diagnóstico y propuesta de diseño
 
 **Slug:** `nombre-preferido`
-**Estado:** DISEÑO. No hay nada desplegado. Producción solo se leyó (GET por REST y `SELECT` en una transacción de solo lectura).
+**Estado:** DISEÑO **probado en el laboratorio** (16-nov-2026, midPoint 4.11.0, datos sintéticos; resultados en el §12). No hay nada desplegado en PROD. Producción solo se leyó (GET por REST y `SELECT` en una transacción de solo lectura).
 **Fecha:** 2026-11-16 (lecturas de PROD a las 15:55 y 15:57 UTC)
 **Relacionado:** [`../nombre-oficial-reniec/01-diseno.md`](../nombre-oficial-reniec/01-diseno.md), sección «Nombre oficial» de [`CLAUDE.md`](../../../CLAUDE.md) (l. 79-90), `docs/upgrade-4.11/INVENTARIO-PROD-4.10.md:215`, `docs/upgrade-4.11/PLAN-Y-ROADMAP.md:59`.
 **Skills consultadas:** `midpoint-best-practices` (§1.4, §4, §6 regla 2, §11.1, §11.3, §12) e `iga-canonical-standards` (§1.3 IIA, §3.1 eduPerson, §5.4 SCIM, §9, §11).
@@ -20,6 +20,7 @@ Convención de citas: `archivo:línea` (repo), URL (docs.evolveum.com), **[PROD-
 4. **Hoy solo hay una fuente real: la API REST (Discovery).** Ningún recurso puede ser fuente por live sync. LDAP no debe serlo, porque su `displayName` es un valor calculado y leerlo de vuelta provocaría un eco. Koha, Zammad y Entra no tienen `SyncOp`, o están en `proposed`. En PROD no hay ni una tarea de live sync [PROD-5]. El diseño deja preparado el inbound de Koha para cuando exista su `SyncOp` [KE].
 5. **Discovery no puede apoyarse solo en el correo.** Con el correo institucional se identifica como mucho a ~62 % de las personas con cuenta LDAP: 11 953 de las 31 136 cuentas `account/default` no tienen `emailAddress` en MidPoint [PROD-7], y hay 59 direcciones institucionales repetidas que afectan a 121 usuarios [PROD-3]. La clave buena es `name` (= `uid` LDAP). Ver §6.
 6. **Hay que coordinarlo con E1 (nombre oficial).** E1 **no está en PROD**: `UserTemplate-Nombre-Oficial` no figura entre las 7 plantillas de PROD [PROD-2], y el atributo LDAP `displayName` sigue en **`weak`** en PROD (v276) aunque el repo ya dice `strong` [PROD-4]. Las dos piezas tocan el mismo atributo 87: se hace **un solo** cambio.
+7. **Probado en el laboratorio el 16-nov-2026** (midPoint 4.11.0, datos sintéticos, §12). Funciona, con tres correcciones: (a) las cuentas de Discovery y de autoservicio necesitan permiso de ejecución sobre sus `ShadowType`, porque sin él la API devuelve 403 **con el foco ya guardado** y LDAP sin escribir; (b) un 204 no garantiza que LDAP esté escrito (con LDAP caído también fue 204, con la operación pendiente); (c) el live sync de Koha necesita un feed limitado a `preferred_name` (R5 se reprodujo) y `errorHandling` para que un valor inválido no detenga la tarea. Las expresiones pasan a MEL.
 
 ---
 
@@ -67,9 +68,11 @@ La nota de la versión 4.11 confirma el diseño: «`displayName` was added to `U
 
 ## 2. Decisiones de modelo
 
-### D1. Qué escribe la persona: su **nombre de pila preferido**, no un nombre completo libre (recomendado)
+### D1. Qué escribe la persona: su **nombre de pila preferido**, no un nombre completo libre — **decidida 16-nov-2026 (Alberto)**
 
 La persona indica cómo quiere que la llamen («Liz», «Pepe», un nombre social). Los apellidos siguen siendo los oficiales.
+
+**Decisión (Alberto, 16-nov-2026):** `displayName` = `preferredName` + " " + `familyName`, o `fullName` si no hay preferido. `givenName`, `familyName` y `fullName` no se tocan nunca.
 
 - **Koha:** `preferred_name` sustituye a `firstname` al mostrar al lector y Koha lo rellena con `firstname` si queda vacío [KE] (`Koha/Patron.pm:261-264`). Es un nombre de pila.
 - **eduPerson:** `eduPersonNickname` es «the informal name by which they are accustomed to be hailed» (`iga-canonical-standards` §3.1). SCIM `nickName` dice lo mismo (§5.1).
@@ -84,9 +87,9 @@ La persona indica cómo quiere que la llamen («Liz», «Pepe», un nombre socia
 `midpoint-best-practices` §1.4 y §6 regla 2 («usar lo que ya existe»), e `iga-canonical-standards` §11 regla 1. El nativo tiene columna indexada, soporte en la GUI y semántica oficial de 4.11, y la extensión está vacía (§1.1).
 **Migración:** no hace falta copiar nada (0 valores). Se marca `sciback:preferredName` como `a:deprecated` en `canonical/schemas/sciback-person-v1.0.xml` y en el schema de PROD; se retira en la versión siguiente. `01-spec.md:352` pasa a decir `preferredName` (nativo) → `eduPersonNickname`.
 
-### D3. `displayPronouns`: fuera de la v1
+### D3. `displayPronouns`: fuera de la v1 — **decidido 16-nov-2026 (Alberto)**
 
-LDAP no tiene `eduPersonDisplayPronouns`: no está en `upeu/ldap/ldifs/03-eduperson.ldif` ni en el esquema del recurso en PROD [PROD-7]. Ningún destino lo consume. Además, puede revelar identidad de género, un dato sensible según la Ley 29733. Se queda en la extensión, sin canal de escritura, hasta que haya un consumidor y una base legal. ❓ Decisión de Alberto.
+LDAP no tiene `eduPersonDisplayPronouns`: no está en `upeu/ldap/ldifs/03-eduperson.ldif` ni en el esquema del recurso en PROD [PROD-7]. Ningún destino lo consume. Además, puede revelar identidad de género, un dato sensible según la Ley 29733. Se queda en la extensión, sin canal de escritura, hasta que haya un consumidor y una base legal. Alberto lo dejó fuera de la v1 el 16-nov-2026.
 
 ### D4. IIA del nombre preferido: la propia persona
 
@@ -102,50 +105,81 @@ Se sigue el mismo patrón que `UserTemplate-Nombre-Oficial` (`upeu/object-templa
 
 ```xml
 <objectTemplate xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
-                oid="(nuevo)">
+                oid="ce40e768-5767-475f-a653-65d9753d6ff5">
   <name>UserTemplate-Nombre-Preferido</name>
   <description>Único escritor de displayName. displayName = preferredName + familyName (oficial)
     si hay preferido; si no, fullName (oficial). No toca givenName/familyName/fullName.</description>
-  <item>
-    <ref>displayName</ref>
-    <mapping>
-      <name>NP1-displayName-preferido-o-oficial</name>
-      <strength>strong</strength>
-      <source><path>preferredName</path></source>
-      <source><path>familyName</path></source>
-      <source><path>fullName</path></source>
-      <expression>
-        <script>
-          <code>
-def p = preferredName != null ? basic.stringify(preferredName).trim() : ''
-def f = familyName != null ? basic.stringify(familyName).trim() : ''
-if (p) { return (p + ' ' + f).trim() }
-return fullName   // oficial; puede ser null en fichas incompletas
-          </code>
-        </script>
-      </expression>
-      <target>
-        <path>displayName</path>
-        <set><predefined>all</predefined></set>
-      </target>
-    </mapping>
-  </item>
+  <mapping>
+    <name>NP1-displayName-preferido-o-oficial</name>
+    <strength>strong</strength>
+    <source><path>preferredName</path></source>
+    <source><path>familyName</path></source>
+    <source><path>fullName</path></source>
+    <expression>
+      <script>
+        <language>http://midpoint.evolveum.com/xml/ns/public/expression/language#mel</language>
+        <code>
+          cel.bind(p, stringify(preferredName).trim(),
+            p != '' ? format.concatName([p, familyName])
+                    : (isBlank(stringify(fullName)) ? nil : stringify(fullName)))
+        </code>
+      </script>
+    </expression>
+    <target>
+      <path>displayName</path>
+      <set><predefined>all</predefined></set>
+    </target>
+  </mapping>
 </objectTemplate>
 ```
 
+Probado tal cual en el laboratorio (§12, T2). Es el fichero `sistemas/nombre-preferido/objetos/11-UserTemplate-Nombre-Preferido.xml` del repo `UPeU-Infra/lab-identidad`. En 4.11 el mapping de una plantilla va en `<mapping>` (como la 380); `<item><ref>…<mapping>` también vale.
+
 - `range=all`, igual que la plantilla 380 de 4.11 (https://docs.evolveum.com/midpoint/release/4.11.0/). Un ítem de un solo valor no tiene rango implícito (`midpoint-best-practices` §11.1), así que se declara. Esto exige que esta plantilla sea la única que escribe `displayName`. Hoy no lo escribe nadie [PROD-4].
-- En Groovy, porque PROD tiene `safeScriptingLanguagesOnly=false` y así se hace el resto del repo. La versión MEL (como la `cel.bind(...)` de la 380) va a F5 (`PLAN-Y-ROADMAP.md:59`). ❓ Probar la sintaxis MEL en el laboratorio.
-- **Saneado del valor de entrada** (recortar, juntar espacios, ≤ 40 caracteres, solo letras, espacio, guion y apóstrofo, sin dígitos): **lo valida quien escribe** (Discovery) y **MidPoint lo hace cumplir** con una regla de política que rechace la modificación si no cumple el patrón. Un mapping no sirve: escribiría sobre su propia fuente. ❓ La sintaxis exacta de la regla (`policyRule` con `modification` + `expression` + `enforcement`) se diseña en el laboratorio.
+- **En MEL, no en Groovy** (cambio tras el laboratorio). MEL funciona con los perfiles de expresión de 4.11 (una instalación nueva aplica `configuration` a plantillas y recursos, y ahí Groovy está prohibido) y en PROD, que no tiene perfiles. Así esta pieza nueva no engorda la migración F5 (`PLAN-Y-ROADMAP.md:59`). Lleva `<language>…#mel</language>` explícito, porque en PROD el lenguaje por defecto sigue siendo Groovy. ❓ Confirmar en la SIM PRE/POST de PROD que la 4.11 de PROD evalúa MEL (en el laboratorio no se puede probar Groovy sin tocar la configuración compartida con midPilot).
+- **Saneado del valor de entrada** (recortar, juntar espacios, ≤ 40 caracteres, solo letras, espacio, guion y apóstrofo, sin dígitos): **lo valida quien escribe** (Discovery) y **MidPoint lo hace cumplir** con una regla de política global que rechaza la modificación si no cumple el patrón. Un mapping no sirve: escribiría sobre su propia fuente. Sintaxis probada en el laboratorio (§12, T6):
+
+```xml
+<!-- PATCH add a systemConfiguration (c:globalPolicyRule) -->
+<globalPolicyRule>
+  <name>NP-validar-preferredName</name>
+  <policyConstraints>
+    <and>
+      <modification>                      <!-- solo si la operación CAMBIA preferredName -->
+        <name>cambia-preferredName</name>
+        <item>preferredName</item>
+      </modification>
+      <objectState>                       <!-- evalúa el estado DESPUÉS de la operación -->
+        <name>preferredName-invalido</name>
+        <expression><script>
+          <language>http://midpoint.evolveum.com/xml/ns/public/expression/language#mel</language>
+          <code>
+            cel.bind(v, stringify(object.preferredName),
+              v != '' &amp;&amp; (v.size() &gt; 40 || !v.matches(r"^\p{L}+(?:[ '-]\p{L}+)*$")))
+          </code>
+        </script></expression>
+      </objectState>
+    </and>
+  </policyConstraints>
+  <policyActions><enforcement/></policyActions>
+  <focusSelector><type>UserType</type></focusSelector>
+</globalPolicyRule>
+```
+
+  - El `<and>` con `<modification>` es imprescindible: sin él, un valor inválido heredado bloquearía **cualquier** otra modificación de la persona (las recons de Oracle incluidas). Medido: con un valor inválido puesto en *raw*, otra modificación pasa.
+  - El rechazo es **HTTP 409** con el mensaje «Object state after operation matches constraint "preferredName-invalido"». Se aplica a todos los canales: REST, GUI y live sync (§3.2).
+  - Pasa «Rector»: el patrón no filtra palabras. La mitigación sigue siendo D1 (apellidos fijos) y la auditoría (R6).
+  - Rechaza una tilde en forma descompuesta (NFD: `e` + U+0301). **Discovery debe normalizar a NFC** antes de enviar.
 
 ### 3.2 Entradas desde recursos: solo por `<channel>`, nunca por reconciliación
 
 Lo que dice la documentación de 4.11 (https://docs.evolveum.com/midpoint/reference/support-4.11/expressions/mappings/, sección *Normal Mappings*): «In inbound mappings, normal strength behaves similarly to strong». Un inbound normal se evalúa «whenever a shadow (account) is loaded into memory during processing» y se aplica «during reconciliation». **Por eso `strength=normal` no protege**: un inbound normal metería en la reconciliación diaria de Koha (09:15) el valor viejo que tenga Koha.
 
-El filtro correcto es la **restricción de canal** del mapping, del mismo documento, sección *Channel Constraints*: `channel` «Limits application of this mapping only to specific channel». En el XSD, `channel`/`exceptChannel` están en `EvenMoreAbstractMappingType` y los heredan los inbounds (verificado en `schema-4.9.1.jar`; ❓ confirmar en 4.11 en el laboratorio). Los URI de canal están en `SchemaConstants`/`Channel` (`…/channels-3#liveSync`, `#asyncUpdate`, `#reconciliation`, `#import`, `#recompute`, `#rest`, `#user`).
+El filtro correcto es la **restricción de canal** del mapping, del mismo documento, sección *Channel Constraints*: `channel` «Limits application of this mapping only to specific channel». En el XSD, `channel`/`exceptChannel` están en `EvenMoreAbstractMappingType` y los heredan los inbounds: verificado en `schema-4.9.1.jar` y en `schema-4.11.0.jar` (`common-core-3.xsd`, l. 5619-5643), y **por comportamiento en 4.11** con un control negativo (§12, T7a/T7f): con `<channel>liveSync` la reconciliación no mete el valor; sin él, sí. Los URI de canal están en `SchemaConstants`/`Channel` (`…/channels-3#liveSync`, `#asyncUpdate`, `#reconciliation`, `#import`, `#recompute`, `#rest`, `#user`).
 
 Además, para un destino de un solo valor el rango por defecto del inbound es `all` («The target value will be replaced», https://docs.evolveum.com/midpoint/reference/support-4.11/expressions/mappings/inbound-mapping/). El último evento que se procesa reemplaza el valor.
 
-**Plantilla de inbound para Koha** (no se puede activar hasta que el conector tenga `SyncOp`, §4.3):
+**Plantilla de inbound para Koha** (no se puede activar hasta que el conector tenga `SyncOp`, §4.3). Probada en el laboratorio con un CSV que imita a Koha (`firstname`, `surname`, `preferred_name`), porque el conector CSV sí tiene live sync:
 
 ```xml
 <attribute>
@@ -156,23 +190,38 @@ Además, para un destino de un solo valor el rango por defecto del inbound es `a
     <strength>strong</strength>
     <channel>http://midpoint.evolveum.com/xml/ns/public/common/channels-3#liveSync</channel>
     <channel>http://midpoint.evolveum.com/xml/ns/public/common/channels-3#asyncUpdate</channel>
-    <expression>
-      <script>
-        <code>
-// Koha nunca deja preferred_name vacío: si es igual a firstname es «sin preferido» [KE]
-def v = input?.toString()?.trim()
-def fn = projection != null ? basic.getAttributeValue(projection, 'firstname')?.toString()?.trim() : null
-if (!v || v.equalsIgnoreCase(fn ?: '')) { return null }   // range all ⇒ borra el preferido
-return v
-        </code>
-      </script>
-    </expression>
-    <target><path>$focus/preferredName</path></target>
+    <source><name>firstname</name><path>$projection/attributes/ri:firstname</path></source>
+    <expression><script>
+      <language>http://midpoint.evolveum.com/xml/ns/public/expression/language#mel</language>
+      <code>
+        // Koha nunca deja preferred_name vacío: si es igual a firstname es «sin preferido» [KE]
+        cel.bind(v, stringify(input).trim(),
+          (v == '' || v.equalsIgnoreCase(stringify(firstname).trim())) ? nil : v)
+      </code>
+    </script></expression>
+    <target><path>preferredName</path></target>
   </inbound>
 </attribute>
 ```
 
-Que el resultado `null` *borre* el valor es lo que se busca, pero **solo es seguro si el feed de live sync emite únicamente cambios humanos de `preferred_name`**. Por eso el `SyncOp` que propone koha-expert lee `action_logs` y excluye `interface='api'`/`svc_midpoint` [KE]. Con un feed «hubo algún cambio en el lector», un evento ajeno a este campo borraría el preferido de MidPoint. ❓ Hay que probarlo en el laboratorio antes de aceptar ese feed.
+Medido en el laboratorio (§12, T7): la reconciliación no lo mete; el live sync sí, y llega a LDAP en la misma operación; `preferred_name = firstname` o vacío borra el preferido (el rango `all` por defecto del inbound sobre un ítem de un solo valor); el eco de lo que MidPoint escribe no produce ningún delta.
+
+**Dos condiciones para activarlo con Koha, confirmadas en el laboratorio:**
+
+1. **El feed solo puede emitir cambios humanos de `preferred_name` (R5 confirmado).** Con un feed que manda el lector entero ante cualquier cambio, un evento **ajeno** (en la prueba, solo cambió `surname`) volvió a meter el `preferred_name` viejo que tenía la fuente y pisó el valor que la persona había puesto por Discovery. El `<channel>` no lo evita: el evento sí es de live sync. Por eso el `SyncOp` de koha-expert tiene que leer `action_logs`, emitir solo filas cuyo diff incluya `preferred_name` y excluir `interface='api'`/`svc_midpoint` [KE].
+2. **La tarea de live sync necesita tolerar los rechazos de la regla de validación.** Un valor inválido que llega por live sync lo rechaza la regla del §3.1, pero **la tarea se queda `SUSPENDED` / `FATAL_ERROR`** y ya no procesa los cambios siguientes. Con este `controlFlow` la tarea termina en `PARTIAL_ERROR`, el valor inválido no entra (queda en la auditoría) y el resto sí:
+
+```xml
+<activity>
+  <work><liveSynchronization><resourceObjects>…</resourceObjects></liveSynchronization></work>
+  <controlFlow><errorHandling><entry>
+    <situation><errorCategory>policy</errorCategory></situation>
+    <reaction><ignore/></reaction>
+  </entry></errorHandling></controlFlow>
+</activity>
+```
+
+   El valor inválido se queda en Koha (el outbound `normal` no lo corrige). Además, conviene que la tarea de live sync tenga como dueño una cuenta de servicio propia: la auditoría registra como iniciador al dueño de la tarea.
 
 ### 3.3 «Gana el último cambio»
 
@@ -184,10 +233,10 @@ Que el resultado `null` *borre* el valor es lo que se busca, pero **solo es segu
 
 | Operación (canal) | `preferredName` | `displayName` (foco) | Destinos |
 |---|---|---|---|
-| PATCH REST de Discovery (`rest`) / GUI (`user`) | cambia | se recalcula en el mismo clockwork | LDAP/Koha/Zammad se escriben en la misma operación; si un recurso no está, queda operación pendiente y la respuesta es 240 o 250 (§6.4) |
+| PATCH REST de Discovery (`rest`) / GUI (`user`) | cambia | se recalcula en el mismo clockwork | LDAP/Koha/Zammad se escriben en la misma operación; si LDAP no responde, queda operación pendiente y la respuesta **sigue siendo 204** (medido, §6.4); la completa la siguiente reconciliación |
 | Recompute (`recompute`) | no se toca | idempotente (strong, `range=all`) | outbounds strong idempotentes; Koha `normal` no escribe si sus fuentes no cambian |
 | Reconciliación Oracle (`reconciliation`/`import`) | no se toca: ningún recurso Oracle tiene inbound de `preferredName` (verificado en el repo) | se recalcula si cambia el nombre oficial | igual que hoy |
-| Reconciliación Koha 09:15 (`reconciliation`) | no se toca: el inbound tiene `<channel>liveSync` | — | el outbound `normal` de `preferred_name` **no corrige deriva** en la reconciliación («Weak and normal mappings will not overwrite or delete a value», doc. de mappings). Se acepta, para no pisar al bibliotecario |
+| Reconciliación Koha 09:15 (`reconciliation`) | no se toca: el inbound tiene `<channel>liveSync` | — | el outbound `normal` de `preferred_name` **no corrige deriva** en la reconciliación («Weak and normal mappings will not overwrite or delete a value», doc. de mappings; **medido en el laboratorio**, T7a). Se acepta, para no pisar al bibliotecario |
 | Live sync Koha (futuro, `liveSync`) | cambia si el lector cambió `preferred_name` | se recalcula | se propaga a LDAP y Zammad; a Koha vuelve el mismo valor (no hace nada) |
 | Alta de persona desde Oracle | vacío | = `fullName` | LDAP `displayName` = oficial; Koha `preferred_name` = `givenName` (lo mismo que haría Koha) |
 
@@ -208,21 +257,28 @@ Que el resultado `null` *borre* el valor es lo que se busca, pero **solo es segu
 <attribute id="87">
   <ref>ri:displayName</ref>
   <outbound>
+    <name>NP-ldap-displayName</name>
     <strength>strong</strength>
     <source><path>$focus/displayName</path></source>
     <source><path>$focus/fullName</path></source>
-    <expression><script><code>displayName ?: fullName</code></script></expression>
+    <expression><script>
+      <language>http://midpoint.evolveum.com/xml/ns/public/expression/language#mel</language>
+      <code>isBlank(stringify(displayName)) ? fullName : displayName</code>
+    </script></expression>
   </outbound>
 </attribute>
 <attribute>
   <ref>ri:eduPersonNickname</ref>
   <tolerant>false</tolerant>
   <outbound>
+    <name>NP-ldap-eduPersonNickname</name>
     <strength>strong</strength>
     <source><path>$focus/preferredName</path></source>
   </outbound>
 </attribute>
 ```
+
+Probado en el laboratorio (§12, T3/T5): `displayName` sale como preferido + apellidos y vuelve al oficial al borrar el preferido; `eduPersonNickname` aparece y desaparece; `cn`/`givenName`/`sn` no cambian; un recompute no produce ningún delta; la reconciliación repone un `displayName` alterado a mano y **retira** un `eduPersonNickname` añadido a mano (`tolerant=false`). Observación aparte: en esa misma prueba un `cn` añadido a mano **no** se retiró (el mapping de `cn` es tolerante y `cn` es multivalor en LDAP); revisar cómo está `cn` en PROD.
 
 - **Choque con E1:** E1 propone el mismo atributo 87 `weak → strong` desde `fullName` (`03-e1-laboratorio.md:136`). Medido el 9-nov, ese cambio actualiza `displayName` a **7 115 activos** (~13 100 en total) (`04-medicion-prod.md:62-71`, `:137`). Se hace **un solo PATCH** con la expresión de arriba: cuando nadie tenga preferido, da lo mismo que E1. Ojo: hay drift entre el repo (`ldap-identity-cache.xml:14341-14355`, strong) y PROD (weak) [PROD-4]. Antes de nada, exportar el `schemaHandling` de PROD.
 - El recurso se modifica **solo con PATCH del ítem**, verificando `version` y `?options=raw` (`CLAUDE.md`, «NUNCA PUT»; `midpoint-best-practices` §11.4).
@@ -279,7 +335,7 @@ PROD (v37): `firstname` ← `givenName` strong y `lastname` ← `familyName` str
 **Hoy no es viable para las personas:** el rol End user tiene 0 titulares y no hay módulo OIDC (§1.3). Se deja preparado el rol, para cuando haya inicio de sesión federado (proyecto aparte):
 
 ```xml
-<role oid="(nuevo)">
+<role oid="27f7c7bd-4b6c-43cd-8368-90e31a847867">
   <name>role-self-preferred-name</name>
   <authorization>
     <name>self-preferred-name-request</name>
@@ -296,11 +352,19 @@ PROD (v37): `firstname` ← `givenName` strong y `lastname` ← `familyName` str
     <!-- sin <item>: en ejecución se modifican también displayName y lo que la plantilla
          recalcule; la puerta real es la fase request (patrón del rol End user, id 10) -->
   </authorization>
+  <authorization>
+    <name>self-preferred-name-shadows-execution</name>
+    <!-- OBLIGATORIA (laboratorio 16-nov): sin ella, 403 con el foco YA cambiado y las cuentas no -->
+    <action>http://midpoint.evolveum.com/xml/ns/public/security/authorization-model-3#add</action>
+    <action>http://midpoint.evolveum.com/xml/ns/public/security/authorization-model-3#modify</action>
+    <phase>execution</phase>
+    <object><type>ShadowType</type><owner><special>self</special></owner></object>
+  </authorization>
 </role>
 ```
 
 - Fases según https://docs.evolveum.com/midpoint/reference/support-4.11/security/authorization/configuration/: «Request: when operation enters the IDM Model component», «Execution: when operation leaves the IDM Model component», y «A single `deny` in any of the phases denies entire operation».
-- **Por qué la ejecución no se limita a `preferredName`:** cada modificación pasa por toda la plantilla (bloques D, E y J de Person-Base). Si arrastra cambios latentes en otros ítems (`midpoint-best-practices` §11.3), una autorización de ejecución restringida haría fallar la operación entera. El rol End user de fábrica sigue el mismo criterio: la restricción va en la fase *request* (descripción de su autorización 10, [PROD-4]). ❓ Comprobar en el laboratorio si `#modify` en ejecución sin `<item>` basta también para las proyecciones, o si hace falta `ShadowType` con `owner self` (End user lo trae, id 11).
+- **Por qué la ejecución no se limita a `preferredName`:** cada modificación pasa por toda la plantilla (bloques D, E y J de Person-Base). Si arrastra cambios latentes en otros ítems (`midpoint-best-practices` §11.3), una autorización de ejecución restringida haría fallar la operación entera. El rol End user de fábrica sigue el mismo criterio: la restricción va en la fase *request* (descripción de su autorización 10, [PROD-4]). **Resuelto en el laboratorio (§12, T-AUTO):** no basta. Sin la autorización de ejecución sobre `ShadowType` con `owner self` (como la id 11 del rol End user), el PATCH devuelve **403** pero el foco **ya quedó cambiado** (`preferredName` y `displayName`) y LDAP no: un estado inconsistente que nadie ve. Con ella, la persona cambia su `preferredName` (204, llega a LDAP), y modificar su `givenName`, `familyName`, `displayName`, `emailAddress` o el preferido de otra persona da 403. Un valor inválido da 409 (la regla del §3.1).
 - `givenName`, `familyName`, `fullName` y `displayName` no se pueden pedir: la fase *request* solo permite `preferredName`. La GUI de autoservicio mostrará muchos más campos (`#selfAll`). Hay que reducir el formulario con `adminGuiConfiguration`. ❓
 
 ---
@@ -309,12 +373,12 @@ PROD (v37): `firstname` ← `givenName` strong y `lastname` ← `familyName` str
 
 ### 6.1 Cuenta y rol (siguiendo el patrón de `svc-ai-identity`)
 
-- **Usuario:** `svc-discovery-preferred-name`, arquetipo `archetype-user-service-account` (`05ceed56-9a60-4531-903f-c7748b36de8a`), con contraseña en `~/.secrets/` del lado de Discovery. Nunca en el repo.
+- **Usuario:** `svc-discovery-preferred-name` (OID propuesto `a9b862db-1b3d-498c-8e5e-4a0a4f9a2266`), arquetipo `archetype-user-service-account` (`05ceed56-9a60-4531-903f-c7748b36de8a`), con contraseña en `~/.secrets/` del lado de Discovery. Nunca en el repo.
 - **Rol:** `role-svc-discovery-preferred-name`, arquetipo application-role, como `role-svc-ai-identity-reader`. A diferencia de ese rol, se usan acciones REST **por operación** en vez de `#all`. Las acciones son `#searchObjects` y `#modifyObject` (https://docs.evolveum.com/midpoint/reference/support-4.11/interfaces/rest/operations/search-op-rest/ y …/modify-op-rest/). La documentación dice que las autorizaciones REST son «necessary, but not sufficient» (…/security/authorization/service/).
 - **Alcance de objetos** *fail-closed*: solo usuarios con un arquetipo de persona (alumno, administrativo, docente, egresado). Ojo: quien pierde todas sus asignaciones pierde el `archetypeRef` (memoria `entra-ex-trabajadores-98-2026-08-16`) y queda **fuera** a propósito.
 
 ```xml
-<role oid="(nuevo)">
+<role oid="8c0d4560-76ff-4c20-b683-3c4d498886ed">
   <name>role-svc-discovery-preferred-name</name>
   <assignment><targetRef oid="279ad5be-a892-4add-946f-8cb3740bfc31" type="c:ArchetypeType"/></assignment>
   <authorization>
@@ -352,15 +416,24 @@ PROD (v37): `firstname` ← `givenName` strong y `lastname` ← `familyName` str
   </authorization>
   <authorization>
     <name>discovery-shadows-execution</name>
+    <!-- OBLIGATORIA (laboratorio 16-nov). Acotada a las cuentas cuyo DUEÑO está en el alcance -->
     <action>http://midpoint.evolveum.com/xml/ns/public/security/authorization-model-3#add</action>
     <action>http://midpoint.evolveum.com/xml/ns/public/security/authorization-model-3#modify</action>
     <phase>execution</phase>
-    <object><type>ShadowType</type></object>
+    <object>
+      <type>ShadowType</type>
+      <owner><type>UserType</type><filter><!-- mismo filtro --></filter></owner>
+    </object>
   </authorization>
 </role>
 ```
 
-OIDs de arquetipo tomados de `canonical/archetypes/user/*.xml`. ❓ En el laboratorio hay que comprobar: (a) que la sintaxis Axiom del filtro con `or` funciona en una autorización; (b) si las autorizaciones de ejecución en `ShadowType` son necesarias o sobran; (c) que **no** se puede leer ningún otro ítem (lista de permitidos *fail-closed*, como se verificó con `svc-ai-identity` el 1-jul).
+OIDs de arquetipo tomados de `canonical/archetypes/user/*.xml`. El rol completo, con el filtro repetido en las cuatro autorizaciones, es `sistemas/nombre-preferido/objetos/40-role-svc-discovery-preferred-name.xml` del repo `UPeU-Infra/lab-identidad`.
+
+**Resuelto en el laboratorio (§12, T4):**
+- (a) **El filtro Axiom con `or` funciona** en las autorizaciones: una persona sin arquetipo de persona, la propia cuenta de servicio y `administrator` no salen en las búsquedas y su PATCH da 403.
+- (b) **La autorización de ejecución sobre `ShadowType` es obligatoria.** Sin ella el PATCH devuelve 403 **después de guardar el foco**: `preferredName` y `displayName` quedan cambiados y LDAP/Koha no. Se acotó al dueño (`<owner>` con el mismo filtro de arquetipos), en vez de a toda `ShadowType`, y funciona igual.
+- (c) **Lectura *fail-closed*:** la búsqueda devuelve solo `oid`, `version`, `name`, `emailAddress`, `preferredName` y `displayName`. Buscar por un ítem no legible (`telephoneNumber`, `givenName`) devuelve 200 con **0 resultados aunque la persona exista**, así que no sirve de oráculo. `GET /users/{oid}` da 403 (el rol solo da `#searchObjects`).
 
 ### 6.2 Cómo encontrar a la persona
 
@@ -392,7 +465,7 @@ o, de respaldo:
 { "query": { "filter": { "text": "emailAddress = \"persona.ficticia@upeu.edu.pe\"" } } }
 ```
 
-Respuesta 200 con la lista de objetos. Discovery solo ve `oid`, `name`, `emailAddress`, `preferredName` y `displayName`. ❓ Comprobar en el laboratorio la forma JSON exacta de `filter.text` en 4.11; la doc de búsqueda solo muestra `{"query": ""}`.
+Respuesta 200 con la lista de objetos. Discovery solo ve `oid`, `name`, `emailAddress`, `preferredName` y `displayName`. **Comprobado en 4.11:** la forma `{"query":{"filter":{"text":"…"}}}` funciona y la respuesta es `{"object":{"object":[ … ]}}` (lista vacía: sin la clave interna `object`). La comparación de `emailAddress` distingue mayúsculas: Discovery lo envía en minúsculas.
 
 **Modificar** (`PATCH /midpoint/ws/rest/users/{oid}`; según la doc, PATCH y POST son equivalentes y se prefiere PATCH):
 
@@ -401,23 +474,22 @@ Respuesta 200 con la lista de objetos. Discovery solo ve `oid`, `name`, `emailAd
     "modificationType": "replace", "path": "preferredName", "value": "Liz" } } }
 ```
 
-Para **borrar**: el mismo cuerpo sin `value`. ❓ Comprobar en el laboratorio que un `PolyString` acepta la cadena simple en JSON.
+Para **borrar**: el mismo cuerpo sin `value` (también vale `"modificationType":"delete"` con el valor actual). **Comprobado en 4.11:** el `PolyString` acepta la cadena simple (y también `{"orig":"Liz"}`). Si el mismo PATCH lleva otro ítem (`givenName`), se rechaza entero con 403 y no se aplica nada.
 
 ### 6.4 Respuestas y qué hace Discovery
 
-| Código | Significado (doc. REST 4.11) | Acción de Discovery |
+Códigos **medidos** en el laboratorio (§12):
+
+| Código | Cuándo (medido) | Acción de Discovery |
 |---|---|---|
-| 204 | Éxito. La operación es síncrona: foco y proyecciones escritos (LDAP incluido) | Leer de nuevo el `displayName` del LDAP (o del foco) y mostrarlo |
-| 250 | «partial error … some changes was executed»: el foco se guardó, algún destino falló | Mostrar «guardado; se propagará». **No reintentar el PATCH** |
-| 240 | Error resuelto por el mecanismo de consistencia (operación pendiente que se reintenta) | Igual que 250 |
-| 400 | Valor que viola el esquema (o la política de §3.1) | Mensaje de validación |
-| 403 | Ítem o persona fuera del alcance de la cuenta | No reintentar; alertar |
+| 204 | Éxito. **No garantiza que LDAP esté escrito:** con LDAP caído también devolvió 204, con la operación pendiente (`IN_PROGRESS` en la auditoría) que completó la siguiente reconciliación | Leer el `displayName` del LDAP; si no está, «guardado; se propagará» y comprobar en el siguiente inicio de sesión. **No reintentar el PATCH** |
+| 403 | Ítem distinto de `preferredName`, persona fuera del alcance, cuenta de servicio o `administrator`, asignaciones | No reintentar; alertar |
 | 404 | `oid` inexistente | Volver a buscar |
-| 5xx | Fallo del servidor | Reintentar con espera (máx. 3) |
+| 409 | Valor rechazado por la regla del §3.1 («Object state after operation matches constraint "preferredName-invalido"») | Mensaje de validación |
+| 502 | Error de configuración o de comunicación de un destino que midPoint no deja pendiente (medido con el CSV sin permiso de escritura): **no se guardó nada** | Reintentar con espera (máx. 3) |
+| 240 / 250 | Documentados (error manejado / parcial), **no observados** en estas pruebas | Igual que 204 |
 
-(https://docs.evolveum.com/midpoint/reference/support-4.11/interfaces/rest/operations/modify-op-rest/). No se espera 409 en una modificación. ❓ Comprobar qué código da en 4.11 un rechazo por regla de política.
-
-**¿Cómo sabe Discovery que llegó al LDAP?** Con un 204, LDAP ya se escribió en la misma operación. Para comprobarlo, Discovery lee `displayName` (o `eduPersonNickname`) del LDAP que consulta al iniciar sesión, con unos segundos de margen por la réplica. Si recibe 240/250 o el valor no aparece, vuelve a comprobarlo al siguiente inicio de sesión. Para los egresados (`account/alumni`), hasta que se decida §4.1, Discovery debe usar `cn` de respaldo.
+**¿Cómo sabe Discovery que llegó al LDAP?** Normalmente, con un 204 LDAP ya se escribió en la misma operación (medido: el valor está en LDAP al volver la respuesta). Pero **un 204 no lo garantiza**: con LDAP caído la respuesta también fue 204 y el cambio quedó como operación pendiente (§6.4). Por eso Discovery lee `displayName` (o `eduPersonNickname`) del LDAP que consulta, con unos segundos de margen por la réplica. Si el valor no aparece, vuelve a comprobarlo al siguiente inicio de sesión, sin repetir el PATCH. Para los egresados (`account/alumni`), hasta que se decida §4.1, Discovery debe usar `cn` de respaldo.
 
 ---
 
@@ -432,49 +504,52 @@ Para **borrar**: el mismo cuerpo sin `value`. ❓ Comprobar en el laboratorio qu
 | # | Riesgo | Mitigación |
 |---|---|---|
 | R1 | Cambio masivo de `displayName` en LDAP al pasar 87 a strong (7 115 activos, ~13 100 en total) | Es el de E1: un solo cambio, SIM PRE/POST, canario acotado y tandas en la ventana segura (protocolo PRE-EJECUCIÓN) |
-| R2 | Una autorización de ejecución demasiado estrecha → los PATCH de Discovery fallan por cambios latentes | Ejecución amplia; la puerta es la fase request (§5, §6.1). Laboratorio T4 |
+| R2 | Una autorización de ejecución demasiado estrecha → los PATCH de Discovery fallan por cambios latentes. **Peor de lo previsto:** el 403 llega con el foco ya guardado y las cuentas sin escribir | Ejecución amplia sobre `UserType` y sobre las `ShadowType` de los usuarios del alcance; la puerta es la fase request (§5, §6.1). Medido en el laboratorio (T4, T-AUTO) |
 | R3 | Cada PATCH arrastra cambios latentes de esa persona (regla 5 del contexto) | Recompute previo planificado; al pilotar, revisar en auditoría los primeros PATCH |
-| R4 | Un inbound de Koha mal filtrado por canal → la reconciliación de las 09:15 reintroduce valores viejos | `<channel>liveSync` + laboratorio T7 (reconciliación con valor viejo = sin cambio) |
-| R5 | Un feed de live sync no limitado a `preferred_name` → borra preferidos | `SyncOp` por `action_logs` [KE]; laboratorio T7 |
+| R4 | Un inbound de Koha mal filtrado por canal → la reconciliación de las 09:15 reintroduce valores viejos | `<channel>liveSync`: **probado** en el laboratorio con control negativo (T7a/T7f: con canal no entra; sin canal entra) |
+| R5 | Un feed de live sync no limitado a `preferred_name` → borra **o reintroduce** preferidos viejos | **Confirmado** en el laboratorio (T7g): un evento ajeno reintrodujo el valor viejo. `SyncOp` por `action_logs` que emita solo cambios de `preferred_name` [KE] |
 | R6 | Abuso: nombres ofensivos, suplantación | D1 (apellidos fijos), validación en las dos puntas, auditoría y posibilidad de que DTI o CRAI lo reviertan |
 | R7 | Privacidad: un nombre social puede revelar identidad de género | Publicar `displayName` a los SP solo donde haga falta; pronombres fuera (D3) |
 | R8 | Drift de GitOps: LDAP 87 (repo strong / PROD weak), Zammad sin XML en el repo, rol `svc-ai` desfasado | Exportar PROD antes de cualquier PATCH y versionar |
 | R9 | Cobertura de Discovery limitada por la falta de correo (§6.2) | Clave `name`; GAP-2 aparte |
 | R10 | Alguien cambia la plantilla de UserType a la 380 de 4.11 (`range=all` en `name`/`fullName`) | Documentado: la 380 no se usa en UPeU |
 | R11 | El OPAC de Koha deja pedir cambios del nombre oficial | `PatronSelfModificationBorrowerUnwantedField` (koha-expert / CRAI) |
+| R12 | Un valor inválido que llega por live sync **detiene la tarea** (`SUSPENDED`) y con ella todos los cambios siguientes | `controlFlow/errorHandling` `policy → ignore` en la tarea de live sync (§3.2), medido en el laboratorio (T7h) |
 
 ## 9. Plan de prueba en el laboratorio (192.168.15.150)
 
-⚠️ Según la memoria del 12-nov, el midPoint de la plataforma (`:8081`) **sigue en 4.10.2**, y la 4.11.0 del laboratorio corre aparte en `:8091` (midPilot). El ítem nativo exige 4.11: o se usa `:8091` o se sube `:8081`. ❓ Verificar la versión antes.
+Se usó el midPoint **4.11.0** de `:8091` (el de midPilot); el de la plataforma (`:8081`) sigue en 4.10.2. Resultado por prueba (detalle en el §12):
 
-| Prueba | Qué se comprueba | Éxito si… |
+| Prueba | Qué se comprueba | Resultado (16-nov-2026) |
 |---|---|---|
-| T1 | El XSD y la columna `preferredName`/`displayName` existen en la instancia | GET de un usuario con el ítem |
-| T2 | Plantilla NP1 con y sin preferido; borrar el preferido | `displayName` = preferido + apellidos / = `fullName`; al borrar vuelve a `fullName` (`range=all`) |
-| T3 | LDAP attr 87 + `eduPersonNickname` (`tolerant=false`) | Tras cambiar y borrar el preferido, el LDAP refleja ambos casos; un recompute no cambia nada |
-| T4 | Cuenta de servicio: búsqueda por `name` y por correo; PATCH de `preferredName` → 204; PATCH de `givenName` → 403; lectura de `telephoneNumber` → oculto; PATCH sobre una cuenta de servicio → 403 | Las cuatro respuestas, como se espera |
-| T5 | Reconciliación del LDAP del laboratorio con un `displayName` alterado a mano | Vuelve al valor calculado; `preferredName` intacto |
-| T6 | Política de validación: valor con dígitos o de más de 40 caracteres | Rechazo con código claro |
-| T7 | Simular la fuente Koha con un conector CSV que soporte sync: a) live sync con valor nuevo → entra; b) **reconciliación** con valor viejo → **no** entra; c) live sync con valor = `firstname` → borra | a/b/c tal cual |
-| T8 | Dos cambios casi simultáneos (REST y live sync) | Gana el último procesado; sin excepción de concurrencia sin resolver |
-| T9 | Auditoría | `ma_audit_event.channel` distingue `rest`/`liveSync`; se ve el delta de `preferredName` |
-| T10 | MEL de la plantilla (versión F5) | Mismo resultado que Groovy |
+| T1 | El XSD y la columna `preferredName`/`displayName` existen en la instancia | ✅ |
+| T2 | Plantilla NP1 con y sin preferido; borrar el preferido | ✅ (MEL; también al cambiar el apellido oficial) |
+| T3 | LDAP attr 87 + `eduPersonNickname` (`tolerant=false`) | ✅ recompute = 0 deltas |
+| T4 | Cuenta de servicio: búsquedas, PATCH 204, PATCH de otros ítems 403, lectura limitada, fuera de alcance 403 | ✅ **con corrección**: hace falta ejecución sobre `ShadowType` |
+| T5 | Reconciliación del LDAP con un `displayName` alterado a mano | ✅ |
+| T6 | Política de validación | ✅ 409 (regla global, §3.1) |
+| T7 | Fuente Koha simulada con CSV + live sync: a) reconciliación no entra; b) live sync entra; c) = `firstname` borra; d) vacío borra; e) eco sin delta; f) control negativo sin `<channel>`; g) evento ajeno (R5); h) valor inválido | ✅ a–f; g **confirma R5**; h **exige `errorHandling`** |
+| T8 | Dos cambios casi simultáneos (REST y live sync) | ⏸ no probado |
+| T9 | Auditoría | ✅ canal (`rest`/`liveSync`) e iniciador en `ma_audit_event`, delta en `ma_audit_delta` |
+| T10 | MEL | ✅ todo el lab es MEL; Groovy no probado (desactivado en una 4.11 nueva) |
+| T-AUTO | Autoservicio por REST con `role-self-preferred-name` | ✅ **con corrección**: ShadowType `owner self` |
+| T-ERR | Un destino falla durante el PATCH de Discovery | LDAP caído → **204** con operación pendiente; CSV sin escritura → 502 sin cambios |
 
 Después: protocolo PRE-EJECUCIÓN en PROD (respaldo → SIM PRE con configuración de producción → cambio inerte `proposed` → SIM POST → canario con lista de nombres → auditoría → lote).
 
 ## 10. Pendientes (❓)
 
-1. **D1** (nombre de pila frente a nombre completo libre) y **D3** (pronombres): Alberto.
-2. Si `account/alumni` publica `displayName` en LDAP.
-3. Cuántas entradas LDAP tienen hoy `eduPersonNickname` (antes de `tolerant=false`).
-4. Qué claims recibe Discovery (¿`uid`/`name`?) y a qué LDAP (maestro o réplica) consulta.
-5. La sintaxis de la regla de validación (§3.1) y el código REST de un rechazo por política.
-6. `<channel>` en un inbound en 4.11 (verificado solo en el XSD 4.9.1), la forma JSON de `filter.text` y que un PolyString acepte una cadena simple en el PATCH JSON.
-7. Si basta `#modify` en ejecución sin `ShadowType` para las proyecciones.
-8. Siembra o descarte de los 28 `preferred_name` distintos de Koha; `SyncOp` de Koha y `PatronSelfModificationBorrowerUnwantedField` (koha-expert).
-9. Inventario de consumidores de `displayName` LDAP.
-10. Versión del midPoint del laboratorio.
-11. Volver a medir en Graph que Entra sigue siendo solo nube.
+Resueltos el 16-nov-2026: D1 y D3 (Alberto); la sintaxis y el código de la regla de validación (409); `<channel>` en 4.11; la forma JSON de `filter.text`; el `PolyString` como cadena; la autorización sobre `ShadowType` (obligatoria); la versión del laboratorio (4.11.0 en `:8091`).
+
+1. Si `account/alumni` publica `displayName` en LDAP.
+2. Cuántas entradas LDAP tienen hoy `eduPersonNickname` (antes de `tolerant=false`).
+3. Qué claims recibe Discovery (¿`uid`/`name`?) y a qué LDAP (maestro o réplica) consulta.
+4. Confirmar en la SIM de PROD que MEL se evalúa allí (PROD no tiene perfiles de expresión y su lenguaje por defecto es Groovy).
+5. Siembra o descarte de los 28 `preferred_name` distintos de Koha; `SyncOp` de Koha que emita **solo** cambios de `preferred_name` (R5) y `PatronSelfModificationBorrowerUnwantedField` (koha-expert).
+6. Inventario de consumidores de `displayName` LDAP.
+7. Volver a medir en Graph que Entra sigue siendo solo nube.
+8. T8 (concurrencia REST + live sync), la GUI de autoservicio (`adminGuiConfiguration`, login federado) y las pruebas con Koha y Zammad reales.
+9. Revisar si el `cn` de PROD es tolerante: en el laboratorio un `cn` añadido a mano no lo retiró la reconciliación (§4.1).
 
 ## 11. Consultas a PROD (solo lectura, 2026-11-16)
 
@@ -487,3 +562,44 @@ Dos sesiones SSH al `.166`, cada una con un solo script. Postgres con `default_t
 - **[PROD-5]** `m_resource` (12); `m_task` con `liveSynchronization`/`asynchronousUpdate` (0); `m_uri` de canales; `m_object` tipo `SECURITY_POLICY`.
 - **[PROD-6]** `common-core-3.xsd` dentro de `BOOT-INF/lib/schema-4.11.0.jar` de `/opt/midpoint/lib/midpoint.jar` (leído en memoria por un pipe; sin escribir en el contenedor): `UserType/preferredName`, `displayName`, `nickName`.
 - **[PROD-7]** Correo por `lifecycleState`; personas con cuenta LDAP `default` sin correo; repetidos solo entre activos; índice sobre `emailaddress`; shadows vivos por recurso e intent (LDAP, Koha, Entra, Zammad); `m_connector` de Koha/Zammad y su `connectorVersion`; esquema LDAP (`eduPersonNickname`, `eduPersonDisplayPronouns`, intents).
+
+## 12. Resultados del laboratorio (16-nov-2026)
+
+**Dónde:** laboratorio UPeU, midPoint **4.11.0** de `sistemas/midpilot` (`:8091`), con datos **sintéticos**: 7 personas ficticias (`2099000NN`), la cuenta `svc-discovery-preferred-name` y una rama propia `ou=nombre-preferido` en el OpenLDAP del laboratorio (el recurso tiene esa rama como `baseContext`). Koha se simuló con un CSV (el conector CSV tiene live sync y el de Koha no). Nada conecta con PROD, Oracle LAMB ni el LDAP `.168/.169`. Koha y Zammad reales quedaron fuera de esta ronda.
+
+**Cómo se reproduce:** repo `UPeU-Infra/lab-identidad`, `sistemas/nombre-preferido/` (`01-montar.sh`, `02-pruebas.sh`, `99-retirar.sh`; README con el detalle). Los arquetipos de prueba usan **los OID de PROD** para que los filtros de las autorizaciones sean los reales. Los objetos que irían a PROD llevan ya su OID definitivo:
+
+| Objeto | OID |
+|---|---|
+| `UserTemplate-Nombre-Preferido` | `ce40e768-5767-475f-a653-65d9753d6ff5` |
+| `role-svc-discovery-preferred-name` | `8c0d4560-76ff-4c20-b683-3c4d498886ed` |
+| usuario `svc-discovery-preferred-name` | `a9b862db-1b3d-498c-8e5e-4a0a4f9a2266` |
+| `role-self-preferred-name` | `27f7c7bd-4b6c-43cd-8368-90e31a847867` |
+| regla global `NP-validar-preferredName` | (contenedor de `systemConfiguration`; en el laboratorio, id 9101) |
+
+**Resultado:** `02-pruebas.sh` da **88 ✅ / 0 ❌**, también en un ciclo completo desde cero (`99-retirar` → `01-montar` → `02-pruebas`, 16:57–16:59 UTC). midPilot quedó intacto: sus 240 usuarios y sus 300 cuentas CSV no se tocaron.
+
+### 12.1 Lo que confirma el diseño
+
+- **Plantilla (T2):** sin preferido, `displayName` = `fullName`; con «Lucía», «Lucía» + apellidos; si cambia el apellido oficial, `displayName` lo sigue; al borrar el preferido, vuelve al oficial (`range=all`). `givenName`/`familyName`/`fullName` no cambian. Un `displayName` escrito a mano por el administrador lo repone la plantilla en la misma operación.
+- **LDAP (T3/T5):** `displayName` y `eduPersonNickname` como en el §4.1; `cn`/`givenName`/`sn` oficiales. Un recompute de todos los sintéticos produce **0 deltas** de usuario. La reconciliación repone `displayName` y retira un `eduPersonNickname` intruso (`tolerant=false`).
+- **Contrato Discovery (T4):** búsqueda por `name` → 1. Correo único → 1; repetido → 2 (Discovery no escribe); en mayúsculas → 0. Fuera de alcance y `administrator` → 0. PATCH → 204 y el valor ya está en LDAP. 403 para `givenName`, `familyName`, `fullName`, `emailAddress`, `displayName`, `telephoneNumber`, asignaciones, la propia cuenta de servicio, `administrator` y personas sin arquetipo de persona. Un PATCH mixto (`preferredName` + `givenName`) se rechaza entero. 404 para un oid inexistente.
+- **Validación (T6):** 409 para dígitos, URL, correo, doble espacio, espacios al borde, 41 caracteres, emoji, HTML, guion inicial y tilde descompuesta (NFD). Acepta «José Luis», «O'Brien», «Ana-María», «Ñañez» y 40 caracteres.
+- **Canal de entrada (T7):** `<channel>` funciona en 4.11. Con canal, la reconciliación no mete el valor de la fuente; sin canal (control negativo), sí. El live sync lo mete y llega a LDAP. Un valor = `firstname` o vacío borra el preferido y la fuente vuelve a `firstname`. El eco de lo que escribe MidPoint no produce ningún delta. El outbound `normal` no pisa la fuente en la reconciliación.
+- **Auditoría (T9):** cada delta de `preferredName` queda con su canal (`rest`, `liveSync`) y su iniciador (`svc-discovery-preferred-name`; en live sync, el dueño de la tarea).
+- **Autoservicio (T-AUTO):** la persona cambia su preferido (204, llega a LDAP). No puede cambiar su nombre oficial, su correo, su `displayName` ni el preferido de otra persona (403). Un valor inválido da 409.
+
+### 12.2 Correcciones que hubo que hacer al diseño
+
+1. **Autorización de ejecución sobre `ShadowType`: obligatoria** en los dos roles (§5, §6.1). Sin ella, el PATCH devuelve **403 después de guardar el foco**, así que el valor queda en MidPoint y no en LDAP ni en Koha. Para Discovery se acotó a las cuentas cuyo dueño está en el alcance; para el autoservicio, `owner self`.
+2. **Códigos REST medidos (§6.4):** con LDAP caído, **204** y operación pendiente (`IN_PROGRESS`), que completó la reconciliación siguiente. No se vieron 240 ni 250. Si el error de un destino no queda pendiente (el CSV sin permiso de escritura), da 502 y no se guarda nada. La regla de validación da 409.
+3. **Live sync (§3.2):** R5 se reprodujo, porque un evento ajeno reintrodujo el valor viejo de la fuente. Además, un valor inválido deja la tarea en `SUSPENDED`, lo que exige `errorHandling` `policy → ignore`.
+4. **MEL en lugar de Groovy** para todas las expresiones nuevas (§3.1).
+5. **Sintaxis de la regla de validación** y su guardia `<and>` + `<modification>` (§3.1).
+
+### 12.3 Hallazgos de 4.11.0 útiles fuera de este diseño
+
+- **PATCH replace de `c:connectorConfiguration` entero → HTTP 500** (`IllegalStateException: An attempt to modify an immutable: XNode…` en `TrustDescriptorSetter`). El PATCH de una sola propiedad (`c:connectorConfiguration/icfc:configurationProperties/cfg:host`) sí funciona y sube la `version`. Hay que tenerlo en cuenta en la receta «nunca PUT, siempre PATCH» de PROD.
+- **La REST de 4.11 no tiene `POST /{type}/{oid}/recompute`** (404; tampoco figura en la documentación de operaciones REST de 4.11). Para recomputar hay que usar una tarea, o `POST /tasks/{oid}/run` para relanzarla.
+- En una instalación 4.11 **nueva**, la configuración del sistema trae perfiles de expresión por tipo (`configuration` para plantillas, recursos y la propia configuración; `safe` para roles y arquetipos). PROD no los tiene porque no se importó la configuración de 4.11.
+- El conector CSV 2.10 escribe el fichero con finales de línea CRLF.
