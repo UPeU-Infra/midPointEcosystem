@@ -34,7 +34,8 @@
     <!-- lifecycleState=active desde el dry-run de julio/2026 (ver upeu-koha/context/22).
          El comentario original de arriba ("proposed... outbound NO se ejecutan") quedó
          obsoleto — se conserva solo como registro histórico del diseño inicial. -->
-    <!-- connectorRef → KohaConnector **v1.7.1** (OID 51e26e79, descubierto en caliente 2026-10-28).
+    <!-- connectorRef → KohaConnector **v1.8.0** (OID 9f05e8ad, 18-nov-2026). midPoint 4.11.0 NO lo
+         descubrió en caliente: hizo falta reiniciar midpoint_server para que apareciera el ConnectorType.
          Implementa PoolableConnector (checkAlive()) y NO maneja fotos del patrón
          (retiradas en v1.4.1→v1.5.0). Historial de versiones relevantes:
            - v1.4.0 (02d503a0): retiró adopt-by-DNI legacy (D-14, commit e384c82).
@@ -52,12 +53,16 @@
              fusionan → fin del 409 "more than one non-repeatable attributes").
            - v1.7.1 (51e26e79, 28-oct): las BAJAS de extended_attributes se aplican (el
              merge-preserve reponía los tipos retirados por completo) + socketTimeout en el
-             pool JDBC. Vuelta atrás: repuntar a 8c090235.
+             pool JDBC.
+           - v1.8.0 (9f05e8ad, 18-nov): live sync del nombre preferido (SyncOp sobre
+             action_logs; propiedades sync* abajo). Esquema y capabilities refrescados: native
+             anuncia liveSync y update/delta. Vuelta atrás: repuntar a 51e26e79 (v1.7.1) y
+             quitar las 4 propiedades sync*.
          Ver upeu-koha/context/26 y github.com/UPeU-Infra/connector-koha releases.
          ⚠️ YA NO comparte OID con koha-ils.xml: el Koha VIEJO (.135) se queda
          deliberadamente en v1.3.11 (45b4f0e0) hasta que se jubile — no cambiar ese,
          ni borrar su jar/ConnectorType, o se rompe el resource viejo. -->
-    <connectorRef oid="51e26e79-862c-4f66-9b76-0a29e3f25b6e" relation="org:default" type="c:ConnectorType"/>
+    <connectorRef oid="9f05e8ad-dcc0-4341-b6ce-5e80408c96d2" relation="org:default" type="c:ConnectorType"/>
     <connectorConfiguration>
         <!-- connectorPoolConfiguration (2026-07-25): solo tiene efecto real desde que
              KohaConnector implementa PoolableConnector (v1.6.0) — antes MidPoint lo
@@ -118,6 +123,15 @@
                 <t:clearValue>__REPLACE_KOHA_PLUS_JDBC_PASS__</t:clearValue>
             </ns2:dbPassword>
             <ns2:dbPoolSize>2</ns2:dbPoolSize>
+            <!-- Live sync del nombre preferido (conector >= 1.8.0; doc/livesync-preferred-name.md del
+                 repo connector-koha). Requiere BorrowersLog=1, dbEnabled=true y GRANT SELECT sobre
+                 koha_upeu.action_logs al usuario JDBC. Antieco por USUARIO: 2 = borrowernumber de
+                 svc_midpoint, dueño de la clave OAuth2 del recurso. NO excluir interface='api'
+                 (Discovery también escribe por la API). -->
+            <ns2:syncExcludeUserIds>2</ns2:syncExcludeUserIds>
+            <ns2:syncTriggerFields>preferred_name</ns2:syncTriggerFields>
+            <ns2:syncBatchSize>500</ns2:syncBatchSize>
+            <ns2:syncSafetyLagSeconds>10</ns2:syncSafetyLagSeconds>
         </ns1:configurationProperties>
     </connectorConfiguration>
     <schema>
